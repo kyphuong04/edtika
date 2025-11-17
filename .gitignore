@@ -8,9 +8,9 @@
 /vendor
 /.idea
 /.vscode
-
+/Source.zip
 /storage/framework/laravel-excel
-
+.env
 .env.backup
 .phpunit.result.cache
 Homestead.json
