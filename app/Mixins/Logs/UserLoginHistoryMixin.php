@@ -30,7 +30,7 @@ class UserLoginHistoryMixin
 
     public function storeUserLoginHistory($user)
     {
-        $ipAddress = $_SERVER['REMOTE_ADDR']; // "46.143.59.39"
+        $ipAddress = request()->ip();
         $country = null;
         $city = null;
         $location = null;
@@ -40,8 +40,6 @@ class UserLoginHistoryMixin
             $country = $locationData['country'] ?? null;
             $city = $locationData['city'] ?? null;
             $location = (!empty($locationData['lat']) and !empty($locationData['lon'])) ? "{$locationData['lat']},{$locationData['lon']}" : null;
-        } else {
-            $ipAddress = null;
         }
 
         $userSession = session()->getId();
@@ -60,8 +58,6 @@ class UserLoginHistoryMixin
             'session_end_at' => null,
             'created_at' => time(),
         ]);
-
-
     }
 
     public function storeUserLogoutHistory($userId)
@@ -86,10 +82,28 @@ class UserLoginHistoryMixin
         }
     }
 
+    public function invalidateAllUserSessions($userId)
+    {
+        $sessions = UserLoginHistory::query()
+            ->where('user_id', $userId)
+            ->whereNull('session_end_at')
+            ->get();
+
+        foreach ($sessions as $session) {
+            $session->update([
+                'session_end_at' => time(),
+                'end_session_type' => 'force_logout'
+            ]);
+
+            $sessionManager = app('session');
+            $sessionManager->getHandler()->destroy($session->session_id);
+        }
+    }
+
     private function getUserLocation($ipAddress)
     {
         try {
-            $response = Http::get("http://ip-api.com/json/{$ipAddress}");
+            $response = Http::timeout(2)->get("http://ip-api.com/json/{$ipAddress}");
             return $response->json();
         } catch (\Exception $e) {
             return null;
