@@ -27,6 +27,7 @@ use App\Models\Webinar;
 use App\Models\WebinarReview;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -445,7 +446,6 @@ class WebinarController extends Controller
 
                     if (file_exists($filePath)) {
                         $extension = \Illuminate\Support\Facades\File::extension($filePath);
-
                         $fileName = str_replace(' ', '-', $file->title);
                         $fileName = str_replace('.', '-', $fileName);
                         $fileName .= '.' . $extension;
@@ -522,8 +522,7 @@ class WebinarController extends Controller
 
         $file_id = $request->get('file_id');
 
-        $file = File::where('id', $file_id)
-            ->first();
+        $file = File::where('id', $file_id)->first();
 
         if (!empty($file)) {
             $webinar = Webinar::where('id', $file->webinar_id)
@@ -568,8 +567,15 @@ class WebinarController extends Controller
 
     public function playFile($slug, $file_id)
     {
-        // this methode linked from video modal for play local video
-        // and linked from file.blade for show google_drive,dropbox,iframe
+        $user = auth()->user();
+        if (!empty($user) and !$this->checkConcurrentLearning($user)) {
+             $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg' => trans('update.device_limit_reached_please_try_again'),
+                'status' => 'error'
+            ];
+            return back()->with(['toast' => $toastData]);
+        }
 
         $webinar = Webinar::where('slug', $slug)
             ->where('status', 'active')
@@ -613,6 +619,15 @@ class WebinarController extends Controller
 
         if (auth()->check()) {
             $user = auth()->user();
+            
+            if (!$this->checkConcurrentLearning($user)) {
+                $toastData = [
+                    'title' => trans('public.request_failed'),
+                    'msg' => trans('update.device_limit_reached_please_try_again'),
+                    'status' => 'error'
+                ];
+                return back()->with(['toast' => $toastData]);
+            }
         }
 
         $course = Webinar::where('slug', $slug)
@@ -831,46 +846,58 @@ class WebinarController extends Controller
     {
         $user = auth()->user();
 
-        if (!empty($user) and !empty(getFeaturesSettings('direct_classes_payment_button_status'))) {
-            $this->validate($request, [
-                'item_id' => 'required',
-                'item_name' => 'nullable',
-            ]);
+        if ($user->isUser()) {
+            return redirect('/panel');
+        }
 
-            $data = $request->except('_token');
+        $this->validate($request, [
+            'item_id' => 'required',
+            'item_name' => 'required',
+        ]);
 
-            $webinarId = $data['item_id'];
-            $ticketId = $data['ticket_id'] ?? null;
+        $data = $request->all();
+        $itemId = $data['item_id'];
+        $itemName = $data['item_name'];
 
-            $webinar = Webinar::where('id', $webinarId)
-                ->where('private', false)
-                ->where('status', 'active')
-                ->first();
+        if ($itemName == 'charge_account') {
+            $paymentController = new PaymentController();
+            return $paymentController->chargeAccount($request);
+        }
 
-            if (!empty($webinar)) {
-                $checkCourseForSale = checkCourseForSale($webinar, $user);
+        $webinar = Webinar::where('id', $itemId)
+            ->where('status', 'active')
+            ->first();
 
-                if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
-                }
+        if (!empty($webinar)) {
+            $checkCourseForSale = checkCourseForSale($webinar, $user);
 
-                $fakeCarts = collect();
-
-                $fakeCart = new Cart();
-                $fakeCart->creator_id = $user->id;
-                $fakeCart->webinar_id = $webinarId;
-                $fakeCart->ticket_id = $ticketId;
-                $fakeCart->special_offer_id = null;
-                $fakeCart->created_at = time();
-
-                $fakeCarts->add($fakeCart);
-
-                $cartController = new CartController();
-
-                return $cartController->checkout(new Request(), $fakeCarts);
+            if ($checkCourseForSale != 'ok') {
+                return $checkCourseForSale;
             }
+
+            $paymentController = new PaymentController();
+            return $paymentController->paymentRequest($webinar);
         }
 
         abort(404);
+    }
+
+    private function checkConcurrentLearning($user)
+    {
+        if ($user->isAdmin() or $user->isTeacher() or $user->isOrganization()) {
+            return true;
+        }
+
+        $cacheKey = 'learning_session_' . $user->id;
+        $currentSessionId = session()->getId();
+        $activeSessionId = Cache::get($cacheKey);
+
+        if (!empty($activeSessionId) and $activeSessionId !== $currentSessionId) {
+            return false;
+        }
+
+        Cache::put($cacheKey, $currentSessionId, 30); // 30 seconds
+
+        return true;
     }
 }
