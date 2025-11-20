@@ -296,16 +296,17 @@ class LoginController extends Controller
 
     private function checkLoginDeviceLimit($user)
     {
-        $securitySettings = getGeneralSecuritySettings();
+        $limitCount = 2; // Default limit for everyone
 
-        if (!empty($securitySettings) and !empty($securitySettings['login_device_limit'])) {
-            $limitCount = !empty($securitySettings['number_of_allowed_devices']) ? $securitySettings['number_of_allowed_devices'] : 1;
+        $count = $user->logged_count;
 
-            $count = $user->logged_count;
+        if ($count >= $limitCount) {
+            $userLoginHistoryMixin = new UserLoginHistoryMixin();
+            $userLoginHistoryMixin->invalidateAllUserSessions($user->id);
 
-            if ($count >= $limitCount) {
-                return "no";
-            }
+            $user->update([
+                'logged_count' => 0
+            ]);
         }
 
         return 'ok';
