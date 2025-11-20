@@ -19,3 +19,13 @@ npm-debug.log
 yarn-error.log
 composer.lock
 storage/debugbar/.gitignore
+
+# --- Docker (Ignore Docker files & folders so they won't be pushed to GitHub)
+# We intentionally ignore Docker configs and scripts. If you want to keep a sample,
+# add a Dockerfile.example or docker-compose.yml.example instead of the real file.
+/docker/
+docker-compose*.yml
+Dockerfile
+DOCKER-README.md
+docker-setup.ps1
+docker-compose.override.yml

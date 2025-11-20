@@ -118,6 +118,76 @@
   }
 }
 
+/* Hover-expandable sidebar (collapse to icons, expand on hover) */
+.panel-sidebar--hover-expandable {
+  /* collapsed width */
+  width: 72px;
+  overflow: hidden;
+  transition: width 0.25s ease;
+  /* Keep icons centered */
+  /* hide texts (only the text span, keep the icon visible) */
+  /* hide username and stats */
+}
+.panel-sidebar--hover-expandable .panel-sidebar__menu, .panel-sidebar--hover-expandable .panel-sidebar__menu-item {
+  justify-content: center;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.panel-sidebar--hover-expandable .panel-sidebar__menu > div > span:nth-child(2), .panel-sidebar--hover-expandable .panel-sidebar__menu-item > span {
+  opacity: 1;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  display: inline-block;
+}
+.panel-sidebar--hover-expandable .panel-sidebar__contents h4,
+.panel-sidebar--hover-expandable .panel-sidebar__contents .d-flex.align-items-center.justify-content-around.mt-12 {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  height: 0;
+  transition: opacity 0.2s ease, max-width 0.25s ease, height 0.2s ease;
+}
+.panel-sidebar--hover-expandable .panel-sidebar__user-avatar, .panel-sidebar--hover-expandable .panel-sidebar__user-avatar img {
+  margin-left: auto;
+  margin-right: auto;
+}
+.panel-sidebar--hover-expandable .panel-sidebar__contents {
+  height: calc(100vh - 230px);
+}
+.panel-sidebar--hover-expandable:hover {
+  width: 258px; /* expanded width: matches existing layout */
+  padding-right: 0;
+}
+.panel-sidebar--hover-expandable:hover .panel-sidebar__menu, .panel-sidebar--hover-expandable:hover .panel-sidebar__menu-item {
+  justify-content: flex-start;
+  padding-left: 32px !important;
+  padding-right: 20px !important;
+}
+.panel-sidebar--hover-expandable:hover .panel-sidebar__menu > div > span, .panel-sidebar--hover-expandable:hover .panel-sidebar__menu-item > span {
+  opacity: 1;
+  max-width: 400px; /* large enough to show full text */
+  margin-left: 8px !important;
+  margin-right: 0 !important;
+}
+@media (max-width: 991px) {
+  .panel-sidebar--hover-expandable {
+    width: 100% !important; /* on small screens, show full */
+  }
+  .panel-sidebar--hover-expandable .panel-sidebar__menu > div > span, .panel-sidebar--hover-expandable .panel-sidebar__menu-item > span {
+    opacity: 1;
+    max-width: none;
+  }
+}
+
+/* Debug helper - remove after verifying hover expand */
+.panel-sidebar.panel-sidebar--hover-expandable.debug-outline {
+  outline: 2px dashed rgba(255, 0, 0, 0.6);
+}
+
 html {
   overflow-y: hidden;
   overflow-x: hidden;
