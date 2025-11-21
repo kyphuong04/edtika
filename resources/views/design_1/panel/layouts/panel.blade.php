@@ -29,6 +29,161 @@
         {!! getThemeFontsSettings() !!}
 
         {!! getThemeColorsSettings() !!}
+
+        /* Collapsed Sidebar Styles */
+        .panel-sidebar.panel-sidebar--collapsed {
+            width: 70px !important;
+            transition: width 0.3s ease;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .sidebar-text,
+        .panel-sidebar.panel-sidebar--collapsed .sidebar-section-title,
+        .panel-sidebar.panel-sidebar--collapsed .collapse-arrow-icon {
+            display: none !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .panel-sidebar__menu,
+        .panel-sidebar.panel-sidebar--collapsed .panel-sidebar__menu-item {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .panel-sidebar__menu-item:before {
+            display: none !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .sidebar-icon {
+            margin: 0 !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .mt-16 {
+            margin-top: 0 !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .accordion__collapse {
+            display: none !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover {
+            width: 258px !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .sidebar-text,
+        .panel-sidebar.panel-sidebar--collapsed:hover .sidebar-section-title {
+            display: inline-block !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .collapse-arrow-icon {
+            display: flex !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .panel-sidebar__menu {
+            justify-content: flex-start !important;
+            padding-left: 32px !important;
+            padding-right: 20px !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .panel-sidebar__menu-item {
+            justify-content: flex-start !important;
+            padding-left: 56px !important;
+            padding-right: 20px !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .panel-sidebar__menu-item:before {
+            display: block !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .sidebar-icon {
+            margin-right: 8px !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .mt-16 {
+            margin-top: 1rem !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .accordion__collapse {
+            display: block !important;
+        }
+        
+        .panel-sidebar__contents {
+            overflow-x: hidden;
+        }
+        
+        .sidebar-text,
+        .sidebar-section-title,
+        .sidebar-icon,
+        .collapse-arrow-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-text {
+            white-space: nowrap;
+        }
+        
+        .sidebar-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            flex-shrink: 0;
+        }
+        
+        /* Panel Content Adjustment */
+        .panel-sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            height: calc(100vh - 70px);
+            z-index: 100;
+        }
+        
+        .panel-content {
+            width: calc(100vw - 258px) !important;
+            margin-left: 258px !important;
+            transition: width 0.3s ease, margin-left 0.3s ease !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed + .panel-content {
+            width: calc(100vw - 70px) !important;
+            margin-left: 70px !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover + .panel-content {
+            width: calc(100vw - 258px) !important;
+            margin-left: 258px !important;
+        }
+        
+        .panel-bottom-bar {
+            width: calc(100% - 258px) !important;
+            transition: width 0.3s ease !important;
+            left: 258px !important;
+        }
+        
+        body:has(.panel-sidebar.panel-sidebar--collapsed) .panel-bottom-bar {
+            width: calc(100% - 70px) !important;
+            left: 70px !important;
+        }
+        
+        body:has(.panel-sidebar.panel-sidebar--collapsed:hover) .panel-bottom-bar {
+            width: calc(100% - 258px) !important;
+            left: 258px !important;
+        }
+        
+        @media (max-width: 991px) {
+            .panel-sidebar {
+                position: fixed !important;
+                left: auto !important;
+            }
+            .panel-content {
+                width: 100vw !important;
+                margin-left: 0 !important;
+            }
+            .panel-bottom-bar {
+                width: 100% !important;
+                left: 0 !important;
+            }
+        }
     </style>
 
 </head>
@@ -46,10 +201,10 @@
 
         @include('design_1.panel.includes.header')
 
-        <div class="d-flex justify-content-end">
+        <div class="d-flex">
             @include('design_1.panel.includes.sidebar')
 
-            <div class="panel-content">
+            <div class="panel-content flex-fill">
                 @include('design_1.panel.includes.title_and_breadcrumb')
 
                 @if(!empty($panelContentFull))
@@ -157,5 +312,38 @@
 
 <script src="/assets/design_1/js/parts/general.min.js"></script>
 <script src="/assets/design_1/js/panel/public.min.js"></script>
+
+<script>
+    // Handle sidebar hover to adjust content width
+    (function() {
+        const sidebar = document.getElementById('panelSidebar');
+        const content = document.querySelector('.panel-content');
+        
+        if (sidebar && content) {
+            sidebar.addEventListener('mouseenter', function() {
+                if (this.classList.contains('panel-sidebar--collapsed')) {
+                    content.style.width = 'calc(100vw - 258px)';
+                    content.style.marginLeft = '258px';
+                }
+            });
+            
+            sidebar.addEventListener('mouseleave', function() {
+                if (this.classList.contains('panel-sidebar--collapsed')) {
+                    content.style.width = 'calc(100vw - 70px)';
+                    content.style.marginLeft = '70px';
+                }
+            });
+            
+            // Initialize content width based on sidebar state
+            if (sidebar.classList.contains('panel-sidebar--collapsed')) {
+                content.style.width = 'calc(100vw - 70px)';
+                content.style.marginLeft = '70px';
+            } else {
+                content.style.width = 'calc(100vw - 258px)';
+                content.style.marginLeft = '258px';
+            }
+        }
+    })();
+</script>
 </body>
 </html>
