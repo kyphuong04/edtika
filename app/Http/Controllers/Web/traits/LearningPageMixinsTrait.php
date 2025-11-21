@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\traits;
 use App\Models\TimeSpentOnCourse;
 use App\Models\Webinar;
 use App\Models\WebinarChapter;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Request;
 
 trait LearningPageMixinsTrait
@@ -93,6 +94,15 @@ trait LearningPageMixinsTrait
 
         $user = auth()->user();
 
+        // Check Concurrent Learning
+        if (!$this->checkConcurrentLearning($user)) {
+            return response()->json([
+                'code' => 403,
+                'status' => 'error',
+                'msg' => trans('update.concurrent_learning_limit_reached') // You might need to add this translation or use a hardcoded string
+            ]);
+        }
+
         $trackingTime = TimeSpentOnCourse::query()->where('course_id', $course->id)
             ->where('user_id', $user->id)
             ->orderBy('entry_time', 'desc')
@@ -116,5 +126,24 @@ trait LearningPageMixinsTrait
             'code' => 200,
             'force_reload' => $forceReload,
         ]);
+    }
+
+    public function checkConcurrentLearning($user)
+    {
+        if ($user->isAdmin() or $user->isTeacher() or $user->isOrganization()) {
+            return true;
+        }
+
+        $cacheKey = 'learning_session_' . $user->id;
+        $currentSessionId = session()->getId();
+        $activeSessionId = Cache::get($cacheKey);
+
+        if (!empty($activeSessionId) and $activeSessionId !== $currentSessionId) {
+            return false;
+        }
+
+        Cache::put($cacheKey, $currentSessionId, 30); // 30 seconds
+
+        return true;
     }
 }
