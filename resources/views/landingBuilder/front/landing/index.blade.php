@@ -28,7 +28,7 @@
     <script src="/assets/vendors/typed/typedjs.js"></script>
 
     <script src="/assets/vendors/plyr.io/plyr.min.js"></script>
-    <script src="{{ getDesign1ScriptPath("video_player_helpers") }}"></script>
+    <script src="{{ getDesign1ScriptPath("video_player_helpers")}}"></script>
     <script src="/assets/design_1/landing_builder/js/front.min.js"></script>
 
 @endpush
