@@ -92,7 +92,7 @@ class UserLoginHistoryMixin
         foreach ($sessions as $session) {
             $session->update([
                 'session_end_at' => time(),
-                'end_session_type' => 'force_logout'
+                'end_session_type' => 'by_admin'
             ]);
 
             $sessionManager = app('session');
