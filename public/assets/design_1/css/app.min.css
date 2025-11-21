@@ -22763,6 +22763,8 @@ fieldset {
 
 .plyr--youtube {
   /* Disable clicks on native YouTube iframe so only Plyr UI is interactive */
+  /* Ensure Plyr controls remain interactive */
+  /* Optional: neutral cursor over the video area */
 }
 .plyr--youtube .plyr__video-embed > iframe {
   pointer-events: none !important;

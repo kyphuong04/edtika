@@ -3,7 +3,7 @@
 @endphp
 
 
-<div id="panelSidebar" class="panel-sidebar bg-white">
+<div id="panelSidebar" class="panel-sidebar bg-white {{ $authUser->isUser() ? 'panel-sidebar--hover-expandable' : '' }}">
     <div class="panel-sidebar__contents bg-white {{ (empty($getPanelSidebarSettings) or empty($getPanelSidebarSettings['background'])) ? 'without-bottom-image' : '' }}" data-simplebar @if((!empty($isRtl))) data-simplebar-direction="rtl" @endif>
 
         <div class="js-show-panel-sidebar cursor-pointer d-flex d-lg-none">
