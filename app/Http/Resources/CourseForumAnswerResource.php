@@ -35,3 +35,4 @@ class CourseForumAnswerResource extends JsonResource
         ];
     }
 }
+

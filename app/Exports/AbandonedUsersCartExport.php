@@ -55,3 +55,5 @@ class AbandonedUsersCartExport implements FromCollection, WithHeadings, WithMapp
         ];
     }
 }
+
+

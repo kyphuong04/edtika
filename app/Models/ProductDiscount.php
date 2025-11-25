@@ -44,3 +44,5 @@ class ProductDiscount extends Model
         return ($count > 0) ? $count - $orderItems : 0;
     }
 }
+
+

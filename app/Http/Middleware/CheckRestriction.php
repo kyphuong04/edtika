@@ -73,3 +73,4 @@ class CheckRestriction
         return true;
     }
 }
+

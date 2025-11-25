@@ -30,3 +30,4 @@ class WebinarCertificateResource extends JsonResource
         ];
     }
 }
+

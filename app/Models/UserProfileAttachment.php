@@ -35,3 +35,5 @@ class UserProfileAttachment extends Model implements TranslatableContract
     }
 
 }
+
+

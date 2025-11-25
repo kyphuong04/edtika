@@ -143,3 +143,5 @@ class Blog extends Model implements TranslatableContract
         return $badges;
     }
 }
+
+

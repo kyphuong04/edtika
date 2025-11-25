@@ -24,3 +24,5 @@ class WebinarAssignmentController extends Controller
         return apiResponse2(1, 'retrieved', trans('api.public.retrieved'), $resource);
     }
 }
+
+

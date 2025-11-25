@@ -11,3 +11,5 @@ class ProductCategoryTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

@@ -184,7 +184,7 @@ class InstructorFinderController extends Controller
         $rating = $request->get('rating');
 
         if (empty($request->get('role'))) {
-            $role = [Role::$organization, Role::$teacher];
+            $role = [Role::$teacher];
         } else {
             $role = [$request->get('role')];
         }
@@ -260,13 +260,13 @@ class InstructorFinderController extends Controller
         }
 
         if (!empty($rating)) {
-            $roleForSort = ($request->get('role') == Role::$organization) ? Role::$organization : Role::$teacher;
+            $roleForSort = ($request->get('role') == Role::$teacher) ? Role::$teacher : Role::$teacher;
             $query = $this->getBestRateUsers($query, $roleForSort, $rating);
         }
 
         if (!empty($sort)) {
             if ($sort == 'top_rate') {
-                $roleForSort = ($request->get('role') == Role::$organization) ? Role::$organization : Role::$teacher;
+                $roleForSort = ($request->get('role') == Role::$teacher) ? Role::$teacher : Role::$teacher;
 
                 $query = $this->getBestRateUsers($query, $roleForSort, 'top');
             }
@@ -309,7 +309,7 @@ class InstructorFinderController extends Controller
     private function getBestRateUsers($query, $role, $rating)
     {
         $query->leftJoin('webinars', function ($join) use ($role) {
-            if ($role == Role::$organization) {
+            if ($role == Role::$teacher) {
                 $join->on('users.id', '=', 'webinars.creator_id');
             } else {
                 $join->on('users.id', '=', 'webinars.teacher_id');
@@ -329,7 +329,7 @@ class InstructorFinderController extends Controller
             $query->where('rates_avg', '<', $rating + 1);
         }
 
-        if ($role == Role::$organization) {
+        if ($role == Role::$teacher) {
             $query->groupBy('webinars.creator_id');
         } else {
             $query->groupBy('webinars.teacher_id');
@@ -628,7 +628,7 @@ class InstructorFinderController extends Controller
             ->where('status', 'active')
             ->count();
 
-        $organizationsCount = User::where('role_name', Role::$organization)
+        $organizationsCount = User::where('role_name', Role::$teacher)
             ->where('status', 'active')
             ->count();
 
@@ -665,3 +665,5 @@ class InstructorFinderController extends Controller
         return view('design_1.web.instructor_finder.wizard.index', $data);
     }
 }
+
+

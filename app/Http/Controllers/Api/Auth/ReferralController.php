@@ -20,3 +20,5 @@ class ReferralController extends Controller
         return redirect('/register');
     }
 }
+
+

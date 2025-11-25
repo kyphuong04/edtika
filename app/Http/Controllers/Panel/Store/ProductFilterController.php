@@ -27,3 +27,5 @@ class ProductFilterController extends Controller
         ], 200);
     }
 }
+
+

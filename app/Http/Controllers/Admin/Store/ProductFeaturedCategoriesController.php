@@ -132,3 +132,5 @@ class ProductFeaturedCategoriesController extends Controller
         return redirect(getAdminPanelUrl("/store/featured-categories"))->with(['toast' => $toastData]);
     }
 }
+
+

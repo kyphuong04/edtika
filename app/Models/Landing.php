@@ -43,3 +43,5 @@ class Landing extends Model implements TranslatableContract
         return "/landings/{$this->url}";
     }
 }
+
+

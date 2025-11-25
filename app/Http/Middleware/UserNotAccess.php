@@ -22,3 +22,4 @@ class UserNotAccess
         abort(404);
     }
 }
+

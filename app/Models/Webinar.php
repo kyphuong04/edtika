@@ -1332,3 +1332,5 @@ class Webinar extends Model implements TranslatableContract
     }
 
 }
+
+

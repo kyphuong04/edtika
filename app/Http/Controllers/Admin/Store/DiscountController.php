@@ -207,3 +207,5 @@ class DiscountController extends Controller
         return redirect()->back();
     }
 }
+
+

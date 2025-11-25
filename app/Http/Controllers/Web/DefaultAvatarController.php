@@ -353,3 +353,5 @@ class DefaultAvatarController extends Controller
         $this->background = $randomColor["b"];
     }
 }
+
+

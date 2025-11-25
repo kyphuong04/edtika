@@ -58,3 +58,5 @@ class FloatingBar extends Model implements TranslatableContract
         return $query->first();
     }
 }
+
+

@@ -132,3 +132,5 @@ class BlogCategoriesController extends Controller
         return redirect(getAdminPanelUrl() . '/blog/categories')->with(['toast' => $toastData]);
     }
 }
+
+

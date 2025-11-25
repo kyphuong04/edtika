@@ -48,3 +48,4 @@ class QuizResource extends JsonResource
 
     }
 }
+

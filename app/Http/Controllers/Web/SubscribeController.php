@@ -96,3 +96,5 @@ class SubscribeController extends Controller
         }
     }
 }
+
+

@@ -66,3 +66,4 @@ class WebinarAssignmentHistoryResource extends JsonResource
         ];
     }
 }
+

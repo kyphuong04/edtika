@@ -126,3 +126,5 @@ class BadgesController extends Controller
         return back();
     }
 }
+
+

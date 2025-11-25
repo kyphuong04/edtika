@@ -78,3 +78,5 @@ class ProductCategory extends Model implements TranslatableContract
         return $query->count();
     }
 }
+
+

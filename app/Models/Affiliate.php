@@ -124,3 +124,5 @@ class Affiliate extends Model
 
     }
 }
+
+

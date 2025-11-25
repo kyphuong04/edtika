@@ -73,3 +73,5 @@ class GiftHistoriesExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

@@ -11,3 +11,5 @@ class WebinarAssignmentTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

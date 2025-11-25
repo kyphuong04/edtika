@@ -54,7 +54,7 @@ class ReferralUsersExport implements FromCollection, WithHeadings, WithMapping
             $userType = 'Student';
         } elseif ($referral->affiliateUser->isTeacher()) {
             $userType = 'Teacher';
-        } elseif ($referral->affiliateUser->isOrganization()) {
+        } elseif ($referral->affiliateUser->isTeacher() // changed from organization) {
             $userType = 'Organization';
         }
 
@@ -70,3 +70,5 @@ class ReferralUsersExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

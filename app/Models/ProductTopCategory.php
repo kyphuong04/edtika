@@ -19,3 +19,5 @@ class ProductTopCategory extends Model
 
 
 }
+
+

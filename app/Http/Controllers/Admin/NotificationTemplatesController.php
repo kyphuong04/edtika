@@ -97,3 +97,5 @@ class NotificationTemplatesController extends Controller
         return redirect(getAdminPanelUrl().'/notifications/templates');
     }
 }
+
+

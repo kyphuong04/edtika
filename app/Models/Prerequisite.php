@@ -15,3 +15,5 @@ class Prerequisite extends Model
         return $this->belongsTo('App\Models\Webinar', 'prerequisite_id', 'id');
     }
 }
+
+

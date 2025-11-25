@@ -90,3 +90,5 @@ class TextLesson extends WebTextLesson
         return $this->belongsTo('App\Models\Api\Webinar', 'webinar_id', 'id');
     }
 }
+
+

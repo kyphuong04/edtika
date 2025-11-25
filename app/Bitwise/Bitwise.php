@@ -82,3 +82,4 @@ class Bitwise
         return $this->hasValue($value, $source);
     }
 }
+

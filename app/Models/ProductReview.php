@@ -26,3 +26,5 @@ class ProductReview extends Model
         return $this->hasMany('App\Models\Comment', 'product_review_id', 'id');
     }
 }
+
+

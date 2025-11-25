@@ -25,3 +25,5 @@ trait DeviceLimitSettings
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

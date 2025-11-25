@@ -37,3 +37,5 @@ class WebinarAssignmentHistory extends Model
         return $this->hasMany('App\Models\WebinarAssignmentHistoryMessage', 'assignment_history_id', 'id');
     }
 }
+
+

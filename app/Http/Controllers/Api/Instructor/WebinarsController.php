@@ -1249,3 +1249,5 @@ class WebinarsController extends Controller
         ], 200);
     }
 }
+
+

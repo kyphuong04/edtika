@@ -25,3 +25,5 @@ class CourseForum extends Model
         return $this->hasMany('App\Models\CourseForumAnswer', 'forum_id', 'id');
     }
 }
+
+

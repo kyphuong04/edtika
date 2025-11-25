@@ -21,3 +21,5 @@ class QuizzesQuestionsAnswer extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'title');
     }
 }
+
+

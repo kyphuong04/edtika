@@ -35,3 +35,5 @@ class ProductBadge extends Model implements TranslatableContract
 
 
 }
+
+

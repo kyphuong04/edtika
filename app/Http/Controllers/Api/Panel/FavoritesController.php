@@ -123,3 +123,5 @@ class FavoritesController extends Controller
         return apiResponse2(1, 'deleted', trans('api.public.deleted'));
     }
 }
+
+

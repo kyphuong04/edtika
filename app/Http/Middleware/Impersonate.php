@@ -23,3 +23,4 @@ class Impersonate
         return $next($request);
     }
 }
+

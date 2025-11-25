@@ -44,3 +44,4 @@ class UserLocale
         return $next($request);
     }
 }
+

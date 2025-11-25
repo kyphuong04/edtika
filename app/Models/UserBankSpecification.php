@@ -22,3 +22,5 @@ class UserBankSpecification extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'name');
     }
 }
+
+

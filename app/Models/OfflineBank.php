@@ -28,3 +28,5 @@ class OfflineBank extends Model implements TranslatableContract
         return $this->hasMany('App\Models\OfflineBankSpecification', 'offline_bank_id', 'id');
     }
 }
+
+

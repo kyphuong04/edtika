@@ -78,3 +78,5 @@ class PaymentChannelController extends Controller
         return redirect(getAdminPanelUrl() . '/settings/financial');
     }
 }
+
+

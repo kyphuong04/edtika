@@ -27,3 +27,5 @@ class InstallmentOrderPayment extends Model
         return $this->belongsTo(SelectedInstallmentStep::class, 'selected_installment_step_id', 'id');
     }
 }
+
+

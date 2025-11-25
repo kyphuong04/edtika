@@ -10,3 +10,5 @@ class TimeSpentOnCourse extends Model
     public $timestamps = false;
     protected $guarded = ['id'];
 }
+
+

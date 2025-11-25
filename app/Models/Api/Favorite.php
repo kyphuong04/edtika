@@ -14,3 +14,4 @@ class Favorite extends WebFavorite{
         return $this->belongsTo('App\Models\Api\User', 'user_id', 'id');
     }
 }
+

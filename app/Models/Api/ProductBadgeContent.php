@@ -102,3 +102,5 @@ class ProductBadgeContent extends Model
     }
 
 }
+
+

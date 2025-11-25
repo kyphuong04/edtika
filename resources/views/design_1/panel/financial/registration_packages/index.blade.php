@@ -224,7 +224,7 @@
                              ['name' => trans('update.meeting_hours'), 'value' => $package->instructors_count],
                              ['name' => trans('update.products'), 'value' => $package->product_count],
                         ];
-                        if($authUser->isOrganization()) {
+                        if($authUser->isAdmin()) {
                             $items[] = ['name' => trans('home.instructors'), 'value' => $package->instructors_count];
                             $items[] = ['name' => trans('public.students'), 'value' => $package->students_count];
                         }

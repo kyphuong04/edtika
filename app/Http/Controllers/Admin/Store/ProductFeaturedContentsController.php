@@ -45,3 +45,5 @@ class ProductFeaturedContentsController extends Controller
         $this->authorize("admin_store_featured_categories");
     }
 }
+
+

@@ -655,3 +655,5 @@ class ProductController extends Controller
         abort(404);
     }
 }
+
+

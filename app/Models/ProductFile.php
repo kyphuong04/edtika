@@ -78,3 +78,5 @@ class ProductFile extends Model implements TranslatableContract
     }
 
 }
+
+

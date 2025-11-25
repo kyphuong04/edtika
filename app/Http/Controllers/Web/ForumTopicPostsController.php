@@ -523,3 +523,5 @@ class ForumTopicPostsController extends Controller
     }
 
 }
+
+

@@ -164,3 +164,5 @@ class FAQController extends Controller
         return redirect()->back();
     }
 }
+
+

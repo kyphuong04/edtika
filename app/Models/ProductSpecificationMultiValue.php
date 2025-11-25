@@ -27,3 +27,5 @@ class ProductSpecificationMultiValue extends Model implements TranslatableContra
         return str_replace(' ', '_', $this->title);
     }
 }
+
+

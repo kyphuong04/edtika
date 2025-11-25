@@ -33,7 +33,7 @@
                                     <span class="ml-4">{{ trans('update.courses') }}</span>
                                 </div>
 
-                                @if($user->isOrganization())
+                                @if($user->isAdmin())
                                     <div class="navbar-item d-flex-center pb-12 cursor-pointer font-12 font-weight-bold {{ (request()->get('tab') == 'instructors') ? 'active' : ''  }}" data-tab-toggle data-tab-href="#instructorsTab">
                                         <x-iconsax-lin-teacher class="icons" width="16px" height="16px"/>
                                         <span class="ml-4">{{ trans('home.instructors') }}</span>
@@ -78,7 +78,7 @@
                                     @include('design_1.web.users.profile.tabs.courses')
                                 </div>
 
-                                @if($user->isOrganization())
+                                @if($user->isAdmin())
                                     <div class="custom-tabs-content px-16 {{ (request()->get('tab') == 'instructors') ? 'active' : ''  }}" id="instructorsTab">
                                         @include('design_1.web.users.profile.tabs.instructors')
                                     </div>

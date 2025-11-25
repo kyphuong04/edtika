@@ -372,3 +372,5 @@ class CourseNoticeboardController extends Controller
         return response()->json([], 422);
     }
 }
+
+

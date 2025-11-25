@@ -179,3 +179,5 @@ class FAQController extends Controller
         ], 200);
     }
 }
+
+
