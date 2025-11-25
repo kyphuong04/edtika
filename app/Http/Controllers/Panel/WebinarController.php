@@ -61,21 +61,13 @@ class WebinarController extends Controller
             ->with('subCategories')
             ->get();
 
-        $teachers = null;
-        $isOrganization = $user->isOrganization();
-
-        if ($isOrganization) {
-            $teachers = User::where('role_name', Role::$teacher)
-                ->where('organ_id', $user->id)->get();
-        }
+        // Note: organization role removed in IELTS platform - teachers create their own courses
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
 
         $data = [
             'pageTitle' => trans('webinars.new_page_title'),
-            'teachers' => $teachers,
             'categories' => $categories,
-            'isOrganization' => $isOrganization,
             'currentStep' => 1,
             'stepCount' => $stepCount,
             'userLanguages' => getUserLanguagesLists(),
@@ -164,9 +156,9 @@ class WebinarController extends Controller
         $this->authorize("panel_webinars_create");
 
         $user = auth()->user();
-        $isOrganization = $user->isOrganization();
+        // Note: organization role removed - teachers manage own courses
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher()) {
             abort(404);
         }
         $locale = $request->get('locale', app()->getLocale());
@@ -180,7 +172,6 @@ class WebinarController extends Controller
         $data = [
             'pageTitle' => trans('webinars.new_page_title_step', ['step' => $step]),
             'currentStep' => $step,
-            'isOrganization' => $isOrganization,
             'userLanguages' => getUserLanguagesLists(),
             'locale' => mb_strtolower($locale),
             'defaultLocale' => getDefaultLocale(),
@@ -532,7 +523,7 @@ class WebinarController extends Controller
             $data['companyLogos'],
         );
 
-        if (empty($data['teacher_id']) and $user->isOrganization() and $webinar->creator_id == $user->id) {
+        if (false) { // organization check removed - teachers assign themselves
             $data['teacher_id'] = $user->id;
         }
 
@@ -1172,3 +1163,5 @@ class WebinarController extends Controller
         abort(403);
     }
 }
+
+

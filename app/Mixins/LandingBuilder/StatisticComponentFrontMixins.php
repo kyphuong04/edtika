@@ -52,7 +52,7 @@ class StatisticComponentFrontMixins
 
     private function number_of_organizations()
     {
-        return User::query()->where('role_name', Role::$organization)
+        return User::query()->where('role_name', Role::$teacher)
             ->where('status', 'active')
             ->count();
     }
@@ -130,3 +130,4 @@ class StatisticComponentFrontMixins
     }
 
 }
+

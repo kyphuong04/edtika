@@ -41,3 +41,5 @@ class Notification extends Model
         return $this->hasOne('App\Models\NotificationStatus', 'notification_id', 'id');
     }
 }
+
+

@@ -40,3 +40,5 @@ class ProductSpecification extends Model implements TranslatableContract
         return str_replace(' ', '_', $this->title);
     }
 }
+
+

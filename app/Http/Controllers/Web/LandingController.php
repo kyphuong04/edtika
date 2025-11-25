@@ -35,3 +35,5 @@ class LandingController extends Controller
         abort(404);
     }
 }
+
+

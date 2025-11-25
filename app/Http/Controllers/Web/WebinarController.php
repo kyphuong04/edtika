@@ -884,7 +884,7 @@ class WebinarController extends Controller
 
     private function checkConcurrentLearning($user)
     {
-        if ($user->isAdmin() or $user->isTeacher() or $user->isOrganization()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             return true;
         }
 
@@ -901,3 +901,5 @@ class WebinarController extends Controller
         return true;
     }
 }
+
+

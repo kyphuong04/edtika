@@ -27,3 +27,5 @@ class WebinarExtraDescription extends Model implements TranslatableContract
     }
 
 }
+
+

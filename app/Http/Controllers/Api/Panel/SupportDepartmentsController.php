@@ -13,3 +13,4 @@ class SupportDepartmentsController extends Controller {
         }) ;
     }
 }
+

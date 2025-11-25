@@ -273,3 +273,5 @@ class SaleController extends Controller
         ]);
     }
 }
+
+

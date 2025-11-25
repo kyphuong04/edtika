@@ -70,7 +70,8 @@ class UserPackage
 
     private function checkAccountRestrictions(): bool
     {
-        if ($this->user->isOrganization()) {
+        if ($this->user->isAdmin()) {
+            // Admin uses organization settings
             $settings = getRegistrationPackagesOrganizationsSettings();
         } else {
             $settings = getRegistrationPackagesInstructorsSettings();
@@ -81,7 +82,8 @@ class UserPackage
 
     public function getDefaultPackage($role = null): UserPackage
     {
-        if ($this->user->isOrganization() or ($role == 'organizations')) {
+        if ($this->user->isAdmin() or ($role == 'organizations')) {
+            // Admin uses organization settings
             $settings = getRegistrationPackagesOrganizationsSettings();
         } else {
             $settings = getRegistrationPackagesInstructorsSettings();
@@ -235,3 +237,5 @@ class UserPackage
         return $result;
     }
 }
+
+

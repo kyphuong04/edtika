@@ -116,3 +116,5 @@ class ForumSettingsController extends Controller
     }
 
 }
+
+

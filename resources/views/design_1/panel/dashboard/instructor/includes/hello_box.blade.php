@@ -1,4 +1,4 @@
-<div class="instructor-dashboard__hello-box {{ $authUser->isOrganization() ? 'organ-hello-box' : '' }} p-16 rounded-24 mt-54 w-100">
+<div class="instructor-dashboard__hello-box {{ $authUser->isAdmin() ? 'organ-hello-box' : '' }} p-16 rounded-24 mt-54 w-100">
 
     <div class="row">
         <div class="col-12 col-lg-6">
@@ -32,7 +32,7 @@
             </div>
 
             <div class="row mt-24">
-                @if($authUser->isOrganization())
+                @if($authUser->isAdmin())
                     <div class="col-6">
                         <div class="d-flex align-items-center">
                             <div class="d-flex-center size-48 bg-white-20 rounded-circle">
@@ -86,7 +86,7 @@
 
         <div class="col-12 col-lg-6 position-relative d-none d-lg-block">
             <div class="hello-box-user-vector d-flex justify-content-end">
-                <img src="/assets/design_1/img/panel/dashboard/{{ $authUser->isOrganization() ? 'organ' : 'instructor' }}/hello-box-user-vector.png" alt="" class="img-fluid">
+                <img src="/assets/design_1/img/panel/dashboard/{{ $authUser->isAdmin() ? 'organ' : 'instructor' }}/hello-box-user-vector.png" alt="" class="img-fluid">
             </div>
         </div>
     </div>
@@ -149,7 +149,7 @@
     @else
         {{-- If Empty --}}
         <div class="row mt-108">
-            @if($authUser->isOrganization())
+            @if($authUser->isAdmin())
                 <div class="col-12 col-lg-6">
                     <a href="/panel/manage/instructors/new">
                         <div class="card-with-mask position-relative">

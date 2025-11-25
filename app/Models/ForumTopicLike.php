@@ -11,3 +11,5 @@ class ForumTopicLike extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

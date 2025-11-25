@@ -634,7 +634,7 @@ trait DashboardTrait
                 DB::raw('sum(sales.total_amount) as sales_amount')
             )->whereNull('sales.refund_at')
             ->where('sales.amount', '>', '0')
-            ->where('users.role_name', (($role == 'teachers') ? Role::$teacher : Role::$organization))
+            ->where('users.role_name', (($role == 'teachers') ? Role::$teacher : Role::$teacher))
             ->groupBy('sales.seller_id')
             ->orderBy('sales_count', 'desc')
             ->limit(5)
@@ -671,3 +671,5 @@ trait DashboardTrait
             ->get();
     }
 }
+
+

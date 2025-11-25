@@ -27,3 +27,5 @@ class SubscribeUse extends Model
         return $this->belongsTo('App\Models\InstallmentOrder', 'installment_order_id', 'id');
     }
 }
+
+

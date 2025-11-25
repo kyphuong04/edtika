@@ -13,3 +13,4 @@ class MorphTypesEnum
     const FORUM_TOPIC = "App\Models\ForumTopic";
     const PRODUCT = "App\Models\Product";
 }
+

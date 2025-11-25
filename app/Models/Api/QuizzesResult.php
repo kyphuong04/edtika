@@ -136,7 +136,7 @@ class QuizzesResult extends WebQuizzesResult
         }
 
         if ($instructor) {
-            $userIds = User::whereIn('role_name', [Role::$teacher, Role::$organization])
+            $userIds = User::whereIn('role_name', [Role::$teacher])
                 ->where('full_name', 'like', '%' . $instructor . '%')
                 ->pluck('id')->toArray();
 
@@ -171,3 +171,5 @@ class QuizzesResult extends WebQuizzesResult
     }
 
 }
+
+

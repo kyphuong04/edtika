@@ -22,3 +22,5 @@ class MaintenanceController extends Controller
         return view('design_1.web.maintenance.index', $data);
     }
 }
+
+

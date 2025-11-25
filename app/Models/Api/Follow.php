@@ -18,3 +18,5 @@ class Follow extends Model
         return $this->belongsTo('App\Models\Api\User', 'follower', 'id');
     }
 }
+
+

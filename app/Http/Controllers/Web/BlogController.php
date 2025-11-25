@@ -320,3 +320,5 @@ class BlogController extends Controller
         abort(404);
     }
 }
+
+

@@ -13,3 +13,5 @@ class Currency extends Model
 
     static $currencyPositions = ['left', 'right', 'left_with_space', 'right_with_space'];
 }
+
+

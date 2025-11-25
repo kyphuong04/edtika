@@ -16,3 +16,5 @@ class AgoraHistory extends Model
         return $this->belongsTo('App\Models\Session', 'session_id', 'id');
     }
 }
+
+

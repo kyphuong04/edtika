@@ -59,3 +59,5 @@ class ForumTopicPost extends Model
         return $name;
     }
 }
+
+

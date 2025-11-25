@@ -148,3 +148,5 @@ class RegistrationPackagesController extends Controller
         return view('api.registration_package', compact('package_id'));
     }
 }
+
+

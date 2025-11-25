@@ -160,3 +160,4 @@ class ForgotPasswordController extends Controller
         return $this->username;
     }
 }
+

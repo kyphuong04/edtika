@@ -8,3 +8,5 @@ class WebinarAssignmentAttachment extends Model
 {
     //
 }
+
+

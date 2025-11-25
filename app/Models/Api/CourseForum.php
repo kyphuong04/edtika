@@ -25,3 +25,5 @@ class CourseForum extends Model
         return $query;
     }
 }
+
+

@@ -18,3 +18,5 @@ class UserBadge extends Model
         return $this->belongsTo('App\Models\Badge', 'badge_id', 'id');
     }
 }
+
+

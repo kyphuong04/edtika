@@ -81,3 +81,5 @@ class PurchaseNotification extends Model implements TranslatableContract
 
 
 }
+
+

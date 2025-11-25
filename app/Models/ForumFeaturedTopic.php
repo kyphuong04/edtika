@@ -17,3 +17,5 @@ class ForumFeaturedTopic extends Model
         return $this->belongsTo('App\Models\ForumTopic', 'topic_id', 'id');
     }
 }
+
+

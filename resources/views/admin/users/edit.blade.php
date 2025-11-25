@@ -65,7 +65,7 @@
 
                                     <h4 class="mt-2">{{ $user->full_name }}</h4>
 
-                                    @if($user->isTeacher() || $user->isOrganization() || $user->isAdmin())
+                                    @if($user->isTeacher() || $user->isAdmin() || $user->isAdmin())
                                         <div class="d-inline-flex align-items-center mt-1">
                                             @php
                                                 $userRates = $user->rates();
@@ -89,7 +89,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                @if(!empty($user) and ($user->isTeacher() || $user->isOrganization() || $user->isAdmin()))
+                                @if(!empty($user) and ($user->isTeacher() || $user->isAdmin() || $user->isAdmin()))
                                     <div class="col-4 mb-3">
                                         <div class="card mb-0">
                                             <div class="card-body pt-10 pb-10 text-center">
@@ -131,7 +131,7 @@
                                 <div class="card-body">
                                     <div class="row">
 
-                                        @if(!empty($user) and ($user->isOrganization() or $user->isTeacher()))
+                                        @if(!empty($user) and ($user->isAdmin() or $user->isTeacher()))
                                             <div class="col-6 mb-3">
                                                 <div class="d-flex align-items-center">
                                                     <x-iconsax-bul-video-play class="icons mb-3 mr-3 text-gray-500" width="26px" height="26px"/>
@@ -147,7 +147,7 @@
                                                     <x-iconsax-bul-video-tick class="icons mb-3 mr-3 text-gray-500" width="26px" height="26px"/>
                                                     <div class="flex-grow-1">
                                                         <span class="font-14 text-gray-500">{{ trans('update.published_courses') }}</span>
-                                                        <span class="font-16 font-weight-bold d-block">{{ ($user->isTeacher() || $user->isOrganization()) ? $user->getActiveWebinars(true) : 0 }}</span>
+                                                        <span class="font-16 font-weight-bold d-block">{{ ($user->isTeacher() || $user->isAdmin()) ? $user->getActiveWebinars(true) : 0 }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -222,7 +222,7 @@
                                             <a class="nav-link" id="badges-tab" data-toggle="tab" href="#badges" role="tab" aria-controls="badges" aria-selected="true">{{ trans('admin/main.badges') }}</a>
                                         </li>
 
-                                        @if(!empty($user) and ($user->isOrganization() or $user->isTeacher()))
+                                        @if(!empty($user) and ($user->isAdmin() or $user->isTeacher()))
                                             @can('admin_update_user_registration_package')
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="registrationPackage-tab" data-toggle="tab" href="#registrationPackage" role="tab" aria-controls="registrationPackage" aria-selected="true">{{ trans('update.registration_package') }}</a>
@@ -230,7 +230,7 @@
                                             @endcan
                                         @endif
 
-                                        @if(!empty($user) and ($user->isOrganization() or $user->isTeacher()))
+                                        @if(!empty($user) and ($user->isAdmin() or $user->isTeacher()))
                                             @can('admin_update_user_meeting_settings')
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="meetingSettings-tab" data-toggle="tab" href="#meetingSettings" role="tab" aria-controls="meetingSettings" aria-selected="true">{{ trans('update.meeting_settings') }}</a>
@@ -287,13 +287,13 @@
 
                                         @include('admin.users.editTabs.badges')
 
-                                        @if(!empty($user) and ($user->isOrganization() or $user->isTeacher()))
+                                        @if(!empty($user) and ($user->isAdmin() or $user->isTeacher()))
                                             @can('admin_update_user_registration_package')
                                                 @include('admin.users.editTabs.registration_package')
                                             @endcan
                                         @endif
 
-                                        @if(!empty($user) and ($user->isOrganization() or $user->isTeacher()))
+                                        @if(!empty($user) and ($user->isAdmin() or $user->isTeacher()))
                                             @can('admin_update_user_meeting_settings')
                                                 @include('admin.users.editTabs.meeting_settings')
                                             @endcan

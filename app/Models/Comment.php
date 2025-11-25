@@ -55,3 +55,5 @@ class Comment extends Model
         return $this->belongsTo('App\Models\ProductReview', 'product_review_id', 'id');
     }
 }
+
+

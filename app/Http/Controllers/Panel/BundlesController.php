@@ -709,3 +709,5 @@ class BundlesController extends Controller
         abort(404);
     }
 }
+
+

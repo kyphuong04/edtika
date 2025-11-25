@@ -57,6 +57,10 @@ Route::get('/emergencyDatabaseUpdate', function () {
     ]);
 });
 
+// Direct purchase code routes (bypass license middleware)
+Route::get('/purchase-code', 'Web\PurchaseCodeController@show')->name('purchase.code.show');
+Route::post('/purchase-code', 'Web\PurchaseCodeController@store')->name('purchase.code.store');
+
 Route::group(['namespace' => 'Auth', 'middleware' => ['check_mobile_app','share', 'check_maintenance', 'check_restriction']], function () {
     Route::get('/login', 'LoginController@showLoginForm');
     Route::post('/login', 'LoginController@login');

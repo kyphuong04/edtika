@@ -24,3 +24,5 @@ class Payout extends Model
         return $this->belongsTo('App\Models\UserSelectedBank', 'user_selected_bank_id', 'id');
     }
 }
+
+

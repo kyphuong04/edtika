@@ -32,3 +32,5 @@ class Promotion extends Model implements TranslatableContract
         return $this->hasMany('App\Models\Sale', 'promotion_id', 'id')->whereNull('refund_at');
     }
 }
+
+

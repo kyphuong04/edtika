@@ -94,3 +94,5 @@ class UsersNotAccessToContentController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

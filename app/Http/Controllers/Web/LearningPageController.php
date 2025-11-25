@@ -86,3 +86,5 @@ class LearningPageController extends Controller
         return view('design_1.web.courses.learning_page.index', $data);
     }
 }
+
+

@@ -424,3 +424,5 @@ class InstallmentsController extends Controller
         return redirect('/cart');
     }
 }
+
+

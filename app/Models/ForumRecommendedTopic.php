@@ -34,3 +34,5 @@ class ForumRecommendedTopic extends Model implements TranslatableContract
             'recommended_topic_id', 'topic_id');
     }
 }
+
+

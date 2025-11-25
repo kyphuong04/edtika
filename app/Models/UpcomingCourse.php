@@ -194,3 +194,5 @@ class UpcomingCourse extends Model implements TranslatableContract
         return !empty($link[$social]) ? $link[$social] : '';
     }
 }
+
+

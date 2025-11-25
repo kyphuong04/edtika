@@ -14,3 +14,5 @@ class Prerequisite extends Model
         ;
     }
 }
+
+

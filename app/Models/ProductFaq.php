@@ -27,3 +27,5 @@ class ProductFaq extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'answer');
     }
 }
+
+

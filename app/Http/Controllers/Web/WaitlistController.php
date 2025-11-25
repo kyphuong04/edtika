@@ -103,3 +103,5 @@ class WaitlistController extends Controller
         abort(404);
     }
 }
+
+

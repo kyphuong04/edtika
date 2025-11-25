@@ -24,3 +24,5 @@ class AdvertisingModalController extends Controller
         ]);
     }
 }
+
+

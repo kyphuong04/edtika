@@ -16,3 +16,5 @@ class TextLessonAttachment extends Model
         return $this->belongsTo('App\Models\File', 'file_id', 'id');
     }
 }
+
+

@@ -193,3 +193,5 @@ class RegistrationPackagesController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

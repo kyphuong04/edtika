@@ -14,3 +14,5 @@ class PurchaseNotificationHistory extends Model
 
 
 }
+
+

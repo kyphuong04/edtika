@@ -16,3 +16,4 @@ class CustomMinioAdapter extends AwsS3V3Adapter
     }
 
 }
+

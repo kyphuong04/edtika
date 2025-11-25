@@ -19,7 +19,7 @@ class BecomeInstructorController extends Controller
         $this->authorize('admin_become_instructors_list');
 
         if ($page == 'organizations') {
-            $role = Role::$organization;
+            $role = Role::$teacher;
         } else {
             $role = Role::$teacher;
         }
@@ -113,3 +113,5 @@ class BecomeInstructorController extends Controller
     }
 
 }
+
+

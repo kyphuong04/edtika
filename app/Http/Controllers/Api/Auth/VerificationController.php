@@ -165,3 +165,5 @@ class VerificationController extends Controller
         return rand(10000, 99999);
     }
 }
+
+

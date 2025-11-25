@@ -26,7 +26,7 @@ class UserController extends Controller
     public function profile(Request $request, $id)
     {
         $user = User::where('id', $id)
-            ->whereIn('role_name', [Role::$organization, Role::$teacher, Role::$user])
+            ->whereIn('role_name', [Role::$teacher, Role::$user])
             ->first();
         if (!$user) {
             abort(404);
@@ -64,7 +64,7 @@ class UserController extends Controller
 
     public function consultations(Request $request)
     {
-        $providers = $this->handleProviders($request, [Role::$teacher, Role::$organization], true);
+        $providers = $this->handleProviders($request, [Role::$teacher], true);
         return apiResponse2(1, 'retrieved', trans('api.public.retrieved'), $providers);
 
 
@@ -72,7 +72,7 @@ class UserController extends Controller
 
     public function organizations(Request $request)
     {
-        $providers = $this->handleProviders($request, [Role::$organization]);
+        $providers = $this->handleProviders($request, [Role::$teacher]);
 
         return apiResponse2(1, 'retrieved', trans('api.public.retrieved'), $providers);
 
@@ -207,7 +207,7 @@ class UserController extends Controller
     private function getBestRateUsers($query, $role)
     {
         $query->leftJoin('webinars', function ($join) use ($role) {
-            if ($role == Role::$organization) {
+            if ($role == Role::$teacher) {
                 $join->on('users.id', '=', 'webinars.creator_id');
             } else {
                 $join->on('users.id', '=', 'webinars.teacher_id');
@@ -222,7 +222,7 @@ class UserController extends Controller
             ->select('users.*', DB::raw('avg(rates) as rates'))
             ->orderBy('rates', 'desc');
 
-        if ($role == Role::$organization) {
+        if ($role == Role::$teacher) {
             $query->groupBy('webinars.creator_id');
         } else {
             $query->groupBy('webinars.teacher_id');
@@ -339,7 +339,7 @@ class UserController extends Controller
 
         //  dd($timestamp);
         $user = User::where('id', $id)
-            ->whereIn('role_name', [Role::$teacher, Role::$organization])
+            ->whereIn('role_name', [Role::$teacher])
             ->where('status', 'active')
             ->first();
 
@@ -407,3 +407,5 @@ class UserController extends Controller
 
 
 }
+
+

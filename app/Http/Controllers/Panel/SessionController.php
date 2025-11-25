@@ -609,3 +609,5 @@ class SessionController extends Controller
         abort(404);
     }
 }
+
+

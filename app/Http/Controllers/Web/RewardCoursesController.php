@@ -54,3 +54,5 @@ class RewardCoursesController extends Controller
         return view('design_1.web.courses.lists.reward_courses', $data);
     }
 }
+
+

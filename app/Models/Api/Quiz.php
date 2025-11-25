@@ -283,7 +283,7 @@ class Quiz extends Model
         }
 
         if ($instructor) {
-            $userIds = User::whereIn('role_name', [Role::$teacher, Role::$organization])
+            $userIds = User::whereIn('role_name', [Role::$teacher])
                 ->where('full_name', 'like', '%' . $instructor . '%')
                 ->pluck('id')->toArray();
 
@@ -329,6 +329,8 @@ class Quiz extends Model
 
 
 }
+
+
 
 
 

@@ -14,7 +14,7 @@
         <div class="invalid-feedback d-block">@error('price') {{ $message }} @enderror</div>
     </div>
 
-    @if($authUser->isOrganization() and $authUser->id == $webinar->creator_id)
+    @if($authUser->isAdmin() and $authUser->id == $webinar->creator_id)
         <div class="form-group">
             <label class="form-group-label">{{ trans('update.organization_price') }}</label>
             <span class="has-translation bg-gray-100 text-gray-500">{{ $currency }}</span>
