@@ -59,3 +59,4 @@ class WebinarForumResource extends JsonResource
         ];
     }
 }
+

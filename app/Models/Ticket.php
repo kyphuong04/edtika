@@ -70,3 +70,5 @@ class Ticket extends Model implements TranslatableContract
         return ($price > 0) ? $price : 0;
     }
 }
+
+

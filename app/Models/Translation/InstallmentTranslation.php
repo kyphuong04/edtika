@@ -13,3 +13,5 @@ class InstallmentTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

@@ -167,3 +167,5 @@ class NavbarLinksSettingsController extends Controller
         abort(404);
     }
 }
+
+

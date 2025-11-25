@@ -62,3 +62,5 @@ class RegistrationBonusExport implements FromCollection, WithHeadings, WithMappi
         ];
     }
 }
+
+

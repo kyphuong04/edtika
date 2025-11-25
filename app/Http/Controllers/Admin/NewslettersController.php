@@ -209,3 +209,5 @@ class NewslettersController extends Controller
         return Excel::download($newslettersExport, trans('admin/main.newsletters') . '.xlsx');
     }
 }
+
+

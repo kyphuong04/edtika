@@ -390,3 +390,5 @@ class CommentsController extends Controller
         return redirect()->back();
     }
 }
+
+

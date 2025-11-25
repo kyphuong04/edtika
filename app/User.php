@@ -138,9 +138,19 @@ class User extends Authenticatable
         return $this->role_name === Role::$teacher;
     }
 
-    public function isOrganization()
+    public function isStudent()
     {
-        return $this->role_name === Role::$organization;
+        return $this->role_name === Role::$student;
+    }
+
+    public function isManager()
+    {
+        return $this->role_name === Role::$manager;
+    }
+
+    public function isCeo()
+    {
+        return $this->role_name === Role::$ceo;
     }
 
     public function hasPermission($section_name)
@@ -751,18 +761,6 @@ class User extends Authenticatable
             }
         }
 
-        if ($this->isOrganization()) {
-            $organNotifications = Notification::whereNull('user_id')
-                ->whereNull('group_id')
-                ->where('type', 'organizations')
-                ->doesntHave('notificationStatus')
-                ->orderBy('created_at', 'desc')
-                ->get();
-            if (!empty($organNotifications) and !$organNotifications->isEmpty()) {
-                $notifications = $notifications->merge($organNotifications);
-            }
-        }
-
         /* Get Course Students Notifications */
         $userBoughtWebinarsIds = $this->getPurchasedCoursesIds();
 
@@ -813,7 +811,8 @@ class User extends Authenticatable
             $query->whereNotNull('organ_id')
                 ->where('organ_id', $this->organ_id)
                 ->where(function ($query) {
-                    if ($this->isOrganization()) {
+                    if ($this->isAdmin()) {
+                        // Admin acts like organization
                         $query->where('type', 'organizations');
                     } else {
                         $type = 'students';
@@ -832,9 +831,8 @@ class User extends Authenticatable
                 $type = array_merge($type, ['students', 'students_and_instructors']);
             } elseif ($this->isTeacher()) {
                 $type = array_merge($type, ['instructors', 'students_and_instructors']);
-            } elseif ($this->isOrganization()) {
-                $type = array_merge($type, ['organizations']);
             }
+            // Note: organization role removed in IELTS platform
 
             $query->whereNull('organ_id')
                 ->whereNull('instructor_id')
@@ -1134,7 +1132,7 @@ class User extends Authenticatable
         $access = false;
 
         if (!empty(getAiContentsSettingsName('status'))) {
-            if ($this->isOrganization() and !empty(getAiContentsSettingsName("active_for_organization_panel"))) {
+            if ($this->isAdmin() and !empty(getAiContentsSettingsName("active_for_organization_panel"))) {
                 $access = true;
             }
 
@@ -1194,3 +1192,5 @@ class User extends Authenticatable
     }
 
 }
+
+

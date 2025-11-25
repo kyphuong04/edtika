@@ -121,3 +121,5 @@ class OpenQuizzesController extends Controller
     }
 
 }
+
+

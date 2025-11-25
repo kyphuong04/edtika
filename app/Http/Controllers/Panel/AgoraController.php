@@ -64,3 +64,5 @@ class AgoraController extends Controller
         return RtmTokenBuilder::buildToken($this->appId, $this->appCertificate, $channelName, null, $privilegeExpiredTs);
     }
 }
+
+

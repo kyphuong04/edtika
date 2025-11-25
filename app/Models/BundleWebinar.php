@@ -21,3 +21,5 @@ class BundleWebinar extends Model
         return $this->belongsTo('App\Models\Bundle', 'bundle_id', 'id');
     }
 }
+
+

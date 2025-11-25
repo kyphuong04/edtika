@@ -91,3 +91,5 @@ class AbandonedCartRule extends Model implements TranslatableContract
     }
 
 }
+
+

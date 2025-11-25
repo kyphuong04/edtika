@@ -147,3 +147,5 @@ trait LearningPageMixinsTrait
         return true;
     }
 }
+
+

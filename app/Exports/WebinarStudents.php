@@ -50,3 +50,5 @@ class WebinarStudents implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

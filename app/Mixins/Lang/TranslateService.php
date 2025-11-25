@@ -155,3 +155,4 @@ class TranslateService
         return lang_path(DIRECTORY_SEPARATOR . $this->translate_from);
     }
 }
+

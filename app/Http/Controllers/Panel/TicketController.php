@@ -207,3 +207,5 @@ class TicketController extends Controller
         return response()->json([], 422);
     }
 }
+
+

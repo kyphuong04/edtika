@@ -16,3 +16,5 @@ class ProductSpecificationCategory extends Model
         return $this->belongsTo('App\Models\ProductCategory', 'category_id', 'id');
     }
 }
+
+

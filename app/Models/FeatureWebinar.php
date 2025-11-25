@@ -29,3 +29,5 @@ class FeatureWebinar extends Model implements TranslatableContract
         return $this->belongsTo('App\Models\Webinar', 'webinar_id', 'id');
     }
 }
+
+

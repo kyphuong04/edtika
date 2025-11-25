@@ -49,3 +49,5 @@ class AbandonedCartController extends Controller
         return view('admin.abandoned_cart.settings.index', $data);
     }
 }
+
+

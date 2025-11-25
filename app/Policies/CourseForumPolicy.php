@@ -97,3 +97,4 @@ class CourseForumPolicy
         return $courseForum->webinar->isOwner($user->id);
     }
 }
+

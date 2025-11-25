@@ -23,3 +23,5 @@ class SubscribesController extends Controller
         return apiResponse2(1, 'retrieved', trans('public.retrieved'), $data);
     }
 }
+
+

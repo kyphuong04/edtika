@@ -29,3 +29,5 @@ class WebinarReport extends Model
         return $this->belongsTo('App\Models\Api\Webinar', 'webinar_id', 'id');
     }
 }
+
+

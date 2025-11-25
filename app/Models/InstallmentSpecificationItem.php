@@ -14,3 +14,5 @@ class InstallmentSpecificationItem extends Model
 
 
 }
+
+

@@ -34,7 +34,7 @@ class UserProfileController extends Controller
     public function profile(Request $request, $username)
     {
         $user = User::where('username', $username)
-            //->whereIn('role_name', [Role::$organization, Role::$teacher, Role::$user])
+            //->whereIn('role_name', [Role::$teacher, Role::$user])
             ->with([
                 'userMetas'
             ])
@@ -312,7 +312,7 @@ class UserProfileController extends Controller
         $date = $request->get('date');
 
         $user = User::where('username', $username)
-            ->whereIn('role_name', [Role::$teacher, Role::$organization])
+            ->whereIn('role_name', [Role::$teacher])
             ->where('status', 'active')
             ->first();
 
@@ -373,7 +373,7 @@ class UserProfileController extends Controller
     private function getBestRateUsers($query, $role)
     {
         $query->leftJoin('webinars', function ($join) use ($role) {
-            if ($role == Role::$organization) {
+            if ($role == Role::$teacher) {
                 $join->on('users.id', '=', 'webinars.creator_id');
             } else {
                 $join->on('users.id', '=', 'webinars.teacher_id');
@@ -388,7 +388,7 @@ class UserProfileController extends Controller
             ->select('users.*', DB::raw('avg(rates) as rates'))
             ->orderBy('rates', 'desc');
 
-        if ($role == Role::$organization) {
+        if ($role == Role::$teacher) {
             $query->groupBy('webinars.creator_id');
         } else {
             $query->groupBy('webinars.teacher_id');
@@ -703,3 +703,5 @@ class UserProfileController extends Controller
     }
 
 }
+
+

@@ -48,3 +48,5 @@ class NewslettersExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

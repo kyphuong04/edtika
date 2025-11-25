@@ -43,3 +43,4 @@ class ProductOrderResource extends JsonResource
         ];
     }
 }
+

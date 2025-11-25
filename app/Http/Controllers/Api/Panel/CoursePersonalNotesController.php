@@ -138,3 +138,5 @@ class CoursePersonalNotesController extends Controller
         return $type;
     }
 }
+
+

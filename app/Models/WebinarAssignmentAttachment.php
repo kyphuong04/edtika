@@ -29,3 +29,5 @@ class WebinarAssignmentAttachment extends Model
         return $size;
     }
 }
+
+

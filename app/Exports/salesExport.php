@@ -77,3 +77,5 @@ class salesExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

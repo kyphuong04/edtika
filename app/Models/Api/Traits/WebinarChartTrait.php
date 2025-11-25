@@ -51,7 +51,7 @@ trait WebinarChartTrait
                 $data['students'] = $user->count;
             } else if ($user->role_name == Role::$teacher) {
                 $data['instructors'] = $user->count;
-            } else if ($user->role_name == Role::$organization) {
+            } else if ($user->role_name == Role::$teacher) {
                 $data['organizations'] = $user->count;
             }
         }
@@ -260,6 +260,8 @@ trait WebinarChartTrait
 
 
 }
+
+
 
 
 

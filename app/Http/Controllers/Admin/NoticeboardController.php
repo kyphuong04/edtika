@@ -18,7 +18,7 @@ class NoticeboardController extends Controller
             ->paginate(10);
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$teacher)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -165,3 +165,5 @@ class NoticeboardController extends Controller
         return redirect(getAdminPanelUrl().'/noticeboards')->with(['toast' => $toastData]);
     }
 }
+
+

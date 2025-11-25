@@ -54,3 +54,5 @@ class SessionController extends Controller
         return redirect(url('panel/sessions/' . $session_id . '/joinToAgora'));
     }
 }
+
+

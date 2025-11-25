@@ -11,3 +11,5 @@ class ForumRecommendedTopicItem extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

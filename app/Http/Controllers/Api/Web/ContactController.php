@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Web;
 
 use App\Http\Controllers\Api\Controller;
 use App\Models\Contact;
@@ -36,3 +36,5 @@ class ContactController extends Controller
         //return back()->with(['msg' => trans('site.contact_store_success')]);
     }
 }
+
+

@@ -34,3 +34,4 @@
         return hash_hmac('sha1', $concat, $appCertificate);
     }
 ?>
+

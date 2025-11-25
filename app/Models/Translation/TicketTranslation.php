@@ -10,3 +10,5 @@ class TicketTranslation extends Model
     protected $table = 'ticket_translations';
     protected $guarded = ['id'];
 }
+
+

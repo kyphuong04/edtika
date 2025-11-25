@@ -120,3 +120,4 @@ class Channel extends BasePaymentChannel implements IChannel
         }
     }
 }
+

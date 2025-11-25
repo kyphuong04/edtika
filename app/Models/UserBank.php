@@ -28,3 +28,5 @@ class UserBank extends Model implements TranslatableContract
         return $this->hasMany('App\Models\UserBankSpecification', 'user_bank_id', 'id');
     }
 }
+
+

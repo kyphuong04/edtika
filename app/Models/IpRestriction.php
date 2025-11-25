@@ -22,3 +22,5 @@ class IpRestriction extends Model
 
 
 }
+
+

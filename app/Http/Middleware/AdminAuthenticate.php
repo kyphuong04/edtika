@@ -128,3 +128,4 @@ class AdminAuthenticate
         return $userLanguages;
     }
 }
+

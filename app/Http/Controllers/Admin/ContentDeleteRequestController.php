@@ -157,3 +157,5 @@ class ContentDeleteRequestController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

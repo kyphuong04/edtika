@@ -325,3 +325,5 @@ class SessionController extends Controller
         \Config::set("bigbluebutton.BBB_SERVER_BASE_URL", !empty($settings['bigbluebutton_server_base_url']) ? $settings['bigbluebutton_server_base_url'] : '');
     }
 }
+
+

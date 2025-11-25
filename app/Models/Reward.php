@@ -59,3 +59,5 @@ class Reward extends Model
         ];
     }
 }
+
+

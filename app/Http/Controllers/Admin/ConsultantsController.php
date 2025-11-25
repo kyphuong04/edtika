@@ -20,7 +20,7 @@ class ConsultantsController extends Controller
     {
         $this->authorize('admin_consultants_lists');
 
-        $query = User::whereIn('role_name', [Role::$teacher, Role::$organization])
+        $query = User::whereIn('role_name', [Role::$teacher])
             ->join('meetings', 'meetings.creator_id', '=', 'users.id')
             ->leftJoin('sales', function ($join) {
                 $join->on('meetings.id', '=', 'sales.meeting_id')
@@ -57,7 +57,7 @@ class ConsultantsController extends Controller
         }
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$teacher)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -200,3 +200,5 @@ class ConsultantsController extends Controller
         return Excel::download($exports, 'consultants.xlsx');
     }
 }
+
+

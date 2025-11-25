@@ -102,3 +102,5 @@ class FavoriteController extends Controller
         return response()->json([], 422);
     }
 }
+
+

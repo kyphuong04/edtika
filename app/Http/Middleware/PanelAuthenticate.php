@@ -21,7 +21,7 @@ class PanelAuthenticate
             auth()->setUser(apiAuth());
         }
 
-        if (auth()->check() and !auth()->user()->isAdmin()) {
+        if (auth()->check() and !auth()->user()->isManager() and !auth()->user()->isCeo()) {
 
             $referralSettings = getReferralSettings();
             view()->share('referralSettings', $referralSettings);
@@ -37,3 +37,4 @@ class PanelAuthenticate
         return redirect('/login');
     }
 }
+

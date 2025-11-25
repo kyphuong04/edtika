@@ -735,3 +735,5 @@ class UpcomingCoursesController extends Controller
     }
 
 }
+
+

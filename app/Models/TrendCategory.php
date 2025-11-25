@@ -24,3 +24,5 @@ class TrendCategory extends Model
         return $this->icon;
     }
 }
+
+

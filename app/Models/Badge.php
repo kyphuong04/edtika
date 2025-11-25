@@ -266,3 +266,5 @@ class Badge extends Model implements TranslatableContract
         return true;
     }
 }
+
+

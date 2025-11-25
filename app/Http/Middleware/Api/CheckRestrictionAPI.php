@@ -78,3 +78,4 @@ class CheckRestrictionAPI
         return true;
     }
 }
+

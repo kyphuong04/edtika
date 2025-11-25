@@ -155,3 +155,5 @@ class SubscribesController extends Controller
         return redirect(getAdminPanelUrl() . '/financial/subscribes');
     }
 }
+
+

@@ -57,3 +57,5 @@ class RegistrationPackage extends Model implements TranslatableContract
         return $price;
     }
 }
+
+

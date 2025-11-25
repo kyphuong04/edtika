@@ -95,3 +95,5 @@ class FloatingBarController extends Controller
         return redirect(getAdminPanelUrl("/floating_bars"))->with(['toast' => $toastData]);
     }
 }
+
+

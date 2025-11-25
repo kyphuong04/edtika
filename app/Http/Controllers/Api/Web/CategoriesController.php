@@ -76,3 +76,5 @@ class CategoriesController extends Controller
 
 
 }
+
+

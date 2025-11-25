@@ -117,3 +117,4 @@ class Channel extends BasePaymentChannel implements IChannel
         return route("chapa.callback", ['reference' => $this->reference]);
     }
 }
+

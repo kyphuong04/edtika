@@ -22,3 +22,4 @@ class RequestType
         return $next($request);
     }
 }
+

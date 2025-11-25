@@ -462,3 +462,5 @@ class InstallmentsController extends Controller
         return view('design_1.web.installments.status.request_rejected', $data);
     }
 }
+
+

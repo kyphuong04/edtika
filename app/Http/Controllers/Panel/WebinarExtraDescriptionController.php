@@ -210,3 +210,5 @@ class WebinarExtraDescriptionController extends Controller
         ], 200);
     }
 }
+
+

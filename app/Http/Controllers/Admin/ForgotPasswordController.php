@@ -91,3 +91,5 @@ class ForgotPasswordController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

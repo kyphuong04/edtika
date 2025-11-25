@@ -12,3 +12,5 @@ class NewsletterHistory extends Model
     protected $guarded = ['id'];
 
 }
+
+

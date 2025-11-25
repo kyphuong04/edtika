@@ -277,3 +277,5 @@ class RegistrationBonusController extends Controller
         return back();
     }
 }
+
+

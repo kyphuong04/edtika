@@ -57,7 +57,7 @@ class SearchController extends Controller
             ;
 
 
-            $organizations = $all_users->where('role_name', Role::$organization)->get()
+            $organizations = $all_users->where('role_name', Role::$teacher)->get()
             ->map(function($organization){
                   return $organization->brief ;
             })
@@ -103,3 +103,5 @@ class SearchController extends Controller
     }
 
 }
+
+

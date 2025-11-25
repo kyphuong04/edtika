@@ -15,3 +15,5 @@ class WebinarAssignmentHistoryMessage extends Model
         $this->attributes['file_path'] = $path;
     }
 }
+
+

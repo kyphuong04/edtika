@@ -56,3 +56,5 @@ class InstallmentStep extends Model implements TranslatableContract
         return trans('update.amount_after_n_days', ['amount' => handlePrice($this->getPrice($itemPrice)), 'days' => $this->deadline, 'percent' => $percentText]);
     }
 }
+
+

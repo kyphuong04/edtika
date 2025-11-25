@@ -173,3 +173,4 @@ class Channel extends BasePaymentChannel implements IChannel
         return $server_output;
     }
 }
+
