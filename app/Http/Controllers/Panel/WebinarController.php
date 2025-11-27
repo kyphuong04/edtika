@@ -44,7 +44,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -82,7 +82,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -324,7 +324,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -578,7 +578,7 @@ class WebinarController extends Controller
         }
 
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -652,7 +652,7 @@ class WebinarController extends Controller
         $this->authorize("panel_webinars_duplicate");
 
         $user = auth()->user();
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -713,7 +713,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -793,7 +793,7 @@ class WebinarController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             return response('', 422);
         }
 

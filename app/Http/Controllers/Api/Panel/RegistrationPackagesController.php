@@ -28,7 +28,7 @@ class RegistrationPackagesController extends Controller
         $role = 'instructors';
 
 
-        if ($user->isOrganization()) {
+        if ($user->isAdmin()) {
 
             $role = 'organizations';
         }
@@ -89,7 +89,7 @@ class RegistrationPackagesController extends Controller
         }
 
         // or !getRegistrationPackagesGeneralSettings('status')
-        if (!($user->isOrganization() or $user->isTeacher())) {
+        if (!($user->isAdmin() or $user->isTeacher())) {
             abort(404);
         }
     }
@@ -98,7 +98,7 @@ class RegistrationPackagesController extends Controller
     {
         $myInstructorsCount = 0;
         $myStudentsCount = 0;
-        if ($user->isOrganization()) {
+        if ($user->isAdmin()) {
             $myInstructorsCount = $user->getOrganizationTeachers()->count();
             $myStudentsCount = $user->getOrganizationStudents()->count();
         }

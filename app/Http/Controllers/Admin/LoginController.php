@@ -114,7 +114,14 @@ class LoginController extends Controller
                 $userLoginHistoryMixin->storeUserLoginHistory($user);
             }
 
-            return Redirect::to(getAdminPanelUrl());
+            // Redirect to role-specific dashboard
+            if ($user->isCeo()) {
+                return Redirect::to('/ceo');
+            } elseif ($user->isManager()) {
+                return Redirect::to('/manager');
+            } else {
+                return Redirect::to('/admin');
+            }
         }
 
         return redirect()->back()->withInput($request->only('email', 'remember'))->withErrors([

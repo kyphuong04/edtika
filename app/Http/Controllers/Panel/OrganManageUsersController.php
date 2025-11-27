@@ -40,7 +40,7 @@ class OrganManageUsersController extends Controller
         $valid_type = ['instructors', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
             $query = User::query()->where('organ_id', $organization->id);
 
             if ($userType == 'instructors') {
@@ -172,7 +172,7 @@ class OrganManageUsersController extends Controller
         $valid_type = ['instructors', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
 
             $packageType = $userType == 'instructors' ? 'instructors_count' : 'students_count';
             $userPackage = new UserPackage();
@@ -218,7 +218,7 @@ class OrganManageUsersController extends Controller
         $valid_type = ['instructors', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
             $this->validate($request, [
                 'email' => 'required|string|email|max:255|unique:users',
                 'full_name' => 'required|string',
@@ -272,7 +272,7 @@ class OrganManageUsersController extends Controller
         $valid_type = ['instructors', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
             $user = User::query()->select('*', DB::raw('ST_AsText(location) as location'))
                 ->where('id', $user_id)
                 ->where('organ_id', $organization->id)
@@ -304,7 +304,7 @@ class OrganManageUsersController extends Controller
         $valid_type = ['instructors', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
             $user = User::where('id', $user_id)
                 ->where('organ_id', $organization->id)
                 ->first();

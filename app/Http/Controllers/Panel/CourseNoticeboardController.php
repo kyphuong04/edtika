@@ -19,7 +19,7 @@ class CourseNoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isOrganization() and !$user->isTeacher()) {
+        if (!$user->isAdmin() and !$user->isTeacher()) {
             abort(404);
         }
 
@@ -163,7 +163,7 @@ class CourseNoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isOrganization() and !$user->isTeacher()) {
+        if (!$user->isAdmin() and !$user->isTeacher()) {
             abort(404);
         }
 
@@ -190,7 +190,7 @@ class CourseNoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isOrganization() and !$user->isTeacher()) {
+        if (!$user->isAdmin() and !$user->isTeacher()) {
             abort(404);
         }
 
@@ -255,7 +255,7 @@ class CourseNoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isOrganization() and !$user->isTeacher()) {
+        if (!$user->isAdmin() and !$user->isTeacher()) {
             abort(404);
         }
 
@@ -291,7 +291,7 @@ class CourseNoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isOrganization() and !$user->isTeacher()) {
+        if (!$user->isAdmin() and !$user->isTeacher()) {
             abort(404);
         }
 
@@ -353,7 +353,7 @@ class CourseNoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isOrganization() and !$user->isTeacher()) {
+        if (!$user->isAdmin() and !$user->isTeacher()) {
             abort(404);
         }
 

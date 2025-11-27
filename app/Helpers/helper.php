@@ -1508,6 +1508,19 @@ function truncate($text, $length, $withTail = true)
 
 function getAdminPanelUrlPrefix()
 {
+    // Check if user is authenticated and is admin
+    if (auth()->check() && auth()->user()->isAdmin()) {
+        $user = auth()->user();
+        
+        // Return role-specific prefix to differentiate URLs
+        if ($user->isCeo()) {
+            return 'ceo';
+        } elseif ($user->isManager()) {
+            return 'manager';
+        }
+    }
+    
+    // Default prefix from settings or 'admin'
     $prefix = getGeneralSecuritySettings('admin_panel_url');
     return !empty($prefix) ? $prefix : 'admin';
 }
