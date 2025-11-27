@@ -161,7 +161,7 @@ class UserProfileController extends Controller
         $data = array_merge($data, $this->getUserForumTopics($request, $username, $user));
 
         // Instructors
-        if ($user->isOrganization()) {
+        if ($user->isAdmin()) {
             $data = array_merge($data, $this->getOrganizationInstructors($request, $username, $user));
         }
 

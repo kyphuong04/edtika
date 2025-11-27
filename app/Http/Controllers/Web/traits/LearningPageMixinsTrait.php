@@ -130,7 +130,7 @@ trait LearningPageMixinsTrait
 
     public function checkConcurrentLearning($user)
     {
-        if ($user->isAdmin() or $user->isTeacher() or $user->isOrganization()) {
+        if ($user->isAdmin() or $user->isTeacher() or $user->isAdmin()) {
             return true;
         }
 

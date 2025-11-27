@@ -37,7 +37,7 @@ class WebinarsController extends Controller
         $query = Webinar::where(function ($query) use ($user) {
             if ($user->isTeacher()) {
                 $query->where('teacher_id', $user->id);
-            } elseif ($user->isOrganization()) {
+            } elseif ($user->isAdmin()) {
                 $query->where('creator_id', $user->id);
             }
         });
@@ -205,7 +205,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -214,7 +214,7 @@ class WebinarsController extends Controller
             ->get();
 
         $teachers = null;
-        $isOrganization = $user->isOrganization();
+        $isOrganization = $user->isAdmin();
 
         if ($isOrganization) {
             $teachers = User::where('role_name', Role::$teacher)
@@ -225,7 +225,7 @@ class WebinarsController extends Controller
             'pageTitle' => trans('webinars.new_page_title'),
             'teachers' => $teachers,
             'categories' => $categories,
-            'isOrganization' => $isOrganization,
+            'isAdmin' => $isOrganization,
             'currentStep' => 1,
         ];
 
@@ -236,7 +236,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -282,7 +282,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -413,7 +413,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -555,16 +555,16 @@ class WebinarsController extends Controller
     public function edit($id, $step = 1)
     {
         $user = auth()->user();
-        $isOrganization = $user->isOrganization();
+        $isOrganization = $user->isAdmin();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
         $data = [
             'pageTitle' => trans('webinars.new_page_title_step', ['step' => $step]),
             'currentStep' => $step,
-            'isOrganization' => $isOrganization,
+            'isAdmin' => $isOrganization,
         ];
 
         $query = Webinar::where('id', $id)
@@ -682,7 +682,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -826,7 +826,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -849,7 +849,7 @@ class WebinarsController extends Controller
     public function duplicate($id)
     {
         $user = auth()->user();
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -881,7 +881,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -923,7 +923,7 @@ class WebinarsController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             return response('', 422);
         }
 

@@ -18,7 +18,7 @@ class NoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isOrganization() || $user->isTeacher()) {
+        if ($user->isAdmin() || $user->isTeacher()) {
 
             $query = Noticeboard::query()->where(function ($query) use ($user) {
                 $query->where('organ_id', $user->id)
@@ -154,7 +154,7 @@ class NoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isOrganization() || $user->isTeacher()) {
+        if ($user->isAdmin() || $user->isTeacher()) {
 
             if ($user->isTeacher()) {
                 $webinars = Webinar::select('id')
@@ -183,7 +183,7 @@ class NoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isOrganization() || $user->isTeacher()) {
+        if ($user->isAdmin() || $user->isTeacher()) {
             $data = $request->all();
 
             $validator = Validator::make($data, [
@@ -210,7 +210,7 @@ class NoticeboardController extends Controller
                 'created_at' => time()
             ];
 
-            if ($user->isOrganization()) {
+            if ($user->isAdmin()) {
                 $storeData['organ_id'] = $user->id;
             } else {
                 $storeData['type'] = 'students';
@@ -234,7 +234,7 @@ class NoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isOrganization() || $user->isTeacher()) {
+        if ($user->isAdmin() || $user->isTeacher()) {
             $noticeboard = Noticeboard::where(function ($query) use ($user) {
                 $query->where('organ_id', $user->id)
                     ->orWhere('instructor_id', $user->id);
@@ -272,7 +272,7 @@ class NoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isOrganization() || $user->isTeacher()) {
+        if ($user->isAdmin() || $user->isTeacher()) {
             $noticeboard = Noticeboard::where(function ($query) use ($user) {
                 $query->where('organ_id', $user->id)
                     ->orWhere('instructor_id', $user->id);
@@ -328,7 +328,7 @@ class NoticeboardController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isOrganization() || $user->isTeacher()) {
+        if ($user->isAdmin() || $user->isTeacher()) {
             $noticeboard = Noticeboard::where(function ($query) use ($user) {
                 $query->where('organ_id', $user->id)
                     ->orWhere('instructor_id', $user->id);
