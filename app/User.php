@@ -241,6 +241,11 @@ class User extends Authenticatable
 
     public function getProfileUrl()
     {
+        // Admin roles should go to admin panel profile edit, not public profile
+        if ($this->isAdmin()) {
+            return getAdminPanelUrl("/users/{$this->id}/edit");
+        }
+        
         return '/users/' . $this->getUsername() . '/profile';
     }
 

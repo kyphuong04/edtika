@@ -1395,7 +1395,7 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isOrganization() or $user->isTeacher()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             $data = $request->all();
 
             UserRegistrationPackage::updateOrCreate([
@@ -1422,7 +1422,7 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isOrganization() or $user->isTeacher()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             $data = $request->all();
 
             $user->update([

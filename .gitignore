@@ -54,6 +54,21 @@ docker-compose.override.yml
 /check_role_2.php
 /grant_student_permissions.php
 /debug_has_permission.php
+/check_routes_status.php
+/check_table_names.php
+/replace_isorganization.php
+/replace_blade_isorganization.php
+
+# PowerShell utility scripts
+/fix_role_org.ps1
+/migrate-database.ps1
+/remove_org.ps1
+/remove_org_final.ps1
+/remove_role_constant.ps1
+/setup-local-domain.ps1
+
+# Python cleanup scripts
+/remove_org_refs.py
 
 # Documentation and schema files (temporary/debug)
 /QUICKSTART.md
@@ -65,3 +80,19 @@ docker-compose.override.yml
 /database_*.md
 /implementation_*.md
 /tech_*.md
+/diagnose_login.php
+/ROLE_PERMISSIONS_VERIFICATION_REPORT.md
+/test_role_fix.php
+/fix_role_permissions.php
+/verify_role_permissions.php
+/verify_all_role_permissions.php
+
+# Test scripts created during development (catch-all patterns)
+/test_*.php
+/check_*.php
+/verify_*.php
+/diagnose_*.php
+/debug_*.php
+/fix_*.php
+/grant_*.php
+/analyze_*.php

@@ -128,7 +128,7 @@ class BundlesController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -137,7 +137,7 @@ class BundlesController extends Controller
             ->get();
 
         $teachers = null;
-        $isOrganization = $user->isOrganization();
+        $isOrganization = $user->isAdmin();
 
         if ($isOrganization) {
             $teachers = User::where('role_name', Role::$teacher)
@@ -164,7 +164,7 @@ class BundlesController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -225,9 +225,9 @@ class BundlesController extends Controller
         $this->authorize("panel_bundles_create");
 
         $user = auth()->user();
-        $isOrganization = $user->isOrganization();
+        $isOrganization = $user->isAdmin();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -349,7 +349,7 @@ class BundlesController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -462,7 +462,7 @@ class BundlesController extends Controller
             $data['demo_video_path'],
         );
 
-        if (empty($data['teacher_id']) and $user->isOrganization() and $bundle->creator_id == $user->id) {
+        if (empty($data['teacher_id']) and $user->isAdmin() and $bundle->creator_id == $user->id) {
             $data['teacher_id'] = $user->id;
         }
 
@@ -512,7 +512,7 @@ class BundlesController extends Controller
             }
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -632,7 +632,7 @@ class BundlesController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -675,7 +675,7 @@ class BundlesController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 

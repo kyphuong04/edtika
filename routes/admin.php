@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 
@@ -1231,6 +1231,31 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::post("/translate", "TranslatorController@translate");
         });
 
+
+        Route::group(['prefix' => 'themes'], function () {
+            Route::get('/', 'ThemesController@index');
+            Route::get('/create', 'ThemesController@create');
+            Route::post('/store', 'ThemesController@store');
+            Route::get('/{id}/edit', 'ThemesController@edit');
+            Route::post('/{id}/update', 'ThemesController@update');
+            Route::get('/{id}/delete', 'ThemesController@delete');
+            Route::get('/{id}/enable', 'ThemesController@enable');
+            Route::post('/getHomeLandingComponents', 'ThemesController@getHomeLandingComponents');
+            Route::get('/colors', 'ThemeColorsController@index');
+            Route::get('/fonts', 'ThemeFontsController@index');
+            Route::get('/headers', 'ThemeHeadersController@index');
+            Route::get('/footers', 'ThemeFootersController@index');
+        });
+
+        Route::group(['prefix' => 'landing-builder', 'namespace' => '\\App\\Http\\Controllers\\LandingBuilder'], function () {
+            Route::get('/start', 'LandingBuilderController@welcome');
+            Route::get('/all-pages', 'LandingBuilderController@allLandingPages');
+            Route::get('/create', 'LandingBuilderController@create');
+            Route::post('/store', 'LandingBuilderController@store');
+            Route::get('/{id}/edit', 'LandingBuilderController@edit');
+            Route::post('/{id}/update', 'LandingBuilderController@update');
+            Route::get('/{id}/delete', 'LandingBuilderController@delete');
+        });
         /* End Admin Middleware */
     });
 });

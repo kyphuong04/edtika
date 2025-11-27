@@ -28,7 +28,7 @@ class ProductController extends Controller
 
         $user = auth()->user();
 
-        if ((!$user->isTeacher() and !$user->isOrganization()) or !$user->checkCanAccessToStore()) {
+        if ((!$user->isTeacher() and !$user->isAdmin()) or !$user->checkCanAccessToStore()) {
             abort(403);
         }
 
@@ -70,7 +70,7 @@ class ProductController extends Controller
             abort(403);
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -102,7 +102,7 @@ class ProductController extends Controller
             abort(403);
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -183,7 +183,7 @@ class ProductController extends Controller
             abort(403);
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -276,7 +276,7 @@ class ProductController extends Controller
             abort(403);
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -484,7 +484,7 @@ class ProductController extends Controller
             abort(403);
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
@@ -527,7 +527,7 @@ class ProductController extends Controller
             abort(403);
         }
 
-        if (!$user->isTeacher() and !$user->isOrganization()) {
+        if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
         }
 
