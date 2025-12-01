@@ -30,6 +30,7 @@ docker-compose.override.yml
 /run_fix.bat
 /clear_all_cache.bat
 /FIX_SUMMARY.md
+/verify_admin.php
 
 # Additional fix/test scripts
 /check_usernames.php
@@ -96,3 +97,12 @@ docker-compose.override.yml
 /fix_*.php
 /grant_*.php
 /analyze_*.php
+/add_*.php
+/force_*.php
+
+# Specific new debug files from latest session
+/check-admin-roles.php
+/check-settings-db.php
+/check-locale.php
+/add-vietnamese.php
+/force-clear-locale.php

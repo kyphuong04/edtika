@@ -64,7 +64,7 @@
                 <select name="role" id="instructor_type" class="form-control select2" data-minimum-results-for-search="Infinity">
                     <option value="">{{ trans('update.not_preferenced') }}</option>
                     <option value="{{ \App\Models\Role::$teacher }}" {{ (request()->get('role') == \App\Models\Role::$teacher) ? 'selected' : '' }}>{{ trans('public.instructor') }}</option>
-                    <option value="{{ \App\Models\Role::$organization }}" {{ (request()->get('role') == \App\Models\Role::$organization) ? 'selected' : '' }}>{{ trans('home.organization') }}</option>
+                    {{-- Removed organization option as Role::$organization no longer exists --}}
                 </select>
             </div>
         </div>
