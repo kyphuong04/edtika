@@ -7,7 +7,7 @@
 <div class="tab-pane mt-3 fade @if(empty($social)) show active @endif" id="basic" role="tabpanel" aria-labelledby="basic-tab">
     <div class="row">
         <div class="col-12 col-md-6">
-            <form action="{{ getAdminPanelUrl() }}/settings/main" method="post">
+            <form action="{{ getAdminPanelUrl() }}/settings/general" method="post">
                 {{ csrf_field() }}
                 <input type="hidden" name="page" value="general">
                 <input type="hidden" name="name" value="general">
