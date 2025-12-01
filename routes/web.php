@@ -215,7 +215,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     });
 
     Route::group(['prefix' => 'users'], function () {
-        Route::get('/{id}/profile', 'UserController@profile');
+        Route::get('/{username}/profile', 'UserProfileController@profile');
         Route::post('/{id}/availableTimes', 'UserController@availableTimes');
         Route::post('/{id}/send-message', 'UserController@sendMessage');
     });

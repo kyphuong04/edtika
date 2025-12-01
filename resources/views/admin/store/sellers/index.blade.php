@@ -36,7 +36,7 @@
                                         <option value="">{{ trans('public.all') }}</option>
 
                                         <option value="{{ \App\Models\Role::$teacher }}" @if(request()->get('role_name') == \App\Models\Role::$teacher) selected @endif>{{ trans('home.instructors') }}</option>
-                                        <option value="{{ \App\Models\Role::$organization }}" @if(request()->get('role_name') == \App\Models\Role::$organization) selected @endif>{{ trans('home.organizations') }}</option>
+                                        {{-- Removed organization option as Role::$organization no longer exists --}}
                                         <option value="{{ \App\Models\Role::$admin }}" @if(request()->get('role_name') == \App\Models\Role::$admin) selected @endif>{{ trans('admin/main.admin') }}</option>
 
                                     </select>

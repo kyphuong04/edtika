@@ -15,7 +15,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // Only load Debugbar when debugging is enabled
+        // This prevents major performance degradation in production/local
+        if (config('app.debug')) {
+            $this->app->register(\Barryvdh\Debugbar\ServiceProvider::class);
+        }
     }
 
     /**

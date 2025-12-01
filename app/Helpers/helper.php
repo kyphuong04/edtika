@@ -1508,16 +1508,10 @@ function truncate($text, $length, $withTail = true)
 
 function getAdminPanelUrlPrefix()
 {
-    // Check if user is authenticated and is admin
+    // Always return 'admin' for all admin users (CEO, Manager, Admin)
+    // Routes are configured under /admin prefix only
     if (auth()->check() && auth()->user()->isAdmin()) {
-        $user = auth()->user();
-        
-        // Return role-specific prefix to differentiate URLs
-        if ($user->isCeo()) {
-            return 'ceo';
-        } elseif ($user->isManager()) {
-            return 'manager';
-        }
+        return 'admin';
     }
     
     // Default prefix from settings or 'admin'
