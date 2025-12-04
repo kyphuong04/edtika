@@ -112,6 +112,8 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         Route::group(['middleware' => 'web.auth'], function () {
             Route::get('/{slug}/installments', 'WebinarController@getInstallmentsByCourse');
 
+            Route::post('/learning/{slug}/itemInfo', 'LearningPageController@getItemInfo');
+            Route::post('/learning/{slug}/track-time', 'LearningPageController@trackTime');
             Route::post('/learning/itemInfo', 'LearningPageController@getItemInfo');
             Route::post('/learning/personalNotes', 'LearningPageController@personalNotes');
             Route::get('/learning/{slug}', 'LearningPageController@index');
