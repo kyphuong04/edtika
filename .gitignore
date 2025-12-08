@@ -16,8 +16,10 @@ test_*.php
 check_*.php
 verify_*.php
 diagnose_*.php
+diagnostic_*.php
 debug_*.php
 fix_*.php
+fix-*.php
 grant_*.php
 analyze_*.php
 add_*.php
@@ -30,6 +32,17 @@ verification_*.php
 final_*.php
 export_*.php
 quick_*.php
+replace_*.php
+restore_*.php
+revert_*.php
+remove_*.php
+enroll_*.php
+ensure_*.php
+explain_*.php
+list_*.php
+update_*.php
+view_*.php
+system_*.php
 
 # Specific test files
 /test_admin_access.php
