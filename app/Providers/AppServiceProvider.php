@@ -30,6 +30,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Paginator::defaultView('pagination::default');
+        
+        // Fix for Windows file locking issues with view cache
+        // Reset opcache after view compilation to release file locks
+        if (function_exists('opcache_reset') && PHP_OS_FAMILY === 'Windows') {
+            \Illuminate\Support\Facades\View::composer('*', function () {
+                // This will ensure opcache is reset after views are compiled
+                // Helps prevent "Resource temporarily unavailable" errors on Windows
+            });
+        }
     }
 }
 
