@@ -44,7 +44,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
 
@@ -61,7 +61,16 @@ class WebinarController extends Controller
             ->with('subCategories')
             ->get();
 
-        // Note: organization role removed in IELTS platform - teachers create their own courses
+        // Note: admin role can select teachers when creating courses
+        $isOrganization = $user->role_name === 'admin';
+        $teachers = [];
+        
+        if ($isOrganization) {
+            $teachers = User::where('role_name', 'teacher')
+                ->where('status', 'active')
+                ->orderBy('full_name', 'asc')
+                ->get();
+        }
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
 
@@ -71,6 +80,8 @@ class WebinarController extends Controller
             'currentStep' => 1,
             'stepCount' => $stepCount,
             'userLanguages' => getUserLanguagesLists(),
+            'isOrganization' => $isOrganization,
+            'teachers' => $teachers,
         ];
 
         return view('design_1.panel.webinars.create.index', $data);
@@ -82,7 +93,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
 
@@ -110,8 +121,14 @@ class WebinarController extends Controller
 
         $data = $request->all();
 
+        // Determine teacher_id: for teachers use their own ID, for admin use selected teacher
+        $teacherId = $user->id;
+        if ($user->role_name === 'admin' && !empty($data['teacher_id'])) {
+            $teacherId = $data['teacher_id'];
+        }
+
         $webinar = Webinar::create([
-            'teacher_id' => $user->isTeacher() ? $user->id : (!empty($data['teacher_id']) ? $data['teacher_id'] : $user->id),
+            'teacher_id' => $teacherId,
             'creator_id' => $user->id,
             'slug' => Webinar::makeSlug($data['title']),
             'type' => $data['type'],
@@ -156,11 +173,11 @@ class WebinarController extends Controller
         $this->authorize("panel_webinars_create");
 
         $user = auth()->user();
-        // Note: organization role removed - teachers manage own courses
 
-        if (!$user->isTeacher()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
+
         $locale = $request->get('locale', app()->getLocale());
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
@@ -191,7 +208,17 @@ class WebinarController extends Controller
             });
 
         if ($step == '1') {
-            $data['teachers'] = $user->getOrganizationTeachers()->get();
+            // Admin can select teachers when editing courses
+            $isOrganization = $user->role_name === 'admin';
+            $data['isOrganization'] = $isOrganization;
+            $data['teachers'] = [];
+            
+            if ($isOrganization) {
+                $data['teachers'] = User::where('role_name', 'teacher')
+                    ->where('status', 'active')
+                    ->orderBy('full_name', 'asc')
+                    ->get();
+            }
         } elseif ($step == 2) {
             $query->with([
                 'category' => function ($query) {
@@ -324,7 +351,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
 
@@ -578,7 +605,7 @@ class WebinarController extends Controller
         }
 
 
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
 
@@ -652,7 +679,7 @@ class WebinarController extends Controller
         $this->authorize("panel_webinars_duplicate");
 
         $user = auth()->user();
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
 
@@ -713,7 +740,7 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             abort(404);
         }
 
@@ -793,7 +820,7 @@ class WebinarController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isTeacher() and !$user->isAdmin()) {
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
             return response('', 422);
         }
 
