@@ -64,6 +64,7 @@ return [
 'drag_to_change_order' => 'Drag to reorder',
 
 'controls' => 'Actions',
+'action' => 'Action',
 'phone' => 'Phone',
 'mobile' => 'Phone',
 'email' => 'Email',

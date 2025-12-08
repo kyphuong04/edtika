@@ -39,30 +39,49 @@
                             </div>
 
                             <div class="d-grid grid-columns-2 grid-lg-columns-3 gap-24 px-16 mt-16">
-                                @if(!empty($paymentChannels))
-                                    @foreach($paymentChannels as $paymentChannel)
-                                        @if(!$isMultiCurrency or (!empty($paymentChannel->currencies) and in_array($userCurrency, $paymentChannel->currencies)))
-                                            <div class="payment-channel-card position-relative">
-                                                <input type="radio" name="gateway" id="gateway_{{ $paymentChannel->id }}" data-class="{{ $paymentChannel->class_name }}" value="{{ $paymentChannel->id }}">
-                                                <label class="position-relative w-100 d-block cursor-pointer" for="gateway_{{ $paymentChannel->id }}">
-                                                    <div class="gateway-mask"></div>
-                                                    <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
-                                                        <div class="d-flex-center size-48 bg-gray-100">
-                                                            <img src="{{ $paymentChannel->image }}" alt="" class="img-fluid">
-                                                        </div>
-                                                        <h6 class="font-14 mt-12">{{ $paymentChannel->title }}</h6>
-                                                    </div>
-                                                </label>
-                                            </div>
-                                        @else
-                                            @php
-                                                $invalidChannels[] = $paymentChannel;
-                                            @endphp
-                                        @endif
-                                    @endforeach
-                                @endif
-
+                                {{-- VNPay Payment Gateway --}}
                                 <div class="payment-channel-card position-relative">
+                                    <input type="radio" name="gateway" id="gateway_vnpay" data-class="VNPay" value="vnpay">
+                                    <label class="position-relative w-100 d-block cursor-pointer" for="gateway_vnpay">
+                                        <div class="gateway-mask"></div>
+                                        <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
+                                            <div class="d-flex-center size-48 bg-gray-100">
+                                                <img src="/assets/design_1/img/payment-gateways/vnpay.svg" alt="VNPay" class="img-fluid">
+                                            </div>
+                                            <h6 class="font-14 mt-12">VNPay</h6>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- Momo Payment Gateway --}}
+                                <div class="payment-channel-card position-relative">
+                                    <input type="radio" name="gateway" id="gateway_momo" data-class="Momo" value="momo">
+                                    <label class="position-relative w-100 d-block cursor-pointer" for="gateway_momo">
+                                        <div class="gateway-mask"></div>
+                                        <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
+                                            <div class="d-flex-center size-48 bg-gray-100">
+                                                <img src="/assets/design_1/img/payment-gateways/momo.svg" alt="Momo" class="img-fluid">
+                                            </div>
+                                            <h6 class="font-14 mt-12">Momo</h6>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- Visa Card Payment Gateway --}}
+                                <div class="payment-channel-card position-relative">
+                                    <input type="radio" name="gateway" id="gateway_visa" data-class="Visa" value="visa">
+                                    <label class="position-relative w-100 d-block cursor-pointer" for="gateway_visa">
+                                        <div class="gateway-mask"></div>
+                                        <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
+                                            <div class="d-flex-center size-48 bg-gray-100">
+                                                <img src="/assets/design_1/img/payment-gateways/visa.svg" alt="Visa" class="img-fluid">
+                                            </div>
+                                            <h6 class="font-14 mt-12">Visa Card</h6>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- <div class="payment-channel-card position-relative">
                                     <input type="radio" name="gateway" id="gateway_credit" value="credit" {{ (empty($userCharge) or ($calculatePrices["total"] > $userCharge)) ? 'disabled' : '' }}>
                                     <label class="position-relative w-100 d-block cursor-pointer" for="gateway_credit">
                                         <div class="gateway-mask"></div>
@@ -74,40 +93,8 @@
                                             <p class="mt-4 font-12 text-gray-500">{{ handlePrice($userCharge) }}</p>
                                         </div>
                                     </label>
-                                </div>
+                                </div> --}}
                             </div>
-
-
-                            @if(!empty($invalidChannels) and empty(getFinancialSettings("hide_disabled_payment_gateways")))
-                                <div class="px-16 mt-28">
-                                    {{-- Alert --}}
-                                    <div class="position-relative pl-8">
-                                        <div class="d-flex align-items-center p-12 rounded-12 bg-gray-500-20">
-                                            <div class="alert-left-20 d-flex-center size-48 bg-gray-500 rounded-12">
-                                                <x-iconsax-bol-info-circle class="icons text-white" width="24px" height="24px"/>
-                                            </div>
-
-                                            <div class="ml-8">
-                                                <h6 class="font-14 text-gray-500">{{ trans('update.disabled_payment_gateways') }}</h6>
-                                                <p class="font-12 text-gray-500 opacity-75">{{ trans('update.disabled_payment_gateways_hint') }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="d-grid grid-columns-3 gap-24 mt-16">
-                                        @foreach($invalidChannels as $invalidChannel)
-                                            <div class="disabled-payment-channel d-flex align-items-center p-16 rounded-16 border-gray-200">
-                                                <div class="d-flex-center size-48 bg-gray-100">
-                                                    <img src="{{ $invalidChannel->image }}" alt="" class="img-fluid">
-                                                </div>
-                                                <h6 class="font-14 ml-16 text-gray-500">{{ $invalidChannel->title }}</h6>
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                </div>
-
-                            @endif
 
                         </div>
                     </div>
