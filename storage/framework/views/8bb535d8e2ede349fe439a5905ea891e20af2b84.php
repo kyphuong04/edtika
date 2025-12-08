@@ -1,0 +1,4 @@
+<svg width="24px" height="24px" class="icons" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <path d="M16 2H8C4 2 2 4 2 8v13c0 .55.45 1 1 1h13c4 0 6-2 6-6V8c0-4-2-6-6-6z" opacity=".4"/>
+  <path d="M17 8.75H7c-.41 0-.75.34-.75.75s.34.75.75.75h10c.41 0 .75-.34.75-.75s-.34-.75-.75-.75zM14 13.75H7c-.41 0-.75.34-.75.75s.34.75.75.75h7c.41 0 .75-.34.75-.75s-.34-.75-.75-.75z"/>
+</svg><?php /**PATH D:\xampp\htdocs\edtika\storage\framework\views/1ea17deb8baf8e23559da0841e782cdc02ef11f9.blade.php ENDPATH**/ ?>
