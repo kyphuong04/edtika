@@ -211,6 +211,16 @@ class SidebarItems
     {
         $items = [];
 
+        // Students Tracking for Instructors
+        if (($user->isOrganization() || $user->isTeacher()) && $user->can('panel_webinars')) {
+            $items['students_tracking'] = [
+                'icon' => self::getIcon('students'),
+                'text' => trans('panel.students_tracking'),
+                'url' => '/panel/students-tracking',
+                'items' => []
+            ];
+        }
+
         if (getFeaturesSettings('webinar_assignment_status') and $user->can('panel_assignments')) {
             $items['assignments'] = [
                 'icon' => self::getIcon('assignments'),

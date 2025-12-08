@@ -19,5 +19,7 @@ return [
     'send_noticeboard' => 'Post a New Notice',
     'edit_noticeboard' => 'Edit Notice',
     'post_notice' => 'Post Notice',
+    'new_support_message' => 'New Support Message',
+    'instructor_sent_message' => ':instructor sent you a support message',
 
 ];

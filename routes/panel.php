@@ -277,6 +277,17 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/{id}/contact-info', 'ReserveMeetingController@getContactInfoModal');
     });
 
+    // Instructor Student Tracking Routes
+    Route::group(['prefix' => 'students-tracking'], function () {
+        Route::get('/', 'StudentTrackingController@index');
+        Route::get('/{studentId}/details', 'StudentTrackingController@show');
+        Route::get('/{studentId}/progress/{webinarId}', 'StudentTrackingController@courseProgress');
+        Route::get('/{studentId}/quiz-results', 'StudentTrackingController@quizResults');
+        Route::get('/{studentId}/assignments', 'StudentTrackingController@assignments');
+        Route::post('/{studentId}/support-message', 'StudentTrackingController@sendSupportMessage');
+        Route::get('/export', 'StudentTrackingController@export');
+    });
+
     Route::group(['prefix' => 'financial'], function () {
         Route::get('/sales', 'SaleController@index');
         Route::get('/summary', 'AccountingSummaryController@index');
