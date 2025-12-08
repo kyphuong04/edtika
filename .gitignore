@@ -12,6 +12,26 @@ docker-compose.override.yml
 .phpunit.result.cache
 
 # Debug and test scripts (do not push to GitHub)
+test_*.php
+check_*.php
+verify_*.php
+diagnose_*.php
+debug_*.php
+fix_*.php
+grant_*.php
+analyze_*.php
+add_*.php
+force_*.php
+copy_*.php
+create_*.php
+apply_*.php
+setup_*.php
+verification_*.php
+final_*.php
+export_*.php
+quick_*.php
+
+# Specific test files
 /test_admin_access.php
 /diagnose_admin.php
 /copy_admin_permissions.php
@@ -24,85 +44,93 @@ docker-compose.override.yml
 /verify_manager.php
 /final_verify.php
 /verify_admin.php
+
+# SQL and database scripts (all SQL files in root)
+/*.sql
 /check_roles.sql
 /fix_admin_roles.sql
-/fix_admin_roles.php
-/run_fix.bat
-/clear_all_cache.bat
-/FIX_SUMMARY.md
-/verify_admin.php
-
-# Additional fix/test scripts
-/check_usernames.php
-/fix_usernames.php
 /create_webie_users.sql
 /update_simple_usernames.sql
-/check_roles_script.php
-/check_permissions.php
-/check_schema.php
-/grant_permissions.php
-/debug_permissions.php
-/check_section.php
-/grant_all_permissions.php
-/check_env.php
-/test_panel_access.php
-/test_all_roles_access.php
-/test_headers.php
-/test_macro.php
-/check_student_permissions.php
-/check_student_role_permissions.php
-/check_user_can.php
-/check_role_2.php
-/grant_student_permissions.php
-/debug_has_permission.php
-/check_routes_status.php
-/check_table_names.php
-/replace_isorganization.php
-/replace_blade_isorganization.php
+/add_student_permissions_to_empty_db.sql
+/admin_panel_permissions.sql
+/check_and_fix_admin_permissions.sql
+/create_test_users.sql
+/empty_db.sql
+/ielts_*.sql
+check_*.sql
+fix_*.sql
+create_*.sql
+add_*.sql
+update_*.sql
+admin_*.sql
+verify_*.sql
+grant_*.sql
+quick_*.sql
+test_*.sql
+empty_db*.sql
+student_permissions*.sql
 
 # PowerShell utility scripts
+/*.ps1
 /fix_role_org.ps1
 /migrate-database.ps1
 /remove_org.ps1
 /remove_org_final.ps1
 /remove_role_constant.ps1
 /setup-local-domain.ps1
+/add_admin_perms_to_empty_db.ps1
+/add_appearance_routes.ps1
+setup_*.ps1
+test_*.ps1
+verify_*.ps1
+fix_*.ps1
 
 # Python cleanup scripts
+/*.py
+/remove_org_refs.py
+/add_admin_perms_to_empty_db.py
 /remove_org_refs.py
 
-# Documentation and schema files (temporary/debug)
+# Documentation files (temporary/debug) - only in root directory
+/*.txt
+/*.md
+!README.md
+!CHANGELOG.md
+!LICENSE.md
+!CONTRIBUTING.md
 /QUICKSTART.md
 /FIX_SUMMARY.md
+/ADMIN_SIDEBAR_FIX.md
+/BROWSER_TESTING.md
 /*.dbml
-/empty_db.sql
 /simplified_schema.dbml
-/ielts_*.sql
 /database_*.md
 /implementation_*.md
 /tech_*.md
-/diagnose_login.php
 /ROLE_PERMISSIONS_VERIFICATION_REPORT.md
-/test_role_fix.php
-/fix_role_permissions.php
-/verify_role_permissions.php
-/verify_all_role_permissions.php
+/*_BACKUP.txt
+/BAO_CAO_*.txt
+/admin_verification_report.txt
+/db_comparison.txt
+check_*.txt
+fix_*.txt
+verify_*.txt
+test_*.txt
+debug_*.txt
+analyze_*.txt
+report_*.txt
+verification_*.txt
+*_report.txt
+*_verification*.txt
+*_BACKUP*.txt
 
-# Test scripts created during development (catch-all patterns)
-/test_*.php
-/check_*.php
-/verify_*.php
-/diagnose_*.php
-/debug_*.php
-/fix_*.php
-/grant_*.php
-/analyze_*.php
-/add_*.php
-/force_*.php
+# Batch files
+/*.bat
+/run_fix.bat
+/clear_all_cache.bat
 
-# Specific new debug files from latest session
-/check-admin-roles.php
-/check-settings-db.php
-/check-locale.php
-/add-vietnamese.php
-/force-clear-locale.php
+# PHP admin/debug files with specific patterns
+check-*.php
+add-*.php
+admin_*.php
+apply_*.php
