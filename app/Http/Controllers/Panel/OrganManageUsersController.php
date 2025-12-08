@@ -32,20 +32,29 @@ use Illuminate\Support\Facades\Storage;
 class OrganManageUsersController extends Controller
 {
     use UserFormFieldsTrait;
-
+      
     public function manageUsers(Request $request, $userType)
     {
-        $this->authorize("panel_organization_{$userType}_lists");
+        $user = auth()->user();
+        
+        // Teachers cannot manage other teachers
+        if ($user->role_name === 'teacher' && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
-        $organization = auth()->user();
+        // Support both 'teachers' and 'instructors' for authorization
+        $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+        $this->authorize("panel_organization_{$permissionType}_lists");
 
-        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
+        $valid_type = ['instructors', 'teachers', 'students'];    
+        $organization = $user;
+
+        if (($organization->role_name === 'admin' || ($organization->role && $organization->role->is_admin)) and in_array($userType, $valid_type)) {
             $query = User::query()->where('organ_id', $organization->id);
 
-            if ($userType == 'instructors') {
+            if ($userType == 'instructors' || $userType == 'teachers') {
                 $query->where('role_name', Role::$teacher);
-            } else {
+            } else if ($userType == 'students') {
                 $query->where('role_name', Role::$user);
             }
 
@@ -74,7 +83,9 @@ class OrganManageUsersController extends Controller
             ];
             $data = array_merge($data, $getListData);
 
-            return view("design_1.panel.manage.{$userType}.index", $data);
+            // Map 'teachers' view to 'instructors' view
+            $viewType = ($userType === 'teachers') ? 'instructors' : $userType;
+            return view("design_1.panel.manage.{$viewType}.index", $data);
         }
 
         abort(404);
@@ -167,14 +178,21 @@ class OrganManageUsersController extends Controller
 
     public function createUser(Request $request, $userType)
     {
-        $this->authorize("panel_organization_{$userType}_create");
+        // Teachers cannot create other teachers
+        if (auth()->user()->role_name === 'teacher' && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
+        // Support both 'teachers' and 'instructors' for authorization
+        $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+        $this->authorize("panel_organization_{$permissionType}_create");
+
+        $valid_type = ['instructors', 'teachers', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
+        if (($organization->role_name === 'admin' || ($organization->role && $organization->role->is_admin)) and in_array($userType, $valid_type)) {
 
-            $packageType = $userType == 'instructors' ? 'instructors_count' : 'students_count';
+            $packageType = ($userType == 'instructors' || $userType == 'teachers') ? 'instructors_count' : 'students_count';
             $userPackage = new UserPackage();
             $userAccountLimited = $userPackage->checkPackageLimit($packageType);
 
@@ -213,12 +231,19 @@ class OrganManageUsersController extends Controller
 
     public function storeUser(Request $request, $userType)
     {
-        $this->authorize("panel_organization_{$userType}_create");
+        // Teachers cannot create other teachers
+        if (auth()->user()->role_name === 'teacher' && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
+        // Support both 'teachers' and 'instructors' for authorization
+        $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+        $this->authorize("panel_organization_{$permissionType}_create");
+
+        $valid_type = ['instructors', 'teachers', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
+        if (($organization->role_name === 'admin' || ($organization->role && $organization->role->is_admin)) and in_array($userType, $valid_type)) {
             $this->validate($request, [
                 'email' => 'required|string|email|max:255|unique:users',
                 'full_name' => 'required|string',
@@ -227,8 +252,8 @@ class OrganManageUsersController extends Controller
             ]);
 
             $data = $request->all();
-            $role_name = ($userType == 'instructors') ? Role::$teacher : Role::$user;
-            $role_id = ($userType == 'instructors') ? Role::getTeacherRoleId() : Role::getUserRoleId();
+            $role_name = ($userType == 'instructors' || $userType == 'teachers') ? Role::$teacher : Role::$user;
+            $role_id = ($userType == 'instructors' || $userType == 'teachers') ? Role::getTeacherRoleId() : Role::getUserRoleId();
 
             $referralSettings = getReferralSettings();
             $usersAffiliateStatus = (!empty($referralSettings) and !empty($referralSettings['users_affiliate_status']));
@@ -267,12 +292,19 @@ class OrganManageUsersController extends Controller
 
     public function editUser(Request $request, $userType, $user_id, $step = "basic_information")
     {
-        $this->authorize("panel_organization_{$userType}_edit");
+        // Teachers cannot edit other teachers
+        if (auth()->user()->role_name === 'teacher' && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
+        // Support both 'teachers' and 'instructors' for authorization
+        $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+        $this->authorize("panel_organization_{$permissionType}_edit");
+
+        $valid_type = ['instructors', 'teachers', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
+        if (($organization->role_name === 'admin' || ($organization->role && $organization->role->is_admin)) and in_array($userType, $valid_type)) {
             $user = User::query()->select('*', DB::raw('ST_AsText(location) as location'))
                 ->where('id', $user_id)
                 ->where('organ_id', $organization->id)
@@ -299,12 +331,19 @@ class OrganManageUsersController extends Controller
 
     public function deleteUser($userType, $user_id)
     {
-        $this->authorize("panel_organization_{$userType}_delete");
+        // Teachers cannot delete other teachers
+        if (auth()->user()->role_name === 'teacher' && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
+        // Support both 'teachers' and 'instructors' for authorization
+        $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+        $this->authorize("panel_organization_{$permissionType}_delete");
+
+        $valid_type = ['instructors', 'teachers', 'students'];
         $organization = auth()->user();
 
-        if ($organization->isAdmin() and in_array($userType, $valid_type)) {
+        if (($organization->role_name === 'admin' || ($organization->role && $organization->role->is_admin)) and in_array($userType, $valid_type)) {
             $user = User::where('id', $user_id)
                 ->where('organ_id', $organization->id)
                 ->first();
