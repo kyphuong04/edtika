@@ -61,7 +61,7 @@ class WebinarsController extends Controller
 
             if ($user->isTeacher()) {
                 $query->where('teacher_id', $user->id);
-            } elseif ($user->isOrganization()) {
+            } elseif ($user->isAdmin()) {
                 $query->where('creator_id', $user->id);
             }
         })->handleFilters()->orderBy('updated_at', 'desc')->get()->map(function ($webinar) {
@@ -362,3 +362,5 @@ class WebinarsController extends Controller
     }
 
 }
+
+

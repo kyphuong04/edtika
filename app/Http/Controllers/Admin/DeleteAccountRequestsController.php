@@ -89,3 +89,5 @@ class DeleteAccountRequestsController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

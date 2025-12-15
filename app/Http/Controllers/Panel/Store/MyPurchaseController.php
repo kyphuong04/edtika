@@ -301,3 +301,5 @@ class MyPurchaseController extends Controller
         abort(404);
     }
 }
+
+

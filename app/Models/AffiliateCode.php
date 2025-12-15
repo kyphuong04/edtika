@@ -16,3 +16,5 @@ class AffiliateCode extends Model
         return url('/reff/' . $this->code);
     }
 }
+
+

@@ -153,7 +153,8 @@ class DashboardController extends Controller
             // Open Meetings
             $data['openMeetings'] = $this->getInstructorOpenMeetingsData($user, $userWebinarsIds);
 
-        } else { // Organization
+        } elseif ($user->isAdmin()) {
+            // Admin: Show organization-like features
             // Top Instructors
             $data['topInstructors'] = $this->getOrganizationTopInstructorsData($user);
 
@@ -214,3 +215,5 @@ class DashboardController extends Controller
     }
 
 }
+
+

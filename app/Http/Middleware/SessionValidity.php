@@ -36,3 +36,4 @@ class SessionValidity
        return $next($request);
    }
 }
+

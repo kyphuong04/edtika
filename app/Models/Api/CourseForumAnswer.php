@@ -13,3 +13,5 @@ class CourseForumAnswer extends Model
        return $this->belongsTo(CourseForum::class, 'forum_id');
     }
 }
+
+

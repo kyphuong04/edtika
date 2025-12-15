@@ -44,3 +44,4 @@ class ThemeHeaderMixins
         return $result;
     }
 }
+

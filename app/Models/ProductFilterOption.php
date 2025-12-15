@@ -21,3 +21,5 @@ class ProductFilterOption extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'title');
     }
 }
+
+

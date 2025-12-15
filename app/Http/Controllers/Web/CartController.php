@@ -883,3 +883,5 @@ class CartController extends Controller
         return (count($cartHasWebinar) or count($cartHasBundle) or count($cartHasMeeting) or count($cartHasInstallmentPayment));
     }
 }
+
+

@@ -166,3 +166,5 @@ class UserLoginHistoryController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

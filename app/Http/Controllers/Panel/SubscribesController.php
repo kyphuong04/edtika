@@ -144,3 +144,5 @@ class SubscribesController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

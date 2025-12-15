@@ -11,3 +11,5 @@ class SessionTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

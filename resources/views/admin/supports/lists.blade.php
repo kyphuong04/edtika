@@ -207,7 +207,7 @@
                                             Student
                                         @elseif($support->user->isTeacher())
                                             Teacher
-                                        @elseif($support->user->isOrganization())
+                                        @elseif($support->user->isAdmin())
                                             Organization
                                         @endif
                                     </td>

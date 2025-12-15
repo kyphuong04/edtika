@@ -47,3 +47,4 @@ class WebinarAssignmentResource extends JsonResource
     }
 
 }
+

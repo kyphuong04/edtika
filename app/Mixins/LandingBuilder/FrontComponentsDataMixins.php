@@ -333,3 +333,4 @@ class FrontComponentsDataMixins
         return $courses;
     }
 }
+

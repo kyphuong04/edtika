@@ -122,3 +122,5 @@ class BlogRelatedPostsController extends Controller
 
 
 }
+
+

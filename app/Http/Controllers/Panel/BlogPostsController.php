@@ -311,3 +311,5 @@ class BlogPostsController extends Controller
         ]);
     }
 }
+
+

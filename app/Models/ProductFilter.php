@@ -33,3 +33,5 @@ class ProductFilter extends Model implements TranslatableContract
         return $this->hasMany('App\Models\ProductFilterOption', 'filter_id', 'id')->orderBy('order', 'asc');
     }
 }
+
+

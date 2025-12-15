@@ -13,3 +13,5 @@ class LandingComponentTranslation extends Model
     protected $guarded = ['id'];
 
 }
+
+

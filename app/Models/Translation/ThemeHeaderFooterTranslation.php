@@ -13,3 +13,5 @@ class ThemeHeaderFooterTranslation extends Model
     protected $guarded = ['id'];
 
 }
+
+

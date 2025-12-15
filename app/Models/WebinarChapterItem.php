@@ -83,3 +83,5 @@ class WebinarChapterItem extends Model
         return $this->belongsTo('App\Models\WebinarChapter', 'chapter_id', 'id');
     }
 }
+
+

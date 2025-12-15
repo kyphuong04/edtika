@@ -30,3 +30,5 @@ class Noticeboard extends Model
         return $this->belongsTo('App\Models\User', 'sender_id', 'id');
     }
 }
+
+

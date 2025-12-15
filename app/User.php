@@ -125,7 +125,13 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        return $this->role->is_admin;
+        // Check both role relationship and role_name for reliability
+        return ($this->role && $this->role->is_admin) || $this->role_name === Role::$admin;
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->role_name === Role::$manager || $this->role_name === Role::$ceo;
     }
 
     public function isUser()
@@ -138,9 +144,48 @@ class User extends Authenticatable
         return $this->role_name === Role::$teacher;
     }
 
+    public function isStudent()
+    {
+        return $this->role_name === Role::$student;
+    }
+
+    /**
+     * Convert user to student role if currently a user (lead)
+     * This is called automatically when user purchases their first course
+     * 
+     * @return bool True if converted, false if already student/teacher/admin
+     */
+    public function convertToStudentIfNeeded()
+    {
+        // Only convert if currently a user (not already student/teacher/admin)
+        if ($this->role_name === Role::$user) {
+            $studentRoleId = Role::getStudentRoleId();
+            
+            $this->role_id = $studentRoleId;
+            $this->role_name = Role::$student;
+            $this->save();
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    public function isManager()
+    {
+        return $this->role_name === Role::$manager;
+    }
+
+    public function isCeo()
+    {
+        return $this->role_name === Role::$ceo;
+    }
+
     public function isOrganization()
     {
-        return $this->role_name === Role::$organization;
+        // Admin role now replaces the old organization role
+        // A user is an organization if they are admin OR have members (teachers or students) under them
+        return $this->isAdmin() || $this->getOrganizationTeachers()->exists() || $this->getOrganizationStudents()->exists();
     }
 
     public function hasPermission($section_name)
@@ -231,6 +276,11 @@ class User extends Authenticatable
 
     public function getProfileUrl()
     {
+        // Admin roles should go to admin panel profile edit, not public profile
+        if ($this->isAdmin()) {
+            return getAdminPanelUrl("/users/{$this->id}/edit");
+        }
+        
         return '/users/' . $this->getUsername() . '/profile';
     }
 
@@ -751,18 +801,6 @@ class User extends Authenticatable
             }
         }
 
-        if ($this->isOrganization()) {
-            $organNotifications = Notification::whereNull('user_id')
-                ->whereNull('group_id')
-                ->where('type', 'organizations')
-                ->doesntHave('notificationStatus')
-                ->orderBy('created_at', 'desc')
-                ->get();
-            if (!empty($organNotifications) and !$organNotifications->isEmpty()) {
-                $notifications = $notifications->merge($organNotifications);
-            }
-        }
-
         /* Get Course Students Notifications */
         $userBoughtWebinarsIds = $this->getPurchasedCoursesIds();
 
@@ -813,7 +851,8 @@ class User extends Authenticatable
             $query->whereNotNull('organ_id')
                 ->where('organ_id', $this->organ_id)
                 ->where(function ($query) {
-                    if ($this->isOrganization()) {
+                    if ($this->isAdmin()) {
+                        // Admin acts like organization
                         $query->where('type', 'organizations');
                     } else {
                         $type = 'students';
@@ -832,9 +871,8 @@ class User extends Authenticatable
                 $type = array_merge($type, ['students', 'students_and_instructors']);
             } elseif ($this->isTeacher()) {
                 $type = array_merge($type, ['instructors', 'students_and_instructors']);
-            } elseif ($this->isOrganization()) {
-                $type = array_merge($type, ['organizations']);
             }
+            // Note: organization role removed in IELTS platform
 
             $query->whereNull('organ_id')
                 ->whereNull('instructor_id')
@@ -1134,11 +1172,11 @@ class User extends Authenticatable
         $access = false;
 
         if (!empty(getAiContentsSettingsName('status'))) {
-            if ($this->isOrganization() and !empty(getAiContentsSettingsName("active_for_organization_panel"))) {
+            if ($this->isAdmin() and !empty(getAiContentsSettingsName("active_for_admin_panel"))) {
                 $access = true;
             }
 
-            if ($this->isTeacher() and !empty(getAiContentsSettingsName("active_for_instructor_panel"))) {
+            if ($this->isTeacher() and !empty(getAiContentsSettingsName("active_for_teacher_panel"))) {
                 $access = true;
             }
         }
@@ -1194,3 +1232,5 @@ class User extends Authenticatable
     }
 
 }
+
+

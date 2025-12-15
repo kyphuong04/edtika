@@ -445,7 +445,8 @@ trait DashboardTrait
         $bundlesCount = 0;
 
 
-        if ($user->isOrganization()) {
+        if ($user->isAdmin()) {
+            // Admin gets organization statistics
             $instructorsCount = $user->getOrganizationTeachers()->count();
             $studentsCount = $user->getOrganizationStudents()->count();
         } else {
@@ -822,3 +823,5 @@ trait DashboardTrait
     }
 
 }
+
+

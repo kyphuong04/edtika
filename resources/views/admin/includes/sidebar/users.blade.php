@@ -32,11 +32,11 @@
                 </li>
             @endcan()
 
-            @can('admin_staffs_list')
+            @if($authUser->isCeo())
                 <li class="{{ (request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/staffs">{{ trans('admin/main.staff') }}</a>
                 </li>
-            @endcan()
+            @endif
 
             @can('admin_users_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/students', false))) ? 'active' : '' }}">

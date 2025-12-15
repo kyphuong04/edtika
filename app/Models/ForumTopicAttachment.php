@@ -30,3 +30,5 @@ class ForumTopicAttachment extends Model
         return $name;
     }
 }
+
+

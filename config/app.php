@@ -183,7 +183,8 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         Laravel\Socialite\SocialiteServiceProvider::class,
         Cviebrock\EloquentSluggable\ServiceProvider::class,
-        Barryvdh\Debugbar\ServiceProvider::class,
+        // Debugbar - only load when debugging is enabled
+        // Barryvdh\Debugbar\ServiceProvider::class, // Commented out - use conditional loading below
 
         /*
          * Package Service Providers...

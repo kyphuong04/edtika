@@ -45,3 +45,4 @@ class TextLessonResource extends JsonResource
 
     }
 }
+

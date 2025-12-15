@@ -114,7 +114,20 @@ class LoginController extends Controller
                 $userLoginHistoryMixin->storeUserLoginHistory($user);
             }
 
-            return Redirect::to(getAdminPanelUrl());
+            // Redirect to role-specific dashboard
+            // Manager and CEO go to admin panel
+            // Admin (organization) goes to user panel
+            if ($user->isCeo()) {
+                return Redirect::to('/ceo');
+            } elseif ($user->isManager()) {
+                return Redirect::to('/manager');
+            } elseif ($user->role_name === 'admin') {
+                // Admin role (replaces old organization) goes to panel
+                return Redirect::to('/panel');
+            } else {
+                // Fallback to admin panel for other admin roles
+                return Redirect::to('/admin');
+            }
         }
 
         return redirect()->back()->withInput($request->only('email', 'remember'))->withErrors([
@@ -133,3 +146,5 @@ class LoginController extends Controller
         return redirect(getAdminPanelUrl() . '/login');
     }
 }
+
+

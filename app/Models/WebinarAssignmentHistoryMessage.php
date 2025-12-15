@@ -21,3 +21,5 @@ class WebinarAssignmentHistoryMessage extends Model
         return "/course/assignment/{$assignmentId}/history/{$this->assignment_history_id}/message/{$this->id}/downloadAttach";
     }
 }
+
+

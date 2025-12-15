@@ -21,3 +21,5 @@ class DiscountCourse extends Model
         return $this->belongsTo('App\Models\Webinar', 'course_id', 'id');
     }
 }
+
+

@@ -75,3 +75,4 @@ class ProductResource extends JsonResource
 
 
 
+

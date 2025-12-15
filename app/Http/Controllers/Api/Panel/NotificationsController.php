@@ -119,7 +119,7 @@ class NotificationsController extends Controller
                         $query->where('notifications.type', 'students');
                     } elseif ($user->isTeacher()) {
                         $query->where('notifications.type', 'instructors');
-                    } elseif ($user->isOrganization()) {
+                    } elseif ($user->isAdmin()) {
                         $query->where('notifications.type', 'organizations');
                     }
                 });
@@ -135,3 +135,5 @@ class NotificationsController extends Controller
             ->get();*/
     }
 }
+
+

@@ -139,7 +139,7 @@ class SearchController extends Controller
             })
             ->where(function (Builder $query) {
                 $query->where('role_name', Role::$teacher);
-                $query->orWhere('role_name', Role::$organization);
+                $query->orWhere('role_name', Role::$teacher);
             });
 
         $usersCount = deepClone($usersQuery)->count();
@@ -149,7 +149,8 @@ class SearchController extends Controller
             ->limit(20)
             ->get();
 
-        $organizations = deepClone($usersQuery)->where('role_name', Role::$organization)
+        // Admin role now replaces the old organization role
+        $organizations = deepClone($usersQuery)->where('role_name', Role::$admin)
             ->inRandomOrder()
             ->limit(20)
             ->get();
@@ -166,3 +167,5 @@ class SearchController extends Controller
         ];
     }
 }
+
+

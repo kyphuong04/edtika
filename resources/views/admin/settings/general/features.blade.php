@@ -502,7 +502,7 @@
                     <h5>{{ trans('update.select_the_role_during_registration') }}</h5>
 
                     @php
-                        $roleItems = [\App\Models\Role::$teacher, \App\Models\Role::$organization];
+                        $roleItems = [\App\Models\Role::$teacher]; // Removed Role::$organization as it no longer exists
                         $selectedRoleItems = (!empty($itemValue) and !empty($itemValue['select_the_role_during_registration']) and is_array($itemValue['select_the_role_during_registration'])) ? $itemValue['select_the_role_during_registration'] : [];
                     @endphp
 

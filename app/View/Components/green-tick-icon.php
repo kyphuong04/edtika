@@ -26,3 +26,4 @@ class green-tick-icon extends Component
         return view('components.green-tick-icon');
     }
 }
+

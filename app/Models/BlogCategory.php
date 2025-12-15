@@ -60,3 +60,5 @@ class BlogCategory extends Model implements TranslatableContract
         return '/blog/categories/' . $this->slug;
     }
 }
+
+

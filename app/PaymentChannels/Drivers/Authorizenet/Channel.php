@@ -195,3 +195,4 @@ class Channel extends BasePaymentChannel implements IChannel
         abort(404);
     }
 }
+

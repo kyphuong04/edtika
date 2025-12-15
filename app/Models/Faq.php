@@ -26,3 +26,5 @@ class Faq extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'answer');
     }
 }
+
+

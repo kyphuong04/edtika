@@ -56,7 +56,7 @@
             @enderror
         </div>
 
-        @if(!empty($upcomingCourse) and $upcomingCourse->creator->isOrganization())
+        @if(!empty($upcomingCourse) and $upcomingCourse->creator->isAdmin())
             <div class="form-group mt-15 ">
                 <label class="input-label d-block">{{ trans('admin/main.organization') }}</label>
 

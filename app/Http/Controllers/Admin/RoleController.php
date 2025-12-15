@@ -179,3 +179,5 @@ class RoleController extends Controller
         Permission::insert($permissions);
     }
 }
+
+

@@ -59,7 +59,7 @@ class RegistrationPackagesController extends Controller
         return Sale::whereNotNull('registration_package_id')
             ->whereNull('refund_at')
             ->whereHas('buyer', function ($query) {
-                $query->where('role_name', Role::$organization);
+                $query->where('role_name', Role::$teacher);
             })
             ->count();
     }
@@ -273,3 +273,5 @@ class RegistrationPackagesController extends Controller
         return view('admin.financial.registration_packages.reports', $data);
     }
 }
+
+

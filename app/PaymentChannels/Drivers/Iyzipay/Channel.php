@@ -202,3 +202,4 @@ class Channel extends BasePaymentChannel implements IChannel
         return back()->with(['toast' => $toastData])->withInput();
     }
 }
+

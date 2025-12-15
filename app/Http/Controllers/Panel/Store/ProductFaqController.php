@@ -163,3 +163,5 @@ class ProductFaqController extends Controller
         ], 200);
     }
 }
+
+

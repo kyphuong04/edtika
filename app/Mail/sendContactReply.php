@@ -44,3 +44,4 @@ class sendContactReply extends Mailable
         }
     }
 }
+

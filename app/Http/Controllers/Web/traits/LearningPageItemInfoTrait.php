@@ -18,48 +18,6 @@ use Illuminate\Support\Facades\Validator;
 
 trait LearningPageItemInfoTrait
 {
-    public function trackTime(Request $request, $courseSlug)
-    {
-        $data = $request->all();
-
-        $validator = Validator::make($data, [
-            'type' => 'required|in:file,session,text_lesson,quiz,assignment',
-            'item_id' => 'required|integer',
-            'time' => 'required|integer|min:1',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'code' => 422,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $course = Webinar::where('slug', $courseSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (empty($course)) {
-            return response()->json(['code' => 404, 'message' => 'Course not found'], 404);
-        }
-
-        $user = auth()->user();
-
-        // Check if user has access to the course
-        if (!$this->checkCourseAccess($course)) {
-            return response()->json(['code' => 403, 'message' => 'Access denied'], 403);
-        }
-
-        // Store learning time (you can create a new model/table for this or use existing)
-        // For now, just update the last view
-        $this->storeCourseLearningLastView($course->id, $data['item_id'], $data['type']);
-
-        return response()->json([
-            'code' => 200,
-            'message' => 'Time tracked successfully'
-        ]);
-    }
-    
     public function getItemInfo(Request $request, $courseSlug)
     {
         $data = $request->all();
@@ -574,3 +532,5 @@ trait LearningPageItemInfoTrait
         return null;
     }
 }
+
+

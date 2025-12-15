@@ -155,7 +155,7 @@ class AbandonedUsersCartController extends Controller
             if ($role == "instructor") {
                 $roleName = Role::$teacher;
             } else if ($role == "organization") {
-                $roleName = Role::$organization;
+                $roleName = Role::$teacher;
             }
 
             $query->whereHas('user', function ($query) use ($roleName) {
@@ -265,3 +265,5 @@ class AbandonedUsersCartController extends Controller
     }
 
 }
+
+

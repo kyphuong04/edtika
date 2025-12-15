@@ -71,3 +71,5 @@ class UserLoginHistoryExport implements FromCollection, WithHeadings, WithMappin
         ];
     }
 }
+
+

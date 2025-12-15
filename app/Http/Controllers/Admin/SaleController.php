@@ -316,3 +316,5 @@ class SaleController extends Controller
         return Excel::download($export, 'sales.xlsx');
     }
 }
+
+

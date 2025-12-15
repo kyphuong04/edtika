@@ -37,3 +37,4 @@ class AdminLocale
         return $next($request);
     }
 }
+

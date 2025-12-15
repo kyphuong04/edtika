@@ -72,3 +72,5 @@ class Meeting extends Model
     }
 
 }
+
+

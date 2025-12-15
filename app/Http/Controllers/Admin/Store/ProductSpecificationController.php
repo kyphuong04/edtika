@@ -238,3 +238,5 @@ class ProductSpecificationController extends Controller
         ], 200);
     }
 }
+
+

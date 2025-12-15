@@ -28,3 +28,5 @@ class HomeController extends Controller
         return view('design_1.web.home.index', $data);
     }
 }
+
+

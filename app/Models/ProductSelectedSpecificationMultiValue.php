@@ -21,3 +21,5 @@ class ProductSelectedSpecificationMultiValue extends Model
         return $this->belongsTo('App\Models\ProductSpecificationMultiValue','specification_multi_value_id','id');
     }
 }
+
+

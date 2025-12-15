@@ -152,8 +152,8 @@ class RegisterController extends Controller
             if ($data['account_type'] == Role::$teacher) {
                 $roleName = Role::$teacher;
                 $roleId = Role::getTeacherRoleId();
-            } else if ($data['account_type'] == Role::$organization) {
-                $roleName = Role::$organization;
+            } else if ($data['account_type'] == Role::$teacher) {
+                $roleName = Role::$teacher;
                 $roleId = Role::getOrganizationRoleId();
             }
         }
@@ -319,3 +319,4 @@ class RegisterController extends Controller
     }
 
 }
+

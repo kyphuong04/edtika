@@ -153,3 +153,5 @@ class Category extends Model implements TranslatableContract
         return $this->webinars()->where('status', 'active')->count();
     }
 }
+
+

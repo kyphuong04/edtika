@@ -22,3 +22,5 @@ class MobileAppController extends Controller
         return view('design_1.web.mobile_app.index', $data);
     }
 }
+
+

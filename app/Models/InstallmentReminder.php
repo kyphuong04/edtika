@@ -13,3 +13,5 @@ class InstallmentReminder extends Model
     protected $guarded = ['id'];
 
 }
+
+

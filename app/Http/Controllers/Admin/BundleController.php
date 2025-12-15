@@ -397,7 +397,7 @@ class BundleController extends Controller
             $teacher = User::findOrFail($data['teacher_id']);
             $creator = $bundle->creator;
 
-            if (empty($teacher) or ($creator->isOrganization() and ($teacher->organ_id != $creator->id and $teacher->id != $creator->id))) {
+            if (empty($teacher) or ($creator->isAdmin() and ($teacher->organ_id != $creator->id and $teacher->id != $creator->id))) {
                 $toastData = [
                     'title' => trans('public.request_failed'),
                     'msg' => trans('admin/main.is_not_the_teacher_of_this_organization'),
@@ -869,3 +869,5 @@ class BundleController extends Controller
     }
 
 }
+
+

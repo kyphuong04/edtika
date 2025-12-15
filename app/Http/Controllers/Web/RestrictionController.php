@@ -17,3 +17,5 @@ class RestrictionController extends Controller
         return view('design_1.web.restriction.index', $data);
     }
 }
+
+

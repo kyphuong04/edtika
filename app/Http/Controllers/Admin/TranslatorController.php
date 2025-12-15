@@ -119,3 +119,5 @@ class TranslatorController extends Controller
     }
 
 }
+
+

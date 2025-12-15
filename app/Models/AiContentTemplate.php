@@ -41,3 +41,5 @@ class AiContentTemplate extends Model implements TranslatableContract
 
 
 }
+
+

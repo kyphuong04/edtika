@@ -10,3 +10,5 @@ class Purchase extends Model
 
     protected $guarded = ['id'];
 }
+
+

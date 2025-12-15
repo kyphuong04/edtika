@@ -52,3 +52,4 @@ class LandingBuilderComponentsNames
         return self::categories[$name] ?? LandingBuilderComponentCategories::HERO;
     }
 }
+

@@ -38,3 +38,4 @@ class XFrameHeadersMiddleware
         return $response;
     }
 }
+

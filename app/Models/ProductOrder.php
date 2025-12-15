@@ -42,3 +42,5 @@ class ProductOrder extends Model
         return $this->belongsTo('App\Models\Gift', 'gift_id', 'id');
     }
 }
+
+

@@ -54,3 +54,5 @@ class RewardProductsController extends Controller
         return view(getTemplate() . '.products.search', $data);
     }
 }
+
+

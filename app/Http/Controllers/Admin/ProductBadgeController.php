@@ -157,3 +157,5 @@ class ProductBadgeController extends Controller
     }
 
 }
+
+
