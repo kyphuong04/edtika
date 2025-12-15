@@ -60,3 +60,5 @@ class UpcomingCoursesExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

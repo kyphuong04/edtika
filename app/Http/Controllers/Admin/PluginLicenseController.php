@@ -111,3 +111,4 @@ class PluginLicenseController extends Controller
             ->with('success', 'Plugins Bundle purchase code successfully saved.');
     }
 } 
+

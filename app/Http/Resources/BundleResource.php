@@ -108,3 +108,4 @@ class BundleResource extends JsonResource
         ];
     }
 }
+

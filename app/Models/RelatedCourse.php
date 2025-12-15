@@ -26,3 +26,5 @@ class RelatedCourse extends Model
         return $this->belongsTo(Webinar::class, 'course_id', 'id');
     }
 }
+
+

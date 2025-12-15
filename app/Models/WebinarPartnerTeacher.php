@@ -23,3 +23,5 @@ class WebinarPartnerTeacher extends Model
     }
 }
 
+
+

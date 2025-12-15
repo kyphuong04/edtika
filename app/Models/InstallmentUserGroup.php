@@ -14,3 +14,5 @@ class InstallmentUserGroup extends Model
 
 
 }
+
+

@@ -1,0 +1,15 @@
+<?php return array (
+  'maximum_64_characters' => 'Tối đa 64 ký tự',
+  'maximum_255_characters' => 'Tối đa 255 ký tự',
+  'maximum_128_characters' => 'Tối đa 128 ký tự',
+  '50_160_characters_preferred' => 'Độ dài ưa thích: 155 - 160 ký tự',
+  'maximum_50_characters' => 'Tối đa 50 ký tự',
+  'course_thumbnail_size' => 'Kích thước ưa thích: 360x250px',
+  'course_cover_size' => 'Kích thước ưa thích: 1920x530px',
+  'max' => 'Tối đa',
+  'capacity_placeholder' => 'Bạn dự định tiếp đón bao nhiêu sinh viên?',
+  'subscribe_hint' => 'Ngoài việc mua hàng trực tiếp, sinh viên có thể đăng ký nội dung của bạn.',
+  'webinar_description_placeholder' => 'Yêu cầu tối thiểu 300 từ. HTML và hình ảnh được hỗ trợ.',
+  'empty_means_unlimited' => 'Để trống không giới hạn.',
+  'webinar_summary_placeholder' => 'Một bản tóm tắt ngắn gọn về nội dung khóa học, lý tưởng nhất là từ 50 đến 160 ký tự.',
+);

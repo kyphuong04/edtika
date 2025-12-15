@@ -31,3 +31,5 @@ class Support extends Model
         return $this->hasMany('App\Models\SupportConversation', 'support_id', 'id');
     }
 }
+
+

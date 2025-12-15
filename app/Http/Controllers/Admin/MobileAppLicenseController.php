@@ -82,3 +82,4 @@ class MobileAppLicenseController extends Controller
             ->with('success', 'Mobile App license validated and saved successfully.');
     }
 } 
+

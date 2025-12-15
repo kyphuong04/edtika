@@ -72,3 +72,4 @@ class LandingBuilderComponentCategories
         return $icons[$cat] ?? 'home-2';
     }
 }
+

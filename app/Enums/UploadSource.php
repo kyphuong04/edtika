@@ -30,3 +30,4 @@ class UploadSource
         self::IFRAME,
     ];
 }
+

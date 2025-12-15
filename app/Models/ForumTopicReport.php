@@ -26,3 +26,5 @@ class ForumTopicReport extends Model
         return $this->belongsTo('App\Models\ForumTopicPost', 'topic_post_id', 'id');
     }
 }
+
+

@@ -369,3 +369,5 @@ class DiscountController extends Controller
         return redirect(getAdminPanelUrl() . '/financial/discounts');
     }
 }
+
+

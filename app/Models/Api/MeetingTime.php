@@ -12,3 +12,5 @@ class MeetingTime extends Model
         return $this->belongsTo('App\Models\Api\Meeting', 'meeting_id', 'id');
     }
 }
+
+

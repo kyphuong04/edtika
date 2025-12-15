@@ -14,3 +14,5 @@ class AbandonedCartRuleSpecificationItem extends Model
 
 
 }
+
+

@@ -233,3 +233,5 @@ class Quiz extends Model implements TranslatableContract
         return $count;
     }
 }
+
+

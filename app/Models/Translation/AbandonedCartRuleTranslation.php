@@ -13,3 +13,5 @@ class AbandonedCartRuleTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

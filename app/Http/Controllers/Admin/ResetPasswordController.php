@@ -93,3 +93,5 @@ class ResetPasswordController extends Controller
         return back()->withInput()->with(['toast' => $toastData]);
     }
 }
+
+

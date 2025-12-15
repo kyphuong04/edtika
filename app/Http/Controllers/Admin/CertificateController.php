@@ -458,3 +458,5 @@ class CertificateController extends Controller
         return Excel::download($export, 'certificates.xlsx');
     }
 }
+
+

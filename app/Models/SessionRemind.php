@@ -11,3 +11,5 @@ class SessionRemind extends Model
     protected $table = 'session_reminds';
     protected $dateFormat = 'U';
 }
+
+

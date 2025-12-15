@@ -50,3 +50,5 @@ class CashbackHistoryExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

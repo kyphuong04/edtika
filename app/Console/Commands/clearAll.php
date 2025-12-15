@@ -55,3 +55,4 @@ class clearAll extends Command
         $this->info('debugbar files cleared!');
     }
 }
+

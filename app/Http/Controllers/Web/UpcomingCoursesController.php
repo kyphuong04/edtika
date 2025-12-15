@@ -492,3 +492,5 @@ class UpcomingCoursesController extends Controller
         return response()->json([], 400);
     }
 }
+
+

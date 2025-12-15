@@ -26,3 +26,4 @@ class SupportConversation extends Model{
 
     }
 }
+

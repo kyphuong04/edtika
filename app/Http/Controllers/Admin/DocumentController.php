@@ -133,3 +133,5 @@ class DocumentController extends Controller
         return view('admin.financial.documents.print', $data);
     }
 }
+
+

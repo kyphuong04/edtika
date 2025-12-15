@@ -150,3 +150,5 @@ class ThemeFontsController extends Controller
         return str_replace('record', rand(1, 600), $content);
     }
 }
+
+

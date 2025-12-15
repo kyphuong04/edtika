@@ -61,7 +61,7 @@
                             <select name="type" class="js-ajax-type js-noticeboard-type-select form-control select2" data-minimum-results-for-search="Infinity">
                                 <option value="">{{ trans('admin/main.select_type') }}</option>
 
-                                @if($authUser->isOrganization())
+                                @if($authUser->isAdmin())
                                     @foreach(\App\Models\Noticeboard::$types as $type)
                                         <option value="{{ $type }}" {{ (!empty($noticeboard) and $noticeboard->type == $type) ? 'selected' : '' }} >{{ trans('public.'.$type) }}</option>
                                     @endforeach

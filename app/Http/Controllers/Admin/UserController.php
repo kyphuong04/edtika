@@ -43,6 +43,11 @@ class UserController extends Controller
 
     public function staffs(Request $request)
     {
+        // Only CEO can access staff list
+        if (!auth()->user()->isCeo()) {
+            return abort(403);
+        }
+        
         $this->authorize('admin_staffs_list');
 
         $staffsRoles = Role::where('is_admin', true)->get();
@@ -68,7 +73,8 @@ class UserController extends Controller
     {
         $this->authorize('admin_organizations_list');
 
-        $query = User::where('role_name', Role::$organization);
+        // Admin role now replaces the old organization role
+        $query = User::where('role_name', Role::$admin);
 
         $totalOrganizations = deepClone($query)->count();
         $verifiedOrganizations = deepClone($query)->where('verified', true)
@@ -135,7 +141,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$teacher)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -191,7 +197,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$teacher)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -1246,12 +1252,13 @@ class UserController extends Controller
             $users->where('role_name', Role::$user);
         }
 
+        // Admin role now replaces the old organization role
         if ($option === "just_organization_role") {
-            $users->where('role_name', Role::$organization);
+            $users->where('role_name', Role::$admin);
         }
 
         if ($option === "just_organization_and_teacher_role") {
-            $users->whereIn('role_name', [Role::$organization, Role::$teacher]);
+            $users->whereIn('role_name', [Role::$admin, Role::$teacher]);
         }
 
         if ($option === "except_user") {
@@ -1337,7 +1344,7 @@ class UserController extends Controller
         $roles = Role::all();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$teacher)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -1395,7 +1402,7 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isOrganization() or $user->isTeacher()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             $data = $request->all();
 
             UserRegistrationPackage::updateOrCreate([
@@ -1422,7 +1429,7 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isOrganization() or $user->isTeacher()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             $data = $request->all();
 
             $user->update([
@@ -1527,3 +1534,5 @@ class UserController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

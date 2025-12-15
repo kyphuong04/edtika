@@ -32,3 +32,4 @@ class ProductFileResource extends JsonResource
 
 
 
+

@@ -24,7 +24,7 @@
                     {{ trans('quiz.student') }}
                 @elseif($cardUser->isTeacher())
                     {{ trans('public.instructor') }}
-                @elseif($cardUser->isOrganization())
+                @elseif($cardUser->isAdmin())
                     {{ trans('home.organization') }}
                 @elseif($cardUser->isAdmin())
                     {{ trans('panel.staff') }}

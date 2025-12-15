@@ -87,3 +87,5 @@ class ForumsBookmarksController extends Controller
     }
 
 }
+
+

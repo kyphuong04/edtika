@@ -32,3 +32,5 @@ class Testimonial extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'comment');
     }
 }
+
+

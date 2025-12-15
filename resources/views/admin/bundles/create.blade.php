@@ -39,130 +39,15 @@
                     <div class="card">
                         <div class="card-body">
 
-                            <form method="post" action="{{ getAdminPanelUrl() }}/bundles/{{ !empty($bundle) ? $bundle->id.'/update' : 'store' }}" id="webinarForm" class="webinar-form" enctype="multipart/form-data">
-                                {{ csrf_field() }}
-                                <section>
-                                    <h2 class="section-title after-line">{{ trans('public.basic_information') }}</h2>
-
-                                    <div class="row">
-                                        <div class="col-12 col-md-5">
-
-                                            @if(!empty(getGeneralSettings('content_translate')))
-                                                <div class="form-group">
-                                                    <label class="input-label">{{ trans('auth.language') }}</label>
-                                                    <select name="locale" class="form-control {{ !empty($bundle) ? 'js-edit-content-locale' : '' }}">
-                                                        @foreach($userLanguages as $lang => $language)
-                                                            <option value="{{ $lang }}" @if(mb_strtolower(request()->get('locale', app()->getLocale())) == mb_strtolower($lang)) selected @endif>{{ $language }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error('locale')
-                                                    <div class="invalid-feedback">
-                                                        {{ $message }}
-                                                    </div>
-                                                    @enderror
-                                                </div>
-                                            @else
-                                                <input type="hidden" name="locale" value="{{ getDefaultLocale() }}">
-                                            @endif
 
 
-                                            <div class="form-group mt-15">
-                                                <label class="input-label">{{ trans('public.title') }}</label>
-                                                <input type="text" name="title" value="{{ !empty($bundle) ? $bundle->title : old('title') }}" class="form-control @error('title')  is-invalid @enderror" placeholder=""/>
-                                                @error('title')
-                                                <div class="invalid-feedback">
-                                                    {{ $message }}
-                                                </div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group mt-15">
-                                                <label class="input-label">{{ trans('update.required_points') }}</label>
-                                                <input type="text" name="points" value="{{ !empty($bundle) ? $bundle->points : old('points') }}" class="form-control @error('points')  is-invalid @enderror" placeholder="Empty means inactive this mode"/>
-                                                <div class="text-gray-500 text-small mt-1">{{ trans('update.product_points_hint') }}</div>
-                                                @error('points')
-                                                <div class="invalid-feedback">
-                                                    {{ $message }}
-                                                </div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group mt-15">
-                                                <label class="input-label">{{ trans('update.bundle_url') }}</label>
-                                                <input type="text" name="slug" value="{{ !empty($bundle) ? $bundle->slug : old('slug') }}" class="form-control @error('slug')  is-invalid @enderror" placeholder=""/>
-                                                <div class="text-gray-500 text-small mt-1">{{ trans('update.bundle_url_hint') }}</div>
-                                                @error('slug')
-                                                <div class="invalid-feedback">
-                                                    {{ $message }}
-                                                </div>
-                                                @enderror
-                                            </div>
-
-                                            @if(!empty($bundle) and $bundle->creator->isOrganization())
-                                                <div class="form-group mt-15 ">
-                                                    <label class="input-label d-block">{{ trans('admin/main.organization') }}</label>
-
-                                                    <select class="form-control" disabled readonly data-placeholder="{{ trans('public.search_instructor') }}">
-                                                        <option selected>{{ $bundle->creator->full_name }}</option>
-                                                    </select>
-                                                </div>
-                                            @endif
-
-
-                                            <div class="form-group mt-15 ">
-                                                <label class="input-label d-block">{{ trans('admin/main.select_a_instructor') }}</label>
-
-
-                                                <select name="teacher_id" data-search-option="except_user" class="form-control search-user-select2"
-                                                        data-placeholder="{{ trans('public.select_a_teacher') }}"
-                                                >
-                                                    @if(!empty($bundle))
-                                                        <option value="{{ $bundle->teacher->id }}" selected>{{ $bundle->teacher->full_name }}</option>
-                                                    @else
-                                                        <option selected disabled>{{ trans('public.select_a_teacher') }}</option>
-                                                    @endif
-                                                </select>
-
-                                                @error('teacher_id')
-                                                <div class="invalid-feedback">
-                                                    {{ $message }}
-                                                </div>
-                                                @enderror
-                                            </div>
-
-
-                                            <div class="form-group mt-15">
-                                                <label class="input-label">{{ trans('public.seo_description') }}</label>
-                                                <input type="text" name="seo_description" value="{{ !empty($bundle) ? $bundle->seo_description : old('seo_description') }}" class="form-control @error('seo_description')  is-invalid @enderror"/>
-                                                <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.seo_description_hint') }}</div>
-                                                @error('seo_description')
-                                                <div class="invalid-feedback">
-                                                    {{ $message }}
-                                                </div>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group mt-15">
-                                                <label class="input-label">{{ trans('public.thumbnail_image') }}</label>
-                                                <div class="input-group">
-                                                    <div class="input-group-prepend">
-                                                        <button type="button" class="input-group-text admin-file-manager" data-input="thumbnail" data-preview="holder">
-                                                            <i class="fa fa-upload"></i>
-                                                        </button>
-                                                    </div>
-                                                    <input type="text" name="thumbnail" id="thumbnail" value="{{ !empty($bundle) ? $bundle->thumbnail : old('thumbnail') }}" class="form-control @error('thumbnail')  is-invalid @enderror"/>
-                                                    <div class="input-group-append">
-                                                        <button type="button" class="input-group-text admin-file-view" data-input="thumbnail">
-                                                            <i class="fa fa-eye"></i>
-                                                        </button>
-                                                    </div>
-                                                    @error('thumbnail')
-                                                    <div class="invalid-feedback">
-                                                        {{ $message }}
-                                                    </div>
-                                                    @enderror
-                                                </div>
-                                            </div>
+                            <div class="empty-state mx-auto d-block"  data-width="900" >
+                                <img class="img-fluid col-md-6" src="/assets/default/img/plugin.svg" alt="image">
+                                <h3 class="mt-3">This is a paid plugin!</h3>
+                                <h5 class="lead">
+                                    You can purchase it by <strong><a href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004">this link</a></strong> on Codecanyon.
+                                </h5>             
+                              </div>
 
 
                                             <div class="form-group mt-15">

@@ -121,3 +121,5 @@ class UpcomingCourseFollowersController extends Controller
     }
 
 }
+
+

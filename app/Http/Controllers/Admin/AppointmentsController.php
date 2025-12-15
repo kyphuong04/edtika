@@ -243,3 +243,5 @@ class AppointmentsController extends Controller
         abort(404);
     }
 }
+
+

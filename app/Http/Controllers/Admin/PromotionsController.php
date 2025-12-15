@@ -157,3 +157,5 @@ class PromotionsController extends Controller
         return view('admin.financial.promotions.promotion_sales', $data);
     }
 }
+
+

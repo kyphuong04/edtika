@@ -184,3 +184,5 @@ class Subscribe extends Model implements TranslatableContract
         return $hasInstallment;
     }
 }
+
+

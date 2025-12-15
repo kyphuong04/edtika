@@ -250,3 +250,5 @@ class Installment extends Model implements TranslatableContract
         return $result;
     }
 }
+
+

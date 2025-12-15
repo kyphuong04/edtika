@@ -415,3 +415,5 @@ class SupportsController extends Controller
         return redirect(getAdminPanelUrl().'/supports/' . $support->id . '/conversation');
     }
 }
+
+

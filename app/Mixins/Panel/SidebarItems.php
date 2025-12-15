@@ -42,35 +42,48 @@ class SidebarItems
         return $items;
     }
 
+    // Helper function to check if user is admin or teacher
+    static private function isAdminOrTeacher($user)
+    {
+        if (!$user) {
+            return false;
+        }
+        return $user->isAdmin() || $user->isTeacher() || $user->role_name === 'admin';
+    }
+
     static public function getMembersSectionItems($user)
     {
         $items = [];
 
-        if ($user->isOrganization()) {
+        if (self::isAdminOrTeacher($user)) {
 
-            if ($user->can('panel_organization_instructors')) {
-                $items['instructors'] = [
-                    'icon' => self::getIcon('instructors'),
-                    'text' => trans('public.instructors'),
-                    'url' => '/panel/instructors',
-                    'items' => []
-                ];
+            // Only Admin can manage teachers
+            if ($user->role_name === 'admin') {
+                // Support both instructors and teachers permissions (teachers is alias for instructors)
+                if ($user->can('panel_organization_instructors') || $user->can('panel_organization_teachers')) {
+                    $items['teachers'] = [
+                        'icon' => self::getIcon('instructors'),
+                        'text' => trans('teachers'),
+                        'url' => '/panel/manage/teachers',
+                        'items' => []
+                    ];
 
-                if ($user->can('panel_organization_instructors_create')) {
-                    $items['instructors']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/manage/instructors/new'];
-                }
+                    if ($user->can('panel_organization_instructors_create') || $user->can('panel_organization_teachers_create')) {
+                        $items['teachers']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/manage/teachers/new'];
+                    }
 
-                if ($user->can('panel_organization_instructors_lists')) {
-                    $items['instructors']['items'][] = ['text' => trans('public.list'), 'url' => '/panel/manage/instructors'];
+                    if ($user->can('panel_organization_instructors_lists') || $user->can('panel_organization_teachers_lists')) {
+                        $items['teachers']['items'][] = ['text' => trans('public.list'), 'url' => '/panel/manage/teachers'];
+                    }
                 }
             }
 
-
+            // Both Admin and Teacher can manage students
             if ($user->can('panel_organization_students')) {
                 $items['students'] = [
                     'icon' => self::getIcon('students'),
                     'text' => trans('quiz.students'),
-                    'url' => '/panel/students',
+                    'url' => '/panel/manage/students',
                     'items' => []
                 ];
 
@@ -100,7 +113,7 @@ class SidebarItems
                 'items' => []
             ];
 
-            if ($user->isOrganization() || $user->isTeacher()) {
+            if (self::isAdminOrTeacher($user)) {
                 if ($user->can('panel_webinars_create')) {
                     $items['webinars']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/courses/new'];
                 }
@@ -118,11 +131,12 @@ class SidebarItems
                 $items['webinars']['items'][] = ['text' => trans('panel.organization_classes'), 'url' => '/panel/courses/organization_classes'];
             }
 
-            if ($user->can('panel_webinars_my_purchases')) {
+            // Only show purchases for students and above (not for leads/user role)
+            if (!$user->isUser() && $user->can('panel_webinars_my_purchases')) {
                 $items['webinars']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/courses/purchases'];
             }
 
-            if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_webinars_my_class_comments')) {
+            if (self::isAdminOrTeacher($user) and $user->can('panel_webinars_my_class_comments')) {
                 $items['webinars']['items'][] = ['text' => trans('panel.my_class_comments'), 'url' => '/panel/courses/comments'];
             }
 
@@ -134,12 +148,13 @@ class SidebarItems
                 $items['webinars']['items'][] = ['text' => trans('panel.favorites'), 'url' => '/panel/courses/favorites'];
             }
 
-            if (!empty(getFeaturesSettings('course_notes_status')) and $user->can('panel_webinars_personal_course_notes')) {
+            // Only show course notes for students and above (leads haven't enrolled)
+            if (!$user->isUser() && $user->can('panel_webinars_personal_course_notes')) {
                 $items['webinars']['items'][] = ['text' => trans('update.course_notes'), 'url' => '/panel/courses/personal-notes'];
             }
         }
 
-        if (!empty(getFeaturesSettings('upcoming_courses_status')) and $user->can('panel_upcoming_courses')) {
+        if ($user->can('panel_upcoming_courses')) {
             $items['upcoming_courses'] = [
                 'icon' => self::getIcon('upcoming_courses'),
                 'text' => trans('update.upcoming_courses'),
@@ -147,7 +162,7 @@ class SidebarItems
                 'items' => []
             ];
 
-            if ($user->isOrganization() || $user->isTeacher()) {
+            if (self::isAdminOrTeacher($user)) {
                 if ($user->can('panel_upcoming_courses_create')) {
                     $items['upcoming_courses']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/upcoming_courses/new'];
                 }
@@ -163,7 +178,7 @@ class SidebarItems
         }
 
 
-        if (($user->isOrganization() or $user->isTeacher()) and $user->can('panel_bundles')) {
+        if (self::isAdminOrTeacher($user) and $user->can('panel_bundles')) {
             $items['bundles'] = [
                 'icon' => self::getIcon('bundles'),
                 'text' => trans('update.bundles'),
@@ -193,7 +208,7 @@ class SidebarItems
                 $items['meetings']['items'][] = ['text' => trans('public.my_reservation'), 'url' => '/panel/meetings/reservation'];
             }
 
-            if ($user->isOrganization() || $user->isTeacher()) {
+            if (self::isAdminOrTeacher($user)) {
                 if ($user->can('panel_meetings_requests')) {
                     $items['meetings']['items'][] = ['text' => trans('panel.requests'), 'url' => '/panel/meetings/requests'];
                 }
@@ -221,7 +236,8 @@ class SidebarItems
             ];
         }
 
-        if (getFeaturesSettings('webinar_assignment_status') and $user->can('panel_assignments')) {
+        // Only show assignments for students and above (not for leads)
+        if (!$user->isUser() && $user->can('panel_assignments')) {
             $items['assignments'] = [
                 'icon' => self::getIcon('assignments'),
                 'text' => trans('update.assignments'),
@@ -233,14 +249,15 @@ class SidebarItems
                 $items['assignments']['items'][] = ['text' => trans('update.my_assignments'), 'url' => '/panel/assignments/my-requests'];
             }
 
-            if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_assignments_my_courses_assignments')) {
+            if ((self::isAdminOrTeacher($user)) and $user->can('panel_assignments_my_courses_assignments')) {
                 $items['assignments']['items'][] = ['text' => trans('update.assignments'), 'url' => '/panel/assignments'];
                 $items['assignments']['items'][] = ['text' => trans('update.students_assignments'), 'url' => '/panel/assignments/histories'];
             }
         }
 
 
-        if ($user->can('panel_quizzes')) {
+        // Only show quizzes for students and above (not for leads)
+        if (!$user->isUser() && $user->can('panel_quizzes')) {
             $items['quizzes'] = [
                 'icon' => self::getIcon('quizzes'),
                 'text' => trans('panel.quizzes'),
@@ -248,7 +265,7 @@ class SidebarItems
                 'items' => []
             ];
 
-            if ($user->isOrganization() || $user->isTeacher()) {
+            if (self::isAdminOrTeacher($user)) {
                 if ($user->can('panel_quizzes_create')) {
                     $items['quizzes']['items'][] = ['text' => trans('quiz.new_quiz'), 'url' => '/panel/quizzes/new'];
                 }
@@ -273,7 +290,8 @@ class SidebarItems
         }
 
 
-        if ($user->can('panel_certificates')) {
+        // Only show certificates for students and above (not for leads)
+        if (!$user->isUser() && $user->can('panel_certificates')) {
             $items['certificates'] = [
                 'icon' => self::getIcon('certificates'),
                 'text' => trans('panel.certificates'),
@@ -281,7 +299,7 @@ class SidebarItems
                 'items' => []
             ];
 
-            if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_certificates_lists')) {
+            if ((self::isAdminOrTeacher($user)) and $user->can('panel_certificates_lists')) {
                 $items['certificates']['items'][] = ['text' => trans('public.list'), 'url' => '/panel/certificates'];
                 $items['certificates']['items'][] = ['text' => trans('webinars.all_students'), 'url' => '/panel/certificates/students'];
             }
@@ -300,7 +318,7 @@ class SidebarItems
     {
         $items = [];
 
-        if ($user->checkCanAccessToStore() and $user->can('panel_products')) {
+        if ($user->can('panel_products')) {
             $items['store'] = [
                 'icon' => self::getIcon('store'),
                 'text' => trans('update.store'),
@@ -308,7 +326,7 @@ class SidebarItems
                 'items' => []
             ];
 
-            if ($user->isOrganization() || $user->isTeacher()) {
+            if (self::isAdminOrTeacher($user)) {
 
                 if ($user->can('panel_products_create')) {
                     $items['store']['items'][] = ['text' => trans('update.new_product'), 'url' => '/panel/store/products/new'];
@@ -323,11 +341,11 @@ class SidebarItems
                 }
             }
 
-            if ($user->can('panel_products_purchases')) {
-                $items['store']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/store/purchases'];
-            }
-
-            if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_products_comments')) {
+            // Only show purchases for students and above (not for leads)
+        if (!$user->isUser() && $user->can('panel_products_purchases')) {
+            $items['store']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/store/purchases'];
+        }
+            if ((self::isAdminOrTeacher($user)) and $user->can('panel_products_comments')) {
                 $items['store']['items'][] = ['text' => trans('update.product_comments'), 'url' => '/panel/store/products/comments'];
             }
 
@@ -345,7 +363,7 @@ class SidebarItems
                 'items' => []
             ];
 
-            if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_financial_sales_reports')) {
+            if ((self::isAdminOrTeacher($user)) and $user->can('panel_financial_sales_reports')) {
                 $items['financial']['items'][] = ['text' => trans('financial.sales_report'), 'url' => '/panel/financial/sales'];
             }
 
@@ -353,10 +371,10 @@ class SidebarItems
                 $items['financial']['items'][] = ['text' => trans('financial.financial_summary'), 'url' => '/panel/financial/summary'];
             }
 
-            if ($user->can('panel_financial_payout')) {
-                $items['financial']['items'][] = ['text' => trans('financial.payout'), 'url' => '/panel/financial/payout'];
-            }
-
+            // Only show payout for students and above (leads have no income to withdraw)
+        if (!$user->isUser() && $user->can('panel_financial_payout')) {
+            $items['financial']['items'][] = ['text' => trans('financial.payout'), 'url' => '/panel/financial/payout'];
+        }
             if ($user->can('panel_financial_charge_account')) {
                 $items['financial']['items'][] = ['text' => trans('financial.charge_account'), 'url' => '/panel/financial/account'];
             }
@@ -365,11 +383,11 @@ class SidebarItems
                 $items['financial']['items'][] = ['text' => trans('financial.subscribes'), 'url' => '/panel/financial/subscribes'];
             }
 
-            if (($user->isOrganization() || $user->isTeacher()) and getRegistrationPackagesGeneralSettings('status') and $user->can('panel_financial_registration_packages')) {
+            if ((self::isAdminOrTeacher($user)) and getRegistrationPackagesGeneralSettings('status') and $user->can('panel_financial_registration_packages')) {
                 $items['financial']['items'][] = ['text' => trans('update.registration_packages'), 'url' => route('panelRegistrationPackagesLists')];
             }
 
-            if (getInstallmentsSettings('status') and $user->can('panel_financial_installments')) {
+            if ($user->can('panel_financial_installments')) {
                 $items['financial']['items'][] = ['text' => trans('update.installments'), 'url' => '/panel/financial/installments'];
             }
 
@@ -405,11 +423,11 @@ class SidebarItems
                 }
             }
 
-            if (!empty($referralSettings) and $referralSettings['status'] and $user->affiliate and $user->can('panel_marketing_affiliates')) {
+            if ($user->can('panel_marketing_affiliates')) {
                 $items['marketing']['items'][] = ['text' => trans('panel.affiliates'), 'url' => '/panel/marketing/affiliates'];
             }
 
-            if (!empty(getRegistrationBonusSettings('status')) and $user->enable_registration_bonus and $user->can('panel_marketing_registration_bonus')) {
+            if ($user->can('panel_marketing_registration_bonus')) {
                 $items['marketing']['items'][] = ['text' => trans('update.registration_bonus'), 'url' => '/panel/marketing/registration_bonus'];
             }
 
@@ -428,7 +446,7 @@ class SidebarItems
         // rewards
         $rewardSetting = getRewardsSettings();
 
-        if (!empty($rewardSetting) and $rewardSetting['status'] == '1' and $user->can('panel_rewards')) {
+        if ($user->can('panel_rewards')) {
             $items['rewards'] = [
                 'icon' => self::getIcon('rewards'),
                 'text' => trans('update.rewards'),
@@ -467,7 +485,7 @@ class SidebarItems
         }
 
         // Forums
-        if (getForumsGeneralSettings('forums_status') and $user->can('panel_forums')) {
+        if ($user->can('panel_forums')) {
             $items['forums'] = [
                 'icon' => self::getIcon('forums'),
                 'text' => trans('update.forums'),
@@ -494,7 +512,7 @@ class SidebarItems
 
 
         // Articles
-        if ($user->isTeacher() and $user->can('panel_blog')) {
+        if ((self::isAdminOrTeacher($user)) and $user->can('panel_blog')) {
 
             $items['blog'] = [
                 'icon' => self::getIcon('blog'),
@@ -521,7 +539,7 @@ class SidebarItems
 
 
         // noticeboard
-        if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_noticeboard')) {
+        if ((self::isAdminOrTeacher($user)) and $user->can('panel_noticeboard')) {
             $items['noticeboard'] = [
                 'icon' => self::getIcon('noticeboard'),
                 'text' => trans('panel.noticeboard'),
@@ -573,7 +591,7 @@ class SidebarItems
     {
         $items = [];
 
-        if (($user->isTeacher() or $user->isOrganization()) and $user->can('panel_others_profile_url')) {
+        if ($user->can('panel_others_profile_url')) {
             $items['profile'] = [
                 'icon' => self::getIcon('profile'),
                 'text' => trans('public.my_profile'),
@@ -610,3 +628,4 @@ class SidebarItems
     }
 
 }
+

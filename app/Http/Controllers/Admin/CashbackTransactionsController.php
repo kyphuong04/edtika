@@ -267,3 +267,5 @@ class CashbackTransactionsController extends Controller
         return Excel::download($export, 'history.xlsx');
     }
 }
+
+

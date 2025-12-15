@@ -14,3 +14,5 @@ class Section extends Model
         return $this->hasMany($this, 'section_group_id', 'id');
     }
 }
+
+

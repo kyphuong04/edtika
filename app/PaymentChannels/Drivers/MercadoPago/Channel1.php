@@ -144,3 +144,4 @@ class Channel1 extends BasePaymentChannel implements IChannel
         return $order;
     }
 }
+

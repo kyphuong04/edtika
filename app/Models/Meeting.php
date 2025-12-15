@@ -38,3 +38,5 @@ class Meeting extends Model
         return $timezone;
     }
 }
+
+

@@ -275,7 +275,7 @@ class WebinarStatisticController extends Controller
                 $data[0] = $user->count;
             } else if ($user->role_name == Role::$teacher) {
                 $data[1] = $user->count;
-            } else if ($user->role_name == Role::$organization) {
+            } else if ($user->role_name == Role::$teacher) {
                 $data[2] = $user->count;
             }
         }
@@ -457,3 +457,5 @@ class WebinarStatisticController extends Controller
         ];
     }
 }
+
+

@@ -106,3 +106,5 @@ trait MyProductsListsTrait
         ]);
     }
 }
+
+

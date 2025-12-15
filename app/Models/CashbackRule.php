@@ -111,3 +111,5 @@ class CashbackRule extends Model implements TranslatableContract
         }
     }
 }
+
+

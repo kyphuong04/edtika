@@ -21,3 +21,5 @@ class TicketUser extends Model
         }
     }
 }
+
+

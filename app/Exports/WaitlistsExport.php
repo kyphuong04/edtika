@@ -51,3 +51,5 @@ class WaitlistsExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

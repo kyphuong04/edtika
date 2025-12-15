@@ -22,3 +22,4 @@ class DebugBar
         return $next($request);
     }
 }
+

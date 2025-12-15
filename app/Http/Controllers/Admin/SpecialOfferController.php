@@ -240,3 +240,5 @@ class SpecialOfferController extends Controller
         return redirect()->back();
     }
 }
+
+

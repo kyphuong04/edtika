@@ -38,14 +38,14 @@
 
         <ul class="my-8">
             <li class="header-1-dropdown-menu__item">
-                <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/") : '/panel' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                <a href="{{ ($authUser->isSuperAdmin()) ? getAdminPanelUrl("/") : '/panel' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                     <x-iconsax-lin-chart-2 class="icons" width="24px" height="24px"/>
                     <span class="ml-8">{{ trans('panel.dashboard') }}</span>
                 </a>
             </li>
 
             <li class="header-1-dropdown-menu__item">
-                <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/notifications") : '/panel/notifications' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                <a href="{{ ($authUser->isSuperAdmin()) ? getAdminPanelUrl("/notifications") : '/panel/notifications' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                     <x-iconsax-lin-notification class="icons" width="24px" height="24px"/>
                     <span class="ml-8">{{ trans('panel.notifications') }}</span>
 
@@ -57,14 +57,14 @@
 
             @if(!$authUser->isUser())
                 <li class="header-1-dropdown-menu__item">
-                    <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/webinars?type=course") : '/panel/courses' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                    <a href="{{ ($authUser->isSuperAdmin()) ? getAdminPanelUrl("/webinars?type=course") : '/panel/courses' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                         <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
                         <span class="ml-8">{{ trans('update.my_courses') }}</span>
                     </a>
                 </li>
 
                 <li class="header-1-dropdown-menu__item">
-                    <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/financial/sales") : '/panel/financial/sales' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                    <a href="{{ ($authUser->isSuperAdmin()) ? getAdminPanelUrl("/financial/sales") : '/panel/financial/sales' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                         <x-iconsax-lin-moneys class="icons" width="24px" height="24px"/>
                         <span class="ml-8">{{ trans('panel.sales') }}</span>
                     </a>
@@ -79,7 +79,7 @@
             @endif
 
             <li class="header-1-dropdown-menu__item">
-                <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/supports") : '/panel/support/new' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                <a href="{{ ($authUser->isSuperAdmin()) ? getAdminPanelUrl("/supports") : '/panel/support/new' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                     <x-iconsax-lin-message-question class="icons" width="24px" height="24px"/>
                     <span class="ml-8">{{ trans('panel.support') }}</span>
                 </a>
@@ -93,7 +93,7 @@
             </li>
 
             <li class="header-1-dropdown-menu__item">
-                <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/settings") : '/panel/setting' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                <a href="{{ ($authUser->isSuperAdmin()) ? getAdminPanelUrl("/settings") : '/panel/setting' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                     <x-iconsax-lin-setting-2 class="icons" width="24px" height="24px"/>
                     <span class="ml-8">{{ trans('panel.settings') }}</span>
                 </a>

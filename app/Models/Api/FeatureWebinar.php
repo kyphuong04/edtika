@@ -38,3 +38,5 @@ class FeatureWebinar extends Model
         return $query;
     }
 }
+
+

@@ -20,3 +20,4 @@ function getLandingComponentScriptPath($name): string
 {
     return "/assets/design_1/landing_builder/js/components/{$name}.min.js";
 }
+

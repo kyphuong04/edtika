@@ -17,56 +17,6 @@
 
         <div class="section-body">
 
-            <section class="card">
-                <div class="card-body">
-                    <form method="get" class="mb-0">
-
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label class="input-label">{{trans('admin/main.search')}}</label>
-                                    <input name="full_name" type="text" class="form-control" value="{{ request()->get('full_name') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label class="input-label">{{ trans('admin/main.role') }}</label>
-                                    <select name="role_name" class="form-control">
-                                        <option value="">{{ trans('public.all') }}</option>
-
-                                        <option value="{{ \App\Models\Role::$teacher }}" @if(request()->get('role_name') == \App\Models\Role::$teacher) selected @endif>{{ trans('home.instructors') }}</option>
-                                        <option value="{{ \App\Models\Role::$organization }}" @if(request()->get('role_name') == \App\Models\Role::$organization) selected @endif>{{ trans('home.organizations') }}</option>
-                                        <option value="{{ \App\Models\Role::$admin }}" @if(request()->get('role_name') == \App\Models\Role::$admin) selected @endif>{{ trans('admin/main.admin') }}</option>
-
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label class="input-label">{{ trans('admin/main.users_group') }}</label>
-                                    <select name="group_id" data-plugin-selectTwo class="form-control populate">
-                                        <option value="">{{ trans('admin/main.select_users_group') }}</option>
-                                        @foreach($userGroups as $userGroup)
-                                            <option value="{{ $userGroup->id }}" @if(request()->get('group_id') == $userGroup->id) selected @endif>{{ $userGroup->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-md-3 d-flex align-items-center ">
-                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
-                            </div>
-
-
-                        </div>
-                    </form>
-                </div>
-            </section>
-
             <div class="row">
                 <div class="col-12 col-md-12">
                     <div class="card">

@@ -132,3 +132,5 @@ class CoursePersonalNotesController extends Controller
         abort(404);
     }
 }
+
+

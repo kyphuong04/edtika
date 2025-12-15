@@ -559,3 +559,5 @@ class UpcomingCoursesController extends Controller
         return response()->json($result, 200);
     }
 }
+
+

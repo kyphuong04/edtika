@@ -18,8 +18,9 @@ class BecomeInstructorController extends Controller
     {
         $this->authorize('admin_become_instructors_list');
 
+        // Admin role now replaces the old organization role
         if ($page == 'organizations') {
-            $role = Role::$organization;
+            $role = Role::$admin;
         } else {
             $role = Role::$teacher;
         }
@@ -113,3 +114,5 @@ class BecomeInstructorController extends Controller
     }
 
 }
+
+

@@ -178,3 +178,5 @@ class CertificatesListsController extends Controller
         return $query->get();
     }
 }
+
+

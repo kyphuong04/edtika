@@ -37,3 +37,5 @@ trait RegionsDataByUser
         ];
     }
 }
+
+

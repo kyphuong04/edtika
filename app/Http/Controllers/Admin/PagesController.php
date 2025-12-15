@@ -182,3 +182,5 @@ class PagesController extends Controller
         return redirect(getAdminPanelUrl() . '/pages');
     }
 }
+
+

@@ -31,3 +31,4 @@ class WebinarChapterItemsResource extends JsonResource
         ];
     }
 }
+

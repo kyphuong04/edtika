@@ -167,6 +167,14 @@ class Sale extends Model
         $registrationBonusAccounting = new RegistrationBonusAccounting();
         $registrationBonusAccounting->checkBonusAfterSale($orderItem->user_id);
 
+        /* Auto-convert user to student role after first course/bundle purchase */
+        if (!empty($orderItem->webinar_id) || !empty($orderItem->bundle_id)) {
+            $buyer = \App\User::find($orderItem->user_id);
+            if ($buyer) {
+                $buyer->convertToStudentIfNeeded();
+            }
+        }
+
         return $sale;
     }
 
@@ -316,3 +324,5 @@ class Sale extends Model
         return $result;
     }
 }
+
+

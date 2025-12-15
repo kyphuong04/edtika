@@ -133,3 +133,5 @@ class ProductBadgeContentsController extends Controller
         return $type;
     }
 }
+
+

@@ -229,3 +229,5 @@ class WebinarReviewController extends Controller
         ]);
     }
 }
+
+

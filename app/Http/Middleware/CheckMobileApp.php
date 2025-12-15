@@ -25,3 +25,4 @@ class CheckMobileApp
         return $next($request);
     }
 }
+

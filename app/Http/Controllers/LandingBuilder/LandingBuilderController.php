@@ -331,3 +331,4 @@ class LandingBuilderController extends Controller
     }
 
 }
+
