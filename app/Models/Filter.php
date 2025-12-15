@@ -32,3 +32,5 @@ class Filter extends Model implements TranslatableContract
         return $this->hasMany('App\Models\FilterOption', 'filter_id', 'id')->orderBy('order', 'asc');
     }
 }
+
+

@@ -39,3 +39,5 @@ class AdvertisingBanner extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'image');
     }
 }
+
+

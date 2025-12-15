@@ -21,3 +21,5 @@ class DiscountGroup extends Model
         return $this->belongsTo('App\Models\Group', 'group_id', 'id');
     }
 }
+
+

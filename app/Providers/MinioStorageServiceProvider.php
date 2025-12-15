@@ -67,3 +67,4 @@ class MinioStorageServiceProvider extends ServiceProvider
 
     }
 }
+

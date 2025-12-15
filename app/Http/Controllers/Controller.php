@@ -40,3 +40,4 @@ class Controller extends BaseController
         return (string)$paginate->links('vendor.pagination.design_1');
     }
 }
+

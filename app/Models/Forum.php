@@ -121,3 +121,5 @@ class Forum extends Model implements TranslatableContract
         return $result;
     }
 }
+
+

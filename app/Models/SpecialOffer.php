@@ -48,3 +48,5 @@ class SpecialOffer extends Model
         return time2string($difference);
     }
 }
+
+

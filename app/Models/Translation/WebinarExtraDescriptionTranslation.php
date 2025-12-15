@@ -11,3 +11,5 @@ class WebinarExtraDescriptionTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

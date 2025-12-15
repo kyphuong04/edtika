@@ -397,3 +397,5 @@ class CashbackRuleController extends Controller
         return redirect(getAdminPanelUrl("/cashback/rules"))->with(['toast' => $toastData]);
     }
 }
+
+

@@ -426,3 +426,4 @@ function getMobileAppGeneralSettings($key = null)
 {
     return App\Models\Setting::getMobileAppGeneralSettings($key);
 }
+

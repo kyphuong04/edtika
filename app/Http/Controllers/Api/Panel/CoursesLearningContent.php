@@ -31,3 +31,5 @@ class CoursesLearningContent extends Controller
     }
 
 }
+
+

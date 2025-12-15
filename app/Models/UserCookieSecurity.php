@@ -14,3 +14,5 @@ class UserCookieSecurity extends Model
     static $ALL = 'all';
     static $CUSTOMIZE = 'customize';
 }
+
+

@@ -122,3 +122,5 @@ class ProductFaqController extends Controller
         return back();
     }
 }
+
+

@@ -121,3 +121,5 @@ class WebinarChapterItem extends Model
     }
 
 }
+
+

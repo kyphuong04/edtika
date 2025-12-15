@@ -21,3 +21,5 @@ class GroupUser extends Model
     }
 
 }
+
+

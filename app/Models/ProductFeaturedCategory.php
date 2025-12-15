@@ -19,3 +19,5 @@ class ProductFeaturedCategory extends Model
 
 
 }
+
+

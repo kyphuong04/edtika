@@ -287,9 +287,12 @@ class LoginController extends Controller
         $userLoginHistoryMixin = new UserLoginHistoryMixin();
         $userLoginHistoryMixin->storeUserLoginHistory($user);
 
+        // Redirect based on role
         if ($user->isAdmin()) {
+            // Admin, Manager, CEO → Admin Panel
             return redirect(getAdminPanelUrl());
         } else {
+            // User (lead), Student, Teacher → User Panel
             return redirect('/panel');
         }
     }
@@ -312,3 +315,4 @@ class LoginController extends Controller
         return 'ok';
     }
 }
+

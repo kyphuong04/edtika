@@ -21,7 +21,7 @@ class ProductController extends Controller
     {
         $user = apiAuth();
 
-        if ((!$user->isTeacher() and !$user->isOrganization()) or !$user->checkCanAccessToStore()) {
+        if ((!$user->isTeacher() and !$user->isAdmin()) or !$user->checkCanAccessToStore()) {
             abort(403);
         }
 
@@ -146,3 +146,5 @@ class ProductController extends Controller
 
 
 }
+
+

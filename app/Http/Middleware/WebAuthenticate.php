@@ -21,3 +21,4 @@ class WebAuthenticate
         return redirect('/login');
     }
 }
+

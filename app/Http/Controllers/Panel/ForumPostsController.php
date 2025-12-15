@@ -139,3 +139,5 @@ class ForumPostsController extends Controller
     }
 
 }
+
+

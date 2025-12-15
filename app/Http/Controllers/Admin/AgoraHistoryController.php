@@ -47,3 +47,5 @@ class AgoraHistoryController extends Controller
         return Excel::download($export, 'agoraHistory.xlsx');
     }
 }
+
+

@@ -24,3 +24,4 @@ class CheckApiKey
         return $next($request);
     }
 }
+

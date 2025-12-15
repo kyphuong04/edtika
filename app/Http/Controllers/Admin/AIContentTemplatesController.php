@@ -171,3 +171,5 @@ class AIContentTemplatesController extends Controller
         return redirect(getAdminPanelUrl("/ai-contents/templates"))->with(['toast' => $toastData]);
     }
 }
+
+

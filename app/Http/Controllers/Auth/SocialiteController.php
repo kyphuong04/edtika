@@ -186,3 +186,4 @@ class SocialiteController extends Controller
     }
 
 }
+

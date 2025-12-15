@@ -20,3 +20,5 @@ class AbandonedCartRuleUserGroup extends Model
 
 
 }
+
+

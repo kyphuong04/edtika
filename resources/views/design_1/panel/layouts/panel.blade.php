@@ -30,9 +30,52 @@
 
         {!! getThemeColorsSettings() !!}
 
+        /* Sidebar Hover Effects */
+        .panel-sidebar__menu,
+        .panel-sidebar__menu-item {
+            height: 40px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 2px 0;
+        }
+        
+        .panel-sidebar__menu:hover,
+        .panel-sidebar__menu-item:hover {
+            background-color: #F3F4F6 !important;
+        }
+        
+        .accordion .panel-sidebar__menu.accordion__title:hover {
+            background-color: #F3F4F6 !important;
+        }
+        
+        a.panel-sidebar__menu:hover,
+        a.panel-sidebar__menu-item:hover {
+            background-color: #F3F4F6 !important;
+            text-decoration: none;
+        }
+        
+        div.panel-sidebar__menu:hover {
+            background-color: #F3F4F6 !important;
+        }
+        
+        .panel-sidebar__panel-user-menu,
+        .panel-sidebar__panel-user-menu-item {
+            height: 48px;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 2px 0;
+        }
+        
+        .panel-sidebar__panel-user-menu:hover,
+        .panel-sidebar__panel-user-menu-item:hover {
+            background-color: #F3F4F6 !important;
+        }
+
         /* Collapsed Sidebar Styles */
         .panel-sidebar.panel-sidebar--collapsed {
-            width: 80px !important;
+            width: 70px !important;
             transition: width 0.3s ease;
         }
         

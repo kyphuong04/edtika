@@ -408,3 +408,5 @@ class QuizzesResultController extends Controller
 
 
 }
+
+

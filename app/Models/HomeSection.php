@@ -58,3 +58,5 @@ class HomeSection extends Model
     static $blog = 'blog';
     static $upcoming_courses = 'upcoming_courses';
 }
+
+

@@ -534,3 +534,5 @@ class ForumTopicsController extends Controller
         abort(403);
     }
 }
+
+

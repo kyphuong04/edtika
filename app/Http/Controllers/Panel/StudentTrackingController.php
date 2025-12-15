@@ -34,12 +34,12 @@ class StudentTrackingController extends Controller
     {
         $user = auth()->user();
 
-        // Only teachers/instructors can access this
+        // Allow teachers/instructors and admins (organizations) to access student tracking
         if (!$user->isTeacher() && !$user->isOrganization()) {
             abort(403);
         }
 
-        // Get all courses/webinars created by this instructor
+        // Get all courses/webinars created by this instructor or organization
         $instructorWebinars = Webinar::where(function ($query) use ($user) {
             $query->where('creator_id', $user->id)
                 ->orWhere('teacher_id', $user->id);

@@ -278,3 +278,5 @@ class CourseForumsControllers extends Controller
         abort(404);
     }
 }
+
+

@@ -106,3 +106,5 @@ class ReferralController extends Controller
         return Excel::download($export, 'referrals_' . $type . '.xlsx');
     }
 }
+
+

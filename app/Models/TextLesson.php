@@ -72,3 +72,5 @@ class TextLesson extends Model implements TranslatableContract
         return $result;
     }
 }
+
+

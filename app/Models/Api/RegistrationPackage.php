@@ -28,3 +28,5 @@ class RegistrationPackage extends Model
         ];
     }
 }
+
+

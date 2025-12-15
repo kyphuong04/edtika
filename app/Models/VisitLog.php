@@ -223,3 +223,5 @@ class VisitLog extends Model
     }
 
 }
+
+

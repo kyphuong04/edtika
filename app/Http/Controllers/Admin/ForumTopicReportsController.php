@@ -40,3 +40,5 @@ class ForumTopicReportsController extends Controller
         return back();
     }
 }
+
+

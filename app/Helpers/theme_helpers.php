@@ -408,3 +408,4 @@ function getThemeFooterData()
         'contents' => $footerContents,
     ];
 }
+

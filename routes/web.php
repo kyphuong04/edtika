@@ -57,6 +57,10 @@ Route::get('/emergencyDatabaseUpdate', function () {
     ]);
 });
 
+// Direct purchase code routes (bypass license middleware)
+Route::get('/purchase-code', 'Web\PurchaseCodeController@show')->name('purchase.code.show');
+Route::post('/purchase-code', 'Web\PurchaseCodeController@store')->name('purchase.code.store');
+
 Route::group(['namespace' => 'Auth', 'middleware' => ['check_mobile_app','share', 'check_maintenance', 'check_restriction']], function () {
     Route::get('/login', 'LoginController@showLoginForm');
     Route::post('/login', 'LoginController@login');
@@ -112,9 +116,8 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         Route::group(['middleware' => 'web.auth'], function () {
             Route::get('/{slug}/installments', 'WebinarController@getInstallmentsByCourse');
 
-            Route::post('/learning/{slug}/itemInfo', 'LearningPageController@getItemInfo');
+           Route::post('/learning/{slug}/itemInfo', 'LearningPageController@getItemInfo');
             Route::post('/learning/{slug}/track-time', 'LearningPageController@trackTime');
-            Route::post('/learning/itemInfo', 'LearningPageController@getItemInfo');
             Route::post('/learning/personalNotes', 'LearningPageController@personalNotes');
             Route::get('/learning/{slug}', 'LearningPageController@index');
             Route::get('/learning/{slug}/noticeboards', 'LearningPageController@noticeboards');
@@ -213,7 +216,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     });
 
     Route::group(['prefix' => 'users'], function () {
-        Route::get('/{id}/profile', 'UserController@profile');
+        Route::get('/{username}/profile', 'UserProfileController@profile');
         Route::post('/{id}/availableTimes', 'UserController@availableTimes');
         Route::post('/{id}/send-message', 'UserController@sendMessage');
     });
@@ -304,7 +307,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     });
 
     Route::group(['prefix' => 'products'], function () {
-        Route::get('/', 'ProductController@searchLists');
+        Route::get('/', 'ProductController@index');
         Route::get('/{slug}', 'ProductController@show');
         Route::post('/{slug}/points/apply', 'ProductController@buyWithPoint');
 
@@ -403,5 +406,47 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     Route::get('/forms/{url}', 'FormsController@index');
     Route::post('/forms/{url}/store', 'FormsController@store');
 
+});
+
+/*
+|--------------------------------------------------------------------------
+| Role-Based Admin Panel Routes (CEO & Manager)
+|--------------------------------------------------------------------------
+| These catch-all routes forward /manager/* and /ceo/* requests to /admin/*
+| allowing role-specific URLs without duplicating all routes.
+*/
+
+Route::group(['prefix' => 'manager', 'namespace' => 'Admin', 'middleware' => ['web', 'admin_locale']], function () {
+    // Auth Routes
+    Route::get('login', 'LoginController@showLoginForm');
+    Route::post('login', 'LoginController@login');
+    Route::get('logout', 'LoginController@logout');
+    
+    // Dashboard
+    Route::group(['middleware' => 'admin'], function () {
+        Route::get('/', 'DashboardController@index');
+    });
+    
+    // Catch-all: Forward all other /manager/* to /admin/* internally
+    Route::any('{path}', function($path) {
+        return redirect('/admin/' . $path, 301);
+    })->where('path', '.*')->middleware('admin');
+});
+
+Route::group(['prefix' => 'ceo', 'namespace' => 'Admin', 'middleware' => ['web', 'admin_locale']], function () {
+    // Auth Routes
+    Route::get('login', 'LoginController@showLoginForm');
+    Route::post('login', 'LoginController@login');
+    Route::get('logout', 'LoginController@logout');
+    
+    // Dashboard  
+    Route::group(['middleware' => 'admin'], function () {
+        Route::get('/', 'DashboardController@index');
+    });
+    
+    // Catch-all: Forward all other /ceo/* to /admin/* internally
+    Route::any('{path}', function($path) {
+        return redirect('/admin/' . $path, 301);
+    })->where('path', '.*')->middleware('admin');
 });
 

@@ -115,3 +115,5 @@ class TrendCategoriesController extends Controller
         return redirect(getAdminPanelUrl().'/categories/trends');
     }
 }
+
+

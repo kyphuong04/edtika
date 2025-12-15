@@ -28,3 +28,5 @@ class SupportDepartment extends Model implements TranslatableContract
         return $this->hasMany('App\Models\Support', 'department_id', 'id');
     }
 }
+
+

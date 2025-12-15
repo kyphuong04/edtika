@@ -129,3 +129,5 @@ class SupportDepartmentsController extends Controller
         return redirect(getAdminPanelUrl().'/supports/departments');
     }
 }
+
+

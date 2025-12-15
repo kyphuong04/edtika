@@ -1508,6 +1508,13 @@ function truncate($text, $length, $withTail = true)
 
 function getAdminPanelUrlPrefix()
 {
+    // Always return 'admin' for all admin users (CEO, Manager, Admin)
+    // Routes are configured under /admin prefix only
+    if (auth()->check() && auth()->user()->isAdmin()) {
+        return 'admin';
+    }
+    
+    // Default prefix from settings or 'admin'
     $prefix = getGeneralSecuritySettings('admin_panel_url');
     return !empty($prefix) ? $prefix : 'admin';
 }
@@ -2447,3 +2454,4 @@ function getDefaultAvatarPath()
 
     return $avatarUrl;
 }
+

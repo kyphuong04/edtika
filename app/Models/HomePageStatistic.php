@@ -27,3 +27,5 @@ class HomePageStatistic extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'description');
     }
 }
+
+

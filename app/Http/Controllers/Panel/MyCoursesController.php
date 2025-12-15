@@ -206,3 +206,5 @@ class MyCoursesController extends Controller
             ->get();
     }
 }
+
+

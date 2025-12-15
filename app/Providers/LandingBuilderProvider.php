@@ -34,3 +34,4 @@ class LandingBuilderProvider extends ServiceProvider
         }
     }
 }
+

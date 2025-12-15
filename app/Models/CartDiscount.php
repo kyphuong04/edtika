@@ -34,3 +34,5 @@ class CartDiscount extends Model implements TranslatableContract
     }
 
 }
+
+

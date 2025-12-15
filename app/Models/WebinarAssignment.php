@@ -148,3 +148,5 @@ class WebinarAssignment extends Model implements TranslatableContract
         return $selectedSale;
     }
 }
+
+

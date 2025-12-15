@@ -300,3 +300,5 @@ class MyPurchasedCoursesController extends Controller
     }
 
 }
+
+

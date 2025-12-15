@@ -29,3 +29,5 @@ class OfflinePayment extends Model
         return '/store/' . $this->user_id . '/offlinePayments/' . $this->attachment;
     }
 }
+
+

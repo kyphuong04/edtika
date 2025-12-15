@@ -41,3 +41,5 @@ class CourseNoticeboard extends Model
         return $icons[$this->color];
     }
 }
+
+

@@ -83,3 +83,4 @@ class CommentResource extends JsonResource
     }
 
 }
+

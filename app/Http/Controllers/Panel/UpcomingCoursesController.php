@@ -113,7 +113,7 @@ class UpcomingCoursesController extends Controller
 
         $user = auth()->user();
         $teachers = null;
-        $isOrganization = $user->isOrganization();
+        $isOrganization = $user->isAdmin();
 
         if ($isOrganization) {
             $teachers = $user->getOrganizationTeachers()->get();
@@ -206,7 +206,7 @@ class UpcomingCoursesController extends Controller
 
         $user = auth()->user();
 
-        $isOrganization = $user->isOrganization();
+        $isOrganization = $user->isAdmin();
         $locale = $request->get('locale', app()->getLocale());
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
@@ -422,7 +422,7 @@ class UpcomingCoursesController extends Controller
             $data['companyLogos'],
         );
 
-        if (empty($data['teacher_id']) and $user->isOrganization() and $upcomingCourse->creator_id == $user->id) {
+        if (empty($data['teacher_id']) and $user->isAdmin() and $upcomingCourse->creator_id == $user->id) {
             $data['teacher_id'] = $user->id;
         }
 
@@ -735,3 +735,5 @@ class UpcomingCoursesController extends Controller
     }
 
 }
+
+

@@ -70,7 +70,7 @@ class Webinar extends Model implements TranslatableContract
 
         $user = auth()->user();
 
-        if (!empty($this->attributes['organization_price']) and !empty($user) and $this->creator->isOrganization() and $user->organ_id == $this->creator_id) {
+        if (!empty($this->attributes['organization_price']) and !empty($user) and $this->creator->isAdmin() and $user->organ_id == $this->creator_id) {
             $result = $this->attributes['organization_price'];
         }
 
@@ -1332,3 +1332,5 @@ class Webinar extends Model implements TranslatableContract
     }
 
 }
+
+

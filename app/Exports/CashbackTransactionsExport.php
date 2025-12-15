@@ -81,3 +81,5 @@ class CashbackTransactionsExport implements FromCollection, WithHeadings, WithMa
         ];
     }
 }
+
+

@@ -21,3 +21,5 @@ class UpcomingCourseReport extends Model
         return $this->belongsTo('App\Models\UpcomingCourse', 'upcoming_course_id', 'id');
     }
 }
+
+

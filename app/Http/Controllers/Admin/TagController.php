@@ -86,3 +86,5 @@ class TagController extends Controller
         return redirect(getAdminPanelUrl().'/tags');
     }
 }
+
+

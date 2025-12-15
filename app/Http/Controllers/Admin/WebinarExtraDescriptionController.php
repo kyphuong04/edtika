@@ -143,3 +143,5 @@ class WebinarExtraDescriptionController extends Controller
         return redirect()->back();
     }
 }
+
+

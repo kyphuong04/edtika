@@ -39,7 +39,8 @@ class BecomeInstructorController extends Controller
                 ->where('status', 'pending')
                 ->first();
 
-            $isOrganizationRole = (!empty($lastRequest) and $lastRequest->role == Role::$organization);
+            // Admin role now replaces the old organization role
+            $isOrganizationRole = (!empty($lastRequest) and $lastRequest->role == Role::$admin);
             $isInstructorRole = (empty($lastRequest) or $lastRequest->role == Role::$teacher);
 
             $userBanks = UserBank::query()
@@ -214,7 +215,7 @@ class BecomeInstructorController extends Controller
         if (!empty($user) and $user->isUser()) {
             $becomeInstructor = BecomeInstructor::where('user_id', $user->id)->first();
 
-            if (!empty($becomeInstructor) and $becomeInstructor->role == Role::$organization) {
+            if (!empty($becomeInstructor) and $becomeInstructor->role == Role::$teacher) {
                 $role = 'organizations';
             }
 
@@ -263,3 +264,5 @@ class BecomeInstructorController extends Controller
         ]);
     }
 }
+
+

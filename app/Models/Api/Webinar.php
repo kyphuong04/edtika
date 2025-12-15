@@ -949,3 +949,5 @@ class Webinar extends Model
         return $this->hasMany('App\Models\Api\Quiz', 'webinar_id', 'id');
     }
 }
+
+

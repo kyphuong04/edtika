@@ -101,3 +101,5 @@ class WebinarCertificateController extends Controller
         abort(404);
     }
 }
+
+

@@ -21,7 +21,9 @@ class AdminAuthenticate
      */
     public function handle($request, Closure $next)
     {
-        if (auth()->check() and auth()->user()->isAdmin()) {
+        // Only Manager and CEO (SuperAdmin) can access admin panel
+        // Regular admin role should use user panel
+        if (auth()->check() and auth()->user()->isSuperAdmin()) {
 
             \Session::forget('impersonated');
 
@@ -128,3 +130,4 @@ class AdminAuthenticate
         return $userLanguages;
     }
 }
+

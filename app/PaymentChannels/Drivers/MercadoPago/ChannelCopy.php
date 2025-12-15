@@ -136,3 +136,4 @@ class ChannelCopy extends BasePaymentChannel implements IChannel
         return $order;
     }
 }
+

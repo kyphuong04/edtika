@@ -541,3 +541,5 @@ class Setting extends Model implements TranslatableContract
         return self::getSetting(self::$mobileAppGeneralSettings, self::$mobileAppGeneralSettingsName, $key);
     }
 }
+
+

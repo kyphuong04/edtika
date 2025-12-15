@@ -300,3 +300,5 @@ class ClassesController extends Controller
         return $ratings;
     }
 }
+
+

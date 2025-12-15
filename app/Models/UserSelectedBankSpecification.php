@@ -20,3 +20,5 @@ class UserSelectedBankSpecification extends Model
     }
 
 }
+
+

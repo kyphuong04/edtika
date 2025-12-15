@@ -57,3 +57,5 @@ class UserLoginHistory extends Model
         return $result;
     }
 }
+
+

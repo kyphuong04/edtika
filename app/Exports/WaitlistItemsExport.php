@@ -53,3 +53,5 @@ class WaitlistItemsExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

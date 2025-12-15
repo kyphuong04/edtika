@@ -65,3 +65,5 @@ class QuizzesQuestion extends Model implements TranslatableContract
         return $result;
     }
 }
+
+
