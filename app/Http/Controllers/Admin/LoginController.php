@@ -115,18 +115,17 @@ class LoginController extends Controller
             }
 
             // Redirect to role-specific dashboard
-            // Manager and CEO go to admin panel
-            // Admin (organization) goes to user panel
-            if ($user->isCeo()) {
-                return Redirect::to('/ceo');
-            } elseif ($user->isManager()) {
-                return Redirect::to('/manager');
+            // Manager and CEO go to admin panel (both are SuperAdmin)
+            // Admin role goes to user panel
+            if ($user->isSuperAdmin()) {
+                // CEO and Manager both go to admin panel
+                return Redirect::to(getAdminPanelUrl());
             } elseif ($user->role_name === 'admin') {
                 // Admin role (replaces old organization) goes to panel
                 return Redirect::to('/panel');
             } else {
                 // Fallback to admin panel for other admin roles
-                return Redirect::to('/admin');
+                return Redirect::to(getAdminPanelUrl());
             }
         }
 
