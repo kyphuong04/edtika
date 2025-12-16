@@ -57,8 +57,8 @@ class SidebarItems
 
         if (self::isAdminOrTeacher($user)) {
 
-            // Only Admin can manage teachers
-            if ($user->role_name === 'admin') {
+            // Admin, Manager, and CEO can manage teachers
+            if (in_array($user->role_name, ['admin', 'manager', 'ceo'])) {
                 // Support both instructors and teachers permissions (teachers is alias for instructors)
                 if ($user->can('panel_organization_instructors') || $user->can('panel_organization_teachers')) {
                     $items['teachers'] = [
@@ -279,14 +279,15 @@ class SidebarItems
                 }
             }
 
-            if ($user->can('panel_quizzes_my_results')) {
+            // Only students see their own quiz results and participation status
+            // Teachers/Admin manage quizzes but don't take them
+            if ($user->isStudent() && $user->can('panel_quizzes_my_results')) {
                 $items['quizzes']['items'][] = ['text' => trans('public.my_results'), 'url' => '/panel/quizzes/my-results'];
             }
 
-            if ($user->can('panel_quizzes_not_participated')) {
+            if ($user->isStudent() && $user->can('panel_quizzes_not_participated')) {
                 $items['quizzes']['items'][] = ['text' => trans('update.not_participated'), 'url' => '/panel/quizzes/opens'];
             }
-
         }
 
 
@@ -371,10 +372,17 @@ class SidebarItems
                 $items['financial']['items'][] = ['text' => trans('financial.financial_summary'), 'url' => '/panel/financial/summary'];
             }
 
-            // Only show payout for students and above (leads have no income to withdraw)
-        if (!$user->isUser() && $user->can('panel_financial_payout')) {
-            $items['financial']['items'][] = ['text' => trans('financial.payout'), 'url' => '/panel/financial/payout'];
-        }
+            // Only show payout for users with income streams
+            // - Teachers/Admin/Manager/CEO: from course sales
+            // - Students: only if they have affiliate enabled
+            if ($user->can('panel_financial_payout')) {
+                $isTeacherOrAbove = !$user->isUser() && !$user->isStudent();
+                $isStudentWithAffiliate = $user->isStudent() && !empty($user->affiliate);
+                
+                if ($isTeacherOrAbove || $isStudentWithAffiliate) {
+                    $items['financial']['items'][] = ['text' => trans('financial.payout'), 'url' => '/panel/financial/payout'];
+                }
+            }
             if ($user->can('panel_financial_charge_account')) {
                 $items['financial']['items'][] = ['text' => trans('financial.charge_account'), 'url' => '/panel/financial/account'];
             }
