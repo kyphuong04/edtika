@@ -26,11 +26,11 @@
                 </li>
             @endcan()
 
-            @can('admin_users_list')
+            @if($authUser->can('admin_users_list') && $authUser->isCeo())
                 <li class="{{ (request()->is(getAdminPanelUrl('/all-users', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/all-users">{{ trans('admin/main.all_users') }}</a>
                 </li>
-            @endcan()
+            @endif
 
             @if($authUser->isCeo())
                 <li class="{{ (request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : '' }}">

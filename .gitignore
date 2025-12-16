@@ -28,8 +28,11 @@ Thumbs.db
 
 # Debug and test scripts (do not push to GitHub)
 test_*.php
+test-*.php
 check_*.php
+check-*.php
 verify_*.php
+verify-*.php
 diagnose_*.php
 diagnose-*.php
 diagnostic_*.php
@@ -38,8 +41,10 @@ debug-*.php
 fix_*.php
 fix-*.php
 grant_*.php
+grant-*.php
 analyze_*.php
 add_*.php
+add-*.php
 force_*.php
 copy_*.php
 create_*.php
@@ -60,13 +65,9 @@ list_*.php
 update_*.php
 view_*.php
 system_*.php
-check-*.php
-verify-*.php
 audit-*.php
 audit_*.php
-add-*.php
 admin_*.php
-apply_*.php
 
 # Specific test files
 /test_admin_access.php

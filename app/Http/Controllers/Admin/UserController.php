@@ -1325,6 +1325,11 @@ class UserController extends Controller
 
     public function allUsers(Request $request, $is_export_excel = false)
     {
+        // Only CEO can view all users in the system
+        if (!auth()->user()->isCeo()) {
+            return abort(403);
+        }
+        
         $this->authorize('admin_users_list');
 
         $query = User::query();

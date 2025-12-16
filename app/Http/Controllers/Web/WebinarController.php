@@ -36,6 +36,7 @@ class WebinarController extends Controller
     use CheckContentLimitationTrait;
     use InstallmentsTrait;
     use CourseShowTrait;
+    use LearningPageMixinsTrait;
 
     public function course(Request $request, $slug, $justReturnData = false)
     {
@@ -882,24 +883,6 @@ class WebinarController extends Controller
         abort(404);
     }
 
-    private function checkConcurrentLearning($user)
-    {
-        if ($user->isAdmin() or $user->isTeacher()) {
-            return true;
-        }
-
-        $cacheKey = 'learning_session_' . $user->id;
-        $currentSessionId = session()->getId();
-        $activeSessionId = Cache::get($cacheKey);
-
-        if (!empty($activeSessionId) and $activeSessionId !== $currentSessionId) {
-            return false;
-        }
-
-        Cache::put($cacheKey, $currentSessionId, 30); // 30 seconds
-
-        return true;
-    }
 }
 
 
