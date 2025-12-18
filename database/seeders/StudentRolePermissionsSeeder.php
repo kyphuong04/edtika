@@ -90,8 +90,8 @@ class StudentRolePermissionsSeeder extends Seeder
             // COMMUNICATIONS Section
             // Support
             'panel_support',
-            'panel_support_new',
-            'panel_support_class_support',
+            'panel_support_create',
+            'panel_support_lists',
             'panel_support_tickets',
             
             // Forums
