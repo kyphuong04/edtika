@@ -4,7 +4,9 @@
     </div>
 
     <h3 class="font-16 font-weight-bold mt-16">{{ $title }}</h3>
-    <p class="mt-4 font-14 text-gray-500">{!! $hint !!}</p>
+    @if(!empty($hint))
+        <p class="mt-4 font-14 text-gray-500">{!! $hint !!}</p>
+    @endif
 
     @if(!empty($btn))
         <a href="{{ $btn['url'] }}" class="btn btn-primary mt-16">{{ $btn['text'] }}</a>

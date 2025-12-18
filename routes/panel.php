@@ -277,16 +277,19 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/{id}/contact-info', 'ReserveMeetingController@getContactInfoModal');
     });
 
-    // Instructor Student Tracking Routes
+    // Instructor    // Student Tracking
     Route::group(['prefix' => 'students-tracking'], function () {
         Route::get('/', 'StudentTrackingController@index');
-        Route::get('/{studentId}/details', 'StudentTrackingController@show');
-        Route::get('/{studentId}/progress/{webinarId}', 'StudentTrackingController@courseProgress');
-        Route::get('/{studentId}/quiz-results', 'StudentTrackingController@quizResults');
-        Route::get('/{studentId}/assignments', 'StudentTrackingController@assignments');
-        Route::post('/{studentId}/support-message', 'StudentTrackingController@sendSupportMessage');
+        Route::get('/{student_id}/details', 'StudentTrackingController@details');
+        Route::get('/{student_id}/courses', 'StudentTrackingController@courses');
+        Route::get('/{student_id}/quizResults', 'StudentTrackingController@quizResults');
+        Route::get('/{student_id}/assignments', 'StudentTrackingController@assignments');
+        Route::post('/{student_id}/sendMessage', 'StudentTrackingController@sendMessage');
         Route::get('/export', 'StudentTrackingController@export');
     });
+
+    // My Students - Teachers only (students enrolled in courses)
+    Route::get('/my-students', 'MyStudentsController@index');
 
     Route::group(['prefix' => 'financial'], function () {
         Route::get('/sales', 'SaleController@index');

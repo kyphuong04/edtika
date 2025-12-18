@@ -4,7 +4,7 @@
     <section>
         <div class="d-flex align-items-start align-items-md-center justify-content-between flex-column flex-md-row">
             <h2 class="section-title">{{ trans('panel.student_details') }}</h2>
-            <a href="/panel/students-tracking" class="btn btn-sm btn-primary">
+            <a href="/panel/my-students" class="btn btn-sm btn-primary">
                 <i class="fa fa-arrow-left mr-2"></i>{{ trans('panel.back_to_list') }}
             </a>
         </div>
