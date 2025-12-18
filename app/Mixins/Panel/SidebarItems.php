@@ -94,6 +94,14 @@ class SidebarItems
                 if ($user->can('panel_organization_students_lists')) {
                     $items['students']['items'][] = ['text' => trans('public.list'), 'url' => '/panel/manage/students'];
                 }
+
+                // Add "My Students" for teachers only - shows students enrolled in their courses
+                if ($user->isTeacher()) {
+                    $items['students']['items'][] = [
+                        'text' => trans('update.my_students'),
+                        'url' => '/panel/my-students'
+                    ];
+                }
             }
 
         }
@@ -497,7 +505,7 @@ class SidebarItems
             $items['forums'] = [
                 'icon' => self::getIcon('forums'),
                 'text' => trans('update.forums'),
-                'url' => '/panel/forums',
+                'url' => '/forums',
                 'items' => []
             ];
 

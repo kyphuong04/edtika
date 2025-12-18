@@ -336,8 +336,19 @@ class OrganManageUsersController extends Controller
         /** @var \App\User $user */
         $user = auth()->user();
         
+        \Log::info('OrganManageUsers::editUser called', [
+            'userType' => $userType,
+            'user_id' => $user_id,
+            'step' => $step,
+            'auth_user_id' => $user->id,
+            'auth_user_role' => $user->role_name,
+            'is_admin' => $user->isAdmin(),
+            'is_teacher' => $user->isTeacher()
+        ]);
+        
         // Only admin (organization) and teachers can manage users
         if (!$user->isAdmin() && !$user->isTeacher()) {
+            \Log::warning('Access denied: User is not admin or teacher');
             abort(403, 'Only admins and teachers can manage users');
         }
         
@@ -354,29 +365,46 @@ class OrganManageUsersController extends Controller
         }
 
         $valid_type = ['instructors', 'teachers', 'students'];
+    
+    \Log::info('Checking user type validity', [
+        'userType' => $userType,
+        'valid_types' => $valid_type,
+        'is_valid' => in_array($userType, $valid_type)
+    ]);
 
-        if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
-            $query = User::query()->select('*', DB::raw('ST_AsText(location) as location'))
-                ->where('id', $user_id);
-            
-            // Teachers can only edit users in their organization
-            if ($user->isTeacher()) {
-                $query->where('organ_id', $user->id);
-            }
-            // Admin can edit any user
-            
-            $targetUser = $query->first();
+    if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
+        $query = User::query()->select('*', DB::raw('ST_AsText(location) as location'))
+            ->where('id', $user_id);
+        
+        // Teachers can only edit users in their organization
+        if ($user->isTeacher()) {
+            \Log::info('Teacher accessing - adding organ_id filter', [
+                'required_organ_id' => $user->id
+            ]);
+            $query->where('organ_id', $user->id);
+        }
+        // Admin can edit any user
+        
+        $targetUser = $query->first();
+        
+        \Log::info('Target user query result', [
+            'found' => !empty($targetUser),
+            'target_user_id' => $targetUser->id ?? null,
+            'target_organ_id' => $targetUser->organ_id ?? null,
+            'target_role' => $targetUser->role_name ?? null
+        ]);
 
-            if (!empty($targetUser)) {
-                $data = [
-                    'pageTitle' => trans('edit'),
-                    'user' => $targetUser,
-                    'organization_id' => $user->id,
-                    'edit_new_user' => true,
-                    'user_type' => $userType,
-                ];
+        if (!empty($targetUser)) {
+            \Log::info('Target user found, rendering edit page');
+            $data = [
+                'pageTitle' => trans('edit'),
+                'user' => $targetUser,
+                'organization_id' => $user->id,
+                'edit_new_user' => true,
+                'user_type' => $userType,
+            ];
 
-                $userController = (new UserController());
+            $userController = (new UserController());
                 $data = array_merge($data, $userController->getUserEditPageData($request, $targetUser, $step));
 
                 return view('design_1.panel.settings.index', $data);
