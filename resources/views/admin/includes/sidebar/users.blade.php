@@ -32,12 +32,6 @@
                 </li>
             @endif
 
-            @if($authUser->isCeo())
-                <li class="{{ (request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/staffs">{{ trans('admin/main.staff') }}</a>
-                </li>
-            @endif
-
             @can('admin_users_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/students', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/students">{{ trans('public.students') }}</a>
@@ -55,6 +49,12 @@
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/organizations">{{ trans('admin/main.organizations') }}</a>
                 </li>
             @endcan()
+
+            @if($authUser->isCeo())
+                <li class="{{ (request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/staffs">{{ trans('admin/main.staff') }}</a>
+                </li>
+            @endif
 
 
         </ul>
