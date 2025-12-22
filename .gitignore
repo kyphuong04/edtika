@@ -84,7 +84,7 @@ admin_*.php
 /verify_admin.php
 
 # SQL and database scripts (all SQL files in root)
-# /*.sql
+/*.sql
 
 check_*.sql
 fix_*.sql
