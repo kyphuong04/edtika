@@ -571,5 +571,103 @@
         }
     }
 
+    // =============================================
+    // Sidebar Hover Expand Enhancement 
+    // (works with Stisla's sidebar-mini)
+    // =============================================
+    if ($('body').hasClass('sidebar-hover-expand') && $(window).width() > 1024) {
+        // Remove niceScroll from sidebar on desktop for better CSS-based scrolling
+        setTimeout(function() {
+            if ($(".main-sidebar").getNiceScroll) {
+                try {
+                    $(".main-sidebar").getNiceScroll().remove();
+                } catch(e) {}
+            }
+        }, 100);
+
+        // Handle sidebar hover events
+        $(".main-sidebar").on('mouseenter', function() {
+            var sidebar = $(this);
+            
+            // Initialize custom scrolling when expanded
+            sidebar.css({
+                'overflow-y': 'auto',
+                'overflow-x': 'hidden'
+            });
+        }).on('mouseleave', function() {
+            var sidebar = $(this);
+            
+            // Hide all dropdowns when leaving sidebar
+            sidebar.find('.dropdown-menu').hide();
+            sidebar.find('li').removeClass('active');
+            
+            // Reset overflow
+            sidebar.css({
+                'overflow': 'visible'
+            });
+        });
+
+        // Override default dropdown click behavior
+        $(".main-sidebar .sidebar-menu li a.has-dropdown").off('click').on('click', function(e) {
+            var sidebar = $(".main-sidebar");
+            
+            // Chỉ cho phép click khi sidebar đang mở rộng (hover)
+            if (sidebar.width() > 100) {
+                e.preventDefault();
+                var me = $(this);
+                var parent = me.parent();
+                var dropdown = parent.find('> .dropdown-menu');
+                
+                if (parent.hasClass('active')) {
+                    parent.removeClass('active');
+                    dropdown.slideUp(300);
+                } else {
+                    // Close other dropdowns
+                    sidebar.find('.sidebar-menu > li.active').removeClass('active');
+                    sidebar.find('.sidebar-menu > li > .dropdown-menu').slideUp(300);
+                    
+                    parent.addClass('active');
+                    dropdown.slideDown(300);
+                }
+            }
+            return false;
+        });
+
+        // Hover behavior for collapsed state
+        $(".main-sidebar .sidebar-menu > li").on('mouseenter', function() {
+            var sidebar = $(".main-sidebar");
+            if (sidebar.width() <= 100) {
+                // Show dropdown on hover in collapsed mode
+                $(this).find('> .dropdown-menu').stop(true, true).show();
+            }
+        }).on('mouseleave', function() {
+            var sidebar = $(".main-sidebar");
+            if (sidebar.width() <= 100) {
+                // Hide dropdown when mouse leaves in collapsed mode
+                $(this).find('> .dropdown-menu').stop(true, true).hide();
+            }
+        });
+
+        // Prevent default toggle_sidebar_mini behavior
+        $("[data-toggle='sidebar']").off('click').on('click', function(e) {
+            e.preventDefault();
+            var body = $("body");
+            var w = $(window);
+
+            if (w.outerWidth() <= 1024) {
+                // Mobile behavior - toggle sidebar visibility
+                body.removeClass('search-show search-gone');
+                if (body.hasClass('sidebar-gone')) {
+                    body.removeClass('sidebar-gone');
+                    body.addClass('sidebar-show');
+                } else {
+                    body.addClass('sidebar-gone');
+                    body.removeClass('sidebar-show');
+                }
+            }
+            // On desktop, do nothing - let CSS handle the hover
+            return false;
+        });
+    }
 
 })(jQuery);
