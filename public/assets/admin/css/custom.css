@@ -1980,6 +1980,23 @@ body.sidebar-mini.sidebar-hover-expand .main-sidebar {
     z-index: 999 !important;
 }
 
+/* Ẩn dropdown popup khi không hover vào menu item - khắc phục popup khó chịu */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar .sidebar-menu > li > ul.dropdown-menu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Chỉ hiện dropdown khi hover trực tiếp vào menu item (chế độ thu nhỏ) */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:not(:hover) .sidebar-menu > li:hover > ul.dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 65px !important;
+    top: 0 !important;
+}
+
 /* Khi hover vào sidebar - mở rộng */
 body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover {
     width: 250px !important;
@@ -2043,6 +2060,18 @@ body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li ul
     width: 100% !important;
     box-shadow: none !important;
     background-color: rgba(0,0,0,0.02) !important;
+    /* Reset trạng thái ẩn mặc định */
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Khi sidebar mở rộng, dropdown chỉ hiện khi menu item active */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li:not(.active) > ul.dropdown-menu {
+    display: none !important;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li.active > ul.dropdown-menu {
+    display: block !important;
 }
 
 /* Ẩn dropdown title khi sidebar mở rộng */

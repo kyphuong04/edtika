@@ -576,6 +576,9 @@
     // (works with Stisla's sidebar-mini)
     // =============================================
     if ($('body').hasClass('sidebar-hover-expand') && $(window).width() > 1024) {
+        // Ẩn tất cả dropdown khi trang load để tránh popup khó chịu
+        $(".main-sidebar .sidebar-menu > li > .dropdown-menu").hide();
+        
         // Remove niceScroll from sidebar on desktop for better CSS-based scrolling
         setTimeout(function() {
             if ($(".main-sidebar").getNiceScroll) {
@@ -594,12 +597,14 @@
                 'overflow-y': 'auto',
                 'overflow-x': 'hidden'
             });
+            
+            // Hiện dropdown của menu item đang active
+            sidebar.find('.sidebar-menu > li.active > .dropdown-menu').show();
         }).on('mouseleave', function() {
             var sidebar = $(this);
             
             // Hide all dropdowns when leaving sidebar
-            sidebar.find('.dropdown-menu').hide();
-            sidebar.find('li').removeClass('active');
+            sidebar.find('.sidebar-menu > li > .dropdown-menu').hide();
             
             // Reset overflow
             sidebar.css({
