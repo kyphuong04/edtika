@@ -106,3 +106,5 @@ class SidebarController extends Controller
         return ($count > 0);
     }
 }
+
+

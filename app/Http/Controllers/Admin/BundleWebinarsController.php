@@ -135,3 +135,5 @@ class BundleWebinarsController extends Controller
         return redirect()->back();
     }
 }
+
+

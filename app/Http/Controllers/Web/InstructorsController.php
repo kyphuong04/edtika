@@ -52,10 +52,10 @@ class InstructorsController extends Controller
 
     public function organizations(Request $request)
     {
-        $query = $this->getListQuery(Role::$organization);
+        $query = $this->getListQuery(Role::$teacher);
         $query = $this->handleFilters($request, $query);
 
-        $getListData = $this->getListData($request, $query, 9, Role::$organization);
+        $getListData = $this->getListData($request, $query, 9, Role::$teacher);
 
         if ($request->ajax()) {
             return $getListData;
@@ -136,7 +136,7 @@ class InstructorsController extends Controller
 
     private function getAjaxResponse(Request $request, $users, $total, $count, $userRole)
     {
-        if ($userRole == Role::$organization) {
+        if ($userRole == Role::$teacher) {
             $html = (string)view()->make('design_1.web.organizations.components.cards.grids.index', [
                 'organizations' => $users,
                 'gridCardClassName' => "",
@@ -277,3 +277,5 @@ class InstructorsController extends Controller
     }
 
 }
+
+

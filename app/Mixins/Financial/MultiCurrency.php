@@ -51,3 +51,4 @@ class MultiCurrency
         return $defaultCurrency;
     }
 }
+

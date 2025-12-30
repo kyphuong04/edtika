@@ -58,3 +58,5 @@ class ReferralHistoryExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 }
+
+

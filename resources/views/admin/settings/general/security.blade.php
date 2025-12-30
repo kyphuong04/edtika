@@ -18,14 +18,16 @@
         <div class="row">
             <div class="col-12 col-md-6">
 
-            <div class="form-group custom-switches-stacked">
+                <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
-                        <input type="hidden" name="value[content_translate]" value="0">
+                        <input type="hidden" name="value[login_device_limit]" value="0">
+                        <input type="checkbox" name="value[login_device_limit]" id="loginDeviceLimit" value="1"
+                               {{ (!empty($itemValue) and !empty($itemValue['login_device_limit']) and $itemValue['login_device_limit']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
                         <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.device_limit') }}</label>
+                        <label class="custom-switch-description mb-0 cursor-pointer"
+                               for="loginDeviceLimit">{{ trans('update.device_limit') }}</label>
                     </label>
-                    <div class="text-muted text-small mt-1">{{ trans('update.device_limit_hint') }}</div>
-                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('update.device_limit_hint') }}</div>
                 </div>
 
                 <div class="js-device-limit-number {{ (!empty($itemValue) and !empty($itemValue['login_device_limit']) and $itemValue['login_device_limit']) ? '' : 'd-none' }}">

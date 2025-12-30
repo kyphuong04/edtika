@@ -10,3 +10,5 @@ class ProductSelectedFilterOption extends Model
     public $timestamps = false;
     protected $guarded = ['id'];
 }
+
+

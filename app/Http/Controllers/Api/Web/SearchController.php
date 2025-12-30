@@ -57,7 +57,8 @@ class SearchController extends Controller
             ;
 
 
-            $organizations = $all_users->where('role_name', Role::$organization)->get()
+            // Admin role now replaces the old organization role
+            $organizations = $all_users->where('role_name', Role::$admin)->get()
             ->map(function($organization){
                   return $organization->brief ;
             })
@@ -103,3 +104,5 @@ class SearchController extends Controller
     }
 
 }
+
+

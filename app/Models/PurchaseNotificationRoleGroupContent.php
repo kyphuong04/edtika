@@ -37,3 +37,5 @@ class PurchaseNotificationRoleGroupContent extends Model
     }
 
 }
+
+

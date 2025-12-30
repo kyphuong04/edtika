@@ -14,3 +14,5 @@ class CashbackRuleSpecificationItem extends Model
 
 
 }
+
+

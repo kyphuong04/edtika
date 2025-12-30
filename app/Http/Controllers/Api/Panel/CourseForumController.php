@@ -137,3 +137,5 @@ class CourseForumController extends Controller
         ]);
     }
 }
+
+

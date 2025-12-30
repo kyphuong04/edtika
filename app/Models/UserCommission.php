@@ -30,3 +30,5 @@ class UserCommission extends Model
         return $commissionPrice;
     }
 }
+
+

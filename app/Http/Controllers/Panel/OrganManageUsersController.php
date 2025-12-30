@@ -32,20 +32,48 @@ use Illuminate\Support\Facades\Storage;
 class OrganManageUsersController extends Controller
 {
     use UserFormFieldsTrait;
-
+      
     public function manageUsers(Request $request, $userType)
     {
-        $this->authorize("panel_organization_{$userType}_lists");
+        /** @var \App\User $user */
+        $user = auth()->user();
+        
+        // Only admin (organization) and teachers can manage users
+        if (!$user->isAdmin() && !$user->isTeacher()) {
+            abort(403, 'Only admins and teachers can manage users');
+        }
+        
+        // Teachers cannot manage other teachers
+        if ($user->isTeacher() && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
-        $organization = auth()->user();
+        // Check permissions only for teachers (admin has full access)
+        if ($user->isTeacher()) {
+            // Support both 'teachers' and 'instructors' for authorization
+            $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+            $this->authorize("panel_organization_{$permissionType}_lists");
+        }
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
-            $query = User::query()->where('organ_id', $organization->id);
+        $valid_type = ['instructors', 'teachers', 'students'];    
+        $organization = $user;
 
-            if ($userType == 'instructors') {
+        if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
+            $query = User::query();
+            
+            // Teachers only see users in their organization
+            if ($user->isTeacher() && !empty($user->organ_id)) {
+                $query->where('organ_id', $user->organ_id);
+            }
+            // Admin sees all users (no organ_id filter)
+            else if ($user->isAdmin()) {
+                // Admin sees all users in the system
+                // No organ_id filter
+            }
+
+            if ($userType == 'instructors' || $userType == 'teachers') {
                 $query->where('role_name', Role::$teacher);
-            } else {
+            } else if ($userType == 'students') {
                 $query->where('role_name', Role::$user);
             }
 
@@ -74,7 +102,9 @@ class OrganManageUsersController extends Controller
             ];
             $data = array_merge($data, $getListData);
 
-            return view("design_1.panel.manage.{$userType}.index", $data);
+            // Map 'teachers' view to 'instructors' view
+            $viewType = ($userType === 'teachers') ? 'instructors' : $userType;
+            return view("design_1.panel.manage.{$viewType}.index", $data);
         }
 
         abort(404);
@@ -167,14 +197,32 @@ class OrganManageUsersController extends Controller
 
     public function createUser(Request $request, $userType)
     {
-        $this->authorize("panel_organization_{$userType}_create");
+        /** @var \App\User $user */
+        $user = auth()->user();
+        
+        // Only admin (organization) and teachers can manage users
+        if (!$user->isAdmin() && !$user->isTeacher()) {
+            abort(403, 'Only admins and teachers can manage users');
+        }
+        
+        // Teachers cannot create other teachers
+        if ($user->isTeacher() && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
-        $organization = auth()->user();
+        // Check permissions only for teachers (admin has full access)
+        if ($user->isTeacher()) {
+            // Support both 'teachers' and 'instructors' for authorization
+            $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+            $this->authorize("panel_organization_{$permissionType}_create");
+        }
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        $valid_type = ['instructors', 'teachers', 'students'];
+        $organization = $user;
 
-            $packageType = $userType == 'instructors' ? 'instructors_count' : 'students_count';
+        if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
+
+            $packageType = ($userType == 'instructors' || $userType == 'teachers') ? 'instructors_count' : 'students_count';
             $userPackage = new UserPackage();
             $userAccountLimited = $userPackage->checkPackageLimit($packageType);
 
@@ -213,12 +261,30 @@ class OrganManageUsersController extends Controller
 
     public function storeUser(Request $request, $userType)
     {
-        $this->authorize("panel_organization_{$userType}_create");
+        /** @var \App\User $user */
+        $user = auth()->user();
+        
+        // Only admin (organization) and teachers can manage users
+        if (!$user->isAdmin() && !$user->isTeacher()) {
+            abort(403, 'Only admins and teachers can manage users');
+        }
+        
+        // Teachers cannot create other teachers
+        if ($user->isTeacher() && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
-        $organization = auth()->user();
+        // Check permissions only for teachers (admin has full access)
+        if ($user->isTeacher()) {
+            // Support both 'teachers' and 'instructors' for authorization
+            $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+            $this->authorize("panel_organization_{$permissionType}_create");
+        }
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
+        $valid_type = ['instructors', 'teachers', 'students'];
+        $organization = $user;
+
+        if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
             $this->validate($request, [
                 'email' => 'required|string|email|max:255|unique:users',
                 'full_name' => 'required|string',
@@ -227,8 +293,8 @@ class OrganManageUsersController extends Controller
             ]);
 
             $data = $request->all();
-            $role_name = ($userType == 'instructors') ? Role::$teacher : Role::$user;
-            $role_id = ($userType == 'instructors') ? Role::getTeacherRoleId() : Role::getUserRoleId();
+            $role_name = ($userType == 'instructors' || $userType == 'teachers') ? Role::$teacher : Role::$user;
+            $role_id = ($userType == 'instructors' || $userType == 'teachers') ? Role::getTeacherRoleId() : Role::getUserRoleId();
 
             $referralSettings = getReferralSettings();
             $usersAffiliateStatus = (!empty($referralSettings) and !empty($referralSettings['users_affiliate_status']));
@@ -267,28 +333,79 @@ class OrganManageUsersController extends Controller
 
     public function editUser(Request $request, $userType, $user_id, $step = "basic_information")
     {
-        $this->authorize("panel_organization_{$userType}_edit");
+        /** @var \App\User $user */
+        $user = auth()->user();
+        
+        \Log::info('OrganManageUsers::editUser called', [
+            'userType' => $userType,
+            'user_id' => $user_id,
+            'step' => $step,
+            'auth_user_id' => $user->id,
+            'auth_user_role' => $user->role_name,
+            'is_admin' => $user->isAdmin(),
+            'is_teacher' => $user->isTeacher()
+        ]);
+        
+        // Only admin (organization) and teachers can manage users
+        if (!$user->isAdmin() && !$user->isTeacher()) {
+            \Log::warning('Access denied: User is not admin or teacher');
+            abort(403, 'Only admins and teachers can manage users');
+        }
+        
+        // Teachers cannot edit other teachers
+        if ($user->isTeacher() && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
-        $organization = auth()->user();
+        // Check permissions only for teachers (admin has full access)
+        if ($user->isTeacher()) {
+            // Support both 'teachers' and 'instructors' for authorization
+            $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+            $this->authorize("panel_organization_{$permissionType}_edit");
+        }
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
-            $user = User::query()->select('*', DB::raw('ST_AsText(location) as location'))
-                ->where('id', $user_id)
-                ->where('organ_id', $organization->id)
-                ->first();
+        $valid_type = ['instructors', 'teachers', 'students'];
+    
+    \Log::info('Checking user type validity', [
+        'userType' => $userType,
+        'valid_types' => $valid_type,
+        'is_valid' => in_array($userType, $valid_type)
+    ]);
 
-            if (!empty($user)) {
-                $data = [
-                    'pageTitle' => trans('edit'),
-                    'user' => $user,
-                    'organization_id' => $organization->id,
-                    'edit_new_user' => true,
-                    'user_type' => $userType,
-                ];
+    if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
+        $query = User::query()->select('*', DB::raw('ST_AsText(location) as location'))
+            ->where('id', $user_id);
+        
+        // Teachers can only edit users in their organization
+        if ($user->isTeacher()) {
+            \Log::info('Teacher accessing - adding organ_id filter', [
+                'required_organ_id' => $user->id
+            ]);
+            $query->where('organ_id', $user->id);
+        }
+        // Admin can edit any user
+        
+        $targetUser = $query->first();
+        
+        \Log::info('Target user query result', [
+            'found' => !empty($targetUser),
+            'target_user_id' => $targetUser->id ?? null,
+            'target_organ_id' => $targetUser->organ_id ?? null,
+            'target_role' => $targetUser->role_name ?? null
+        ]);
 
-                $userController = (new UserController());
-                $data = array_merge($data, $userController->getUserEditPageData($request, $user, $step));
+        if (!empty($targetUser)) {
+            \Log::info('Target user found, rendering edit page');
+            $data = [
+                'pageTitle' => trans('edit'),
+                'user' => $targetUser,
+                'organization_id' => $user->id,
+                'edit_new_user' => true,
+                'user_type' => $userType,
+            ];
+
+            $userController = (new UserController());
+                $data = array_merge($data, $userController->getUserEditPageData($request, $targetUser, $step));
 
                 return view('design_1.panel.settings.index', $data);
             }
@@ -299,18 +416,41 @@ class OrganManageUsersController extends Controller
 
     public function deleteUser($userType, $user_id)
     {
-        $this->authorize("panel_organization_{$userType}_delete");
+        /** @var \App\User $user */
+        $user = auth()->user();
+        
+        // Only admin (organization) and teachers can manage users
+        if (!$user->isAdmin() && !$user->isTeacher()) {
+            abort(403, 'Only admins and teachers can manage users');
+        }
+        
+        // Teachers cannot delete other teachers
+        if ($user->isTeacher() && in_array($userType, ['instructors', 'teachers'])) {
+            abort(403, 'Teachers cannot manage other teachers');
+        }
 
-        $valid_type = ['instructors', 'students'];
-        $organization = auth()->user();
+        // Check permissions only for teachers (admin has full access)
+        if ($user->isTeacher()) {
+            // Support both 'teachers' and 'instructors' for authorization
+            $permissionType = ($userType === 'teachers') ? 'instructors' : $userType;
+            $this->authorize("panel_organization_{$permissionType}_delete");
+        }
 
-        if ($organization->isOrganization() and in_array($userType, $valid_type)) {
-            $user = User::where('id', $user_id)
-                ->where('organ_id', $organization->id)
-                ->first();
+        $valid_type = ['instructors', 'teachers', 'students'];
 
-            if (!empty($user)) {
-                $user->update([
+        if (($user->isAdmin() || $user->isTeacher()) && in_array($userType, $valid_type)) {
+            $query = User::where('id', $user_id);
+            
+            // Teachers can only delete users in their organization
+            if ($user->isTeacher()) {
+                $query->where('organ_id', $user->id);
+            }
+            // Admin can delete any user
+            
+            $targetUser = $query->first();
+
+            if (!empty($targetUser)) {
+                $targetUser->update([
                     'organ_id' => null
                 ]);
 
@@ -324,3 +464,5 @@ class OrganManageUsersController extends Controller
     }
 
 }
+
+

@@ -21,7 +21,9 @@ class PanelAuthenticate
             auth()->setUser(apiAuth());
         }
 
-        if (auth()->check() and !auth()->user()->isAdmin()) {
+        // Allow all authenticated users except Super Admins (Manager/CEO)
+        // Admin role (regular admin) can access panel
+        if (auth()->check() and !auth()->user()->isSuperAdmin()) {
 
             $referralSettings = getReferralSettings();
             view()->share('referralSettings', $referralSettings);
@@ -37,3 +39,4 @@ class PanelAuthenticate
         return redirect('/login');
     }
 }
+

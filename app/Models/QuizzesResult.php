@@ -50,3 +50,5 @@ class QuizzesResult extends Model
         return $quizQuestions;
     }
 }
+
+

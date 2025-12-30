@@ -11,3 +11,5 @@ class Newsletter extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

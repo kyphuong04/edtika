@@ -45,3 +45,5 @@ class ThemeHeaderFooter extends Model implements TranslatableContract
         'footer_1' => 'footer 1',
     ];
 }
+
+

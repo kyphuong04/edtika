@@ -26,23 +26,29 @@
                 </li>
             @endcan()
 
-            @can('admin_users_list')
+            @if($authUser->can('admin_users_list') && $authUser->isCeo())
                 <li class="{{ (request()->is(getAdminPanelUrl('/all-users', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/all-users">{{ trans('admin/main.all_users') }}</a>
                 </li>
-            @endcan()
+            @endif
 
-            @can('admin_staffs_list')
+            @if($authUser->isCeo())
                 <li class="{{ (request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/staffs">{{ trans('admin/main.staff') }}</a>
                 </li>
-            @endcan()
-
+            @endif
+            @if(($authUser->isManager() || $authUser->isCeo()) && $authUser->can('admin_users_list'))
+                <li class="{{ (request()->is(getAdminPanelUrl('/regular-users', false))) ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/regular-users">Users</a>
+                </li>
+            @endif
             @can('admin_users_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/students', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/students">{{ trans('public.students') }}</a>
                 </li>
             @endcan()
+
+           
 
             @can('admin_instructors_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/instructors', false))) ? 'active' : '' }}">

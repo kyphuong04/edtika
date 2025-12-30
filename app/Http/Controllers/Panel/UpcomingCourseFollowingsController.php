@@ -108,3 +108,5 @@ class UpcomingCourseFollowingsController extends Controller
     }
 
 }
+
+

@@ -352,3 +352,5 @@ class NotificationsController extends Controller
         return response()->json([], 200);
     }
 }
+
+

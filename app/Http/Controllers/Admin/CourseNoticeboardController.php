@@ -207,3 +207,5 @@ class CourseNoticeboardController extends Controller
         abort(404);
     }
 }
+
+

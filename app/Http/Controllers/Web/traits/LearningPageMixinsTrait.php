@@ -130,20 +130,29 @@ trait LearningPageMixinsTrait
 
     public function checkConcurrentLearning($user)
     {
-        if ($user->isAdmin() or $user->isTeacher() or $user->isOrganization()) {
+        // CEO, Manager, Admin, and Teacher are exempt from concurrent learning restrictions
+        // They can watch videos/learn on multiple devices simultaneously
+        if ($user->isCeo() or $user->isManager() or $user->isAdmin() or $user->isTeacher()) {
             return true;
         }
 
+        // For Students and Users: Only one device can be learning at a time
+        // Use cache to track which session is currently active for this user
         $cacheKey = 'learning_session_' . $user->id;
         $currentSessionId = session()->getId();
         $activeSessionId = Cache::get($cacheKey);
 
+        // If another session is already learning, block this request
         if (!empty($activeSessionId) and $activeSessionId !== $currentSessionId) {
-            return false;
+            return false; // Another device is currently learning
         }
 
-        Cache::put($cacheKey, $currentSessionId, 30); // 30 seconds
+        // Mark this session as the active learning session
+        // Cache expires after 5 minutes of inactivity (auto-release lock)
+        Cache::put($cacheKey, $currentSessionId, 300); // 300 seconds = 5 minutes
 
-        return true;
+        return true; // Allow learning
     }
 }
+
+

@@ -8,3 +8,5 @@ class ContentDeleteRequest extends Model
 {
 
 }
+
+

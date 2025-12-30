@@ -37,3 +37,5 @@ class ProductSelectedSpecification extends Model implements TranslatableContract
         return $this->hasMany('App\Models\ProductSelectedSpecificationMultiValue', 'selected_specification_id', 'id');
     }
 }
+
+

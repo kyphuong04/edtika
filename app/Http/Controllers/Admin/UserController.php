@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Bitwise\UserLevelOfTraining;
 use App\Exports\InstructorsExport;
 use App\Exports\OrganizationsExport;
+use App\Exports\RegularUsersExport;
 use App\Exports\StudentsExport;
 use App\Exports\UsersExport;
 use App\Http\Controllers\Controller;
@@ -43,6 +44,11 @@ class UserController extends Controller
 
     public function staffs(Request $request)
     {
+        // Only CEO can access staff list
+        if (!auth()->user()->isCeo()) {
+            return abort(403);
+        }
+        
         $this->authorize('admin_staffs_list');
 
         $staffsRoles = Role::where('is_admin', true)->get();
@@ -68,7 +74,8 @@ class UserController extends Controller
     {
         $this->authorize('admin_organizations_list');
 
-        $query = User::where('role_name', Role::$organization);
+        // Admin role now replaces the old organization role
+        $query = User::where('role_name', Role::$admin);
 
         $totalOrganizations = deepClone($query)->count();
         $verifiedOrganizations = deepClone($query)->where('verified', true)
@@ -83,6 +90,7 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+            
 
         $query = $this->filters($query, $request);
 
@@ -117,7 +125,7 @@ class UserController extends Controller
     {
         $this->authorize('admin_users_list');
 
-        $query = User::where('role_name', Role::$user);
+        $query = User::where('role_id', 2);
 
         $totalStudents = deepClone($query)->count();
         $inactiveStudents = deepClone($query)->where('status', 'inactive')
@@ -135,7 +143,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$admin)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -191,7 +199,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$admin)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -223,6 +231,68 @@ class UserController extends Controller
         ];
 
         return view('admin.users.instructors', $data);
+    }
+
+    public function regularUsers(Request $request, $is_export_excel = false)
+    {
+        // Only Manager and CEO can access regular users list
+        $authUser = auth()->user();
+        if (!$authUser->isManager() && !$authUser->isCeo()) {
+            return abort(403);
+        }
+
+        $this->authorize('admin_users_list');
+
+        $query = User::where('role_id', 1); // role_id = 1 is regular users
+
+        $totalRegularUsers = deepClone($query)->count();
+        $inactiveRegularUsers = deepClone($query)->where('status', 'inactive')
+            ->count();
+        $banRegularUsers = deepClone($query)->where('ban', true)
+            ->whereNotNull('ban_end_at')
+            ->where('ban_end_at', '>', time())
+            ->count();
+
+        $totalOrganizationsRegularUsers = User::where('role_id', 1)
+            ->whereNotNull('organ_id')
+            ->count();
+        $userGroups = Group::where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $organizations = User::select('id', 'full_name', 'created_at')
+            ->where('role_name', Role::$admin)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+
+        $query = $this->filters($query, $request);
+
+        if ($is_export_excel) {
+            $users = $query->orderBy('users.created_at', 'desc')->get();
+        } else {
+            $users = $query->orderBy('users.created_at', 'desc')
+                ->paginate(10);
+        }
+
+        $users = $this->addUsersExtraInfo($users);
+
+        if ($is_export_excel) {
+            return $users;
+        }
+
+        $data = [
+            'pageTitle' => 'Regular Users',
+            'users' => $users,
+            'totalRegularUsers' => $totalRegularUsers,
+            'inactiveRegularUsers' => $inactiveRegularUsers,
+            'banRegularUsers' => $banRegularUsers,
+            'totalOrganizationsRegularUsers' => $totalOrganizationsRegularUsers,
+            'userGroups' => $userGroups,
+            'organizations' => $organizations,
+        ];
+
+        return view('admin.users.regular_users', $data);
     }
 
     private function addUsersExtraInfo($users)
@@ -1246,12 +1316,13 @@ class UserController extends Controller
             $users->where('role_name', Role::$user);
         }
 
+        // Admin role now replaces the old organization role
         if ($option === "just_organization_role") {
-            $users->where('role_name', Role::$organization);
+            $users->where('role_name', Role::$admin);
         }
 
         if ($option === "just_organization_and_teacher_role") {
-            $users->whereIn('role_name', [Role::$organization, Role::$teacher]);
+            $users->whereIn('role_name', [Role::$admin, Role::$teacher]);
         }
 
         if ($option === "except_user") {
@@ -1316,8 +1387,30 @@ class UserController extends Controller
         return Excel::download($usersExport, 'students.xlsx');
     }
 
+    public function exportExcelRegularUsers(Request $request)
+    {
+        // Only Manager and CEO can export regular users
+        $authUser = auth()->user();
+        if (!$authUser->isManager() && !$authUser->isCeo()) {
+            return abort(403);
+        }
+
+        $this->authorize('admin_users_export_excel');
+
+        $users = $this->regularUsers($request, true);
+
+        $usersExport = new RegularUsersExport($users);
+
+        return Excel::download($usersExport, 'regular_users.xlsx');
+    }
+
     public function allUsers(Request $request, $is_export_excel = false)
     {
+        // Only CEO can view all users in the system
+        if (!auth()->user()->isCeo()) {
+            return abort(403);
+        }
+        
         $this->authorize('admin_users_list');
 
         $query = User::query();
@@ -1337,7 +1430,7 @@ class UserController extends Controller
         $roles = Role::all();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$organization)
+            ->where('role_name', Role::$teacher)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -1395,7 +1488,7 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isOrganization() or $user->isTeacher()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             $data = $request->all();
 
             UserRegistrationPackage::updateOrCreate([
@@ -1422,7 +1515,7 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if ($user->isOrganization() or $user->isTeacher()) {
+        if ($user->isAdmin() or $user->isTeacher()) {
             $data = $request->all();
 
             $user->update([
@@ -1527,3 +1620,5 @@ class UserController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

@@ -13,11 +13,26 @@
         const path = `${courseLearningUrl}/track-time`;
 
         setInterval(function () {
-            $.post(path, {}, function (result) {
-                if (result && result.force_reload) {
-                    window.location.reload();
+            const $activeItem = $('.js-content-tab-item.active');
+            
+            if ($activeItem.length) {
+                const type = $activeItem.attr('data-type');
+                const itemId = $activeItem.attr('data-id');
+                
+                if (type && itemId) {
+                    const data = {
+                        type: type,
+                        item_id: itemId,
+                        time: 10
+                    };
+                    
+                    $.post(path, data, function (result) {
+                        if (result && result.force_reload) {
+                            window.location.reload();
+                        }
+                    });
                 }
-            })
+            }
         }, 10000)
     }
 

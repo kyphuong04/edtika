@@ -128,3 +128,5 @@ class BlogFeaturedCategoriesController extends Controller
         return redirect(getAdminPanelUrl("/blog/featured-categories"))->with(['toast' => $toastData]);
     }
 }
+
+

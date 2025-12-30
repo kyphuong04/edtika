@@ -11,3 +11,5 @@ class SaleLog extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

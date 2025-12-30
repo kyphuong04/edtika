@@ -24,3 +24,5 @@ class BlogCategory extends Model  implements TranslatableContract
         ] ;
     }
 }
+
+

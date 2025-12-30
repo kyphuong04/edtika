@@ -63,3 +63,5 @@ class Certificate extends WebCertificate
         return $this->hasOne('App\Models\Api\QuizzesResult', 'id', 'quiz_result_id');
     }
 }
+
+

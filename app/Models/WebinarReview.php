@@ -31,3 +31,5 @@ class WebinarReview extends Model
         return $this->hasMany('App\Models\Comment', 'review_id', 'id');
     }
 }
+
+

@@ -33,3 +33,5 @@ class LandingComponent extends Model implements TranslatableContract
     }
 
 }
+
+

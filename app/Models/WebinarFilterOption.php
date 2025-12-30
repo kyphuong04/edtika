@@ -11,3 +11,5 @@ class WebinarFilterOption extends Model
 
     protected $guarded = ['id'];
 }
+
+

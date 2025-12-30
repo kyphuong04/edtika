@@ -11,3 +11,5 @@ class UpcomingCourseFilterOption extends Model
 
     protected $guarded = ['id'];
 }
+
+

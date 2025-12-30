@@ -13,3 +13,5 @@ class BlogTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

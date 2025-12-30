@@ -155,3 +155,5 @@ class Session extends Model implements TranslatableContract
         return $sessionStreamType;
     }
 }
+
+

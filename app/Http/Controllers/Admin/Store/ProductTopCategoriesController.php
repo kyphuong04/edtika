@@ -132,3 +132,5 @@ class ProductTopCategoriesController extends Controller
         return redirect(getAdminPanelUrl("/store/top-categories"))->with(['toast' => $toastData]);
     }
 }
+
+

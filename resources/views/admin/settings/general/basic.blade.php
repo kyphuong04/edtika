@@ -7,7 +7,7 @@
 <div class="tab-pane mt-3 fade @if(empty($social)) show active @endif" id="basic" role="tabpanel" aria-labelledby="basic-tab">
     <div class="row">
         <div class="col-12 col-md-6">
-            <form action="{{ getAdminPanelUrl() }}/settings/main" method="post">
+            <form action="{{ getAdminPanelUrl() }}/settings/general" method="post">
                 {{ csrf_field() }}
                 <input type="hidden" name="page" value="general">
                 <input type="hidden" name="name" value="general">
@@ -41,8 +41,8 @@
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.register_method') }}</label>
                     <select name="value[register_method]" class="form-control">
+                        <option value="mobile" @if(!empty($itemValue) and !empty($itemValue['register_method']) and $itemValue['register_method'] == 'mobile') selected @endif>{{ trans('admin/main.sms') }}</option>
                         <option value="email" @if(!empty($itemValue) and !empty($itemValue['register_method']) and $itemValue['register_method'] == 'email') selected @endif>{{ trans('admin/main.email') }}</option>
-                        <option>{{ trans('admin/main.sms') }} (Paid Plugin)</option>
                     </select>
                 </div>
 
@@ -153,10 +153,11 @@
                 <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
                         <input type="hidden" name="value[content_translate]" value="0">
+                        <input type="checkbox" name="value[content_translate]" id="contentTranslate" value="1" {{ (!empty($itemValue) and !empty($itemValue['content_translate']) and $itemValue['content_translate']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.multi_language_content') }}</label>
                     </label>
-                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('update.multi_language_content_hint') }}</div>
                 </div>
 
                 <div class="form-group custom-switches-stacked">

@@ -45,3 +45,5 @@ class CertificateTemplate extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'rtl');
     }
 }
+
+

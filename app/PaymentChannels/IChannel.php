@@ -32,3 +32,4 @@ interface IChannel
     public function getCredentialItems(): array;
 
 }
+

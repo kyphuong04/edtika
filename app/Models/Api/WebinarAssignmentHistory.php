@@ -113,3 +113,5 @@ class WebinarAssignmentHistory extends Model
         return $this->belongsTo('App\Models\Api\WebinarAssignment', 'assignment_id', 'id');
     }
 }
+
+

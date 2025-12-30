@@ -98,3 +98,5 @@ class WebinarChapter extends Model
 
     }
 }
+
+

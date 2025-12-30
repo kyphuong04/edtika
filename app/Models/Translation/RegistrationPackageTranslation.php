@@ -11,3 +11,5 @@ class RegistrationPackageTranslation extends Model
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 }
+
+

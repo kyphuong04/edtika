@@ -22,3 +22,4 @@ class UserBankResource extends JsonResource
         ];
     }
 }
+

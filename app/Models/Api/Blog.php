@@ -100,3 +100,5 @@ class Blog extends Model implements TranslatableContract
     }
 
 }
+
+

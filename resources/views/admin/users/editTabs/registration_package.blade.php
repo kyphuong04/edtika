@@ -17,7 +17,7 @@
                 @php
                     $packageItems = ['courses_capacity','courses_count','meeting_count'];
 
-                    if(!empty($user) and $user->isOrganization()) {
+                    if(!empty($user) and $user->isAdmin()) {
                         $organizationPackageItems = ['instructors_count','students_count'];
 
                         $packageItems = array_merge($organizationPackageItems,$packageItems);

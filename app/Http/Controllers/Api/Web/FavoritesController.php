@@ -41,3 +41,5 @@ class FavoritesController extends Controller
 
 
 }
+
+

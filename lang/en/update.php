@@ -153,6 +153,7 @@ return [
 'course_page' => 'Course page',
 'quiz_page' => 'Quiz page',
 'my_courses' => 'My courses',
+'my_students' => 'My Students',
 'learnt' => 'Learned',
 'please_wait_for_the_content_to_load' => 'Please wait while the content loads...',
 'download_the_file' => 'Download file',

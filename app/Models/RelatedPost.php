@@ -26,3 +26,5 @@ class RelatedPost extends Model
         return $this->belongsTo(Blog::class, 'post_id', 'id');
     }
 }
+
+

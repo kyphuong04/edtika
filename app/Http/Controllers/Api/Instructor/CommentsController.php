@@ -248,3 +248,5 @@ class CommentsController extends Controller
         return response()->json([], 422);
     }
 }
+
+

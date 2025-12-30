@@ -611,7 +611,7 @@ class WebinarController extends Controller
             $teacher = User::find($data['teacher_id']);
             $creator = !empty($data['organ_id']) ? User::find($data['organ_id']) : $webinar->creator;
 
-            if (empty($teacher) or ($creator->isOrganization() and ($teacher->organ_id != $creator->id and $teacher->id != $creator->id))) {
+            if (empty($teacher) or ($creator->isAdmin() and ($teacher->organ_id != $creator->id and $teacher->id != $creator->id))) {
                 $toastData = [
                     'title' => trans('public.request_failed'),
                     'msg' => trans('admin/main.is_not_the_teacher_of_this_organization'),
@@ -1303,3 +1303,5 @@ class WebinarController extends Controller
         abort(403);
     }
 }
+
+

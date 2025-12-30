@@ -441,3 +441,5 @@ class QuizResultsController extends Controller
     }
 
 }
+
+

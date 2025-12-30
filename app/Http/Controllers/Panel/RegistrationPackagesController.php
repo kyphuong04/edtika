@@ -27,7 +27,7 @@ class RegistrationPackagesController extends Controller
             $user = auth()->user();
         }
 
-        if (!($user->isOrganization() or $user->isTeacher()) or !getRegistrationPackagesGeneralSettings('status')) {
+        if (!($user->isAdmin() or $user->isTeacher()) or !getRegistrationPackagesGeneralSettings('status')) {
             abort(404);
         }
     }
@@ -46,7 +46,7 @@ class RegistrationPackagesController extends Controller
 
         $role = 'instructors';
 
-        if ($user->isOrganization()) {
+        if ($user->isAdmin()) {
             $role = 'organizations';
         }
 
@@ -80,7 +80,7 @@ class RegistrationPackagesController extends Controller
     {
         $myInstructorsCount = 0;
         $myStudentsCount = 0;
-        if ($user->isOrganization()) {
+        if ($user->isAdmin()) {
             $myInstructorsCount = $user->getOrganizationTeachers()->count();
             $myStudentsCount = $user->getOrganizationStudents()->count();
         }
@@ -193,3 +193,5 @@ class RegistrationPackagesController extends Controller
         return back()->with(['toast' => $toastData]);
     }
 }
+
+

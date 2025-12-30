@@ -84,3 +84,5 @@ class NotificationTemplate extends Model
         'forms' => ['submit_form_by_users'],
     ];
 }
+
+

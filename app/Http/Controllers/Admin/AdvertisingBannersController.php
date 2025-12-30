@@ -133,3 +133,5 @@ class AdvertisingBannersController extends Controller
         return redirect(getAdminPanelUrl().'/advertising/banners');
     }
 }
+
+

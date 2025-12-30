@@ -32,3 +32,4 @@ class TicketResource extends JsonResource
         ];
     }
 }
+

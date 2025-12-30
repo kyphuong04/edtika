@@ -37,3 +37,4 @@ class CheckMaintenance
         return $next($request);
     }
 }
+

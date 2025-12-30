@@ -41,3 +41,5 @@ class SetCurrencyController extends Controller
         return redirect()->back();
     }
 }
+
+
