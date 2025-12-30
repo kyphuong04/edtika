@@ -37,12 +37,18 @@
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/staffs">{{ trans('admin/main.staff') }}</a>
                 </li>
             @endif
-
+            @if(($authUser->isManager() || $authUser->isCeo()) && $authUser->can('admin_users_list'))
+                <li class="{{ (request()->is(getAdminPanelUrl('/regular-users', false))) ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/regular-users">Users</a>
+                </li>
+            @endif
             @can('admin_users_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/students', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/students">{{ trans('public.students') }}</a>
                 </li>
             @endcan()
+
+           
 
             @can('admin_instructors_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/instructors', false))) ? 'active' : '' }}">
