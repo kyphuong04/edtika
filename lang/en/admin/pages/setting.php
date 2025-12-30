@@ -196,7 +196,7 @@ return [
 'subscribes' => 'Subscriptions Section',
 'blog' => 'Blog Section',
 'organizations' => 'Organizations Section',
-'instructors' => 'Instructors Section',
+'instructors' => 'Mentors Section',
 'video_or_image_section' => 'Video or Image Section',
 'main_home_video_or_image_box' => 'Home Page Video or Image Section',
 

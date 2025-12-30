@@ -61,14 +61,14 @@
 }
 .panel-sidebar__contents {
   width: 100%;
-  height: calc(100vh - 278px);
+  height: 100%;
 }
 .panel-sidebar__contents.without-bottom-image {
   height: calc(100vh - 70px);
 }
 @media (max-width: 991px) {
   .panel-sidebar__contents {
-    height: calc(100vh - 110px);
+    height: 100%;
   }
 }
 .panel-sidebar__bottom-banner {

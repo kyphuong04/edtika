@@ -757,10 +757,16 @@ table tr th:first-child, table tr td:first-child {
 }
 
 .select2-container {
-    z-index: 1212 !important;
+    z-index: 99 !important;
 }
 
-.modal .select2-container {
+/* Select2 dropdown không đè lên sidebar */
+.select2-container--open {
+    z-index: 99 !important;
+}
+
+.modal .select2-container,
+.modal .select2-container--open {
     z-index: 10550 !important;
 }
 
@@ -1968,3 +1974,139 @@ table tbody tr:first-child th:last-child {
     opacity: 0.9;
 }
 
+/* ====================================
+   Sidebar Hover to Expand 
+   Hoạt động với sidebar-mini của Stisla
+   ==================================== */
+
+/* Transition cho sidebar */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar {
+    transition: width 0.3s ease, box-shadow 0.3s ease !important;
+    position: fixed !important;
+    z-index: 999 !important;
+}
+
+/* Ẩn dropdown popup khi không hover vào menu item - khắc phục popup khó chịu */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar .sidebar-menu > li > ul.dropdown-menu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Chỉ hiện dropdown khi hover trực tiếp vào menu item (chế độ thu nhỏ) */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:not(:hover) .sidebar-menu > li:hover > ul.dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 65px !important;
+    top: 0 !important;
+}
+
+/* Khi hover vào sidebar - mở rộng */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover {
+    width: 250px !important;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Hiện logo lớn khi hover */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-brand {
+    display: block !important;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-brand-sm {
+    display: none !important;
+}
+
+/* Hiện text menu khi hover */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a {
+    justify-content: flex-start !important;
+    padding: 0 15px !important;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a span {
+    display: inline-block !important;
+    margin-left: 10px !important;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a .ion,
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a .fas,
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a .far,
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a .fab,
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a .fal,
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a .icons,
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a svg {
+    margin-right: 15px !important;
+    font-size: 18px !important;
+}
+
+/* Hiện dropdown arrow khi hover */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li > a.has-dropdown:after {
+    content: "\f107" !important;
+    font-family: 'Font Awesome 5 Free' !important;
+    font-weight: 900 !important;
+    position: absolute !important;
+    right: 15px !important;
+}
+
+/* Menu header */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li.menu-header {
+    font-size: 10px !important;
+    height: auto !important;
+    padding: 10px 15px !important;
+}
+
+/* Dropdown khi hover mở rộng - trở về vị trí bình thường */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li ul.dropdown-menu {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    background-color: rgba(0,0,0,0.02) !important;
+    /* Reset trạng thái ẩn mặc định */
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Khi sidebar mở rộng, dropdown chỉ hiện khi menu item active */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li:not(.active) > ul.dropdown-menu {
+    display: none !important;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li.active > ul.dropdown-menu {
+    display: block !important;
+}
+
+/* Ẩn dropdown title khi sidebar mở rộng */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover .sidebar-menu > li ul.dropdown-menu .dropdown-title {
+    display: none !important;
+}
+
+/* Ẩn hamburger menu trên desktop */
+body.sidebar-mini.sidebar-hover-expand [data-toggle="sidebar"] {
+    display: none !important;
+}
+
+/* Custom scrollbar cho sidebar khi hover */
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover::-webkit-scrollbar {
+    width: 6px;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+body.sidebar-mini.sidebar-hover-expand .main-sidebar:hover::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+/* Responsive - Trên mobile/tablet hiện hamburger và tắt hover */
+@media (max-width: 1024px) {
+    body.sidebar-mini.sidebar-hover-expand [data-toggle="sidebar"] {
+        display: flex !important;
+    }
+}
