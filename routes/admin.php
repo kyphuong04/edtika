@@ -66,6 +66,11 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/excel', 'UserController@exportExcelStudents');
         });
 
+        Route::group(['prefix' => 'regular-users'  ], function () {
+            Route::get('/', 'UserController@regularUsers');
+            Route::get('/excel', 'UserController@exportExcelRegularUsers');
+        });
+
         Route::group(['prefix' => 'instructors'], function () {
             Route::get('/', 'UserController@instructors');
             Route::get('/excel', 'UserController@exportExcelInstructors');
@@ -1257,10 +1262,98 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/create', 'LandingBuilderController@create');
             Route::post('/store', 'LandingBuilderController@store');
             Route::get('/{id}/edit', 'LandingBuilderController@edit');
-            Route::post('/{id}/update', 'LandingBuilderController@update');
+            Route::post('/{id}/update', 'LandingBuilderController@update'); 
             Route::get('/{id}/delete', 'LandingBuilderController@delete');
         });
+        
+        // IELTS Test Module Routes
+        Route::group(['prefix' => 'ielts-tests'], function () {
+            // Test Management
+            Route::get('/', 'IeltsTestController@index')->name('admin.ielts_tests.index');
+            
+            // New workflow: Choose Type → Mock/Practice forms
+            Route::get('/create', 'IeltsTestController@chooseType')->name('admin.ielts_tests.create');
+            Route::get('/create/mock', 'IeltsTestController@createMock')->name('admin.ielts_tests.create.mock');
+            Route::get('/create/practice', 'IeltsTestController@createPractice')->name('admin.ielts_tests.create.practice');
+            Route::post('/store/mock', 'IeltsTestController@storeMock')->name('admin.ielts_tests.store_mock');
+            Route::post('/store/practice', 'IeltsTestController@storePractice')->name('admin.ielts_tests.store_practice');
+            
+            Route::post('/store', 'IeltsTestController@store')->name('admin.ielts_tests.store');
+            Route::get('/{id}/edit', 'IeltsTestController@edit')->name('admin.ielts_tests.edit');
+            Route::post('/{id}/update', 'IeltsTestController@update')->name('admin.ielts_tests.update');
+            Route::get('/{id}/delete', 'IeltsTestController@destroy')->name('admin.ielts_tests.destroy');
+            Route::post('/{id}/duplicate', 'IeltsTestController@duplicate')->name('admin.ielts_tests.duplicate');
+            
+            // Approval Workflow
+            Route::post('/{id}/submit-for-approval', 'IeltsTestController@submitForApproval')->name('admin.ielts_tests.submit_approval');
+            Route::get('/pending-approval', 'IeltsTestController@pendingApproval')->name('admin.ielts_tests.pending_approval');
+            Route::post('/{id}/approve', 'IeltsTestController@approve')->name('admin.ielts_tests.approve');
+            Route::post('/{id}/reject', 'IeltsTestController@reject')->name('admin.ielts_tests.reject');
+            
+            // Section Management
+            Route::get('/{testId}/sections', 'IeltsTestController@manageSections')->name('admin.ielts_tests.sections');
+            Route::post('/{testId}/sections/store', 'IeltsTestController@storeSection')->name('admin.ielts_tests.sections.store');
+            Route::post('/sections/{sectionId}/update', 'IeltsTestController@updateSection')->name('admin.ielts_tests.sections.update');
+            Route::get('/sections/{sectionId}/delete', 'IeltsTestController@deleteSection')->name('admin.ielts_tests.sections.delete');
+            
+            // Question Management
+            Route::get('/sections/{sectionId}/questions', 'IeltsTestController@manageQuestions')->name('admin.ielts_tests.questions');
+            Route::post('/sections/{sectionId}/questions/store', 'IeltsTestController@storeQuestion')->name('admin.ielts_tests.questions.store');
+            Route::post('/questions/{questionId}/update', 'IeltsTestController@updateQuestion')->name('admin.ielts_tests.questions.update');
+            Route::get('/questions/{questionId}/delete', 'IeltsTestController@deleteQuestion')->name('admin.ielts_tests.questions.delete');
+            Route::post('/sections/{sectionId}/questions/bulk-import', 'IeltsTestController@bulkImportQuestions')->name('admin.ielts_tests.questions.bulk_import');
+            
+            // Attempts & Grading
+            Route::get('/attempts', 'IeltsTestController@attempts')->name('admin.ielts_tests.attempts');
+            Route::get('/attempts/{attemptId}', 'IeltsTestController@viewAttempt')->name('admin.ielts_tests.view_attempt');
+            Route::post('/answers/{answerId}/grade', 'IeltsTestController@gradeAnswer')->name('admin.ielts_tests.grade_answer');
+            Route::get('/attempts/excel', 'IeltsTestController@exportAttemptsExcel')->name('admin.ielts_tests.export_attempts');
+            
+            // Practice Categories
+            Route::group(['prefix' => 'practice-categories'], function () {
+                Route::get('/', 'IeltsPracticeCategoryController@index')->name('admin.ielts_practice_categories.index');
+                Route::post('/store', 'IeltsPracticeCategoryController@store')->name('admin.ielts_practice_categories.store');
+                Route::post('/{id}/update', 'IeltsPracticeCategoryController@update')->name('admin.ielts_practice_categories.update');
+                Route::get('/{id}/delete', 'IeltsPracticeCategoryController@destroy')->name('admin.ielts_practice_categories.destroy');
+            });
+        });
         /* End Admin Middleware */
+    });
+
+    // IELTS Practice Categories
+    Route::group(['prefix' => 'practice-categories'], function () {
+        Route::get('/', 'IeltsPracticeCategoryController@index')->name('admin.practice_categories.index');
+        Route::post('/store', 'IeltsPracticeCategoryController@store')->name('admin.practice_categories.store');
+        Route::post('/{id}/update', 'IeltsPracticeCategoryController@update')->name('admin.practice_categories.update');
+        Route::delete('/{id}/delete', 'IeltsPracticeCategoryController@destroy')->name('admin.practice_categories.destroy');
+    });
+    
+    // Question Bank Management (Admin)
+    Route::group(['prefix' => 'question-bank'], function () {
+        // Dashboard (admin view - all questions)
+        Route::get('/', 'QuestionBankController@index')->name('admin.question_bank');
+        
+        // Mock Bank
+        Route::get('/mock', 'QuestionBankController@mockList')->name('admin.question_bank.mock.list');
+        
+        // Practice Bank
+        Route::get('/practice', 'QuestionBankController@practiceList')->name('admin.question_bank.practice.list');
+        
+        // View question details
+        Route::get('/{bankType}/{id}/show', 'QuestionBankController@show')->name('admin.question_bank.show');
+        
+        // Create/Store
+        Route::get('/create', 'QuestionBankController@create')->name('admin.question_bank.create');
+        Route::post('/store', 'QuestionBankController@store')->name('admin.question_bank.store');
+        
+        // Edit/Update/Delete
+        Route::get('/{bankType}/{id}/edit', 'QuestionBankController@edit')->name('admin.question_bank.edit');
+        Route::post('/{bankType}/{id}/update', 'QuestionBankController@update')->name('admin.question_bank.update');
+        Route::get('/{bankType}/{id}/delete', 'QuestionBankController@destroy')->name('admin.question_bank.delete');
+        
+        // Admin-only features
+        Route::post('/{bankType}/bulk-delete-unused', 'QuestionBankController@bulkDeleteUnused')->name('admin.question_bank.bulk_delete_unused');
+        Route::get('/statistics', 'QuestionBankController@statistics')->name('admin.question_bank.statistics');
     });
 });
         

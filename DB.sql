@@ -1,25 +1,26 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Host: 127.0.0.1
--- Generation Time: Dec 09, 2025 at 04:03 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.1.25
+﻿-- ================================================================
+-- DATABASE TABLES ONLY - No CREATE DATABASE or USE statements
+-- File: FOR_TEST_DB.sql
+-- Import this into ANY database you want
+-- Created: 2025-12-18
+-- ================================================================
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
---
--- Database: `webieco2_edtika`
---
+-- ================================================================
+-- INSTRUCTIONS:
+-- 1. Select your test database in phpMyAdmin first
+-- 2. Then import this file
+-- 3. All tables will be created in the selected database
+-- ================================================================
+
 
 -- --------------------------------------------------------
 
@@ -137,6 +138,31 @@ CREATE TABLE `accounting` (
   `description` text DEFAULT NULL,
   `created_at` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_kpis`
+--
+
+CREATE TABLE `admin_kpis` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `admin_id` int(10) UNSIGNED NOT NULL,
+  `period_type` enum('daily','weekly','monthly') NOT NULL,
+  `period_date` date NOT NULL,
+  `tickets_received` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `tickets_resolved` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `tickets_pending` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `avg_resolution_time_hours` decimal(10,2) DEFAULT NULL,
+  `content_reviewed` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `content_approved` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `content_rejected` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `reports_processed` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `leads_contacted` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `leads_converted` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Admin/Staff performance tracking';
 
 -- --------------------------------------------------------
 
@@ -735,6 +761,55 @@ CREATE TABLE `certificate_template_translations` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `chat_conversations`
+--
+
+CREATE TABLE `chat_conversations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `type` enum('direct','group') NOT NULL DEFAULT 'direct',
+  `title` varchar(255) DEFAULT NULL COMMENT 'For group chats',
+  `created_by` int(10) UNSIGNED NOT NULL,
+  `is_archived` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chat conversations';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `chat_messages`
+--
+
+CREATE TABLE `chat_messages` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `conversation_id` int(10) UNSIGNED NOT NULL,
+  `sender_id` int(10) UNSIGNED NOT NULL,
+  `message` text NOT NULL,
+  `attachment_type` enum('image','file','audio','video') DEFAULT NULL,
+  `attachment_path` varchar(255) DEFAULT NULL,
+  `is_system_message` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chat messages';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `chat_participants`
+--
+
+CREATE TABLE `chat_participants` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `conversation_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `role` enum('member','admin') NOT NULL DEFAULT 'member',
+  `last_read_at` bigint(20) UNSIGNED DEFAULT NULL,
+  `joined_at` bigint(20) UNSIGNED NOT NULL,
+  `left_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chat participants';
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `comments`
 --
 
@@ -881,7 +956,9 @@ CREATE TABLE `course_learning_last_views` (
 --
 
 INSERT INTO `course_learning_last_views` (`id`, `user_id`, `webinar_id`, `item_id`, `item_type`, `visited_at`) VALUES
-(1, 1047, 1, 1, 'file', 1765176112);
+(1, 1047, 1, 1, 'file', 1765771804),
+(2, 1055, 1, 1, 'file', 1765771945),
+(3, 1048, 1, 1, 'file', 1765771460);
 
 -- --------------------------------------------------------
 
@@ -1027,6 +1104,42 @@ CREATE TABLE `device_sessions` (
   `status` enum('active','pending_approval','rejected','expired') NOT NULL DEFAULT 'active',
   `created_at` bigint(20) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Device login sessions (max 2 active)';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_words`
+--
+
+CREATE TABLE `dictionary_words` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `word` varchar(255) NOT NULL,
+  `pronunciation_us` varchar(100) DEFAULT NULL,
+  `pronunciation_uk` varchar(100) DEFAULT NULL,
+  `audio_us` varchar(255) DEFAULT NULL,
+  `audio_uk` varchar(255) DEFAULT NULL,
+  `word_type` enum('noun','verb','adjective','adverb','pronoun','preposition','conjunction','interjection') DEFAULT NULL,
+  `difficulty_level` enum('a1','a2','b1','b2','c1','c2') DEFAULT NULL COMMENT 'CEFR levels',
+  `ielts_band` decimal(2,1) DEFAULT NULL COMMENT '4.0-9.0',
+  `frequency_rank` int(10) UNSIGNED DEFAULT NULL COMMENT 'Lower = more common',
+  `created_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dictionary word entries';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_word_translations`
+--
+
+CREATE TABLE `dictionary_word_translations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `word_id` int(10) UNSIGNED NOT NULL,
+  `locale` varchar(255) NOT NULL,
+  `definition` text DEFAULT NULL,
+  `example_sentences` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`example_sentences`)),
+  `synonyms` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`synonyms`)),
+  `antonyms` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`antonyms`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1317,6 +1430,74 @@ CREATE TABLE `filter_translations` (
   `locale` varchar(255) NOT NULL,
   `title` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `flashcards`
+--
+
+CREATE TABLE `flashcards` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `deck_id` int(10) UNSIGNED NOT NULL,
+  `front` text NOT NULL COMMENT 'Word/Question',
+  `back` text NOT NULL COMMENT 'Definition/Answer',
+  `image` varchar(255) DEFAULT NULL,
+  `audio` varchar(255) DEFAULT NULL,
+  `example_sentence` text DEFAULT NULL,
+  `source_type` enum('manual','auto_from_lesson','dictionary') NOT NULL DEFAULT 'manual',
+  `source_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'lesson_id or word_id',
+  `order` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Individual flashcards';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `flashcard_decks`
+--
+
+CREATE TABLE `flashcard_decks` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `is_public` tinyint(1) NOT NULL DEFAULT 0,
+  `card_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='User flashcard decks';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `flashcard_deck_translations`
+--
+
+CREATE TABLE `flashcard_deck_translations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `flashcard_deck_id` int(10) UNSIGNED NOT NULL,
+  `locale` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `flashcard_review_logs`
+--
+
+CREATE TABLE `flashcard_review_logs` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `flashcard_id` int(10) UNSIGNED NOT NULL,
+  `quality` tinyint(1) NOT NULL COMMENT 'SM-2: 0-5, 5=perfect recall',
+  `ease_factor` decimal(4,2) NOT NULL DEFAULT 2.50,
+  `interval_days` int(10) UNSIGNED NOT NULL DEFAULT 1,
+  `next_review_date` date NOT NULL,
+  `reviewed_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Spaced repetition review history';
 
 -- --------------------------------------------------------
 
@@ -1850,6 +2031,28 @@ INSERT INTO `home_sections` (`id`, `name`, `order`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ielts_mock_tests`
+--
+
+CREATE TABLE `ielts_mock_tests` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `quiz_id` int(10) UNSIGNED NOT NULL COMMENT 'Link to main quiz',
+  `test_code` varchar(50) NOT NULL,
+  `test_type` enum('academic','general') NOT NULL,
+  `is_full_test` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1=all 4 skills',
+  `simulates_real_exam` tinyint(1) NOT NULL DEFAULT 1,
+  `listening_duration` int(10) UNSIGNED NOT NULL DEFAULT 30 COMMENT 'minutes',
+  `reading_duration` int(10) UNSIGNED NOT NULL DEFAULT 60,
+  `writing_duration` int(10) UNSIGNED NOT NULL DEFAULT 60,
+  `speaking_duration` int(10) UNSIGNED NOT NULL DEFAULT 15,
+  `total_duration` int(10) UNSIGNED NOT NULL DEFAULT 165,
+  `instructions` text DEFAULT NULL,
+  `created_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='IELTS mock test configurations';
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `ielts_question_types`
 --
 
@@ -1869,18 +2072,18 @@ CREATE TABLE `ielts_question_types` (
 --
 
 INSERT INTO `ielts_question_types` (`id`, `skill_id`, `code`, `name_en`, `name_vi`, `description`, `auto_gradable`, `created_at`) VALUES
-(1, 1, 'listening_mcq', 'Multiple Choice', 'Trắc nghiệm', NULL, 1, 1764818305),
-(2, 1, 'listening_matching', 'Matching', 'Nối', NULL, 1, 1764818305),
-(3, 1, 'listening_fill_blank', 'Fill in the Blanks', 'Điền vào chỗ trống', NULL, 1, 1764818305),
-(4, 2, 'reading_tfng', 'True/False/Not Given', 'Đúng/Sai/Không xác định', NULL, 1, 1764818305),
-(5, 2, 'reading_mcq', 'Multiple Choice', 'Trắc nghiệm', NULL, 1, 1764818305),
-(6, 2, 'reading_matching', 'Matching', 'Nối', NULL, 1, 1764818305),
-(7, 2, 'reading_fill_blank', 'Fill in the Blanks', 'Điền vào chỗ trống', NULL, 1, 1764818305),
-(8, 3, 'writing_task1', 'Task 1 (Report/Letter)', 'Bài 1 (Báo cáo/Thư)', NULL, 0, 1764818305),
-(9, 3, 'writing_task2', 'Task 2 (Essay)', 'Bài 2 (Luận)', NULL, 0, 1764818305),
-(10, 4, 'speaking_part1', 'Part 1 (Introduction)', 'Phần 1 (Giới thiệu)', NULL, 0, 1764818305),
-(11, 4, 'speaking_part2', 'Part 2 (Long Turn)', 'Phần 2 (Nói dài)', NULL, 0, 1764818305),
-(12, 4, 'speaking_part3', 'Part 3 (Discussion)', 'Phần 3 (Thảo luận)', NULL, 0, 1764818305);
+(1, 1, 'listening_mcq', 'Multiple Choice', 'Tráº¯c nghiá»‡m', NULL, 1, 1764818305),
+(2, 1, 'listening_matching', 'Matching', 'Ná»‘i', NULL, 1, 1764818305),
+(3, 1, 'listening_fill_blank', 'Fill in the Blanks', 'Äiá»n vÃ o chá»— trá»‘ng', NULL, 1, 1764818305),
+(4, 2, 'reading_tfng', 'True/False/Not Given', 'ÄÃºng/Sai/KhÃ´ng xÃ¡c Ä‘á»‹nh', NULL, 1, 1764818305),
+(5, 2, 'reading_mcq', 'Multiple Choice', 'Tráº¯c nghiá»‡m', NULL, 1, 1764818305),
+(6, 2, 'reading_matching', 'Matching', 'Ná»‘i', NULL, 1, 1764818305),
+(7, 2, 'reading_fill_blank', 'Fill in the Blanks', 'Äiá»n vÃ o chá»— trá»‘ng', NULL, 1, 1764818305),
+(8, 3, 'writing_task1', 'Task 1 (Report/Letter)', 'BÃ i 1 (BÃ¡o cÃ¡o/ThÆ°)', NULL, 0, 1764818305),
+(9, 3, 'writing_task2', 'Task 2 (Essay)', 'BÃ i 2 (Luáº­n)', NULL, 0, 1764818305),
+(10, 4, 'speaking_part1', 'Part 1 (Introduction)', 'Pháº§n 1 (Giá»›i thiá»‡u)', NULL, 0, 1764818305),
+(11, 4, 'speaking_part2', 'Part 2 (Long Turn)', 'Pháº§n 2 (NÃ³i dÃ i)', NULL, 0, 1764818305),
+(12, 4, 'speaking_part3', 'Part 3 (Discussion)', 'Pháº§n 3 (Tháº£o luáº­n)', NULL, 0, 1764818305);
 
 -- --------------------------------------------------------
 
@@ -1905,9 +2108,9 @@ CREATE TABLE `ielts_skills` (
 
 INSERT INTO `ielts_skills` (`id`, `code`, `name_en`, `name_vi`, `icon`, `color`, `order`, `created_at`) VALUES
 (1, 'listening', 'Listening', 'Nghe', NULL, '#4CAF50', 1, 1764818305),
-(2, 'reading', 'Reading', 'Đọc', NULL, '#2196F3', 2, 1764818305),
-(3, 'writing', 'Writing', 'Viết', NULL, '#FF9800', 3, 1764818305),
-(4, 'speaking', 'Speaking', 'Nói', NULL, '#F44336', 4, 1764818305);
+(2, 'reading', 'Reading', 'Äá»c', NULL, '#2196F3', 2, 1764818305),
+(3, 'writing', 'Writing', 'Viáº¿t', NULL, '#FF9800', 3, 1764818305),
+(4, 'speaking', 'Speaking', 'NÃ³i', NULL, '#F44336', 4, 1764818305);
 
 -- --------------------------------------------------------
 
@@ -2262,6 +2465,117 @@ CREATE TABLE `landing_translations` (
 
 INSERT INTO `landing_translations` (`id`, `landing_id`, `locale`, `title`) VALUES
 (1, 1, 'en', 'Lite (Included)');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leaderboards`
+--
+
+CREATE TABLE `leaderboards` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `type` enum('weekly','monthly','all_time','skill_specific','course_specific') NOT NULL,
+  `skill_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'For skill-specific',
+  `webinar_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'For course-specific',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `prize_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Prizes for top ranks' CHECK (json_valid(`prize_info`)),
+  `created_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Leaderboard configurations';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leaderboard_entries`
+--
+
+CREATE TABLE `leaderboard_entries` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `leaderboard_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `score` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `rank` int(10) UNSIGNED DEFAULT NULL,
+  `additional_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Extra metrics' CHECK (json_valid(`additional_data`)),
+  `updated_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Leaderboard user rankings';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leads`
+--
+
+CREATE TABLE `leads` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `source` varchar(100) DEFAULT NULL COMMENT 'Landing page, Facebook, Google Ads, etc',
+  `utm_source` varchar(100) DEFAULT NULL,
+  `utm_campaign` varchar(100) DEFAULT NULL,
+  `utm_medium` varchar(100) DEFAULT NULL,
+  `target_band` decimal(2,1) DEFAULT NULL,
+  `current_level` varchar(50) DEFAULT NULL,
+  `interested_courses` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`interested_courses`)),
+  `diagnostic_test_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'If took placement test',
+  `status` enum('new','contacted','qualified','converted','rejected','lost') NOT NULL DEFAULT 'new',
+  `assigned_to` int(10) UNSIGNED DEFAULT NULL COMMENT 'Sale/Admin assigned',
+  `notes` text DEFAULT NULL,
+  `converted_user_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'User ID after conversion',
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lead/prospect management';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lead_activities`
+--
+
+CREATE TABLE `lead_activities` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `lead_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'Who did the activity',
+  `activity_type` enum('call','email','meeting','note','status_change','sms','whatsapp') NOT NULL,
+  `description` text DEFAULT NULL,
+  `outcome` varchar(255) DEFAULT NULL,
+  `next_follow_up` datetime DEFAULT NULL,
+  `created_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lead interaction history';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `manager_kpis`
+--
+
+CREATE TABLE `manager_kpis` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `manager_id` int(10) UNSIGNED NOT NULL,
+  `period_type` enum('daily','weekly','monthly','quarterly') NOT NULL,
+  `period_date` date NOT NULL,
+  `total_teachers` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `total_admins` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `total_sales` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `avg_team_kpi_achievement` decimal(5,2) DEFAULT NULL COMMENT 'Average KPI achievement % of team',
+  `total_active_students` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `new_students_enrolled` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `student_retention_rate` decimal(5,2) DEFAULT NULL COMMENT 'Percentage',
+  `avg_student_satisfaction` decimal(3,2) DEFAULT NULL COMMENT '0.00-5.00 stars',
+  `total_revenue` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `target_revenue` decimal(15,2) DEFAULT NULL,
+  `revenue_achievement_rate` decimal(5,2) DEFAULT NULL,
+  `course_completion_rate` decimal(5,2) DEFAULT NULL COMMENT 'Overall completion rate',
+  `avg_test_pass_rate` decimal(5,2) DEFAULT NULL COMMENT 'Students passing tests',
+  `content_quality_score` decimal(5,2) DEFAULT NULL COMMENT 'Based on reviews/reports',
+  `pending_approvals` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Content waiting approval',
+  `escalated_issues` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `resolved_escalations` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Manager performance and team oversight KPIs';
 
 -- --------------------------------------------------------
 
@@ -2775,6 +3089,25 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `mock_test_sessions`
+--
+
+CREATE TABLE `mock_test_sessions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `mock_test_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `started_at` bigint(20) UNSIGNED NOT NULL,
+  `completed_at` bigint(20) UNSIGNED DEFAULT NULL,
+  `current_section` enum('listening','reading','writing','speaking','completed') NOT NULL,
+  `time_remaining_seconds` int(10) UNSIGNED DEFAULT NULL,
+  `is_paused` tinyint(1) NOT NULL DEFAULT 0,
+  `session_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Answers and progress' CHECK (json_valid(`session_data`)),
+  `device_info` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Browser, OS for security' CHECK (json_valid(`device_info`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Active mock test sessions';
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `navbar_buttons`
 --
 
@@ -2895,7 +3228,12 @@ INSERT INTO `notifications` (`id`, `user_id`, `sender_id`, `group_id`, `webinar_
 (2237, 1, NULL, NULL, NULL, 'New course enrollment', '<p>Webie User enrolled in Sample Course&nbsp;on 4 Dec 2025 04:40&nbsp;at Free</p>', 'system', 'single', 1764841204),
 (2238, 1, NULL, NULL, NULL, 'New item created', '<p>Webie Admin created a new item with title LMS_test_123</p>', 'system', 'single', 1765185320),
 (2239, 1050, NULL, NULL, NULL, 'Course created', '<p>You created a new course&nbsp;with title LMS_test_123</p>', 'system', 'single', 1765185866),
-(2240, 1, NULL, NULL, NULL, 'Content review request', '<p>Webie Admin sent a review request for LMS_test_123</p>', 'system', 'single', 1765185866);
+(2240, 1, NULL, NULL, NULL, 'Content review request', '<p>Webie Admin sent a review request for LMS_test_123</p>', 'system', 'single', 1765185866),
+(2241, 1, NULL, NULL, NULL, 'New course enrollment', '<p>Phuc User enrolled in Sample Course&nbsp;on 14 Dec 2025 22:30&nbsp;at Free</p>', 'system', 'single', 1765769426),
+(2242, 1, NULL, NULL, NULL, 'New course enrollment', '<p>Webie Student enrolled in Sample Course&nbsp;on 14 Dec 2025 23:04&nbsp;at Free</p>', 'system', 'single', 1765771449),
+(2243, 1, NULL, NULL, NULL, 'New organization user', '<p>Webie Teacher submitted Tráº§n HoÃ ng PhÃºc&nbsp;as new Student</p>', 'system', 'single', 1765872627),
+(2244, 1, NULL, NULL, NULL, 'New course enrollment', '<p>Cambridge Dental enrolled in LMS_test_123&nbsp;on 16 Dec 2025 21:23&nbsp;at Free</p>', 'system', 'single', 1765938193),
+(2245, 1, NULL, NULL, NULL, 'New course enrollment', '<p>Webie User enrolled in LMS_test_123&nbsp;on 17 Dec 2025 16:17&nbsp;at Free</p>', 'system', 'single', 1765963049);
 
 -- --------------------------------------------------------
 
@@ -5534,36 +5872,26 @@ INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21163, 5, 100302, 1),
 (21164, 5, 100303, 1),
 (21165, 2, 100020, 1),
-(21166, 2, 100023, 1),
 (21167, 2, 100024, 1),
 (21168, 2, 100026, 1),
 (21169, 2, 100027, 1),
 (21170, 2, 100029, 1),
 (21171, 2, 100030, 1),
 (21172, 2, 100031, 1),
-(21173, 2, 100032, 1),
-(21174, 2, 100033, 1),
-(21175, 2, 100034, 1),
-(21176, 2, 100035, 1),
 (21177, 2, 100040, 1),
-(21178, 2, 100043, 1),
 (21179, 2, 100044, 1),
-(21180, 2, 100045, 1),
 (21181, 2, 100053, 1),
 (21182, 2, 100054, 1),
 (21183, 2, 100055, 1),
 (21184, 2, 100060, 1),
 (21185, 2, 100061, 1),
-(21186, 2, 100063, 1),
 (21187, 2, 100070, 1),
 (21188, 2, 100071, 1),
 (21189, 2, 100080, 1),
-(21190, 2, 100083, 1),
 (21191, 2, 100085, 1),
 (21192, 2, 100086, 1),
 (21193, 2, 100090, 1),
 (21194, 2, 100092, 1),
-(21195, 2, 100093, 1),
 (21196, 2, 100100, 1),
 (21197, 2, 100101, 1),
 (21198, 2, 100102, 1),
@@ -5573,25 +5901,14 @@ INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21202, 2, 100106, 1),
 (21203, 2, 100107, 1),
 (21204, 2, 100120, 1),
-(21205, 2, 100121, 1),
 (21206, 2, 100122, 1),
 (21207, 2, 100123, 1),
 (21208, 2, 100124, 1),
-(21209, 2, 100125, 1),
-(21210, 2, 100126, 1),
-(21211, 2, 100127, 1),
 (21212, 2, 100140, 1),
-(21213, 2, 100141, 1),
-(21214, 2, 100142, 1),
 (21215, 2, 100143, 1),
 (21216, 2, 100160, 1),
-(21217, 2, 100161, 1),
-(21218, 2, 100162, 1),
 (21219, 2, 100163, 1),
 (21220, 2, 100164, 1),
-(21221, 2, 100165, 1),
-(21222, 2, 100166, 1),
-(21223, 2, 100167, 1),
 (21224, 2, 100180, 1),
 (21225, 2, 100181, 1),
 (21226, 2, 100182, 1),
@@ -5608,8 +5925,6 @@ INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21237, 2, 100223, 1),
 (21238, 2, 100224, 1),
 (21239, 2, 100225, 1),
-(21240, 2, 100240, 1),
-(21241, 2, 100241, 1),
 (21242, 2, 100260, 1),
 (21243, 2, 100261, 1),
 (21244, 2, 100280, 1),
@@ -6042,8 +6357,7 @@ INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21671, 6, 1853, 1),
 (21672, 6, 1875, 1),
 (21673, 6, 1876, 1),
-(21674, 6, 1877, 1);
-INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
+(21674, 6, 1877, 1),
 (21675, 6, 1900, 1),
 (21676, 6, 1901, 1),
 (21677, 6, 1902, 1),
@@ -6069,7 +6383,8 @@ INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21697, 6, 1975, 1),
 (21698, 6, 1976, 1),
 (21699, 6, 1977, 1),
-(21700, 6, 1978, 1),
+(21700, 6, 1978, 1);
+INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21701, 6, 1979, 1),
 (21702, 6, 2000, 1),
 (21703, 6, 2001, 1),
@@ -6181,7 +6496,10 @@ INSERT INTO `permissions` (`id`, `role_id`, `section_id`, `allow`) VALUES
 (21809, 6, 3173, 1),
 (21810, 6, 3174, 1),
 (21811, 6, 3175, 1),
-(21812, 6, 3176, 1);
+(21812, 6, 3176, 1),
+(21813, 2, 100125, 1),
+(21814, 2, 100127, 1),
+(21815, 2, 100240, 1);
 
 -- --------------------------------------------------------
 
@@ -7132,6 +7450,29 @@ INSERT INTO `roles` (`id`, `name`, `users_count`, `is_admin`, `created_at`) VALU
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `role_kpi_targets`
+--
+
+CREATE TABLE `role_kpi_targets` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `role_id` int(10) UNSIGNED NOT NULL COMMENT 'Teacher, Admin, Manager role',
+  `period_type` enum('daily','weekly','monthly','quarterly','yearly') NOT NULL,
+  `kpi_category` enum('teacher','admin','sales','general') NOT NULL,
+  `metric_name` varchar(100) NOT NULL COMMENT 'e.g., avg_response_time_minutes, tickets_resolved',
+  `target_value` decimal(15,2) NOT NULL COMMENT 'Numeric target',
+  `comparison_operator` enum('gte','lte','eq') NOT NULL DEFAULT 'gte' COMMENT 'gte=>=, lte=<=, eq==',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `priority` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',
+  `description` text DEFAULT NULL,
+  `reward_points` int(10) UNSIGNED DEFAULT NULL COMMENT 'Points if target met',
+  `created_by` int(10) UNSIGNED DEFAULT NULL COMMENT 'CEO/Manager who set it',
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='KPI targets set by CEO/Manager for roles';
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `role_translations`
 --
 
@@ -7191,10 +7532,16 @@ CREATE TABLE `sales` (
   `converted_user_to_student` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Flag if this sale converted user to student'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
+--
 -- Dumping data for table `sales`
+--
 
 INSERT INTO `sales` (`id`, `seller_id`, `buyer_id`, `order_id`, `webinar_id`, `bundle_id`, `meeting_id`, `meeting_time_id`, `subscribe_id`, `ticket_id`, `promotion_id`, `product_order_id`, `registration_package_id`, `installment_payment_id`, `gift_id`, `payment_method`, `type`, `amount`, `tax`, `commission`, `discount`, `total_amount`, `product_delivery_fee`, `manual_added`, `access_to_purchased_item`, `created_at`, `refund_at`, `converted_user_to_student`) VALUES
-(283, 1016, 1047, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'credit', 'webinar', 0.00, NULL, NULL, NULL, 0.00, NULL, 0, 1, 1764841204, NULL, 0);
+(283, 1016, 1047, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'credit', 'webinar', 0.00, NULL, NULL, NULL, 0.00, NULL, 0, 1, 1764841204, NULL, 0),
+(284, 1016, 1055, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'credit', 'webinar', 0.00, NULL, NULL, NULL, 0.00, NULL, 0, 1, 1765769426, NULL, 0),
+(285, 1016, 1048, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'credit', 'webinar', 0.00, NULL, NULL, NULL, 0.00, NULL, 0, 1, 1765771449, NULL, 0),
+(286, 1050, 1054, NULL, 2024, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'credit', 'webinar', 0.00, NULL, NULL, NULL, 0.00, NULL, 0, 1, 1765938193, NULL, 0),
+(287, 1050, 1047, NULL, 2024, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'credit', 'webinar', 0.00, NULL, NULL, NULL, 0.00, NULL, 0, 1, 1765963049, NULL, 0);
 
 --
 -- Triggers `sales`
@@ -7248,6 +7595,33 @@ CREATE TRIGGER `trg_convert_user_to_student_on_sale` AFTER INSERT ON `sales` FOR
 END
 $$
 DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sales_kpis`
+--
+
+CREATE TABLE `sales_kpis` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL COMMENT 'Sale/Admin with sales role',
+  `period_type` enum('weekly','monthly','quarterly','yearly') NOT NULL,
+  `period_date` date NOT NULL,
+  `leads_assigned` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `leads_contacted` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `leads_qualified` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `leads_converted` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `leads_rejected` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `conversion_rate` decimal(5,2) DEFAULT NULL COMMENT 'Percentage',
+  `revenue_generated` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `target_revenue` decimal(15,2) DEFAULT NULL,
+  `achievement_rate` decimal(5,2) DEFAULT NULL COMMENT 'Percentage',
+  `calls_made` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `emails_sent` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `meetings_held` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sales performance tracking';
 
 -- --------------------------------------------------------
 
@@ -7984,7 +8358,7 @@ INSERT INTO `settings` (`id`, `page`, `name`, `updated_at`) VALUES
 (1, 'seo', 'seo_metas', 1709806236),
 (2, 'general', 'socials', 1632121340),
 (4, 'other', 'footer', 1632071275),
-(5, 'general', 'general', 1709749204),
+(5, 'general', 'general', 1765941664),
 (6, 'financial', 'financial', 1678734927),
 (8, 'personalization', 'home_hero', 1652016269),
 (12, 'customization', 'custom_css_js', 1636119881),
@@ -8055,7 +8429,7 @@ CREATE TABLE `setting_translations` (
 INSERT INTO `setting_translations` (`id`, `setting_id`, `locale`, `value`) VALUES
 (1, 1, 'en', '{\"home\":{\"title\":\"Home\",\"description\":\"Home Page Description\",\"robot\":\"index\"},\"search\":{\"title\":\"Search\",\"description\":\"Search Page Description\",\"robot\":\"index\"},\"categories\":{\"title\":\"Category\",\"description\":\"Categories Page Description\",\"robot\":\"index\"},\"login\":{\"title\":\"Login\",\"description\":\"Login Page Description\",\"robot\":\"index\"},\"register\":{\"title\":\"Register\",\"description\":\"Register Page Description\",\"robot\":\"index\"},\"about\":{\"title\":\"about page title\",\"description\":\"about page Description\"},\"contact\":{\"title\":\"Contact\",\"description\":\"Contact Page Description\",\"robot\":\"index\"},\"certificate_validation\":{\"title\":\"Certificate validation\",\"description\":\"Certificate Validation Description\",\"robot\":\"index\"},\"classes\":{\"title\":\"Courses\",\"description\":\"Courses page Description\",\"robot\":\"index\"},\"blog\":{\"title\":\"Blog\",\"description\":\"Blog Page Description\",\"robot\":\"index\"},\"instructors\":{\"title\":\"Instructors\",\"description\":\"Instructors Page Description\",\"robot\":\"index\"},\"organizations\":{\"title\":\"Organizations\",\"description\":\"Organizations Page Description\",\"robot\":\"index\"},\"instructor_finder_wizard\":{\"title\":\"Instructor finder wizard\",\"description\":\"Tutor Finder Wizard Description\",\"robot\":\"noindex\"},\"instructor_finder\":{\"title\":\"Instructor finder\",\"description\":\"Tutor Finder Description\",\"robot\":\"index\"},\"reward_courses\":{\"title\":\"Reward courses\",\"description\":\"Reward Courses Description\",\"robot\":\"index\"},\"products_lists\":{\"title\":\"Store Products\",\"description\":\"Store Products Description\",\"robot\":\"noindex\"},\"reward_products\":{\"title\":\"Reward Products\",\"description\":\"Reward Products Description\",\"robot\":\"noindex\"},\"forum\":{\"title\":\"Forums\",\"description\":\"Forums Description\",\"robot\":\"noindex\"},\"upcoming_courses_lists\":{\"title\":\"Upcoming Course\",\"description\":\"Upcoming Courses Description\",\"robot\":\"noindex\"},\"tags\":{\"title\":\"Tags\",\"description\":\"Tags Page Description\",\"robot\":\"noindex\"}}'),
 (2, 2, 'en', '{\"Instagram\":{\"title\":\"Instagram\",\"image\":\"\\/store\\/1\\/default_images\\/social\\/instagram.svg\",\"link\":\"https:\\/\\/www.instagram.com\\/\",\"order\":\"1\"},\"Whatsapp\":{\"title\":\"Whatsapp\",\"image\":\"\\/store\\/1\\/default_images\\/social\\/whatsapp.svg\",\"link\":\"https:\\/\\/web.whatsapp.com\\/\",\"order\":\"2\"},\"Twitter\":{\"title\":\"Twitter\",\"image\":\"\\/store\\/1\\/default_images\\/social\\/twitter.svg\",\"link\":\"https:\\/\\/twitter.com\\/\",\"order\":\"3\"},\"Facebook\":{\"title\":\"Facebook\",\"image\":\"\\/store\\/1\\/default_images\\/social\\/facebook.svg\",\"link\":\"https:\\/\\/www.facebook.com\\/\",\"order\":\"4\"}}'),
-(4, 5, 'en', '{\"site_name\":\"Rocket LMS\",\"site_email\":\"mailer@rocket-soft.org\",\"site_phone\":\"415-716-1166\",\"site_language\":\"EN\",\"register_method\":\"email\",\"default_time_zone\":\"America\\/New_York\",\"date_format\":\"textual\",\"time_format\":\"24_hours\",\"user_languages\":[\"AR\",\"EN\",\"ES\"],\"rtl_languages\":[\"AR\"],\"fav_icon\":\"\\/store\\/1\\/favicon.png\",\"logo\":\"\\/store\\/1\\/default_images\\/website-logo.png\",\"footer_logo\":\"\\/store\\/1\\/default_images\\/website-logo-white.png\",\"rtl_layout\":\"0\",\"preloading\":\"1\",\"hero_section1\":\"0\",\"hero_section2\":\"1\",\"content_translate\":\"1\",\"app_debugbar\":\"0\"}'),
+(4, 5, 'en', '{\"site_name\":\"WEBIE EDTIKA\",\"site_email\":\"mailer@rocket-soft.org\",\"site_phone\":\"415-716-1166\",\"site_language\":\"EN\",\"register_method\":\"email\",\"default_time_zone\":\"Asia\\/Ho_Chi_Minh\",\"date_format\":\"textual\",\"time_format\":\"24_hours\",\"user_languages\":[\"AR\",\"EN\",\"ES\"],\"rtl_languages\":[\"AR\"],\"fav_icon\":\"\\/store\\/1051\\/Logo Webie-01.png\",\"logo\":\"\\/store\\/1051\\/Logo Webie-01.png\",\"dark_mode_logo\":\"\\/store\\/1051\\/Logo Webie-01.png\",\"rtl_layout\":\"0\",\"preloading\":\"1\",\"content_translate\":\"1\",\"app_debugbar\":\"0\"}'),
 (5, 6, 'en', '{\"commission\":\"20\",\"tax\":\"10\",\"minimum_payout\":\"50\",\"currency\":\"USD\",\"currency_position\":\"left\",\"price_display\":\"only_price\"}'),
 (6, 8, 'en', '{\"title\":\"Joy of learning & teaching...\",\"description\":\"Rocket LMS is a fully-featured educational platform that helps instructors to create and publish video courses, live classes, and text courses and earn money, and helps students to learn in the easiest way.\",\"hero_background\":\"\\/store\\/1\\/default_images\\/hero_1.jpg\"}'),
 (7, 12, 'en', '{\"css\":null,\"js\":null}'),
@@ -8149,6 +8523,21 @@ CREATE TABLE `special_offers` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `streak_history`
+--
+
+CREATE TABLE `streak_history` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `date` date NOT NULL,
+  `activity_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `activities` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'lessons, quizzes completed' CHECK (json_valid(`activities`)),
+  `minutes_studied` int(10) UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Daily activity log';
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `student_progress_ielts`
 --
 
@@ -8185,6 +8574,30 @@ CREATE TABLE `student_weaknesses` (
   `accuracy_rate` decimal(5,2) DEFAULT NULL COMMENT 'Percentage',
   `last_analyzed_at` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI-powered student weakness analysis';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_weekly_goals`
+--
+
+CREATE TABLE `student_weekly_goals` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `week_start_date` date NOT NULL,
+  `week_end_date` date NOT NULL,
+  `target_study_hours` decimal(5,2) DEFAULT NULL,
+  `target_lessons` int(10) UNSIGNED DEFAULT NULL,
+  `target_exercises` int(10) UNSIGNED DEFAULT NULL,
+  `target_mock_tests` int(10) UNSIGNED DEFAULT NULL,
+  `actual_study_hours` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `actual_lessons` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `actual_exercises` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `actual_mock_tests` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `achievement_rate` decimal(5,2) DEFAULT NULL COMMENT 'Overall percentage',
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Student weekly learning goals';
 
 -- --------------------------------------------------------
 
@@ -8345,6 +8758,35 @@ CREATE TABLE `tags` (
   `bundle_id` int(10) UNSIGNED DEFAULT NULL,
   `upcoming_course_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `teacher_kpis`
+--
+
+CREATE TABLE `teacher_kpis` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `teacher_id` int(10) UNSIGNED NOT NULL,
+  `period_type` enum('daily','weekly','monthly') NOT NULL,
+  `period_date` date NOT NULL COMMENT 'Start date of period',
+  `avg_response_time_minutes` decimal(10,2) DEFAULT NULL,
+  `messages_answered` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `student_queries_total` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `writing_graded_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `speaking_graded_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `total_graded_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `avg_grading_time_hours` decimal(10,2) DEFAULT NULL,
+  `pending_grading_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `active_students_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `avg_student_rating` decimal(3,2) DEFAULT NULL COMMENT '0.00-5.00 stars',
+  `rating_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `lessons_created` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `lessons_approved` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `lessons_rejected` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` bigint(20) UNSIGNED NOT NULL,
+  `updated_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Teacher performance KPIs';
 
 -- --------------------------------------------------------
 
@@ -8596,7 +9038,16 @@ INSERT INTO `time_spent_on_courses` (`id`, `user_id`, `course_id`, `page`, `entr
 (7, 1047, 1, 'learning_page', 1765176101, 1765176111, 10),
 (8, 1047, 1, 'learning_page', 1765176102, 1765176112, 10),
 (9, 1050, 2024, 'learning_page', 1765187413, 1765187423, 10),
-(10, 1047, 1, 'learning_page', 1765263548, 1765263558, 10);
+(10, 1047, 1, 'learning_page', 1765263548, 1765263558, 10),
+(11, 1055, 1, 'learning_page', 1765769446, 1765769456, 10),
+(12, 1048, 1, 'learning_page', 1765771457, 1765771467, 10),
+(13, 1047, 1, 'learning_page', 1765771788, 1765771798, 10),
+(14, 1047, 1, 'learning_page', 1765771795, 1765771805, 10),
+(15, 1055, 1, 'learning_page', 1765771938, 1765771948, 10),
+(16, 1054, 2024, 'learning_page', 1765938221, 1765938231, 10),
+(17, 1054, 2024, 'learning_page', 1765938269, 1765938279, 10),
+(18, 1054, 2024, 'learning_page', 1765940352, 1765940362, 10),
+(19, 1047, 2024, 'learning_page', 1765963189, 1765963199, 10);
 
 -- --------------------------------------------------------
 
@@ -8780,16 +9231,18 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `full_name`, `role_name`, `role_id`, `user_type`, `student_converted_at`, `organ_id`, `mobile`, `email`, `bio`, `password`, `google_id`, `facebook_id`, `remember_token`, `logged_count`, `verified`, `financial_approval`, `installment_approval`, `enable_installments`, `disable_cashback`, `enable_registration_bonus`, `registration_bonus_amount`, `avatar`, `avatar_settings`, `cover_img`, `profile_video`, `profile_secondary_image`, `headline`, `about`, `address`, `country_id`, `province_id`, `city_id`, `district_id`, `location`, `level_of_training`, `meeting_type`, `status`, `access_content`, `enable_ai_content`, `language`, `currency`, `timezone`, `theme_color_mode`, `newsletter`, `public_message`, `enable_profile_statistics`, `identity_scan`, `certificate`, `affiliate`, `can_create_store`, `ban`, `ban_start_at`, `ban_end_at`, `offline`, `offline_message`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'admin', 'Admin', 'admin', 4, 'user', NULL, NULL, '00000000', 'admin@demo.com', 'Senior software developer', '$2y$10$nSUg1Z2rltHGecudC6dEEeRoqfIhlHi8WaAFFQs57oyFtpkvvQufW', NULL, NULL, 'ip243UvI93rGCrkirVfcZBpgl32Cb8LckUL8qrcmwIjKGQUNNmvbdu9pOYZL', 0, 1, 0, 0, 1, 0, 0, NULL, '/store/1/default_images/logo-new.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, 'EN', 'USD', 'America/New_York', NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1597826952, 1597826952, NULL),
+(1, 'admin', 'Admin', 'admin', 4, 'user', NULL, NULL, '00000000', 'admin@demo.com', 'Senior software developer', '$2y$10$nSUg1Z2rltHGecudC6dEEeRoqfIhlHi8WaAFFQs57oyFtpkvvQufW', NULL, NULL, 'oFL6jL6h6hrNSW0boBX9099kO5bmSkbRlzWXDNxjoJr69aG4nqTQr78aTOH9', 0, 1, 0, 0, 1, 0, 0, NULL, '/store/1/default_images/logo-new.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, 'EN', 'USD', 'America/New_York', NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1597826952, 1597826952, NULL),
 (1016, 'ricardo_dave', 'Ricardo dave', 'admin', 4, 'user', NULL, NULL, '+12025250175', 'Ricardodave09@hotmail.com', 'Data Analyst at Microsoft', '$2y$10$NA3UcrvzR9bOoHbFQa.Xbeb2KhRplWzdSLU72eRosUOLfhaMITiN.', NULL, NULL, NULL, 0, 0, 1, 0, 1, 0, 0, NULL, '/store/3/setting/avatar.jpg', NULL, '/store/1016/7.jpg', NULL, NULL, NULL, 'Ricardo dave has a BS and MS in Mechanical Engineering from Santa Clara University and years of experience as a professional instructor and trainer for Data Science and programming. He has publications and patents in various fields such as microfluidics, materials science, and data science technologies. Over the course of his career he has developed a skill set in analyzing data and he hopes to use his experience in teaching and data science to help other people learn the power of programming the ability to analyze data, as well as present the data in clear and beautiful visualizations. Currently he works as the Head of Data Science for Pierian Data Inc. and provides in-person data science and python programming training courses to employees working at top companies, including General Electric, Cigna, The New York Times, Credit Suisse, McKinsey and many more. Feel free to contact him on LinkedIn for more information on in-person training sessions or group training sessions in Las Vegas, NV.', 'Luib, 72 Wern Ddu Lane', NULL, NULL, NULL, NULL, 0x000000000101000000c5f8fa14fb6748409a3a59c20bfb0140, b'010', 'all', 'active', 1, 0, 'EN', 'USD', 'America/New_York', NULL, 0, 0, 0, '/store/1016/passport.jpg', '', 1, 0, 0, NULL, NULL, 1, 'I am not available for 2 days due to a business trip', 1624817905, NULL, NULL),
-(1047, 'webieuser', 'Webie User', 'user', 2, 'user', NULL, NULL, '0900000001', 'webie.user@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'mjEpvaBkOplWrrlSilUfwIeWmMXL97NqWCQKBXd4iwc1vujYx5DSp2fJ0xCN', 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1047/setting/avatar.png', '{\"color\":\"000000\",\"background\":\"F48FB1\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764841204, NULL),
-(1048, 'webiestudent', 'Webie Student', 'student', 2, 'user', NULL, NULL, '0900000002', 'webie.student@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'DBQ1suUBNiKQxn1C8p4DwtSaIWRe9N3K6IcofQ5o0yizjHe18opPIjcLj5SJ', 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1048/setting/avatar.png', '{\"color\":\"FFFFFF\",\"background\":\"f57c00\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
-(1049, 'webieteacher', 'Webie Teacher', 'teacher', 3, 'user', NULL, NULL, '0900000003', 'webie.teacher@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'WGKRrPxjDwuxGTSmm2LMbWjwofiLjbMBv6dh9qfjWwBDPVAQGjp10m44uYZ0', 2, 0, 0, 0, 1, 0, 0, NULL, '/store/1049/setting/avatar.png', '{\"color\":\"000000\",\"background\":\"efebe9\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
-(1050, 'webieadmin', 'Webie Admin', 'admin', 4, 'user', NULL, NULL, '0900000004', 'webie.admin@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'C00VP8GZEldDDfoFoKI9RHtOQQFG9YJna9fZSwbjGL9qCHDu8zYhaZlTeqUu', 1, 0, 0, 0, 1, 0, 0, NULL, '/store/1050/setting/avatar.png', '{\"color\":\"FFFFFF\",\"background\":\"5d4037\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
+(1047, 'webieuser', 'Webie User', 'user', 2, 'user', NULL, NULL, '0900000001', 'webie.user@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'LtKVCXNwX1JSM0i0V9lkTyiY7vgOEx8uBJiOWpK5kpAILvvHI06IEQl7E0WT', 1, 0, 0, 0, 1, 0, 1, NULL, '/store/1047/setting/avatar.png', '{\"color\":\"000000\",\"background\":\"F48FB1\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764841204, NULL),
+(1048, 'webiestudent', 'Webie Student', 'student', 2, 'user', NULL, NULL, '0900000002', 'webie.student@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'bCAo19UwDjnKBScsptJLsmgvTW6J8r0DNw2kJVzjDILwglw6lH9Tlqo1WoCu', 2, 0, 0, 0, 1, 0, 1, NULL, '/store/1048/setting/avatar.png', '{\"color\":\"FFFFFF\",\"background\":\"f57c00\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
+(1049, 'webieteacher', 'Webie Teacher', 'teacher', 3, 'user', NULL, NULL, '0900000003', 'webie.teacher@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'IGDgcjafhMx3HyojflOsxT0ndixBvjzl8tIxyHDrLIeiY5DNqEjkms43Jd7U', 11, 0, 0, 0, 1, 0, 0, NULL, '/store/1049/setting/avatar.png', '{\"color\":\"000000\",\"background\":\"efebe9\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
+(1050, 'webieadmin', 'Webie Admin', 'admin', 4, 'user', NULL, NULL, '0900000004', 'webie.admin@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, '8y9wiBfOc0ZUou7Nw2APsH8uXxIE3IRzTaPA1bwYEPA2F8JXNdT9Pov3xafj', 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1050/setting/avatar.png', '{\"color\":\"FFFFFF\",\"background\":\"5d4037\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
 (1051, 'webiemanager', 'Webie Manager', 'manager', 5, 'user', NULL, NULL, '0900000005', 'webie.manager@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, NULL, 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1051/Logo Webie-01.png', '{\"color\":\"000000\",\"background\":\"90caf9\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
-(1052, 'webieceo', 'Webie CEO', 'ceo', 6, 'user', NULL, NULL, '0900000006', 'webie.ceo@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, NULL, 0, 0, 0, 0, 1, 0, 0, NULL, NULL, '{\"color\":\"000000\",\"background\":\"8bc34a\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
+(1052, 'webieceo', 'Webie CEO', 'ceo', 6, 'user', NULL, NULL, '0900000006', 'webie.ceo@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'UcmvzZtSVnZgxticAtGv0ap4KIh7a2HdlbjJl4EheklfNkJ4GVBThZmmkomR', 1, 0, 0, 0, 1, 0, 0, NULL, '/store/1052/Logo Webie-01.png', '{\"color\":\"000000\",\"background\":\"8bc34a\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1764818328, 1764818328, NULL),
 (1053, 'cambridge-dental-pf5kd', 'Cambridge Dental', 'teacher', 3, 'user', NULL, 1050, '7789911132', 'phuctran18072004@gmail.com', NULL, '$2y$10$.HSXTLa4q1Ddie9RYIVgXOZtT0EiCx1uOv014hSdnbLZ6wbwSlRAm', NULL, NULL, 'NEOLyGMh7ib8QE1EyF3If34k4f6TEgCCiXm5uifA8t6CUjQxVZHUbBADJKmn', 0, 0, 0, 0, 1, 0, 0, NULL, NULL, '{\"color\":\"FFFFFF\",\"background\":\"4e342e\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL, 1764829468, NULL, NULL),
-(1054, 'cambridge-dental-lrt9l', 'Cambridge Dental', 'user', 1, 'user', NULL, 1050, '7789911133', 'phuctran@gmail.com', NULL, '$2y$10$3BzR9l1aWfqAO5jfM/.57uDxaogX8A0W.1VNhBvhLNT.JDcsLR31i', NULL, NULL, NULL, 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1054/setting/avatar.png', '{\"color\":\"000000\",\"background\":\"ff9100\"}', NULL, NULL, '/store/1054/setting/profile_secondary_image.png', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL, 1764834602, NULL, NULL);
+(1054, 'cambridge-dental-lrt9l', 'Cambridge Dental', 'user', 1, 'user', NULL, 1050, '7789911133', 'phuctran@gmail.com', NULL, '$2y$10$3BzR9l1aWfqAO5jfM/.57uDxaogX8A0W.1VNhBvhLNT.JDcsLR31i', NULL, NULL, 'ttIi6AyvC54wp2EzFXQEHbBegCgQQyDBpLiQlU8kqnB0voKeZE1auhrllLTX', 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1054/setting/avatar.png', '{\"color\":\"000000\",\"background\":\"ff9100\"}', NULL, NULL, '/store/1054/setting/profile_secondary_image.png', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL, 1764834602, NULL, NULL),
+(1055, NULL, 'Phuc User', 'user', 1, 'user', NULL, NULL, '0909990001', 'phuc.user@demo.com', NULL, '$2y$10$KWJcbLuAnPAgf2w3OFax8./W652/NVoW1wFjztn6S..F5LnIFlWoy', NULL, NULL, 'I5fWqiAdVLJ45m5yoC3nc1SQNrBnog1d9U14CgnG7H8GFqxuNwFWJpaSUApC', 0, 0, 0, 0, 1, 0, 0, NULL, '/store/1055/setting/avatar.jpg', '{\"color\":\"000000\",\"background\":\"ff9e80\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 1, 0, 0, NULL, NULL, 0, NULL, 1765768542, 1765768542, NULL),
+(1056, 'tran-hoang-phuc-cmmrj', 'Tráº§n HoÃ ng PhÃºc', 'user', 1, 'user', NULL, 1049, '969554026', 'Phuc.student@demo.gmail', NULL, '$2y$10$dZEb2IuYoiXmOIa5Xm3jG.GyUeW1KvO4fE74Nc2GOC0QS1pmmbrOi', NULL, NULL, NULL, 0, 0, 0, 0, 1, 0, 0, NULL, NULL, '{\"color\":\"000000\",\"background\":\"eceff1\"}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'all', 'active', 1, 0, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL, 1765872627, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -8897,6 +9350,23 @@ CREATE TABLE `users_zoom_api` (
   `account_id` text DEFAULT NULL,
   `created_at` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_activity_streaks`
+--
+
+CREATE TABLE `user_activity_streaks` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `current_streak` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `longest_streak` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `last_activity_date` date DEFAULT NULL,
+  `freeze_tokens` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Skip days without breaking streak',
+  `total_active_days` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `updated_at` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='User daily activity streaks';
 
 -- --------------------------------------------------------
 
@@ -9101,7 +9571,7 @@ INSERT INTO `user_login_histories` (`id`, `user_id`, `browser`, `device`, `os`, 
 (65, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'ZwSV9gZoqua34KWvDTlHoY4sc2Bqz08S0C2HNQyH', 1765182445, 1765188039, 'by_admin', 1765182445),
 (66, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'gc5A4p9tgZRGOFYVYj702mUKYXM4q3pT9un5MjUU', 1765183251, 1765183916, 'default', 1765183251),
 (67, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'ojORttwJsnQtsUptqXuCaWr5U6c2zNUvL4aN3vv4', 1765184010, 1765184189, 'default', 1765184010),
-(68, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '4D8FypMZGxElKlFFDdU1cskdYs3rswnPNnyf8tss', 1765184262, NULL, NULL, 1765184262),
+(68, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '4D8FypMZGxElKlFFDdU1cskdYs3rswnPNnyf8tss', 1765184262, 1765765000, 'by_admin', 1765184262),
 (69, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '3DsOIHKeoqhEHUIg0ytyswy5RWvFKVBkPnqjJqkR', 1765186034, 1765188039, 'by_admin', 1765186034),
 (70, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'CBIvkn9iasu0brfvIeSFC6U9xSBWeWfSm7ZcbJ4t', 1765188042, 1765262513, 'by_admin', 1765188042),
 (71, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'TwKQSkA9IeQb3OHcYuGPa5BuP3Q0VJdfZ2AQgfym', 1765250224, NULL, NULL, 1765250224),
@@ -9118,7 +9588,72 @@ INSERT INTO `user_login_histories` (`id`, `user_id`, `browser`, `device`, `os`, 
 (82, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'UwRGIKfjWe1NuzUBfZTBAkmhxV3KzMkZ9yxQwZ8l', 1765264635, 1765267549, 'by_admin', 1765264635),
 (83, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'T07oYPP7fZfiIM5hCc6IkQWEhqhfnWcgDiUcbBiL', 1765267552, NULL, NULL, 1765267552),
 (84, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'WMsq9NeBNZZEoyoTVk1RkwN5wZxuNS41F8GbgDej', 1765268927, 1765268948, 'default', 1765268927),
-(85, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'uaPdYGnAOhnHdMIdRBsDmKL43GvsI0y6Jho8B0rn', 1765268996, NULL, NULL, 1765268996);
+(85, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'uaPdYGnAOhnHdMIdRBsDmKL43GvsI0y6Jho8B0rn', 1765268996, NULL, NULL, 1765268996),
+(86, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '3LWZ1UVvcx8NcCIiTcxG7JgZA5nqsNSVCtsZeQDb', 1765516152, 1765517232, 'default', 1765516152),
+(87, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '6BTvqwTJqfhsb7sWDpF3pIILIjAmKEcIYEfN9mWU', 1765517322, 1765765000, 'by_admin', 1765517322),
+(88, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'pMFWHD7qH1nCRg2QGPMbvlaRYW8SLlQGjDNfapTP', 1765686137, 1765774642, 'by_admin', 1765686137),
+(89, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'y40aRqYEzHpOdNzSMrf7pyWZoyjL7D9JjDb2VzaQ', 1765765001, 1765766939, 'default', 1765765001),
+(90, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'MmGZJ4t56WYu7bU29JFIVhK9zvZPJDXQ6zqEnits', 1765767039, 1765767180, 'default', 1765767039),
+(91, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '6wdhF1JojdRnOLtfYShtQhnfwJthsjvolBtqQBnI', 1765767266, 1765767387, 'default', 1765767266),
+(92, 1050, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'm7fIXmqoDHSCtW4CrLdoRZ5Hrq3vYjyHujiwv284', 1765767433, 1765768590, 'default', 1765767433),
+(93, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'mUTPqgwAzpPCZQcn5faV8UbRcHe0CpKhDYL37Ipg', 1765768684, NULL, NULL, 1765768684),
+(94, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '7kdvtf90K1BHMR3ZfTyyqwdcsFGsrUhZtbyEI4Dx', 1765768753, 1765771632, 'default', 1765768753),
+(95, 1055, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'sNVzA8qQTUMvj0e9tVxWyGSdSXBuU1vxFDvTr4bc', 1765769232, 1765769804, 'default', 1765769232),
+(96, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'i7xWhqxZKn0asLuAM350xfwvVMkOTbgh2pzq8fzM', 1765769849, 1765771383, 'default', 1765769849),
+(97, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'NWP6gG6X1DFiEqtFWNVMrnPMOh2nMfKlDysSWQ9I', 1765771400, 1765771859, 'default', 1765771400),
+(98, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'y0b6Uai3IggERF1CmVeyjOW5A5yhDlhGODlgMIVM', 1765771680, 1765771825, 'default', 1765771680),
+(99, 1055, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'mld68AVMMQXFcX5dGwLMZMIYm8lGwsgfwgqSwZrJ', 1765771895, 1765772041, 'default', 1765771895),
+(100, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'cKKWMyCQ0Ko7UTHVdJQD2TfIRVzBzZbPy9Bt4COD', 1765772126, 1765772479, 'default', 1765772126),
+(101, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'cJhBj9sBW4cipPwkvnLWXKJHxbBA2oTHLWzbK3vS', 1765772542, 1765773819, 'default', 1765772542),
+(102, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'frmFt8ugI5Qe5SyuBA0ZB0pUstuxIfdY9tzHtONX', 1765773883, 1765774095, 'default', 1765773883),
+(103, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'R6hhJJg2YxWK2uWMSShDZyiCjZQQETePVy97p3UG', 1765774171, 1765774642, 'by_admin', 1765774171),
+(104, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'Mu5C679SCZ7hkuLK7CNnLEPdmvBcOEWP0LINnTxW', 1765774645, 1765774999, 'default', 1765774645),
+(105, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'toFEnxrDLnBUPxAJcALo2gVUflYALvio2ZipVxfZ', 1765779320, 1765783033, 'by_admin', 1765779320),
+(106, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'GnpdZVtN0ZxlJMdzMM2A33SXxjCebPxisuzykBmx', 1765781514, 1765783034, 'by_admin', 1765781514),
+(107, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'Hc09ovRc5hKcUnLeEwjotOLnlXirh7SKxkrALt1E', 1765783035, 1765783225, 'default', 1765783035),
+(108, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'NurDpMYWZX3pvEwYMGzgwGyDlF0QlIOVR6ecXUNU', 1765785473, 1765787185, 'default', 1765785473),
+(109, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'nCldhQCWtk0AQ3P0E7tUGXZYonvxPxkshtiqZGxd', 1765787325, 1765788334, 'default', 1765787325),
+(110, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'lFxIXSVn7UDFZ3Zx2lPxsp955uMWZqKS6P6CKI9J', 1765789277, NULL, NULL, 1765789277),
+(111, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'utLp6F2CcfLE1elawDGpKClwkuGGF9kfI2ErnKZg', 1765789711, 1765792136, 'default', 1765789711),
+(112, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'N22xcr6r542T1maUJHyvGgAeAWVBXjJfM5vR03mw', 1765793105, 1765793145, 'default', 1765793105),
+(113, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'kupuebEpXcBc5qeYua26EWHudXucyAOcsBO135Jz', 1765793223, 1765793570, 'default', 1765793223),
+(114, 1048, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '3E2axq0dcgM2PtWSkOQ2ytHqmoOIEmwsPPOXceBq', 1765794662, 1765795026, 'default', 1765794662),
+(115, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'JXFVfr3SlnlIEimJ4JkxrdahcsLKLE4cHGMjzQvM', 1765795171, 1765803865, 'default', 1765795171),
+(116, 1054, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '2igRr6lU0a2yeTnBkRkPpRcPsZwbgpsOsl7voPpu', 1765811756, 1765813697, 'default', 1765811756),
+(117, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '0tKduiHqcMBHDQAARnt5BzkumHgx4SjdOoxG1Qlr', 1765813946, NULL, NULL, 1765813946),
+(118, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'gaaFhOAlPbEmr7rf5CRa1YNK9IzPMZSCg3obyFGx', 1765855529, NULL, NULL, 1765855529),
+(119, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '6YTDyfvspOIianbEpz5oeDrngPdM0lcrbtld9DKh', 1765855716, NULL, NULL, 1765855716),
+(120, 1047, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '6dRPTjzOIYs7KftcHxN6ktRUfNijc8JXUkS7Y8Qe', 1765856378, 1765856495, 'default', 1765856378),
+(121, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'ZpSOKXfghAcKLUmaGyF8Y1LlxQUXjS82qvgP9nJd', 1765856434, 1765856950, 'default', 1765856434),
+(122, 1054, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'uhORx8Q2GIz3AWyTAjVOau4eAyHWHOXyYXZndmEu', 1765856578, 1765857148, 'default', 1765856578),
+(123, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '2T8puzQ69RpBxzCHbAhLf6lDPVg6TSqKBMcBTVd8', 1765856653, NULL, NULL, 1765856653),
+(124, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '8aOq4zbu2cNtqgB1maRoZQE2mKzH2VSuFDwnVWzK', 1765856736, NULL, NULL, 1765856736),
+(125, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'RlUfFVvTs9VVTQIsxUPq1WstLpX64hX7Lb232LRb', 1765857037, NULL, NULL, 1765857037),
+(126, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'msoo6I8J6kYOWiBaYl4YhqnWZ1RhvMHaeQ7t2dZg', 1765857324, NULL, NULL, 1765857324),
+(127, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'cxce3iAGpQUmjJs1peCjFC3xHOQfaoh0hGrIYmzB', 1765857336, NULL, NULL, 1765857336),
+(128, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'wuhsxTQYvQOj1rY5pNXHsEKRlll23Jursh5W7If1', 1765858249, 1765862076, 'default', 1765858249),
+(129, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'ESHtINVbFHvp6pkI6hkvFtwcLCx7SPxS4BRxHr70', 1765866308, 1765871404, 'default', 1765866308),
+(130, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'RlOWcLuGpLJ6Of49MBNgsWr48y8BDwDssI42aKWh', 1765871532, 1765875571, 'default', 1765871532),
+(131, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '62RNhoj0fYzCsA1iyZyYrwpVq5g7OMP8nArz5ejG', 1765875901, NULL, NULL, 1765875901),
+(132, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'uR16NNdoMvljqt9lpeQuZsie2mxagvZwIx7y1QR0', 1765892937, NULL, NULL, 1765892937),
+(133, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'MUve0CdPB1n3TuOsry4zNATh2Hy3fzQEjVz8zoVw', 1765894300, NULL, NULL, 1765894300),
+(134, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'FJyhnrPCyyHv0vEk0DOsK92vBvqjo8ddReMUreRb', 1765894458, NULL, NULL, 1765894458),
+(135, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'nq1xdzJJCE68RLHMRl2wWZ6kTTdv68NdrOtU3hFn', 1765894759, NULL, NULL, 1765894759),
+(136, 1051, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '4OHeCysmc2438fRKG1nHUvu4CxSkljfRI75vzTFD', 1765937780, 1765944855, 'default', 1765937780),
+(137, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '1pJHHgxGP7jTu6EGumkH4noFXnbtudn7QIOxZ2US', 1765937815, 1765937995, 'default', 1765937815),
+(138, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '6sUMzEgLTzioPThORl1bI44CLG29J9m0NJ1NXf1R', 1765938053, NULL, NULL, 1765938053),
+(139, 1054, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'FXNy7rWhuwNMzoIXAfvMC54BMt7l7i0UHrDg3lSO', 1765938059, 1765952308, 'default', 1765938059),
+(140, 1049, 'Chrome', 'desktop', 'OS X-10_15_7', '192.168.194.14', NULL, NULL, NULL, 'zFywTwBilrBeouBZAjAKHToisg2TvUzy5Seq821A', 1765941587, NULL, NULL, 1765941587),
+(141, 1052, 'Chrome', 'desktop', 'OS X-10_15_7', '192.168.194.14', NULL, NULL, NULL, 'As6RLzWk24bDY8dD8qUXnO7tjZ94XxxUIDZs9XF6', 1765944790, NULL, NULL, 1765944790),
+(142, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'tmiPZrIVAz8kGwBjj82iUPYnXNImEp7y8JeNd50S', 1765944920, NULL, NULL, 1765944920),
+(143, 1052, 'Chrome', 'desktop', 'OS X-10_15_7', '192.168.194.14', NULL, NULL, NULL, 'q3uev8BaWQkfrAxvSDIymJBACsnk72wALl45XKA8', 1765951942, NULL, NULL, 1765951942),
+(144, 1052, 'Chrome', 'desktop', 'OS X-10_15_7', '192.168.194.14', NULL, NULL, NULL, 'j8PL5AoMe0eGWMmroxntcq5B6l1UcTq8ra4SAZJJ', 1765951942, NULL, NULL, 1765951942),
+(145, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'ZSQIo9g9kiAn4AKjKU5s9Vn3NeKT7ueRYKQWRmih', 1765952745, NULL, NULL, 1765952745),
+(146, 1048, 'Chrome', 'desktop', 'OS X-10_15_7', '192.168.194.14', NULL, NULL, NULL, 'OUhBxO2pE5Lw3QMGNnde5RWJPjzXZ2iCQda6kZiH', 1765952942, NULL, NULL, 1765952942),
+(147, 1047, 'Chrome', 'desktop', 'OS X-10_15_7', '192.168.194.14', NULL, NULL, NULL, 'NZsTzlzKkYY1Crs42PRXcDV0tWj1uILlQ4Wlq4b8', 1765962813, NULL, NULL, 1765962813),
+(148, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'dcH7Mov5p7XFFHuRJqfCzqVPCGQXyQ6ux9bjriE3', 1765963139, NULL, NULL, 1765963139),
+(149, 1052, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, '6grIj8cRLDaMPxwE2cStd44wMkU6XqNqSr5vBr7b', 1766024310, NULL, NULL, 1766024310),
+(150, 1049, 'Chrome', 'desktop', 'Windows-10.0', '127.0.0.1', NULL, NULL, NULL, 'YNIU2xvPgBndN4Z8TkJWTRhnJrcwZ5S1g6AbPMYR', 1766029860, NULL, NULL, 1766029860);
 
 -- --------------------------------------------------------
 
@@ -9147,6 +9682,22 @@ CREATE TABLE `user_profile_attachment_translations` (
   `title` varchar(255) NOT NULL,
   `description` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_saved_words`
+--
+
+CREATE TABLE `user_saved_words` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `word_id` int(10) UNSIGNED NOT NULL,
+  `note` text DEFAULT NULL,
+  `mastery_level` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=new, 1=learning, 2=reviewing, 3=mastered',
+  `saved_at` bigint(20) UNSIGNED NOT NULL,
+  `last_reviewed_at` bigint(20) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='User bookmarked vocabulary';
 
 -- --------------------------------------------------------
 
@@ -9215,7 +9766,10 @@ INSERT INTO `visits_logs` (`id`, `owner_id`, `targetable_id`, `targetable_type`,
 (2, 1016, 1, 'App\\Models\\Webinar', 1047, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1764841185),
 (3, 1016, 1, 'App\\Models\\Webinar', 1047, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1765176033),
 (4, 1050, 2024, 'App\\Models\\Webinar', 1050, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1765185914),
-(5, 1016, 1, 'App\\Models\\Webinar', 1047, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1765263295);
+(5, 1016, 1, 'App\\Models\\Webinar', 1047, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1765263295),
+(6, 1016, 1, 'App\\Models\\Webinar', 1055, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1765769399),
+(7, 1050, 2024, 'App\\Models\\Webinar', 1054, 'adbe59ad98ecb429ddaf4e97a58787b1dd74e640', 1765938154),
+(8, 1050, 2024, 'App\\Models\\Webinar', 1047, '49d10fd4f2d349e50424e51fe596be3e8d749a5c', 1765962940);
 
 -- --------------------------------------------------------
 
@@ -9285,7 +9839,7 @@ CREATE TABLE `webinars` (
 INSERT INTO `webinars` (`id`, `teacher_id`, `creator_id`, `category_id`, `type`, `ielts_type`, `private`, `slug`, `start_date`, `duration`, `duration_weeks`, `timezone`, `thumbnail`, `image_cover`, `video_demo`, `video_demo_source`, `icon`, `capacity`, `target_band`, `sales_count_number`, `price`, `organization_price`, `support`, `certificate`, `downloadable`, `partner_instructor`, `subscribe`, `forum`, `enable_waitlist`, `access_days`, `points`, `message_for_reviewer`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 1016, 1016, 612, 'course', NULL, 0, 'Sample-Course', NULL, 90, NULL, 'America/New_York', '/store/1016/1.jpg', '/store/1016/1_c.jpg', '/store/1016/Become A Product Manager.mp4', 'upload', NULL, NULL, NULL, NULL, 0.00, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, 'active', 1656669428, 1656669564, NULL),
 (2023, 1053, 1050, 612, 'course', NULL, 0, 'LMS', NULL, 30, NULL, NULL, '/store/1050/webinars/2023/thumbnail.png', '/store/1050/webinars/2023/image_cover.png', 'https://youtu.be/E4ScPro8YcI?si=Hz0Qlg3SYH_eKq0q', 'youtube', NULL, NULL, NULL, NULL, 10.00, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, 'drftertertertetwvwesdfghjlkytrewertyuioiuytrew', 'pending', 1764837620, 1764837974, NULL),
-(2024, 1049, 1050, 612, 'course', NULL, 0, 'LMS-test-123', NULL, 30, NULL, NULL, '/store/1050/webinars/2024/thumbnail.jpg', '/store/1050/webinars/2024/image_cover.jpg', 'https://www.youtube.com/watch?v=VJ2uRLidZLw', 'youtube', NULL, 10, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, 'pending', 1765185318, 1765185866, NULL);
+(2024, 1049, 1050, 612, 'course', NULL, 0, 'LMS-test-123', NULL, 30, NULL, NULL, '/store/1050/webinars/2024/thumbnail.jpg', '/store/1050/webinars/2024/image_cover.jpg', 'https://www.youtube.com/watch?v=VJ2uRLidZLw', 'youtube', NULL, 10, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, 'active', 1765185318, 1765185866, NULL);
 
 -- --------------------------------------------------------
 
@@ -9547,7 +10101,7 @@ CREATE TABLE `webinar_translations` (
 
 INSERT INTO `webinar_translations` (`id`, `webinar_id`, `locale`, `title`, `seo_description`, `summary`, `description`) VALUES
 (1, 1, 'en', 'Sample Course', 'The most complete course available on Product Management.', NULL, '<p>The Lorem ipum filling text is used by graphic designers, programmers and printers with the aim of occupying the spaces of a website, an advertising product or an editorial production whose final text is not yet ready.</p><p>This expedient serves to get an idea of the finished product that will soon be printed or disseminated via digital channels.</p><p><br></p><p>In order to have a result that is more in keeping with the final result, the graphic designers, designers or typographers report the Lorem ipsum text in respect of two fundamental aspects, namely readability and editorial requirements.</p><p><br></p><p>The choice of font and font size with which Lorem ipsum is reproduced answers to specific needs that go beyond the simple and simple filling of spaces dedicated to accepting real texts and allowing to have hands an advertising/publishing product, both web and paper, true to reality.</p><p><br></p><p>Its nonsense allows the eye to focus only on the graphic layout objectively evaluating the stylistic choices of a project, so it is installed on many graphic programs on many software platforms of personal publishing and content management system.</p>'),
-(171, 2023, 'en', 'LMS', NULL, 'đâsdasdasdasd', '<p>áhbgduyagidhasuidgauisojdoausgduyadouiabsuydguasygduyagsduygasuydgasugdausygdyausgdyusagggysssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssgaaaaaaaaaaduasgduygausdgausygduyagsudagsuydgausydgausygduasgyduasgduyasgduyusygduyagsudagsuydgausydgausygduasgyduasgduyasgduyasgduasgdyuagsdanv dbacsghdfcahsgdca</p>'),
+(171, 2023, 'en', 'LMS', NULL, 'Ä‘Ã¢sdasdasdasd', '<p>Ã¡hbgduyagidhasuidgauisojdoausgduyadouiabsuydguasygduyagsduygasuydgasugdausygdyausgdyusagggysssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssgaaaaaaaaaaduasgduygausdgausygduyagsudagsuydgausydgausygduasgyduasgduyasgduyusygduyagsudagsuydgausydgausygduasgyduasgduyasgduyasgduasgdyuagsdanv dbacsghdfcahsgdca</p>'),
 (172, 2024, 'en', 'LMS_test_123', NULL, 'This course provides a comprehensive introduction to the core concepts, frameworks, and practical skills required in the field. Students learn both theoretical foundations and hands-on applications through lectures, exercises, and real-world case studies.\r\n\r\n2. Learning Objectives', '<p data-start=\"162\" data-end=\"777\">This course provides a comprehensive and structured introduction to both the theoretical foundations and practical applications within the field of study. Throughout the duration of the course, students are guided through a series of interconnected topics that gradually build a strong understanding of the subject matter. The course begins by establishing essential concepts and defining the key principles that form the basis for advanced learning. These fundamental ideas help students develop a clear framework for understanding how the field operates and how various components interact in real-world contexts.</p><p data-start=\"779\" data-end=\"1420\">As the course progresses, students are introduced to a range of tools, techniques, and methodologies commonly used by professionals. Through hands-on activities, exercises, and guided practice sessions, learners gain direct experience applying what they have learned in practical scenarios. This balance between theory and practice ensures that students not only understand the concepts but also develop the ability to use them effectively in problem-solving situations. Case studies are incorporated to demonstrate real-world applications, encouraging students to analyze situations critically and make informed decisions based on evidence.</p><p data-start=\"1422\" data-end=\"1823\">The learning experience is enhanced through a variety of teaching methods, including lectures, group discussions, workshops, and individual or team-based projects. These approaches foster collaboration, communication, and critical thinking skills. Students are encouraged to actively engage with the material, ask questions, and share insights, creating a dynamic and interactive learning environment.</p><p>\r\n\r\n\r\n</p><p data-start=\"1825\" data-end=\"2368\">Assessment in the course is conducted through assignments, quizzes, mid-term evaluations, and a final exam or project. These assessments are designed to measure both theoretical understanding and practical competence. By the end of the course, students will have gained solid foundational knowledge, enhanced problem-solving abilities, and hands-on experience relevant to the field. They will be well-prepared to apply these skills in further studies or professional settings, making this course a valuable component of their academic journey.</p>');
 
 -- --------------------------------------------------------
@@ -9638,6 +10192,14 @@ ALTER TABLE `accounting`
   ADD KEY `subscribe_id` (`subscribe_id`) USING BTREE,
   ADD KEY `promotion_id` (`promotion_id`) USING BTREE,
   ADD KEY `accounting_installment_payment_id_foreign` (`installment_payment_id`);
+
+--
+-- Indexes for table `admin_kpis`
+--
+ALTER TABLE `admin_kpis`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `admin_period` (`admin_id`,`period_type`,`period_date`),
+  ADD KEY `admin_id` (`admin_id`);
 
 --
 -- Indexes for table `advertising_banners`
@@ -9904,6 +10466,32 @@ ALTER TABLE `certificate_template_translations`
   ADD KEY `certificate_template_translations_locale_index` (`locale`);
 
 --
+-- Indexes for table `chat_conversations`
+--
+ALTER TABLE `chat_conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `type` (`type`);
+
+--
+-- Indexes for table `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `conversation_id` (`conversation_id`),
+  ADD KEY `sender_id` (`sender_id`),
+  ADD KEY `created_at` (`created_at`);
+
+--
+-- Indexes for table `chat_participants`
+--
+ALTER TABLE `chat_participants`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `conv_user` (`conversation_id`,`user_id`),
+  ADD KEY `conversation_id` (`conversation_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `comments`
 --
 ALTER TABLE `comments`
@@ -10033,6 +10621,23 @@ ALTER TABLE `device_sessions`
   ADD KEY `device_id` (`device_id`),
   ADD KEY `is_active` (`is_active`),
   ADD KEY `idx_user_active` (`user_id`,`is_active`);
+
+--
+-- Indexes for table `dictionary_words`
+--
+ALTER TABLE `dictionary_words`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `word` (`word`),
+  ADD KEY `word_type` (`word_type`),
+  ADD KEY `difficulty_level` (`difficulty_level`);
+
+--
+-- Indexes for table `dictionary_word_translations`
+--
+ALTER TABLE `dictionary_word_translations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `word_id` (`word_id`),
+  ADD KEY `locale` (`locale`);
 
 --
 -- Indexes for table `discounts`
@@ -10177,6 +10782,38 @@ ALTER TABLE `filter_translations`
   ADD PRIMARY KEY (`id`),
   ADD KEY `filter_translations_filter_id_foreign` (`filter_id`),
   ADD KEY `filter_translations_locale_index` (`locale`);
+
+--
+-- Indexes for table `flashcards`
+--
+ALTER TABLE `flashcards`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `deck_id` (`deck_id`),
+  ADD KEY `source_type` (`source_type`);
+
+--
+-- Indexes for table `flashcard_decks`
+--
+ALTER TABLE `flashcard_decks`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `flashcard_deck_translations`
+--
+ALTER TABLE `flashcard_deck_translations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `flashcard_deck_id` (`flashcard_deck_id`),
+  ADD KEY `locale` (`locale`);
+
+--
+-- Indexes for table `flashcard_review_logs`
+--
+ALTER TABLE `flashcard_review_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `flashcard_id` (`flashcard_id`),
+  ADD KEY `next_review_date` (`next_review_date`);
 
 --
 -- Indexes for table `floating_bars`
@@ -10431,6 +11068,14 @@ ALTER TABLE `home_sections`
   ADD KEY `home_sections_name_index` (`name`);
 
 --
+-- Indexes for table `ielts_mock_tests`
+--
+ALTER TABLE `ielts_mock_tests`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `test_code` (`test_code`),
+  ADD KEY `quiz_id` (`quiz_id`);
+
+--
 -- Indexes for table `ielts_question_types`
 --
 ALTER TABLE `ielts_question_types`
@@ -10585,6 +11230,55 @@ ALTER TABLE `landing_translations`
   ADD KEY `landing_translations_locale_index` (`locale`);
 
 --
+-- Indexes for table `leaderboards`
+--
+ALTER TABLE `leaderboards`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `type` (`type`),
+  ADD KEY `is_active` (`is_active`),
+  ADD KEY `leaderboards_skill_id_foreign` (`skill_id`),
+  ADD KEY `leaderboards_webinar_id_foreign` (`webinar_id`);
+
+--
+-- Indexes for table `leaderboard_entries`
+--
+ALTER TABLE `leaderboard_entries`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `board_user` (`leaderboard_id`,`user_id`),
+  ADD KEY `leaderboard_id` (`leaderboard_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `rank` (`rank`);
+
+--
+-- Indexes for table `leads`
+--
+ALTER TABLE `leads`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `status` (`status`),
+  ADD KEY `assigned_to` (`assigned_to`),
+  ADD KEY `email` (`email`),
+  ADD KEY `phone` (`phone`),
+  ADD KEY `leads_converted_user_id_foreign` (`converted_user_id`);
+
+--
+-- Indexes for table `lead_activities`
+--
+ALTER TABLE `lead_activities`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `lead_id` (`lead_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `activity_type` (`activity_type`);
+
+--
+-- Indexes for table `manager_kpis`
+--
+ALTER TABLE `manager_kpis`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `manager_period` (`manager_id`,`period_type`,`period_date`),
+  ADD KEY `manager_id` (`manager_id`),
+  ADD KEY `period_date` (`period_date`);
+
+--
 -- Indexes for table `meetings`
 --
 ALTER TABLE `meetings`
@@ -10603,6 +11297,15 @@ ALTER TABLE `meeting_times`
 --
 ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`) USING BTREE;
+
+--
+-- Indexes for table `mock_test_sessions`
+--
+ALTER TABLE `mock_test_sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `mock_test_id` (`mock_test_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `started_at` (`started_at`);
 
 --
 -- Indexes for table `navbar_buttons`
@@ -11235,6 +11938,16 @@ ALTER TABLE `roles`
   ADD PRIMARY KEY (`id`) USING BTREE;
 
 --
+-- Indexes for table `role_kpi_targets`
+--
+ALTER TABLE `role_kpi_targets`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `role_id` (`role_id`),
+  ADD KEY `period_type` (`period_type`),
+  ADD KEY `is_active` (`is_active`),
+  ADD KEY `role_kpi_targets_created_by_foreign` (`created_by`);
+
+--
 -- Indexes for table `role_translations`
 --
 ALTER TABLE `role_translations`
@@ -11255,6 +11968,14 @@ ALTER TABLE `sales`
   ADD KEY `sales_seller_id_foreign` (`seller_id`) USING BTREE,
   ADD KEY `sales_promotion_id_foreign` (`promotion_id`) USING BTREE,
   ADD KEY `sales_installment_payment_id_foreign` (`installment_payment_id`);
+
+--
+-- Indexes for table `sales_kpis`
+--
+ALTER TABLE `sales_kpis`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_period` (`user_id`,`period_type`,`period_date`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `sales_log`
@@ -11339,6 +12060,15 @@ ALTER TABLE `special_offers`
   ADD KEY `special_offers_registration_package_id_foreign` (`registration_package_id`);
 
 --
+-- Indexes for table `streak_history`
+--
+ALTER TABLE `streak_history`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_date` (`user_id`,`date`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `date` (`date`);
+
+--
 -- Indexes for table `student_progress_ielts`
 --
 ALTER TABLE `student_progress_ielts`
@@ -11354,6 +12084,15 @@ ALTER TABLE `student_weaknesses`
   ADD UNIQUE KEY `student_skill_type_unique` (`student_id`,`skill_id`,`question_type_id`),
   ADD KEY `skill_id` (`skill_id`),
   ADD KEY `question_type_id` (`question_type_id`);
+
+--
+-- Indexes for table `student_weekly_goals`
+--
+ALTER TABLE `student_weekly_goals`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_week` (`user_id`,`week_start_date`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `week_start_date` (`week_start_date`);
 
 --
 -- Indexes for table `subscribes`
@@ -11436,6 +12175,15 @@ ALTER TABLE `tags`
   ADD KEY `tags_webinar_id_foreign` (`webinar_id`) USING BTREE,
   ADD KEY `tags_bundle_id_foreign` (`bundle_id`),
   ADD KEY `tags_upcoming_course_id_foreign` (`upcoming_course_id`);
+
+--
+-- Indexes for table `teacher_kpis`
+--
+ALTER TABLE `teacher_kpis`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `teacher_period` (`teacher_id`,`period_type`,`period_date`),
+  ADD KEY `teacher_id` (`teacher_id`),
+  ADD KEY `period_date` (`period_date`);
 
 --
 -- Indexes for table `testimonials`
@@ -11655,6 +12403,13 @@ ALTER TABLE `users_zoom_api`
   ADD KEY `users_zoom_api_user_id_foreign` (`user_id`);
 
 --
+-- Indexes for table `user_activity_streaks`
+--
+ALTER TABLE `user_activity_streaks`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `user_banks`
 --
 ALTER TABLE `user_banks`
@@ -11728,6 +12483,15 @@ ALTER TABLE `user_profile_attachment_translations`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_profile_attachment_id_trans` (`user_profile_attachment_id`),
   ADD KEY `user_profile_attachment_translations_locale_index` (`locale`);
+
+--
+-- Indexes for table `user_saved_words`
+--
+ALTER TABLE `user_saved_words`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_word` (`user_id`,`word_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `word_id` (`word_id`);
 
 --
 -- Indexes for table `user_selected_banks`
@@ -11950,6 +12714,12 @@ ALTER TABLE `accounting`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=837;
 
 --
+-- AUTO_INCREMENT for table `admin_kpis`
+--
+ALTER TABLE `admin_kpis`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `advertising_banners`
 --
 ALTER TABLE `advertising_banners`
@@ -12142,6 +12912,24 @@ ALTER TABLE `certificate_template_translations`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
+-- AUTO_INCREMENT for table `chat_conversations`
+--
+ALTER TABLE `chat_conversations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `chat_participants`
+--
+ALTER TABLE `chat_participants`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `comments`
 --
 ALTER TABLE `comments`
@@ -12187,7 +12975,7 @@ ALTER TABLE `course_learning`
 -- AUTO_INCREMENT for table `course_learning_last_views`
 --
 ALTER TABLE `course_learning_last_views`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `course_noticeboards`
@@ -12236,6 +13024,18 @@ ALTER TABLE `device_login_requests`
 --
 ALTER TABLE `device_sessions`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `dictionary_words`
+--
+ALTER TABLE `dictionary_words`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `dictionary_word_translations`
+--
+ALTER TABLE `dictionary_word_translations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `discounts`
@@ -12344,6 +13144,30 @@ ALTER TABLE `filter_option_translations`
 --
 ALTER TABLE `filter_translations`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=278;
+
+--
+-- AUTO_INCREMENT for table `flashcards`
+--
+ALTER TABLE `flashcards`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `flashcard_decks`
+--
+ALTER TABLE `flashcard_decks`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `flashcard_deck_translations`
+--
+ALTER TABLE `flashcard_deck_translations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `flashcard_review_logs`
+--
+ALTER TABLE `flashcard_review_logs`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `floating_bars`
@@ -12538,6 +13362,12 @@ ALTER TABLE `home_sections`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
+-- AUTO_INCREMENT for table `ielts_mock_tests`
+--
+ALTER TABLE `ielts_mock_tests`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `ielts_question_types`
 --
 ALTER TABLE `ielts_question_types`
@@ -12652,6 +13482,36 @@ ALTER TABLE `landing_translations`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `leaderboards`
+--
+ALTER TABLE `leaderboards`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `leaderboard_entries`
+--
+ALTER TABLE `leaderboard_entries`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `leads`
+--
+ALTER TABLE `leads`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `lead_activities`
+--
+ALTER TABLE `lead_activities`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `manager_kpis`
+--
+ALTER TABLE `manager_kpis`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `meetings`
 --
 ALTER TABLE `meetings`
@@ -12668,6 +13528,12 @@ ALTER TABLE `meeting_times`
 --
 ALTER TABLE `migrations`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=625;
+
+--
+-- AUTO_INCREMENT for table `mock_test_sessions`
+--
+ALTER TABLE `mock_test_sessions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `navbar_buttons`
@@ -12709,7 +13575,7 @@ ALTER TABLE `noticeboards_status`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2241;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2246;
 
 --
 -- AUTO_INCREMENT for table `notifications_status`
@@ -12799,7 +13665,7 @@ ALTER TABLE `payu_transactions`
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21813;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21816;
 
 --
 -- AUTO_INCREMENT for table `prerequisites`
@@ -13144,6 +14010,12 @@ ALTER TABLE `roles`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `role_kpi_targets`
+--
+ALTER TABLE `role_kpi_targets`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `role_translations`
 --
 ALTER TABLE `role_translations`
@@ -13153,7 +14025,13 @@ ALTER TABLE `role_translations`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=284;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=288;
+
+--
+-- AUTO_INCREMENT for table `sales_kpis`
+--
+ALTER TABLE `sales_kpis`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sales_log`
@@ -13216,6 +14094,12 @@ ALTER TABLE `special_offers`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
+-- AUTO_INCREMENT for table `streak_history`
+--
+ALTER TABLE `streak_history`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `student_progress_ielts`
 --
 ALTER TABLE `student_progress_ielts`
@@ -13225,6 +14109,12 @@ ALTER TABLE `student_progress_ielts`
 -- AUTO_INCREMENT for table `student_weaknesses`
 --
 ALTER TABLE `student_weaknesses`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_weekly_goals`
+--
+ALTER TABLE `student_weekly_goals`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -13286,6 +14176,12 @@ ALTER TABLE `system_settings`
 --
 ALTER TABLE `tags`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6700;
+
+--
+-- AUTO_INCREMENT for table `teacher_kpis`
+--
+ALTER TABLE `teacher_kpis`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `testimonials`
@@ -13363,7 +14259,7 @@ ALTER TABLE `ticket_users`
 -- AUTO_INCREMENT for table `time_spent_on_courses`
 --
 ALTER TABLE `time_spent_on_courses`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `trend_categories`
@@ -13405,7 +14301,7 @@ ALTER TABLE `upcoming_course_translations`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1055;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1057;
 
 --
 -- AUTO_INCREMENT for table `users_badges`
@@ -13448,6 +14344,12 @@ ALTER TABLE `users_registration_packages`
 --
 ALTER TABLE `users_zoom_api`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `user_activity_streaks`
+--
+ALTER TABLE `user_activity_streaks`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `user_banks`
@@ -13495,7 +14397,7 @@ ALTER TABLE `user_form_fields`
 -- AUTO_INCREMENT for table `user_login_histories`
 --
 ALTER TABLE `user_login_histories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
 
 --
 -- AUTO_INCREMENT for table `user_profile_attachments`
@@ -13508,6 +14410,12 @@ ALTER TABLE `user_profile_attachments`
 --
 ALTER TABLE `user_profile_attachment_translations`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_saved_words`
+--
+ALTER TABLE `user_saved_words`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `user_selected_banks`
@@ -13531,7 +14439,7 @@ ALTER TABLE `verifications`
 -- AUTO_INCREMENT for table `visits_logs`
 --
 ALTER TABLE `visits_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `waitlists`
@@ -13682,6 +14590,12 @@ ALTER TABLE `abandoned_cart_rule_users_groups`
 --
 ALTER TABLE `accounting`
   ADD CONSTRAINT `accounting_installment_payment_id_foreign` FOREIGN KEY (`installment_payment_id`) REFERENCES `installment_order_payments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `admin_kpis`
+--
+ALTER TABLE `admin_kpis`
+  ADD CONSTRAINT `admin_kpis_admin_id_foreign` FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `advertising_banners_translations`
@@ -13866,6 +14780,26 @@ ALTER TABLE `certificate_template_translations`
   ADD CONSTRAINT `certificate_template_id` FOREIGN KEY (`certificate_template_id`) REFERENCES `certificates_templates` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `chat_conversations`
+--
+ALTER TABLE `chat_conversations`
+  ADD CONSTRAINT `chat_conversations_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  ADD CONSTRAINT `chat_messages_conversation_id_foreign` FOREIGN KEY (`conversation_id`) REFERENCES `chat_conversations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `chat_messages_sender_id_foreign` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `chat_participants`
+--
+ALTER TABLE `chat_participants`
+  ADD CONSTRAINT `chat_participants_conversation_id_foreign` FOREIGN KEY (`conversation_id`) REFERENCES `chat_conversations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `chat_participants_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `comments`
 --
 ALTER TABLE `comments`
@@ -13965,6 +14899,12 @@ ALTER TABLE `device_login_requests`
 --
 ALTER TABLE `device_sessions`
   ADD CONSTRAINT `fk_device_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `dictionary_word_translations`
+--
+ALTER TABLE `dictionary_word_translations`
+  ADD CONSTRAINT `dict_word_translations_word_id_foreign` FOREIGN KEY (`word_id`) REFERENCES `dictionary_words` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `discounts`
@@ -14080,6 +15020,31 @@ ALTER TABLE `filter_option_translations`
 --
 ALTER TABLE `filter_translations`
   ADD CONSTRAINT `filter_translations_filter_id_foreign` FOREIGN KEY (`filter_id`) REFERENCES `filters` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `flashcards`
+--
+ALTER TABLE `flashcards`
+  ADD CONSTRAINT `flashcards_deck_id_foreign` FOREIGN KEY (`deck_id`) REFERENCES `flashcard_decks` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `flashcard_decks`
+--
+ALTER TABLE `flashcard_decks`
+  ADD CONSTRAINT `flashcard_decks_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `flashcard_deck_translations`
+--
+ALTER TABLE `flashcard_deck_translations`
+  ADD CONSTRAINT `flashcard_deck_translations_deck_id_foreign` FOREIGN KEY (`flashcard_deck_id`) REFERENCES `flashcard_decks` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `flashcard_review_logs`
+--
+ALTER TABLE `flashcard_review_logs`
+  ADD CONSTRAINT `flashcard_review_logs_flashcard_id_foreign` FOREIGN KEY (`flashcard_id`) REFERENCES `flashcards` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `flashcard_review_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `floating_bar_translations`
@@ -14266,6 +15231,12 @@ ALTER TABLE `home_page_statistic_translations`
   ADD CONSTRAINT `home_page_statistic_id` FOREIGN KEY (`home_page_statistic_id`) REFERENCES `home_page_statistics` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `ielts_mock_tests`
+--
+ALTER TABLE `ielts_mock_tests`
+  ADD CONSTRAINT `ielts_mock_tests_quiz_id_foreign` FOREIGN KEY (`quiz_id`) REFERENCES `quizzes` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `ielts_question_types`
 --
 ALTER TABLE `ielts_question_types`
@@ -14363,6 +15334,40 @@ ALTER TABLE `landing_translations`
   ADD CONSTRAINT `landing_translations_landing_id_foreign` FOREIGN KEY (`landing_id`) REFERENCES `landings` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `leaderboards`
+--
+ALTER TABLE `leaderboards`
+  ADD CONSTRAINT `leaderboards_skill_id_foreign` FOREIGN KEY (`skill_id`) REFERENCES `ielts_skills` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `leaderboards_webinar_id_foreign` FOREIGN KEY (`webinar_id`) REFERENCES `webinars` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `leaderboard_entries`
+--
+ALTER TABLE `leaderboard_entries`
+  ADD CONSTRAINT `leaderboard_entries_leaderboard_id_foreign` FOREIGN KEY (`leaderboard_id`) REFERENCES `leaderboards` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `leaderboard_entries_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `leads`
+--
+ALTER TABLE `leads`
+  ADD CONSTRAINT `leads_assigned_to_foreign` FOREIGN KEY (`assigned_to`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `leads_converted_user_id_foreign` FOREIGN KEY (`converted_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `lead_activities`
+--
+ALTER TABLE `lead_activities`
+  ADD CONSTRAINT `lead_activities_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `lead_activities_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `manager_kpis`
+--
+ALTER TABLE `manager_kpis`
+  ADD CONSTRAINT `manager_kpis_manager_id_foreign` FOREIGN KEY (`manager_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `meetings`
 --
 ALTER TABLE `meetings`
@@ -14373,6 +15378,13 @@ ALTER TABLE `meetings`
 --
 ALTER TABLE `meeting_times`
   ADD CONSTRAINT `meeting_times_meeting_id_foreign` FOREIGN KEY (`meeting_id`) REFERENCES `meetings` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `mock_test_sessions`
+--
+ALTER TABLE `mock_test_sessions`
+  ADD CONSTRAINT `mock_test_sessions_mock_test_id_foreign` FOREIGN KEY (`mock_test_id`) REFERENCES `ielts_mock_tests` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `mock_test_sessions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `navbar_buttons`
@@ -14800,6 +15812,13 @@ ALTER TABLE `rewards_accounting`
   ADD CONSTRAINT `rewards_accounting_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `role_kpi_targets`
+--
+ALTER TABLE `role_kpi_targets`
+  ADD CONSTRAINT `role_kpi_targets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `role_kpi_targets_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `role_translations`
 --
 ALTER TABLE `role_translations`
@@ -14810,6 +15829,12 @@ ALTER TABLE `role_translations`
 --
 ALTER TABLE `sales`
   ADD CONSTRAINT `sales_installment_payment_id_foreign` FOREIGN KEY (`installment_payment_id`) REFERENCES `installment_order_payments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sales_kpis`
+--
+ALTER TABLE `sales_kpis`
+  ADD CONSTRAINT `sales_kpis_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `sales_log`
@@ -14871,6 +15896,12 @@ ALTER TABLE `special_offers`
   ADD CONSTRAINT `special_offers_webinar_id_foreign` FOREIGN KEY (`webinar_id`) REFERENCES `webinars` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `streak_history`
+--
+ALTER TABLE `streak_history`
+  ADD CONSTRAINT `streak_history_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `student_progress_ielts`
 --
 ALTER TABLE `student_progress_ielts`
@@ -14884,6 +15915,12 @@ ALTER TABLE `student_weaknesses`
   ADD CONSTRAINT `fk_weaknesses_question_type` FOREIGN KEY (`question_type_id`) REFERENCES `ielts_question_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_weaknesses_skill` FOREIGN KEY (`skill_id`) REFERENCES `ielts_skills` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_weaknesses_student` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_weekly_goals`
+--
+ALTER TABLE `student_weekly_goals`
+  ADD CONSTRAINT `student_weekly_goals_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `subscribe_reminds`
@@ -14937,6 +15974,12 @@ ALTER TABLE `tags`
   ADD CONSTRAINT `tags_bundle_id_foreign` FOREIGN KEY (`bundle_id`) REFERENCES `bundles` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `tags_upcoming_course_id_foreign` FOREIGN KEY (`upcoming_course_id`) REFERENCES `upcoming_courses` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `tags_webinar_id_foreign` FOREIGN KEY (`webinar_id`) REFERENCES `webinars` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `teacher_kpis`
+--
+ALTER TABLE `teacher_kpis`
+  ADD CONSTRAINT `teacher_kpis_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `testimonial_translations`
@@ -15098,6 +16141,12 @@ ALTER TABLE `users_zoom_api`
   ADD CONSTRAINT `users_zoom_api_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `user_activity_streaks`
+--
+ALTER TABLE `user_activity_streaks`
+  ADD CONSTRAINT `user_activity_streaks_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `user_bank_specifications`
 --
 ALTER TABLE `user_bank_specifications`
@@ -15153,6 +16202,13 @@ ALTER TABLE `user_profile_attachments`
 --
 ALTER TABLE `user_profile_attachment_translations`
   ADD CONSTRAINT `user_profile_attachment_id_trans` FOREIGN KEY (`user_profile_attachment_id`) REFERENCES `user_profile_attachments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_saved_words`
+--
+ALTER TABLE `user_saved_words`
+  ADD CONSTRAINT `user_saved_words_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_saved_words_word_id_foreign` FOREIGN KEY (`word_id`) REFERENCES `dictionary_words` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `user_selected_banks`
