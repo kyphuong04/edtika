@@ -90,6 +90,7 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+            
 
         $query = $this->filters($query, $request);
 
@@ -142,7 +143,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$teacher)
+            ->where('role_name', Role::$admin)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -198,7 +199,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$teacher)
+            ->where('role_name', Role::$admin)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -260,7 +261,7 @@ class UserController extends Controller
             ->get();
 
         $organizations = User::select('id', 'full_name', 'created_at')
-            ->where('role_name', Role::$teacher)
+            ->where('role_name', Role::$admin)
             ->orderBy('created_at', 'desc')
             ->get();
 
