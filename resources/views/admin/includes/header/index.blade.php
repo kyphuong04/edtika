@@ -1,9 +1,9 @@
-<div class="admin-header d-flex align-items-start justify-content-between bg-primary pt-16 px-24 px-lg-28">
-    <div class="d-flex cursor-pointer" data-toggle="sidebar">
+<div class="admin-header d-flex align-items-start justify-content-end bg-primary pt-16 px-24 px-lg-28">
+    <div class="d-flex cursor-pointer d-none d-lg-none" data-toggle="sidebar">
         <x-iconsax-lin-menu class="icons text-dark" width="24px" height="24px"/>
     </div>
 
-    <div class="d-flex align-items-center justify-content-end flex-1 gap-16">
+    <div class="d-flex align-items-center justify-content-end gap-16">
 
     {{-- About System --}}
         <div class="about-system-select position-relative">
