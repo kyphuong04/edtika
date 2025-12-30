@@ -50,7 +50,7 @@ return [
 'new_descriptive_question' => 'New Descriptive Question',
 'student' => 'Student',
 'students' => 'Students',
-'instructors' => 'Instructors',
+'instructors' => 'Mentors',
 'student_results' => 'Student Results',
 'average' => 'Average',
 'average_grade' => 'Average Grade',

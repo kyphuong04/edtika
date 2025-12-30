@@ -11,6 +11,39 @@
     z-index: 100;
     flex-shrink: 0;
 
+    // Default state - expanded
+    .panel-sidebar__menu,
+    .panel-sidebar__menu-item {
+        > div {
+            display: flex;
+            align-items: center;
+        }
+    }
+    
+    .sidebar-icon {
+        margin-right: 8px;
+        
+        .rtl & {
+            margin-right: 0;
+            margin-left: 8px;
+        }
+    }
+
+    // Toggle button styles
+    .js-toggle-panel-sidebar {
+        height: 40px;
+        margin: 8px 8px;
+        transition: background-color 0.2s ease;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        &:hover {
+            background-color: var(--gray-100);
+        }
+    }
+
     &--collapsed {
         width: 70px !important;
 
@@ -18,6 +51,7 @@
         .sidebar-section-title,
         .collapse-arrow-icon {
             display: none !important;
+            opacity: 0;
         }
 
         .panel-sidebar__menu,
@@ -25,6 +59,11 @@
             justify-content: center !important;
             padding-left: 0 !important;
             padding-right: 0 !important;
+            text-align: center !important;
+            
+            > div {
+                justify-content: center !important;
+            }
         }
 
         .panel-sidebar__menu-item:before {
@@ -32,7 +71,7 @@
         }
 
         .sidebar-icon {
-            margin: 0 !important;
+            margin: 0 auto !important;
         }
 
         .accordion__collapse {
@@ -45,20 +84,30 @@
 
         &:hover {
             width: 258px !important;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 
             .sidebar-text,
             .sidebar-section-title {
                 display: inline-block !important;
+                opacity: 1;
+                animation: fadeIn 0.2s ease;
             }
 
             .collapse-arrow-icon {
                 display: flex !important;
+                opacity: 1;
+                animation: fadeIn 0.2s ease;
             }
 
             .panel-sidebar__menu {
                 justify-content: flex-start !important;
                 padding-left: 32px !important;
                 padding-right: 20px !important;
+                text-align: left !important;
+                
+                > div {
+                    justify-content: flex-start !important;
+                }
             }
 
             .panel-sidebar__menu-item {
@@ -72,6 +121,7 @@
             }
 
             .sidebar-icon {
+                margin: 0 !important;
                 margin-right: 8px !important;
 
                 .rtl & {
@@ -127,6 +177,11 @@
         &:hover {
             background-color: var(--gray-100);
         }
+        
+        > div {
+            display: flex;
+            align-items: center;
+        }
     }
 
     &__panel-user-menu,
@@ -172,10 +227,12 @@
     .sidebar-text {
         transition: all 0.2s ease;
         white-space: nowrap;
+        overflow: hidden;
     }
 
     .sidebar-section-title {
         transition: all 0.2s ease;
+        overflow: hidden;
     }
 
     .sidebar-icon {
@@ -184,11 +241,22 @@
         align-items: center;
         justify-content: center;
         min-width: 24px;
+        max-width: 24px;
         flex-shrink: 0;
     }
 
     .collapse-arrow-icon {
         transition: all 0.2s ease;
+    }
+
+    // Fade in animation for text
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
 
     @media (max-width: $screen-sm-max) {
