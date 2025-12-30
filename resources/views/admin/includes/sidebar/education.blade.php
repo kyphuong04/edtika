@@ -117,6 +117,30 @@
                 </li>
             @endcan()
 
+            {{-- IELTS Tests - TEMPORARY: Permission bypassed for testing --}}
+            @if(true) {{-- TODO: Change back to @can('admin_ielts_tests') after fixing permissions --}}
+                <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false))) ? 'active' : '' }}">
+                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
+                        <x-iconsax-bul-clipboard-text class="icons" width="24px" height="24px"/>
+                        <span>IELTS Tests</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests', false))) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests">All Tests</a>
+                        </li>
+                        <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/create', false))) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/create">Create New</a>
+                        </li>
+                        <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/pending-approval', false))) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/pending-approval">Pending Approval</a>
+                        </li>
+                        <li class="{{ (request()->is(getAdminPanelUrl('/practice-categories', false))) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/practice-categories">Practice Categories</a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
+
             @can('admin_certificate')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/certificates*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">

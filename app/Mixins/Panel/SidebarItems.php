@@ -227,6 +227,51 @@ class SidebarItems
             }
         }
 
+        // IELTS Tests - Different interfaces for different roles
+        if (!$user->isUser()) {
+            // Admin/Teacher/Manager/CEO → Panel management with dropdown
+            if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization()) {
+                $items['ielts_tests'] = [
+                    'icon' => self::getIcon('quizzes'),
+                    'text' => 'IELTS Tests',
+                    'url' => '/panel/my-ielts-tests',
+                    'items' => [
+                        ['text' => 'My Tests', 'url' => '/panel/my-ielts-tests'],
+                        ['text' => 'Create from Bank', 'url' => '/panel/my-ielts-tests/create'],
+                    ]
+                ];
+            } 
+            // Student → Dropdown with Mock Tests and Practice Tests
+            else {
+                $items['ielts_tests'] = [
+                    'icon' => self::getIcon('quizzes'),
+                    'text' => 'IELTS Tests',
+                    'url' => '/panel/ielts-tests',
+                    'items' => [
+                        ['text' => 'Mock Tests', 'url' => '/panel/ielts-tests/mock'],
+                        ['text' => 'Practice Tests', 'url' => '/panel/ielts-tests/practice'],
+                    ]
+                ];
+            }
+        }
+        
+        // Question Bank - For Teachers, Organizations, and Admins
+        if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization()) {
+            $items['question_bank'] = [
+                'icon' => self::getIcon('quizzes'), // Reusing quiz icon
+                'text' => 'Question Bank',
+                'url' => '/panel/question-bank',
+                'items' => [
+                    ['text' => 'Dashboard', 'url' => '/panel/question-bank'],
+                    ['text' => 'Mock Questions', 'url' => '/panel/question-bank/mock'],
+                    ['text' => 'Practice Questions', 'url' => '/panel/question-bank/practice'],
+                    ['text' => 'Mock Groups', 'url' => '/panel/question-bank/mock/groups'],
+                    ['text' => 'Practice Groups', 'url' => '/panel/question-bank/practice/groups'],
+                    ['text' => 'Add Question', 'url' => '/panel/question-bank/create'],
+                ]
+            ];
+        }
+
         return $items;
     }
 
