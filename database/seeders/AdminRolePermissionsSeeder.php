@@ -107,6 +107,14 @@ class AdminRolePermissionsSeeder extends Seeder
             'panel_quizzes_my_results',
             'panel_quizzes_not_participated',
             
+            // IELTS Tests
+            'panel_ielts_tests',
+            'panel_ielts_tests_create',
+            'panel_ielts_tests_edit',
+            'panel_ielts_tests_delete',
+            'panel_ielts_tests_lists',
+            'panel_ielts_tests_approve',
+            
             'panel_certificates',
             'panel_certificates_lists',
             'panel_certificates_students_lists',

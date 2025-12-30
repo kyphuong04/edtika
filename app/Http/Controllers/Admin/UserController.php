@@ -124,7 +124,7 @@ class UserController extends Controller
     {
         $this->authorize('admin_users_list');
 
-        $query = User::where('role_name', Role::$user);
+        $query = User::where('role_id', 2);
 
         $totalStudents = deepClone($query)->count();
         $inactiveStudents = deepClone($query)->where('status', 'inactive')
