@@ -117,12 +117,11 @@ class StudentRolePermissionsSeeder extends Seeder
         ];
         
         $sections = Section::whereIn('name', $allowedSections)->get();
+        $allowedSectionIds = $sections->pluck('id')->toArray();
         
+        // 1. Add new permissions (insert missing ones)
         $insertData = [];
-        $now = time();
-        
         foreach ($sections as $section) {
-            // Check if permission already exists
             $exists = Permission::where('role_id', $studentRoleId)
                 ->where('section_id', $section->id)
                 ->exists();
@@ -138,9 +137,20 @@ class StudentRolePermissionsSeeder extends Seeder
         
         if (!empty($insertData)) {
             Permission::insert($insertData);
-            $this->command->info("Created " . count($insertData) . " permissions for Student role (role_id: {$studentRoleId})");
-        } else {
-            $this->command->info("All permissions already exist for Student role");
+            $this->command->info("✓ Added " . count($insertData) . " new permissions for Student role");
         }
+        
+        // 2. Remove old permissions (delete ones not in the allowed list)
+        $deletedCount = Permission::where('role_id', $studentRoleId)
+            ->whereNotIn('section_id', $allowedSectionIds)
+            ->delete();
+        
+        if ($deletedCount > 0) {
+            $this->command->warn("✗ Removed " . $deletedCount . " permissions no longer in the allowed list");
+        }
+        
+        // 3. Summary
+        $totalPermissions = Permission::where('role_id', $studentRoleId)->count();
+        $this->command->info("── Student role now has {$totalPermissions} permissions total");
     }
 }
