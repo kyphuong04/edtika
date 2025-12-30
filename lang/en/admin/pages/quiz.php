@@ -12,7 +12,7 @@ return [
 'page_lists_lead' => 'List of quizzes. You can edit or delete any row.',
 'page_results_lead' => 'View quiz results.',
 'title' => 'Title',
-'instructors' => 'Instructors',
+'instructors' => 'Mentors',
 'instructor' => 'Instructor',
 'quizzes_list' => 'Quizzes List',
 'quiz_results' => 'Quiz Results',
