@@ -169,7 +169,7 @@ return [
 'support_summary' => 'Support summary',
 'classes_support' => 'Course support',
 'support_tickets' => 'Support tickets',
-'staff' => 'Staff',
+'staff' => 'Manager',
 'teacher' => 'Instructor',
 'open' => 'Open',
 'closed' => 'Closed',

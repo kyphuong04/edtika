@@ -68,13 +68,13 @@ return [
     'subscribe_now' => 'Subscribe Now!',
     'subscribe_now_hint' => '#Pick a plan and start saving today',
 
-    'instructors' => 'Instructors',
+    'instructors' => 'Mentors',
     'all_instructors' => 'All Instructors',
     'instructors_hint' => '#Learn from the best educators in the field',
     'reserve_a_live_class' => 'Book a Live Meeting',
 
     'organization' => 'Organization',
-    'organizations' => 'Organizations',
+    'organizations' => 'Admin',
     'all_organizations' => 'All Organizations',
     'organizations_hint' => '#Leading educational institutions to support your learning',
 

@@ -23,7 +23,7 @@ return [
     'action' => 'Action',
     'id' => 'ID',
     'name' => 'Name',
-    'instructors' => 'Instructors',
+    'instructors' => 'Mentors',
     'students' => 'Students',
     'role_name' => 'Role Name',
     'admin_role' => 'Admin Role',

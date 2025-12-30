@@ -48,7 +48,7 @@ return [
 'paid' => 'Paid',
 'paid_amount' => 'Amount Paid',
 'instructor' => 'Instructor',
-'instructors' => 'Instructors',
+'instructors' => 'Mentors',
     'students' => 'Students',
     'student' => 'Student',
     'students_and_instructors' => 'Students and Instructors',

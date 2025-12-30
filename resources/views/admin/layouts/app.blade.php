@@ -17,7 +17,7 @@
     @stack('libraries_top')
 
     <link rel="stylesheet" href="/assets/admin/css/style.css">
-    <link rel="stylesheet" href="/assets/admin/css/custom.css">
+    <link rel="stylesheet" href="/assets/admin/css/custom.css?v={{ time() }}">
     <link rel="stylesheet" href="/assets/admin/css/components.css">
     <link rel="stylesheet" href="/assets/admin/css/extra.min.css">
     @if($isRtl)
@@ -37,7 +37,7 @@
         {!! getThemeColorsSettings(true) !!}
     </style>
 </head>
-<body class="{{ $isRtl ? 'rtl' : '' }}">
+<body class="sidebar-mini sidebar-hover-expand {{ $isRtl ? 'rtl' : '' }}">
 
 <div id="app">
     <div class="main-wrapper">
@@ -134,7 +134,7 @@
     var priceInvalidHintLang = '{{ trans('update.price_invalid_hint') }}';
 </script>
 
-<script src="/assets/admin/js/custom.js"></script>
+<script src="/assets/admin/js/custom.js?v={{ time() }}"></script>
 <script src="/assets/admin/js/parts/ai-content-generator.min.js"></script>
 
 <script>
