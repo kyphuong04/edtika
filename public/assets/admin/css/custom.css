@@ -757,10 +757,16 @@ table tr th:first-child, table tr td:first-child {
 }
 
 .select2-container {
-    z-index: 1212 !important;
+    z-index: 99 !important;
 }
 
-.modal .select2-container {
+/* Select2 dropdown không đè lên sidebar */
+.select2-container--open {
+    z-index: 99 !important;
+}
+
+.modal .select2-container,
+.modal .select2-container--open {
     z-index: 10550 !important;
 }
 
