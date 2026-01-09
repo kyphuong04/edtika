@@ -1271,7 +1271,15 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             // Test Management
             Route::get('/', 'IeltsTestController@index')->name('admin.ielts_tests.index');
             
-            // New workflow: Choose Type → Mock/Practice forms
+            // IELTS Settings
+            Route::get('/settings', 'IeltsTestController@settings')->name('admin.ielts_tests.settings');
+            Route::post('/settings', 'IeltsTestController@storeSettings')->name('admin.ielts_tests.settings.store');
+            
+            // NEW: Wizard-style creation (recommended)
+            Route::get('/wizard', 'IeltsTestController@wizard')->name('admin.ielts_tests.wizard');
+            Route::post('/wizard/store', 'IeltsTestController@wizardStore')->name('admin.ielts_tests.wizard.store');
+            
+            // Legacy: Choose Type → Mock/Practice forms
             Route::get('/create', 'IeltsTestController@chooseType')->name('admin.ielts_tests.create');
             Route::get('/create/mock', 'IeltsTestController@createMock')->name('admin.ielts_tests.create.mock');
             Route::get('/create/practice', 'IeltsTestController@createPractice')->name('admin.ielts_tests.create.practice');
@@ -1289,6 +1297,12 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/pending-approval', 'IeltsTestController@pendingApproval')->name('admin.ielts_tests.pending_approval');
             Route::post('/{id}/approve', 'IeltsTestController@approve')->name('admin.ielts_tests.approve');
             Route::post('/{id}/reject', 'IeltsTestController@reject')->name('admin.ielts_tests.reject');
+            Route::post('/{id}/publish', 'IeltsTestController@publish')->name('admin.ielts_tests.publish');
+            Route::post('/{id}/unpublish', 'IeltsTestController@unpublish')->name('admin.ielts_tests.unpublish');
+            
+            // Question Groups Approval
+            Route::post('/question-groups/{id}/approve', 'IeltsTestController@approveQuestionGroup')->name('admin.question_groups.approve');
+            Route::post('/question-groups/{id}/reject', 'IeltsTestController@rejectQuestionGroup')->name('admin.question_groups.reject');
             
             // Section Management
             Route::get('/{testId}/sections', 'IeltsTestController@manageSections')->name('admin.ielts_tests.sections');
@@ -1296,7 +1310,12 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::post('/sections/{sectionId}/update', 'IeltsTestController@updateSection')->name('admin.ielts_tests.sections.update');
             Route::get('/sections/{sectionId}/delete', 'IeltsTestController@deleteSection')->name('admin.ielts_tests.sections.delete');
             
-            // Question Management
+            // Question Group Management (NEW)
+            Route::get('/sections/{sectionId}/question-groups', 'IeltsTestController@manageQuestionGroups')->name('admin.ielts_tests.question_groups');
+            Route::post('/sections/{sectionId}/question-groups/store', 'IeltsTestController@storeQuestionGroup')->name('admin.ielts_tests.question_groups.store');
+            Route::delete('/question-groups/{groupId}', 'IeltsTestController@deleteQuestionGroup')->name('admin.ielts_tests.question_groups.delete');
+            
+            // Question Management (Updated to work with groups)
             Route::get('/sections/{sectionId}/questions', 'IeltsTestController@manageQuestions')->name('admin.ielts_tests.questions');
             Route::post('/sections/{sectionId}/questions/store', 'IeltsTestController@storeQuestion')->name('admin.ielts_tests.questions.store');
             Route::post('/questions/{questionId}/update', 'IeltsTestController@updateQuestion')->name('admin.ielts_tests.questions.update');
@@ -1317,7 +1336,6 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
                 Route::get('/{id}/delete', 'IeltsPracticeCategoryController@destroy')->name('admin.ielts_practice_categories.destroy');
             });
         });
-        /* End Admin Middleware */
     });
 
     // IELTS Practice Categories

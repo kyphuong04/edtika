@@ -73,8 +73,18 @@
                         <div class="mb-16">
                             <label class="font-12 text-gray-500 mb-8">Audio File</label>
                             <input type="file" name="audio_file" class="form-control" accept="audio/*">
-                            @if($group->audio_file)
-                                <small class="text-gray-500 font-12 mt-4">Current: {{ basename($group->audio_file) }}</small>
+                            @if($group->audio_file || $group->audio_path)
+                                <div class="mt-12 p-12 bg-gray-100 rounded-12">
+                                    <div class="d-flex align-items-center gap-8 mb-8">
+                                        <x-iconsax-bul-music-play class="icons text-primary" width="16px" height="16px"/>
+                                        <span class="font-12 font-weight-500 text-dark">Current Audio</span>
+                                    </div>
+                                    <audio controls preload="metadata" style="width: 100%; height: 40px;">
+                                        <source src="{{ $group->audio_url }}" type="audio/mpeg">
+                                        Your browser does not support audio.
+                                    </audio>
+                                    <small class="text-gray-500 font-12 mt-8 d-block">{{ basename($group->audio_file ?? $group->audio_path) }}</small>
+                                </div>
                             @endif
                         </div>
                     @endif

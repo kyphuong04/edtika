@@ -25,6 +25,12 @@
 @elseif($name == 'quizzes')
     <x-iconsax-lin-clipboard-tick class="icons" width="20px" height="20px"/>
 
+@elseif($name == 'ielts_tests')
+    <x-iconsax-lin-document-text class="icons" width="20px" height="20px"/>
+
+@elseif($name == 'question_bank')
+    <x-iconsax-lin-archive-book class="icons" width="20px" height="20px"/>
+
 @elseif($name == 'certificates')
     <x-iconsax-lin-bookmark-2 class="icons" width="20px" height="20px"/>
 

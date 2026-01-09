@@ -79,12 +79,12 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="input-label">Practice Category</label>
-                                    <select name="practice_category_id" class="form-control">
+                                    <select name="practice_category_id" class="form-control" id="practiceCategory">
                                         <option value="">Select category...</option>
                                         @foreach($practiceCategories as $skill => $categories)
                                             <optgroup label="{{ ucfirst($skill) }}">
                                                 @foreach($categories as $category)
-                                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                    <option value="{{ $category->id }}" data-skill="{{ $skill }}">{{ $category->name }}</option>
                                                 @endforeach
                                             </optgroup>
                                         @endforeach
@@ -119,40 +119,65 @@
                             </div>
                         </div>
 
-                        <h6 class="mt-4 mb-3">Select Skills</h6>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <strong>Practice tests focus on ONE skill only.</strong> Select the skill below:
+                        </div>
+
+                        <h6 class="mt-4 mb-3">Select ONE Skill *</h6>
                         <div class="row">
                             <div class="col-md-3">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="has_listening" class="custom-control-input" id="hasListening" value="1">
-                                    <label class="custom-control-label" for="hasListening">Listening</label>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" name="practice_skill" class="custom-control-input practice-skill-radio" id="skillListening" value="listening" required>
+                                    <label class="custom-control-label" for="skillListening">
+                                        <i class="fas fa-headphones mr-2"></i>Listening
+                                    </label>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="has_reading" class="custom-control-input" id="hasReading" value="1">
-                                    <label class="custom-control-label" for="hasReading">Reading</label>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" name="practice_skill" class="custom-control-input practice-skill-radio" id="skillReading" value="reading" required>
+                                    <label class="custom-control-label" for="skillReading">
+                                        <i class="fas fa-book-open mr-2"></i>Reading
+                                    </label>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="has_writing" class="custom-control-input" id="hasWriting" value="1">
-                                    <label class="custom-control-label" for="hasWriting">Writing</label>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" name="practice_skill" class="custom-control-input practice-skill-radio" id="skillWriting" value="writing" required>
+                                    <label class="custom-control-label" for="skillWriting">
+                                        <i class="fas fa-pencil-alt mr-2"></i>Writing
+                                    </label>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="has_speaking" class="custom-control-input" id="hasSpeaking" value="1">
-                                    <label class="custom-control-label" for="hasSpeaking">Speaking</label>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" name="practice_skill" class="custom-control-input practice-skill-radio" id="skillSpeaking" value="speaking" required>
+                                    <label class="custom-control-label" for="skillSpeaking">
+                                        <i class="fas fa-microphone mr-2"></i>Speaking
+                                    </label>
                                 </div>
                             </div>
+                        </div>
+
+                        <div id="durationField" class="form-group mt-4" style="display: none;">
+                            <label class="input-label">Duration (minutes) *</label>
+                            <input type="number" name="skill_duration" class="form-control" placeholder="e.g., 30" min="1">
+                            <small class="text-gray">Recommended: Listening (30), Reading (60), Writing (60), Speaking (15)</small>
                         </div>
                     </div>
 
                     <div id="mockInfo" style="display: none;">
-                        <div class="alert alert-info mt-3">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Mock tests automatically include all 4 skills (Listening, Reading, Writing, Speaking) with fixed durations:
-                            Listening (30 min), Reading (60 min), Writing (60 min), Speaking (15 min)
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Mock tests automatically include ALL 4 skills in strict order:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>1. Listening</strong> - 30 minutes (40 questions)</li>
+                                <li><strong>2. Reading</strong> - 60 minutes (40 questions)</li>
+                                <li><strong>3. Writing</strong> - 60 minutes (2 tasks)</li>
+                                <li><strong>4. Speaking</strong> - 11-14 minutes (3 parts)</li>
+                            </ul>
+                            <p class="mb-0 mt-2"><small>This order follows official IELTS exam format and cannot be changed.</small></p>
                         </div>
                     </div>
 
@@ -204,6 +229,7 @@
     document.getElementById('testType').addEventListener('change', function() {
         const practiceOptions = document.getElementById('practiceOptions');
         const mockInfo = document.getElementById('mockInfo');
+        const durationField = document.getElementById('durationField');
         
         if (this.value === 'practice') {
             practiceOptions.style.display = 'block';
@@ -211,9 +237,58 @@
         } else if (this.value === 'mock') {
             practiceOptions.style.display = 'none';
             mockInfo.style.display = 'block';
+            durationField.style.display = 'none';
         } else {
             practiceOptions.style.display = 'none';
             mockInfo.style.display = 'none';
+            durationField.style.display = 'none';
+        }
+    });
+
+    // Show duration field when skill is selected
+    document.querySelectorAll('.practice-skill-radio').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const durationField = document.getElementById('durationField');
+            const durationInput = durationField.querySelector('input[name="skill_duration"]');
+            
+            if (this.checked) {
+                durationField.style.display = 'block';
+                durationInput.required = true;
+                
+                // Set recommended duration
+                const skill = this.value;
+                if (skill === 'listening') {
+                    durationInput.value = 30;
+                } else if (skill === 'reading') {
+                    durationInput.value = 60;
+                } else if (skill === 'writing') {
+                    durationInput.value = 60;
+                } else if (skill === 'speaking') {
+                    durationInput.value = 15;
+                }
+            }
+        });
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const testType = document.getElementById('testType').value;
+        
+        if (testType === 'practice') {
+            const selectedSkill = document.querySelector('input[name="practice_skill"]:checked');
+            const duration = document.querySelector('input[name="skill_duration"]').value;
+            
+            if (!selectedSkill) {
+                e.preventDefault();
+                alert('Please select ONE skill for practice test!');
+                return false;
+            }
+            
+            if (!duration || duration < 1) {
+                e.preventDefault();
+                alert('Please enter duration for the selected skill!');
+                return false;
+            }
         }
     });
 </script>

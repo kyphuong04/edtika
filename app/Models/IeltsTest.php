@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * A complete IELTS test containing listening, reading, writing, and speaking sections.
+ * 
+ * Can be either a full mock test (all 4 skills) or practice test (focus on specific skills).
+ * Tracks approval workflow, enrollment requirements, and retake policies.
+ */
 class IeltsTest extends Model
 {
     public $timestamps = false;
@@ -62,8 +68,12 @@ class IeltsTest extends Model
     {
         return $this->belongsTo(\App\User::class, 'approved_by');
     }
-    
-    // Scopes
+
+    /*
+    |--------------------------------------------------------------------------
+    | Query Scopes
+    |--------------------------------------------------------------------------
+    */
     
     public function scopeActive($query)
     {
@@ -94,8 +104,12 @@ class IeltsTest extends Model
     {
         return $query->where('status', 'pending_approval');
     }
-    
-    // Helper Methods
+
+    /*
+    |--------------------------------------------------------------------------
+    | Test Type Checks
+    |--------------------------------------------------------------------------
+    */
     
     public function isMockTest()
     {
@@ -106,6 +120,25 @@ class IeltsTest extends Model
     {
         return $this->type === 'practice';
     }
+    
+    /**
+     * Determine which skill is the main focus for practice tests.
+     * 
+     * @return string|null 'listening', 'reading', 'writing', 'speaking', or null
+     */
+    public function getPrimarySkill()
+    {
+        if ($this->has_listening) return 'listening';
+        if ($this->has_reading) return 'reading';
+        if ($this->has_writing) return 'writing';
+        if ($this->has_speaking) return 'speaking';
+        return null;
+    }
+    /*
+    |--------------------------------------------------------------------------
+    | Status Management
+    |--------------------------------------------------------------------------
+    */
     
     public function isPublished()
     {
@@ -121,9 +154,26 @@ class IeltsTest extends Model
     {
         return in_array($this->status, ['draft', 'rejected']);
     }
+    /*
+    |--------------------------------------------------------------------------
+    | Duration Calculations
+    |--------------------------------------------------------------------------
+    */
     
     public function getTotalDurationAttribute()
     {
+        // First, check if sections have duration set
+        if ($this->relationLoaded('sections') && $this->sections->count() > 0) {
+            return $this->sections->sum('duration_minutes') ?: 0;
+        }
+        
+        // If sections aren't loaded yet, query the database
+        $sectionDuration = $this->sections()->sum('duration_minutes');
+        if ($sectionDuration > 0) {
+            return $sectionDuration;
+        }
+        
+        // Fall back to legacy skill-specific duration fields
         return ($this->listening_duration ?? 0) + 
                ($this->reading_duration ?? 0) + 
                ($this->writing_duration ?? 0) + 
@@ -141,9 +191,17 @@ class IeltsTest extends Model
         }
         return "{$mins} min";
     }
+    /*
+    |--------------------------------------------------------------------------
+    | User Attempt Tracking
+    |--------------------------------------------------------------------------
+    */
     
     /**
-     * Get user's attempts count for this test
+     * Count how many times a user has completed this test.
+     * 
+     * @param int $userId
+     * @return int
      */
     public function getUserAttemptsCount($userId)
     {
@@ -154,7 +212,10 @@ class IeltsTest extends Model
     }
     
     /**
-     * Get user's best attempt
+     * Find a user's highest-scoring attempt on this test.
+     * 
+     * @param int $userId
+     * @return IeltsTestAttempt|null
      */
     public function getUserBestAttempt($userId)
     {
@@ -166,11 +227,16 @@ class IeltsTest extends Model
     }
     
     /**
-     * Check if user can take this test
+     * Determine whether a user is allowed to take this test.
+     * 
+     * Checks enrollment, daily limits (for mocks), and per-test attempt limits.
+     * 
+     * @param int $userId
+     * @return true|string Returns true if allowed, or reason code if not: 'daily_limit', 'max_attempts', 'not_enrolled'
      */
     public function canUserTake($userId)
     {
-        // Check if enrolled (if required)
+        // First, verify enrollment if this test requires it
         if ($this->require_enrollment && $this->webinar_id) {
             $enrolled = \App\Sale::where('webinar_id', $this->webinar_id)
                 ->where('buyer_id', $userId)
@@ -179,16 +245,25 @@ class IeltsTest extends Model
                 ->exists();
             
             if (!$enrolled) {
-                return false;
+                return 'not_enrolled';
             }
         }
         
-        // Check retake limit
-        if (!$this->allow_retake) {
-            $attemptsCount = $this->getUserAttemptsCount($userId);
-            // Mock tests: max 3 attempts
-            if ($this->isMockTest() && $attemptsCount >= 3) {
-                return false;
+        // For mock tests, enforce daily limit and per-test attempt limit
+        if ($this->isMockTest()) {
+            $dailyLimit = (int) (getIeltsSettings('mock_tests_per_day') ?? 2);
+            $todayAttempts = self::getUserMockAttemptsToday($userId);
+            
+            if ($todayAttempts >= $dailyLimit) {
+                return 'daily_limit';
+            }
+            
+            // Also check the max attempts per individual test (default 3)
+            if (!$this->allow_retake) {
+                $attemptsCount = $this->getUserAttemptsCount($userId);
+                if ($attemptsCount >= 3) {
+                    return 'max_attempts';
+                }
             }
         }
         
@@ -196,7 +271,47 @@ class IeltsTest extends Model
     }
     
     /**
-     * Validate mock test requirements
+     * Count how many mock tests a user has attempted today (across ALL mock tests).
+     * 
+     * @param int $userId
+     * @return int
+     */
+    public static function getUserMockAttemptsToday($userId)
+    {
+        $todayStart = strtotime('today 00:00:00');
+        $todayEnd = strtotime('today 23:59:59');
+        
+        return IeltsTestAttempt::whereHas('test', function($q) {
+                $q->where('type', 'mock');
+            })
+            ->where('user_id', $userId)
+            ->whereBetween('started_at', [$todayStart, $todayEnd])
+            ->count();
+    }
+    
+    /**
+     * How many more mock tests can the user take today?
+     * 
+     * @param int $userId
+     * @return int Number of remaining attempts
+     */
+    public static function getRemainingMockTestsToday($userId)
+    {
+        $dailyLimit = (int) (getIeltsSettings('mock_tests_per_day') ?? 2);
+        $todayAttempts = self::getUserMockAttemptsToday($userId);
+        return max(0, $dailyLimit - $todayAttempts);
+    }
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Validation Rules
+    |--------------------------------------------------------------------------
+    */
+    
+    /**
+     * Quick validation check for mock test structure.
+     * 
+     * @return array ['valid' => bool, 'errors' => string[]]
      */
     public function validateMockTestStructure()
     {
@@ -206,37 +321,62 @@ class IeltsTest extends Model
         
         $errors = [];
         
-        // Must have all 4 skills
+        $sectionCount = $this->sections()->count();
+        if ($sectionCount === 0) {
+            $errors[] = 'Test must have at least one section';
+        }
+        
+        $totalQuestions = 0;
+        foreach ($this->sections as $section) {
+            $totalQuestions += $section->questions()->count();
+        }
+        
+        if ($totalQuestions === 0) {
+            $errors[] = 'Test must have at least one question';
+        }
+        
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors
+        ];
+    }
+    
+    /**
+     * Comprehensive validation before publishing a full mock test.
+     * 
+     * Ensures all 4 skills are present with proper sections.
+     * 
+     * @return array ['valid' => bool, 'errors' => string[]]
+     */
+    public function validateFullMockTestStructure()
+    {
+        $errors = [];
+        
+        // All 4 skills must be included
         if (!$this->has_listening) $errors[] = 'Missing Listening section';
         if (!$this->has_reading) $errors[] = 'Missing Reading section';
         if (!$this->has_writing) $errors[] = 'Missing Writing section';
         if (!$this->has_speaking) $errors[] = 'Missing Speaking section';
         
-        // Check durations
-        if ($this->listening_duration != 30) $errors[] = 'Listening must be 30 minutes';
-        if ($this->reading_duration != 60) $errors[] = 'Reading must be 60 minutes';
-        if ($this->writing_duration != 60) $errors[] = 'Writing must be 60 minutes';
-        if ($this->speaking_duration != 15) $errors[] = 'Speaking must be 15 minutes';
-        
-        // Check sections
+        // Validate that each enabled skill has at least one section
         $listeningSections = $this->sections()->where('skill', 'listening')->count();
-        if ($listeningSections != 4) {
-            $errors[] = "Listening must have 4 parts (found {$listeningSections})";
+        if ($this->has_listening && $listeningSections < 1) {
+            $errors[] = "Listening should have at least 1 part (found {$listeningSections})";
         }
         
         $readingSections = $this->sections()->where('skill', 'reading')->count();
-        if ($readingSections != 3) {
-            $errors[] = "Reading must have 3 passages (found {$readingSections})";
+        if ($this->has_reading && $readingSections < 1) {
+            $errors[] = "Reading should have at least 1 passage (found {$readingSections})";
         }
         
         $writingSections = $this->sections()->where('skill', 'writing')->count();
-        if ($writingSections != 2) {
-            $errors[] = "Writing must have 2 tasks (found {$writingSections})";
+        if ($this->has_writing && $writingSections < 1) {
+            $errors[] = "Writing should have at least 1 task (found {$writingSections})";
         }
         
         $speakingSections = $this->sections()->where('skill', 'speaking')->count();
-        if ($speakingSections != 3) {
-            $errors[] = "Speaking must have 3 parts (found {$speakingSections})";
+        if ($this->has_speaking && $speakingSections < 1) {
+            $errors[] = "Speaking should have at least 1 part (found {$speakingSections})";
         }
         
         return [

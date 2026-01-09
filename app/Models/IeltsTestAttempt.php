@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Represents a single test attempt by a student.
+ * 
+ * Each attempt tracks progress through listening, reading, writing, and speaking
+ * sections, along with scores and band calculations.
+ */
 class IeltsTestAttempt extends Model
 {
     public $timestamps = false;
@@ -29,12 +35,24 @@ class IeltsTestAttempt extends Model
         'reading_score' => 'float',
         'writing_score' => 'float',
         'speaking_score' => 'float',
+        'listening_band' => 'float',
+        'reading_band' => 'float',
+        'writing_band' => 'float',
+        'speaking_band' => 'float',
         'overall_band' => 'float',
         'progress_percentage' => 'float',
+        'writing_criteria' => 'array',
+        'speaking_criteria' => 'array',
+        'writing_graded_at' => 'integer',
+        'speaking_graded_at' => 'integer',
     ];
-    
-    // Relationships
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     public function test()
     {
         return $this->belongsTo(IeltsTest::class, 'test_id');
@@ -60,8 +78,22 @@ class IeltsTestAttempt extends Model
         return $this->belongsTo(\App\QuizzesResult::class, 'quiz_result_id');
     }
     
-    // Scopes
+    public function writingGrader()
+    {
+        return $this->belongsTo(\App\User::class, 'writing_graded_by');
+    }
     
+    public function speakingGrader()
+    {
+        return $this->belongsTo(\App\User::class, 'speaking_graded_by');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
     public function scopeInProgress($query)
     {
         return $query->where('status', 'in_progress');
@@ -76,9 +108,13 @@ class IeltsTestAttempt extends Model
     {
         return $query->where('user_id', $userId);
     }
-    
-    // Helper Methods
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Checks
+    |--------------------------------------------------------------------------
+    */
+
     public function isInProgress()
     {
         return $this->status === 'in_progress';
@@ -94,76 +130,119 @@ class IeltsTestAttempt extends Model
         return $this->status === 'paused';
     }
     
+    /*
+    |--------------------------------------------------------------------------
+    | Section Navigation
+    |--------------------------------------------------------------------------
+    */
+
     /**
-     * Get next section to navigate to
+     * Find the next section in sequence.
+     *
+     * @return IeltsTestSection|null
      */
     public function getNextSection()
     {
-        $skillOrder = ['listening', 'reading', 'writing', 'speaking'];
-        $currentIndex = array_search($this->current_skill, $skillOrder);
-        
-        if ($currentIndex === false || $currentIndex >= count($skillOrder) - 1) {
-            return null; // Last section
+        $allSections = $this->test->sections()->orderBy('sort_order')->get();
+
+        if ($allSections->isEmpty()) {
+            return null;
         }
-        
-        $nextSkill = $skillOrder[$currentIndex + 1];
-        
-        return $this->test->sections()
-            ->where('skill', $nextSkill)
-            ->orderBy('sort_order')
-            ->first();
+
+        $currentSectionId = $this->current_section_id;
+        $currentIndex = -1;
+
+        foreach ($allSections as $index => $section) {
+            if ($section->id == $currentSectionId) {
+                $currentIndex = $index;
+                break;
+            }
+        }
+
+        if ($currentIndex >= 0 && $currentIndex < $allSections->count() - 1) {
+            return $allSections[$currentIndex + 1];
+        }
+
+        return null;
     }
     
+    /*
+    |--------------------------------------------------------------------------
+    | Progress Tracking
+    |--------------------------------------------------------------------------
+    */
+
     /**
-     * Update progress percentage
+     * Update the progress percentage based on answered questions.
+     *
+     * @return void
      */
     public function updateProgress()
     {
         $totalAnswered = $this->answers()->whereNotNull('answer_text')->count();
         $this->total_questions_answered = $totalAnswered;
-        
+
         if ($this->total_questions > 0) {
             $this->progress_percentage = ($totalAnswered / $this->total_questions) * 100;
         }
-        
+
         $this->updated_at = time();
         $this->save();
     }
     
     /**
-     * Mark section as completed
+     * Mark a specific skill section as completed.
+     *
+     * @param string $skill One of: listening, reading, writing, speaking
+     * @return void
      */
     public function completeSection($skill)
     {
         $completedField = $skill . '_completed';
         $finishedField = $skill . '_finished_at';
-        
+
         $this->{$completedField} = true;
         $this->{$finishedField} = time();
         $this->updated_at = time();
         $this->save();
     }
     
+    /*
+    |--------------------------------------------------------------------------
+    | Time Management
+    |--------------------------------------------------------------------------
+    */
+
     /**
-     * Calculate time remaining
+     * Calculate how much time is left for this attempt.
+     *
+     * @return int Seconds remaining
      */
     public function getTimeRemaining()
     {
         if ($this->remaining_time_seconds !== null) {
             return $this->remaining_time_seconds;
         }
-        
-        $totalDuration = $this->test->total_duration * 60; // Convert to seconds
+
+        $totalDuration = $this->test->total_duration * 60;
         $elapsed = time() - $this->started_at;
-        
+
         return max(0, $totalDuration - $elapsed);
     }
-    
+
     /**
-     * Check if time has expired
+     * Check whether time has run out.
+     *
+     * @return bool
      */
     public function hasExpired()
     {
+        $totalDuration = $this->test->total_duration ?? 0;
+
+        if ($totalDuration <= 0) {
+            return false;
+        }
+
         return $this->getTimeRemaining() <= 0;
     }
 }
