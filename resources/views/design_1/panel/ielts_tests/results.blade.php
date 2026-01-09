@@ -124,6 +124,34 @@
     </div>
 
     {{-- Skill Breakdown --}}
+    @php
+        // Band conversion function
+        if (!function_exists('rawToBand')) {
+            function rawToBand($raw, $skill = 'listening') {
+                $conversionTable = [
+                    39 => 9.0, 40 => 9.0,
+                    37 => 8.5, 38 => 8.5,
+                    35 => 8.0, 36 => 8.0,
+                    33 => 7.5, 34 => 7.5,
+                    30 => 7.0, 31 => 7.0, 32 => 7.0,
+                    27 => 6.5, 28 => 6.5, 29 => 6.5,
+                    23 => 6.0, 24 => 6.0, 25 => 6.0, 26 => 6.0,
+                    18 => 5.5, 19 => 5.5, 20 => 5.5, 21 => 5.5, 22 => 5.5,
+                    16 => 5.0, 17 => 5.0,
+                    13 => 4.5, 14 => 4.5, 15 => 4.5,
+                    11 => 4.0, 12 => 4.0,
+                    8 => 3.5, 9 => 3.5, 10 => 3.5,
+                    6 => 3.0, 7 => 3.0,
+                    4 => 2.5, 5 => 2.5,
+                    3 => 2.0,
+                    2 => 1.0,
+                    1 => 1.0,
+                    0 => 0.0
+                ];
+                return $conversionTable[$raw] ?? 0;
+            }
+        }
+    @endphp
     <div class="row">
         @if($test->has_listening)
         <div class="col-md-6">
@@ -132,8 +160,8 @@
                     <div>
                         <span class="badge badge-info mb-2">Listening</span>
                         <h4 class="mb-0">
-                            @if($attempt->listening_band)
-                                Band {{ $attempt->listening_band }}
+                            @if($attempt->listening_score !== null)
+                                Band {{ rawToBand($attempt->listening_score) }}
                             @else
                                 Pending
                             @endif
@@ -168,8 +196,8 @@
                     <div>
                         <span class="badge badge-success mb-2">Reading</span>
                         <h4 class="mb-0">
-                            @if($attempt->reading_band)
-                                Band {{ $attempt->reading_band }}
+                            @if($attempt->reading_score !== null)
+                                Band {{ rawToBand($attempt->reading_score) }}
                             @else
                                 Pending
                             @endif
@@ -215,17 +243,32 @@
                 </div>
                 
                 @if($attempt->writing_band)
+                    @php
+                        $writingCriteria = $attempt->writing_criteria ?? [];
+                    @endphp
                     <div class="band-descriptor">
-                        <strong>Task Achievement:</strong> Band {{ $attempt->writing_band }}<br>
-                        <strong>Coherence & Cohesion:</strong> Band {{ $attempt->writing_band }}<br>
-                        <strong>Lexical Resource:</strong> Band {{ $attempt->writing_band }}<br>
-                        <strong>Grammar & Accuracy:</strong> Band {{ $attempt->writing_band }}
+                        <strong>Task Achievement:</strong> Band {{ $writingCriteria['task_response'] ?? $attempt->writing_band }}<br>
+                        <strong>Coherence & Cohesion:</strong> Band {{ $writingCriteria['coherence_cohesion'] ?? $attempt->writing_band }}<br>
+                        <strong>Lexical Resource:</strong> Band {{ $writingCriteria['lexical_resource'] ?? $attempt->writing_band }}<br>
+                        <strong>Grammar & Accuracy:</strong> Band {{ $writingCriteria['grammatical_accuracy'] ?? $attempt->writing_band }}
                     </div>
+                    @if($attempt->writing_feedback)
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <strong class="d-block mb-1"><i class="fas fa-comment-dots text-primary mr-1"></i> Teacher Feedback:</strong>
+                            <p class="mb-0 text-gray">{{ $attempt->writing_feedback }}</p>
+                        </div>
+                    @endif
                 @else
                     <p class="text-gray font-14 mb-0">
                         <i class="fas fa-clock mr-1"></i>
                         Your writing is being carefully reviewed by an instructor
                     </p>
+                    {{-- Grade button for teachers/admins --}}
+                    @if(auth()->user()->isTeacher() || auth()->user()->isAdmin() || auth()->user()->isOrganization())
+                        <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'writing']) }}" class="btn btn-warning btn-sm mt-3">
+                            <i class="fas fa-pen mr-1"></i> Grade Writing Now
+                        </a>
+                    @endif
                 @endif
             </div>
         </div>
@@ -249,17 +292,32 @@
                 </div>
                 
                 @if($attempt->speaking_band)
+                    @php
+                        $speakingCriteria = $attempt->speaking_criteria ?? [];
+                    @endphp
                     <div class="band-descriptor">
-                        <strong>Fluency & Coherence:</strong> Band {{ $attempt->speaking_band }}<br>
-                        <strong>Lexical Resource:</strong> Band {{ $attempt->speaking_band }}<br>
-                        <strong>Grammatical Range:</strong> Band {{ $attempt->speaking_band }}<br>
-                        <strong>Pronunciation:</strong> Band {{ $attempt->speaking_band }}
+                        <strong>Fluency & Coherence:</strong> Band {{ $speakingCriteria['fluency_coherence'] ?? $attempt->speaking_band }}<br>
+                        <strong>Lexical Resource:</strong> Band {{ $speakingCriteria['lexical_resource'] ?? $attempt->speaking_band }}<br>
+                        <strong>Grammatical Range:</strong> Band {{ $speakingCriteria['grammatical_range'] ?? $attempt->speaking_band }}<br>
+                        <strong>Pronunciation:</strong> Band {{ $speakingCriteria['pronunciation'] ?? $attempt->speaking_band }}
                     </div>
+                    @if($attempt->speaking_feedback)
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <strong class="d-block mb-1"><i class="fas fa-comment-dots text-primary mr-1"></i> Teacher Feedback:</strong>
+                            <p class="mb-0 text-gray">{{ $attempt->speaking_feedback }}</p>
+                        </div>
+                    @endif
                 @else
                     <p class="text-gray font-14 mb-0">
                         <i class="fas fa-clock mr-1"></i>
                         Your speaking is being carefully reviewed by an instructor
                     </p>
+                    {{-- Grade button for teachers/admins --}}
+                    @if(auth()->user()->isTeacher() || auth()->user()->isAdmin() || auth()->user()->isOrganization())
+                        <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'speaking']) }}" class="btn btn-danger btn-sm mt-3">
+                            <i class="fas fa-microphone mr-1"></i> Grade Speaking Now
+                        </a>
+                    @endif
                 @endif
             </div>
         </div>
