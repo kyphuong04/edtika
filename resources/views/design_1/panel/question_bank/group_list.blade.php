@@ -66,7 +66,7 @@
                             <h4 class="font-16 font-weight-bold text-dark mb-8">{{ $group->title }}</h4>
                             <div class="d-flex align-items-center gap-8 flex-wrap">
                                 {{-- Skill Badge --}}
-                                <span class="badge badge-{{ $group->skill === 'listening' ? 'primary' : ($group->skill === 'reading' ? 'info' : ($group->skill === 'writing' ? 'danger' : 'success')) }}">
+                                <span class="badge badge-{{ $group->skill === 'listening' ? 'primary' : ($group->skill === 'reading' ? 'info' : 'primary') }}">
                                     {{ $group->skill_label }}
                                 </span>
                                 
@@ -97,6 +97,20 @@
                             <span class="font-14 text-gray-600">Used {{ $group->usage_count }}x</span>
                         </div>
                     </div>
+
+                    {{-- Audio Player for Listening Groups --}}
+                    @if($group->skill === 'listening' && ($group->audio_file || $group->audio_path))
+                        <div class="audio-player mb-16 p-12 bg-gray-100 rounded-12">
+                            <div class="d-flex align-items-center gap-8 mb-8">
+                                <x-iconsax-bul-music-play class="icons text-primary" width="16px" height="16px"/>
+                                <span class="font-12 font-weight-500 text-dark">Audio Preview</span>
+                            </div>
+                            <audio controls preload="metadata" style="width: 100%; height: 40px;">
+                                <source src="{{ $group->audio_url }}" type="audio/mpeg">
+                                Your browser does not support audio.
+                            </audio>
+                        </div>
+                    @endif
 
                     {{-- Tags --}}
                     @if($group->tags && is_array($group->tags))

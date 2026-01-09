@@ -188,6 +188,29 @@ class User extends Authenticatable
         return $this->isAdmin() || $this->getOrganizationTeachers()->exists() || $this->getOrganizationStudents()->exists();
     }
 
+    /**
+     * Check if user can manage IELTS tests (create, edit, view question bank)
+     * Follows role hierarchy: Teacher < Admin < Manager < CEO
+     * Higher roles inherit all lower role permissions
+     * 
+     * @return bool
+     */
+    public function canManageIeltsTests()
+    {
+        return $this->isTeacher() || $this->isAdmin() || $this->isOrganization() || $this->isManager() || $this->isCeo();
+    }
+
+    /**
+     * Check if user can approve/reject IELTS tests
+     * Only Manager and CEO can approve tests
+     * 
+     * @return bool
+     */
+    public function canApproveIeltsTests()
+    {
+        return $this->isManager() || $this->isCeo();
+    }
+
     public function hasPermission($section_name)
     {
         if (!isset($this->permissions)) {

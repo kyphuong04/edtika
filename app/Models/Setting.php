@@ -38,7 +38,7 @@ class Setting extends Model implements TranslatableContract
         $othersPersonalization, $installmentsSettings, $installmentsTermsSettings, $registrationBonusSettings, $registrationBonusTermsSettings, $statisticsSettings,
         $maintenanceSettings, $restrictionSettings, $generalOptions, $giftsGeneralSettings, $aiContentsSettings, $certificateSettings, $abandonedCartSettings, $smsChannelsSettings,
         $commissionSettings, $instructorFinderSettings, $becomeInstructorSettings, $forumsHomepageSettings, $forumsHomepageRevolverSettings, $forumsCtaSectionSettings, $forumsGeneralSettings, $forumsImagesSettings, $guarantyTextSettings, $contentReviewInformationSettings, $blogFeaturedContentsSettings,
-        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings;
+        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings, $ieltsSettings;
 
     // settings name , Using these keys, values are taken from the settings table
     static $seoMetasName = 'seo_metas';
@@ -101,6 +101,7 @@ class Setting extends Model implements TranslatableContract
     static $storeFeaturedProductsSettingsName = 'store_featured_products_settings';
     static $userDashboardDataSettingsName = 'user_dashboard_data';
     static $mobileAppGeneralSettingsName = 'mobile_app_general_settings';
+    static $ieltsSettingsName = 'ielts_settings';
 
     //statics
     static $pagesSeoMetas = ['home', 'search', 'tags', 'categories', 'classes', 'login', 'register', 'contact', 'blog', 'certificate_validation',
@@ -539,6 +540,11 @@ class Setting extends Model implements TranslatableContract
     static function getMobileAppGeneralSettings($key = null)
     {
         return self::getSetting(self::$mobileAppGeneralSettings, self::$mobileAppGeneralSettingsName, $key);
+    }
+
+    static function getIeltsSettings($key = null)
+    {
+        return self::getSetting(self::$ieltsSettings, self::$ieltsSettingsName, $key);
     }
 }
 

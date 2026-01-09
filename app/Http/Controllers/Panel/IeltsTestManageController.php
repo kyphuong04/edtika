@@ -14,15 +14,12 @@ use Illuminate\Http\Request;
 
 class IeltsTestManageController extends Controller
 {
-    /**
-     * Display user's tests
-     */
     public function index()
     {
         $user = auth()->user();
         
-        // Only teachers and admins can access
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        // Teachers, Admins, Managers, CEOs can access (role hierarchy)
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403, 'Unauthorized');
         }
         
@@ -47,24 +44,24 @@ class IeltsTestManageController extends Controller
         return view('design_1.panel.ielts_tests_manage.index', $data);
     }
     
-    /**
-     * Show create form
-     */
     public function create()
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        // Teachers, Admins, Managers, CEOs can create tests
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
         // Get Question Bank groups for selection
         try {
             $mockGroups = \App\Models\IeltsQuestionGroup::where('bank_type', 'mock')
+                ->where('status', 'approved')
                 ->get()
                 ->groupBy('skill');
                 
             $practiceGroups = \App\Models\IeltsQuestionGroup::where('bank_type', 'practice')
+                ->where('status', 'approved')
                 ->get()
                 ->groupBy('skill');
         } catch (\Exception $e) {
@@ -82,14 +79,11 @@ class IeltsTestManageController extends Controller
         return view('design_1.panel.ielts_tests_manage.create_from_bank', $data);
     }
 
-    /**
-     * Show choose type page (Mock vs Practice)
-     */
     public function chooseType()
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
@@ -100,14 +94,12 @@ class IeltsTestManageController extends Controller
         return view('design_1.panel.ielts_tests_manage.choose_type', $data);
     }
 
-    /**
-     * Show Mock Test creation form
-     */
+  // form create mock test
     public function createMock()
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
@@ -117,15 +109,12 @@ class IeltsTestManageController extends Controller
         
         return view('design_1.panel.ielts_tests_manage.create_mock', $data);
     }
-
-    /**
-     * Show Practice Test creation form
-     */
+    // form create practice test
     public function createPractice()
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
@@ -138,10 +127,7 @@ class IeltsTestManageController extends Controller
         
         return view('design_1.panel.ielts_tests_manage.create_practice', $data);
     }
-
-    /**
-     * Store Mock Test
-     */
+    // Store Mock Test
     public function storeMock(Request $request)
     {
         $user = auth()->user();
@@ -205,9 +191,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
 
-    /**
-     * Store Practice Test
-     */
+    // Store Practice Test
     public function storePractice(Request $request)
     {
         $user = auth()->user();
@@ -273,9 +257,7 @@ class IeltsTestManageController extends Controller
     }
 
     
-    /**
-     * Store new test
-     */
+    // Store new test
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -335,9 +317,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Store new test from Question Bank groups
-     */
+    // Store new test from Question Bank groups
     public function storeFromBank(Request $request)
     {
         $user = auth()->user();
@@ -346,10 +326,87 @@ class IeltsTestManageController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:mock,practice,diagnostic',
-            'format' => 'nullable|in:academic,general',
+            'format' => 'nullable|in:academic,general,full',
             'group_ids' => 'required|array|min:1',
             'group_ids.*' => 'exists:ielts_question_groups,id',
+            // Practice test time settings
+            'practice_mode' => 'nullable|in:untimed,timed,exam_mode',
+            'total_duration' => 'nullable|integer|min:5|max:180',
+            'show_answers_immediately' => 'nullable|boolean',
         ]);
+        
+        // Validate bank type matches test type
+        $groups = \App\Models\IeltsQuestionGroup::whereIn('id', $validated['group_ids'])
+            ->where('status', 'approved')
+            ->get();
+        
+        if ($groups->count() !== count($validated['group_ids'])) {
+            return back()->with(['toast' => [
+                'title' => 'Error',
+                'msg' => 'Some selected groups are not approved or do not exist.',
+                'status' => 'error'
+            ]])->withInput();
+        }
+        
+        // Validate bank type for mock/practice tests
+        if ($validated['type'] === 'mock') {
+            $invalidGroups = $groups->where('bank_type', '!=', 'mock');
+            if ($invalidGroups->isNotEmpty()) {
+                return back()->with(['toast' => [
+                    'title' => 'Error',
+                    'msg' => 'Mock tests can only use questions from the Mock Bank. Please remove Practice Bank groups.',
+                    'status' => 'error'
+                ]])->withInput();
+            }
+            
+            // Validate that all 4 skills are present for Mock Test
+            $skillsPresent = $groups->pluck('skill')->unique()->toArray();
+            $requiredSkills = ['listening', 'reading', 'writing', 'speaking'];
+            $missingSkills = array_diff($requiredSkills, $skillsPresent);
+            
+            if (!empty($missingSkills)) {
+                return back()->with(['toast' => [
+                    'title' => 'Mock Test Requires All 4 Skills',
+                    'msg' => 'Missing: ' . implode(', ', array_map('ucfirst', $missingSkills)) . '. A complete IELTS Mock Test must include Listening, Reading, Writing, and Speaking.',
+                    'status' => 'error'
+                ]])->withInput();
+            }
+            
+            // Validate standard IELTS parts count (HARD VALIDATION - must have exact parts)
+            $partsCount = $groups->groupBy('skill')->map->count();
+            $requiredParts = [
+                'listening' => 4,
+                'reading' => 3,
+                'writing' => 2,
+                'speaking' => 3,
+            ];
+            
+            $errors = [];
+            foreach ($requiredParts as $skill => $required) {
+                $actual = $partsCount->get($skill, 0);
+                if ($actual !== $required) {
+                    $errors[] = ucfirst($skill) . ": $actual/$required parts";
+                }
+            }
+            
+            if (!empty($errors)) {
+                return back()->with(['toast' => [
+                    'title' => 'Invalid IELTS Mock Test Structure',
+                    'msg' => implode(', ', $errors) . '. A standard IELTS Mock Test must have exactly: Listening (4 parts), Reading (3 passages), Writing (2 tasks), Speaking (3 parts).',
+                    'status' => 'error'
+                ]])->withInput();
+            }
+        } elseif ($validated['type'] === 'practice') {
+            $invalidGroups = $groups->where('bank_type', '!=', 'practice');
+            if ($invalidGroups->isNotEmpty()) {
+                return back()->with(['toast' => [
+                    'title' => 'Error',
+                    'msg' => 'Practice tests can only use questions from the Practice Bank. Please remove Mock Bank groups.',
+                    'status' => 'error'
+                ]])->withInput();
+            }
+        }
+        // Diagnostic tests can use both bank types
         
         // Create test shell
         $slug = \Str::slug($validated['title']);
@@ -359,6 +416,19 @@ class IeltsTestManageController extends Controller
             $count++;
         }
         
+        // Calculate total duration based on practice mode
+        $totalDuration = null; // Let it be calculated from sections
+        if ($validated['type'] === 'mock') {
+            // Mock test uses standard IELTS timing - will be set in sections
+        } elseif (isset($validated['practice_mode'])) {
+            if ($validated['practice_mode'] === 'timed' && isset($validated['total_duration'])) {
+                $totalDuration = $validated['total_duration'];
+            } elseif ($validated['practice_mode'] === 'exam_mode') {
+                // Will be calculated from sections
+            }
+            // For 'untimed', totalDuration stays null
+        }
+        
         $test = IeltsTest::create([
             'title' => $validated['title'],
             'slug' => $slug,
@@ -366,12 +436,19 @@ class IeltsTestManageController extends Controller
             'type' => $validated['type'],
             'format' => $validated['format'] ?? 'academic',
             'created_by' => $user->id,
-            'status' => 'draft',
+            // Tạo từ Question Bank (đã approved) → Published ngay, student làm được luôn
+            'status' => 'published',
             'is_active' => true,
+            'approved_at' => time(),
             'has_listening' => false,
             'has_reading' => false,
             'has_writing' => false,
             'has_speaking' => false,
+            'practice_mode' => $validated['practice_mode'] ?? null,
+            'show_answers_immediately' => $validated['show_answers_immediately'] ?? false,
+            // Calculate target band from selected groups
+            'target_band_min' => $groups->whereNotNull('target_band')->min('target_band'),
+            'target_band_max' => $groups->whereNotNull('target_band')->max('target_band'),
             'created_at' => time(),
             'updated_at' => time(),
         ]);
@@ -379,60 +456,151 @@ class IeltsTestManageController extends Controller
         // Copy questions from selected groups
         $totalQuestions = 0;
         
+        // Standard IELTS section durations (in minutes)
+        $standardDurations = [
+            'listening' => 30,
+            'reading' => 60,
+            'writing' => 60,
+            'speaking' => 15,
+        ];
+        
+        // Standard IELTS skill order
+        $skillOrder = ['listening', 'reading', 'writing', 'speaking'];
+        
+        // Group the selected groups by skill
+        $groupsBySkill = [];
         foreach ($validated['group_ids'] as $groupId) {
-            $group = \App\Models\IeltsQuestionGroup::with(['mockQuestions', 'practiceQuestions'])->find($groupId);
+            $group = \App\Models\IeltsQuestionGroup::with(['questions'])->find($groupId);
+            if ($group) {
+                $groupsBySkill[$group->skill][] = $group;
+            }
+        }
+        
+        // Process groups in standard IELTS order
+        $globalSortOrder = 0;
+        
+        foreach ($skillOrder as $skill) {
+            if (!isset($groupsBySkill[$skill])) continue;
             
-            if (!$group) continue;
+            $skillGroups = $groupsBySkill[$skill];
+            $partNumber = 0; // Part number within this skill
             
             // Enable skill for this test
-            $skillField = 'has_' . $group->skill;
+            $skillField = 'has_' . $skill;
             $test->$skillField = true;
             
-            // Get questions from group
-            $questions = $group->bank_type === 'mock' ? $group->mockQuestions : $group->practiceQuestions;
+            foreach ($skillGroups as $group) {
+                $partNumber++;
+                $globalSortOrder++;
             
-            foreach ($questions as $question) {
-                // Copy question to test
-                IeltsTestQuestion::create([
+                // Set duration based on test type
+                $sectionDuration = null;
+                if ($validated['type'] === 'mock') {
+                    $sectionDuration = $standardDurations[$skill] ?? 30;
+                } elseif (isset($validated['practice_mode']) && $validated['practice_mode'] !== 'untimed') {
+                    $sectionDuration = $group->duration ?? $standardDurations[$skill] ?? 30;
+                }
+                
+                $section = IeltsTestSection::create([
                     'test_id' => $test->id,
-                    'skill' => $question->skill,
-                    'question_type' => $question->question_type,
-                    'question_text' => $question->question_text,
-                    'passage_text' => $question->passage_text ?? null,
-                    'audio_file' => $question->audio_file ?? null,
-                    'image_file' => $question->image_file ?? null,
-                    'options' => $question->options,
-                    'correct_answer' => $question->correct_answer,
-                    'difficulty_level' => $question->difficulty_level,
-                    'points' => $question->points ?? 1.0,
-                    'instruction' => $question->instruction,
-                    'tags' => $question->tags,
-                    // Track source
-                    'source_question_id' => $question->id,
-                    'source_group_id' => $groupId,
+                    'skill' => $skill,
+                    'title' => $group->title,
+                    'section_number' => $partNumber, // Part number within this skill (1, 2, 3...)
+                    'instructions' => $group->instructions ?? null,
+                    'passage_text' => $group->passage ?? $group->passage_text ?? null,
+                    'question_start' => 1,
+                    'question_end' => $group->questions->count() ?: 1,
+                    'duration_minutes' => $sectionDuration,
+                    'sort_order' => $globalSortOrder, // Global order across all sections
+                    'question_group_id' => $group->id, // Link to original group for audio/content
+                    'audio_file' => $group->audio_path ?? $group->audio_file ?? null, // Copy audio path
+                    'created_at' => time(),
+                ]);
+            
+                // Get questions from group
+                $questions = $group->questions;
+                $questionNumber = 0;
+                
+                foreach ($questions as $question) {
+                    $questionNumber++;
+                    
+                    // Map question type to valid ENUM values
+                    $questionType = $this->mapQuestionType($question->question_type ?? $group->question_type ?? 'multiple_choice');
+                    
+                    // Get answer options - field is 'answer_options' not 'options'
+                    // Also check question_data for legacy questions that stored options there
+                    $answerOptions = $question->answer_options ?? null;
+                    if (empty($answerOptions) && !empty($question->question_data)) {
+                        // Parse question_data to extract options
+                        $questionData = is_string($question->question_data) 
+                            ? json_decode($question->question_data, true) 
+                            : $question->question_data;
+                        if (is_array($questionData)) {
+                            $extractedOptions = [];
+                            foreach ($questionData as $key => $value) {
+                                // Match both 'options[A]' and 'options[A' (some legacy data lost the closing bracket)
+                                if (preg_match('/^options\[([A-Z]+)\]?$/', $key, $matches)) {
+                                    $extractedOptions[$matches[1]] = $value;
+                                }
+                            }
+                            if (!empty($extractedOptions)) {
+                                $answerOptions = $extractedOptions;
+                            }
+                        }
+                    }
+                    if (is_array($answerOptions)) {
+                        $answerOptions = json_encode($answerOptions);
+                    }
+                    
+                    // Copy question to test section
+                    IeltsTestQuestion::create([
+                        'section_id' => $section->id,
+                        'question_number' => $questionNumber,
+                        'question_type' => $questionType,
+                        'question_text' => $question->question_text ?? $question->content ?? '',
+                        'question_image' => $question->image_file ?? null,
+                        'question_audio' => $question->audio_file ?? null,
+                        'instruction' => $question->instruction ?? null,
+                        'correct_answer' => is_array($question->correct_answer) ? json_encode($question->correct_answer) : $question->correct_answer,
+                        'answer_options' => $answerOptions,
+                        'accept_synonyms' => $question->accept_synonyms ?? 0,
+                        'case_sensitive' => $question->case_sensitive ?? 0,
+                        'max_words' => $question->max_words ?? $group->max_words ?? null,
+                        'points' => $question->points ?? 1.0,
+                        'auto_gradable' => !in_array($skill, ['writing', 'speaking']),
+                        'explanation' => $question->explanation ?? null,
+                        'sort_order' => $questionNumber,
+                        'created_at' => time(),
+                    ]);
+                    
+                    $totalQuestions++;
+                }
+                
+                // Update section question range
+                $section->update([
+                    'question_end' => $questionNumber ?: 1,
                 ]);
                 
-                $totalQuestions++;
-            }
-            
-            // Update group usage count
-            $group->incrementUsage();
-        }
+                // Update group usage count if method exists
+                if (method_exists($group, 'incrementUsage')) {
+                    $group->incrementUsage();
+                }
+            } // End foreach $skillGroups
+        } // End foreach $skillOrder
         
         $test->save();
         
+        // Redirect to My Tests page
         return redirect()
             ->route('panel.my_ielts_tests.index')
             ->with(['toast' => [
                 'title' => 'Success',
-                'msg' => "Test created with {$totalQuestions} questions from " . count($validated['group_ids']) . " groups!",
+                'msg' => "Test '{$test->title}' created with {$totalQuestions} questions!",
                 'status' => 'success'
             ]]);
     }
     
-    /**
-     * Show edit form
-     */
+    // form edit
     public function edit($id)
     {
         $test = IeltsTest::where('id', $id)
@@ -450,9 +618,7 @@ class IeltsTestManageController extends Controller
         return view('design_1.panel.ielts_tests_manage.edit', $data);
     }
     
-    /**
-     * Update test
-     */
+    // update test
     public function update(Request $request, $id)
     {
         $test = IeltsTest::where('id', $id)
@@ -480,9 +646,7 @@ class IeltsTestManageController extends Controller
         ]]);
     }
     
-    /**
-     * Delete test
-     */
+    // delete test
     public function destroy($id)
     {
         $test = IeltsTest::where('id', $id)
@@ -509,9 +673,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Duplicate test
-     */
+    // duplicate test
     public function duplicate($id)
     {
         $original = IeltsTest::where('id', $id)
@@ -547,9 +709,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Manage sections
-     */
+    // manage sections
     public function sections($id)
     {
         $test = IeltsTest::where('id', $id)
@@ -565,34 +725,44 @@ class IeltsTestManageController extends Controller
         return view('design_1.panel.ielts_tests_manage.sections', $data);
     }
     
-    /**
-     * Submit test for approval
-     */
+    /// submit for approval
     public function submitForApproval($id)
     {
         $test = IeltsTest::where('id', $id)
             ->where('created_by', auth()->id())
+            ->with('sections')
             ->firstOrFail();
+        
+        // Check if test can be submitted
+        if (!in_array($test->status, ['draft', 'rejected'])) {
+            return back()->with(['toast' => [
+                'title' => 'Error',
+                'msg' => 'Only draft or rejected tests can be submitted for approval',
+                'status' => 'error'
+            ]]);
+        }
         
         // Check if test has sections
         if ($test->sections->count() === 0) {
             return back()->with(['toast' => [
                 'title' => 'Error',
-                'msg' => 'Cannot submit test without sections',
+                'msg' => 'Cannot submit test without sections. Please add content first.',
                 'status' => 'error'
             ]]);
         }
         
-        // Validate mock test structure if applicable
-        if ($test->type === 'mock') {
-            $validation = $test->validateMockTestStructure();
-            if (!$validation['valid']) {
-                return back()->with(['toast' => [
-                    'title' => 'Error',
-                    'msg' => 'Test incomplete: ' . implode(', ', $validation['errors']),
-                    'status' => 'error'
-                ]]);
-            }
+        // Check if sections have questions
+        $totalQuestions = 0;
+        foreach ($test->sections as $section) {
+            $totalQuestions += $section->questions()->count();
+        }
+        
+        if ($totalQuestions === 0) {
+            return back()->with(['toast' => [
+                'title' => 'Error',
+                'msg' => 'Cannot submit test without questions. Please add questions first.',
+                'status' => 'error'
+            ]]);
         }
         
         $test->update([
@@ -620,7 +790,7 @@ class IeltsTestManageController extends Controller
         }
         
         return redirect()
-            ->route('panel.my_ielts_tests')
+            ->route('panel.my_ielts_tests.index')
             ->with(['toast' => [
                 'title' => 'Success',
                 'msg' => 'Test submitted for approval! Manager/CEO will review it.',
@@ -628,9 +798,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Show create section form
-     */
+    // Show create section form
     public function createSection($testId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -643,9 +811,7 @@ class IeltsTestManageController extends Controller
         ]);
     }
     
-    /**
-     * Store new section
-     */
+    // Store new section
     public function storeSection(Request $request, $testId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -704,9 +870,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Show edit section form
-     */
+    // edit section form
     public function editSection($testId, $sectionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -725,9 +889,7 @@ class IeltsTestManageController extends Controller
         ]);
     }
     
-    /**
-     * Update section
-     */
+    // update section
     public function updateSection(Request $request, $testId, $sectionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -759,9 +921,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Delete section
-     */
+    // delete section
     public function deleteSection($testId, $sectionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -784,9 +944,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Show questions for section
-     */
+    // question for section
     public function questions($testId, $sectionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -805,9 +963,7 @@ class IeltsTestManageController extends Controller
         ]);
     }
     
-    /**
-     * Show create question form
-     */
+    //create question form
     public function createQuestion($testId, $sectionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -825,9 +981,7 @@ class IeltsTestManageController extends Controller
         ]);
     }
     
-    /**
-     * Store new question
-     */
+    // Store new question
     public function storeQuestion(Request $request, $testId, $sectionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -890,9 +1044,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Show edit question form
-     */
+    // edit question form
     public function editQuestion($testId, $sectionId, $questionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -914,10 +1066,8 @@ class IeltsTestManageController extends Controller
             'pageTitle' => 'Edit Question',
         ]);
     }
-    
-    /**
-     * Update question
-     */
+
+    // update question
     public function updateQuestion(Request $request, $testId, $sectionId, $questionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -981,9 +1131,7 @@ class IeltsTestManageController extends Controller
             ]]);
     }
     
-    /**
-     * Delete question
-     */
+    // delete question
     public function deleteQuestion($testId, $sectionId, $questionId)
     {
         $test = IeltsTest::where('id', $testId)
@@ -1007,5 +1155,80 @@ class IeltsTestManageController extends Controller
                 'msg' => 'Question deleted successfully!',
                 'status' => 'success'
             ]]);
+    }
+    
+    // Map Question Bank question types to valid ENUM values
+    private function mapQuestionType($type)
+    {
+        // Valid ENUM values in ielts_test_questions table
+        $validTypes = [
+            'fill_blank',
+            'multiple_choice',
+            'multiple_select',
+            'matching',
+            'true_false_ng',
+            'yes_no_ng',
+            'short_answer',
+            'essay',
+            'diagram_label',
+            'sentence_completion',
+            'note_completion',
+            'table_completion',
+            'flow_chart',
+            'summary_completion',
+        ];
+        
+        // If already valid, return as-is
+        if (in_array($type, $validTypes)) {
+            return $type;
+        }
+        
+        // Mapping from Question Bank types to valid ENUM values
+        $mapping = [
+            // Multiple choice variations
+            'multiple_choice_single' => 'multiple_choice',
+            'multiple_choice_multiple' => 'multiple_select', // Map to multiple_select for proper grading
+            'mcq' => 'multiple_choice',
+            'mcq_single' => 'multiple_choice',
+            'mcq_multiple' => 'multiple_select',
+            'choose_two' => 'multiple_select',
+            'choose_three' => 'multiple_select',
+            
+            // True/False variations
+            'true_false_not_given' => 'true_false_ng',
+            'tfng' => 'true_false_ng',
+            
+            // Yes/No variations
+            'yes_no_not_given' => 'yes_no_ng',
+            'ynng' => 'yes_no_ng',
+            
+            // Matching variations
+            'matching_headings' => 'matching',
+            'matching_information' => 'matching',
+            'matching_features' => 'matching',
+            'matching_sentence_endings' => 'sentence_completion',
+            
+            // Completion variations
+            'form_completion' => 'fill_blank',
+            'flow_chart_completion' => 'flow_chart',
+            'diagram_labeling' => 'diagram_label',
+            'map_labeling' => 'diagram_label',
+            
+            // Writing tasks
+            'task1_graph' => 'essay',
+            'task1_map' => 'essay',
+            'task1_process' => 'essay',
+            'task1_letter' => 'essay',
+            'task2_essay' => 'essay',
+            'writing' => 'essay',
+            
+            // Speaking parts
+            'part1_questions' => 'short_answer',
+            'part2_cue_card' => 'essay',
+            'part3_discussion' => 'short_answer',
+            'speaking' => 'essay',
+        ];
+        
+        return $mapping[$type] ?? 'multiple_choice';
     }
 }

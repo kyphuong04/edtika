@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Student's answer to a specific IELTS test question.
+ * 
+ * Handles both auto-graded questions (listening/reading) and manually graded
+ * ones (writing/speaking), including audio recordings and band score breakdowns.
+ */
 class IeltsTestAnswer extends Model
 {
     public $timestamps = false;
@@ -38,8 +44,12 @@ class IeltsTestAnswer extends Model
     {
         return $this->belongsTo(\App\User::class, 'graded_by');
     }
-    
-    // Accessors
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
     
     public function getAnswerOptionsArrayAttribute()
     {
@@ -49,7 +59,42 @@ class IeltsTestAnswer extends Model
         return $this->answer_options ?? [];
     }
     
-    // Helper Methods
+    /**
+     * Get the audio recording URL for speaking answers.
+     * 
+     * Checks both file_url and answer_text for backward compatibility.
+     * 
+     * @return string|null
+     */
+    public function getAudioUrlAttribute()
+    {
+        if (!empty($this->file_url)) {
+            return $this->file_url;
+        }
+        
+        // For older records, the URL might be stored in answer_text
+        if (!empty($this->answer_text)) {
+            if (str_starts_with($this->answer_text, '/storage/speaking_answers/') 
+                || str_contains($this->answer_text, '.webm') 
+                || str_contains($this->answer_text, '.mp3')) {
+                return $this->answer_text;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Check whether this answer includes an audio recording.
+     * 
+     * @return bool
+     */
+    public function hasAudioRecording()
+    {
+        return !empty($this->audio_url);
+    }
+
+    // grading status
     
     public function isGraded()
     {
@@ -62,7 +107,11 @@ class IeltsTestAnswer extends Model
     }
     
     /**
-     * Auto-grade this answer
+     * Automatically grade this answer against the correct answer.
+     * 
+     * Only works for questions that support auto-grading (listening/reading).
+     * 
+     * @return bool Whether grading was successful
      */
     public function autoGrade()
     {
@@ -80,7 +129,15 @@ class IeltsTestAnswer extends Model
     }
     
     /**
-     * Manually grade with feedback
+     * Manually grade this answer with detailed feedback.
+     * 
+     * Used for writing and speaking sections that require human evaluation.
+     * 
+     * @param bool $isCorrect Whether the answer is correct
+     * @param float $pointsEarned Points awarded
+     * @param string|null $feedback Optional grader comments
+     * @param array|null $bands Optional band score breakdown
+     * @return void
      */
     public function manualGrade($isCorrect, $pointsEarned, $feedback = null, $bands = null)
     {
@@ -90,7 +147,7 @@ class IeltsTestAnswer extends Model
         $this->graded_by = auth()->id();
         $this->graded_at = time();
         
-        // Store band scores for Writing/Speaking
+        // Save detailed band scores if provided
         if ($bands && is_array($bands)) {
             $section = $this->question->section;
             if ($section->skill === 'writing') {

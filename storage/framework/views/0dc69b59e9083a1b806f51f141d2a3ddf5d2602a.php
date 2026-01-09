@@ -1,5 +1,5 @@
-<div class="admin-header d-flex align-items-start justify-content-between bg-primary pt-16 px-24 px-lg-28">
-    <div class="d-flex cursor-pointer" data-toggle="sidebar">
+<div class="admin-header d-flex align-items-start justify-content-end bg-primary pt-16 px-24 px-lg-28">
+    <div class="d-flex cursor-pointer d-none d-lg-none" data-toggle="sidebar">
         <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
 <?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
 <?php $component->withName('iconsax-lin-menu'); ?>
@@ -17,7 +17,7 @@
 <?php endif; ?>
     </div>
 
-    <div class="d-flex align-items-center justify-content-end flex-1 gap-16">
+    <div class="d-flex align-items-center justify-content-end gap-16">
 
     
         <div class="about-system-select position-relative">

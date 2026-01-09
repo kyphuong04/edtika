@@ -131,6 +131,11 @@
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/create', false))) ? 'active' : '' }}">
                             <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/create">Create New</a>
                         </li>
+                        <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/attempts*', false))) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/attempts">
+                                <span>Student Grading</span>
+                            </a>
+                        </li>
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/pending-approval', false))) ? 'active' : '' }}">
                             <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/pending-approval">Pending Approval</a>
                         </li>
