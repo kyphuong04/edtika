@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Represents a section within an IELTS test (e.g., Listening Part 1, Reading Passage 2).
+ * 
+ * Each section belongs to a skill and may link to a reusable Question Group from the bank.
+ * Stores duration, question range, audio/passage content, and display order.
+ */
 class IeltsTestSection extends Model
 {
     public $timestamps = false;
@@ -24,12 +30,35 @@ class IeltsTestSection extends Model
         return $this->belongsTo(IeltsTest::class, 'test_id');
     }
     
+    /**
+     * Link to Question Group (Part)
+     */
+    public function questionGroup()
+    {
+        return $this->belongsTo(IeltsQuestionGroup::class, 'question_group_id');
+    }
+    
+    /**
+     * Questions that appear in this specific section.
+     * 
+     * Questions are stored in the ielts_test_questions table.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function questions()
     {
         return $this->hasMany(IeltsTestQuestion::class, 'section_id')->orderBy('sort_order');
     }
     
-    // Scopes
+    /**
+     * Get all questions as a collection (for use in views)
+     */
+    public function getQuestionsFromGroup()
+    {
+        return $this->questions()->get();
+    }
+    
+   // query scopes
     
     public function scopeListening($query)
     {
@@ -50,12 +79,21 @@ class IeltsTestSection extends Model
     {
         return $query->where('skill', 'speaking');
     }
-    
-    // Helper Methods
+    //content & metadata
     
     public function getTotalQuestionsAttribute()
     {
-        return $this->question_end - $this->question_start + 1;
+        // If this section uses a question group, get the count from there
+        if ($this->question_group_id && $this->questionGroup) {
+            return $this->questionGroup->question_count;
+        }
+        
+        // Otherwise, calculate based on question number range
+        if ($this->question_end && $this->question_start) {
+            return $this->question_end - $this->question_start + 1;
+        }
+        
+        return 0;
     }
     
     public function getQuestionRangeAttribute()
@@ -65,12 +103,91 @@ class IeltsTestSection extends Model
     
     public function hasAudio()
     {
-        return !empty($this->audio_file);
+        // Check this section's own audio file first
+        if (!empty($this->audio_file)) {
+            return true;
+        }
+        // Fall back to the linked question group's audio
+        if ($this->question_group_id && $this->questionGroup) {
+            return !empty($this->questionGroup->audio_file);
+        }
+        return false;
     }
     
     public function hasPassage()
     {
-        return !empty($this->passage_text);
+        // Check this section's own passage first
+        if (!empty($this->passage_text)) {
+            return true;
+        }
+        // Fall back to the linked question group's passage
+        if ($this->question_group_id && $this->questionGroup) {
+            return !empty($this->questionGroup->passage);
+        }
+        return false;
+    }
+    
+    /**
+     * Retrieve passage text from this section or its linked question group.
+     * 
+     * @param mixed $value
+     * @return string|null
+     */
+    public function getPassageTextAttribute($value)
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+        if ($this->question_group_id && $this->questionGroup) {
+            return $this->questionGroup->passage;
+        }
+        return null;
+    }
+    
+    /**
+     * Retrieve audio file path from this section or its linked question group.
+     * 
+     * @param mixed $value
+     * @return string|null
+     */
+    public function getAudioFileAttribute($value)
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+        // Fall back to the question group's audio path (or audio_file if audio_path isn't set)
+        if ($this->question_group_id && $this->questionGroup) {
+            return $this->questionGroup->audio_path ?? $this->questionGroup->audio_file;
+        }
+        return null;
+    }
+    
+    /**
+     * Get a properly formatted URL for audio playback.
+     * 
+     * @return string|null
+     */
+    public function getAudioUrlAttribute()
+    {
+        // Prefer audio from the linked question group (most reliable source)
+        if ($this->question_group_id && $this->questionGroup && $this->questionGroup->audio_url) {
+            return $this->questionGroup->audio_url;
+        }
+        
+        // Otherwise, check this section's own audio_file
+        $audioFile = $this->getRawOriginal('audio_file') ?? $this->attributes['audio_file'] ?? null;
+        
+        if (!$audioFile) {
+            return null;
+        }
+        
+        // If it's already a full URL or absolute path, use it as-is
+        if (str_starts_with($audioFile, '/') || str_starts_with($audioFile, 'http')) {
+            return $audioFile;
+        }
+        
+        // Otherwise, generate URL using Laravel's storage system
+        return \Storage::disk('public')->url($audioFile);
     }
     
     public function hasImage()

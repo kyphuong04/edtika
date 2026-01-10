@@ -2,16 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
+
+
+// Fast route for question type forms (no heavy middleware)
+Route::get('/api/question-type-form/{type}', function ($type) {
+    $viewPath = 'design_1.panel.questions.types.' . $type;
+    if (view()->exists($viewPath)) {
+        return view($viewPath)->render();
+    }
+    return view('design_1.panel.questions.types.default')->render();
+})->middleware(['web'])->name('api.question_type_form');
+
 Route::group(['prefix' => 'my_api', 'namespace' => 'Api\Panel', 'middleware' => ['signed', 'x_frame_headers'], 'as' => 'my_api.web.'], function () {
     Route::get('checkout/{user}', 'CartController@webCheckoutRender')->name('checkout');
     Route::get('/charge/{user}', 'PaymentsController@webChargeRender')->name('charge');

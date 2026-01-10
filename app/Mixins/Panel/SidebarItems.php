@@ -230,21 +230,29 @@ class SidebarItems
         // IELTS Tests - Different interfaces for different roles
         if (!$user->isUser()) {
             // Admin/Teacher/Manager/CEO → Panel management with dropdown
-            if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization()) {
+            if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
+                $ieltsItems = [
+                    ['text' => 'My Tests', 'url' => '/panel/my-ielts-tests'],
+                    ['text' => 'Create from Bank', 'url' => '/panel/my-ielts-tests/create'],
+                    ['text' => 'Grade Tests', 'url' => '/panel/ielts-grading'],
+                ];
+                
+                // Manager/CEO/Admin get additional menu for All Tests Overview
+                if ($user->isAdmin() || $user->isManager() || $user->isCeo()) {
+                    $ieltsItems[] = ['text' => 'All Tests', 'url' => '/admin/ielts-tests'];
+                }
+                
                 $items['ielts_tests'] = [
-                    'icon' => self::getIcon('quizzes'),
+                    'icon' => self::getIcon('ielts_tests'),
                     'text' => 'IELTS Tests',
                     'url' => '/panel/my-ielts-tests',
-                    'items' => [
-                        ['text' => 'My Tests', 'url' => '/panel/my-ielts-tests'],
-                        ['text' => 'Create from Bank', 'url' => '/panel/my-ielts-tests/create'],
-                    ]
+                    'items' => $ieltsItems
                 ];
             } 
             // Student → Dropdown with Mock Tests and Practice Tests
             else {
                 $items['ielts_tests'] = [
-                    'icon' => self::getIcon('quizzes'),
+                    'icon' => self::getIcon('ielts_tests'),
                     'text' => 'IELTS Tests',
                     'url' => '/panel/ielts-tests',
                     'items' => [
@@ -255,20 +263,25 @@ class SidebarItems
             }
         }
         
-        // Question Bank - For Teachers, Organizations, and Admins
-        if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization()) {
+        // Question Bank - For Teachers, Organizations, Admins, Managers, CEOs (role hierarchy)
+        if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
+            $questionBankItems = [
+                ['text' => 'Dashboard', 'url' => '/panel/question-bank'],
+                ['text' => 'Mock Groups', 'url' => '/panel/question-groups?type=mock'],
+                ['text' => 'Practice Groups', 'url' => '/panel/question-groups?type=practice'],
+                ['text' => 'Import Questions', 'url' => '/panel/question-bank/import'],
+            ];
+            
+            // Admin/Manager/CEO can see Pending Approval for Question Bank
+            if ($user->isAdmin() || $user->isManager() || $user->isCeo()) {
+                $questionBankItems[] = ['text' => 'Pending Approval', 'url' => '/admin/question-groups/pending'];
+            }
+            
             $items['question_bank'] = [
-                'icon' => self::getIcon('quizzes'), // Reusing quiz icon
+                'icon' => self::getIcon('question_bank'),
                 'text' => 'Question Bank',
                 'url' => '/panel/question-bank',
-                'items' => [
-                    ['text' => 'Dashboard', 'url' => '/panel/question-bank'],
-                    ['text' => 'Mock Questions', 'url' => '/panel/question-bank/mock'],
-                    ['text' => 'Practice Questions', 'url' => '/panel/question-bank/practice'],
-                    ['text' => 'Mock Groups', 'url' => '/panel/question-bank/mock/groups'],
-                    ['text' => 'Practice Groups', 'url' => '/panel/question-bank/practice/groups'],
-                    ['text' => 'Add Question', 'url' => '/panel/question-bank/create'],
-                ]
+                'items' => $questionBankItems
             ];
         }
 

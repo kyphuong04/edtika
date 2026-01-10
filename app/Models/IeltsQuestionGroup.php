@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class IeltsQuestionGroup extends Model
 {
@@ -12,20 +13,29 @@ class IeltsQuestionGroup extends Model
     protected $table = 'ielts_question_groups';
 
     protected $fillable = [
+        'section_id',
         'creator_id',
         'bank_type',
         'skill',
+        'question_type',
+        'question_start',
+        'question_end',
         'title',
         'description',
+        'instructions',
         'passage',
         'transcript',
         'audio_file',
+        'audio_path',
         'task_image',
+        'max_words',
         'target_band',
         'practice_focus',
         'tags',
         'difficulty_level',
         'usage_count',
+        'status',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -34,27 +44,47 @@ class IeltsQuestionGroup extends Model
         'usage_count' => 'integer',
     ];
 
-    /*
-     |--------------------------------------------------------------------------
-     | Relationships
-     |--------------------------------------------------------------------------
-     */
+    protected $appends = ['audio_url'];
+
+    
+    public function getAudioUrlAttribute()
+    {
+        $audioPath = $this->audio_path ?? $this->audio_file;
+        
+        if (!$audioPath) {
+            return null;
+        }
+        
+        // If path starts with / or http, it's already a full path
+        if (str_starts_with($audioPath, '/') || str_starts_with($audioPath, 'http')) {
+            return $audioPath;
+        }
+        
+        // Use the public disk which points to /store
+        return Storage::disk('public')->url($audioPath);
+    }
+
+
+    public function section()
+    {
+        return $this->belongsTo(IeltsTestSection::class, 'section_id');
+    }
 
     public function creator()
     {
-        return $this->belongsTo(User::class, 'creator_id');
+        return $this->belongsTo(\App\User::class, 'creator_id');
     }
 
     public function mockQuestions()
     {
         return $this->hasMany(IeltsMockQuestionBank::class, 'group_id')
-                    ->orderBy('question_order');
+                    ->orderBy('id');
     }
 
     public function practiceQuestions()
     {
         return $this->hasMany(IeltsPracticeQuestionBank::class, 'group_id')
-                    ->orderBy('question_order');
+                    ->orderBy('id');
     }
 
     // Get questions based on bank_type
@@ -66,11 +96,6 @@ class IeltsQuestionGroup extends Model
         return $this->practiceQuestions();
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | Scopes
-     |--------------------------------------------------------------------------
-     */
 
     public function scopeByBankType($query, $bankType)
     {
@@ -141,6 +166,43 @@ class IeltsQuestionGroup extends Model
     public function getBankTypeLabelAttribute()
     {
         return $this->bank_type === 'mock' ? 'Mock' : 'Practice';
+    }
+
+    /**
+     * Get human-readable question type label
+     */
+    public function getQuestionTypeLabel()
+    {
+        $types = [
+            'multiple_choice' => 'Multiple Choice',
+            'fill_blank' => 'Fill in the Blanks',
+            'true_false_not_given' => 'True / False / Not Given',
+            'yes_no_not_given' => 'Yes / No / Not Given',
+            'matching_headings' => 'Matching Headings',
+            'matching_information' => 'Matching Information',
+            'matching_features' => 'Matching Features',
+            'matching_sentence_endings' => 'Matching Sentence Endings',
+            'sentence_completion' => 'Sentence Completion',
+            'summary_completion' => 'Summary Completion',
+            'note_completion' => 'Note Completion',
+            'table_completion' => 'Table Completion',
+            'flow_chart_completion' => 'Flow Chart Completion',
+            'diagram_labeling' => 'Diagram Labeling',
+            'map_labeling' => 'Map Labeling',
+            'form_completion' => 'Form Completion',
+            'short_answer' => 'Short Answer Questions',
+            'matching' => 'Matching',
+            'task1_graph' => 'Task 1 - Graph/Chart',
+            'task1_map' => 'Task 1 - Map/Diagram',
+            'task1_process' => 'Task 1 - Process',
+            'task1_letter' => 'Task 1 - Letter',
+            'task2_essay' => 'Task 2 - Essay',
+            'part1_questions' => 'Part 1 - Interview',
+            'part2_cue_card' => 'Part 2 - Cue Card',
+            'part3_discussion' => 'Part 3 - Discussion',
+        ];
+
+        return $types[$this->question_type] ?? ucwords(str_replace('_', ' ', $this->question_type));
     }
 
     /*

@@ -427,3 +427,25 @@ function getMobileAppGeneralSettings($key = null)
     return App\Models\Setting::getMobileAppGeneralSettings($key);
 }
 
+/**
+ * IELTS Settings Helper
+ * @param null $key
+ * $key => "mock_tests_per_day" | "practice_unlimited" | "mock_requires_4_skills"
+ * @return mixed
+ */
+function getIeltsSettings($key = null)
+{
+    $defaults = [
+        'mock_tests_per_day' => 2,           // Max mock tests per day
+        'practice_unlimited' => true,        // Practice tests unlimited
+        'mock_requires_4_skills' => true,    // Mock test must have 4 skills
+    ];
+    
+    $value = App\Models\Setting::getIeltsSettings($key);
+    
+    if ($key !== null) {
+        return $value ?? ($defaults[$key] ?? null);
+    }
+    
+    return array_merge($defaults, $value ?? []);
+}
