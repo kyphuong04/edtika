@@ -33,6 +33,17 @@
         <?php echo getThemeColorsSettings(); ?>
 
 
+        /* Sidebar Default State - Expanded */
+        .panel-sidebar:not(.panel-sidebar--collapsed) .sidebar-icon {
+            margin-right: 8px !important;
+        }
+        
+        .panel-sidebar:not(.panel-sidebar--collapsed) .panel-sidebar__menu > div,
+        .panel-sidebar:not(.panel-sidebar--collapsed) .panel-sidebar__menu-item > div {
+            display: flex;
+            align-items: center;
+        }
+
         /* Sidebar Hover Effects */
         .panel-sidebar__menu,
         .panel-sidebar__menu-item {
@@ -93,6 +104,13 @@
             justify-content: center !important;
             padding-left: 0 !important;
             padding-right: 0 !important;
+            display: flex !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed .panel-sidebar__menu > div,
+        .panel-sidebar.panel-sidebar--collapsed .panel-sidebar__menu-item > div {
+            justify-content: center !important;
+            width: 100%;
         }
         
         .panel-sidebar.panel-sidebar--collapsed .panel-sidebar__menu-item:before {
@@ -100,7 +118,7 @@
         }
         
         .panel-sidebar.panel-sidebar--collapsed .sidebar-icon {
-            margin: 0 !important;
+            margin: 0 auto !important;
         }
         
         .panel-sidebar.panel-sidebar--collapsed .mt-16 {
@@ -128,6 +146,11 @@
             justify-content: flex-start !important;
             padding-left: 32px !important;
             padding-right: 20px !important;
+            text-align: left !important;
+        }
+        
+        .panel-sidebar.panel-sidebar--collapsed:hover .panel-sidebar__menu > div {
+            justify-content: flex-start !important;
         }
         
         .panel-sidebar.panel-sidebar--collapsed:hover .panel-sidebar__menu-item {
@@ -141,6 +164,7 @@
         }
         
         .panel-sidebar.panel-sidebar--collapsed:hover .sidebar-icon {
+            margin: 0 !important;
             margin-right: 8px !important;
         }
         

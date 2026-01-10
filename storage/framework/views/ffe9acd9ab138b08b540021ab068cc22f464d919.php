@@ -1,0 +1,3 @@
+<svg width="14px" height="14px" class="icons ml-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M14.43 5.93L20.5 12l-6.07 6.07M3.5 12h16.83"/>
+</svg><?php /**PATH C:\xampp\htdocs\edtika\storage\framework\views/854c287f536200a97d8696d93457eea38f2bd913.blade.php ENDPATH**/ ?>

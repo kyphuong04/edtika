@@ -13,20 +13,34 @@
     </div>
 
     <div class="section-body">
+        {{-- Instructions Alert --}}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>IELTS Question Structure:</strong> Each section contains multiple <strong>Question Groups</strong>. 
+            Each group has a specific question type (e.g., Multiple Choice, True/False/Not Given) and shares common content (passage, audio, instructions).
+        </div>
+
         <div class="card">
             <div class="card-header justify-content-between">
                 <div>
                     <h4 class="mb-0">{{ $section->title }}</h4>
-                    <p class="text-gray mb-0 mt-1">Questions {{ $section->question_start }} - {{ $section->question_end }}</p>
+                    <p class="text-gray mb-0 mt-1">
+                        <span class="badge badge-{{
+                            $section->skill === 'listening' ? 'info' :
+                            ($section->skill === 'reading' ? 'success' :
+                            ($section->skill === 'writing' ? 'warning' : 'danger'))
+                        }}">{{ ucfirst($section->skill) }}</span>
+                        <span class="ml-2">Questions {{ $section->question_start }} - {{ $section->question_end }}</span>
+                    </p>
                 </div>
                 <div>
                     <a href="{{ route('admin.ielts_tests.sections', $section->test_id) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Sections
                     </a>
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addQuestionModal">
-                        <i class="fas fa-plus mr-2"></i>
-                        Add Question
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addQuestionGroupModal">
+                        <i class="fas fa-layer-group mr-2"></i>
+                        Add Question Group
                     </button>
                 </div>
             </div>

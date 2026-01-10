@@ -2,183 +2,263 @@
 
 @section('content')
 <section class="section">
-    <div class="section-header">
-        <h1>Pending Approval</h1>
-        <div class="section-header-breadcrumb">
-            <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">Dashboard</a></div>
-            <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.index') }}">IELTS Tests</a></div>
-            <div class="breadcrumb-item">Pending Approval</div>
-        </div>
-    </div>
-
-    <div class="section-body">
-        <div class="card">
-            <div class="card-header">
-                <h4>Tests Awaiting Approval</h4>
-                <div class="card-header-action">
-                    <span class="badge badge-warning">{{ $tests->count() }} Tests</span>
+    {{-- Modern Header --}}
+    <div class="bg-white rounded-16 shadow-sm p-24 mb-24" style="border-radius: 12px;">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="rounded-12 p-12 mr-16" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-clock text-white" style="font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h1 class="font-20 font-weight-bold text-dark mb-4">
+                        Question Groups - Pending Approval
+                    </h1>
+                    <p class="text-gray-500 font-13 mb-0">
+                        <i class="fas fa-info-circle mr-4" style="font-size: 14px;"></i>
+                        Review and approve submitted question groups
+                    </p>
                 </div>
             </div>
-            <div class="card-body">
-                @if($tests->isEmpty())
-                    <div class="text-center py-5">
-                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                        <h5>All caught up!</h5>
-                        <p class="text-gray">No tests pending approval</p>
-                    </div>
-                @else
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Test</th>
-                                    <th>Type</th>
-                                    <th>Created By</th>
-                                    <th>Submitted</th>
-                                    <th>Sections</th>
-                                    <th>Questions</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($tests as $test)
-                                <tr>
-                                    <td>
-                                        <strong>{{ $test->title }}</strong>
-                                        <small class="d-block text-gray">{{ Str::limit($test->description, 50) }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-{{ $test->type === 'mock' ? 'primary' : 'info' }}">
-                                            {{ ucfirst($test->type) }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $test->creator->full_name ?? 'Unknown' }}</td>
-                                    <td>{{ dateTimeFormat($test->updated_at, 'j M Y, H:i') }}</td>
-                                    <td>{{ $test->sections->count() }} sections</td>
-                                    <td>
-                                        {{ $test->sections->sum(function($s) { return $s->questions->count(); }) }} questions
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal" 
-                                                    data-target="#reviewModal{{ $test->id }}">
-                                                <i class="fas fa-eye mr-1"></i>
-                                                Review
-                                            </button>
-                                            
-                                            <form action="{{ route('admin.ielts_tests.approve', $test->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-success">
-                                                    <i class="fas fa-check mr-1"></i>
-                                                    Approve
-                                                </button>
-                                            </form>
-                                            
-                                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" 
-                                                    data-target="#rejectModal{{ $test->id }}">
-                                                <i class="fas fa-times mr-1"></i>
-                                                Reject
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                {{-- Review Modal --}}
-                                <div class="modal fade" id="reviewModal{{ $test->id }}" tabindex="-1">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Review: {{ $test->title }}</h5>
-                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="row mb-3">
-                                                    <div class="col-md-6">
-                                                        <strong>Type:</strong> {{ ucfirst($test->type) }}<br>
-                                                        <strong>Format:</strong> {{ ucfirst($test->format) }}<br>
-                                                        <strong>Duration:</strong> {{ $test->total_duration }} minutes
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <strong>Skills:</strong><br>
-                                                        @if($test->has_listening) <span class="badge badge-info">Listening</span> @endif
-                                                        @if($test->has_reading) <span class="badge badge-success">Reading</span> @endif
-                                                        @if($test->has_writing) <span class="badge badge-warning">Writing</span> @endif
-                                                        @if($test->has_speaking) <span class="badge badge-danger">Speaking</span> @endif
-                                                    </div>
-                                                </div>
-
-                                                <h6 class="mt-3">Description:</h6>
-                                                <p>{{ $test->description }}</p>
-
-                                                <h6 class="mt-3">Sections ({{ $test->sections->count() }}):</h6>
-                                                <ul>
-                                                    @foreach($test->sections as $section)
-                                                        <li>
-                                                            {{ $section->title }} - {{ ucfirst($section->skill) }}
-                                                            ({{ $section->questions->count() }} questions)
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-
-                                                @if($test->isMockTest())
-                                                    @php
-                                                        $validation = $test->validateMockTestStructure();
-                                                    @endphp
-                                                    
-                                                    @if($validation['valid'])
-                                                        <div class="alert alert-success">
-                                                            <i class="fas fa-check-circle mr-2"></i>
-                                                            Mock test structure is valid
-                                                        </div>
-                                                    @else
-                                                        <div class="alert alert-danger">
-                                                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                                                            <strong>Validation Issues:</strong>
-                                                            <ul class="mb-0 mt-2">
-                                                                @foreach($validation['errors'] as $error)
-                                                                    <li>{{ $error }}</li>
-                                                                @endforeach
-                                                            </ul>
-                                                        </div>
-                                                    @endif
-                                                @endif
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- Reject Modal --}}
-                                <div class="modal fade" id="rejectModal{{ $test->id }}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Reject Test</h5>
-                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                            </div>
-                                            <form action="{{ route('admin.ielts_tests.reject', $test->id) }}" method="POST">
-                                                @csrf
-                                                <div class="modal-body">
-                                                    <p>Please provide a reason for rejecting this test:</p>
-                                                    <textarea name="rejection_reason" class="form-control" rows="4" required></textarea>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-danger">Reject Test</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+            <div>
+                <span class="badge badge-warning" style="padding: 10px 20px; font-size: 14px; border-radius: 20px; font-weight: 600;">
+                    {{ $groups->total() }} Pending
+                </span>
             </div>
         </div>
     </div>
+
+    {{-- Stats Cards --}}
+    <div class="row mb-24">
+        @php
+            $skillStats = [
+                'reading' => ['icon' => 'fa-book', 'color' => '#3b82f6', 'bg' => 'rgba(59, 130, 246, 0.1)', 'count' => $groups->where('skill', 'reading')->count()],
+                'listening' => ['icon' => 'fa-headphones', 'color' => '#1a3a5c', 'bg' => 'rgba(26, 58, 92, 0.1)', 'count' => $groups->where('skill', 'listening')->count()],
+                'writing' => ['icon' => 'fa-pen', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.1)', 'count' => $groups->where('skill', 'writing')->count()],
+                'speaking' => ['icon' => 'fa-microphone', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.1)', 'count' => $groups->where('skill', 'speaking')->count()]
+            ];
+        @endphp
+        @foreach(['reading', 'listening', 'writing', 'speaking'] as $skill)
+            <div class="col-md-3">
+                <div class="bg-white rounded-12 p-16 shadow-sm h-100 d-flex align-items-center" style="border-radius: 12px;">
+                    <div class="rounded-10 p-12 mr-16" style="background: {{ $skillStats[$skill]['bg'] }}; border-radius: 10px;">
+                        <i class="fas {{ $skillStats[$skill]['icon'] }}" style="font-size: 24px; color: {{ $skillStats[$skill]['color'] }}"></i>
+                    </div>
+                    <div>
+                        <div class="font-24 font-weight-bold" style="color: {{ $skillStats[$skill]['color'] }};">
+                            {{ $skillStats[$skill]['count'] }}
+                        </div>
+                        <div class="font-12 text-gray-500 text-uppercase">{{ ucfirst($skill) }}</div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Filters Card --}}
+    <div class="bg-white rounded-16 shadow-sm p-20 mb-24" style="border-radius: 12px;">
+        <form method="GET" class="m-0">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Skill</label>
+                    <select name="skill" class="form-control">
+                        <option value="">All Skills</option>
+                        <option value="reading" {{ request('skill') == 'reading' ? 'selected' : '' }}>
+                            <i class="fas fa-book"></i> Reading
+                        </option>
+                        <option value="listening" {{ request('skill') == 'listening' ? 'selected' : '' }}>
+                            <i class="fas fa-headphones"></i> Listening
+                        </option>
+                        <option value="writing" {{ request('skill') == 'writing' ? 'selected' : '' }}>
+                            <i class="fas fa-pen"></i> Writing
+                        </option>
+                        <option value="speaking" {{ request('skill') == 'speaking' ? 'selected' : '' }}>
+                            <i class="fas fa-microphone"></i> Speaking
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Type</label>
+                    <select name="type" class="form-control">
+                        <option value="">All Types</option>
+                        <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>Mock</option>
+                        <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>Practice</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Search</label>
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search by title or creator..." value="{{ request('search') }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100" 
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                        <i class="fas fa-filter mr-8"></i>Filter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- Groups Table --}}
+    <div class="bg-white rounded-16 shadow-sm overflow-hidden" style="border-radius: 12px;">
+        @if($groups->isEmpty())
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h5 style="font-weight: 600;">All caught up!</h5>
+                <p class="text-muted">No question groups pending approval</p>
+            </div>
+        @else
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                            <th class="font-11 text-gray-600 text-uppercase py-16 px-20 font-weight-bold border-0">Group</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Type</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Skill</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Created By</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Submitted</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Questions</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center" style="width: 250px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($groups as $group)
+                        <tr style="transition: all 0.2s ease; border-bottom: 1px solid #f0f0f0;" class="hover-row">
+                            <td class="py-16 px-20">
+                                <div class="d-flex align-items-center">
+                                    @php
+                                        $skillIcons = [
+                                            'reading' => ['icon' => 'fa-book', 'color' => '#3b82f6'],
+                                            'listening' => ['icon' => 'fa-headphones', 'color' => '#1a3a5c'],
+                                            'writing' => ['icon' => 'fa-pen', 'color' => '#8b5cf6'],
+                                            'speaking' => ['icon' => 'fa-microphone', 'color' => '#10b981']
+                                        ];
+                                        $currentSkill = $skillIcons[$group->skill] ?? ['icon' => 'fa-circle', 'color' => '#6c757d'];
+                                    @endphp
+                                    <div class="rounded-8 p-10 mr-12" style="background: rgba({{ hexdec(substr($currentSkill['color'], 1, 2)) }}, {{ hexdec(substr($currentSkill['color'], 3, 2)) }}, {{ hexdec(substr($currentSkill['color'], 5, 2)) }}, 0.1);">
+                                        <i class="fas {{ $currentSkill['icon'] }}" style="color: {{ $currentSkill['color'] }}; font-size: 16px;"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-14 font-weight-bold text-dark">{{ $group->title }}</div>
+                                        @if($group->description)
+                                            <div class="font-12 text-gray-500 mt-4">{{ Str::limit($group->description, 60) }}</div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge" style="display: inline-block; width: 70px; padding: 5px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; {{ $group->bank_type === 'mock' ? 'background: #e3f2fd; color: #1976d2;' : 'background: #e8f5e9; color: #388e3c;' }}">
+                                    {{ $group->bank_type === 'mock' ? 'Mock' : 'Practice' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge" style="display: inline-block; width: 100px; padding: 6px 10px; border-radius: 16px; font-size: 11px; font-weight: 600; 
+                                    @if($group->skill === 'reading') background: #dbeafe; color: #1e40af;
+                                    @elseif($group->skill === 'listening') background: #e0e7ff; color: #4338ca;
+                                    @elseif($group->skill === 'writing') background: #fce7f3; color: #be185d;
+                                    @elseif($group->skill === 'speaking') background: #d1fae5; color: #065f46;
+                                    @endif">
+                                    <i class="fas {{ $currentSkill['icon'] }} mr-1" style="font-size: 10px;"></i>
+                                    {{ ucfirst($group->skill) }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="font-13 text-gray-700">
+                                    <i class="fas fa-user-circle mr-1 text-gray-400"></i>
+                                    {{ $group->creator->full_name ?? 'Unknown' }}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="font-13 text-gray-600">
+                                    <i class="fas fa-clock mr-1 text-gray-400" style="font-size: 11px;"></i>
+                                    {{ dateTimeFormat($group->updated_at, 'j M Y, H:i') }}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge" style="display: inline-block; width: 40px; background: #f0f9ff; border: 2px solid #bae6fd; color: #0369a1; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">
+                                    {{ $group->questions_count }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center" style="gap: 6px;">
+                                    <a href="{{ route('panel.question-groups.show', $group->id) }}" 
+                                       class="btn btn-sm" target="_blank"
+                                       style="padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; background: #f8f9fa; color: #495057; border: 1px solid #dee2e6;">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    <form action="{{ route('admin.question_groups.approve', $group->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm"
+                                                style="padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none;">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <button type="button" class="btn btn-sm" 
+                                            data-toggle="modal" data-target="#rejectModal{{ $group->id }}"
+                                            style="padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; border: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {{-- Reject Modal --}}
+                        <div class="modal fade" id="rejectModal{{ $group->id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content" style="border-radius: 12px; border: none; overflow: hidden;">
+                                    <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; border: none;">
+                                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle mr-2"></i>Reject Question Group</h5>
+                                        <button type="button" class="close" data-dismiss="modal" style="color: white; opacity: 1;">&times;</button>
+                                    </div>
+                                    <form action="{{ route('admin.question_groups.reject', $group->id) }}" method="POST">
+                                        @csrf
+                                        <div class="modal-body" style="padding: 24px;">
+                                            <p style="margin-bottom: 8px;"><strong>Group:</strong> {{ $group->title }}</p>
+                                            <p style="color: #6c757d; font-size: 14px; margin-bottom: 16px;">Please provide a reason for rejecting this question group:</p>
+                                            <textarea name="rejection_reason" class="form-control" rows="4" required 
+                                                      placeholder="Enter rejection reason..." 
+                                                      style="border-radius: 8px; border: 1px solid #dee2e6; font-size: 14px;"></textarea>
+                                        </div>
+                                        <div class="modal-footer" style="border-top: 1px solid #f0f0f0; padding: 16px 24px;">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 6px;">Cancel</button>
+                                            <button type="submit" class="btn btn-danger" style="border-radius: 6px;">
+                                                <i class="fas fa-ban mr-1"></i> Reject Group
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            
+            {{-- Pagination --}}
+            @if($groups->hasPages())
+                <div class="p-3" style="border-top: 1px solid #f0f0f0;">
+                    {{ $groups->links() }}
+                </div>
+            @endif
+        @endif
+    </div>
 </section>
+
+<style>
+.hover-row:hover {
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.text-gray-500 { color: #6c757d; }
+.text-gray-600 { color: #4b5563; }
+.text-gray-700 { color: #374151; }
+.text-gray-400 { color: #9ca3af; }
+.rounded-8 { border-radius: 8px; }
+.rounded-10 { border-radius: 10px; }
+.rounded-12 { border-radius: 12px; }
+.rounded-16 { border-radius: 16px; }
+</style>
+
 @endsection

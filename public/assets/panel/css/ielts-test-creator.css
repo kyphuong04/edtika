@@ -1,0 +1,90 @@
+/* IELTS Test Creator - Minimal Custom Styles */
+/* Most styles use utility classes from panel.min.css */
+
+.gap-12 {
+    gap: 12px;
+}
+.rounded-12 {
+    border-radius: 12px;
+}
+.rounded-16 {
+    border-radius: 16px;
+}
+
+/* Progress Steps - Keep minimal custom styling */
+.progress-steps {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Requirements Box */
+.requirements-box {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 2px solid #bfdbfe;
+    border-radius: 12px;
+}
+
+.requirements-box ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 12px;
+}
+
+.requirements-box li {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Selection Summary */
+.selection-summary {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid #bbf7d0;
+    border-radius: 12px;
+}
+
+/* Question Group Card Checkboxes */
+.question-group-card .group-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.question-group-card .group-checkbox:checked ~ .group-card-content {
+    border-color: #1a3a5c;
+    background: rgba(26, 58, 92, 0.05);
+}
+
+.question-group-card:hover .group-card-content {
+    border-color: #1a3a5c;
+    transform: translateY(-2px);
+}
+
+.group-check-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.question-group-card
+    .group-checkbox:checked
+    ~ .group-card-content
+    .group-check-icon {
+    background: #1a3a5c;
+    border-color: #1a3a5c;
+    color: #fff;
+}

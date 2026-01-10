@@ -27,6 +27,11 @@ class IeltsTestQuestion extends Model
         return $this->belongsTo(IeltsTestSection::class, 'section_id');
     }
     
+    public function questionGroup()
+    {
+        return $this->belongsTo(IeltsQuestionGroup::class, 'question_group_id');
+    }
+    
     public function answers()
     {
         return $this->hasMany(IeltsTestAnswer::class, 'question_id');
@@ -50,6 +55,14 @@ class IeltsTestQuestion extends Model
         return $this->answer_options ?? [];
     }
     
+    /**
+     * Alias for answer_options - for compatibility with views that use $q->options
+     */
+    public function getOptionsAttribute()
+    {
+        return $this->answer_options_array;
+    }
+    
     // Helper Methods
     
     public function isMultipleChoice()
@@ -59,12 +72,12 @@ class IeltsTestQuestion extends Model
     
     public function isMultipleSelect()
     {
-        return $this->question_type === 'multiple_select';
+        return in_array($this->question_type, ['multiple_select', 'multiple_choice_multiple', 'choose_two', 'choose_three']);
     }
     
     public function isFillBlank()
     {
-        return $this->question_type === 'fill_blank';
+        return in_array($this->question_type, ['fill_blank', 'sentence_completion', 'note_completion', 'table_completion', 'summary_completion', 'flow_chart', 'diagram_label', 'short_answer']);
     }
     
     public function isEssay()
