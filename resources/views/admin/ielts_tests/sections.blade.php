@@ -93,10 +93,10 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ route('admin.ielts_tests.questions', $section->id) }}" 
-                                               class="btn btn-sm btn-primary" title="Manage Questions">
-                                                <i class="fas fa-question-circle"></i>
-                                                Questions
+                                            <a href="{{ route('admin.ielts_tests.question_groups', $section->id) }}" 
+                                               class="btn btn-sm btn-primary" title="Manage Question Groups">
+                                                <i class="fas fa-layer-group"></i>
+                                                Question Groups
                                             </a>
                                             <button type="button" class="btn btn-sm btn-warning" title="Edit" 
                                                     onclick="editSection({{ $section->id }})">
@@ -172,23 +172,52 @@
             <form action="{{ route('admin.ielts_tests.sections.store', $test->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
+                    @if($test->isMockTest())
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Mock Test - Follow LRWS Order:</strong>
+                            <ol class="mb-0 mt-2">
+                                <li>Create Listening sections first (30 min total)</li>
+                                <li>Then Reading sections (60 min total)</li>
+                                <li>Then Writing sections (60 min total)</li>
+                                <li>Finally Speaking sections (11-14 min total)</li>
+                            </ol>
+                        </div>
+                    @endif
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Skill *</label>
-                                <select name="skill" class="form-control" required>
+                                <select name="skill" class="form-control" id="sectionSkill" required>
                                     <option value="">Select skill...</option>
-                                    <option value="listening">Listening</option>
-                                    <option value="reading">Reading</option>
-                                    <option value="writing">Writing</option>
-                                    <option value="speaking">Speaking</option>
+                                    @if($test->has_listening)
+                                        <option value="listening">Listening</option>
+                                    @endif
+                                    @if($test->has_reading)
+                                        <option value="reading">Reading</option>
+                                    @endif
+                                    @if($test->has_writing)
+                                        <option value="writing">Writing</option>
+                                    @endif
+                                    @if($test->has_speaking)
+                                        <option value="speaking">Speaking</option>
+                                    @endif
                                 </select>
+                                <small class="text-gray">
+                                    @if($test->isMockTest())
+                                        Follow order: L → R → W → S
+                                    @else
+                                        Only {{ ucfirst($test->getPrimarySkill()) }} available for this practice test
+                                    @endif
+                                </small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Section Number *</label>
                                 <input type="number" name="section_number" class="form-control" required>
+                                <small class="text-gray">e.g., 1, 2, 3 for each skill</small>
                             </div>
                         </div>
                     </div>
@@ -224,19 +253,60 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Audio File (Listening)</label>
-                        <input type="file" name="audio_file" class="form-control" accept="audio/*">
+                    {{-- Listening-specific fields --}}
+                    <div id="listeningFields" class="skill-fields" style="display: none;">
+                        <h6 class="mt-3 mb-2 text-primary"><i class="fas fa-headphones mr-2"></i>Listening Section</h6>
+                        <div class="form-group">
+                            <label>Audio File * <span class="text-danger">(Required for Listening)</span></label>
+                            <input type="file" name="audio_file" class="form-control" accept="audio/*">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Image File</label>
+                    {{-- Reading-specific fields --}}
+                    <div id="readingFields" class="skill-fields" style="display: none;">
+                        <h6 class="mt-3 mb-2 text-success"><i class="fas fa-book-open mr-2"></i>Reading Section</h6>
+                        <div class="form-group">
+                            <label>Reading Passage * <span class="text-danger">(Required for Reading)</span></label>
+                            <textarea name="passage_text" class="form-control" rows="10" placeholder="Paste the reading passage here..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Passage Title</label>
+                            <input type="text" name="passage_title" class="form-control" placeholder="e.g., The History of Time">
+                        </div>
+                    </div>
+
+                    {{-- Writing-specific fields --}}
+                    <div id="writingFields" class="skill-fields" style="display: none;">
+                        <h6 class="mt-3 mb-2 text-warning"><i class="fas fa-pencil-alt mr-2"></i>Writing Section</h6>
+                        <div class="form-group">
+                            <label>Task Type *</label>
+                            <select name="writing_task_type" class="form-control">
+                                <option value="">Select task type...</option>
+                                <option value="task1">Task 1 - Describe graph/chart/diagram/letter</option>
+                                <option value="task2">Task 2 - Essay</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Speaking-specific fields --}}
+                    <div id="speakingFields" class="skill-fields" style="display: none;">
+                        <h6 class="mt-3 mb-2 text-danger"><i class="fas fa-microphone mr-2"></i>Speaking Section</h6>
+                        <div class="form-group">
+                            <label>Part Type *</label>
+                            <select name="speaking_part_type" class="form-control">
+                                <option value="">Select part type...</option>
+                                <option value="part1">Part 1 - Introduction & Interview</option>
+                                <option value="part2">Part 2 - Long Turn (Cue Card)</option>
+                                <option value="part3">Part 3 - Discussion</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Common image field --}}
+                    <div class="form-group mt-3">
+                        <label>Image File (Optional)</label>
                         <input type="file" name="image_file" class="form-control" accept="image/*">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Reading Passage</label>
-                        <textarea name="passage_text" class="form-control" rows="10"></textarea>
+                        <small class="text-gray">For diagrams, maps, charts, etc.</small>
                     </div>
 
                     <div class="form-group">
@@ -253,6 +323,59 @@
     </div>
 </div>
 @endsection
+
+@push('scripts_bottom')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const skillSelect = document.getElementById('sectionSkill');
+    const skillFields = document.querySelectorAll('.skill-fields');
+
+    if (skillSelect) {
+        skillSelect.addEventListener('change', function() {
+            // Hide all skill-specific fields
+            skillFields.forEach(field => field.style.display = 'none');
+
+            // Show relevant fields based on selected skill
+            const selectedSkill = this.value;
+            if (selectedSkill === 'listening') {
+                document.getElementById('listeningFields').style.display = 'block';
+            } else if (selectedSkill === 'reading') {
+                document.getElementById('readingFields').style.display = 'block';
+            } else if (selectedSkill === 'writing') {
+                document.getElementById('writingFields').style.display = 'block';
+            } else if (selectedSkill === 'speaking') {
+                document.getElementById('speakingFields').style.display = 'block';
+            }
+        });
+    }
+
+    // Form validation before submit
+    document.querySelector('#addSectionModal form').addEventListener('submit', function(e) {
+        const skill = skillSelect.value;
+        
+        // Validate Listening - must have audio
+        if (skill === 'listening') {
+            const audioFile = document.querySelector('input[name="audio_file"]');
+            if (!audioFile.value && !audioFile.files.length) {
+                e.preventDefault();
+                alert('Audio file is required for Listening sections!');
+                return false;
+            }
+        }
+        
+        // Validate Reading - must have passage
+        if (skill === 'reading') {
+            const passageText = document.querySelector('textarea[name="passage_text"]');
+            if (!passageText.value.trim()) {
+                e.preventDefault();
+                alert('Reading passage text is required for Reading sections!');
+                return false;
+            }
+        }
+    });
+});
+</script>
+@endpush
 
 @push('scripts_bottom')
 <script>

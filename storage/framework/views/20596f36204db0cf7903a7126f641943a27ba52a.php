@@ -3,6 +3,18 @@
 <?php $__env->startSection('content'); ?>
 <section class="mt-30">
     
+    <?php if(session('mock_parts_warning')): ?>
+    <div class="alert alert-warning alert-dismissible fade show mb-20" role="alert">
+        <i class="fas fa-exclamation-triangle mr-10"></i>
+        <strong>Test Created!</strong> <?php echo e(session('mock_parts_warning')); ?>
+
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <?php endif; ?>
+    
+    
     <div class="d-flex align-items-center justify-content-between mb-25">
         <div>
             <h1 class="section-title font-24 text-dark-blue">My IELTS Tests</h1>
@@ -97,19 +109,19 @@
     <div class="col-lg-3 col-md-6 col-sm-6 col-12 mt-20">
         <div class="bg-white rounded-16 p-20 d-flex align-items-center justify-content-between border">
             <div>
-                <span class="d-block text-gray-500 font-12 mb-5">Pending Approval</span>
-                <h3 class="font-30 font-weight-bold text-dark-blue"><?php echo e($stats['pending']); ?></h3>
+                <span class="d-block text-gray-500 font-12 mb-5">Published</span>
+                <h3 class="font-30 font-weight-bold text-dark-blue"><?php echo e($stats['published']); ?></h3>
             </div>
-            <div class="d-flex-center size-48 bg-warning-light rounded-circle">
+            <div class="d-flex-center size-48 bg-success-light rounded-circle">
                 <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
 <?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
-<?php $component->withName('iconsax-bul-clock'); ?>
+<?php $component->withName('iconsax-bul-tick-circle'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
 <?php $attributes = $attributes->except(collect($constructor->getParameters())->map->getName()->all()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'size-icon-20 text-warning']); ?>
+<?php $component->withAttributes(['class' => 'size-icon-20 text-success']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e)): ?>
@@ -119,10 +131,53 @@
             </div>
         </div>
     </div>
-</div>
+ </div>
 
     
-    <div class="row" style="margin-top: 60px;">
+    <div class="row" style="margin-top: 30px;">
+        <div class="col-12">
+            <div class="bg-white rounded-16 shadow-sm p-20" style="border-radius: 12px;">
+                <form method="GET" class="m-0">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Type</label>
+                            <select name="type" class="form-control">
+                                <option value="">All Types</option>
+                                <option value="mock" <?php echo e(request('type') == 'mock' ? 'selected' : ''); ?>>Mock Test</option>
+                                <option value="practice" <?php echo e(request('type') == 'practice' ? 'selected' : ''); ?>>Practice</option>
+                                <option value="diagnostic" <?php echo e(request('type') == 'diagnostic' ? 'selected' : ''); ?>>Diagnostic</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Status</label>
+                            <select name="status" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="draft" <?php echo e(request('status') == 'draft' ? 'selected' : ''); ?>>Draft</option>
+                                <option value="pending_approval" <?php echo e(request('status') == 'pending_approval' ? 'selected' : ''); ?>>Pending</option>
+                                <option value="approved" <?php echo e(request('status') == 'approved' ? 'selected' : ''); ?>>Approved</option>
+                                <option value="published" <?php echo e(request('status') == 'published' ? 'selected' : ''); ?>>Published</option>
+                                <option value="rejected" <?php echo e(request('status') == 'rejected' ? 'selected' : ''); ?>>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Search</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Search by title..." value="<?php echo e(request('search')); ?>">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100" 
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                                <i class="fas fa-filter mr-8"></i>Filter
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row" style="margin-top: 30px;">
         <div class="col-12">
             <?php if($tests->isEmpty()): ?>
                 <div class="bg-white shadow-sm rounded-16 p-30">

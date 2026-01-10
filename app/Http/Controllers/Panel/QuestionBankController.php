@@ -20,8 +20,8 @@ class QuestionBankController extends Controller
     {
         $user = auth()->user();
         
-        // Check permissions
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        // Check permissions - Teachers, Admins, Managers, CEOs can access
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403, 'Unauthorized');
         }
         
@@ -83,7 +83,7 @@ class QuestionBankController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
@@ -144,7 +144,7 @@ class QuestionBankController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
@@ -359,7 +359,7 @@ class QuestionBankController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         
@@ -544,7 +544,7 @@ class QuestionBankController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization()) {
+        if (!$user->isAdmin() && !$user->isTeacher() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
             abort(403);
         }
         

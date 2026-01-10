@@ -106,6 +106,17 @@
                                     <span class="skill-label">{{ $skill['label'] }}</span>
                                 </div>
 
+                                {{-- Audio Player for Listening --}}
+                                @if($question->skill === 'listening' && $question->audio_file)
+                                    <div class="audio-player-mini mb-12">
+                                        <audio controls preload="metadata" style="width: 100%; height: 36px;">
+                                            <source src="{{ Storage::disk('public')->url($question->audio_file) }}" type="audio/mpeg">
+                                            <source src="{{ Storage::disk('public')->url($question->audio_file) }}" type="audio/wav">
+                                            Your browser does not support audio.
+                                        </audio>
+                                    </div>
+                                @endif
+
                                 {{-- Question Content --}}
                                 <h5 class="question-text">{{ \Illuminate\Support\Str::limit($question->question_text, 120) }}</h5>
 
@@ -309,12 +320,12 @@
 }
 
 .skill-writing {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #1a3a5c 0%, #2e5a8a 100%);
     color: white;
 }
 
 .skill-speaking {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: linear-gradient(135deg, #2e5a8a 0%, #3b82f6 100%);
     color: white;
 }
 
@@ -462,11 +473,11 @@
 }
 
 .skill-badge.skill-writing {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #1a3a5c 0%, #2e5a8a 100%);
 }
 
 .skill-badge.skill-speaking {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: linear-gradient(135deg, #2e5a8a 0%, #3b82f6 100%);
 }
 
 .question-cell {

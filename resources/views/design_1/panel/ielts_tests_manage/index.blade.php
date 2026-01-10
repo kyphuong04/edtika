@@ -2,6 +2,17 @@
 
 @section('content')
 <section class="mt-30">
+    {{-- IELTS Standard Warning --}}
+    @if(session('mock_parts_warning'))
+    <div class="alert alert-warning alert-dismissible fade show mb-20" role="alert">
+        <i class="fas fa-exclamation-triangle mr-10"></i>
+        <strong>Test Created!</strong> {{ session('mock_parts_warning') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    @endif
+    
     {{-- Header --}}
     <div class="d-flex align-items-center justify-content-between mb-25">
         <div>
@@ -55,18 +66,61 @@
     <div class="col-lg-3 col-md-6 col-sm-6 col-12 mt-20">
         <div class="bg-white rounded-16 p-20 d-flex align-items-center justify-content-between border">
             <div>
-                <span class="d-block text-gray-500 font-12 mb-5">Pending Approval</span>
-                <h3 class="font-30 font-weight-bold text-dark-blue">{{ $stats['pending'] }}</h3>
+                <span class="d-block text-gray-500 font-12 mb-5">Published</span>
+                <h3 class="font-30 font-weight-bold text-dark-blue">{{ $stats['published'] }}</h3>
             </div>
-            <div class="d-flex-center size-48 bg-warning-light rounded-circle">
-                <x-iconsax-bul-clock class="size-icon-20 text-warning"/>
+            <div class="d-flex-center size-48 bg-success-light rounded-circle">
+                <x-iconsax-bul-tick-circle class="size-icon-20 text-success"/>
             </div>
         </div>
     </div>
-</div>
+ </div>
+
+    {{-- Filters Card --}}
+    <div class="row" style="margin-top: 30px;">
+        <div class="col-12">
+            <div class="bg-white rounded-16 shadow-sm p-20" style="border-radius: 12px;">
+                <form method="GET" class="m-0">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Type</label>
+                            <select name="type" class="form-control">
+                                <option value="">All Types</option>
+                                <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>Mock Test</option>
+                                <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>Practice</option>
+                                <option value="diagnostic" {{ request('type') == 'diagnostic' ? 'selected' : '' }}>Diagnostic</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Status</label>
+                            <select name="status" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                                <option value="pending_approval" {{ request('status') == 'pending_approval' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
+                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Search</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Search by title..." value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100" 
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                                <i class="fas fa-filter mr-8"></i>Filter
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     {{-- Tests List --}}
-    <div class="row" style="margin-top: 60px;">
+    <div class="row" style="margin-top: 30px;">
         <div class="col-12">
             @if($tests->isEmpty())
                 <div class="bg-white shadow-sm rounded-16 p-30">
