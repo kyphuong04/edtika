@@ -1,136 +1,359 @@
 @extends('design_1.panel.layouts.panel')
 
 @push('styles_top')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    .test-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 20px;
+    .page-header {
+        margin-bottom: 32px;
+    }
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+    .page-header p {
+        color: #6b7280;
+        margin: 0;
+    }
+
+    /* Section */
+    .tests-section {
+        margin-bottom: 48px;
+    }
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         margin-bottom: 20px;
+    }
+    .section-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    .section-icon.mock { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .section-icon.practice { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    .section-title .badge {
+        font-size: 13px;
+        font-weight: 500;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+    .section-desc {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Test Cards Grid */
+    .tests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+    }
+
+    /* Test Card */
+    .test-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 24px;
         transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
     .test-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transform: translateY(-2px);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+        border-color: transparent;
     }
-    .skill-badge {
+    .test-card.mock::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    .test-card.practice::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    .test-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+    .test-card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    .test-card-badge {
         padding: 4px 12px;
-        border-radius: 16px;
+        border-radius: 20px;
         font-size: 12px;
         font-weight: 600;
-        margin-right: 8px;
-        display: inline-block;
     }
-    .skill-listening { background: #dbeafe; color: #1e40af; }
-    .skill-reading { background: #d1fae5; color: #065f46; }
-    .skill-writing { background: #fef3c7; color: #92400e; }
-    .skill-speaking { background: #fee2e2; color: #991b1b; }
+    .test-card-badge.mock { background: #ede9fe; color: #7c3aed; }
+    .test-card-badge.practice { background: #d1fae5; color: #059669; }
+    .test-card-badge.free { background: #d1fae5; color: #059669; }
+    .test-card-badge.locked { background: #f3f4f6; color: #6b7280; }
+
+    .test-card-desc {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 16px;
+        line-height: 1.5;
+    }
+
+    /* Skills Row */
+    .skills-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .skill-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .skill-badge.listening { background: #dbeafe; color: #1e40af; }
+    .skill-badge.reading { background: #d1fae5; color: #065f46; }
+    .skill-badge.writing { background: #fef3c7; color: #92400e; }
+    .skill-badge.speaking { background: #fee2e2; color: #991b1b; }
+
+    /* Meta Info */
+    .test-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        color: #6b7280;
+        font-size: 13px;
+    }
+    .test-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .test-meta-item i {
+        color: #9ca3af;
+    }
+
+    /* Completion Badge */
+    .completion-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: #ecfdf5;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: #065f46;
+    }
+    .completion-badge i {
+        color: #10b981;
+    }
+
+    /* Actions */
+    .test-actions {
+        display: flex;
+        gap: 12px;
+    }
+    .btn-view {
+        flex: 1;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.2s;
+        background: #f3f4f6;
+        color: #374151;
+        border: none;
+    }
+    .btn-view:hover {
+        background: #e5e7eb;
+        color: #1f2937;
+        text-decoration: none;
+    }
+    .btn-start {
+        flex: 1;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.2s;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-start.mock { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-start.practice { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .btn-start:hover {
+        transform: scale(1.02);
+        color: white;
+        text-decoration: none;
+    }
+    .btn-start:disabled {
+        background: #e5e7eb;
+        color: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: #f9fafb;
+        border-radius: 16px;
+        border: 2px dashed #e5e7eb;
+    }
+    .empty-state img {
+        max-width: 200px;
+        margin-bottom: 24px;
+        opacity: 0.8;
+    }
+    .empty-state h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    .empty-state p {
+        color: #6b7280;
+        margin: 0;
+    }
 </style>
 @endpush
 
 @section('content')
 <section class="mt-30">
-    <div class="d-flex align-items-start align-items-md-center justify-content-between flex-column flex-md-row">
-        <h1 class="section-title">IELTS Tests</h1>
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>IELTS Tests</h1>
+        <p>Practice and improve your IELTS skills with our comprehensive test library</p>
     </div>
 
     {{-- Mock Tests Section --}}
-    <section class="mt-25">
-        <h2 class="section-title mb-20">
-            <i class="fas fa-clipboard-list mr-2"></i>
-            Mock Tests
-            <span class="badge badge-primary ml-2">{{ $mockTests->count() }}</span>
-        </h2>
-        <p class="text-gray mb-20">Complete IELTS exam simulations. All 4 skills in strict order.</p>
+    <section class="tests-section">
+        <div class="section-header">
+            <div class="section-icon mock">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div>
+                <h2 class="section-title">
+                    Mock Tests
+                    <span class="badge badge-primary">{{ $mockTests->count() }}</span>
+                </h2>
+                <p class="section-desc">Complete IELTS exam simulations • All 4 skills in timed conditions</p>
+            </div>
+        </div>
 
         @if($mockTests->isEmpty())
-            <div class="no-result">
-                <div class="no-result-logo">
-                    <img src="/assets/default/img/no-results/support.png" alt="">
-                </div>
-                <div class="d-flex align-items-center flex-column mt-30 text-center">
-                    <h2>No mock tests available!</h2>
-                    <p class="mt-5 text-center">There are no mock tests available at this moment.</p>
-                </div>
+            <div class="empty-state">
+                <img src="/assets/default/img/no-results/support.png" alt="">
+                <h3>No Mock Tests Available</h3>
+                <p>Check back soon for new mock tests!</p>
             </div>
         @else
-            <div class="row">
+            <div class="tests-grid">
                 @foreach($mockTests as $test)
-                    <div class="col-md-6 col-lg-4">
-                        <div class="test-card">
-                            <div class="d-flex justify-content-between align-items-start mb-15">
-                                <h3 class="font-16 font-weight-bold">{{ $test->title }}</h3>
-                                <div>
-                                    @if($test->is_lead_test)
-                                        <span class="badge badge-warning">Diagnostic</span>
-                                    @elseif($test->is_free)
-                                        <span class="badge badge-success">Free</span>
-                                    @elseif($test->require_enrollment)
-                                        @if($test->user_enrolled)
-                                            <span class="badge badge-success">Enrolled</span>
-                                        @else
-                                            <span class="badge badge-secondary">🔒 Requires Course</span>
-                                        @endif
-                                    @else
-                                        <span class="badge badge-primary">Mock</span>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <p class="text-gray font-14 mb-15">{{ Str::limit($test->description, 100) }}</p>
-
-                            <div class="mb-15">
-                                <span class="skill-badge skill-listening">L</span>
-                                <span class="skill-badge skill-reading">R</span>
-                                <span class="skill-badge skill-writing">W</span>
-                                <span class="skill-badge skill-speaking">S</span>
-                            </div>
-
-                            <div class="d-flex align-items-center justify-content-between text-gray font-12 mb-15">
-                                <div>
-                                    <i class="far fa-clock mr-1"></i>
-                                    {{ $test->total_duration }} minutes
-                                </div>
-                                <div>
-                                    <i class="far fa-question-circle mr-1"></i>
-                                    ~80 questions
-                                </div>
-                            </div>
-
-                            @if($test->user_attempts > 0)
-                                <div class="alert alert-success py-2 px-3 font-12 mb-15">
-                                    <i class="fas fa-check-circle mr-1"></i>
-                                    Completed {{ $test->user_attempts }} time(s)
-                                    @if($test->best_attempt)
-                                        <br>Best: Band {{ $test->best_attempt->overall_band ?? 'Pending' }}
-                                    @endif
-                                </div>
+                    <div class="test-card mock">
+                        <div class="test-card-header">
+                            <h3 class="test-card-title">{{ $test->title }}</h3>
+                            @if($test->is_free)
+                                <span class="test-card-badge free">Free</span>
+                            @elseif($test->require_enrollment && !$test->user_enrolled)
+                                <span class="test-card-badge locked">🔒 Enroll Required</span>
+                            @else
+                                <span class="test-card-badge mock">Mock</span>
                             @endif
+                        </div>
 
+                        @if($test->description)
+                        <p class="test-card-desc">{{ Str::limit($test->description, 100) }}</p>
+                        @endif
+
+                        <div class="skills-row">
+                            @if($test->has_listening)<span class="skill-badge listening">L</span>@endif
+                            @if($test->has_reading)<span class="skill-badge reading">R</span>@endif
+                            @if($test->has_writing)<span class="skill-badge writing">W</span>@endif
+                            @if($test->has_speaking)<span class="skill-badge speaking">S</span>@endif
+                        </div>
+
+                        <div class="test-meta">
+                            <div class="test-meta-item">
+                                <i class="far fa-clock"></i>
+                                <span>{{ $test->total_duration }} min</span>
+                            </div>
+                            <div class="test-meta-item">
+                                <i class="fas fa-question-circle"></i>
+                                <span>~80 questions</span>
+                            </div>
                             @if($test->target_band_min && $test->target_band_max)
-                                <div class="text-gray font-12 mb-15">
-                                    <i class="fas fa-bullseye mr-1"></i>
-                                    Target: Band {{ $test->target_band_min }} - {{ $test->target_band_max }}
-                                </div>
-                            @endif
-
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn btn-sm btn-primary flex-fill">
-                                    View Details
-                                </a>
-                                @if($test->can_take)
-                                    <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" class="flex-fill">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-success w-100">
-                                            Start Test
-                                        </button>
-                                    </form>
-                                @else
-                                    <button class="btn btn-sm btn-secondary flex-fill" disabled>
-                                        Max Attempts Reached
-                                    </button>
-                                @endif
+                            <div class="test-meta-item">
+                                <i class="fas fa-bullseye"></i>
+                                <span>Band {{ $test->target_band_min }}-{{ $test->target_band_max }}</span>
                             </div>
+                            @endif
+                        </div>
+
+                        @if($test->user_attempts > 0)
+                            <div class="completion-badge">
+                                <i class="fas fa-check-circle"></i>
+                                <span>
+                                    Completed {{ $test->user_attempts }}x
+                                    @if($test->best_attempt && $test->best_attempt->overall_band)
+                                        • Best: Band {{ $test->best_attempt->overall_band }}
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
+
+                        <div class="test-actions">
+                            <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn-view">
+                                View Details
+                            </a>
+                            @if($test->can_take)
+                                <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="flex:1;">
+                                    @csrf
+                                    <button type="submit" class="btn-start mock w-100">
+                                        Start Test
+                                    </button>
+                                </form>
+                            @else
+                                <button class="btn-start" disabled style="flex:1;">
+                                    Max Attempts
+                                </button>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -139,91 +362,84 @@
     </section>
 
     {{-- Practice Tests Section --}}
-    <section class="mt-40">
-        <h2 class="section-title mb-20">
-            <i class="fas fa-dumbbell mr-2"></i>
-            Practice Tests
-            <span class="badge badge-info ml-2">{{ $practiceTests->count() }}</span>
-        </h2>
-        <p class="text-gray mb-20">Skill-focused practice. Choose 1-4 skills with instant feedback.</p>
+    <section class="tests-section">
+        <div class="section-header">
+            <div class="section-icon practice">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <div>
+                <h2 class="section-title">
+                    Practice Tests
+                    <span class="badge badge-success">{{ $practiceTests->count() }}</span>
+                </h2>
+                <p class="section-desc">Skill-focused practice • Choose 1-4 skills • Instant feedback</p>
+            </div>
+        </div>
 
         @if($practiceTests->isEmpty())
-            <div class="no-result">
-                <div class="no-result-logo">
-                    <img src="/assets/default/img/no-results/support.png" alt="">
-                </div>
-                <div class="d-flex align-items-center flex-column mt-30 text-center">
-                    <h2>No practice tests available!</h2>
-                    <p class="mt-5 text-center">Practice tests will be added soon.</p>
-                </div>
+            <div class="empty-state">
+                <img src="/assets/default/img/no-results/support.png" alt="">
+                <h3>No Practice Tests Available</h3>
+                <p>Practice tests will be added soon!</p>
             </div>
         @else
-            <div class="row">
+            <div class="tests-grid">
                 @foreach($practiceTests as $test)
-                    <div class="col-md-6 col-lg-4">
-                        <div class="test-card">
-                            <div class="d-flex justify-content-between align-items-start mb-15">
-                                <h3 class="font-16 font-weight-bold">{{ $test->title }}</h3>
-                                <span class="badge badge-info">Practice</span>
+                    <div class="test-card practice">
+                        <div class="test-card-header">
+                            <h3 class="test-card-title">{{ $test->title }}</h3>
+                            <span class="test-card-badge practice">Practice</span>
+                        </div>
+
+                        @if($test->description)
+                        <p class="test-card-desc">{{ Str::limit($test->description, 100) }}</p>
+                        @endif
+
+                        <div class="skills-row">
+                            @if($test->has_listening)<span class="skill-badge listening">Listening</span>@endif
+                            @if($test->has_reading)<span class="skill-badge reading">Reading</span>@endif
+                            @if($test->has_writing)<span class="skill-badge writing">Writing</span>@endif
+                            @if($test->has_speaking)<span class="skill-badge speaking">Speaking</span>@endif
+                        </div>
+
+                        <div class="test-meta">
+                            <div class="test-meta-item">
+                                <i class="far fa-clock"></i>
+                                @if($test->practice_mode === 'untimed')
+                                    <span>Untimed</span>
+                                @else
+                                    <span>{{ $test->total_duration }} min</span>
+                                @endif
                             </div>
-
-                            <p class="text-gray font-14 mb-15">{{ Str::limit($test->description, 100) }}</p>
-
-                            <div class="mb-15">
-                                @if($test->has_listening)
-                                    <span class="skill-badge skill-listening">Listening</span>
-                                @endif
-                                @if($test->has_reading)
-                                    <span class="skill-badge skill-reading">Reading</span>
-                                @endif
-                                @if($test->has_writing)
-                                    <span class="skill-badge skill-writing">Writing</span>
-                                @endif
-                                @if($test->has_speaking)
-                                    <span class="skill-badge skill-speaking">Speaking</span>
-                                @endif
+                            <div class="test-meta-item">
+                                <i class="fas fa-redo"></i>
+                                <span>Unlimited</span>
                             </div>
-
-                            <div class="d-flex align-items-center justify-content-between text-gray font-12 mb-15">
-                                <div>
-                                    <i class="far fa-clock mr-1"></i>
-                                    @if($test->practice_mode === 'untimed')
-                                        Untimed
-                                    @else
-                                        {{ $test->total_duration }} min
-                                    @endif
-                                </div>
-                                <div>
-                                    <i class="fas fa-redo mr-1"></i>
-                                    Unlimited retakes
-                                </div>
-                            </div>
-
-                            @if($test->user_attempts > 0)
-                                <div class="alert alert-info py-2 px-3 font-12 mb-15">
-                                    <i class="fas fa-history mr-1"></i>
-                                    Practiced {{ $test->user_attempts }} time(s)
-                                </div>
-                            @endif
-
                             @if($test->practiceCategory)
-                                <div class="text-gray font-12 mb-15">
-                                    <i class="fas fa-folder mr-1"></i>
-                                    {{ $test->practiceCategory->name }}
-                                </div>
-                            @endif
-
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn btn-sm btn-primary flex-fill">
-                                    View Details
-                                </a>
-                                <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" class="flex-fill">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-success w-100">
-                                        Start Practice
-                                    </button>
-                                </form>
+                            <div class="test-meta-item">
+                                <i class="fas fa-folder"></i>
+                                <span>{{ $test->practiceCategory->name }}</span>
                             </div>
+                            @endif
+                        </div>
+
+                        @if($test->user_attempts > 0)
+                            <div class="completion-badge">
+                                <i class="fas fa-history"></i>
+                                <span>Practiced {{ $test->user_attempts }} time(s)</span>
+                            </div>
+                        @endif
+
+                        <div class="test-actions">
+                            <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn-view">
+                                View Details
+                            </a>
+                            <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="flex:1;">
+                                @csrf
+                                <button type="submit" class="btn-start practice w-100">
+                                    Start Practice
+                                </button>
+                            </form>
                         </div>
                     </div>
                 @endforeach

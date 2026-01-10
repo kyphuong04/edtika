@@ -1,7 +1,7 @@
 <?php $__currentLoopData = \App\Mixins\Panel\SidebarItems::getItems(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sidebarSection => $sidebarMenus): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
     <?php if(!empty($sidebarMenus) and count($sidebarMenus)): ?>
         <div class="mt-16">
-            <span class="d-block font-12 font-weight-bold text-gray-400 text-uppercase pl-32 pr-20 mb-8"><?php echo e(trans("update.{$sidebarSection}")); ?></span>
+            <span class="sidebar-section-title d-block font-12 font-weight-bold text-gray-400 text-uppercase pl-32 pr-20 mb-8"><?php echo e(trans("update.{$sidebarSection}")); ?></span>
 
             <?php $__currentLoopData = $sidebarMenus; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sidebarMenuName => $sidebarMenu): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <?php
@@ -24,8 +24,8 @@
                     <div class="accordion ">
                         <div class="panel-sidebar__menu accordion__title d-flex align-items-center justify-content-between pl-32 pr-20 <?php echo e(($isActiveMainManu) ? 'sidenav-item-active' : ''); ?>">
                             <div class="d-flex align-items-center flex-1 cursor-pointer" href="#collapseSidebar<?php echo e($sidebarMenuName); ?>" data-parent="#sidebarAccordions" role="button" data-toggle="collapse">
-                                <span class=" <?php echo e($isActiveMainManu ? 'text-primary' : 'text-gray-500'); ?>"><?php echo $sidebarMenu['icon']; ?></span>
-                                <span class="ml-8 font-14 <?php echo e($isActiveMainManu ? 'text-primary' : 'text-dark'); ?>"><?php echo e($sidebarMenu['text']); ?></span>
+                                <span class="sidebar-icon <?php echo e($isActiveMainManu ? 'text-primary' : 'text-gray-500'); ?>"><?php echo $sidebarMenu['icon']; ?></span>
+                                <span class="sidebar-text ml-8 font-14 <?php echo e($isActiveMainManu ? 'text-primary' : 'text-dark'); ?>"><?php echo e($sidebarMenu['text']); ?></span>
                             </div>
 
                             <span class="collapse-arrow-icon d-flex cursor-pointer" href="#collapseSidebar<?php echo e($sidebarMenuName); ?>" data-parent="#sidebarAccordions" role="button" data-toggle="collapse">
@@ -56,7 +56,7 @@
                                 ?>
 
                                 <a href="<?php echo e($sidebarMenuItem['url']); ?>" class="d-flex align-items-center panel-sidebar__menu-item text-gray-500 font-14 pl-32 pr-20 <?php echo e(($isActiveItemManu) ? 'text-primary' : ''); ?>">
-                                    <span class=""><?php echo e($sidebarMenuItem['text']); ?></span>
+                                    <span class="sidebar-text"><?php echo e($sidebarMenuItem['text']); ?></span>
                                 </a>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
@@ -65,8 +65,8 @@
                 <?php else: ?>
                     <a href="<?php echo e($sidebarMenu['url']); ?>" class="panel-sidebar__menu d-flex align-items-center justify-content-between pl-32 pr-20 <?php echo e(($isActiveMainManu) ? 'sidenav-item-active' : ''); ?>">
                         <div class="d-flex align-items-center flex-1 cursor-pointer">
-                            <span class=" <?php echo e($isActiveMainManu ? 'text-primary' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-gray-500')); ?>"><?php echo $sidebarMenu['icon']; ?></span>
-                            <span class="ml-8 font-14 <?php echo e($isActiveMainManu ? 'text-primary' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-dark')); ?>"><?php echo e($sidebarMenu['text']); ?></span>
+                            <span class="sidebar-icon <?php echo e($isActiveMainManu ? 'text-primary' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-gray-500')); ?>"><?php echo $sidebarMenu['icon']; ?></span>
+                            <span class="sidebar-text ml-8 font-14 <?php echo e($isActiveMainManu ? 'text-primary' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-dark')); ?>"><?php echo e($sidebarMenu['text']); ?></span>
                         </div>
 
                     </a>

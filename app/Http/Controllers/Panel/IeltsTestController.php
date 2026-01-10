@@ -87,27 +87,46 @@ class IeltsTestController extends Controller
             $test->can_take = $test->canUserTake($authUser->id);
         }
         
+        // Mock test daily limit info
+        $dailyLimit = getIeltsSettings('mock_tests_per_day') ?? 2;
+        $remainingToday = IeltsTest::getRemainingMockTestsToday($authUser->id);
+        
         $data = [
             'pageTitle' => 'Mock Tests',
             'mockTests' => $mockTests,
-            'practiceTests' => collect([]),
+            'dailyLimit' => $dailyLimit,
+            'remainingToday' => $remainingToday,
         ];
         
-        return view('design_1.panel.ielts_tests.index', $data);
+        return view('design_1.panel.ielts_tests.mock', $data);
     }
     
     /**
      * Display only practice tests
      */
-    public function indexPractice()
+    public function indexPractice(Request $request)
     {
         $authUser = auth()->user();
         
-        $practiceTests = IeltsTest::with('sections', 'practiceCategory')
+        // Note: Practice tests may have status 'approved' instead of 'published'
+        $query = IeltsTest::with('sections', 'practiceCategory')
             ->practiceTests()
-            ->published()
-            ->active()
-            ->get();
+            ->where(function($q) {
+                $q->where('status', 'published')
+                  ->orWhere('status', 'approved');
+            });
+        
+        // Filter by band score if provided
+        $band = $request->get('band');
+        if ($band) {
+            list($min, $max) = explode('-', $band);
+            $query->where(function($q) use ($min, $max) {
+                $q->whereBetween('target_band_min', [(float)$min, (float)$max])
+                  ->orWhereBetween('target_band_max', [(float)$min, (float)$max]);
+            });
+        }
+        
+        $practiceTests = $query->get();
         
         foreach ($practiceTests as $test) {
             $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
@@ -117,11 +136,10 @@ class IeltsTestController extends Controller
         
         $data = [
             'pageTitle' => 'Practice Tests',
-            'mockTests' => collect([]),
             'practiceTests' => $practiceTests,
         ];
         
-        return view('design_1.panel.ielts_tests.index', $data);
+        return view('design_1.panel.ielts_tests.practice', $data);
     }
     
     /**
@@ -160,13 +178,24 @@ class IeltsTestController extends Controller
         $test = IeltsTest::with('sections')->findOrFail($id);
         $authUser = auth()->user();
         
-        if (!$test->canUserTake($authUser->id)) {
+        $canTake = $test->canUserTake($authUser->id);
+        
+        if ($canTake !== true) {
+            $messages = [
+                'daily_limit' => 'You have reached your daily mock test limit. Come back tomorrow!',
+                'max_attempts' => 'You have reached the maximum attempts for this test.',
+                'not_enrolled' => 'You need to enroll in the course to access this test.',
+            ];
+            
             return back()->with(['toast' => [
-                'title' => 'Error',
-                'msg' => 'You cannot take this test',
+                'title' => 'Cannot Start Test',
+                'msg' => $messages[$canTake] ?? 'You cannot take this test',
                 'status' => 'error'
             ]]);
         }
+        
+        // Get the requested skill from form (for practice tests)
+        $requestedSkill = $request->input('skill');
         
         // Get attempt number
         $attemptNumber = IeltsTestAttempt::where('test_id', $test->id)
@@ -180,25 +209,50 @@ class IeltsTestController extends Controller
         if ($test->has_writing) $totalQuestions += 2;
         if ($test->has_speaking) $totalQuestions += 10; // Approximate
         
+        // Determine starting skill - use requested skill if provided and valid
+        $startingSkill = null;
+        if ($requestedSkill && in_array($requestedSkill, ['listening', 'reading', 'writing', 'speaking'])) {
+            // Verify the test has this skill
+            $hasSkillFlag = 'has_' . $requestedSkill;
+            if ($test->$hasSkillFlag) {
+                $startingSkill = $requestedSkill;
+            }
+        }
+        
+        // Fallback to default order if no skill specified
+        if (!$startingSkill) {
+            $startingSkill = $test->has_listening ? 'listening' : 
+                            ($test->has_reading ? 'reading' : 
+                            ($test->has_writing ? 'writing' : 'speaking'));
+        }
+        
         // Create new attempt
         $attempt = IeltsTestAttempt::create([
             'test_id' => $test->id,
             'user_id' => $authUser->id,
             'attempt_number' => $attemptNumber,
             'status' => 'in_progress',
-            'current_skill' => $test->has_listening ? 'listening' : 
-                              ($test->has_reading ? 'reading' : 
-                              ($test->has_writing ? 'writing' : 'speaking')),
+            'current_skill' => $startingSkill,
             'started_at' => time(),
             'total_questions' => $totalQuestions,
             'remaining_time_seconds' => $test->total_duration * 60,
             'updated_at' => time(),
         ]);
         
-        // Get first section
-        $firstSection = $test->sections()->orderBy('sort_order')->first();
+        // Get first section for the requested skill
+        $firstSection = $test->sections()
+            ->where('skill', $startingSkill)
+            ->orderBy('sort_order')
+            ->first();
+        
+        // Fallback to any first section if no section found for requested skill
+        if (!$firstSection) {
+            $firstSection = $test->sections()->orderBy('sort_order')->first();
+        }
+        
         if ($firstSection) {
             $attempt->current_section_id = $firstSection->id;
+            $attempt->current_skill = $firstSection->skill; // Ensure skill matches section
             $attempt->save();
         }
         
@@ -210,7 +264,7 @@ class IeltsTestController extends Controller
      */
     public function takeTest($attemptId)
     {
-        $attempt = IeltsTestAttempt::with(['test.sections.questions', 'answers', 'currentSection'])
+        $attempt = IeltsTestAttempt::with(['test.sections.questions', 'answers', 'currentSection.questionGroup'])
             ->findOrFail($attemptId);
         
         $authUser = auth()->user();
@@ -232,7 +286,30 @@ class IeltsTestController extends Controller
         }
         
         $currentSection = $attempt->currentSection;
-        $questions = $currentSection->questions;
+        
+        // If no current section, get first section
+        if (!$currentSection) {
+            $currentSection = $attempt->test->sections()->orderBy('sort_order')->first();
+            if ($currentSection) {
+                $attempt->current_section_id = $currentSection->id;
+                $attempt->current_skill = $currentSection->skill;
+                $attempt->save();
+            } else {
+                // No sections available
+                return back()->with(['toast' => [
+                    'title' => 'Error',
+                    'msg' => 'This test has no sections configured.',
+                    'status' => 'error'
+                ]]);
+            }
+        }
+        
+        // Load questions with their groups for IDP-style grouping
+        $questions = $currentSection->questions()
+            ->with('questionGroup')
+            ->orderBy('question_number')
+            ->orderBy('id')
+            ->get();
         
         // Get existing answers
         $userAnswers = $attempt->answers()->pluck('answer_text', 'question_id')->toArray();
@@ -246,7 +323,8 @@ class IeltsTestController extends Controller
             'userAnswers' => $userAnswers,
         ];
         
-        return view('design_1.panel.ielts_tests.take', $data);
+        // Use IDP-style interface for all tests
+        return view('design_1.panel.ielts_tests.take_idp', $data);
     }
     
     /**
@@ -263,18 +341,34 @@ class IeltsTestController extends Controller
         $questionId = $request->input('question_id');
         $answerText = $request->input('answer_text');
         $answerOptions = $request->input('answer_options');
+        $audioUrl = null;
+        
+        // Handle audio file upload for Speaking section
+        if ($request->hasFile('audio')) {
+            $audioFile = $request->file('audio');
+            $fileName = 'speaking_' . $attemptId . '_' . $questionId . '_' . time() . '.' . $audioFile->getClientOriginalExtension();
+            $path = $audioFile->storeAs('speaking_answers', $fileName, 'public');
+            $audioUrl = '/storage/' . $path;
+        }
+        
+        $updateData = [
+            'answer_text' => $answerText,
+            'answer_options' => $answerOptions ? json_encode($answerOptions) : null,
+            'answered_at' => time(),
+            'modified_at' => time(),
+        ];
+        
+        // Store audio URL in file_url column for Speaking section
+        if (!empty($audioUrl)) {
+            $updateData['file_url'] = $audioUrl;
+        }
         
         IeltsTestAnswer::updateOrCreate(
             [
                 'attempt_id' => $attempt->id,
                 'question_id' => $questionId,
             ],
-            [
-                'answer_text' => $answerText,
-                'answer_options' => $answerOptions ? json_encode($answerOptions) : null,
-                'answered_at' => time(),
-                'modified_at' => time(),
-            ]
+            $updateData
         );
         
         // Update progress
@@ -282,7 +376,8 @@ class IeltsTestController extends Controller
         
         return response()->json([
             'status' => 'success',
-            'message' => 'Answer saved'
+            'message' => 'Answer saved',
+            'audio_url' => $audioUrl
         ]);
     }
     
@@ -316,10 +411,20 @@ class IeltsTestController extends Controller
                 'redirect' => route('panel.ielts_tests.take', $attempt->id)
             ]);
         } else {
-            // All sections completed, submit test
+            // All sections completed - auto-grade and redirect to results
+            $this->autoGradeListening($attempt);
+            $this->autoGradeReading($attempt);
+            $this->calculateBandScores($attempt);
+            
+            $attempt->update([
+                'status' => 'completed',
+                'completed_at' => time(),
+                'updated_at' => time(),
+            ]);
+            
             return response()->json([
                 'status' => 'completed',
-                'redirect' => route('panel.ielts_tests.submit_confirm', $attempt->id)
+                'redirect' => route('panel.ielts_tests.results', $attempt->id)
             ]);
         }
     }
@@ -494,7 +599,15 @@ class IeltsTestController extends Controller
         $attempt = IeltsTestAttempt::with(['test.sections.questions', 'answers'])
             ->findOrFail($attemptId);
         
-        if ($attempt->user_id !== auth()->id()) {
+        $authUser = auth()->user();
+        
+        // Owner, teachers, admins, and organizations can view
+        $canView = $attempt->user_id === $authUser->id 
+            || $authUser->isTeacher() 
+            || $authUser->isAdmin() 
+            || $authUser->isOrganization();
+        
+        if (!$canView) {
             abort(403);
         }
         
