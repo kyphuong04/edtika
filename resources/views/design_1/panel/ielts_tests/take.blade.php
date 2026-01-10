@@ -109,6 +109,92 @@
         border-radius: 12px;
         margin-bottom: 20px;
     }
+    
+    /* Writing Section Styles */
+    .writing-section-header {
+        background: #e8e8e8;
+        padding: 16px 24px;
+        border-radius: 8px 8px 0 0;
+        margin: -30px -30px 0 -30px;
+    }
+    .writing-section-header h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 8px 0;
+    }
+    .writing-section-header p {
+        font-size: 14px;
+        color: #4b5563;
+        margin: 0;
+    }
+    .writing-layout {
+        display: grid;
+        grid-template-columns: 55% 45%;
+        gap: 24px;
+        margin-top: 24px;
+    }
+    .writing-question-box {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 24px;
+        font-size: 15px;
+        line-height: 1.7;
+        color: #1f2937;
+    }
+    .writing-question-box h4 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 16px 0;
+    }
+    .writing-question-box ul {
+        margin: 12px 0;
+        padding-left: 24px;
+    }
+    .writing-question-box li {
+        margin-bottom: 8px;
+    }
+    .writing-question-box strong {
+        font-weight: 600;
+        color: #111827;
+    }
+    .writing-answer-box {
+        background: white;
+        border: 2px solid #d1d5db;
+        border-radius: 8px;
+        padding: 24px;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+    .writing-answer-box textarea {
+        width: 100%;
+        min-height: 400px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 16px;
+        font-size: 15px;
+        line-height: 1.6;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        resize: vertical;
+    }
+    .writing-answer-box textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .word-counter {
+        text-align: right;
+        margin-top: 12px;
+        font-size: 14px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    .word-counter.warning {
+        color: #ef4444;
+    }
 </style>
 @endpush
 
@@ -165,7 +251,106 @@
             </div>
             @endif
 
-            {{-- Questions --}}
+            {{-- Writing Section Special Layout --}}
+            @if($currentSection->skill === 'writing' && !$questions->isEmpty())
+            <div class="question-card">
+                {{-- Writing Header --}}
+                <div class="writing-section-header">
+                    <h3>{{ $currentSection->title }}</h3>
+                    <p>You should spend about <strong>{{ $currentSection->duration ?? 20 }} minutes</strong> on this task. Write at least <strong>{{ $questions->first()->min_words ?? 150 }} words</strong>.</p>
+                </div>
+
+                {{-- Two Column Layout --}}
+                <div class="writing-layout">
+                    {{-- Left: Question Content --}}
+                    <div class="writing-question-box">
+                        <template x-for="(question, index) in questions" :key="question.id">
+                            <div x-show="currentQuestionIndex === index">
+                                <div x-html="question.question_text"></div>
+                                <div x-show="question.instruction" class="mt-3">
+                                    <div x-html="question.instruction"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    {{-- Right: Answer Area --}}
+                    <div class="writing-answer-box">
+                        <template x-for="(question, index) in questions" :key="question.id">
+                            <div x-show="currentQuestionIndex === index">
+                                <textarea 
+                                    x-model="answers[question.id]"
+                                    @input.debounce.1000ms="saveAnswer(question.id)"
+                                    placeholder="Write your response here..."></textarea>
+                                <div class="word-counter" 
+                                     :class="countWords(answers[question.id] || '') < (question.min_words || 0) ? 'warning' : ''">
+                                    Words: <strong x-text="countWords(answers[question.id] || '')"></strong>
+                                    <template x-if="question.min_words">
+                                        <span> / <span x-text="question.min_words"></span> minimum</span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Navigation for Writing --}}
+                <div class="d-flex justify-content-between mt-4">
+                    <button class="btn btn-secondary" 
+                            @click="previousQuestion()"
+                            x-show="questions.length > 1">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Previous
+                    </button>
+                    
+                    <button class="btn btn-primary" 
+                            @click="nextQuestion()"
+                            x-show="currentQuestionIndex < questions.length - 1">
+                        Next
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+
+                    <button class="btn btn-success" 
+                            @click="finishSection()"
+                            x-show="currentQuestionIndex === questions.length - 1">
+                        Finish Section
+                        <i class="fas fa-check ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            @endif
+
+            {{-- No Questions Warning --}}
+            @if($questions->isEmpty() && $currentSection->skill !== 'writing')
+            <div class="question-card text-center">
+                <div class="py-5">  
+                    <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                    <h3 class="text-gray">No Questions Available</h3>
+                    <p class="text-gray">This section does not have any questions yet.</p>
+                    <hr class="my-4">
+                    <p class="text-muted font-12">
+                        <strong>Debug Info:</strong><br>
+                        Section ID: {{ $currentSection->id ?? 'N/A' }}<br>
+                        Section Title: {{ $currentSection->title ?? 'N/A' }}<br>
+                        Skill: {{ $currentSection->skill ?? 'N/A' }}<br>
+                        Questions Count: {{ $questions->count() }}
+                    </p>
+                    <div class="mt-4">
+                        <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn btn-secondary mr-2">
+                            <i class="fas fa-arrow-left mr-1"></i> Back to Test
+                        </a>
+                        <form action="{{ route('panel.ielts_tests.finish_section', $attempt->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-primary">
+                                Skip to Next Section <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @elseif($currentSection->skill !== 'writing')
+
+            {{-- Questions (Non-Writing) --}}
             <template x-for="(question, index) in questions" :key="question.id">
                 <div class="question-card" 
                      x-show="currentQuestionIndex === index"
@@ -291,6 +476,7 @@
                     </div>
                 </div>
             </template>
+            @endif {{-- End if questions is empty --}}
         </div>
 
         {{-- Sidebar --}}
@@ -481,8 +667,17 @@ function testTakingApp() {
 
         autoSubmit() {
             clearInterval(this.timer);
-            alert('Time is up! Your test will be submitted automatically.');
-            window.location.href = '{{ route("panel.ielts_tests.submit", $attempt->id) }}';
+            Swal.fire({
+                title: 'Time\'s Up!',
+                text: 'Your test will be submitted automatically.',
+                icon: 'warning',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#1a3a5c',
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(() => {
+                window.location.href = '{{ route("panel.ielts_tests.submit", $attempt->id) }}';
+            });
         }
     }
 }

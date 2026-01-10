@@ -580,6 +580,14 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/attempt/{attemptId}/review', 'IeltsTestController@reviewAnswers')->name('panel.ielts_tests.review');
     });
 
+    // IELTS Grading (Teachers/Admins - grade speaking and writing answers)
+    Route::group(['prefix' => 'ielts-grading'], function () {
+        Route::get('/', 'IeltsGradingController@index')->name('panel.ielts_grading.index');
+        Route::get('/{attemptId}/grade/{skill?}', 'IeltsGradingController@grade')->name('panel.ielts_grading.grade');
+        Route::post('/{attemptId}/submit', 'IeltsGradingController@submitGrade')->name('panel.ielts_grading.submit');
+        Route::get('/answer/{answerId}', 'IeltsGradingController@viewAnswer')->name('panel.ielts_grading.view_answer');
+    });
+
     // IELTS Test Management (Teachers/Admins - create and manage their tests)
     Route::group(['prefix' => 'my-ielts-tests'], function () {
         Route::get('/', 'IeltsTestManageController@index')->name('panel.my_ielts_tests.index');
@@ -589,13 +597,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/create', 'IeltsTestManageController@create')->name('panel.my_ielts_tests.create');
         Route::post('/store-from-bank', 'IeltsTestManageController@storeFromBank')->name('panel.my_ielts_tests.store_from_bank');
         
-        // Old routes for backward compatibility
-        Route::get('/create-legacy', 'IeltsTestManageController@chooseType')->name('panel.my_ielts_tests.create.legacy');
-        Route::get('/create/mock', 'IeltsTestManageController@createMock')->name('panel.my_ielts_tests.create.mock');
-        Route::get('/create/practice', 'IeltsTestManageController@createPractice')->name('panel.my_ielts_tests.create.practice');
-        Route::post('/store/mock', 'IeltsTestManageController@storeMock')->name('panel.my_ielts_tests.store_mock');
-        Route::post('/store/practice', 'IeltsTestManageController@storePractice')->name('panel.my_ielts_tests.store_practice');
-        
+        // Legacy routes removed - use create from Question Bank only
         Route::post('/store', 'IeltsTestManageController@store')->name('panel.my_ielts_tests.store');
         Route::get('/{id}/edit', 'IeltsTestManageController@edit')->name('panel.my_ielts_tests.edit');
         Route::post('/{id}/update', 'IeltsTestManageController@update')->name('panel.my_ielts_tests.update');
@@ -641,15 +643,19 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/{bankType}/{id}/update', 'QuestionBankController@update')->name('panel.question_bank.update');
         Route::get('/{bankType}/{id}/delete', 'QuestionBankController@destroy')->name('panel.question_bank.delete');
         
-        // ===== QUESTION GROUPS =====
-        Route::get('/{bankType}/groups', 'QuestionBankController@groupList')->name('panel.question_bank.groups');
-        Route::get('/{bankType}/groups/create', 'QuestionBankController@createGroup')->name('panel.question_bank.groups.create');
-        Route::post('/groups/store', 'QuestionBankController@storeGroup')->name('panel.question_bank.groups.store');
-        Route::get('/{bankType}/groups/{id}/edit', 'QuestionBankController@editGroup')->name('panel.question_bank.groups.edit');
-        Route::post('/{bankType}/groups/{id}/update', 'QuestionBankController@updateGroup')->name('panel.question_bank.groups.update');
-        Route::get('/{bankType}/groups/{id}/delete', 'QuestionBankController@destroyGroup')->name('panel.question_bank.groups.delete');
+        //  QUESTION GROUPS - Redirect to new module
+        Route::get('/{bankType}/groups', function($bankType) {
+            return redirect()->route('panel.question-groups.index', ['type' => $bankType]);
+        })->name('panel.question_bank.groups');
+        Route::get('/{bankType}/groups/create', function($bankType) {
+            return redirect()->route('panel.question-groups.create', ['type' => $bankType]);
+        })->name('panel.question_bank.groups.create');
         
-        // ===== EXCEL IMPORT (ZIP with Media Files + Preview) =====
+        //  EXCEL IMPORT (ZIP with Media Files + Preview) 
+        Route::get('/import', function() {
+            // Redirect to import form with default skill (or show selection page)
+            return view('design_1.panel.question_bank.import_select_skill');
+        })->name('panel.question_bank.import.index');
         Route::get('/import/{skill}', 'QuestionBankController@importForm')->name('panel.question_bank.import');
         Route::post('/import/preview', 'QuestionBankController@previewImport')->name('panel.question_bank.import.preview');
         Route::post('/import/confirm', 'QuestionBankController@processImport')->name('panel.question_bank.import.confirm');
@@ -657,5 +663,47 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/template/{skill}', 'QuestionBankController@downloadTemplate')->name('panel.question_bank.import.template');
     });
 
+    Route::group(['prefix' => 'question-groups'], function () {
+        // list all groups (filter by type=mock or type=practice)
+        Route::get('/', 'QuestionGroupController@index')->name('panel.question-groups.index');
+        
+        // create new group
+        Route::get('/create', 'QuestionGroupController@create')->name('panel.question-groups.create');
+        Route::post('/', 'QuestionGroupController@store')->name('panel.question-groups.store');
+        
+        // view group with questions
+        Route::get('/{id}', 'QuestionGroupController@show')->name('panel.question-groups.show');
+        
+        // edit group
+        Route::get('/{id}/edit', 'QuestionGroupController@edit')->name('panel.question-groups.edit');
+        Route::put('/{id}', 'QuestionGroupController@update')->name('panel.question-groups.update');
+        Route::post('/{id}', 'QuestionGroupController@update')->name('panel.question-groups.update-post'); // fallback for forms without @method('PUT')
+        
+        // Submit for approval
+        Route::post('/{id}/submit-approval', 'QuestionGroupController@submitApproval')->name('panel.question-groups.submit-approval');
+        
+        // delete group
+        Route::delete('/{id}', 'QuestionGroupController@destroy')->name('panel.question-groups.destroy');
+    });
+
+    Route::group(['prefix' => 'questions'], function () {
+        // create question for a group
+        Route::get('/groups/{groupId}/create', 'QuestionController@create')->name('panel.questions.create');
+        
+        // store new question
+        Route::post('/groups/{groupId}', 'QuestionController@store')->name('panel.questions.store');
+        
+        // edit question
+        Route::get('/{questionId}/edit', 'QuestionController@edit')->name('panel.questions.edit');
+        
+        // update question
+        Route::put('/{questionId}', 'QuestionController@update')->name('panel.questions.update');
+        
+        // delete question
+        Route::delete('/{questionId}', 'QuestionController@destroy')->name('panel.questions.destroy');
+        
+        // get type-specific form HTML
+        Route::get('/type-form/{type}', 'QuestionController@getQuestionTypeForm')->name('panel.questions.type_form');
+    });
 
 });

@@ -125,7 +125,15 @@
                             </div>
 
                             <div class="d-flex align-items-center gap-12">
-                                <a href="{{ route('admin.ielts_tests.create') }}" class="btn btn-primary">
+                                <a href="{{ route('admin.ielts_tests.settings') }}" class="btn btn-outline-secondary">
+                                    <x-iconsax-lin-setting-2 class="icons" width="18px" height="18px"/>
+                                    <span class="ml-4 font-12">Settings</span>
+                                </a>
+                                <a href="{{ route('admin.ielts_tests.attempts') }}" class="btn btn-outline-success">
+                                    <x-iconsax-lin-teacher class="icons" width="18px" height="18px"/>
+                                    <span class="ml-4 font-12">Student Grading</span>
+                                </a>
+                                <a href="{{ route('admin.ielts_tests.wizard') }}" class="btn btn-primary">
                                     <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
                                     <span class="ml-4 font-12">Create New Test</span>
                                 </a>
@@ -219,20 +227,45 @@
                                                                 <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
                                                                 <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
                                                             </a>
+                                                            
+                                                            @if($test->status === 'pending_approval')
+                                                <form action="{{ route('admin.ielts_tests.approve', $test->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                        <x-iconsax-lin-tick-circle class="icons text-success mr-2" width="18px" height="18px"/>
+                                                        <span class="text-success font-14 font-weight-bold">Approve</span>
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 reject-btn" 
+                                                        data-test-id="{{ $test->id }}" data-test-title="{{ $test->title }}">
+                                                    <x-iconsax-lin-close-circle class="icons text-danger mr-2" width="18px" height="18px"/>
+                                                    <span class="text-danger font-14">Reject</span>
+                                                </button>
+                                            @endif
+                                            
+                                            @if($test->status === 'published')
+                                                <form action="{{ route('admin.ielts_tests.unpublish', $test->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                        <x-iconsax-lin-slash class="icons text-warning mr-2" width="18px" height="18px"/>
+                                                        <span class="text-warning font-14">Unpublish</span>
+                                                    </button>
+                                                </form>
+                                            @endif
 
-                                                            @if($test->canBeEdited())
-                                                                @include('admin.includes.delete_button',[
-                                                                    'url' => route('admin.ielts_tests.destroy', $test->id),
-                                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
-                                                                    'btnText' => trans("admin/main.delete"),
-                                                                    'btnIcon' => 'trash',
-                                                                    'iconType' => 'lin',
-                                                                    'iconClass' => 'text-danger mr-2',
-                                                                ])
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </td>
+                                            @if($test->canBeEdited())
+                                                @include('admin.includes.delete_button',[
+                                                    'url' => route('admin.ielts_tests.destroy', $test->id),
+                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans("admin/main.delete"),
+                                                    'btnIcon' => 'trash',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-danger mr-2',
+                                                ])
+                                            @endif
+                                        </div>
+                                    </div>
+                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
