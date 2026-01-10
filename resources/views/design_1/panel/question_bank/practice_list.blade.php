@@ -122,6 +122,17 @@
                                     @endif
                                 </div>
 
+                                {{-- Audio Player for Listening --}}
+                                @if($question->skill === 'listening' && $question->audio_file)
+                                    <div class="audio-player-mini mb-12">
+                                        <audio controls preload="metadata" style="width: 100%; height: 36px;">
+                                            <source src="{{ Storage::disk('public')->url($question->audio_file) }}" type="audio/mpeg">
+                                            <source src="{{ Storage::disk('public')->url($question->audio_file) }}" type="audio/wav">
+                                            Your browser does not support audio.
+                                        </audio>
+                                    </div>
+                                @endif
+
                                 <h5 class="question-text">{{ \Illuminate\Support\Str::limit($question->question_text, 120) }}</h5>
 
                                 <div class="question-meta">
@@ -269,8 +280,8 @@
 .skill-indicator { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
 .skill-listening { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
 .skill-reading { background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); color: white; }
-.skill-writing { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-.skill-speaking { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+.skill-writing { background: linear-gradient(135deg, #1a3a5c 0%, #2e5a8a 100%); color: white; }
+.skill-speaking { background: linear-gradient(135deg, #2e5a8a 0%, #3b82f6 100%); color: white; }
 
 .band-indicator { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); padding: 6px 12px; border-radius: 8px; color: white; font-size: 12px; font-weight: 600; }
 
@@ -299,8 +310,8 @@
 .skill-badge { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; font-size: 20px; }
 .skill-badge.skill-listening { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 .skill-badge.skill-reading { background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); }
-.skill-badge.skill-writing { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-.skill-badge.skill-speaking { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.skill-badge.skill-writing { background: linear-gradient(135deg, #1a3a5c 0%, #2e5a8a 100%); }
+.skill-badge.skill-speaking { background: linear-gradient(135deg, #2e5a8a 0%, #3b82f6 100%); }
 
 .question-cell { max-width: 500px; }
 .question-title { font-size: 14px; color: #1f2937; margin-bottom: 6px; line-height: 1.5; }

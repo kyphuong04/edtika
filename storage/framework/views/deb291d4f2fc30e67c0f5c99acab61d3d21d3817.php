@@ -17,7 +17,7 @@
     <?php echo $__env->yieldPushContent('libraries_top'); ?>
 
     <link rel="stylesheet" href="/assets/admin/css/style.css">
-    <link rel="stylesheet" href="/assets/admin/css/custom.css">
+    <link rel="stylesheet" href="/assets/admin/css/custom.css?v=<?php echo e(time()); ?>">
     <link rel="stylesheet" href="/assets/admin/css/components.css">
     <link rel="stylesheet" href="/assets/admin/css/extra.min.css">
     <?php if($isRtl): ?>
@@ -40,7 +40,7 @@
 
     </style>
 </head>
-<body class="<?php echo e($isRtl ? 'rtl' : ''); ?>">
+<body class="sidebar-mini sidebar-hover-expand <?php echo e($isRtl ? 'rtl' : ''); ?>">
 
 <div id="app">
     <div class="main-wrapper">
@@ -137,7 +137,7 @@
     var priceInvalidHintLang = '<?php echo e(trans('update.price_invalid_hint')); ?>';
 </script>
 
-<script src="/assets/admin/js/custom.js"></script>
+<script src="/assets/admin/js/custom.js?v=<?php echo e(time()); ?>"></script>
 <script src="/assets/admin/js/parts/ai-content-generator.min.js"></script>
 
 <script>
