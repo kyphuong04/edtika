@@ -657,5 +657,30 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/template/{skill}', 'QuestionBankController@downloadTemplate')->name('panel.question_bank.import.template');
     });
 
+    // Dictionary & Flashcard Routes
+    Route::group(['prefix' => 'dictionary'], function () {
+        Route::get('/', 'DictionaryController@index');
+        Route::get('/dictionaries', 'DictionaryController@getDictionaries');
+        Route::get('/search', 'DictionaryController@search');
+        Route::get('/search-first', 'DictionaryController@searchFirst');
+        Route::get('/did-you-mean', 'DictionaryController@didYouMean');
+        Route::get('/nearby-entries', 'DictionaryController@getNearbyEntries');
+        Route::get('/entry', 'DictionaryController@getEntry');
+        
+        // Flashcard Management
+        Route::get('/flashcards', 'DictionaryController@flashcards');
+        Route::post('/flashcards/save', 'DictionaryController@saveFlashcard');
+        Route::delete('/flashcards/{id}', 'DictionaryController@deleteFlashcard');
+
+        // Word Lists Management
+        Route::get('/word-lists', 'DictionaryController@wordLists');
+        Route::post('/word-lists/create', 'DictionaryController@createWordList');
+        Route::get('/word-lists/{id}', 'DictionaryController@viewWordList');
+        Route::put('/word-lists/{id}', 'DictionaryController@updateWordList');
+        Route::delete('/word-lists/{id}', 'DictionaryController@deleteWordList');
+        Route::post('/word-lists/add-word', 'DictionaryController@addWordToList');
+        Route::post('/word-lists/remove-word', 'DictionaryController@removeWordFromList');
+        Route::get('/word-lists-dropdown', 'DictionaryController@getUserWordLists');
+    });
 
 });

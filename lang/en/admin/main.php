@@ -1588,4 +1588,15 @@ return [
 'ban_users' => 'Banned users',
 'total_reservatores' => 'Total Reservatores',
 
+// Dictionary & Flashcard
+'dictionary_and_flashcard' => 'Dictionary & Flashcard',
+'search_word' => 'Search Word',
+'enter_word_to_search' => 'Enter a word to search...',
+'searching' => 'Searching',
+'please_enter_word' => 'Please enter a word to search',
+'word_not_found' => 'Word not found',
+'search_error' => 'Search error',
+'did_you_mean' => 'Did you mean',
+'related_words' => 'Related Words',
+
 ];

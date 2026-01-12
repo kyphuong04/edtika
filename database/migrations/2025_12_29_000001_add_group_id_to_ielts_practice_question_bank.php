@@ -14,17 +14,20 @@ class AddGroupIdToIeltsPracticeQuestionBank extends Migration
     public function up()
     {
         Schema::table('ielts_practice_question_bank', function (Blueprint $table) {
-            // Add group_id column after id
-            $table->bigInteger('group_id')->unsigned()->nullable()->after('id');
-            
-            // Add index for performance
-            $table->index('group_id');
-            
-            // Add foreign key constraint
-            $table->foreign('group_id')
-                  ->references('id')
-                  ->on('ielts_question_groups')
-                  ->onDelete('cascade');
+            // Check if column doesn't exist before adding
+            if (!Schema::hasColumn('ielts_practice_question_bank', 'group_id')) {
+                // Add group_id column after id
+                $table->bigInteger('group_id')->unsigned()->nullable()->after('id');
+                
+                // Add index for performance
+                $table->index('group_id');
+                
+                // Add foreign key constraint
+                $table->foreign('group_id')
+                      ->references('id')
+                      ->on('ielts_question_groups')
+                      ->onDelete('cascade');
+            }
         });
     }
 

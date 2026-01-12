@@ -7,7 +7,8 @@
                 $authUser->can('admin_reviews_lists') or
                 $authUser->can('admin_webinar_assignments') or
                 $authUser->can('admin_enrollment') or
-                $authUser->can('admin_waitlists')
+                $authUser->can('admin_waitlists') or
+                $authUser->can('admin_dictionary')
             )
     <li class="menu-header">{{ trans('site.education') }}</li>
 @endif
@@ -317,6 +318,15 @@
                     <a href="{{ getAdminPanelUrl() }}/reviews" class="nav-link @if(!empty($sidebarBeeps['reviews']) and $sidebarBeeps['reviews']) beep beep-sidebar @endif">
                         <x-iconsax-bul-like-dislike class="icons" width="24px" height="24px"/>
                         <span>{{ trans('admin/main.reviews') }}</span>
+                    </a>
+                </li>
+            @endcan
+
+            @can('admin_dictionary')
+                <li class="{{ (request()->is(getAdminPanelUrl('/dictionary*', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl() }}/dictionary" class="nav-link">
+                        <x-iconsax-bul-book class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.dictionary_and_flashcard') }}</span>
                     </a>
                 </li>
             @endcan
