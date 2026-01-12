@@ -7,7 +7,8 @@
                 $authUser->can('admin_reviews_lists') or
                 $authUser->can('admin_webinar_assignments') or
                 $authUser->can('admin_enrollment') or
-                $authUser->can('admin_waitlists')
+                $authUser->can('admin_waitlists') or
+                $authUser->can('admin_dictionary')
             ): ?>
     <li class="menu-header"><?php echo e(trans('site.education')); ?></li>
 <?php endif; ?>
@@ -170,6 +171,44 @@
 <?php endif; ?>
                         <span><?php echo e(trans('admin/main.quizzes')); ?></span>
                     </a>
+                </li>
+            <?php endif; ?>
+
+            
+            <?php if(true): ?> 
+                <li class="nav-item dropdown <?php echo e((request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false))) ? 'active' : ''); ?>">
+                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
+                        <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
+<?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
+<?php $component->withName('iconsax-bul-clipboard-text'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
+<?php $attributes = $attributes->except(collect($constructor->getParameters())->map->getName()->all()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'icons','width' => '24px','height' => '24px']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e)): ?>
+<?php $component = $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e; ?>
+<?php unset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e); ?>
+<?php endif; ?>
+                        <span>IELTS Tests</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="<?php echo e((request()->is(getAdminPanelUrl('/ielts-tests', false))) ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/ielts-tests">All Tests</a>
+                        </li>
+                        <li class="<?php echo e((request()->is(getAdminPanelUrl('/ielts-tests/create', false))) ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/ielts-tests/create">Create New</a>
+                        </li>
+                        <li class="<?php echo e((request()->is(getAdminPanelUrl('/ielts-tests/pending-approval', false))) ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/ielts-tests/pending-approval">Pending Approval</a>
+                        </li>
+                        <li class="<?php echo e((request()->is(getAdminPanelUrl('/practice-categories', false))) ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/practice-categories">Practice Categories</a>
+                        </li>
+                    </ul>
                 </li>
             <?php endif; ?>
 
@@ -475,6 +514,29 @@
 <?php unset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e); ?>
 <?php endif; ?>
                         <span><?php echo e(trans('admin/main.reviews')); ?></span>
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('admin_dictionary')): ?>
+                <li class="<?php echo e((request()->is(getAdminPanelUrl('/dictionary*', false))) ? 'active' : ''); ?>">
+                    <a href="<?php echo e(getAdminPanelUrl()); ?>/dictionary" class="nav-link">
+                        <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
+<?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
+<?php $component->withName('iconsax-bul-book'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
+<?php $attributes = $attributes->except(collect($constructor->getParameters())->map->getName()->all()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'icons','width' => '24px','height' => '24px']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e)): ?>
+<?php $component = $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e; ?>
+<?php unset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e); ?>
+<?php endif; ?>
+                        <span><?php echo e(trans('admin/main.dictionary_and_flashcard')); ?></span>
                     </a>
                 </li>
             <?php endif; ?>
