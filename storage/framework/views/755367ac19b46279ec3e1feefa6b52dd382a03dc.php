@@ -201,6 +201,11 @@
                         <li class="<?php echo e((request()->is(getAdminPanelUrl('/ielts-tests/create', false))) ? 'active' : ''); ?>">
                             <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/ielts-tests/create">Create New</a>
                         </li>
+                        <li class="<?php echo e((request()->is(getAdminPanelUrl('/ielts-tests/attempts*', false))) ? 'active' : ''); ?>">
+                            <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/ielts-tests/attempts">
+                                <span>Student Grading</span>
+                            </a>
+                        </li>
                         <li class="<?php echo e((request()->is(getAdminPanelUrl('/ielts-tests/pending-approval', false))) ? 'active' : ''); ?>">
                             <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/ielts-tests/pending-approval">Pending Approval</a>
                         </li>
