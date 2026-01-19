@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\User;
 
 class Flashcard extends Model
 {
@@ -13,6 +14,7 @@ class Flashcard extends Model
     protected $fillable = [
         'user_id',
         'word',
+        'part_of_speech',
         'pronunciation',
         'definition',
         'example',

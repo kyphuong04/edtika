@@ -13,10 +13,10 @@ class CreateFlashcardsTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('flashcards')) {
-            Schema::create('flashcards', function (Blueprint $table) {
+        if (!Schema::hasTable('user_flashcards')) {
+            Schema::create('user_flashcards', function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->bigInteger('user_id')->unsigned();
+                $table->integer('user_id')->unsigned();
                 $table->string('word');
                 $table->string('pronunciation')->nullable();
                 $table->text('definition');
@@ -24,8 +24,12 @@ class CreateFlashcardsTable extends Migration
                 $table->text('translation')->nullable();
                 $table->timestamps();
 
-                $table->foreign('user_id')->on('users')->references('id')->cascadeOnDelete();
                 $table->index('user_id');
+            });
+
+            // Add foreign key after table creation
+            Schema::table('user_flashcards', function (Blueprint $table) {
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             });
         }
     }
@@ -37,6 +41,6 @@ class CreateFlashcardsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('flashcards');
+        Schema::dropIfExists('user_flashcards');
     }
 }

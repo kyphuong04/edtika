@@ -662,14 +662,16 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/', 'DictionaryController@index');
         Route::get('/dictionaries', 'DictionaryController@getDictionaries');
         Route::get('/search', 'DictionaryController@search');
-        Route::get('/search-first', 'DictionaryController@searchFirst');
+        Route::post('/search-first', 'DictionaryController@searchFirst');
         Route::get('/did-you-mean', 'DictionaryController@didYouMean');
         Route::get('/nearby-entries', 'DictionaryController@getNearbyEntries');
         Route::get('/entry', 'DictionaryController@getEntry');
         
         // Flashcard Management
+        Route::get('/flashcards-preview', 'DictionaryController@flashcardsPreview');
         Route::get('/flashcards', 'DictionaryController@flashcards');
         Route::post('/flashcards/save', 'DictionaryController@saveFlashcard');
+        Route::post('/save-flashcard', 'DictionaryController@saveFlashcard');
         Route::delete('/flashcards/{id}', 'DictionaryController@deleteFlashcard');
 
         // Word Lists Management
@@ -681,6 +683,18 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/word-lists/add-word', 'DictionaryController@addWordToList');
         Route::post('/word-lists/remove-word', 'DictionaryController@removeWordFromList');
         Route::get('/word-lists-dropdown', 'DictionaryController@getUserWordLists');
+
+        // Academic Word Lists (Band-based)
+        Route::get('/academic-word-lists/{id}', 'DictionaryController@getAcademicWordList');
+        Route::post('/academic-word-lists/mark-learned', 'DictionaryController@markWordAsLearned');
+        
+        // Practice Mode
+        Route::post('/practice/start', 'DictionaryController@startPractice');
+        Route::post('/practice/start-my-word-list', 'DictionaryController@startMyWordListPractice');
+        Route::post('/practice/submit-answer', 'DictionaryController@submitPracticeAnswer');
+        
+        // My Word List
+        Route::get('/my-word-list', 'DictionaryController@getMyWordList');
     });
 
 });

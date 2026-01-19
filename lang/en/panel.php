@@ -426,6 +426,7 @@ return [
 'word_list_created_successfully' => 'Word list created successfully!',
 'word_list_updated_successfully' => 'Word list updated successfully!',
 'word_list_deleted_successfully' => 'Word list deleted successfully!',
+'words_deleted_successfully' => 'Words deleted successfully!',
 'word_added_to_list_successfully' => 'Word added to list successfully!',
 'word_removed_from_list_successfully' => 'Word removed from list successfully!',
 'word_already_in_list' => 'Word already exists in this list',
