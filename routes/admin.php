@@ -1373,5 +1373,16 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
         Route::post('/{bankType}/bulk-delete-unused', 'QuestionBankController@bulkDeleteUnused')->name('admin.question_bank.bulk_delete_unused');
         Route::get('/statistics', 'QuestionBankController@statistics')->name('admin.question_bank.statistics');
     });
+
+    // Dictionary & Flashcard Routes
+    Route::group(['prefix' => 'dictionary'], function () {
+        Route::get('/', 'DictionaryController@index');
+        Route::get('/dictionaries', 'DictionaryController@getDictionaries');
+        Route::get('/search', 'DictionaryController@search');
+        Route::get('/search-first', 'DictionaryController@searchFirst');
+        Route::get('/did-you-mean', 'DictionaryController@didYouMean');
+        Route::get('/nearby-entries', 'DictionaryController@getNearbyEntries');
+        Route::get('/entry', 'DictionaryController@getEntry');
+    });
 });
         

@@ -644,15 +644,15 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/{bankType}/{id}/delete', 'QuestionBankController@destroy')->name('panel.question_bank.delete');
         
         //  QUESTION GROUPS - Redirect to new module
-        Route::get('/{bankType}/groups', function($bankType) {
+        Route::get('/{bankType}/groups', function ($bankType) {
             return redirect()->route('panel.question-groups.index', ['type' => $bankType]);
         })->name('panel.question_bank.groups');
-        Route::get('/{bankType}/groups/create', function($bankType) {
+        Route::get('/{bankType}/groups/create', function ($bankType) {
             return redirect()->route('panel.question-groups.create', ['type' => $bankType]);
         })->name('panel.question_bank.groups.create');
         
         //  EXCEL IMPORT (ZIP with Media Files + Preview) 
-        Route::get('/import', function() {
+        Route::get('/import', function () {
             // Redirect to import form with default skill (or show selection page)
             return view('design_1.panel.question_bank.import_select_skill');
         })->name('panel.question_bank.import.index');
@@ -704,6 +704,45 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         
         // get type-specific form HTML
         Route::get('/type-form/{type}', 'QuestionController@getQuestionTypeForm')->name('panel.questions.type_form');
+    });
+    // Dictionary & Flashcard Routes
+    Route::group(['prefix' => 'dictionary'], function () {
+        Route::get('/', 'DictionaryController@index');
+        Route::get('/dictionaries', 'DictionaryController@getDictionaries');
+        Route::get('/search', 'DictionaryController@search');
+        Route::post('/search-first', 'DictionaryController@searchFirst');
+        Route::get('/did-you-mean', 'DictionaryController@didYouMean');
+        Route::get('/nearby-entries', 'DictionaryController@getNearbyEntries');
+        Route::get('/entry', 'DictionaryController@getEntry');
+        
+        // Flashcard Management
+        Route::get('/flashcards-preview', 'DictionaryController@flashcardsPreview');
+        Route::get('/flashcards', 'DictionaryController@flashcards');
+        Route::post('/flashcards/save', 'DictionaryController@saveFlashcard');
+        Route::post('/save-flashcard', 'DictionaryController@saveFlashcard');
+        Route::delete('/flashcards/{id}', 'DictionaryController@deleteFlashcard');
+
+        // Word Lists Management
+        Route::get('/word-lists', 'DictionaryController@wordLists');
+        Route::post('/word-lists/create', 'DictionaryController@createWordList');
+        Route::get('/word-lists/{id}', 'DictionaryController@viewWordList');
+        Route::put('/word-lists/{id}', 'DictionaryController@updateWordList');
+        Route::delete('/word-lists/{id}', 'DictionaryController@deleteWordList');
+        Route::post('/word-lists/add-word', 'DictionaryController@addWordToList');
+        Route::post('/word-lists/remove-word', 'DictionaryController@removeWordFromList');
+        Route::get('/word-lists-dropdown', 'DictionaryController@getUserWordLists');
+
+        // Academic Word Lists (Band-based)
+        Route::get('/academic-word-lists/{id}', 'DictionaryController@getAcademicWordList');
+        Route::post('/academic-word-lists/mark-learned', 'DictionaryController@markWordAsLearned');
+        
+        // Practice Mode
+        Route::post('/practice/start', 'DictionaryController@startPractice');
+        Route::post('/practice/start-my-word-list', 'DictionaryController@startMyWordListPractice');
+        Route::post('/practice/submit-answer', 'DictionaryController@submitPracticeAnswer');
+        
+        // My Word List
+        Route::get('/my-word-list', 'DictionaryController@getMyWordList');
     });
 
 });

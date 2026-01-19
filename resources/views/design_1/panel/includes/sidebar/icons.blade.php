@@ -76,4 +76,7 @@
 @elseif($name == 'events')
     <x-iconsax-lin-calendar-2 class="icons" width="20px" height="20px"/>
 
+@elseif($name == 'dictionary')
+    <x-iconsax-lin-book class="icons" width="20px" height="20px"/>
+
 @endif

@@ -285,6 +285,18 @@ class SidebarItems
             ];
         }
 
+        // Dictionary & Flashcard - Available for all roles
+        $items['dictionary'] = [
+            'icon' => self::getIcon('dictionary'),
+            'text' => trans('panel.dictionary_and_flashcard'),
+            'url' => '/panel/dictionary',
+            'items' => [
+                ['text' => trans('panel.dictionary'), 'url' => '/panel/dictionary'],
+                ['text' => trans('panel.my_flashcards'), 'url' => '/panel/dictionary/flashcards'],
+                ['text' => trans('panel.word_lists'), 'url' => '/panel/dictionary/word-lists'],
+            ]
+        ];
+
         return $items;
     }
 
