@@ -3,9 +3,9 @@
 <?php $__env->startPush('styles_top'); ?>
 <style>
     .dictionary-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
+        max-width: 100%;
+        margin: 0;
+        padding: 0 30px;
     }
     
     .user-stats-card {
@@ -311,325 +311,6 @@
         color: #f1f5f9;
     }
     
-    /* Dictionary Result Styles */
-    .dictionary-result-container {
-        background: #fff;
-        border-radius: 12px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .dictionary-result-container.hidden {
-        display: none;
-    }
-    
-    .dark-mode .dictionary-result-container {
-        background: #1e293b;
-    }
-    
-    .result-card {
-        width: 100%;
-    }
-    
-    .result-header {
-        margin-bottom: 20px;
-    }
-    
-    .dark-mode .result-header {
-        border-color: #374151;
-    }
-    
-    .result-word {
-        font-size: 32px;
-        font-weight: 700;
-        color: #1f2937;
-        margin: 0;
-    }
-    
-    .dark-mode .result-word {
-        color: #f1f5f9;
-    }
-    
-    .part-of-speech-section {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .part-of-speech-section:last-child {
-        border-bottom: none;
-    }
-    
-    .pos-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-    
-    .pos-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #374151;
-        font-style: italic;
-    }
-    
-    .dark-mode .pos-title {
-        color: #e5e7eb;
-    }
-    
-    .btn-save-pos {
-        background: #6b7280;
-        color: white;
-        border: none;
-        padding: 8px 24px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-    
-    .btn-save-pos:hover {
-        background: #4b5563;
-        transform: translateY(-1px);
-    }
-    
-    .btn-save-pos.saved {
-        background: #10b981;
-    }
-    
-    .btn-save-pos.saved:hover {
-        background: #059669;
-    }
-    
-    .definition-item {
-        margin-bottom: 15px;
-        padding-left: 20px;
-    }
-    
-    .definition-text {
-        color: #374151;
-        line-height: 1.6;
-        margin-bottom: 5px;
-    }
-    
-    .dark-mode .definition-text {
-        color: #d1d5db;
-    }
-    
-    .example-text {
-        color: #6b7280;
-        font-style: italic;
-        margin-left: 15px;
-        line-height: 1.5;
-    }
-    
-    .dark-mode .example-text {
-        color: #9ca3af;
-    }
-    
-    .btn-back {
-        width: 100%;
-        padding: 12px;
-        background: white;
-        border: 2px solid #d1d5db;
-        border-radius: 10px;
-        color: #374151;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        margin-top: 20px;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    .btn-back:hover {
-        background: #f9fafb;
-        border-color: #9ca3af;
-    }
-    
-    .dark-mode .btn-back {
-        background: #2d3748;
-        border-color: #4a5568;
-        color: #e5e7eb;
-    }
-    
-    .dark-mode .btn-back:hover {
-        background: #374151;
-        border-color: #6b7280;
-    }
-    }
-    
-    .dictionary-result-container.hidden {
-        display: none;
-    }
-    
-    .dark-mode .dictionary-result-container {
-        background: #1e293b;
-    }
-    
-    .result-card {
-        max-width: 800px;
-    }
-    
-    .result-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .dark-mode .result-header {
-        border-bottom-color: #334155;
-    }
-    
-    .result-word {
-        font-size: 32px;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0;
-        font-style: italic;
-    }
-    
-    .dark-mode .result-word {
-        color: #f1f5f9;
-    }
-    
-    .btn-save-word {
-        padding: 10px 24px;
-        background: #10b981;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 14px;
-    }
-    
-    .btn-save-word:hover {
-        background: #059669;
-    }
-    
-    .btn-save-word:disabled {
-        background: #6b7280;
-        cursor: not-allowed;
-    }
-    
-    .pronunciation-section {
-        display: flex;
-        gap: 30px;
-        margin-bottom: 30px;
-    }
-    
-    .pronunciation-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .pronunciation-label {
-        font-weight: 700;
-        color: #64748b;
-        font-size: 14px;
-    }
-    
-    .dark-mode .pronunciation-label {
-        color: #94a3b8;
-    }
-    
-    .pronunciation-text {
-        color: #1e293b;
-        font-size: 16px;
-    }
-    
-    .dark-mode .pronunciation-text {
-        color: #f1f5f9;
-    }
-    
-    .pronunciation-audio-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: #3b82f6;
-        border: none;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    
-    .pronunciation-audio-btn:hover:not(:disabled) {
-        background: #2563eb;
-        transform: scale(1.1);
-    }
-    
-    .pronunciation-audio-btn:disabled {
-        background: #d1d5db;
-        color: #9ca3af;
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-    
-    .pronunciation-audio-btn i {
-        font-size: 18px;
-    }
-    
-    .definitions-section {
-        margin-top: 20px;
-    }
-    
-    .definition-group {
-        margin-bottom: 25px;
-    }
-    
-    .part-of-speech {
-        font-size: 18px;
-        font-weight: 600;
-        color: #3b82f6;
-        margin-bottom: 15px;
-        font-style: italic;
-    }
-    
-    .definition-item {
-        margin-bottom: 15px;
-        padding-left: 20px;
-    }
-    
-    .definition-text {
-        color: #1e293b;
-        font-size: 15px;
-        line-height: 1.6;
-        margin-bottom: 8px;
-    }
-    
-    .dark-mode .definition-text {
-        color: #f1f5f9;
-    }
-    
-    .definition-example {
-        color: #64748b;
-        font-size: 14px;
-        font-style: italic;
-        padding-left: 15px;
-        border-left: 3px solid #e2e8f0;
-        margin-top: 5px;
-    }
-    
-    .dark-mode .definition-example {
-        color: #94a3b8;
-        border-left-color: #334155;
-    }
-    
     .word-item {
         background: #fff;
         border-radius: 8px;
@@ -787,9 +468,9 @@
     .stats-widget {
         background: #fff;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     
     .dark-mode .stats-widget {
@@ -797,11 +478,13 @@
     }
     
     .widget-title {
-        font-size: 16px;
-        font-weight: 600;
+        font-size: 18px;
+        font-weight: 700;
         color: #1e293b;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
     .dark-mode .widget-title {
@@ -811,34 +494,85 @@
     .streak-circles {
         display: flex;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
+        flex-wrap: wrap;
         margin-bottom: 15px;
     }
     
     .streak-circle {
-        width: 40px;
-        height: 40px;
+        background: #f8fafc;
+        width: 45px;
+        height: 45px;
         border-radius: 50%;
         border: 2px solid #e2e8f0;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 16px;
+        font-weight: 700;
         color: #94a3b8;
+        transition: all 0.3s;
     }
     
     .streak-circle.active {
         background: #3b82f6;
         border-color: #3b82f6;
         color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .dark-mode .streak-circle {
+        background: #0f172a;
+        border-color: #334155;
+    }
+    
+    .dark-mode .streak-circle.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
     }
     
     .ranking-placeholder {
         text-align: center;
-        padding: 30px;
+        padding: 40px 20px;
         color: #94a3b8;
         font-size: 14px;
+        line-height: 1.6;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+    
+    .dark-mode .ranking-placeholder {
+        background: #0f172a;
+        color: #64748b;
+    }
+
+    .flashcard-preview {
+        text-align: center;
+    }
+
+    .flashcard-info {
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .dark-mode .flashcard-info {
+        background: #0f172a;
+    }
+
+    .flashcard-info p {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .flashcard-info .text-muted {
+        color: #64748b !important;
+        font-size: 13px;
+    }
+
+    .dark-mode .flashcard-info .text-muted {
+        color: #94a3b8 !important;
     }
     
     .practice-mode-container {
@@ -1006,58 +740,204 @@
     .hidden {
         display: none !important;
     }
+
+    /* Dictionary Result Styles */
+    .dictionary-result-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .dark-mode .dictionary-result-container {
+        background: #1e293b;
+    }
+
+    .result-word {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+
+    .dark-mode .result-word {
+        color: #f1f5f9;
+    }
+
+    .result-pronunciation {
+        font-size: 18px;
+        color: #3b82f6;
+        font-style: italic;
+        margin-bottom: 20px;
+    }
+
+    .dark-mode .result-pronunciation {
+        color: #60a5fa;
+    }
+
+    .result-pos {
+        display: inline-block;
+        background: #e0f2fe;
+        color: #0284c7;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .dark-mode .result-pos {
+        background: #0c4a6e;
+        color: #7dd3fc;
+    }
+
+    .result-definition {
+        font-size: 16px;
+        color: #475569;
+        margin: 10px 0;
+        line-height: 1.6;
+    }
+
+    .dark-mode .result-definition {
+        color: #cbd5e1;
+    }
+
+    .result-example {
+        font-size: 15px;
+        color: #64748b;
+        font-style: italic;
+        margin: 8px 0;
+        padding-left: 15px;
+        border-left: 3px solid #e2e8f0;
+    }
+
+    .dark-mode .result-example {
+        color: #94a3b8;
+        border-left-color: #334155;
+    }
+
+    .result-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .result-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .result-btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .result-btn-primary:hover {
+        background: #2563eb;
+    }
+
+    .result-btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .result-btn-secondary:hover {
+        background: #e2e8f0;
+    }
+
+    .dark-mode .result-btn-secondary {
+        background: #0f172a;
+        color: #cbd5e1;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 991px) {
+        .col-lg-8,
+        .col-lg-4 {
+            margin-bottom: 30px;
+        }
+        
+        .dictionary-container {
+            padding: 0 10px;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        .dictionary-container {
+            padding: 0 20px;
+        }
+        
+        /* Add gap between columns */
+        .row {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        
+        .col-lg-8,
+        .col-lg-4 {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+    }
+    
+    @media (min-width: 1200px) {
+        .dictionary-container {
+            padding: 0 40px;
+        }
+        
+        .row {
+            margin-left: -15px;
+            margin-right: -15px;
+        }
+        
+        .col-lg-8,
+        .col-lg-4 {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+    }
+    
+    @media (min-width: 1400px) {
+        .dictionary-container {
+            padding: 0 50px;
+        }
+    }
 </style>
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startSection('content'); ?>
 <div class="dictionary-container">
-    <!-- Search Section -->
-    <div class="search-section">
-        <h3 class="search-title">Search English</h3>
-        <div class="search-wrapper">
-            <input type="text" class="search-input" id="searchInput" placeholder="Search the word...">
-            <button class="search-btn" id="searchBtn">Search</button>
-        </div>
-    </div>
-
-    <!-- Dictionary Search Result -->
-    <div class="dictionary-result-container hidden" id="dictionaryResult">
-        <div class="result-card">
-            <div class="result-header">
-                <h2 class="result-word" id="resultWord"></h2>
-            </div>
-            
-            <div class="pronunciation-section">
-                <div class="pronunciation-item">
-                    <span class="pronunciation-label">UK</span>
-                    <span class="pronunciation-text" id="pronunciationUK">/--/</span>
-                    <button class="pronunciation-audio-btn" id="audioUKBtn" disabled>
-                        <i class="iconsax" data-icon="volume-high"></i>
-                    </button>
-                </div>
-                <div class="pronunciation-item">
-                    <span class="pronunciation-label">US</span>
-                    <span class="pronunciation-text" id="pronunciationUS">/--/</span>
-                    <button class="pronunciation-audio-btn" id="audioUSBtn" disabled>
-                        <i class="iconsax" data-icon="volume-high"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="definitions-section" id="definitionsSection">
-                <!-- Definitions will be loaded here -->
-            </div>
-            
-            <button class="btn-back" id="backBtn">
-                <i class="iconsax" data-icon="arrow-left"></i> Back
-            </button>
-        </div>
-    </div>
-
     <!-- Main Content Grid -->
     <div class="row">
-        <!-- Left Column: Word Lists -->
+        <!-- Left Column: Search, Word Lists (66%) -->
         <div class="col-lg-8">
+            <!-- Search Section -->
+            <div class="search-section">
+                <h3 class="search-title">Search English</h3>
+                <div class="search-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search the word...">
+                    <button class="search-btn" id="searchBtn">Search</button>
+                </div>
+            </div>
+
+            <!-- Dictionary Result Container (hidden by default) -->
+            <div class="dictionary-result-container hidden" id="dictionaryResult">
+                <!-- Search results will be displayed here -->
+            </div>
+            <!-- Dictionary Result Container (hidden by default) -->
+            <div class="dictionary-result-container hidden" id="dictionaryResult">
+                <!-- Search results will be displayed here -->
+            </div>
+
             <!-- Academic Word Lists Section -->
             <div class="word-lists-section" id="academicWordListsSection">
                 <div class="section-header">
@@ -1161,13 +1041,20 @@
             </div>
         </div>
 
-        <!-- Right Column: Stats -->
+        <!-- Right Column: Flashcards, Streak, Ranking (33%) -->
         <div class="col-lg-4">
             <!-- Flashcards Widget -->
             <div class="stats-widget">
                 <h3 class="widget-title">FLASHCARDS</h3>
-                <div class="ranking-placeholder">
-                    <p>Flashcards based on your band level will appear here</p>
+                <div class="flashcard-preview">
+                    <div class="flashcard-info">
+                        <p class="mb-2">📚 Based on your Band <?php echo e(number_format($userStats['band_estimate'], 1)); ?> level</p>
+                        <p class="mb-0 text-muted">Build your vocabulary with smart flashcards</p>
+                    </div>
+                    <a href="/panel/dictionary/flashcards" class="btn btn-sm btn-primary mt-3 w-100">
+                        <i class="iconsax mr-1" data-icon="cards"></i>
+                        View All Flashcards
+                    </a>
                 </div>
             </div>
 
@@ -1205,9 +1092,156 @@
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let selectedAnswer = null;
-    let currentAudioUK = null;
-    let currentAudioUS = null;
-    let currentSearchedWord = null;
+
+    // Search functionality
+    let isSearching = false; // Prevent duplicate searches
+
+    $('#searchBtn').on('click', function(e) {
+        e.preventDefault();
+        performSearch();
+    });
+
+    $('#searchInput').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            performSearch();
+        }
+    });
+
+    function performSearch() {
+        // Prevent duplicate calls
+        if (isSearching) {
+            return;
+        }
+
+        const searchTerm = $('#searchInput').val().trim();
+        
+        if (searchTerm === '') {
+            alert('Please enter a word to search');
+            return;
+        }
+
+        isSearching = true;
+
+        $.ajax({
+            url: '/panel/dictionary/search-first',
+            method: 'POST',
+            data: {
+                query: searchTerm,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            beforeSend: function() {
+                $('#searchBtn').prop('disabled', true).text('Searching...');
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    displaySearchResult(response.data);
+                    $('#dictionaryResult').removeClass('hidden');
+                } else {
+                    alert('No results found for: ' + searchTerm);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Search error:', xhr.responseText);
+                
+                let errorMessage = 'An error occurred while searching';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                alert(errorMessage);
+            },
+            complete: function() {
+                $('#searchBtn').prop('disabled', false).text('Search');
+                isSearching = false;
+            }
+        });
+    }
+
+    function displaySearchResult(data) {
+        console.log('Dictionary data:', data); // Debug log
+        
+        let html = `
+            <div class="result-word">${data.headword || data.word || 'Unknown'}</div>
+        `;
+
+        // Handle pronunciations
+        if (data.pronunciations && data.pronunciations.length > 0) {
+            const pronText = data.pronunciations[0].ipa || data.pronunciations[0].text || '';
+            if (pronText) {
+                html += `<div class="result-pronunciation">/${pronText}/</div>`;
+            }
+        }
+
+        // Handle meanings (new API structure)
+        if (data.meanings && data.meanings.length > 0) {
+            data.meanings.forEach(function(meaning) {
+                if (meaning.partOfSpeech) {
+                    html += `<div class="result-pos">${meaning.partOfSpeech}</div>`;
+                }
+
+                if (meaning.definitions && meaning.definitions.length > 0) {
+                    meaning.definitions.forEach(function(defObj) {
+                        if (defObj.definition) {
+                            html += `<div class="result-definition">${defObj.definition}</div>`;
+                        }
+                        
+                        if (defObj.example) {
+                            html += `<div class="result-example">"${defObj.example}"</div>`;
+                        }
+                    });
+                }
+            });
+        }
+        // Fallback to old senses structure
+        else if (data.senses && data.senses.length > 0) {
+            data.senses.forEach(function(sense) {
+                if (sense.part_of_speech) {
+                    html += `<div class="result-pos">${sense.part_of_speech}</div>`;
+                }
+
+                if (sense.definitions && sense.definitions.length > 0) {
+                    sense.definitions.forEach(function(definition) {
+                        html += `<div class="result-definition">${definition}</div>`;
+                    });
+                }
+
+                if (sense.examples && sense.examples.length > 0) {
+                    sense.examples.forEach(function(example) {
+                        html += `<div class="result-example">"${example}"</div>`;
+                    });
+                }
+            });
+        }
+
+        html += `
+            <div class="result-actions">
+                <button class="result-btn result-btn-primary" id="saveToFlashcard" data-word="${data.headword || data.word}">
+                    <i class="iconsax" data-icon="bookmark"></i>
+                    Save to Flashcard
+                </button>
+                <button class="result-btn result-btn-secondary" id="addToWordList" data-word="${data.headword || data.word}">
+                    <i class="iconsax" data-icon="add-circle"></i>
+                    Add to Word List
+                </button>
+            </div>
+        `;
+
+        $('#dictionaryResult').html(html);
+    }
+
+    // Save to flashcard
+    $(document).on('click', '#saveToFlashcard', function() {
+        const word = $('.result-word').text();
+        // Implement save to flashcard logic
+        alert('Saving "' + word + '" to flashcard...');
+    });
+
+    // Add to word list
+    $(document).on('click', '#addToWordList', function() {
+        const word = $('.result-word').text();
+        // Implement add to word list logic
+        alert('Adding "' + word + '" to word list...');
+    });
 
     // Toggle between Academic and My Word List
     $('#toggleMyWordListBtn').on('click', function() {
@@ -1531,7 +1565,8 @@
     $('#searchBtn').on('click', function() {
         let searchTerm = $('#searchInput').val().trim();
         if (searchTerm) {
-            searchDictionary(searchTerm);
+            // Implement dictionary search (existing functionality)
+            console.log('Searching for:', searchTerm);
         }
     });
 
@@ -1539,246 +1574,6 @@
         if (e.which === 13) {
             $('#searchBtn').click();
         }
-    });
-    
-    // Search Dictionary
-    function searchDictionary(word) {
-        $.ajax({
-            url: '/panel/dictionary/search-first',
-            method: 'POST',
-            data: {
-                word: word,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            beforeSend: function() {
-                $('#searchBtn').prop('disabled', true).text('Searching...');
-            },
-            success: function(response) {
-                if (response.success && response.data) {
-                    displayDictionaryResult(response.data);
-                    currentSearchedWord = word;
-                } else {
-                    alert('Word not found. Please try another word.');
-                }
-            },
-            error: function(error) {
-                console.error('Error searching dictionary:', error);
-                alert('Failed to search. Please try again.');
-            },
-            complete: function() {
-                $('#searchBtn').prop('disabled', false).text('Search');
-            }
-        });
-    }
-    
-    // Display Dictionary Result
-    function displayDictionaryResult(data) {
-        // Hide word lists and show dictionary result
-        $('#academicWordListsSection, #myWordListSection, #practiceModeContainer').addClass('hidden');
-        $('#dictionaryResult').removeClass('hidden');
-        
-        // Set word
-        $('#resultWord').text(data.word);
-        
-        // Set pronunciations with fallback to placeholder
-        let ukPhonetic = '/--/';
-        let usPhonetic = '/--/';
-        let ukAudio = '';
-        let usAudio = '';
-        
-        if (data.phonetics && data.phonetics.length > 0) {
-            data.phonetics.forEach(function(phonetic) {
-                if (phonetic.text) {
-                    // Check if it's UK pronunciation
-                    if (phonetic.text.toLowerCase().includes('uk') || phonetic.countryCode === 'uk') {
-                        ukPhonetic = phonetic.text;
-                        if (phonetic.audio) ukAudio = phonetic.audio;
-                    }
-                    // Check if it's US pronunciation
-                    else if (phonetic.text.toLowerCase().includes('us') || phonetic.countryCode === 'us') {
-                        usPhonetic = phonetic.text;
-                        if (phonetic.audio) usAudio = phonetic.audio;
-                    }
-                    // Use as default if no specific marker
-                    else if (ukPhonetic === '/--/') {
-                        ukPhonetic = phonetic.text;
-                        if (phonetic.audio) ukAudio = phonetic.audio;
-                        usPhonetic = phonetic.text;
-                        if (phonetic.audio) usAudio = phonetic.audio;
-                    }
-                }
-            });
-        }
-        
-        $('#pronunciationUK').text(ukPhonetic);
-        $('#pronunciationUS').text(usPhonetic);
-        
-        // Store audio URLs
-        currentAudioUK = ukAudio ? new Audio(ukAudio) : null;
-        currentAudioUS = usAudio ? new Audio(usAudio) : null;
-        
-        // Enable/disable audio buttons
-        $('#audioUKBtn').prop('disabled', !currentAudioUK);
-        $('#audioUSBtn').prop('disabled', !currentAudioUS);
-        
-        // Display definitions grouped by part of speech
-        let definitionsHtml = '';
-        if (data.meanings && data.meanings.length > 0) {
-            data.meanings.forEach(function(meaning, index) {
-                definitionsHtml += '<div class="part-of-speech-section">';
-                definitionsHtml += '<div class="pos-header">';
-                definitionsHtml += '<span class="pos-title">' + meaning.partOfSpeech + '</span>';
-                definitionsHtml += '<button class="btn-save-pos" data-pos="' + meaning.partOfSpeech + '" data-word="' + data.word + '">';
-                definitionsHtml += 'Save</button>';
-                definitionsHtml += '</div>';
-                
-                if (meaning.definitions && meaning.definitions.length > 0) {
-                    meaning.definitions.forEach(function(def, defIndex) {
-                        definitionsHtml += '<div class="definition-item">';
-                        definitionsHtml += '<div class="definition-text">' + (defIndex + 1) + '. ' + def.definition + '</div>';
-                        
-                        if (def.example) {
-                            definitionsHtml += '<div class="example-text">• ' + def.example + '</div>';
-                        }
-                        
-                        definitionsHtml += '</div>';
-                    });
-                }
-                
-                definitionsHtml += '</div>';
-            });
-        } else {
-            definitionsHtml = '<p>No definitions found.</p>';
-        }
-        
-        $('#definitionsSection').html(definitionsHtml);
-        
-        // Bind save buttons
-        $('.btn-save-pos').on('click', function(e) {
-            e.stopPropagation();
-            let btn = $(this);
-            let word = btn.data('word');
-            let partOfSpeech = btn.data('pos');
-            
-            // Get definitions for this part of speech
-            let meaning = data.meanings.find(m => m.partOfSpeech === partOfSpeech);
-            let definition = '';
-            let example = '';
-            
-            if (meaning && meaning.definitions && meaning.definitions.length > 0) {
-                definition = meaning.definitions[0].definition;
-                example = meaning.definitions[0].example || '';
-            }
-            
-            saveWordToFlashcard(word, partOfSpeech, definition, example, btn);
-        });
-    }
-    
-    // Save word to flashcard with part of speech
-    function saveWordToFlashcard(word, partOfSpeech, definition, example, btn) {
-        $.ajax({
-            url: '/panel/dictionary/save-flashcard',
-            method: 'POST',
-            data: {
-                word: word,
-                part_of_speech: partOfSpeech,
-                definition: definition,
-                example: example,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            beforeSend: function() {
-                btn.prop('disabled', true).text('Saving...');
-            },
-            success: function(response) {
-                if (response.success) {
-                    btn.removeClass('saved').addClass('saved').text('Saved');
-                    setTimeout(function() {
-                        btn.prop('disabled', false);
-                    }, 1000);
-                } else {
-                    alert('Failed to save word');
-                    btn.prop('disabled', false).text('Save');
-                }
-            },
-            error: function(error) {
-                console.error('Error saving flashcard:', error);
-                alert('Failed to save word');
-                btn.prop('disabled', false).text('Save');
-            }
-        });
-    }
-    
-    // Back button
-    $('#backBtn').on('click', function() {
-        $('#dictionaryResult').addClass('hidden');
-        $('#academicWordListsSection').removeClass('hidden');
-        
-        // Clear audio
-        if (currentAudioUK) {
-            currentAudioUK.pause();
-            currentAudioUK = null;
-        }
-        if (currentAudioUS) {
-            currentAudioUS.pause();
-            currentAudioUS = null;
-        }
-    });
-    
-    // Play UK Audio
-    $('#audioUKBtn').on('click', function() {
-        if (currentAudioUK) {
-            currentAudioUK.play();
-        }
-    });
-    
-    // Play US Audio
-    $('#audioUSBtn').on('click', function() {
-        if (currentAudioUS) {
-            currentAudioUS.play();
-        }
-    });
-    
-    // Save Word to My Word List
-    $('#saveWordBtn').on('click', function() {
-        if (!currentSearchedWord) return;
-        
-        let word = $('#resultWord').text();
-        let definition = '';
-        let pronunciation = $('#pronunciationUS').text();
-        
-        // Get first definition
-        let firstDef = $('#definitionsSection .definition-text').first().text();
-        if (firstDef) {
-            definition = firstDef.replace(/^\d+\.\s*/, ''); // Remove number prefix
-        }
-        
-        $.ajax({
-            url: '/panel/dictionary/save-flashcard',
-            method: 'POST',
-            data: {
-                word: word,
-                pronunciation: pronunciation,
-                definition: definition,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            beforeSend: function() {
-                $('#saveWordBtn').prop('disabled', true).text('Saving...');
-            },
-            success: function(response) {
-                if (response.success) {
-                    alert('Word saved to My Word List successfully!');
-                    $('#saveWordBtn').text('Saved ✓');
-                } else {
-                    alert(response.message || 'Failed to save word');
-                    $('#saveWordBtn').prop('disabled', false).text('Save');
-                }
-            },
-            error: function(error) {
-                console.error('Error saving word:', error);
-                alert('Failed to save word. Please try again.');
-                $('#saveWordBtn').prop('disabled', false).text('Save');
-            }
-        });
     });
 
     // Filter functionality
@@ -1832,4 +1627,4 @@
 </script>
 <?php $__env->stopPush(); ?>
 
-<?php echo $__env->make('design_1.panel.layouts.panel', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\edtika\resources\views/design_1/panel/dictionary/index.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('design_1.panel.layouts.panel', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\edtika\resources\views/design_1/panel/dictionary/index_new.blade.php ENDPATH**/ ?>

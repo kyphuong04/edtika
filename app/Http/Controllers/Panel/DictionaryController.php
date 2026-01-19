@@ -7,28 +7,103 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Flashcard;
 use App\Models\WordList;
+use App\Models\UserWordProgress;
+use App\Models\AcademicWordList;
+use App\Models\AcademicWordListWord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DictionaryController extends Controller
 {
+    // Using Cambridge Dictionary API
     private $baseUrl = 'https://dictionary.cambridge.org/api/v1';
     private $accessKey;
 
     public function __construct()
     {
-        // You need to set your Cambridge Dictionary API access key in .env file
         $this->accessKey = env('CAMBRIDGE_DICT_ACCESS_KEY', '');
     }
 
     public function index()
     {
+        $user = Auth::user();
+
+        // Get Academic Word Lists (Band-based) that user has access to
+        $academicWordLists = AcademicWordList::with(['words', 'accessUsers'])
+            ->where('is_active', true)
+            ->get()
+            ->map(function($list) use ($user) {
+                $hasAccess = $list->hasAccess($user->id);
+                return [
+                    'id' => $list->id,
+                    'name' => $list->name,
+                    'description' => $list->description,
+                    'band_level' => $list->band_level,
+                    'word_count' => $list->word_count,
+                    'has_access' => $hasAccess,
+                    'is_locked' => !$hasAccess,
+                ];
+            });
+
+        // Get user's personal "My Word List"
+        $myWordList = WordList::with('flashcards')->firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'category' => 'user',
+                'name' => 'My Word List'
+            ],
+            [
+                'description' => 'My personal vocabulary collection',
+                'is_public' => false,
+                'word_count' => 0
+            ]
+        );
+
+        // Get user stats
+        $userStats = [
+            'streak' => $this->getUserStreak($user->id),
+            'ranking' => 0, // TODO: Implement ranking logic
+            'band_estimate' => $user->band_estimate ?? 5.0,
+        ];
+
         $data = [
             'pageTitle' => trans('panel.dictionary_and_flashcard'),
             'hasApiKey' => !empty($this->accessKey),
+            'academicWordLists' => $academicWordLists,
+            'myWordList' => $myWordList,
+            'userStats' => $userStats,
         ];
 
-        return view('design_1.panel.dictionary.index', $data);
+        return view('design_1.panel.dictionary.index_new', $data);
+    }
+
+    private function getUserStreak($userId)
+    {
+        // Calculate consecutive days of practice
+        $recentPractices = UserWordProgress::where('user_id', $userId)
+            ->whereNotNull('last_practiced_at')
+            ->orderBy('last_practiced_at', 'desc')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->last_practiced_at->format('Y-m-d');
+            });
+
+        $streak = 0;
+        $currentDate = now()->startOfDay();
+        
+        foreach ($recentPractices as $date => $practices) {
+            $practiceDate = \Carbon\Carbon::parse($date);
+            $daysDiff = $currentDate->diffInDays($practiceDate, false);
+            
+            if ($daysDiff == $streak) {
+                $streak++;
+            } else {
+                break;
+            }
+        }
+
+        return $streak;
     }
 
     /**
@@ -75,17 +150,26 @@ class DictionaryController extends Controller
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'accessKey' => $this->accessKey
-            ])->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/search", [
+            ])->timeout(10)->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/search", [
                 'q' => $query,
                 'page' => $page,
                 'pagesize' => $pageSize
             ]);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'API request failed',
+                    'status' => $response->status()
+                ], 500);
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => $response->json()
             ]);
         } catch (\Exception $e) {
+            Log::error('Dictionary search error', ['message' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -98,9 +182,9 @@ class DictionaryController extends Controller
      */
     public function searchFirst(Request $request)
     {
-        $dictionaryCode = $request->get('dictionary', 'english-vietnamese');
-        $query = $request->get('q', '');
-        $format = $request->get('format', 'html');
+        // Accept both 'query', 'word', and 'q' parameters
+        $query = $request->input('query', $request->input('word', $request->get('q', '')));
+        $format = $request->get('format', 'json');
 
         if (empty($query)) {
             return response()->json([
@@ -109,25 +193,307 @@ class DictionaryController extends Controller
             ], 400);
         }
 
+        // Try Cambridge Dictionary API first (if key is available)
+        if (!empty($this->accessKey)) {
+            try {
+                $url = $this->baseUrl . "/dictionaries/english/entries/{$query}";
+                
+                $response = Http::timeout(10)
+                    ->withHeaders([
+                        'accessKey' => $this->accessKey,
+                        'Accept' => 'application/json',
+                    ])
+                    ->get($url);
+
+                Log::info('Cambridge Dictionary API Response', [
+                    'status' => $response->status(),
+                    'url' => $url,
+                    'query' => $query,
+                ]);
+
+                // If successful, process Cambridge data
+                if ($response->successful() && !empty($response->json())) {
+                    $apiData = $response->json();
+                    $transformedData = $this->transformCambridgeData($apiData);
+
+                    return response()->json([
+                        'success' => true,
+                        'data' => $transformedData
+                    ]);
+                }
+                
+                // Log Cambridge API failure and fall through to Free Dictionary
+                Log::warning('Cambridge Dictionary API failed, falling back to Free Dictionary', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+            } catch (\Exception $e) {
+                // Log error and fall through to Free Dictionary
+                Log::warning('Cambridge Dictionary API error, falling back to Free Dictionary', [
+                    'message' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Fallback to Free Dictionary API
         try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'accessKey' => $this->accessKey
-            ])->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/search/first", [
-                'q' => $query,
-                'format' => $format
+            $freeDictUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en/' . $query;
+            
+            $response = Http::timeout(10)->get($freeDictUrl);
+
+            Log::info('Free Dictionary API Response', [
+                'status' => $response->status(),
+                'url' => $freeDictUrl,
+                'query' => $query,
             ]);
+
+            if (!$response->successful()) {
+                if ($response->status() === 404) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No definition found for "' . $query . '"',
+                        'data' => null
+                    ]);
+                }
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dictionary API request failed',
+                ], 500);
+            }
+
+            $apiData = $response->json();
+            
+            if (empty($apiData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No definition found for "' . $query . '"',
+                    'data' => null
+                ]);
+            }
+
+            // Transform Free Dictionary API data
+            $transformedData = $this->transformDictionaryData($apiData[0]);
 
             return response()->json([
                 'success' => true,
-                'data' => $response->json()
+                'data' => $transformedData
             ]);
         } catch (\Exception $e) {
+            Log::error('All Dictionary APIs failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Error: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Transform Cambridge Dictionary API data to our format
+     */
+    private function transformCambridgeData($data)
+    {
+        // Extract the first entry if available
+        $entry = $data['entryContent'] ?? $data;
+        
+        $transformed = [
+            'word' => $entry['headword'] ?? ($data['headword'] ?? ''),
+            'phonetics' => [],
+            'meanings' => []
+        ];
+
+        // Transform pronunciations from Cambridge API
+        if (isset($entry['pronunciations'])) {
+            foreach ($entry['pronunciations'] as $pron) {
+                $phoneticEntry = [
+                    'text' => $pron['ipa'] ?? '',
+                    'audio' => ''
+                ];
+                
+                // Check for audio files
+                if (isset($pron['audio']) && is_array($pron['audio'])) {
+                    foreach ($pron['audio'] as $audioItem) {
+                        if (isset($audioItem['url'])) {
+                            $phoneticEntry['audio'] = $audioItem['url'];
+                            break;
+                        }
+                    }
+                } elseif (isset($pron['audioUrl'])) {
+                    $phoneticEntry['audio'] = $pron['audioUrl'];
+                }
+                
+                // Add region label if available
+                if (isset($pron['region'])) {
+                    $phoneticEntry['text'] = '/' . $phoneticEntry['text'] . '/ ' . $pron['region'];
+                }
+                
+                $transformed['phonetics'][] = $phoneticEntry;
+            }
+        }
+
+        // Transform senses (definitions) from Cambridge API
+        if (isset($entry['senses'])) {
+            $meaningsByPos = [];
+            
+            foreach ($entry['senses'] as $sense) {
+                $pos = $sense['partOfSpeech'] ?? $sense['pos'] ?? 'other';
+                
+                if (!isset($meaningsByPos[$pos])) {
+                    $meaningsByPos[$pos] = [
+                        'partOfSpeech' => $pos,
+                        'definitions' => []
+                    ];
+                }
+                
+                $definition = [
+                    'definition' => $sense['definition'] ?? ($sense['guideWord'] ?? ''),
+                ];
+                
+                // Add examples
+                if (isset($sense['examples']) && is_array($sense['examples'])) {
+                    $definition['example'] = $sense['examples'][0]['text'] ?? '';
+                } elseif (isset($sense['example'])) {
+                    $definition['example'] = $sense['example'];
+                }
+                
+                $meaningsByPos[$pos]['definitions'][] = $definition;
+            }
+            
+            $transformed['meanings'] = array_values($meaningsByPos);
+        }
+
+        return $transformed;
+    }
+
+    /**
+     * Transform Free Dictionary API data to our format (fallback)
+     */
+    private function transformDictionaryData($data)
+    {
+        $transformed = [
+            'headword' => $data['word'] ?? '',
+            'pronunciations' => [],
+            'meanings' => []
+        ];
+
+        // Transform pronunciations
+        if (isset($data['phonetics']) && is_array($data['phonetics'])) {
+            $ukPron = null;
+            $usPron = null;
+            
+            foreach ($data['phonetics'] as $phonetic) {
+                if (!empty($phonetic['text'])) {
+                    $audioUrl = $phonetic['audio'] ?? '';
+                    
+                    // Determine if UK or US based on audio URL
+                    if (strpos($audioUrl, '-uk') !== false || strpos($audioUrl, '-gb') !== false) {
+                        $ukPron = [
+                            'label' => 'UK',
+                            'ipa' => $phonetic['text'],
+                            'audio' => $audioUrl
+                        ];
+                    } elseif (strpos($audioUrl, '-us') !== false) {
+                        $usPron = [
+                            'label' => 'US',
+                            'ipa' => $phonetic['text'],
+                            'audio' => $audioUrl
+                        ];
+                    } else {
+                        // If no specific marker, treat as general pronunciation
+                        if (!$ukPron && !$usPron) {
+                            $transformed['pronunciations'][] = [
+                                'label' => '',
+                                'ipa' => $phonetic['text'],
+                                'audio' => $audioUrl
+                            ];
+                        }
+                    }
+                }
+            }
+            
+            // Add UK first, then US
+            if ($ukPron) {
+                $transformed['pronunciations'][] = $ukPron;
+            }
+            if ($usPron) {
+                $transformed['pronunciations'][] = $usPron;
+            }
+        }
+
+        // Transform meanings
+        if (isset($data['meanings']) && is_array($data['meanings'])) {
+            foreach ($data['meanings'] as $meaning) {
+                $partOfSpeech = $meaning['partOfSpeech'] ?? '';
+                
+                $definitions = [];
+                if (isset($meaning['definitions']) && is_array($meaning['definitions'])) {
+                    foreach ($meaning['definitions'] as $def) {
+                        $definitions[] = [
+                            'definition' => $def['definition'] ?? '',
+                            'example' => $def['example'] ?? '',
+                            'synonyms' => $def['synonyms'] ?? [],
+                            'antonyms' => $def['antonyms'] ?? []
+                        ];
+                    }
+                }
+
+                $transformed['meanings'][] = [
+                    'partOfSpeech' => $partOfSpeech,
+                    'definitions' => $definitions,
+                    'synonyms' => $meaning['synonyms'] ?? [],
+                    'antonyms' => $meaning['antonyms'] ?? []
+                ];
+            }
+        }
+
+        // Add HTML content if format is html
+        $htmlContent = $this->generateHtmlContent($transformed);
+        $transformed['htmlContent'] = $htmlContent;
+
+        return $transformed;
+    }
+
+    /**
+     * Generate HTML content from transformed data
+     */
+    private function generateHtmlContent($data)
+    {
+        $html = '';
+
+        // Meanings
+        if (!empty($data['meanings'])) {
+            foreach ($data['meanings'] as $meaning) {
+                $html .= '<div class="definition-section">';
+                $html .= '<h3 class="definition-title">' . htmlspecialchars($meaning['partOfSpeech']) . '</h3>';
+                
+                if (!empty($meaning['definitions'])) {
+                    $index = 1;
+                    foreach ($meaning['definitions'] as $def) {
+                        $html .= '<div class="definition-item">';
+                        $html .= '<div class="definition-text"><strong>' . $index . '.</strong> ' . htmlspecialchars($def['definition']) . '</div>';
+                        
+                        if (!empty($def['example'])) {
+                            $html .= '<div class="example-text">"' . htmlspecialchars($def['example']) . '"</div>';
+                        }
+                        
+                        if (!empty($def['synonyms'])) {
+                            $html .= '<div class="mt-2 text-sm text-gray-600"><strong>Synonyms:</strong> ' . implode(', ', array_map('htmlspecialchars', $def['synonyms'])) . '</div>';
+                        }
+                        
+                        $html .= '</div>';
+                        $index++;
+                    }
+                }
+                
+                $html .= '</div>';
+            }
+        }
+        
+        return $html;
     }
 
     /**
@@ -135,7 +501,6 @@ class DictionaryController extends Controller
      */
     public function didYouMean(Request $request)
     {
-        $dictionaryCode = $request->get('dictionary', 'english-vietnamese');
         $query = $request->get('q', '');
         $maxResults = $request->get('max', 5);
 
@@ -147,17 +512,13 @@ class DictionaryController extends Controller
         }
 
         try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'accessKey' => $this->accessKey
-            ])->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/search/didyoumean", [
-                'q' => $query,
-                'max' => $maxResults
-            ]);
-
+            // Generate simple suggestions based on common English words
+            // You could enhance this with a proper spell checker library
+            $suggestions = $this->generateSuggestions($query, $maxResults);
+            
             return response()->json([
                 'success' => true,
-                'data' => $response->json()
+                'data' => $suggestions
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -165,6 +526,49 @@ class DictionaryController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Generate spelling suggestions for a word
+     */
+    private function generateSuggestions($word, $max = 5)
+    {
+        // Common misspellings and corrections
+        $commonCorrections = [
+            'helo' => 'hello',
+            'wrold' => 'world',
+            'teh' => 'the',
+            'recieve' => 'receive',
+            'beleive' => 'believe',
+            'occured' => 'occurred',
+            'seperate' => 'separate',
+            'definately' => 'definitely',
+            'wich' => 'which',
+            'thier' => 'their',
+        ];
+
+        $suggestions = [];
+        
+        // Check if there's a direct correction
+        $lowerWord = strtolower($word);
+        if (isset($commonCorrections[$lowerWord])) {
+            $suggestions[] = $commonCorrections[$lowerWord];
+        }
+
+        // Add some basic variations if we don't have enough suggestions
+        if (count($suggestions) < $max) {
+            // Try the word with different cases
+            if (strlen($word) > 1) {
+                $suggestions[] = strtolower($word);
+                $suggestions[] = ucfirst(strtolower($word));
+            }
+        }
+
+        // Remove duplicates and limit results
+        $suggestions = array_unique($suggestions);
+        $suggestions = array_slice($suggestions, 0, $max);
+        
+        return array_values($suggestions);
     }
 
     /**
@@ -240,6 +644,23 @@ class DictionaryController extends Controller
     }
 
     /**
+     * Get flashcards preview for dashboard
+     */
+    public function flashcardsPreview()
+    {
+        $user = Auth::user();
+        $flashcards = Flashcard::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(4)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $flashcards
+        ]);
+    }
+
+    /**
      * Flashcard Management
      */
     public function flashcards()
@@ -267,12 +688,15 @@ class DictionaryController extends Controller
         $request->validate([
             'word' => 'required|string|max:255',
             'definition' => 'required|string',
+            'part_of_speech' => 'nullable|string|max:50',
         ]);
 
+        // For same word with different part of speech, create separate flashcard
         $flashcard = Flashcard::updateOrCreate(
             [
                 'user_id' => $user->id,
-                'word' => $request->word
+                'word' => $request->word,
+                'part_of_speech' => $request->part_of_speech
             ],
             [
                 'definition' => $request->definition,
@@ -527,5 +951,524 @@ class DictionaryController extends Controller
             'data' => $wordLists
         ]);
     }
-}
 
+    /**
+     * Get word list details with flashcards and progress
+     */
+    public function getWordListDetails($id)
+    {
+        $user = Auth::user();
+        $wordList = WordList::with(['flashcards'])->findOrFail($id);
+
+        // Check if user has access to this word list
+        if ($wordList->type === 'user' && $wordList->user_id != $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        // Get flashcards with user progress
+        $flashcards = $wordList->flashcards->map(function($flashcard) use ($user, $id) {
+            $progress = UserWordProgress::where('user_id', $user->id)
+                ->where('flashcard_id', $flashcard->id)
+                ->where('word_list_id', $id)
+                ->first();
+
+            return [
+                'id' => $flashcard->id,
+                'word' => $flashcard->word,
+                'pronunciation' => $flashcard->pronunciation,
+                'definition' => $flashcard->definition,
+                'example' => $flashcard->example,
+                'translation' => $flashcard->translation,
+                'is_learned' => $progress ? $progress->is_learned : false,
+                'correct_count' => $progress ? $progress->correct_count : 0,
+                'incorrect_count' => $progress ? $progress->incorrect_count : 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'word_list' => $wordList,
+                'flashcards' => $flashcards,
+            ]
+        ]);
+    }
+
+
+
+
+
+    /**
+     * Mark word as learned
+     */
+    public function markAsLearned(Request $request)
+    {
+        $request->validate([
+            'word_list_id' => 'required|exists:word_lists,id',
+            'flashcard_id' => 'required|exists:flashcards,id',
+        ]);
+
+        $user = Auth::user();
+
+        UserWordProgress::markAsLearned(
+            $user->id,
+            $request->flashcard_id,
+            $request->word_list_id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Word marked as learned'
+        ]);
+    }
+
+    /**
+     * Add word to My Word List from dictionary search
+     */
+    public function addToMyWordList(Request $request)
+    {
+        $request->validate([
+            'word' => 'required|string',
+            'pronunciation' => 'nullable|string',
+            'definition' => 'required|string',
+            'example' => 'nullable|string',
+            'translation' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+
+        // Get or create My Word List
+        $myWordList = WordList::firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'category' => 'user',
+                'name' => 'My Word List'
+            ],
+            [
+                'description' => 'My personal vocabulary collection',
+                'is_public' => false,
+                'word_count' => 0
+            ]
+        );
+
+        // Check if word already exists in flashcards
+        $flashcard = Flashcard::firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'word' => $request->word,
+            ],
+            [
+                'pronunciation' => $request->pronunciation,
+                'definition' => $request->definition,
+                'example' => $request->example,
+                'translation' => $request->translation,
+            ]
+        );
+
+        // Add to word list if not already there
+        if (!$myWordList->flashcards()->where('flashcard_id', $flashcard->id)->exists()) {
+            $maxOrder = $myWordList->flashcards()->max('order') ?? 0;
+            $myWordList->flashcards()->attach($flashcard->id, ['order' => $maxOrder + 1]);
+            $myWordList->updateWordCount();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Word added to My Word List',
+            'flashcard_id' => $flashcard->id,
+        ]);
+    }
+
+    /**
+     * Remove word from word list (My Word List only)
+     */
+    public function removeFromWordList(Request $request)
+    {
+        $request->validate([
+            'word_list_id' => 'required|exists:word_lists,id',
+            'flashcard_id' => 'required|exists:flashcards,id',
+        ]);
+
+        $user = Auth::user();
+        $wordList = WordList::findOrFail($request->word_list_id);
+
+        // Only allow removing from own word lists
+        if ($wordList->user_id != $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        $wordList->flashcards()->detach($request->flashcard_id);
+        $wordList->updateWordCount();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Word removed from word list'
+        ]);
+    }
+
+    /**
+     * Get academic word list details with words
+     */
+    public function getAcademicWordList($id)
+    {
+        $user = Auth::user();
+        $wordList = AcademicWordList::with('words')->findOrFail($id);
+
+        // Check access
+        if (!$wordList->hasAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have access to this word list'
+            ], 403);
+        }
+
+        // Get user progress for each word
+        $words = $wordList->words->map(function($word) use ($user) {
+            $progress = UserWordProgress::where('user_id', $user->id)
+                ->where('academic_word_list_word_id', $word->id)
+                ->first();
+
+            return [
+                'id' => $word->id,
+                'word' => $word->word,
+                'pronunciation' => $word->pronunciation,
+                'definition' => $word->definition,
+                'example' => $word->example,
+                'translation' => $word->translation,
+                'is_learned' => $progress ? $progress->is_learned : false,
+                'practice_count' => $progress ? $progress->practice_count : 0,
+                'correct_count' => $progress ? $progress->correct_count : 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $wordList->id,
+                'name' => $wordList->name,
+                'description' => $wordList->description,
+                'band_level' => $wordList->band_level,
+                'word_count' => $wordList->word_count,
+                'words' => $words,
+            ]
+        ]);
+    }
+
+    /**
+     * Mark word as learned
+     */
+    public function markWordAsLearned(Request $request)
+    {
+        $request->validate([
+            'word_id' => 'required|exists:academic_word_list_words,id',
+        ]);
+
+        $user = Auth::user();
+        $word = AcademicWordListWord::findOrFail($request->word_id);
+
+        // Check access to the word list
+        if (!$word->academicWordList->hasAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        $progress = UserWordProgress::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'academic_word_list_word_id' => $word->id,
+            ],
+            [
+                'word' => $word->word,
+                'is_learned' => true,
+                'learned_at' => now(),
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Word marked as learned'
+        ]);
+    }
+
+    /**
+     * Start practice session for academic word list
+     */
+    public function startPractice(Request $request)
+    {
+        $request->validate([
+            'word_list_id' => 'required|exists:academic_word_lists,id',
+            'word_ids' => 'nullable|array',
+            'word_ids.*' => 'exists:academic_word_list_words,id',
+        ]);
+
+        $user = Auth::user();
+        $wordList = AcademicWordList::with('words')->findOrFail($request->word_list_id);
+
+        // Check access
+        if (!$wordList->hasAccess($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 403);
+        }
+
+        // Get words to practice (selected words or all words)
+        if ($request->word_ids && count($request->word_ids) > 0) {
+            $practiceWords = $wordList->words->whereIn('id', $request->word_ids);
+        } else {
+            $practiceWords = $wordList->words;
+        }
+
+        if ($practiceWords->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No words to practice'
+            ], 400);
+        }
+
+        // Generate practice questions
+        $questions = [];
+        foreach ($practiceWords as $word) {
+            // Get 3 random wrong answers from the same word list
+            $wrongAnswers = $wordList->words
+                ->where('id', '!=', $word->id)
+                ->random(min(3, $wordList->words->count() - 1))
+                ->pluck('word')
+                ->toArray();
+
+            // Combine with correct answer and shuffle
+            $answers = array_merge([$word->word], $wrongAnswers);
+            shuffle($answers);
+
+            $questions[] = [
+                'word_id' => $word->id,
+                'question' => $word->definition,
+                'correct_answer' => $word->word,
+                'answers' => $answers,
+            ];
+        }
+
+        // Shuffle questions
+        shuffle($questions);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'word_list_id' => $wordList->id,
+                'word_list_name' => $wordList->name,
+                'total_questions' => count($questions),
+                'questions' => $questions,
+            ]
+        ]);
+    }
+
+    /**
+     * Start practice session for My Word List
+     */
+    public function startMyWordListPractice(Request $request)
+    {
+        $request->validate([
+            'flashcard_ids' => 'nullable|array',
+            'flashcard_ids.*' => 'exists:flashcards,id',
+        ]);
+
+        $user = Auth::user();
+        
+        // Get My Word List
+        $myWordList = WordList::where('user_id', $user->id)
+            ->where('category', 'user')
+            ->where('name', 'My Word List')
+            ->with('flashcards')
+            ->first();
+
+        if (!$myWordList) {
+            return response()->json([
+                'success' => false,
+                'message' => 'My Word List not found'
+            ], 404);
+        }
+
+        // Get flashcards to practice
+        if ($request->flashcard_ids && count($request->flashcard_ids) > 0) {
+            $practiceFlashcards = $myWordList->flashcards->whereIn('id', $request->flashcard_ids);
+        } else {
+            $practiceFlashcards = $myWordList->flashcards;
+        }
+
+        if ($practiceFlashcards->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No words to practice'
+            ], 400);
+        }
+
+        // Generate practice questions
+        $questions = [];
+        foreach ($practiceFlashcards as $flashcard) {
+            // Get 3 random wrong answers from My Word List
+            $wrongAnswers = $myWordList->flashcards
+                ->where('id', '!=', $flashcard->id)
+                ->random(min(3, $myWordList->flashcards->count() - 1))
+                ->pluck('word')
+                ->toArray();
+
+            // Combine with correct answer and shuffle
+            $answers = array_merge([$flashcard->word], $wrongAnswers);
+            shuffle($answers);
+
+            $questions[] = [
+                'flashcard_id' => $flashcard->id,
+                'question' => $flashcard->definition,
+                'correct_answer' => $flashcard->word,
+                'answers' => $answers,
+            ];
+        }
+
+        // Shuffle questions
+        shuffle($questions);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'word_list_id' => $myWordList->id,
+                'word_list_name' => $myWordList->name,
+                'total_questions' => count($questions),
+                'questions' => $questions,
+            ]
+        ]);
+    }
+
+    /**
+     * Submit practice answer
+     */
+    public function submitPracticeAnswer(Request $request)
+    {
+        $request->validate([
+            'word_id' => 'nullable|exists:academic_word_list_words,id',
+            'flashcard_id' => 'nullable|exists:flashcards,id',
+            'selected_answer' => 'required|string',
+            'correct_answer' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+        $isCorrect = $request->selected_answer === $request->correct_answer;
+
+        // Update progress based on word source
+        if ($request->word_id) {
+            // Academic word list word
+            $progress = UserWordProgress::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'academic_word_list_word_id' => $request->word_id,
+                ],
+                [
+                    'word' => $request->correct_answer,
+                    'last_practiced_at' => now(),
+                ]
+            );
+
+            $progress->increment('practice_count');
+            if ($isCorrect) {
+                $progress->increment('correct_count');
+                
+                // Mark as learned if correct_count >= 3
+                if ($progress->correct_count >= 3 && !$progress->is_learned) {
+                    $progress->update([
+                        'is_learned' => true,
+                        'learned_at' => now(),
+                    ]);
+                }
+            }
+        } elseif ($request->flashcard_id) {
+            // My Word List flashcard
+            $progress = UserWordProgress::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'flashcard_id' => $request->flashcard_id,
+                ],
+                [
+                    'word' => $request->correct_answer,
+                    'last_practiced_at' => now(),
+                ]
+            );
+
+            $progress->increment('practice_count');
+            if ($isCorrect) {
+                $progress->increment('correct_count');
+                
+                // Mark as learned if correct_count >= 3
+                if ($progress->correct_count >= 3 && !$progress->is_learned) {
+                    $progress->update([
+                        'is_learned' => true,
+                        'learned_at' => now(),
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'is_correct' => $isCorrect,
+            'message' => $isCorrect ? 'Correct!' : 'Incorrect',
+        ]);
+    }
+
+    /**
+     * Get My Word List details
+     */
+    public function getMyWordList()
+    {
+        $user = Auth::user();
+        
+        $myWordList = WordList::where('user_id', $user->id)
+            ->where('category', 'user')
+            ->where('name', 'My Word List')
+            ->with('flashcards')
+            ->first();
+
+        if (!$myWordList) {
+            return response()->json([
+                'success' => false,
+                'message' => 'My Word List not found'
+            ], 404);
+        }
+
+        // Get user progress for each flashcard
+        $flashcards = $myWordList->flashcards->map(function($flashcard) use ($user) {
+            $progress = UserWordProgress::where('user_id', $user->id)
+                ->where('flashcard_id', $flashcard->id)
+                ->first();
+
+            return [
+                'id' => $flashcard->id,
+                'word' => $flashcard->word,
+                'pronunciation' => $flashcard->pronunciation,
+                'definition' => $flashcard->definition,
+                'example' => $flashcard->example,
+                'translation' => $flashcard->translation,
+                'is_learned' => $progress ? $progress->is_learned : false,
+                'practice_count' => $progress ? $progress->practice_count : 0,
+                'correct_count' => $progress ? $progress->correct_count : 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $myWordList->id,
+                'name' => $myWordList->name,
+                'description' => $myWordList->description,
+                'word_count' => $myWordList->word_count,
+                'flashcards' => $flashcards,
+            ]
+        ]);
+    }
+}

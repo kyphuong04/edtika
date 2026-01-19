@@ -1189,7 +1189,7 @@ class User extends Authenticatable
             $userPackage = new UserPackage($this);
             $activePackage = $userPackage->getPackage();
 
-            $access = !!(!empty($activePackage->ai_content_access) and $activePackage->ai_content_access);
+            $access = !empty($activePackage) && !empty($activePackage->ai_content_access);
         }
 
         return $access;
