@@ -1,4 +1,8 @@
-<svg width="20px" height="20px" class="icons text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+<svg width="20px" height="20px" class="icons text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.05 2.53L4.03 6.46c-1.93 1.26-1.93 4.08 0 5.34l6.02 3.93c1.08.71 2.86.71 3.94 0l5.99-3.93c1.92-1.26 1.92-4.07 0-5.33l-5.99-3.93c-1.08-.72-2.86-.72-3.94-.01z"/>
   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.63 13.08l-.01 4.69c0 1.27.98 2.63 2.18 3.03l3.19 1.06c.55.18 1.46.18 2.02 0l3.19-1.06c1.2-.4 2.18-1.76 2.18-3.03v-4.64M21.4 15V9"/>
+<<<<<<<< HEAD:storage/framework/views/b3e6a869b658472b4ebff3d64fc3d6e44921197a.php
 </svg><?php /**PATH D:\xampp\htdocs\edtika\storage\framework\views/be40acb66d4be2b64f42783f686f4dc76a10c57f.blade.php ENDPATH**/ ?>
+========
+</svg><?php /**PATH D:\xampp\htdocs\edtika\storage\framework\views/6b99ef5bd952d74a86a69f52804b5ec158946a9f.blade.php ENDPATH**/ ?>
+>>>>>>>> frontend:storage/framework/views/0bfed62c69aaa55d921c7ca21a8731a681997d23.php
