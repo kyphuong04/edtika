@@ -46,11 +46,23 @@
                 </li>
             <?php endif; ?>
 
+            <?php if($authUser->isCeo()): ?>
+                <li class="<?php echo e((request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : ''); ?>">
+                    <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/staffs"><?php echo e(trans('admin/main.staff')); ?></a>
+                </li>
+            <?php endif; ?>
+            <?php if(($authUser->isManager() || $authUser->isCeo()) && $authUser->can('admin_users_list')): ?>
+                <li class="<?php echo e((request()->is(getAdminPanelUrl('/regular-users', false))) ? 'active' : ''); ?>">
+                    <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/regular-users">Users</a>
+                </li>
+            <?php endif; ?>
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('admin_users_list')): ?>
                 <li class="<?php echo e((request()->is(getAdminPanelUrl('/students', false))) ? 'active' : ''); ?>">
                     <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/students"><?php echo e(trans('public.students')); ?></a>
                 </li>
             <?php endif; ?>
+
+           
 
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('admin_instructors_list')): ?>
                 <li class="<?php echo e((request()->is(getAdminPanelUrl('/instructors', false))) ? 'active' : ''); ?>">
@@ -61,12 +73,6 @@
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('admin_organizations_list')): ?>
                 <li class="<?php echo e((request()->is(getAdminPanelUrl('/organizations', false))) ? 'active' : ''); ?>">
                     <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/organizations"><?php echo e(trans('admin/main.organizations')); ?></a>
-                </li>
-            <?php endif; ?>
-
-            <?php if($authUser->isCeo()): ?>
-                <li class="<?php echo e((request()->is(getAdminPanelUrl('/staffs', false))) ? 'active' : ''); ?>">
-                    <a class="nav-link" href="<?php echo e(getAdminPanelUrl()); ?>/staffs"><?php echo e(trans('admin/main.staff')); ?></a>
                 </li>
             <?php endif; ?>
 
