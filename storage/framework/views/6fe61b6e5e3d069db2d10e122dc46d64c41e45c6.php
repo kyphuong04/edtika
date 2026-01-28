@@ -1,3 +1,0 @@
-<svg width="14px" height="14px" class="mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M8 2v3M16 2v3M21 8.5V17c0 3-1.5 5-5 5H8c-3.5 0-5-2-5-5V8.5c0-3 1.5-5 5-5h8c3.5 0 5 2 5 5zM8 11h8M8 16h4"/>
-</svg><?php /**PATH D:\xampp\htdocs\edtika\storage\framework\views/4462339e3c7346fd12b52b281bbb8b99d6a6bee9.blade.php ENDPATH**/ ?>
