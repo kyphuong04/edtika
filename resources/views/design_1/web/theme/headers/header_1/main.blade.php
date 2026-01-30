@@ -32,7 +32,7 @@
                     @if(!empty($themeSpecificLinks) and count($themeSpecificLinks))
                         <div class="d-flex align-items-center gap-16 gap-lg-32">
                             @foreach($themeSpecificLinks as $themeSpecificLink)
-                                <a href="{{ $themeSpecificLink['url'] }}" class="text-dark">{{ $themeSpecificLink['title'] }}</a>
+                                <a href="{{ $themeSpecificLink['url'] }}" class="text-dark">{{ trans('navbar.' . strtolower($themeSpecificLink['title'])) }}</a>
                             @endforeach
                         </div>
                     @endif
@@ -41,12 +41,12 @@
                 {{-- Right Button --}}
                 <div class="col-6 col-lg-3 mt-12 mt-lg-0 d-flex align-items-center justify-content-end">
                     @if(!empty($themeSpecificButton) and !empty($themeSpecificButton['title']))
-                        <a href="{{ $themeSpecificButton['url'] }}" class="btn-flip-effect btn btn-primary btn-lg gap-8 text-white" data-text="{{ $themeSpecificButton['title'] }}">
+                        <a href="{{ $themeSpecificButton['url'] }}" class="btn-flip-effect btn btn-primary btn-lg gap-8 text-white" data-text="{{ trans('home.start_learning') }}">
                             @if(!empty($themeSpecificButton['icon']))
                                 @svg("iconsax-{$themeSpecificButton['icon']}", ['width' => '20px', 'height' => '20px', 'class' => "icons"])
                             @endif
 
-                            <span class="btn-flip-effect__text text-white">{{ $themeSpecificButton['title'] }}</span>
+                            <span class="btn-flip-effect__text text-white">{{ trans('home.start_learning') }}</span>
                         </a>
                     @endif
                 </div>
