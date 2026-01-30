@@ -94,7 +94,7 @@
             <div class="custom-tabs-content {{ $hasThemeSpecificButton ? '' : 'without-bottom-specific-button' }}" id="mobileHeaderLinks">
                 @if(!empty($themeSpecificLinks) and count($themeSpecificLinks))
                     @foreach($themeSpecificLinks as $themeSpecificLink)
-                        <a href="{{ $themeSpecificLink['url'] }}" class="d-block font-20 text-gray-500 py-12">{{ $themeSpecificLink['title'] }}</a>
+                        <a href="{{ $themeSpecificLink['url'] }}" class="d-block font-20 text-gray-500 py-12">{{ trans('navbar.' . strtolower($themeSpecificLink['title'])) }}</a>
                     @endforeach
                 @endif
             </div>
@@ -108,7 +108,7 @@
                     @svg("iconsax-{$themeSpecificButton['icon']}", ['width' => '20px', 'height' => '20px', 'class' => "icons"])
                 @endif
 
-                <span class="text-white">{{ $themeSpecificButton['title'] }}</span>
+                <span class="text-white">{{ trans('home.start_learning') }}</span>
             </a>
         </div>
     @endif

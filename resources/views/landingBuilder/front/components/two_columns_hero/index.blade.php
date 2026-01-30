@@ -24,12 +24,12 @@
                                             @svg("iconsax-{$contents['upper_cta']['icon']}", ['width' => '20px', 'height' => '20px', 'class' => "icons text-white two-columns-hero-section__upper-cta-badge-icon"])
                                         @endif
 
-                                        <span class="font-14 text-white">{{ $contents['upper_cta']['badge_text'] }}</span>
+                                        <span class="font-14 text-white">{{ trans('home.hero_badge') }}</span>
                                     </div>
                                 @endif
 
                                 @if(!empty($contents['upper_cta']['main_text']))
-                                    <span class="font-14 text-dark">{{ $contents['upper_cta']['main_text'] }}</span>
+                                    <span class="font-14 text-dark">{{ trans('home.book_a_meeting') }}</span>
                                 @endif
 
                                 <x-iconsax-lin-arrow-right class="icons text-dark" width="16px" height="16px"/>
@@ -41,66 +41,35 @@
                     @if(!empty($contents['main_content']))
                         <h1 class="d-inline-flex flex-column font-64 mt-24">
                             <div class="d-inline-flex align-items-center gap-12 font-64">
-                                @if(!empty($contents['main_content']['title_line_1']))
-                                    <span class="text-dark">{{ $contents['main_content']['title_line_1'] }}</span>
-                                @endif
-
-                                @if(!empty($contents['main_content']['highlight_words']) and is_array($contents['main_content']['highlight_words']))
-                                    @if(count($contents['main_content']['highlight_words']) > 1)
-                                        @push('scripts_bottom')
-                                            <script>
-                                                var twoColumnsHeroHighlightWords = @json(array_values($contents['main_content']['highlight_words']));
-
-                                                $(document).ready(function () {
-                                                    handleHighlightWords(twoColumnsHeroHighlightWords, 'js-two-columns-hero-highlight-words-card')
-                                                })
-                                            </script>
-                                        @endpush
-
-                                        <div
-                                            class="js-two-columns-hero-highlight-words-card text-primary"
-                                            data-type-speed="50"
-                                            data-back-speed="25"
-                                            data-delay="1500"
-                                        >{{ array_values($contents['main_content']['highlight_words'])[0] }}</div>
-                                    @else
-                                        @foreach($contents['main_content']['highlight_words'] as $highlightWord)
-                                            <span class="text-primary">{{ $highlightWord }}</span>
-                                        @endforeach
-                                    @endif
-                                @endif
+                                <span class="text-dark">{{ trans('home.hero_title') }}</span>
                             </div>
-
-                            @if(!empty($contents['main_content']['title_line_2']))
-                                <span class="mt-4 text-dark">{{ $contents['main_content']['title_line_2'] }}</span>
-                            @endif
                         </h1>
 
                         @if(!empty($contents['main_content']['description']))
-                            <div class="mt-16 font-16 text-gray-500">{!! nl2br($contents['main_content']['description']) !!}</div>
+                            <div class="mt-16 font-16 text-gray-500">{!! nl2br(trans('home.hero_desc')) !!}</div>
                         @endif
 
                         @if(!empty($contents['main_content']['primary_button']) or !empty($contents['main_content']['secondary_button']))
                             <div class="d-flex align-items-lg-center flex-column flex-lg-row mt-32 gap-16">
                                 {{-- Primary Button --}}
                                 @if(!empty($contents['main_content']['primary_button']) and !empty($contents['main_content']['primary_button']['label']))
-                                    <a href="{{ !empty($contents['main_content']['primary_button']['url']) ? $contents['main_content']['primary_button']['url'] : '' }}" class="btn-flip-effect btn btn-primary btn-xlg gap-8 text-white" data-text="{{ $contents['main_content']['primary_button']['label'] }}">
+                                    <a href="{{ !empty($contents['main_content']['primary_button']['url']) ? $contents['main_content']['primary_button']['url'] : '' }}" class="btn-flip-effect btn btn-primary btn-xlg gap-8 text-white" data-text="{{ trans('home.start_learning') }}">
                                         @if(!empty($contents['main_content']['primary_button']['icon']))
                                             @svg("iconsax-{$contents['main_content']['primary_button']['icon']}", ['width' => '24px', 'height' => '24px', 'class' => "icons"])
                                         @endif
 
-                                        <span class="btn-flip-effect__text text-white">{{ $contents['main_content']['primary_button']['label'] }}</span>
+                                        <span class="btn-flip-effect__text text-white">{{ trans('home.start_learning') }}</span>
                                     </a>
                                 @endif
 
                                 {{-- Secondary Button --}}
                                 @if(!empty($contents['main_content']['secondary_button']) and !empty($contents['main_content']['secondary_button']['label']))
-                                    <a href="{{ !empty($contents['main_content']['secondary_button']['url']) ? $contents['main_content']['secondary_button']['url'] : '' }}" class="btn-flip-effect btn-flip-effect__text-dark btn btn-xlg gap-8" data-text="{{ $contents['main_content']['secondary_button']['label'] }}">
+                                    <a href="{{ !empty($contents['main_content']['secondary_button']['url']) ? $contents['main_content']['secondary_button']['url'] : '' }}" class="btn-flip-effect btn-flip-effect__text-dark btn btn-xlg gap-8" data-text="{{ trans('home.explore_courses') }}">
                                         @if(!empty($contents['main_content']['secondary_button']['icon']))
                                             @svg("iconsax-{$contents['main_content']['secondary_button']['icon']}", ['width' => '24px', 'height' => '24px', 'class' => "icons"])
                                         @endif
 
-                                        <span class="btn-flip-effect__text text-dark">{{ $contents['main_content']['secondary_button']['label'] }}</span>
+                                        <span class="btn-flip-effect__text text-dark">{{ trans('home.explore_courses') }}</span>
                                     </a>
                                 @endif
                             </div>
