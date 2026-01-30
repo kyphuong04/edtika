@@ -69,13 +69,13 @@
                                 @else
                                     @if(!empty($themeHeaderTopNavData['link_1']) and !empty($themeHeaderTopNavData['link_1']['title']))
                                         <a href="{{ !empty($themeHeaderTopNavData['link_1']['url']) ? $themeHeaderTopNavData['link_1']['url'] : '#!' }}" class="d-flex align-items-center text-white opacity-75">
-                                            <span class="">{{ $themeHeaderTopNavData['link_1']['title'] }}</span>
+                                            <span class="">{{ trans('navbar.' . strtolower($themeHeaderTopNavData['link_1']['title'])) }}</span>
                                         </a>
                                     @endif
 
                                     @if(!empty($themeHeaderTopNavData['link_2']) and !empty($themeHeaderTopNavData['link_2']['title']))
                                         <a href="{{ !empty($themeHeaderTopNavData['link_2']['url']) ? $themeHeaderTopNavData['link_2']['url'] : '#!' }}" class="d-flex align-items-center text-white opacity-75 ml-32">
-                                            <span class="">{{ $themeHeaderTopNavData['link_2']['title'] }}</span>
+                                            <span class="">{{ trans('navbar.' . strtolower($themeHeaderTopNavData['link_2']['title'])) }}</span>
                                         </a>
                                     @endif
                                 @endif
