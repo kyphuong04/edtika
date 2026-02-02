@@ -79,9 +79,7 @@
 
                     <h4 class="mt-12 font-14 font-weight-bold">{{ trans('panel.your_affiliate_code') }}</h4>
 
-                    @if(!empty($referralSettings['referral_description']))
-                        <p class="mt-8 font-12 text-gray-500 text-center">{{ $referralSettings['referral_description'] }}</p>
-                    @endif
+                    <p class="mt-8 font-12 text-gray-500 text-center">{{ trans('update.referral_description_hint') }}</p>
                 </div>
 
                 <div class="form-group mb-0 mt-28">

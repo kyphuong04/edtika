@@ -25,7 +25,14 @@
             @if(!empty($navbarPages) and count($navbarPages))
                 <div class="d-none d-lg-flex align-items-center">
                     @foreach($navbarPages as $navbarPage)
-                        <a href="{{ $navbarPage['link'] }}" class="navbar-item navbar-item-h-70 d-flex align-items-center mr-16 mr-lg-32 text-gray-500">{{ $navbarPage['title'] }}</a>
+                        @php
+                            $navTitle = $navbarPage['title'];
+                            $navKey = 'navbar.' . strtolower($navTitle);
+                            if (\Illuminate\Support\Facades\Lang::has($navKey)) {
+                                 $navTitle = trans($navKey);
+                            }
+                        @endphp
+                        <a href="{{ $navbarPage['link'] }}" class="navbar-item navbar-item-h-70 d-flex align-items-center mr-16 mr-lg-32 text-gray-500">{{ $navTitle }}</a>
                     @endforeach
                 </div>
             @endif

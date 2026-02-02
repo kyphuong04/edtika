@@ -6,9 +6,9 @@
                     <h5 class="font-16 font-weight-bold">{{ trans('update.your_balance') }}</h5>
 
                     <ul class="mt-8">
-                        <li class="text-gray-500">Payouts will be processed on 15th of each month</li>
-                        <li class="text-gray-500">Minimum payout amount is $500</li>
-                        <li class="text-gray-500">Holder name will be checked</li>
+                        <li class="text-gray-500">{{ trans('update.payout_condition_1') }}</li>
+                        <li class="text-gray-500">{{ trans('update.payout_condition_2') }}</li>
+                        <li class="text-gray-500">{{ trans('update.payout_condition_3') }}</li>
                     </ul>
 
                     <div class="d-flex align-items-center mt-72">

@@ -26,7 +26,7 @@ return [
     'choose_webinar' => 'Chọn một khóa học',
 
     'certificates' => 'Chứng chỉ',
-    'quizzes' => 'Bài kiểm tra',
+    'quizzes' => 'Quiz',
     'financial' => 'Tài chính',
     'requests' => 'Yêu cầu',
     'support' => 'Hỗ trợ',
@@ -311,4 +311,17 @@ return [
     'day_6' => 'T6',
     'day_7' => 'T7',
 
+    'dictionary_and_flashcard' => 'Từ điển & Flashcard',
+    'dictionary' => 'Từ điển',
+    'my_flashcards' => 'Flashcard của tôi',
+    'word_lists' => 'Danh sách từ vựng',
+    'save_to_flashcard' => 'Lưu vào Flashcard',
+    'back_to_dictionary' => 'Quay lại Từ điển',
+    'no_flashcards_yet' => 'Bạn chưa có flashcard nào',
+    'word_list_created_successfully' => 'Đã tạo danh sách từ vựng thành công!',
+    'word_list_updated_successfully' => 'Đã cập nhật danh sách từ vựng thành công!',
+    'word_list_deleted_successfully' => 'Đã xóa danh sách từ vựng thành công!',
+    'no_word_lists_yet' => 'Bạn chưa có danh sách từ vựng nào',
+    'essential_ielts_academic_word_list' => 'Danh sách từ vựng IELTS học thuật thiết yếu',
+    'students_tracking' => 'Theo dõi học viên',
 ];
