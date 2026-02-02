@@ -24,11 +24,33 @@
                                 @endif
 
                                 @if(!empty($slider['title']))
-                                    <h4 class="font-16 mt-16">{{ $slider['title'] }}</h4>
+                                    @php
+                                        $sliderTitle = $slider['title'];
+                                        $titleMap = [
+                                            'Affordable Quality Education' => 'update.affordable_quality_education',
+                                            'Advance Your Career' => 'update.advance_your_career',
+                                            'Instant Certificate Access' => 'update.instant_certificate_access',
+                                        ];
+                                        if (array_key_exists($sliderTitle, $titleMap)) {
+                                            $sliderTitle = trans($titleMap[$sliderTitle]);
+                                        }
+                                    @endphp
+                                    <h4 class="font-16 mt-16">{{ $sliderTitle }}</h4>
                                 @endif
 
                                 @if(!empty($slider['subtitle']))
-                                    <div class="font-14 mt-8 text-gray-500">{{ $slider['subtitle'] }}</div>
+                                    @php
+                                        $sliderSubtitle = $slider['subtitle'];
+                                        $subtitleMap = [
+                                            'High-value courses at accessible prices' => 'update.high_value_courses_at_accessible_prices',
+                                            'Build your resume with proven expertise' => 'update.build_your_resume_with_proven_expertise',
+                                            'Download certificates right after completion' => 'update.download_certificates_right_after_completion',
+                                        ];
+                                        if (array_key_exists($sliderSubtitle, $subtitleMap)) {
+                                            $sliderSubtitle = trans($subtitleMap[$sliderSubtitle]);
+                                        }
+                                    @endphp
+                                    <div class="font-14 mt-8 text-gray-500">{{ $sliderSubtitle }}</div>
                                 @endif
 
                             </div>

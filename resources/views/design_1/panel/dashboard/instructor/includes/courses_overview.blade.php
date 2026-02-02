@@ -109,16 +109,16 @@
             <h4 class="mt-12 font-14 text-dark">{{ trans('update.no_course!') }}</h4>
             <div class="font-12 text-gray-500 mt-4">{{ trans('update.instructor_dashboard_courses_overview_no_courses_hint') }}</div>
 
-            <div class="d-flex align-items-center gap-8 mt-28 p-8 rounded-16 bg-white">
-                <a href="/panel/courses/new" target="_blank" class="text-decoration-none w-100">
+            <div class="d-flex align-items-center justify-content-between gap-8 mt-28 p-8 rounded-16 bg-white">
+                <a href="/panel/courses/new" target="_blank" class="text-decoration-none flex-grow-1">
                     <div class="btn btn-xlg border-dashed border-gray-200 rounded-16 bg-white bg-hover-gray-100 w-100">
                         <x-iconsax-bul-play-add class="icons text-primary" width="24px" height="24px"/>
-                        <span class="ml-8 text-dark">{{ trans('update.create_a_course') }}</span>
+                        <span class="ml-8 text-dark text-nowrap">{{ trans('update.create_a_course') }}</span>
                     </div>
                 </a>
 
                 <a href="/classes" target="_blank" class="btn btn-xlg rounded-16 bg-transparent bg-hover-gray-100">
-                    <span class="mr-8 text-dark">{{ trans('update.get_inspiration') }}</span>
+                    <span class="mr-8 text-dark text-nowrap">{{ trans('update.get_inspiration') }}</span>
                     <x-iconsax-lin-arrow-right-1 class="icons text-gray-500" width="20px" height="20px"/>
                 </a>
             </div>

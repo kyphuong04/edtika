@@ -146,6 +146,14 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'title' => 'tiêu đề',
+        'thumbnail' => 'hình thu nhỏ',
+        'image_cover' => 'ảnh bìa',
+        'description' => 'mô tả',
+        'content' => 'nội dung',
+        'category_id' => 'danh mục',
+        'teacher_id' => 'giảng viên',
+    ],
 
 ];
