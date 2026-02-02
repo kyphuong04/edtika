@@ -63,7 +63,7 @@ class SidebarItems
                 if ($user->can('panel_organization_instructors') || $user->can('panel_organization_teachers')) {
                     $items['teachers'] = [
                         'icon' => self::getIcon('instructors'),
-                        'text' => trans('teachers'),
+                        'text' => trans('panel.teacher'),
                         'url' => '/panel/manage/teachers',
                         'items' => []
                     ];
