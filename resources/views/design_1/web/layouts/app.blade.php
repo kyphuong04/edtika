@@ -166,30 +166,30 @@
         if ($.fn.select2) {
             $.fn.select2.defaults.set('language', {
                 errorLoading: function () {
-                    return 'Không thể tải kết quả.';
+                    return '{{ trans('update.select2_error_loading') }}';
                 },
                 inputTooLong: function (args) {
                     var overChars = args.input.length - args.maximum;
-                    return 'Vui lòng xóa bớt ' + overChars + ' ký tự';
+                    return '{{ trans('update.select2_input_too_long') }}'.replace(':count', overChars);
                 },
                 inputTooShort: function (args) {
                     var remaining = args.minimum - args.input.length;
-                    return 'Vui lòng nhập thêm ' + remaining + ' ký tự';
+                    return '{{ trans('update.select2_input_too_short') }}'.replace(':count', remaining);
                 },
                 loadingMore: function () {
-                    return 'Đang tải thêm kết quả...';
+                    return '{{ trans('update.select2_loading_more') }}';
                 },
                 maximumSelected: function (args) {
-                    return 'Bạn chỉ có thể chọn ' + args.maximum + ' mục';
+                    return '{{ trans('update.select2_maximum_selected') }}'.replace(':count', args.maximum);
                 },
                 noResults: function () {
-                    return 'Không tìm thấy kết quả';
+                    return '{{ trans('update.select2_no_results') }}';
                 },
                 searching: function () {
-                    return 'Đang tìm kiếm...';
+                    return '{{ trans('update.select2_searching') }}';
                 },
                 removeAllItems: function () {
-                    return 'Xóa tất cả các mục';
+                    return '{{ trans('update.select2_remove_all_items') }}';
                 }
             });
         }

@@ -55,7 +55,7 @@ return [
     'this_webinar_includes' => ':classes này bao gồm:',
     'downloadable_content' => 'Nội dung có thể tải xuống',
     'official_certificate' => 'Chứng chỉ chính thức',
-    'online_quizzes_count' => ':quiz_count Bài kiểm tra trực tuyến',
+    'online_quizzes_count' => ':quiz_count Quiz trực tuyến',
     'instructor_support' => 'Hỗ trợ từ giảng viên',
 
     'report_this_webinar' => 'Báo cáo khóa học này',
@@ -128,7 +128,7 @@ return [
     'show_only_subscribe' => 'Chỉ hiện khóa học có thể đăng ký',
     'show_only_bundles' => 'Chỉ hiện gói',
     'show_only_certificate_included' => 'Chỉ hiện khóa học có chứng chỉ',
-    'show_only_with_quiz' => 'Chỉ hiện khóa học có bài kiểm tra',
+    'show_only_with_quiz' => 'Chỉ hiện khóa học có quiz',
     'show_only_featured' => 'Chỉ hiện khóa học nổi bật',
 
     'private' => 'Riêng tư',

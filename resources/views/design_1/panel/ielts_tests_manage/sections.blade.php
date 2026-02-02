@@ -37,15 +37,15 @@
 <section class="mt-30">
     <div class="d-flex align-items-center justify-content-between mb-20">
         <div>
-            <h1 class="section-title">Manage Sections: {{ $test->title }}</h1>
-            <p class="text-gray">Add and organize test sections here. Each section represents a part of your IELTS test.</p>
+            <h1 class="section-title">{{ trans('update.manage_sections_title') }}: {{ $test->title }}</h1>
+            <p class="text-gray">{{ trans('update.manage_sections_hint') }}</p>
         </div>
         <div>
             <a href="{{ route('panel.my_ielts_tests.edit', $test->id) }}" class="btn btn-secondary mr-10">
-                <i class="fas fa-arrow-left mr-5"></i>Back to Edit
+                <i class="fas fa-arrow-left mr-5"></i>{{ trans('update.back_to_edit') }}
             </a>
             <a href="{{ route('panel.my_ielts_tests.sections.create', $test->id) }}" class="btn btn-primary">
-                <i class="fas fa-plus mr-5"></i>Add Section
+                <i class="fas fa-plus mr-5"></i>{{ trans('update.add_section') }}
             </a>
         </div>
     </div>
@@ -53,7 +53,7 @@
     {{-- Progress (for mock tests) --}}
     @if($test->type === 'mock_test')
         <div class="alert alert-info">
-            <strong>Mock Test Requirements:</strong> Must have 4 sections (Listening, Reading,  Writing, Speaking)
+            <strong>{{ trans('update.mock_test_requirements') }}</strong> {{ trans('update.mock_test_requirements_hint') }}
             <br>
            <small>
                 Current: {{ $test->sections->count() }}/4 sections |
@@ -69,11 +69,12 @@
 @if($test->sections->isEmpty())
         <div class="no-result mt-50">
             <div class="d-flex align-items-center flex-column mt-30 text-center">
-                <h2>No sections yet!</h2>
-                <p class="mt-5">Click "Add Section" to create sections in the Admin Panel.</p>
+                <h2>{{ trans('update.no_sections_yet') }}</h2>
+                <p class="mt-5">{{ trans('update.click_add_section_hint') }}</p>
                 <div class="alert alert-info mt-20" style="max-width: 600px;">
                     <i class="fas fa-info-circle mr-5"></i>
-                    <strong>Note:</strong> Section and question management (upload audio, images, add questions) is available in the Admin Panel for full control and file upload capabilities.
+                    <strong>{{ trans('update.admin_panel_note') }}</strong>
+                    {{ trans('update.admin_panel_hint') }}
                 </div>
             </div>
         </div>
@@ -97,19 +98,19 @@
 
                                 <div class="d-flex align-items-center text-gray font-12">
                                     <div class="mr-20">
-                                        <i class="far fa-clock mr-5"></i>{{ $section->duration_minutes }} min
+                                        <i class="far fa-clock mr-5"></i>{{ $section->duration_minutes }} {{ trans('update.min') }}
                                     </div>
                                     <div class="mr-20">
-                                        <i class="far fa-list-alt mr-5"></i>{{ $section->questions->count() }} questions
+                                        <i class="far fa-list-alt mr-5"></i>{{ $section->questions->count() }} {{ trans('update.questions_count') }}
                                     </div>
                                     @if($section->audio_file)
                                         <div class="mr-20">
-                                            <i class="fas fa-headphones mr-5"></i>Has audio
+                                            <i class="fas fa-headphones mr-5"></i>{{ trans('update.has_audio') }}
                                         </div>
                                     @endif
                                     @if($section->passage_text)
                                         <div class="mr-20">
-                                            <i class="fas fa-align-left mr-5"></i>Has passage
+                                            <i class="fas fa-align-left mr-5"></i>{{ trans('update.has_passage') }}
                                         </div>
                                     @endif
                                 </div>
@@ -118,15 +119,15 @@
                             <div>
                                 <a href="{{ route('panel.my_ielts_tests.questions', [$test->id, $section->id]) }}" 
                                    class="btn btn-sm btn-info mr-5">
-                                    <i class="fas fa-question-circle"></i> Questions
+                                    <i class="fas fa-question-circle"></i> {{ trans('update.questions') }}
                                 </a>
                                 <a href="{{ route('panel.my_ielts_tests.sections.edit', [$test->id, $section->id]) }}" 
                                    class="btn btn-sm btn-primary mr-5">
-                                    <i class="far fa-edit"></i> Edit
+                                    <i class="far fa-edit"></i> {{ trans('update.edit') }}
                                 </a>
                                 <a href="{{ route('panel.my_ielts_tests.sections.delete', [$test->id, $section->id]) }}" 
                                    class="btn btn-sm btn-danger"
-                                   onclick="return confirm('Are you sure? This will delete all questions in this section.')">
+                                   onclick="return confirm('{{ trans('update.delete_section_confirm') }}')">
                                     <i class="far fa-trash-alt"></i>
                                 </a>
                             </div>
@@ -140,9 +141,9 @@
     {{-- Publish Button --}}
     @if($test->sections->count() >= ($test->type === 'mock_test' ? 4 : 1))
         <div class="mt-30 text-center">
-            <p class="text-gray mb-15">Ready to publish this test?</p>
+            <p class="text-gray mb-15">{{ trans('update.ready_to_publish_hint') }}</p>
             <a href="#" class="btn btn-success btn-lg">
-                <i class="fas fa-check mr-5"></i>Publish Test
+                <i class="fas fa-check mr-5"></i>{{ trans('update.publish_test') }}
             </a>
         </div>
     @endif

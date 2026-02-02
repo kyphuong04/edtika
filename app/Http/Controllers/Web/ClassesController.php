@@ -57,6 +57,11 @@ class ClassesController extends Controller
 
         $seoSettings = getSeoMetas('classes');
         $pageTitle = $seoSettings['title'] ?? '';
+
+        if (empty($pageTitle) or $pageTitle == 'Courses') {
+            $pageTitle = trans('update.courses');
+        }
+
         $pageDescription = $seoSettings['description'] ?? '';
         $pageRobot = getPageRobot('classes');
 

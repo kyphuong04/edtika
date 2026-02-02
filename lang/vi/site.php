@@ -41,7 +41,7 @@ return [
     'check_identity_settings' => 'Vui lòng kiểm tra cài đặt danh tính của bạn',
     'filter_items' => 'Lọc mục',
     'more_options' => 'Tùy chọn khác',
-    'show_only_courses_with_quiz' => 'Chỉ hiện khóa học có bài kiểm tra',
+    'show_only_courses_with_quiz' => 'Chỉ hiện khóa học có quiz',
     'show_only_featured_webinars' => 'Chỉ hiện khóa học nổi bật',
     'show_only_subscribe' => 'Chỉ hiện đã đăng ký',
     'show_only_certificate_included' => 'Chỉ hiện khóa học có chứng chỉ',
