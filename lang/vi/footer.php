@@ -35,5 +35,7 @@ return [
     'design' => 'Thiết kế',
     'contact' => 'Liên hệ',
     'login' => 'Đăng nhập',
+    'join_us_today' => 'Tham gia ngay hôm nay',
+    'subscribe_content' => 'Chúng tôi sẽ gửi những ưu đãi mới nhất và độc quyền đến email của bạn.',
     'register' => 'Đăng ký',
 ];

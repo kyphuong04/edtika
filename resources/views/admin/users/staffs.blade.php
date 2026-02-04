@@ -39,7 +39,7 @@
                                     <select name="role_id" class="form-control">
                                         <option value="">{{ trans('public.all') }}</option>
                                         @foreach($staffsRoles as $role)
-                                            <option value="{{ $role->id }}" @if(!empty(request()->get('role_id')) and request()->get('role_id') == $role->id) selected @endif>{{ $role->caption }}</option>
+                                            <option value="{{ $role->id }}" @if(!empty(request()->get('role_id')) and request()->get('role_id') == $role->id) selected @endif>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -102,14 +102,14 @@
                                                 </div>
                                             </td>
 
-                                            <td class="text-center">{{ $user->role->caption }}</td>
+                                            <td class="text-center">{{ (Lang::has('admin/main.'.strtolower($user->role->name))) ? trans('admin/main.'.strtolower($user->role->name)) : $user->role->caption }}</td>
                                             <td>{{ dateTimeFormat($user->created_at, 'j M Y | H:i') }}</td>
 
                                             <td>
                                                 <div class="media-body">
                                                     @if($user->ban and !empty($user->ban_end_at) and $user->ban_end_at > time())
                                                     <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.ban') }}</span>
-                                                    <div class="text-small font-12 text-gray-500">Until {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
+                                                    <div class="text-small font-12 text-gray-500">{{ trans('admin/main.until') }} {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
                                                     @else
                                                     <span class="badge-status {{ ($user->status == 'active') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ trans('admin/main.'.$user->status) }}</span>
                                                     @endif

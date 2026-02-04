@@ -13,7 +13,7 @@
                 <input type="hidden" name="features" value="features">
 
                 <div class="mb-5">
-                    <h5>{{ trans('update.agora') }} {{ trans('admin/main.settings') }}</h5>
+                    <h5>{{ trans('update.agora_settings') }}</h5>
 
                     <div class="form-group">
                         <label>{{ trans('update.agora') }} {{ trans('update.resolution') }}</label>
@@ -117,7 +117,7 @@
                 </div>
 
                 <div class="mb-5">
-                    <h5>{{ trans('update.new_interactive_file') }} {{ trans('admin/main.settings') }}</h5>
+                    <h5>{{ trans('update.interactive_file_settings') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
                         <label class="custom-switch pl-0">
@@ -130,7 +130,7 @@
                 </div>
 
                 <div class="mb-5">
-                    <h5>{{ trans('update.timezone') }} {{ trans('admin/main.settings') }}</h5>
+                    <h5>{{ trans('update.timezone_settings') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
                         <label class="custom-switch pl-0">

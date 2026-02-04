@@ -32,7 +32,7 @@
                                 @can('admin_filters_create')
                                    <a href="{{ getAdminPanelUrl() }}/filters/create" target="_blank" class="btn btn-primary">
                                        <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                                       <span class="ml-4 font-12">{{ trans('admin/main.new') }}{{ trans('admin/main.filter') }}</span>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.new') }} {{ trans('admin/main.filter') }}</span>
                                    </a>
                                @endcan
 

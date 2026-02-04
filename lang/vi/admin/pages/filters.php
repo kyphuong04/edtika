@@ -8,25 +8,25 @@ return [
     |--------------------------------------------------------------------------
     */
 
-'filters' => 'Filters',
-'new_page_lead' => 'You can create a new filter.',
-'edit_page_lead' => 'You can edit this filter.',
+'filters' => 'Bộ lọc',
+'new_page_lead' => 'Bạn có thể tạo một bộ lọc mới.',
+'edit_page_lead' => 'Bạn có thể chỉnh sửa bộ lọc này.',
 
-'add_options' => 'Add Options',
-'option' => 'Option',
-'filter_option' => 'Filter Option',
+'add_options' => 'Thêm tùy chọn',
+'option' => 'Tùy chọn',
+'filter_option' => 'Tùy chọn bộ lọc',
 
-'tags_list_page_title' => 'Filters List',
-'filter' => 'Filter',
-'create_field_title_placeholder' => 'Choose a title.',
-'filters_count' => 'Filters Count',
-'page_lists_lead' => 'List of filters. You can edit or delete any entry.',
+'tags_list_page_title' => 'Danh sách bộ lọc',
+'filter' => 'Bộ lọc',
+'create_field_title_placeholder' => 'Chọn một tiêu đề.',
+'filters_count' => 'Số lượng bộ lọc',
+'page_lists_lead' => 'Danh sách các bộ lọc. Bạn có thể chỉnh sửa hoặc xóa bất kỳ mục nào.',
 
-'admin_filters' => 'Filters',
-'admin_filters_list' => 'Filters List',
-'admin_filters_create' => 'Create Filter',
-'admin_filters_edit' => 'Edit Filter',
-'admin_filters_delete' => 'Delete Filter',
+'admin_filters' => 'Bộ lọc',
+'admin_filters_list' => 'Danh sách bộ lọc',
+'admin_filters_create' => 'Tạo bộ lọc',
+'admin_filters_edit' => 'Chỉnh sửa bộ lọc',
+'admin_filters_delete' => 'Xóa bộ lọc',
 
 
 ];

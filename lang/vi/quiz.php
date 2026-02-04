@@ -11,7 +11,7 @@ return [
 'quiz' => 'Quiz',
 'quizzes' => 'Quiz',
 'my_quizzes' => 'Quiz của tôi',
-'new_quiz' => 'Quiz mới',
+'new_quiz' => 'Tạo Quiz mới',
 'edit_quiz' => 'Chỉnh sửa quiz',
 'quiz_title' => 'Tiêu đề quiz',
 'number_of_attemps' => 'Số lần thử',
@@ -119,7 +119,7 @@ return [
 'quiz_chance_remained' => 'Còn :count lần thử',
 'student_answer' => 'Câu trả lời của học viên',
 
-'new_quiz_page_title' => 'Quiz mới',
+'new_quiz_page_title' => 'Tạo Quiz mới',
 'quizzes_list_page_title' => 'Danh sách quiz',
 'quizzes_section' => 'Không có phần nào',
 

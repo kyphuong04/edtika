@@ -10,8 +10,8 @@ return [
 
     'webinars_list_page_title' => 'Danh sách khóa học',
     'webinars_purchases_page_title' => 'Khóa học đã mua',
-    'new_page_title' => 'Khóa học mới',
-    'new_page_title_step' => 'Khóa học mới – Bước :step',
+    'new_page_title' => 'Tạo khóa học mới',
+    'new_page_title_step' => 'Tạo khóa học mới – Bước :step',
     'webinar' => 'Lớp học trực tiếp',
     'webinars' => 'Lớp học trực tiếp',
     'class' => 'Khóa học',

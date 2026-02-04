@@ -33,7 +33,7 @@
                             @can('admin_roles_create')
                             <a href="{{ getAdminPanelUrl() }}/roles/create" target="_blank" class="btn btn-primary">
                                        <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                                       <span class="ml-4 font-12">{{ trans('admin/main.new') }} {{ trans('admin/main.role') }}</span>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.new_role') }}</span>
                                    </a>
                             @endcan
 
@@ -56,7 +56,7 @@
                                     @foreach($roles as $role)
                                         <tr>
                                             <td>{{$role->id}}</td>
-                                            <td class="text-left">{{$role->caption}}</td>
+                                            <td class="text-left">{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</td>
                                             <td>{{$role->users->count()}}</td>
                                             <td>
                                                 @if($role->is_admin)

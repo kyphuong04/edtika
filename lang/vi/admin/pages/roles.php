@@ -8,25 +8,25 @@ return [
     |--------------------------------------------------------------------------
     */
 
-'role' => 'Role',
-'roles' => 'Roles',
-'select_sections_level' => 'Select Sections Level',
-'page_lists_title' => 'User Roles',
-'page_lists_lead' => 'List of roles. You can edit or delete any row.',
-'new_page_title' => 'New Role',
+'role' => 'Vai trò',
+'roles' => 'Các vai trò',
+'select_sections_level' => 'Chọn mức độ phần',
+'page_lists_title' => 'Vai trò người dùng',
+'page_lists_lead' => 'Danh sách các vai trò. Bạn có thể chỉnh sửa hoặc xóa bất kỳ hàng nào.',
+'new_page_title' => 'Tạo vai trò mới',
 
-'sections' => 'Sections',
-'new_page_lead' => 'You can create a new role.',
-'select_type' => 'Select a Type',
+'sections' => 'Các phần',
+'new_page_lead' => 'Bạn có thể tạo một vai trò mới.',
+'select_type' => 'Chọn một loại',
 
-'create_field_name_placeholder' => 'Example: admin',
-'is_admin' => 'Admin Panel Access',
+'create_field_name_placeholder' => 'Ví dụ: admin',
+'is_admin' => 'Truy cập bảng quản trị',
 
-'admin_roles' => 'Roles',
-'admin_roles_list' => 'Roles List',
-'admin_roles_create' => 'Create Role',
-'admin_roles_edit' => 'Edit Role',
-'admin_roles_delete' => 'Delete Role',
+'admin_roles' => 'Các vai trò',
+'admin_roles_list' => 'Danh sách vai trò',
+'admin_roles_create' => 'Tạo vai trò',
+'admin_roles_edit' => 'Chỉnh sửa vai trò',
+'admin_roles_delete' => 'Xóa vai trò',
 
 
 ];

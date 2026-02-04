@@ -124,7 +124,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.user')}}</label>
                                     <select name="user_ids[]" multiple="multiple" class="form-control search-user-select2"
-                                            data-placeholder="Search users">
+                                            data-placeholder="{{ trans('admin/main.search_users') }}">
 
                                         @if(!empty($selectedUsers) and $selectedUsers->count() > 0)
                                             @foreach($selectedUsers as $user)

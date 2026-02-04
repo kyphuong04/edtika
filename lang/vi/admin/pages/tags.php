@@ -8,19 +8,19 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'tags_list_page_title' => 'Tags List',
-    'tag' => 'Tag',
-    'tags' => 'Tags',
-    'title' => 'Title',
-    'create_field_title_placeholder' => 'Enter a title.',
-    'tags_count' => 'Number of Tags',
-    'new_page_lead' => 'Create a new tag.',
-    'page_lists_lead' => 'List of tags. You can edit or delete any entry.',
+    'tags_list_page_title' => 'Danh sách thẻ',
+    'tag' => 'Thẻ',
+    'tags' => 'Các thẻ',
+    'title' => 'Tiêu đề',
+    'create_field_title_placeholder' => 'Nhập tiêu đề.',
+    'tags_count' => 'Số lượng thẻ',
+    'new_page_lead' => 'Tạo một thẻ mới.',
+    'page_lists_lead' => 'Danh sách các thẻ. Bạn có thể chỉnh sửa hoặc xóa bất kỳ mục nào.',
 
-    'admin_tags' => 'Tags',
-    'admin_tags_list' => 'Tags List',
-    'admin_tags_create' => 'Create Tag',
-    'admin_tags_edit' => 'Edit Tag',
-    'admin_tags_delete' => 'Delete Tag',
+    'admin_tags' => 'Thẻ',
+    'admin_tags_list' => 'Danh sách thẻ',
+    'admin_tags_create' => 'Tạo thẻ',
+    'admin_tags_edit' => 'Chỉnh sửa thẻ',
+    'admin_tags_delete' => 'Xóa thẻ',
 
 ];

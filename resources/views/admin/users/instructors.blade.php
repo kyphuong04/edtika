@@ -11,9 +11,9 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{ trans('admin/main.instructors') }}</h1>
+            <h1>{{ trans('admin/main.instructors_list') }}</h1>
             <div class="section-header-breadcrumb">
-                <div class="breadcrumb-item active"><a href="#">{{ trans('admin/main.instructors') }}</a></div>
+                <div class="breadcrumb-item active"><a href="#">{{ trans('admin/main.instructors_list') }}</a></div>
                 <div class="breadcrumb-item">{{ trans('admin/main.users') }}</div>
             </div>
         </div>
@@ -198,7 +198,7 @@
                                @can('admin_quizzes_create')
                                    <a href="{{ getAdminPanelUrl() }}/users/create" target="_blank" class="btn btn-primary">
                                        <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                                       <span class="ml-4 font-12">{{ trans('admin/main.new') }} {{ trans('admin/main.user') }}</span>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.new_user') }}</span>
                                    </a>
                                @endcan
 

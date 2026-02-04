@@ -282,7 +282,7 @@ class UserController extends Controller
         }
 
         $data = [
-            'pageTitle' => 'Regular Users',
+            'pageTitle' => trans('admin/main.regular_users'),
             'users' => $users,
             'totalRegularUsers' => $totalRegularUsers,
             'inactiveRegularUsers' => $inactiveRegularUsers,
