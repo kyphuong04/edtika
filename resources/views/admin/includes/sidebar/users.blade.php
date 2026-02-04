@@ -39,7 +39,7 @@
             @endif
             @if(($authUser->isManager() || $authUser->isCeo()) && $authUser->can('admin_users_list'))
                 <li class="{{ (request()->is(getAdminPanelUrl('/regular-users', false))) ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/regular-users">Users</a>
+                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/regular-users">{{ trans('admin/main.regular_users') }}</a>
                 </li>
             @endif
             @can('admin_users_list')

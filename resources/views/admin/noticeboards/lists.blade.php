@@ -77,7 +77,7 @@
                                     <div class="form-group">
                                         <label class="input-label">{{trans('admin/main.sender')}}</label>
                                         <select name="sender" data-plugin-selectTwo class="form-control populate">
-                                            <option value="">Select Sender</option>
+                                            <option value="">{{ trans('admin/main.select_sender') }}</option>
                                             <option value="admin" @if(request()->get('sender') == 'admin') selected @endif>{{trans('admin/main.admin_role')}}</option>
                                             <option value="organizations" @if(request()->get('sender') == 'organizations') selected @endif>{{trans('admin/main.organizations')}}</option>
                                         </select>

@@ -22,7 +22,7 @@
 
                 <div class="form-group">
                     <label class="input-label">{{ trans('update.student_enroll_on_courses') }}</label>
-                    <select name="value[student_enroll_on_courses][]" multiple="multiple" class="form-control search-webinar-select2" data-placeholder="Search classes">
+                    <select name="value[student_enroll_on_courses][]" multiple="multiple" class="form-control search-webinar-select2" data-placeholder="{{ trans('admin/main.search_webinar') }}">
 
                         @if(!empty($itemValue) and !empty($itemValue['student_enroll_on_courses']))
                             @foreach($itemValue['student_enroll_on_courses'] as $webinarId)
@@ -40,7 +40,7 @@
 
                 <div class="form-group">
                     <label class="input-label">{{ trans('update.student_overview_courses') }}</label>
-                    <select name="value[student_overview_courses][]" multiple="multiple" class="form-control search-webinar-select2" data-placeholder="Search classes">
+                    <select name="value[student_overview_courses][]" multiple="multiple" class="form-control search-webinar-select2" data-placeholder="{{ trans('admin/main.search_webinar') }}">
 
                         @if(!empty($itemValue) and !empty($itemValue['student_overview_courses']))
                             @foreach($itemValue['student_overview_courses'] as $webinarId)
@@ -58,7 +58,7 @@
 
                 <div class="form-group">
                     <label class="input-label">{{ trans('update.student_when_dont_upcoming_live_session') }}</label>
-                    <select name="value[student_when_dont_upcoming_live_session][]" multiple="multiple" class="form-control search-webinar-select2" data-placeholder="Search classes">
+                    <select name="value[student_when_dont_upcoming_live_session][]" multiple="multiple" class="form-control search-webinar-select2" data-placeholder="{{ trans('admin/main.search_webinar') }}">
 
                         @if(!empty($itemValue) and !empty($itemValue['student_when_dont_upcoming_live_session']))
                             @foreach($itemValue['student_when_dont_upcoming_live_session'] as $webinarId)

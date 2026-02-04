@@ -963,13 +963,11 @@ class IeltsTestController extends Controller
         
         $group->update(['status' => 'approved']);
         
-        // Notify creator
-        if ($group->creator_id) {
             Notification::create([
                 'user_id' => $group->creator_id,
                 'sender' => Notification::$SystemSender,
-                'title' => 'Question Group Approved',
-                'message' => 'Your question group "' . $group->title . '" has been approved!',
+                'title' => trans('update.question_group_approved'),
+            'message' => trans('update.question_group_approved_msg', ['title' => $group->title]),
                 'type' => 'single',
                 'created_at' => time(),
             ]);
@@ -1006,8 +1004,8 @@ class IeltsTestController extends Controller
             Notification::create([
                 'user_id' => $group->creator_id,
                 'sender' => Notification::$SystemSender,
-                'title' => 'Question Group Rejected',
-                'message' => 'Your question group "' . $group->title . '" was rejected. Reason: ' . ($reason ?? 'No reason provided'),
+                'title' => trans('update.question_group_rejected'),
+            'message' => trans('update.question_group_rejected_msg', ['title' => $group->title, 'reason' => ($reason ?? 'No reason provided')]),
                 'type' => 'single',
                 'created_at' => time(),
             ]);

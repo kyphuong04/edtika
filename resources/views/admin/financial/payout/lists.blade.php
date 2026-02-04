@@ -35,7 +35,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.start_date') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="fsdate" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="Start Date">
+                                        <input type="date" id="fsdate" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.start_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -44,7 +44,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.end_date') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="lsdate" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="End Date">
+                                        <input type="date" id="lsdate" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="{{ trans('admin/main.end_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -55,7 +55,7 @@
                                     <select name="role_id" data-plugin-selectTwo class="form-control populate">
                                         <option value="">{{ trans('admin/main.all_roles') }}</option>
                                         @foreach($roles as $role)
-                                            <option value="{{ $role->id }}" @if($role->id == request()->get('role_id')) selected @endif>{{ $role->caption }}</option>
+                                            <option value="{{ $role->id }}" @if($role->id == request()->get('role_id')) selected @endif>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -65,7 +65,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.user') }}</label>
                                     <select name="user_ids[]" multiple="multiple" class="form-control search-user-select2"
-                                            data-placeholder="Search teachers">
+                                            data-placeholder="{{ trans('admin/main.search_teachers') }}">
 
                                         @if(!empty($users) and $users->count() > 0)
                                             @foreach($users as $user_filter)
@@ -93,7 +93,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.filters') }}</label>
                                     <select name="sort" data-plugin-selectTwo class="form-control populate">
-                                        <option value="">Filter Type</option>
+                                        <option value="">{{ trans('admin/main.filter_type') }}</option>
                                         <option value="amount_asc" @if(request()->get('sort') == 'amount_asc') selected @endif>{{ trans('admin/main.amount_ascending') }}</option>
                                         <option value="amount_desc" @if(request()->get('sort') == 'amount_desc') selected @endif>{{ trans('admin/main.amount_descending') }}</option>
                                         <option value="created_at_asc" @if(request()->get('sort') == 'created_at_asc') selected @endif>{{ trans('admin/main.last_payout_date_ascending') }}</option>
@@ -164,7 +164,7 @@
                                                     <span class="d-block">{{ $payout->user->full_name }}</span>
                                                 </td>
 
-                                                <td>{{ $payout->user->role->caption }}</td>
+                                                <td>{{ (Lang::has('admin/main.'.strtolower($payout->user->role->name))) ? trans('admin/main.'.strtolower($payout->user->role->name)) : $payout->user->role->caption }}</td>
 
                                                 <td>{{ handlePrice($payout->amount) }}</td>
 

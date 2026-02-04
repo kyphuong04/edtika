@@ -30,6 +30,7 @@ return [
 'link' => 'Link',
 'duration' => 'Duration',
 'minutes' => 'Minutes',
+'input_too_short' => 'Please enter 3 or more characters',
 'min' => 'Min',
 'view' => 'View',
 'view_profile' => 'View Profile',

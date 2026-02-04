@@ -61,7 +61,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.class') }}</label>
                                     <select name="webinar_ids[]" multiple="multiple" class="form-control search-webinar-select2"
-                                            data-placeholder="Search classes">
+                                            data-placeholder="{{ trans('admin/main.search_classes') }}">
 
                                         @if(!empty($webinars) and $webinars->count() > 0)
                                             @foreach($webinars as $webinar)

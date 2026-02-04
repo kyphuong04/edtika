@@ -148,4 +148,11 @@ return [
 
     'attributes' => [],
 
+    'image_cover' => 'Image Cover',
+    'teacher_id' => 'Teacher Id',
+    'content' => 'Content',
+    'description' => 'Description',
+    'thumbnail' => 'Thumbnail',
+    'category_id' => 'Category Id',
+    'title' => 'Title',
 ];

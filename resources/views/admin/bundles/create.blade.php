@@ -43,9 +43,9 @@
 
                             <div class="empty-state mx-auto d-block"  data-width="900" >
                                 <img class="img-fluid col-md-6" src="/assets/default/img/plugin.svg" alt="image">
-                                <h3 class="mt-3">This is a paid plugin!</h3>
+                                <h3 class="mt-3">{{ trans('admin/main.this_is_a_paid_plugin') }}</h3>
                                 <h5 class="lead">
-                                    You can purchase it by <strong><a href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004">this link</a></strong> on Codecanyon.
+                                    {!! trans('admin/main.purchase_plugin_hint', ['link' => '<strong><a href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004">'. trans('admin/main.this_link') .'</a></strong>']) !!}
                                 </h5>             
                               </div>
 

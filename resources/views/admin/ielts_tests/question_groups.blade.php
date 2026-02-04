@@ -7,8 +7,8 @@
         <div class="section-header-breadcrumb">
             <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">Dashboard</a></div>
             <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.index') }}">IELTS Tests</a></div>
-            <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.sections', $section->test_id) }}">Sections</a></div>
-            <div class="breadcrumb-item">Question Groups</div>
+            <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.sections', $section->test_id) }}">{{ trans('update.ielts_manage_sections') }}</a></div>
+            <div class="breadcrumb-item">{{ trans('update.ielts_manage_question_groups') }}</div>
         </div>
     </div>
 
@@ -16,8 +16,8 @@
         {{-- Instructions Alert --}}
         <div class="alert alert-info">
             <i class="fas fa-info-circle mr-2"></i>
-            <strong>About Question Groups:</strong> Each group contains questions of the same type that share common content (e.g., one passage with multiple question types in Reading).
-            <br><strong>Example:</strong> Reading Passage 1 might have: Questions 1-5 (Multiple Choice), Questions 6-9 (Table Completion), Questions 10-13 (Matching).
+            <strong>{{ trans('update.ielts_about_question_groups') }}:</strong> {{ trans('update.ielts_about_question_groups_desc') }}
+            <br><strong>{{ trans('update.ielts_question_group_example') }}:</strong> {{ trans('update.ielts_question_group_example_desc') }}
         </div>
 
         <div class="card">
@@ -36,11 +36,11 @@
                 <div>
                     <a href="{{ route('admin.ielts_tests.sections', $section->test_id) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Sections
+                        {{ trans('update.ielts_back_to_sections') }}
                     </a>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addQuestionGroupModal">
                         <i class="fas fa-layer-group mr-2"></i>
-                        Add Question Group
+                        {{ trans('update.ielts_add_question_group') }}
                     </button>
                 </div>
             </div>
@@ -48,11 +48,11 @@
                 @if($questionGroups->isEmpty())
                     <div class="text-center py-5">
                         <i class="fas fa-layer-group fa-3x text-gray mb-3"></i>
-                        <h5>No Question Groups Yet</h5>
-                        <p class="text-gray">Create your first question group for this section</p>
+                        <h5>{{ trans('update.ielts_no_question_groups_yet') }}</h5>
+                        <p class="text-gray">{{ trans('update.ielts_create_first_question_group_hint') }}</p>
                         <button type="button" class="btn btn-primary mt-3" data-toggle="modal" data-target="#addQuestionGroupModal">
                             <i class="fas fa-plus mr-2"></i>
-                            Create Question Group
+                            {{ trans('update.ielts_add_question_group') }}
                         </button>
                     </div>
                 @else
@@ -136,7 +136,7 @@
 
                             @if($group->task_image)
                                 <div class="mb-3">
-                                    <strong><i class="fas fa-image mr-1"></i>Task Image:</strong>
+                                    <strong><i class="fas fa-image mr-1"></i>{{ trans('update.ielts_task_image') }}:</strong>
                                     <div class="mt-2">
                                         <img src="{{ $group->task_image }}" alt="Task" class="img-thumbnail" style="max-width: 400px;">
                                     </div>
@@ -254,7 +254,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Instructions for Students</label>
+                        <label>{{ trans('update.ielts_instructions_for_students') }}</label>
                         <textarea name="instructions" class="form-control" rows="3" 
                                   placeholder="e.g., Choose the correct letter A, B, C or D"></textarea>
                     </div>

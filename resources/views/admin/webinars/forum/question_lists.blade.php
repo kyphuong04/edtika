@@ -81,7 +81,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.date')}}</label>
                                     <div class="input-group">
-                                        <input type="date" id="fsdate" class="text-center form-control" name="date" value="{{ request()->get('date') }}" placeholder="Date">
+                                        <input type="date" id="fsdate" class="text-center form-control" name="date" value="{{ request()->get('date') }}" placeholder="{{ trans('admin/main.date') }}">
                                     </div>
                                 </div>
                             </div>
