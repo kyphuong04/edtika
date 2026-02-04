@@ -39,7 +39,7 @@
                         <select class="form-control @error('role_id') is-invalid @enderror" id="roleId" name="role_id">
                             <option disabled {{ empty($user) ? 'selected' : '' }}>{{ trans('admin/main.select_role') }}</option>
                             @foreach ($roles as $role)
-                                <option value="{{ $role->id }}" {{ (!empty($user) and $user->role_id == $role->id) ? 'selected' :''}}>{{ $role->caption }}</option>
+                                <option value="{{ $role->id }}" {{ (!empty($user) and $user->role_id == $role->id) ? 'selected' :''}}>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                             @endforeach
                         </select>
                         @error('role_id')
@@ -164,7 +164,7 @@
                         <option disabled {{ empty($user) ? 'selected' : '' }}>{{ trans('admin/main.select_status') }}</option>
 
                         @foreach (\App\User::$statuses as $status)
-                            <option value="{{ $status }}" {{ !empty($user) && $user->status === $status ? 'selected' :''}}>{{  $status }}</option>
+                            <option value="{{ $status }}" {{ !empty($user) && $user->status === $status ? 'selected' :''}}>{{ trans('admin/main.'.$status) }}</option>
                         @endforeach
                     </select>
                     @error('status')

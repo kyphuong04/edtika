@@ -183,8 +183,8 @@
                                             </td>
 
                                             <td class="text-center">
-                                                <div class="text-dark-blue font-weight-500">{{ $test->total_duration }} min</div>
-                                                <small class="text-gray">{{ $test->sections->count() }} sections</small>
+                                                <div class="text-dark-blue font-weight-500">{{ $test->total_duration }} {{ trans('update.ielts_min') }}</div>
+                                                <small class="text-gray">{{ trans('update.ielts_sections_count', ['count' => $test->sections->count()]) }}</small>
                                             </td>
 
                                             <td class="text-center">
@@ -240,7 +240,7 @@
 
                                                         <!-- <a href="{{ route('panel.my_ielts_tests.duplicate', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                             <x-iconsax-lin-copy class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">Duplicate</span>
+                                                            <span class="text-gray-500 font-14">{{ trans('update.ielts_duplicate') }}</span>
                                                         </a> -->
 
                                                         @if($test->canBeEdited())

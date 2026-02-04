@@ -3,10 +3,10 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>IELTS Tests</h1>
+            <h1>{{ trans('update.ielts_tests') }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a></div>
-                <div class="breadcrumb-item">IELTS Tests</div>
+                <div class="breadcrumb-item">{{ trans('update.ielts_tests') }}</div>
             </div>
         </div>
 
@@ -16,7 +16,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Total Tests</span>
+                            <span class="text-gray-500 mt-8">{{ trans('update.ielts_total_tests') }}</span>
                             <div class="d-flex-center size-48 bg-primary-30 rounded-12">
                                 <x-iconsax-bul-clipboard-text class="icons text-primary" width="24px" height="24px"/>
                             </div>
@@ -31,7 +31,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Mock Tests</span>
+                            <span class="text-gray-500 mt-8">{{ trans('update.ielts_mock_tests') }}</span>
                             <div class="d-flex-center size-48 bg-success-30 rounded-12">
                                 <x-iconsax-bul-document-text class="icons text-success" width="24px" height="24px"/>
                             </div>
@@ -46,7 +46,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Practice Tests</span>
+                            <span class="text-gray-500 mt-8">{{ trans('update.ielts_practice_tests') }}</span>
                             <div class="d-flex-center size-48 bg-accent-30 rounded-12">
                                 <x-iconsax-bul-note-text class="icons text-accent" width="24px" height="24px"/>
                             </div>
@@ -61,7 +61,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Pending Approval</span>
+                            <span class="text-gray-500 mt-8">{{ trans('update.ielts_pending_approval') }}</span>
                             <div class="d-flex-center size-48 bg-warning-30 rounded-12">
                                 <x-iconsax-bul-clock class="icons text-warning" width="24px" height="24px"/>
                             </div>
@@ -79,18 +79,18 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.search') }}</label>
-                                <input type="text" class="form-control" name="search" value="{{ request()->get('search') }}" placeholder="Search test title...">
+                                <input type="text" class="form-control" name="search" value="{{ request()->get('search') }}" placeholder="{{ trans('update.ielts_search_test_title_placeholder') }}">
                             </div>
                         </div>
 
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label class="input-label">Type</label>
+                                <label class="input-label">{{ trans('admin/main.type') }}</label>
                                 <select name="type" class="form-control">
-                                    <option value="">All Types</option>
-                                    <option value="mock" {{ request()->get('type') == 'mock' ? 'selected' : '' }}>Mock Test</option>
-                                    <option value="practice" {{ request()->get('type') == 'practice' ? 'selected' : '' }}>Practice Test</option>
-                                    <option value="diagnostic" {{ request()->get('type') == 'diagnostic' ? 'selected' : '' }}>Diagnostic Test</option>
+                                    <option value="">{{ trans('update.ielts_all_types') }}</option>
+                                    <option value="mock" {{ request()->get('type') == 'mock' ? 'selected' : '' }}>{{ trans('update.ielts_mock_tests') }}</option>
+                                    <option value="practice" {{ request()->get('type') == 'practice' ? 'selected' : '' }}>{{ trans('update.ielts_practice_tests') }}</option>
+                                    <option value="diagnostic" {{ request()->get('type') == 'diagnostic' ? 'selected' : '' }}>{{ trans('update.ielts_diagnostic_test') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -99,11 +99,11 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.status') }}</label>
                                 <select name="status" class="form-control">
-                                    <option value="">All Status</option>
-                                    <option value="draft" {{ request()->get('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                                    <option value="pending_approval" {{ request()->get('status') == 'pending_approval' ? 'selected' : '' }}>Pending Approval</option>
-                                    <option value="approved" {{ request()->get('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                    <option value="published" {{ request()->get('status') == 'published' ? 'selected' : '' }}>Published</option>
+                                    <option value="">{{ trans('update.ielts_all_status') }}</option>
+                                    <option value="draft" {{ request()->get('status') == 'draft' ? 'selected' : '' }}>{{ trans('update.ielts_draft') }}</option>
+                                    <option value="pending_approval" {{ request()->get('status') == 'pending_approval' ? 'selected' : '' }}>{{ trans('update.ielts_pending_approval') }}</option>
+                                    <option value="approved" {{ request()->get('status') == 'approved' ? 'selected' : '' }}>{{ trans('update.ielts_approved') }}</option>
+                                    <option value="published" {{ request()->get('status') == 'published' ? 'selected' : '' }}>{{ trans('update.ielts_published') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -120,22 +120,23 @@
                     <div class="card">
                         <div class="card-header justify-content-between">
                             <div>
+                            <div class="d-flex align-items-start justify-content-between">
                                 <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
-                                <p class="font-12 mt-4 mb-0 text-gray-500">Manage all IELTS tests in a single place</p>
+                                <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.ielts_manage_tests_hint') }}</p>
                             </div>
 
                             <div class="d-flex align-items-center gap-12">
                                 <a href="{{ route('admin.ielts_tests.settings') }}" class="btn btn-outline-secondary">
                                     <x-iconsax-lin-setting-2 class="icons" width="18px" height="18px"/>
-                                    <span class="ml-4 font-12">Settings</span>
+                                    <span class="ml-4 font-12">{{ trans('update.ielts_settings') }}</span>
                                 </a>
                                 <a href="{{ route('admin.ielts_tests.attempts') }}" class="btn btn-outline-success">
                                     <x-iconsax-lin-teacher class="icons" width="18px" height="18px"/>
-                                    <span class="ml-4 font-12">Student Grading</span>
+                                    <span class="ml-4 font-12">{{ trans('update.ielts_student_grading') }}</span>
                                 </a>
                                 <a href="{{ route('admin.ielts_tests.wizard') }}" class="btn btn-primary">
                                     <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                                    <span class="ml-4 font-12">Create New Test</span>
+                                    <span class="ml-4 font-12">{{ trans('update.ielts_create_new_test') }}</span>
                                 </a>
                             </div>
                         </div>
@@ -145,13 +146,13 @@
                                 <table class="table custom-table font-14">
                                     <thead>
                                         <tr>
-                                            <th class="text-left">Title</th>
-                                            <th class="text-center">Type</th>
-                                            <th class="text-center">Format</th>
-                                            <th class="text-center">Duration</th>
-                                            <th class="text-center">Attempts</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Created By</th>
+                                            <th class="text-left">{{ trans('update.ielts_title') }}</th>
+                                            <th class="text-center">{{ trans('admin/main.type') }}</th>
+                                            <th class="text-center">{{ trans('update.ielts_format') }}</th>
+                                            <th class="text-center">{{ trans('admin/main.duration') }}</th>
+                                            <th class="text-center">{{ trans('update.ielts_attempts') }}</th>
+                                            <th class="text-center">{{ trans('admin/main.status') }}</th>
+                                            <th class="text-center">{{ trans('update.ielts_created_by') }}</th>
                                             <th>{{ trans('admin/main.actions') }}</th>
                                         </tr> 
                                     </thead>
@@ -161,17 +162,17 @@
                                                 <td>
                                                     <span class="text-black font-weight-bold">{{ $test->title }}</span>
                                                     @if($test->target_band_min && $test->target_band_max)
-                                                        <small class="d-block text-gray-700">Target: Band {{ $test->target_band_min }} - {{ $test->target_band_max }}</small>
+                                                        <small class="d-block text-gray-700">{{ trans('update.ielts_target_band') }} {{ $test->target_band_min }} - {{ $test->target_band_max }}</small>
                                                     @endif
                                                 </td>
 
                                                 <td class="text-center">
                                                     @if($test->type === 'mock')
-                                                        <span class="badge-status  text-black bg-primary-30" style="min-width: 90px; display: inline-block;">Mock</span>
+                                                        <span class="badge-status  text-black bg-primary-30" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_mock_tests') }}</span>
                                                     @elseif($test->type === 'practice')
-                                                        <span class="badge-status text-black bg-info-30" style="min-width: 90px; display: inline-block;">Practice</span>
+                                                        <span class="badge-status text-black bg-info-30" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_practice_tests') }}</span>
                                                     @else
-                                                        <span class="badge-status text-black bg-gray-200" style="min-width: 90px; display: inline-block;">Diagnostic</span>
+                                                        <span class="badge-status text-black bg-gray-200" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_diagnostic_test') }}</span>
                                                     @endif
                                                 </td>
 
@@ -180,7 +181,7 @@
                                                 </td>
 
                                                 <td class="text-center">
-                                                    {{ $test->total_duration }} min
+                                                    {{ $test->total_duration }} {{ trans('update.ielts_min') }}
                                                     <small class="d-block text-gray-500">
                                                         @if($test->has_listening) L:{{ $test->listening_duration }} @endif
                                                         @if($test->has_reading) R:{{ $test->reading_duration }} @endif
@@ -195,15 +196,15 @@
 
                                                 <td class="text-center">
                                                     @if($test->status === 'published')
-                                                        <span class="badge-status text-black bg-success-30" style="min-width: 90px; display: inline-block;">Published</span>
+                                                        <span class="badge-status text-black bg-success-30" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_published') }}</span>
                                                     @elseif($test->status === 'pending_approval')
-                                                        <span class="badge-status text-black bg-warning-30" style="min-width: 90px; display: inline-block;">Pending</span>
+                                                        <span class="badge-status text-black bg-warning-30" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_pending_approval') }}</span>
                                                     @elseif($test->status === 'approved')
-                                                        <span class="badge-status text-black bg-info-30" style="min-width: 90px; display: inline-block;">Approved</span>
+                                                        <span class="badge-status text-black bg-info-30" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_approved') }}</span>
                                                     @elseif($test->status === 'rejected')
-                                                        <span class="badge-status text-black bg-danger-30" style="min-width: 90px; display: inline-block;">Rejected</span>
+                                                        <span class="badge-status text-black bg-danger-30" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_rejected') }}</span>
                                                     @else
-                                                        <span class="badge-status text-black bg-gray-200" style="min-width: 90px; display: inline-block;">Draft</span>
+                                                        <span class="badge-status text-black bg-gray-200" style="min-width: 90px; display: inline-block;">{{ trans('update.ielts_draft') }}</span>
                                                     @endif
                                                 </td>
 
@@ -220,7 +221,7 @@
                                                         <div class="dropdown-menu dropdown-menu-right">
                                                             <a href="{{ route('admin.ielts_tests.sections', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                                 <x-iconsax-lin-hierarchy-square class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                                <span class="text-gray-500 font-14">Manage Sections</span>
+                                                                <span class="text-gray-500 font-14">{{ trans('update.ielts_manage_sections') }}</span>
                                                             </a>
 
                                                             <a href="{{ route('admin.ielts_tests.edit', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
@@ -233,13 +234,13 @@
                                                     @csrf
                                                     <button type="submit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                         <x-iconsax-lin-tick-circle class="icons text-success mr-2" width="18px" height="18px"/>
-                                                        <span class="text-success font-14 font-weight-bold">Approve</span>
+                                                        <span class="text-success font-14 font-weight-bold">{{ trans('update.ielts_approve') }}</span>
                                                     </button>
                                                 </form>
                                                 <button type="button" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 reject-btn" 
                                                         data-test-id="{{ $test->id }}" data-test-title="{{ $test->title }}">
                                                     <x-iconsax-lin-close-circle class="icons text-danger mr-2" width="18px" height="18px"/>
-                                                    <span class="text-danger font-14">Reject</span>
+                                                    <span class="text-danger font-14">{{ trans('update.ielts_reject') }}</span>
                                                 </button>
                                             @endif
                                             
@@ -248,7 +249,7 @@
                                                     @csrf
                                                     <button type="submit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                         <x-iconsax-lin-slash class="icons text-warning mr-2" width="18px" height="18px"/>
-                                                        <span class="text-warning font-14">Unpublish</span>
+                                                        <span class="text-warning font-14">{{ trans('update.ielts_unpublish') }}</span>
                                                     </button>
                                                 </form>
                                             @endif

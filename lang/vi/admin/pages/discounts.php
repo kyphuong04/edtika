@@ -8,19 +8,19 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'discount_list_page_title' => 'Discounts List',
-'discount' => 'Discount',
-'title' => 'Title',
-'tags_count' => 'Tags Count',
-'new_page_lead' => 'You can create a new discount.',
-'parent_name' => 'Parent Name',
-'select_parent_name' => 'Select Parent Name',
-'discount_count' => 'Discounts Count',
-'page_lists_lead' => 'List of discounts. You can edit or delete any entry.',
-'sub_discount' => 'Sub-Discount',
-'has_sub_discount' => 'Has Sub-Discount',
-'add_sub_discount' => 'Add Sub-Discount',
-'add' => 'Add',
-'remove' => 'Remove',
+    'discount_list_page_title' => 'Danh sách mã giảm giá',
+'discount' => 'Giảm giá',
+'title' => 'Tiêu đề',
+'tags_count' => 'Số lượng thẻ',
+'new_page_lead' => 'Bạn có thể tạo một mã giảm giá mới.',
+'parent_name' => 'Tên cha',
+'select_parent_name' => 'Chọn tên cha',
+'discount_count' => 'Số lượng mã giảm giá',
+'page_lists_lead' => 'Danh sách các mã giảm giá. Bạn có thể chỉnh sửa hoặc xóa bất kỳ mục nào.',
+'sub_discount' => 'Giảm giá phụ',
+'has_sub_discount' => 'Có giảm giá phụ',
+'add_sub_discount' => 'Thêm giảm giá phụ',
+'add' => 'Thêm',
+'remove' => 'Xóa',
 
 ];

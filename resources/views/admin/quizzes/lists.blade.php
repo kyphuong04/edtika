@@ -126,7 +126,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.instructor') }}</label>
                                 <select name="teacher_ids[]" multiple="multiple" data-search-option="just_teacher_role" class="form-control search-user-select2"
-                                        data-placeholder="Search teachers">
+                                        data-placeholder="{{ trans('admin/main.search_teachers') }}">
 
                                     @if(!empty($teachers) and $teachers->count() > 0)
                                         @foreach($teachers as $teacher)
@@ -141,7 +141,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.class') }}</label>
                                 <select name="webinar_ids[]" multiple="multiple" class="form-control search-webinar-select2"
-                                        data-placeholder="Search classes">
+                                        data-placeholder="{{ trans('admin/main.search_classes') }}">
 
                                     @if(!empty($webinars) and $webinars->count() > 0)
                                         @foreach($webinars as $webinar)

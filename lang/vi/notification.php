@@ -19,7 +19,7 @@ return [
     'send_noticeboard' => 'Đăng thông báo mới',
     'edit_noticeboard' => 'Chỉnh sửa thông báo',
     'post_notice' => 'Đăng thông báo',
-    'new_support_message' => 'Tin nhắn hỗ trợ mới',
+    'new_support_message' => 'Tạo tin nhắn hỗ trợ mới',
     'instructor_sent_message' => ':instructor đã gửi cho bạn một tin nhắn hỗ trợ',
 
 ];

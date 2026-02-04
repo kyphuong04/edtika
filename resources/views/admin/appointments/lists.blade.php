@@ -87,7 +87,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.start_date')}}</label>
                                     <div class="input-group">
-                                        <input type="date" id="from" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="Start Date">
+                                        <input type="date" id="from" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.start_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -95,7 +95,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.end_date')}}</label>
                                     <div class="input-group">
-                                        <input type="date" id="to" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="End Date">
+                                        <input type="date" id="to" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="{{ trans('admin/main.end_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -106,10 +106,10 @@
                                     <label class="input-label">{{trans('admin/main.status')}}</label>
                                     <select name="status" data-plugin-selectTwo class="form-control populate">
                                         <option value="">{{trans('admin/main.all_status')}}</option>
-                                        <option value="{{ \App\Models\ReserveMeeting::$open }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$open) selected @endif>Open</option>
-                                        <option value="{{ \App\Models\ReserveMeeting::$finished }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$finished) selected @endif>Finished</option>
-                                        <option value="{{ \App\Models\ReserveMeeting::$canceled }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$canceled) selected @endif>Canceled</option>
-                                        <option value="{{ \App\Models\ReserveMeeting::$pending }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$pending) selected @endif>Pending</option>
+                                        <option value="{{ \App\Models\ReserveMeeting::$open }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$open) selected @endif>{{ trans('public.open') }}</option>
+                                        <option value="{{ \App\Models\ReserveMeeting::$finished }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$finished) selected @endif>{{ trans('public.finished') }}</option>
+                                        <option value="{{ \App\Models\ReserveMeeting::$canceled }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$canceled) selected @endif>{{ trans('public.canceled') }}</option>
+                                        <option value="{{ \App\Models\ReserveMeeting::$pending }}" @if(request()->get('status') == \App\Models\ReserveMeeting::$pending) selected @endif>{{ trans('public.pending') }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -135,7 +135,7 @@
                                     <label class="input-label">{{trans('admin/main.consultant')}}</label>
 
                                     <select name="consultant_ids[]" multiple="multiple" data-search-option="consultants" class="form-control search-user-select2"
-                                            data-placeholder="Search Consultants">
+                                            data-placeholder="{{ trans('admin/main.search_consultants') }}">
 
                                         @if(!empty($consultants) and $consultants->count() > 0)
                                             @foreach($consultants as $teacher)
@@ -152,7 +152,7 @@
                                     <label class="input-label">{{trans('admin/main.reservatore')}}</label>
 
                                     <select name="user_ids[]" multiple="multiple" class="form-control search-user-select2"
-                                            data-placeholder="Search Reservatores">
+                                            data-placeholder="{{ trans('admin/main.search_reservatores') }}">
 
                                         @if(!empty($users) and $users->count() > 0)
                                             @foreach($users as $user)

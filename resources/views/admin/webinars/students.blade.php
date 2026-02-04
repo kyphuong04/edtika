@@ -144,7 +144,7 @@
                             <select name="role_id" class="form-control">
                                 <option value="">{{ trans('admin/main.all_roles') }}</option>
                                 @foreach($roles as $role)
-                                    <option value="{{ $role->id }}" @if($role->id == request()->get('role_id')) selected @endif>{{ $role->caption }}</option>
+                                    <option value="{{ $role->id }}" @if($role->id == request()->get('role_id')) selected @endif>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                 @endforeach
                             </select>
                         </div>

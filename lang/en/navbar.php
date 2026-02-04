@@ -24,5 +24,5 @@ return [
     'forums' => 'Forums',
     'login' => 'Login',
     'register' => 'Register',
-
+    'about' => 'About',
 ];

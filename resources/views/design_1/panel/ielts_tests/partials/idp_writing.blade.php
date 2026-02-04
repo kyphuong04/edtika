@@ -1,6 +1,6 @@
 @php
     $task = $question ?? $section ?? null;
-    $taskText = $task->question_text ?? $task->instruction ?? $task->content ?? $task->passage_text ?? $section->content ?? $section->passage_text ?? 'No task content available';
+    $taskText = $task->question_text ?? $task->instruction ?? $task->content ?? $task->passage_text ?? $section->content ?? $section->passage_text ?? trans('update.ielts_no_task_content');
     $saved = $userAnswer ?? '';
     $minWords = $section->part_number == 1 ? 150 : 250;
 @endphp
@@ -29,9 +29,9 @@
         id="writingAnswer" 
         style="flex: 1; width: 100%; border: 1px solid #ccc; padding: 12px; font-size: 15px; font-family: Arial, sans-serif; line-height: 1.6; resize: none; background: #fff;"
         oninput="updateWordCount(); autoSave({{ $task->id ?? 0 }}, this.value)"
-        placeholder="Write your response here...">{{ $saved }}</textarea>
+        placeholder="{{ trans('update.ielts_start_writing') }}">{{ $saved }}</textarea>
     
     <div style="text-align: right; padding: 8px 0; font-size: 13px; color: #666;">
-        Words: <span id="wordCount">0</span>
+        {!! trans('update.ielts_words_count', ['count' => '<span id="wordCount">0</span>']) !!}
     </div>
 </div>

@@ -11,9 +11,9 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{ trans('admin/main.all_users') }} {{ trans('admin/main.list') }}</h1>
+            <h1>{{ trans('admin/main.all_users_list') }}</h1>
             <div class="section-header-breadcrumb">
-                <div class="breadcrumb-item active"><a>{{ trans('admin/main.all_users') }}</a></div>
+                <div class="breadcrumb-item active"><a>{{ trans('admin/main.all_users_list') }}</a></div>
                 <div class="breadcrumb-item"><a href="#">{{ trans('admin/main.users_list') }}</a></div>
             </div>
         </div>
@@ -99,7 +99,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.start_date') }}</label>
                                 <div class="input-group">
-                                    <input type="date" id="from" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="Start Date">
+                                    <input type="date" id="from" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.start_date') }}">
                                 </div>
                             </div>
                         </div>
@@ -107,7 +107,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.end_date') }}</label>
                                 <div class="input-group">
-                                    <input type="date" id="to" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="End Date">
+                                    <input type="date" id="to" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="{{ trans('admin/main.end_date') }}">
                                 </div>
                             </div>
                         </div>
@@ -149,7 +149,7 @@
                                 <select name="role_id" data-plugin-selectTwo class="form-control populate">
                                     <option value="">{{ trans('admin/main.all_roles') }}</option>
                                     @foreach($roles as $role)
-                                        <option value="{{ $role->id }}" @if(request()->get('role_id') == $role->id) selected @endif>{{ $role->name }}</option>
+                                        <option value="{{ $role->id }}" @if(request()->get('role_id') == $role->id) selected @endif>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -211,7 +211,7 @@
                 @can('admin_users_create')
                     <a href="{{ getAdminPanelUrl() }}/users/create" target="_blank" class="btn btn-primary">
                         <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                        <span class="ml-4 font-12">{{ trans('admin/main.new') }} {{ trans('admin/main.user') }}</span>
+                        <span class="ml-4 font-12">{{ trans('admin/main.new_user') }}</span>
                     </a>
                 @endcan
             </div>
@@ -268,7 +268,7 @@
                             </td>
 
                             <td>
-                                {{ optional($user->role)->caption ?? '-' }}
+                                {{ (!empty($user->role) and Lang::has('admin/main.'.strtolower($user->role->name))) ? trans('admin/main.'.strtolower($user->role->name)) : (optional($user->role)->caption ?? '-') }}
                             </td>
 
                             <td>{{ handlePrice($user->getAccountingBalance()) }}</td>
@@ -284,7 +284,7 @@
                             <td>
                                 @if($user->ban and !empty($user->ban_end_at) and $user->ban_end_at > time())
                                     <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.ban') }}</span>
-                                    <div class="text-small font-12 text-gray-500">Until {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
+                                    <div class="text-small font-12 text-gray-500">{{ trans('admin/main.until') }} {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
                                 @else
                                     <span class="badge-status {{ ($user->status == 'active') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ trans('admin/main.'.$user->status) }}</span>
                                 @endif
