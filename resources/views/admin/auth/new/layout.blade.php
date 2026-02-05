@@ -14,6 +14,9 @@
     <title>{{ $pageTitle ?? '' }}{{ !empty($generalSettings['site_name']) ? (' | '.$generalSettings['site_name']) : '' }}</title>
 
     <!-- General CSS File -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/default/vendors/simplebar/simplebar.css">
     <link rel="stylesheet" href="/assets/design_1/css/app.min.css">
     <link rel="stylesheet" href="/assets/admin/css/extra.min.css">
@@ -31,6 +34,13 @@
         {!! getThemeFontsSettings() !!}
 
         {!! getThemeColorsSettings() !!}
+
+        :root {
+            --main-font-family: 'Roboto', sans-serif !important;
+        }
+        body, h1, h2, h3, h4, h5, h6, p, a, span, button, input, textarea, select, .btn, div {
+            font-family: 'Roboto', sans-serif !important;
+        }
     </style>
 
 </head>
