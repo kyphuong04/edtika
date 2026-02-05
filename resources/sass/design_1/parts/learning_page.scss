@@ -424,3 +424,69 @@ body {
     }
 
 }
+
+.learning-page__content-tabs {
+    .nav-tabs {
+        border-bottom: 0;
+        gap: 24px;
+        display: inline-flex;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        box-shadow: none !important;
+
+        &::after {
+            display: none !important;
+        }
+    }
+
+    .nav-link {
+        border: none;
+        color: var(--gray-500);
+        font-weight: 500;
+        padding: 10px 4px 12px;
+        position: relative;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        border-bottom: 0 !important;
+
+        &:hover {
+            color: var(--gray-800);
+        }
+
+        &.active {
+            color: var(--gray-900);
+            background: transparent;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
+
+        &::after {
+            display: none !important;
+        }
+    }
+
+    .nav-tabs .nav-link::after,
+    .nav-tabs .nav-link.active::after,
+    .nav-tabs .nav-item .nav-link::after,
+    .nav-tabs .nav-item .nav-link.active::after {
+        display: none !important;
+        content: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .tab-content {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 16px;
+    }
+}
+
+.learning-page__empty-tab {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 14px;
+}

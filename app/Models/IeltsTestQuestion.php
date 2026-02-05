@@ -18,6 +18,9 @@ class IeltsTestQuestion extends Model
         'case_sensitive' => 'boolean',
         'auto_gradable' => 'boolean',
         'points' => 'float',
+        'answer_options' => 'array',
+        'table_structure' => 'array',
+        'flow_data' => 'array',
     ];
     
     // Relationships

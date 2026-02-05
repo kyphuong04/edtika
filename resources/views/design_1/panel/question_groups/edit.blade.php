@@ -76,6 +76,14 @@
                 <div class="col-12">
                     <div class="form-group">
                         <label class="form-group-label is-required">Writing Task Type</label>
+                        
+                        @if(empty($group->question_type))
+                            <div class="alert alert-warning mb-2" style="font-size: 13px; padding: 10px;">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Please select a Task Type</strong> - This group doesn't have a task type set yet.
+                            </div>
+                        @endif
+                        
                         <select name="question_type" id="writingTaskType" class="form-control" {{ $group->skill == 'writing' ? 'required' : '' }}>
                             <option value="">-- Select Task Type --</option>
                             <optgroup label="✏️ Task 1 (Academic)">
@@ -105,9 +113,9 @@
                         <label class="form-group-label is-required">Speaking Part</label>
                         <select name="question_type" id="speakingPartType" class="form-control" {{ $group->skill == 'speaking' ? 'required' : '' }}>
                             <option value="">-- Select Speaking Part --</option>
-                            <option value="part1" {{ $group->question_type == 'part1' ? 'selected' : '' }}>Part 1: Introduction & Interview (4-5 mins)</option>
-                            <option value="part2" {{ $group->question_type == 'part2' ? 'selected' : '' }}>Part 2: Long Turn / Cue Card (3-4 mins)</option>
-                            <option value="part3" {{ $group->question_type == 'part3' ? 'selected' : '' }}>Part 3: Two-way Discussion (4-5 mins)</option>
+                            <option value="part1" {{ in_array($group->question_type, ['part1', 'part1_questions']) ? 'selected' : '' }}>Part 1: Introduction & Interview (4-5 mins)</option>
+                            <option value="part2" {{ in_array($group->question_type, ['part2', 'part2_cue_card']) ? 'selected' : '' }}>Part 2: Long Turn / Cue Card (3-4 mins)</option>
+                            <option value="part3" {{ in_array($group->question_type, ['part3', 'part3_discussion']) ? 'selected' : '' }}>Part 3: Two-way Discussion (4-5 mins)</option>
                         </select>
                         <small class="form-text text-muted">
                             <strong>Part 1:</strong> Personal questions about familiar topics<br>
