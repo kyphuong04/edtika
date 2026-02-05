@@ -72,29 +72,29 @@
 <div class="results-container mt-30">
     {{-- Overall Band Score --}}
     <div class="band-score-card">
-        <h2 class="mb-0">Overall Band Score</h2>
+        <h2 class="mb-0">{{ trans('update.overall_band_score') }}</h2>
         @if($attempt->overall_band)
             <div class="band-score-display">{{ $attempt->overall_band }}</div>
             <p class="mb-0 font-18">
                 @if($attempt->overall_band >= 8.0)
-                    Very Good User
+                    {{ trans('update.very_good_user') }}
                 @elseif($attempt->overall_band >= 7.0)
-                    Good User
+                    {{ trans('update.good_user') }}
                 @elseif($attempt->overall_band >= 6.0)
-                    Competent User
+                    {{ trans('update.competent_user') }}
                 @elseif($attempt->overall_band >= 5.0)
-                    Modest User
+                    {{ trans('update.modest_user') }}
                 @else
-                    Limited User
+                    {{ trans('update.limited_user') }}
                 @endif
             </p>
         @else
             <div class="band-score-display">
                 <i class="fas fa-clock"></i>
             </div>
-            <p class="mb-0 font-18">Pending Manual Grading</p>
+            <p class="mb-0 font-18">{{ trans('update.pending_manual_grading') }}</p>
             <p class="mb-0 font-14 mt-2 opacity-75">
-                Writing and Speaking sections are being graded by instructors
+                {{ trans('update.grading_by_instructors_hint') }}
             </p>
         @endif
     </div>
@@ -104,19 +104,19 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3">
-                    <h6 class="text-gray mb-1">Test</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.test') }}</h6>
                     <p class="mb-0 font-weight-bold">{{ $test->title }}</p>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-gray mb-1">Attempt</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.attempt') }}</h6>
                     <p class="mb-0 font-weight-bold">#{{ $attempt->attempt_number }}</p>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-gray mb-1">Completed</h6>
+                    <h6 class="text-gray mb-1">{{ trans('admin/main.completed') }}</h6>
                     <p class="mb-0 font-weight-bold">{{ dateTimeFormat($attempt->completed_at, 'j M Y') }}</p>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-gray mb-1">Duration</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.duration') }}</h6>
                     <p class="mb-0 font-weight-bold">{{ gmdate('H:i:s', $attempt->time_spent) }}</p>
                 </div>
             </div>
@@ -158,12 +158,12 @@
             <div class="skill-score-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <span class="badge badge-info mb-2">Listening</span>
+                        <span class="badge badge-info mb-2">{{ trans('update.listening') }}</span>
                         <h4 class="mb-0">
                             @if($attempt->listening_score !== null)
-                                Band {{ rawToBand($attempt->listening_score) }}
+                                {{ trans('update.band') }} {{ rawToBand($attempt->listening_score) }}
                             @else
-                                Pending
+                                {{ trans('admin/main.pending') }}
                             @endif
                         </h4>
                     </div>
@@ -172,7 +172,7 @@
                 
                 @if($attempt->listening_score !== null)
                     <div class="d-flex justify-content-between text-gray font-14 mb-2">
-                        <span>Score</span>
+                        <span>{{ trans('update.score') }}</span>
                         <span class="font-weight-bold">{{ $attempt->listening_score }} / 40</span>
                     </div>
                     <div class="score-bar">
@@ -180,10 +180,10 @@
                     </div>
                     
                     <div class="band-descriptor">
-                        <strong>Correct Answers:</strong> {{ $attempt->listening_score }}
+                        <strong>{{ trans('update.correct_answers') }}:</strong> {{ $attempt->listening_score }}
                     </div>
                 @else
-                    <p class="text-gray font-14 mb-0">Auto-grading in progress...</p>
+                    <p class="text-gray font-14 mb-0">{{ trans('update.auto_grading_in_progress') }}</p>
                 @endif
             </div>
         </div>
@@ -194,12 +194,12 @@
             <div class="skill-score-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <span class="badge badge-success mb-2">Reading</span>
+                        <span class="badge badge-success mb-2">{{ trans('update.reading') }}</span>
                         <h4 class="mb-0">
                             @if($attempt->reading_score !== null)
-                                Band {{ rawToBand($attempt->reading_score) }}
+                                {{ trans('update.band') }} {{ rawToBand($attempt->reading_score) }}
                             @else
-                                Pending
+                                {{ trans('admin/main.pending') }}
                             @endif
                         </h4>
                     </div>
@@ -208,7 +208,7 @@
                 
                 @if($attempt->reading_score !== null)
                     <div class="d-flex justify-content-between text-gray font-14 mb-2">
-                        <span>Score</span>
+                        <span>{{ trans('update.score') }}</span>
                         <span class="font-weight-bold">{{ $attempt->reading_score }} / 40</span>
                     </div>
                     <div class="score-bar">
@@ -216,10 +216,10 @@
                     </div>
                     
                     <div class="band-descriptor">
-                        <strong>Correct Answers:</strong> {{ $attempt->reading_score }}
+                        <strong>{{ trans('update.correct_answers') }}:</strong> {{ $attempt->reading_score }}
                     </div>
                 @else
-                    <p class="text-gray font-14 mb-0">Auto-grading in progress...</p>
+                    <p class="text-gray font-14 mb-0">{{ trans('update.auto_grading_in_progress') }}</p>
                 @endif
             </div>
         </div>
@@ -230,12 +230,12 @@
             <div class="skill-score-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <span class="badge badge-warning mb-2">Writing</span>
+                        <span class="badge badge-warning mb-2">{{ trans('update.writing') }}</span>
                         <h4 class="mb-0">
                             @if($attempt->writing_band)
-                                Band {{ $attempt->writing_band }}
+                                {{ trans('update.band') }} {{ $attempt->writing_band }}
                             @else
-                                <span class="text-warning">Pending Grading</span>
+                                <span class="text-warning">{{ trans('update.pending_grading') }}</span>
                             @endif
                         </h4>
                     </div>
@@ -247,26 +247,26 @@
                         $writingCriteria = $attempt->writing_criteria ?? [];
                     @endphp
                     <div class="band-descriptor">
-                        <strong>Task Achievement:</strong> Band {{ $writingCriteria['task_response'] ?? $attempt->writing_band }}<br>
-                        <strong>Coherence & Cohesion:</strong> Band {{ $writingCriteria['coherence_cohesion'] ?? $attempt->writing_band }}<br>
-                        <strong>Lexical Resource:</strong> Band {{ $writingCriteria['lexical_resource'] ?? $attempt->writing_band }}<br>
-                        <strong>Grammar & Accuracy:</strong> Band {{ $writingCriteria['grammatical_accuracy'] ?? $attempt->writing_band }}
+                        <strong>{{ trans('update.task_achievement') }}:</strong> {{ trans('update.band') }} {{ $writingCriteria['task_response'] ?? $attempt->writing_band }}<br>
+                        <strong>{{ trans('update.coherence_cohesion') }}:</strong> {{ trans('update.band') }} {{ $writingCriteria['coherence_cohesion'] ?? $attempt->writing_band }}<br>
+                        <strong>{{ trans('update.lexical_resource') }}:</strong> {{ trans('update.band') }} {{ $writingCriteria['lexical_resource'] ?? $attempt->writing_band }}<br>
+                        <strong>{{ trans('update.grammatical_accuracy') }}:</strong> {{ trans('update.band') }} {{ $writingCriteria['grammatical_accuracy'] ?? $attempt->writing_band }}
                     </div>
                     @if($attempt->writing_feedback)
                         <div class="mt-3 p-3 bg-light rounded">
-                            <strong class="d-block mb-1"><i class="fas fa-comment-dots text-primary mr-1"></i> Teacher Feedback:</strong>
+                            <strong class="d-block mb-1"><i class="fas fa-comment-dots text-primary mr-1"></i> {{ trans('update.teacher_feedback_box') }}:</strong>
                             <p class="mb-0 text-gray">{{ $attempt->writing_feedback }}</p>
                         </div>
                     @endif
                 @else
                     <p class="text-gray font-14 mb-0">
                         <i class="fas fa-clock mr-1"></i>
-                        Your writing is being carefully reviewed by an instructor
+                        {{ trans('update.writing_review_hint') }}
                     </p>
                     {{-- Grade button for teachers/admins --}}
                     @if(auth()->user()->isTeacher() || auth()->user()->isAdmin() || auth()->user()->isOrganization())
                         <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'writing']) }}" class="btn btn-warning btn-sm mt-3">
-                            <i class="fas fa-pen mr-1"></i> Grade Writing Now
+                            <i class="fas fa-pen mr-1"></i> {{ trans('update.grade_writing') }}
                         </a>
                     @endif
                 @endif
@@ -279,12 +279,12 @@
             <div class="skill-score-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <span class="badge badge-danger mb-2">Speaking</span>
+                        <span class="badge badge-danger mb-2">{{ trans('update.speaking') }}</span>
                         <h4 class="mb-0">
                             @if($attempt->speaking_band)
-                                Band {{ $attempt->speaking_band }}
+                                {{ trans('update.band') }} {{ $attempt->speaking_band }}
                             @else
-                                <span class="text-warning">Pending Grading</span>
+                                <span class="text-warning">{{ trans('update.pending_grading') }}</span>
                             @endif
                         </h4>
                     </div>
@@ -296,26 +296,26 @@
                         $speakingCriteria = $attempt->speaking_criteria ?? [];
                     @endphp
                     <div class="band-descriptor">
-                        <strong>Fluency & Coherence:</strong> Band {{ $speakingCriteria['fluency_coherence'] ?? $attempt->speaking_band }}<br>
-                        <strong>Lexical Resource:</strong> Band {{ $speakingCriteria['lexical_resource'] ?? $attempt->speaking_band }}<br>
-                        <strong>Grammatical Range:</strong> Band {{ $speakingCriteria['grammatical_range'] ?? $attempt->speaking_band }}<br>
-                        <strong>Pronunciation:</strong> Band {{ $speakingCriteria['pronunciation'] ?? $attempt->speaking_band }}
+                        <strong>{{ trans('update.fluency_coherence') }}:</strong> {{ trans('update.band') }} {{ $speakingCriteria['fluency_coherence'] ?? $attempt->speaking_band }}<br>
+                        <strong>{{ trans('update.lexical_resource') }}:</strong> {{ trans('update.band') }} {{ $speakingCriteria['lexical_resource'] ?? $attempt->speaking_band }}<br>
+                        <strong>{{ trans('update.grammatical_range') }}:</strong> {{ trans('update.band') }} {{ $speakingCriteria['grammatical_range'] ?? $attempt->speaking_band }}<br>
+                        <strong>{{ trans('update.pronunciation') }}:</strong> {{ trans('update.band') }} {{ $speakingCriteria['pronunciation'] ?? $attempt->speaking_band }}
                     </div>
                     @if($attempt->speaking_feedback)
                         <div class="mt-3 p-3 bg-light rounded">
-                            <strong class="d-block mb-1"><i class="fas fa-comment-dots text-primary mr-1"></i> Teacher Feedback:</strong>
+                            <strong class="d-block mb-1"><i class="fas fa-comment-dots text-primary mr-1"></i> {{ trans('update.teacher_feedback_box') }}:</strong>
                             <p class="mb-0 text-gray">{{ $attempt->speaking_feedback }}</p>
                         </div>
                     @endif
                 @else
                     <p class="text-gray font-14 mb-0">
                         <i class="fas fa-clock mr-1"></i>
-                        Your speaking is being carefully reviewed by an instructor
+                        {{ trans('update.speaking_review_hint') }}
                     </p>
                     {{-- Grade button for teachers/admins --}}
                     @if(auth()->user()->isTeacher() || auth()->user()->isAdmin() || auth()->user()->isOrganization())
                         <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'speaking']) }}" class="btn btn-danger btn-sm mt-3">
-                            <i class="fas fa-microphone mr-1"></i> Grade Speaking Now
+                            <i class="fas fa-microphone mr-1"></i> {{ trans('update.grade_speaking') }}
                         </a>
                     @endif
                 @endif
@@ -327,28 +327,28 @@
     {{-- Overall Statistics --}}
     <div class="card mt-4">
         <div class="card-header">
-            <h5 class="mb-0">Test Statistics</h5>
+            <h5 class="mb-0">{{ trans('update.test_statistics') }}</h5>
         </div>
         <div class="card-body">
             <div class="stats-grid">
                 <div class="stat-box">
                     <i class="fas fa-tasks fa-2x text-primary mb-2"></i>
-                    <h6 class="text-gray mb-1">Total Questions</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.total_questions') }}</h6>
                     <h4 class="mb-0">{{ $attempt->total_questions }}</h4>
                 </div>
                 <div class="stat-box">
                     <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
-                    <h6 class="text-gray mb-1">Answered</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.answered_stat') }}</h6>
                     <h4 class="mb-0">{{ $attempt->answered_questions }}</h4>
                 </div>
                 <div class="stat-box">
                     <i class="fas fa-percentage fa-2x text-info mb-2"></i>
-                    <h6 class="text-gray mb-1">Progress</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.progress') }}</h6>
                     <h4 class="mb-0">{{ round($attempt->progress_percentage, 1) }}%</h4>
                 </div>
                 <div class="stat-box">
                     <i class="fas fa-clock fa-2x text-warning mb-2"></i>
-                    <h6 class="text-gray mb-1">Time Spent</h6>
+                    <h6 class="text-gray mb-1">{{ trans('update.time_spent') }}</h6>
                     <h4 class="mb-0">{{ gmdate('H:i', $attempt->time_spent) }}</h4>
                 </div>
             </div>
@@ -360,17 +360,17 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-1">Next Steps</h5>
-                    <p class="text-gray mb-0">Review your answers or take another test</p>
+                    <h5 class="mb-1">{{ trans('update.whats_next') }}</h5>
+                    <p class="text-gray mb-0">{{ trans('update.next_steps_hint') }}</p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('panel.ielts_tests.review', $attempt->id) }}" class="btn btn-outline-primary">
                         <i class="fas fa-eye mr-2"></i>
-                        Review Answers
+                        {{ trans('update.review_answers') }}
                     </a>
                     <a href="{{ route('panel.ielts_tests.index') }}" class="btn btn-primary">
                         <i class="fas fa-th-list mr-2"></i>
-                        Back to Tests
+                        {{ trans('update.back_to_tests') }}
                     </a>
                 </div>
             </div>
@@ -380,33 +380,33 @@
     {{-- Band Score Guide --}}
     <div class="card mt-4">
         <div class="card-header">
-            <h5 class="mb-0">IELTS Band Score Guide</h5>
+            <h5 class="mb-0">{{ trans('update.ielts_band_score_guide') }}</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <h6 class="font-weight-bold">Band 9.0 - Expert User</h6>
-                    <p class="text-gray font-14">Full operational command of the language</p>
+                    <h6 class="font-weight-bold">{{ trans('update.band_9_expert_user') }}</h6>
+                    <p class="text-gray font-14">{{ trans('update.band_9_desc') }}</p>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="font-weight-bold">Band 8.0 - Very Good User</h6>
-                    <p class="text-gray font-14">Fully operational with occasional inaccuracies</p>
+                    <h6 class="font-weight-bold">{{ trans('update.band_8_very_good_user') }}</h6>
+                    <p class="text-gray font-14">{{ trans('update.band_8_desc') }}</p>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="font-weight-bold">Band 7.0 - Good User</h6>
-                    <p class="text-gray font-14">Operational command with occasional inaccuracies</p>
+                    <h6 class="font-weight-bold">{{ trans('update.band_7_good_user') }}</h6>
+                    <p class="text-gray font-14">{{ trans('update.band_7_desc') }}</p>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="font-weight-bold">Band 6.0 - Competent User</h6>
-                    <p class="text-gray font-14">Effective command despite inaccuracies</p>
+                    <h6 class="font-weight-bold">{{ trans('update.band_6_competent_user') }}</h6>
+                    <p class="text-gray font-14">{{ trans('update.band_6_desc') }}</p>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="font-weight-bold">Band 5.0 - Modest User</h6>
-                    <p class="text-gray font-14">Partial command, copes with overall meaning</p>
+                    <h6 class="font-weight-bold">{{ trans('update.band_5_modest_user') }}</h6>
+                    <p class="text-gray font-14">{{ trans('update.band_5_desc') }}</p>
                 </div>
                 <div class="col-md-6">
-                    <h6 class="font-weight-bold">Band 4.0 - Limited User</h6>
-                    <p class="text-gray font-14">Basic competence in familiar situations</p>
+                    <h6 class="font-weight-bold">{{ trans('update.band_4_limited_user') }}</h6>
+                    <p class="text-gray font-14">{{ trans('update.band_4_desc') }}</p>
                 </div>
             </div>
         </div>

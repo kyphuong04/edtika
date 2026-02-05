@@ -37,30 +37,30 @@
         <div class="part-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #E31837;">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
                 <span style="background: #E31837; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">
-                    SPEAKING
+                    {{ trans('update.ielts_speaking') }}
                 </span>
                 <span style="background: #f3f4f6; color: #1f2937; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">
-                    Part {{ $partNum }}
+                    {{ trans('update.ielts_part', ['part' => $partNum]) }}
                 </span>
             </div>
             
             <h2 style="font-size: 20px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px 0;">
                 @if($partNum == 1)
-                    Introduction and Interview
+                    {{ trans('update.ielts_speaking_intro') }}
                 @elseif($partNum == 2)
-                    Individual Long Turn (Cue Card)
+                    {{ trans('update.ielts_speaking_cue_card') }}
                 @else
-                    Two-way Discussion
+                    {{ trans('update.ielts_speaking_discussion') }}
                 @endif
             </h2>
             
             <p style="font-size: 14px; color: #666; margin: 0; line-height: 1.5;">
                 @if($partNum == 1)
-                    The examiner will ask you questions about yourself and familiar topics such as home, family, work, studies and interests.
+                    {{ trans('update.ielts_speaking_part1_instruction') }}
                 @elseif($partNum == 2)
-                    You will be given a topic on a card. You have <strong>1 minute</strong> to prepare your answer. Then you must speak for <strong>1-2 minutes</strong>.
+                    {!! trans('update.ielts_speaking_part2_instruction') !!}
                 @else
-                    The examiner will ask further questions connected to the topic in Part 2. These will be more abstract and discussion-based.
+                    {{ trans('update.ielts_speaking_part3_instruction') }}
                 @endif
             </p>
         </div>
@@ -70,7 +70,7 @@
             <div class="cue-card" style="background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                     <span style="font-size: 24px;">📝</span>
-                    <span style="font-size: 15px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">Topic Card</span>
+                    <span style="font-size: 15px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">{{ trans('update.ielts_speaking_topic_card') }}</span>
                 </div>
                 
                 <div style="font-size: 17px; color: #78350f; line-height: 1.7; font-weight: 500; margin-bottom: 16px;">
@@ -79,7 +79,7 @@
                 
                 @if(!empty($cueCardPoints))
                     <div style="background: rgba(255,255,255,0.7); border-radius: 8px; padding: 16px; margin-top: 16px;">
-                        <p style="font-size: 14px; font-weight: 600; color: #92400e; margin: 0 0 12px 0;">You should say:</p>
+                        <p style="font-size: 14px; font-weight: 600; color: #92400e; margin: 0 0 12px 0;">{{ trans('update.ielts_write_about_topic') }}</p>
                         <ul style="margin: 0; padding-left: 24px; color: #78350f; font-size: 15px; line-height: 2;">
                             @foreach($cueCardPoints as $point)
                                 @if(trim($point))
@@ -92,7 +92,7 @@
                 
                 <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #d97706;">
                     <p style="font-size: 13px; color: #92400e; margin: 0; font-style: italic;">
-                        📌 You will have to talk about the topic for one to two minutes. You have one minute to prepare.
+                        {{ trans('update.ielts_speaking_part2_instruction') }}
                     </p>
                 </div>
             </div>
@@ -115,11 +115,11 @@
             <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
                 <p style="font-size: 14px; color: #1e40af; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
                     <span>🔊</span>
-                    <span>Listen to the examiner's question:</span>
+                    <span>{{ trans('update.ielts_listen_and_answer', ['start' => '', 'end' => '']) }}</span>
                 </p>
                 <audio controls style="width: 100%;">
                     <source src="{{ $audioUrl }}" type="audio/mpeg">
-                    Your browser does not support audio.
+                    {{ trans('update.ielts_browser_no_audio_support') }}
                 </audio>
             </div>
         @endif
@@ -133,7 +133,7 @@
         
         {{-- Tips Box --}}
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px; margin-top: 20px;">
-            <p style="font-size: 14px; font-weight: 600; color: #166534; margin: 0 0 8px 0;">💡 Speaking Tips:</p>
+            <p style="font-size: 14px; font-weight: 600; color: #166534; margin: 0 0 8px 0;">💡 {{ trans('update.ielts_speaking_tips') }}:</p>
             <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #166534; line-height: 1.8;">
                 @if($partNum == 1)
                     <li>Answer in complete sentences, not just "yes" or "no"</li>
@@ -159,7 +159,7 @@
         <div id="speakingTimerSection" style="text-align: center; margin-bottom: 32px;">
             @if($prepTime > 0)
                 <div id="prepPhaseSection">
-                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Preparation Time</p>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">{{ trans('update.ielts_speaking_prep_time') }}</p>
                     <div id="prepTimerDisplay" style="font-size: 56px; font-weight: 700; color: #3b82f6; font-variant-numeric: tabular-nums; text-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);">
                         {{ sprintf('%02d:%02d', floor($prepTime/60), $prepTime%60) }}
                     </div>
@@ -170,7 +170,7 @@
             @endif
             
             <div id="speakPhaseSection" style="{{ $prepTime > 0 ? 'display: none;' : '' }}">
-                <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Speaking Time</p>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">{{ trans('update.ielts_speaking_speak_time') }}</p>
                 <div id="speakTimerDisplay" style="font-size: 56px; font-weight: 700; color: #1f2937; font-variant-numeric: tabular-nums;">
                     {{ sprintf('%02d:%02d', floor($speakTime/60), $speakTime%60) }}
                 </div>
@@ -204,7 +204,7 @@
         <div id="speakingStatus" style="text-align: center; margin-bottom: 24px;">
             <div id="speakingStatusBadge" style="display: inline-flex; align-items: center; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 500; background: #dbeafe; color: #1e40af;">
                 <span style="margin-right: 10px;">ℹ️</span>
-                <span id="speakingStatusText">Complete the microphone check to begin</span>
+                <span id="speakingStatusText">{{ trans('update.ielts_speaking_mic_check_hint') }}</span>
             </div>
         </div>
         
@@ -212,20 +212,20 @@
         <div id="speakingControls" style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
             @if($prepTime > 0)
                 <button type="button" id="btnStartPrep" onclick="SpeakingTest.startPreparation()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35); transition: all 0.2s;">
-                    <span>▶</span> Start Preparation
+                    <span>▶</span> {{ trans('update.ielts_speaking_start_prep') }}
                 </button>
             @endif
             
             <button type="button" id="btnStartRecording" onclick="SpeakingTest.toggleRecording()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(135deg, #E31837 0%, #be123c 100%); color: white; display: {{ $prepTime > 0 ? 'none' : 'flex' }}; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(227, 24, 55, 0.35); transition: all 0.2s;">
-                <span>🎤</span> <span id="recordBtnLabel">Start Recording</span>
+                <span>🎤</span> <span id="recordBtnLabel">{{ trans('update.ielts_speaking_start_recording') }}</span>
             </button>
             
             <button type="button" id="btnPlayRecording" onclick="SpeakingTest.playRecording()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; display: none; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); transition: all 0.2s;">
-                <span>▶</span> Play Recording
+                <span>▶</span> {{ trans('update.ielts_speaking_play_recording') }}
             </button>
             
             <button type="button" id="btnReRecord" onclick="SpeakingTest.reRecord()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: #f3f4f6; color: #374151; display: none; align-items: center; gap: 10px; transition: all 0.2s;">
-                <span>🔄</span> Re-record
+                <span>🔄</span> {{ trans('update.ielts_speaking_re_record') }}
             </button>
         </div>
         

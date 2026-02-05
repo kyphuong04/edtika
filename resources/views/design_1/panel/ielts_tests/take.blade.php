@@ -415,7 +415,7 @@
                                            x-model="answers[question.id]"
                                            @change="saveAnswer(question.id)"
                                            class="mr-2">
-                                    <span>True</span>
+                                    <span>{{ trans('update.ielts_true') }}</span>
                                 </label>
                                 <label class="d-block mb-3 p-3 border rounded cursor-pointer hover-bg-light">
                                     <input type="radio" 
@@ -424,7 +424,7 @@
                                            x-model="answers[question.id]"
                                            @change="saveAnswer(question.id)"
                                            class="mr-2">
-                                    <span>False</span>
+                                    <span>{{ trans('update.ielts_false') }}</span>
                                 </label>
                             </div>
                         </template>
