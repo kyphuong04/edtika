@@ -612,7 +612,7 @@ class IeltsTestController extends Controller
         }
         
         $data = [
-            'pageTitle' => 'Review Answers',
+            'pageTitle' => trans('update.review_answers'),
             'attempt' => $attempt,
             'test' => $attempt->test,
         ];

@@ -345,8 +345,8 @@
     {{-- Main Content - Student Answer --}}
     <div class="grading-content">
         <div class="content-header">
-            <h2>{{ $skill === 'writing' ? '✍️ Writing Assessment' : '🎤 Speaking Assessment' }}</h2>
-            <p>{{ $test->title }} - Attempt #{{ $attempt->attempt_number }}</p>
+            <h2>{{ $skill === 'writing' ? '✍️ ' . trans('update.writing_assessment') : '🎤 ' . trans('update.speaking_assessment') }}</h2>
+            <p>{{ $test->title }} - {{ trans('update.attempt_number', ['number' => $attempt->attempt_number]) }}</p>
         </div>
         
         <div class="student-banner">
@@ -354,15 +354,15 @@
                 {{ strtoupper(substr($user->full_name ?? 'U', 0, 1)) }}
             </div>
             <div class="student-details">
-                <h3>{{ $user->full_name ?? 'Unknown User' }}</h3>
-                <p>{{ $user->email ?? '' }} • Completed {{ $attempt->completed_at ? date('M j, Y \a\t g:i A', $attempt->completed_at) : 'N/A' }}</p>
+                <h3>{{ $user->full_name ?? trans('update.unknown_user') }}</h3>
+                <p>{{ $user->email ?? '' }} • {{ trans('admin/main.completed') }} {{ $attempt->completed_at ? date('M j, Y \a\t g:i A', $attempt->completed_at) : 'N/A' }}</p>
             </div>
         </div>
         
         <div class="answer-section">
             @foreach($sections as $section)
                 <div class="section-title">
-                    {{ $skill === 'writing' ? 'Task' : 'Part' }} {{ $section->part_number ?? $loop->iteration }}
+                    {{ $skill === 'writing' ? trans('update.task') : trans('update.part') }} {{ $section->part_number ?? $loop->iteration }}
                     @if($section->title)
                         - {{ $section->title }}
                     @endif
@@ -371,7 +371,7 @@
                 {{-- Task Prompt --}}
                 @if($section->content || $section->passage_text)
                     <div class="task-prompt">
-                        <strong>Task:</strong><br>
+                        <strong>{{ trans('update.task') }}:</strong><br>
                         {!! nl2br(e($section->content ?? $section->passage_text)) !!}
                     </div>
                 @endif
@@ -386,7 +386,7 @@
                 @if($sectionAnswers->count() > 0)
                     @foreach($sectionAnswers as $answer)
                         @if($skill === 'writing')
-                            <div class="answer-content">{{ $answer->answer_text ?? 'No answer provided' }}</div>
+                            <div class="answer-content">{{ $answer->answer_text ?? trans('update.no_answer_provided') }}</div>
                             
                             @php
                                 $text = $answer->answer_text ?? '';
@@ -395,31 +395,31 @@
                             @endphp
                             
                             <div class="word-stats">
-                                <span>📝 Words: <strong>{{ $words }}</strong></span>
-                                <span>📊 Characters: <strong>{{ $chars }}</strong></span>
-                                <span>📋 Min Required: <strong>{{ $section->part_number == 1 ? 150 : 250 }}</strong></span>
+                                <span>📝 {{ trans('update.words_count_stat') }}: <strong>{{ $words }}</strong></span>
+                                <span>📊 {{ trans('update.chars_count_stat') }}: <strong>{{ $chars }}</strong></span>
+                                <span>📋 {{ trans('update.min_required') }}: <strong>{{ $section->part_number == 1 ? 150 : 250 }}</strong></span>
                             </div>
                         @else
                             {{-- Speaking - Audio Player --}}
                             @if($answer->answer_text && strpos($answer->answer_text, '/storage/') !== false)
                                 <div class="audio-player-container">
-                                    <p style="margin-bottom: 12px; color: #6b7280;">🎧 Student's Recording:</p>
+                                    <p style="margin-bottom: 12px; color: #6b7280;">🎧 {{ trans('update.students_recording') }}:</p>
                                     <audio controls>
                                         <source src="{{ $answer->answer_text }}" type="audio/webm">
-                                        Your browser does not support audio playback.
+                                        {{ trans('update.browser_not_support_audio') }}
                                     </audio>
                                 </div>
                             @else
                                 <div class="no-answer">
-                                    No audio recording available for this task.
+                                    {{ trans('update.no_audio_recording_task') }}
                                 </div>
                             @endif
                         @endif
                     @endforeach
                 @else
-                    <div class="no-answer">
-                        No answer submitted for this section.
-                    </div>
+                        <div class="no-answer">
+                            {{ trans('update.no_answer_submitted_for_this_section') }}
+                        </div>
                 @endif
                 
                 @if(!$loop->last)
@@ -432,7 +432,7 @@
     {{-- Grading Panel --}}
     <div class="grading-panel">
         <div class="panel-header">
-            <h3>📝 Grade {{ ucfirst($skill) }}</h3>
+            <h3>📝 {{ $skill === 'writing' ? trans('update.grade_writing') : trans('update.grade_speaking') }}</h3>
         </div>
         
         <form action="{{ route('panel.ielts_grading.submit', $attempt->id) }}" method="POST">
@@ -442,7 +442,7 @@
             <div class="panel-body">
                 {{-- Band Score --}}
                 <div class="band-selector">
-                    <label>Overall Band Score</label>
+                    <label>{{ trans('update.overall_band_score') }}</label>
                     <input type="number" name="band_score" id="bandScore" class="band-input" 
                            min="0" max="9" step="0.5" value="{{ $skill === 'writing' ? $attempt->writing_band : $attempt->speaking_band }}"
                            required placeholder="0.0">
@@ -454,46 +454,46 @@
                     </div>
                     
                     <div class="band-descriptor-card" id="bandDescriptor">
-                        Select a band score to see the descriptor.
+                        {{ trans('update.select_band_to_see_descriptor') }}
                     </div>
                 </div>
                 
                 {{-- Criteria Scores --}}
                 <div class="criteria-section">
-                    <h4>Assessment Criteria</h4>
+                    <h4>{{ trans('update.assessment_criteria') }}</h4>
                     
                     @if($skill === 'writing')
                         <div class="criteria-item">
-                            <span class="criteria-label">Task Achievement/Response</span>
+                            <span class="criteria-label">{{ trans('update.task_achievement_response') }}</span>
                             <input type="number" name="criteria_scores[task_achievement]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                         <div class="criteria-item">
-                            <span class="criteria-label">Coherence & Cohesion</span>
+                            <span class="criteria-label">{{ trans('update.coherence_cohesion') }}</span>
                             <input type="number" name="criteria_scores[coherence]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                         <div class="criteria-item">
-                            <span class="criteria-label">Lexical Resource</span>
+                            <span class="criteria-label">{{ trans('update.lexical_resource') }}</span>
                             <input type="number" name="criteria_scores[lexical]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                         <div class="criteria-item">
-                            <span class="criteria-label">Grammatical Range & Accuracy</span>
+                            <span class="criteria-label">{{ trans('update.grammatical_range_accuracy') }}</span>
                             <input type="number" name="criteria_scores[grammar]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                     @else
                         <div class="criteria-item">
-                            <span class="criteria-label">Fluency & Coherence</span>
+                            <span class="criteria-label">{{ trans('update.fluency_coherence') }}</span>
                             <input type="number" name="criteria_scores[fluency]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                         <div class="criteria-item">
-                            <span class="criteria-label">Lexical Resource</span>
+                            <span class="criteria-label">{{ trans('update.lexical_resource') }}</span>
                             <input type="number" name="criteria_scores[lexical]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                         <div class="criteria-item">
-                            <span class="criteria-label">Grammatical Range & Accuracy</span>
+                            <span class="criteria-label">{{ trans('update.grammatical_range_accuracy') }}</span>
                             <input type="number" name="criteria_scores[grammar]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                         <div class="criteria-item">
-                            <span class="criteria-label">Pronunciation</span>
+                            <span class="criteria-label">{{ trans('update.pronunciation') }}</span>
                             <input type="number" name="criteria_scores[pronunciation]" class="criteria-input" min="0" max="9" step="0.5" placeholder="0">
                         </div>
                     @endif
@@ -501,15 +501,15 @@
                 
                 {{-- Feedback --}}
                 <div class="feedback-section">
-                    <label>Feedback for Student (Optional)</label>
-                    <textarea name="feedback" class="feedback-textarea" placeholder="Provide constructive feedback to help the student improve...">{{ $skill === 'writing' ? $attempt->writing_feedback : $attempt->speaking_feedback }}</textarea>
+                    <label>{{ trans('update.feedback_optional') }}</label>
+                    <textarea name="feedback" class="feedback-textarea" placeholder="{{ trans('update.provide_feedback_hint') }}">{{ $skill === 'writing' ? $attempt->writing_feedback : $attempt->speaking_feedback }}</textarea>
                 </div>
                 
                 {{-- Submit Buttons --}}
                 <div class="submit-section">
-                    <a href="{{ route('panel.ielts_grading.index') }}" class="btn-submit btn-cancel">Cancel</a>
+                    <a href="{{ route('panel.ielts_grading.index') }}" class="btn-submit btn-cancel">{{ trans('admin/main.cancel') }}</a>
                     <button type="submit" class="btn-submit btn-submit-grade">
-                        ✓ Submit Grade
+                        ✓ {{ trans('update.submit_grade') }}
                     </button>
                 </div>
             </div>
@@ -519,19 +519,19 @@
 
 <script>
 const bandDescriptors = {
-    9: '<strong>Band 9 - Expert:</strong> Full operational command of the language. Appropriate, accurate, and fluent with complete understanding.',
-    8.5: '<strong>Band 8.5:</strong> Very good command approaching expert level.',
-    8: '<strong>Band 8 - Very Good:</strong> Fully operational command with occasional unsystematic inaccuracies.',
-    7.5: '<strong>Band 7.5:</strong> Good command with occasional inaccuracies in unfamiliar situations.',
-    7: '<strong>Band 7 - Good:</strong> Operational command with occasional inaccuracies and misunderstandings.',
-    6.5: '<strong>Band 6.5:</strong> Generally effective command despite some inaccuracies.',
-    6: '<strong>Band 6 - Competent:</strong> Generally effective command despite inaccuracies and misunderstandings.',
-    5.5: '<strong>Band 5.5:</strong> Partial command, coping with overall meaning in most situations.',
-    5: '<strong>Band 5 - Modest:</strong> Partial command, coping with overall meaning in most situations.',
-    4.5: '<strong>Band 4.5:</strong> Limited command, basic competence in familiar situations.',
-    4: '<strong>Band 4 - Limited:</strong> Basic competence limited to familiar situations.',
-    3.5: '<strong>Band 3.5:</strong> Extremely limited command in very familiar situations.',
-    3: '<strong>Band 3 - Extremely Limited:</strong> Conveys and understands only general meaning.',
+    9: '<strong>Band 9 - Thông thạo:</strong> Làm chủ ngôn ngữ hoàn toàn. Sử dụng phù hợp, chính xác và trôi chảy với sự hiểu biết đầy đủ.',
+    8.5: '<strong>Band 8.5:</strong> Rất tốt, gần mức chuyên gia.',
+    8: '<strong>Band 8 - Rất tốt:</strong> Làm chủ ngôn ngữ hoàn toàn, chỉ thỉnh thoảng mắc lỗi không có hệ thống.',
+    7.5: '<strong>Band 7.5:</strong> Tốt, đôi khi mắc lỗi trong những tình huống xa lạ.',
+    7: '<strong>Band 7 - Tốt:</strong> Làm chủ được ngôn ngữ mặc dù thỉnh thoảng có những lỗi không chính xác và hiểu lầm.',
+    6.5: '<strong>Band 6.5:</strong> Có khả năng sử dụng ngôn ngữ hiệu quả mặc dù vẫn còn một số lỗi không chính xác.',
+    6: '<strong>Band 6 - Khá:</strong> Có khả năng sử dụng ngôn ngữ hiệu quả mặc dù vẫn còn những lỗi không chính xác và hiểu lầm.',
+    5.5: '<strong>Band 5.5:</strong> Có khả năng sử dụng một phần ngôn ngữ, xử lý được ý nghĩa tổng thể trong hầu hết các tình huống.',
+    5: '<strong>Band 5 - Bình thường:</strong> Có khả năng sử dụng một phần ngôn ngữ, xử lý được ý nghĩa tổng thể trong hầu hết các tình huống.',
+    4.5: '<strong>Band 4.5:</strong> Khả năng hạn chế, chỉ có năng lực cơ bản trong những tình huống quen thuộc.',
+    4: '<strong>Band 4 - Hạn chế:</strong> Năng lực cơ bản chỉ giới hạn trong các tình huống quen thuộc.',
+    3.5: '<strong>Band 3.5:</strong> Khả năng cực kỳ hạn chế trong những tình huống rất quen thuộc.',
+    3: '<strong>Band 3 - Cực kỳ hạn chế:</strong> Chỉ truyền đạt và hiểu được ý nghĩa chung nhất.',
 };
 
 function selectBand(band) {
@@ -557,7 +557,7 @@ function updateBandDescriptor(band) {
     if (key && bandDescriptors[key]) {
         descriptor.innerHTML = bandDescriptors[key];
     } else {
-        descriptor.innerHTML = 'Select a band score to see the descriptor.';
+        descriptor.innerHTML = '{{ trans('update.select_band_to_see_descriptor') }}';
     }
 }
 

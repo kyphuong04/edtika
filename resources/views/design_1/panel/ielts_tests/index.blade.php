@@ -255,11 +255,12 @@
 @endpush
 
 @section('content')
+@section('content')
 <section class="mt-30">
     <!-- Page Header -->
     <div class="page-header">
-        <h1>IELTS Tests</h1>
-        <p>Practice and improve your IELTS skills with our comprehensive test library</p>
+        <h1>{{ trans('update.ielts_tests') }}</h1>
+        <p>{{ trans('update.ielts_tests_library_hint') }}</p>
     </div>
 
     {{-- Mock Tests Section --}}
@@ -270,18 +271,18 @@
             </div>
             <div>
                 <h2 class="section-title">
-                    Mock Tests
+                    {{ trans('update.mock_tests') }}
                     <span class="badge badge-primary">{{ $mockTests->count() }}</span>
                 </h2>
-                <p class="section-desc">Complete IELTS exam simulations • All 4 skills in timed conditions</p>
+                <p class="section-desc">{{ trans('update.mock_tests_desc') }}</p>
             </div>
         </div>
 
         @if($mockTests->isEmpty())
             <div class="empty-state">
                 <img src="/assets/default/img/no-results/support.png" alt="">
-                <h3>No Mock Tests Available</h3>
-                <p>Check back soon for new mock tests!</p>
+                <h3>{{ trans('update.no_mock_tests_available') }}</h3>
+                <p>{{ trans('update.no_mock_tests_hint') }}</p>
             </div>
         @else
             <div class="tests-grid">
@@ -290,11 +291,11 @@
                         <div class="test-card-header">
                             <h3 class="test-card-title">{{ $test->title }}</h3>
                             @if($test->is_free)
-                                <span class="test-card-badge free">Free</span>
+                                <span class="test-card-badge free">{{ trans('update.free') }}</span>
                             @elseif($test->require_enrollment && !$test->user_enrolled)
-                                <span class="test-card-badge locked">🔒 Enroll Required</span>
+                                <span class="test-card-badge locked">{{ trans('update.enroll_required') }}</span>
                             @else
-                                <span class="test-card-badge mock">Mock</span>
+                                <span class="test-card-badge mock">{{ trans('update.mock') }}</span>
                             @endif
                         </div>
 
@@ -303,25 +304,25 @@
                         @endif
 
                         <div class="skills-row">
-                            @if($test->has_listening)<span class="skill-badge listening">L</span>@endif
-                            @if($test->has_reading)<span class="skill-badge reading">R</span>@endif
-                            @if($test->has_writing)<span class="skill-badge writing">W</span>@endif
-                            @if($test->has_speaking)<span class="skill-badge speaking">S</span>@endif
+                            @if($test->has_listening)<span class="skill-badge listening">{{ trans('update.L') }}</span>@endif
+                            @if($test->has_reading)<span class="skill-badge reading">{{ trans('update.R') }}</span>@endif
+                            @if($test->has_writing)<span class="skill-badge writing">{{ trans('update.W') }}</span>@endif
+                            @if($test->has_speaking)<span class="skill-badge speaking">{{ trans('update.S') }}</span>@endif
                         </div>
 
                         <div class="test-meta">
                             <div class="test-meta-item">
                                 <i class="far fa-clock"></i>
-                                <span>{{ $test->total_duration }} min</span>
+                                <span>{{ $test->total_duration }} {{ trans('update.min') }}</span>
                             </div>
                             <div class="test-meta-item">
                                 <i class="fas fa-question-circle"></i>
-                                <span>~80 questions</span>
+                                <span>~80 {{ trans('update.questions') }}</span>
                             </div>
                             @if($test->target_band_min && $test->target_band_max)
                             <div class="test-meta-item">
                                 <i class="fas fa-bullseye"></i>
-                                <span>Band {{ $test->target_band_min }}-{{ $test->target_band_max }}</span>
+                                <span>{{ trans('update.band') }} {{ $test->target_band_min }}-{{ $test->target_band_max }}</span>
                             </div>
                             @endif
                         </div>
@@ -330,9 +331,9 @@
                             <div class="completion-badge">
                                 <i class="fas fa-check-circle"></i>
                                 <span>
-                                    Completed {{ $test->user_attempts }}x
+                                    {{ trans('admin/main.completed') }} {{ $test->user_attempts }}x
                                     @if($test->best_attempt && $test->best_attempt->overall_band)
-                                        • Best: Band {{ $test->best_attempt->overall_band }}
+                                        • {{ trans('update.best_score') }}: {{ trans('update.band') }} {{ $test->best_attempt->overall_band }}
                                     @endif
                                 </span>
                             </div>
@@ -340,18 +341,18 @@
 
                         <div class="test-actions">
                             <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn-view">
-                                View Details
+                                {{ trans('update.view_details') }}
                             </a>
                             @if($test->can_take)
                                 <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="flex:1;">
                                     @csrf
                                     <button type="submit" class="btn-start mock w-100">
-                                        Start Test
+                                        {{ trans('update.start_test') }}
                                     </button>
                                 </form>
                             @else
                                 <button class="btn-start" disabled style="flex:1;">
-                                    Max Attempts
+                                    {{ trans('update.max_attempts') }}
                                 </button>
                             @endif
                         </div>
@@ -369,18 +370,18 @@
             </div>
             <div>
                 <h2 class="section-title">
-                    Practice Tests
+                    {{ trans('update.practice_tests') }}
                     <span class="badge badge-success">{{ $practiceTests->count() }}</span>
                 </h2>
-                <p class="section-desc">Skill-focused practice • Choose 1-4 skills • Instant feedback</p>
+                <p class="section-desc">{{ trans('update.practice_tests_desc') }}</p>
             </div>
         </div>
 
         @if($practiceTests->isEmpty())
             <div class="empty-state">
                 <img src="/assets/default/img/no-results/support.png" alt="">
-                <h3>No Practice Tests Available</h3>
-                <p>Practice tests will be added soon!</p>
+                <h3>{{ trans('update.no_practice_tests_available') }}</h3>
+                <p>{{ trans('update.no_practice_tests_hint') }}</p>
             </div>
         @else
             <div class="tests-grid">
@@ -388,7 +389,7 @@
                     <div class="test-card practice">
                         <div class="test-card-header">
                             <h3 class="test-card-title">{{ $test->title }}</h3>
-                            <span class="test-card-badge practice">Practice</span>
+                            <span class="test-card-badge practice">{{ trans('update.practice') }}</span>
                         </div>
 
                         @if($test->description)
@@ -396,24 +397,24 @@
                         @endif
 
                         <div class="skills-row">
-                            @if($test->has_listening)<span class="skill-badge listening">Listening</span>@endif
-                            @if($test->has_reading)<span class="skill-badge reading">Reading</span>@endif
-                            @if($test->has_writing)<span class="skill-badge writing">Writing</span>@endif
-                            @if($test->has_speaking)<span class="skill-badge speaking">Speaking</span>@endif
+                            @if($test->has_listening)<span class="skill-badge listening">{{ trans('update.listening') }}</span>@endif
+                            @if($test->has_reading)<span class="skill-badge reading">{{ trans('update.reading') }}</span>@endif
+                            @if($test->has_writing)<span class="skill-badge writing">{{ trans('update.writing') }}</span>@endif
+                            @if($test->has_speaking)<span class="skill-badge speaking">{{ trans('update.speaking') }}</span>@endif
                         </div>
 
                         <div class="test-meta">
                             <div class="test-meta-item">
                                 <i class="far fa-clock"></i>
                                 @if($test->practice_mode === 'untimed')
-                                    <span>Untimed</span>
+                                    <span>{{ trans('update.untimed') }}</span>
                                 @else
-                                    <span>{{ $test->total_duration }} min</span>
+                                    <span>{{ $test->total_duration }} {{ trans('update.min') }}</span>
                                 @endif
                             </div>
                             <div class="test-meta-item">
                                 <i class="fas fa-redo"></i>
-                                <span>Unlimited</span>
+                                <span>{{ trans('update.unlimited') }}</span>
                             </div>
                             @if($test->practiceCategory)
                             <div class="test-meta-item">
@@ -426,18 +427,18 @@
                         @if($test->user_attempts > 0)
                             <div class="completion-badge">
                                 <i class="fas fa-history"></i>
-                                <span>Practiced {{ $test->user_attempts }} time(s)</span>
+                                <span>{{ trans('update.practiced_count', ['count' => $test->user_attempts]) }}</span>
                             </div>
                         @endif
 
                         <div class="test-actions">
                             <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn-view">
-                                View Details
+                                {{ trans('update.view_details') }}
                             </a>
                             <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="flex:1;">
                                 @csrf
                                 <button type="submit" class="btn-start practice w-100">
-                                    Start Practice
+                                    {{ trans('update.start_practice') }}
                                 </button>
                             </form>
                         </div>

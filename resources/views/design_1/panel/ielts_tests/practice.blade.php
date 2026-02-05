@@ -308,12 +308,12 @@
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 16px;">
             <div>
-                <h1>Practice Tests</h1>
-                <p>Luyện tập từng kỹ năng IELTS với feedback ngay lập tức</p>
+                <h1>{{ trans('update.practice_tests') }}</h1>
+                <p>{{ trans('update.practice_tests_hint') }}</p>
             </div>
             <div class="unlimited-badge">
                 <i class="fas fa-infinity"></i>
-                <span>Không giới hạn lượt làm</span>
+                <span>{{ trans('update.unlimited_attempts') }}</span>
             </div>
         </div>
     </div>
@@ -321,7 +321,7 @@
     <!-- Band Score Tabs -->
     <div class="band-tabs">
         <a href="{{ route('panel.ielts_tests.practice') }}" class="band-tab {{ !request('band') ? 'active' : '' }}">
-            Tất cả
+            {{ trans('admin/main.all') }}
         </a>
         <a href="{{ route('panel.ielts_tests.practice', ['band' => '4-5']) }}" class="band-tab {{ request('band') === '4-5' ? 'active' : '' }}">
             Band 4.0 - 5.0
@@ -340,8 +340,8 @@
     @if($practiceTests->isEmpty())
         <div class="empty-state">
             <img src="/assets/default/img/no-results/support.png" alt="">
-            <h3>Chưa có Practice Tests</h3>
-            <p>Practice tests sẽ được thêm sớm!</p>
+            <h3>{{ trans('update.no_practice_tests_available') }}</h3>
+            <p>{{ trans('update.no_practice_tests_hint') }}</p>
         </div>
     @else
         @foreach($practiceTests as $test)
@@ -357,12 +357,12 @@
                     <div class="skill-icon">
                         <i class="fas fa-headphones"></i>
                     </div>
-                    <div class="skill-name">Listening</div>
+                    <div class="skill-name">{{ trans('update.listening') }}</div>
                     <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST">
                         @csrf
                         <input type="hidden" name="skill" value="listening">
                         <button type="submit" class="btn-skill-start">
-                            <i class="fas fa-bolt"></i> Làm bài
+                            <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                         </button>
                     </form>
                     <div class="skill-status unlocked">
@@ -377,12 +377,12 @@
                     <div class="skill-icon">
                         <i class="fas fa-book-open"></i>
                     </div>
-                    <div class="skill-name">Reading</div>
+                    <div class="skill-name">{{ trans('update.reading') }}</div>
                     <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST">
                         @csrf
                         <input type="hidden" name="skill" value="reading">
                         <button type="submit" class="btn-skill-start">
-                            <i class="fas fa-bolt"></i> Làm bài
+                            <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                         </button>
                     </form>
                     <div class="skill-status unlocked">
@@ -397,12 +397,12 @@
                     <div class="skill-icon">
                         <i class="fas fa-pen-fancy"></i>
                     </div>
-                    <div class="skill-name">Writing</div>
+                    <div class="skill-name">{{ trans('update.writing') }}</div>
                     <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST">
                         @csrf
                         <input type="hidden" name="skill" value="writing">
                         <button type="submit" class="btn-skill-start">
-                            <i class="fas fa-bolt"></i> Làm bài
+                            <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                         </button>
                     </form>
                     <div class="skill-status unlocked">
@@ -417,12 +417,12 @@
                     <div class="skill-icon">
                         <i class="fas fa-microphone"></i>
                     </div>
-                    <div class="skill-name">Speaking</div>
+                    <div class="skill-name">{{ trans('update.speaking') }}</div>
                     <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST">
                         @csrf
                         <input type="hidden" name="skill" value="speaking">
                         <button type="submit" class="btn-skill-start">
-                            <i class="fas fa-bolt"></i> Làm bài
+                            <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                         </button>
                     </form>
                     <div class="skill-status unlocked">
@@ -436,7 +436,7 @@
             <div class="full-test-footer">
                 <div class="full-test-info">
                     <span class="full-test-icon"><i class="fas fa-th-large"></i></span>
-                    <span class="full-test-label">Full Test<sup>®</sup></span>
+                    <span class="full-test-label">{{ trans('update.full_test') }}<sup>®</sup></span>
                 </div>
                 <div class="progress-container">
                     @php
@@ -450,7 +450,7 @@
                 <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST">
                     @csrf
                     <button type="submit" class="btn-full-start">
-                        <i class="fas fa-bolt"></i> Start
+                        <i class="fas fa-bolt"></i> {{ trans('admin/main.start') }}
                     </button>
                 </form>
             </div>
