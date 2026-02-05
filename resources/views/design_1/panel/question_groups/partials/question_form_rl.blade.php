@@ -209,7 +209,11 @@
         <div class="questions-list">
             @foreach($group->questions as $question)
                 @php
-                    $questionData = json_decode($question->question_data ?? '{}', true) ?? [];
+                    // Check if question_data is already an array (from model cast) or needs decoding
+                    $questionData = is_array($question->question_data) 
+                        ? $question->question_data 
+                        : json_decode($question->question_data ?? '{}', true) ?? [];
+                    
                     $correctAnswer = $question->correct_answer ?? '-';
                     $questionText = $question->question_text ?? $questionData['question_text'] ?? $questionData['statement'] ?? '';
                     $questionTypeLabel = ucwords(str_replace('_', ' ', $question->question_type ?? 'Unknown'));
@@ -274,7 +278,13 @@
 
 @push('scripts_bottom')
 <script>
+console.log('=== Script Loading Started ===');
+
 $(document).ready(function() {
+    console.log('=== Document Ready Fired ===');
+    console.log('jQuery version:', $.fn.jquery);
+    console.log('Save button exists:', $('#saveAllQuestionsBtn').length);
+    
     let questionsArray = [];
     let editingIndex = -1;
     
@@ -391,19 +401,33 @@ $(document).ready(function() {
             // Add each question from batch
             batchQuestions.forEach(function(q) {
                 const questionData = {
-                    question_number: q.question_number,
                     question_type: q.question_type || type,
                     question_type_label: q.question_type_label || $('#questionType option:selected').text().trim(),
                     question_text: q.question_text || '',
-                    correct_answer: q.correct_answer || ''
                 };
+                
+                // Add row_type if exists (for header/question distinction)
+                if (q.row_type) {
+                    questionData.row_type = q.row_type;
+                }
+                
+                // Add question_number and correct_answer only for question rows (not header rows)
+                if (!q.row_type || q.row_type === 'question') {
+                    questionData.question_number = q.question_number;
+                    questionData.correct_answer = q.correct_answer || '';
+                }
                 
                 // Copy all other properties
                 for (let key in q) {
                     if (key.startsWith('options[')) {
                         questionData[key] = q[key];
-                    } else if (!['question_number', 'question_type', 'question_type_label', 'question_text', 'correct_answer'].includes(key)) {
-                        questionData['question_data[' + key + ']'] = q[key];
+                    } else if (!['question_number', 'question_type', 'question_type_label', 'question_text', 'correct_answer', 'row_type'].includes(key)) {
+                        // Keep important fields at root level, others go to question_data
+                        if (['word_limit', 'marks', 'columns', 'row_context', 'table_structure'].includes(key)) {
+                            questionData[key] = q[key];
+                        } else {
+                            questionData['question_data[' + key + ']'] = q[key];
+                        }
                     }
                 }
                 
@@ -689,13 +713,22 @@ $(document).ready(function() {
 
     // Save all questions
     $('#saveAllQuestionsBtn').on('click', function() {
+        console.log('=== Save All Button Clicked ===');
+        console.log('Questions Array:', questionsArray);
+        console.log('Array Length:', questionsArray.length);
+        
         if (questionsArray.length === 0) {
+            console.warn('No questions in array!');
             notify('warning', 'Please add at least one question');
             return;
         }
 
         const btn = $(this);
+        console.log('Button element:', btn);
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-8"></span>Saving...');
+
+        console.log('Sending questions:', questionsArray);
+        console.log('URL:', '{{ route("panel.questions.store", $group->id) }}');
 
         $.ajax({
             url: '{{ route("panel.questions.store", $group->id) }}',
@@ -704,7 +737,11 @@ $(document).ready(function() {
                 _token: '{{ csrf_token() }}',
                 questions: questionsArray
             },
+            beforeSend: function() {
+                console.log('AJAX beforeSend triggered');
+            },
             success: function(response) {
+                console.log('✅ Success response:', response);
                 if (response.success) {
                     notify('success', 'All questions saved successfully!');
                     setTimeout(() => window.location.reload(), 1000);
@@ -714,6 +751,19 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                console.error('❌ Error response:', xhr);
+                console.error('Status:', xhr.status);
+                console.error('Response:', xhr.responseJSON);
+                console.error('Error details:', JSON.stringify(xhr.responseJSON, null, 2));
+                
+                // Show detailed errors if available
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    console.error('Validation errors:', xhr.responseJSON.errors);
+                    xhr.responseJSON.errors.forEach((err, idx) => {
+                        console.error(`Error ${idx}:`, err);
+                    });
+                }
+                
                 notify('error', xhr.responseJSON?.message || 'Error saving questions');
                 btn.prop('disabled', false).html('<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-8"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path><path d="M12 13v4"></path><path d="m10 15 2-2 2 2"></path></svg>Save All');
             }

@@ -226,9 +226,9 @@
                                     @endif
                                     @if($section->skill === 'speaking')
                                         <optgroup label="Speaking Parts">
-                                            <option value="part1_questions">Part 1 - Introduction & Interview</option>
-                                            <option value="part2_cue_card">Part 2 - Long Turn (Cue Card)</option>
-                                            <option value="part3_discussion">Part 3 - Discussion</option>
+                                            <option value="part1">Part 1 - Introduction & Interview</option>
+                                            <option value="part2">Part 2 - Long Turn (Cue Card)</option>
+                                            <option value="part3">Part 3 - Discussion</option>
                                         </optgroup>
                                     @endif
                                 </select>

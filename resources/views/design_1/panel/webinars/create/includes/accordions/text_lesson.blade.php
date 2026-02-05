@@ -136,20 +136,73 @@
                 <div class="invalid-feedback"></div>
             </div>
 
-            <div class="form-group">
-                <label class="form-group-label">{{ trans('public.summary') }}</label>
-                <textarea name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][summary]" class="js-ajax-summary form-control" rows="6">{{ !empty($textLesson) ? $textLesson->summary : '' }}</textarea>
-                <div class="invalid-feedback"></div>
-            </div>
+            <div class="interactive-content-section mt-24">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="text-desc-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" data-toggle="tab" href="#text-desc-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tab" aria-controls="text-desc-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" aria-selected="true">Description</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="text-quiz-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" data-toggle="tab" href="#text-quiz-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tab" aria-controls="text-quiz-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" aria-selected="false">Interactive Quiz</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="text-notes-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" data-toggle="tab" href="#text-notes-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tab" aria-controls="text-notes-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" aria-selected="false">Lecture Notes</a>
+                    </li>
+                </ul>
 
+                <div class="tab-content p-16 border border-gray-200 rounded-16">
+                    <div class="tab-pane fade show active" id="text-desc-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tabpanel" aria-labelledby="text-desc-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}">
+                        <div class="form-group">
+                            <label class="form-group-label">{{ trans('public.summary') }}</label>
+                            <textarea name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][summary]" class="js-ajax-summary form-control" rows="6">{{ !empty($textLesson) ? $textLesson->summary : '' }}</textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
 
-            <div class="form-group">
-                <label class="form-group-label">{{ trans('public.content') }}</label>
-                <div class="content-summernote js-ajax-file_path">
-                    <textarea class="js-content-summernote-input form-control {{ !empty($textLesson) ? 'js-content-summernote' : '' }}">{{ !empty($textLesson) ? $textLesson->content : '' }}</textarea>
-                    <textarea name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][content]" class="js-hidden-content-summernote {{ !empty($textLesson) ? 'js-hidden-content-'.$textLesson->id : '' }} d-none">{{ !empty($textLesson) ? $textLesson->content : '' }}</textarea>
+                        <div class="form-group">
+                            <label class="form-group-label">{{ trans('public.content') }}</label>
+                            <div class="content-summernote js-ajax-file_path">
+                                <textarea class="js-content-summernote-input form-control {{ !empty($textLesson) ? 'js-content-summernote' : '' }}">{{ !empty($textLesson) ? $textLesson->content : '' }}</textarea>
+                                <textarea name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][content]" class="js-hidden-content-summernote {{ !empty($textLesson) ? 'js-hidden-content-'.$textLesson->id : '' }} d-none">{{ !empty($textLesson) ? $textLesson->content : '' }}</textarea>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="text-quiz-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tabpanel" aria-labelledby="text-quiz-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}">
+                        <div class="interactive-quiz-builder" data-name-prefix="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][interactive_quiz]">
+                            <div class="form-group">
+                                <label class="form-group-label">Quiz title</label>
+                                <input type="text" name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][interactive_quiz][title]" class="form-control" placeholder="Enter quiz title">
+                            </div>
+
+                            <div class="quiz-questions-wrapper">
+                                <div class="d-flex align-items-center justify-content-between mb-8">
+                                    <label class="form-group-label mb-0">Questions</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary js-add-quiz-question">
+                                        <x-iconsax-lin-add class="icons" width="14px" height="14px"/>
+                                        Add question
+                                    </button>
+                                </div>
+
+                                <div class="quiz-questions-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="text-notes-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tabpanel" aria-labelledby="text-notes-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}">
+                        <div class="lecture-notes-builder" data-name-prefix="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][lecture_notes]">
+                            <div class="d-flex align-items-center justify-content-between mb-8">
+                                <label class="form-group-label mb-0">Lecture Notes</label>
+                                <button type="button" class="btn btn-sm btn-outline-primary js-add-lecture-note">
+                                    <x-iconsax-lin-add class="icons" width="14px" height="14px"/>
+                                    Add note
+                                </button>
+                            </div>
+
+                            <div class="lecture-notes-list"></div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="invalid-feedback"></div>
             </div>
 
             <div class="form-group d-flex align-items-center">

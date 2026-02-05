@@ -1,0 +1,188 @@
+/* Table Completion - IDP/IELTS Style */
+/* For both Reading and Listening sections */
+
+/* General Table Styles */
+.table-completion-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.idp-table-completion-styled {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Table Header */
+.idp-table-completion-styled thead {
+    background: #e8e8e8;
+}
+
+.idp-table-completion-styled th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    border: 1px solid #c0c0c0;
+    color: #000000;
+    font-size: 14px;
+}
+
+/* Table Body */
+.idp-table-completion-styled td {
+    padding: 12px 16px;
+    border: 1px solid #c0c0c0;
+    vertical-align: top;
+    line-height: 1.6;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.idp-table-completion-styled td .cell-text {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Question Input Wrapper */
+.tc-input-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 2px dashed #00b4d8;
+    margin: 4px 0;
+    white-space: nowrap;
+}
+
+/* Question Number Badge */
+.tc-question-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    background: #00b4d8;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 13px;
+    border-radius: 50%;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+/* Input Field */
+.idp-table-input {
+    border: 1px solid #00b4d8;
+    padding: 6px 12px;
+    border-radius: 3px;
+    font-size: 14px;
+    min-width: 120px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.idp-table-input:focus {
+    outline: none;
+    border-color: #0077b6;
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.2);
+}
+
+.idp-table-input:hover {
+    border-color: #0096c7;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .idp-table-completion-styled {
+        font-size: 13px;
+    }
+    
+    .idp-table-completion-styled th,
+    .idp-table-completion-styled td {
+        padding: 8px 12px;
+    }
+    
+    .tc-input-wrapper {
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+    
+    .tc-question-number {
+        min-width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+    
+    .idp-table-input {
+        min-width: 100px;
+        padding: 4px 8px;
+        font-size: 13px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .idp-table-completion-styled {
+        border: 1px solid #000;
+    }
+    
+    .idp-table-completion-styled th,
+    .idp-table-completion-styled td {
+        border: 1px solid #000;
+    }
+    
+    .tc-input-wrapper {
+        background: transparent;
+        border: 1px solid #000;
+    }
+    
+    .tc-question-number {
+        background: transparent;
+        color: #000;
+        border: 1px solid #000;
+    }
+    
+    .idp-table-input {
+        border: none;
+        border-bottom: 1px solid #000;
+        padding: 0;
+        min-width: 100px;
+    }
+}
+
+/* Alternative old style support (backwards compatibility) */
+.idp-table-completion {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.idp-table-completion th {
+    background: #e8e8e8;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #d9d9d9;
+}
+
+.idp-table-completion td {
+    padding: 10px 12px;
+    border: 1px solid #d9d9d9;
+    background: #ffffff;
+}
+
+/* Table header row style */
+.table-header-row {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.table-header-row td {
+    border-bottom: 2px solid #c0c0c0;
+}
