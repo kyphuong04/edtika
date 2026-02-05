@@ -44,7 +44,7 @@
                                             @else
                                                 <h4 class="statistics-section__counter-value font-24 text-white">{{ $statisticValue }}</h4>
                                             @endif
-                                            <p class="font-16 text-white mt-4">{{ $statistic['title'] }}</p>
+                                            <p class="font-16 text-white mt-4">{{ trans('home.' . \Illuminate\Support\Str::snake($statistic['title'])) }}</p>
                                         </div>
                                     </div>
                                 </div>

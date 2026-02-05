@@ -43,21 +43,21 @@
                                     @endif
 
                                     @if(!empty($themeFooterContent['cta']['pre_title']))
-                                        <span class="">{{ $themeFooterContent['cta']['pre_title'] }}</span>
+                                        <span class="">{{ trans('footer.cta_title') }}</span>
                                     @endif
                                 </div>
 
                                 @if(!empty($themeFooterContent['cta']['title']))
-                                    <h3 class="mt-16 font-44 text-white mr-0 mr-lg-48">{{ $themeFooterContent['cta']['title'] }}</h3>
+                                    <h3 class="mt-16 font-44 text-white mr-0 mr-lg-48">{{ trans('footer.cta_desc') }}</h3>
                                 @endif
 
                                 @if(!empty($themeFooterContent['cta']['button']) and !empty($themeFooterContent['cta']['button']['label']))
-                                    <a href="{{ (!empty($themeFooterContent['cta']['button']['url'])) ? $themeFooterContent['cta']['button']['url'] : '' }}" class="btn-flip-effect btn btn-xlg btn-primary gap-8 mt-32" data-text="{{ $themeFooterContent['cta']['button']['label'] }}">
+                                    <a href="{{ (!empty($themeFooterContent['cta']['button']['url'])) ? $themeFooterContent['cta']['button']['url'] : '' }}" class="btn-flip-effect btn btn-xlg btn-primary gap-8 mt-32" data-text="{{ trans('footer.enroll_on_courses') }}">
                                         @if(!empty($themeFooterContent['cta']['button']['icon']))
                                             @svg("iconsax-{$themeFooterContent['cta']['button']['icon']}", ['width' => '24px', 'height' => '24px', 'class' => "icons"])
                                         @endif
 
-                                        <span class="btn-flip-effect__text">{{ $themeFooterContent['cta']['button']['label'] }}</span>
+                                        <span class="btn-flip-effect__text">{{ trans('footer.enroll_on_courses') }}</span>
                                     </a>
                                 @endif
                             @endif
@@ -65,14 +65,14 @@
 
                         <div class="col-6 col-lg-2 mt-32 mt-lg-0">
                             @if(!empty($themeFooterContent['links_1_section_title']))
-                                <h4 class="font-16 text-white">{{ $themeFooterContent['links_1_section_title'] }}</h4>
+                                <h4 class="font-16 text-white">{{ trans('footer.additional_links') }}</h4>
                             @endif
 
                             @if(!empty($themeFooterContent['specific_links']) and is_array($themeFooterContent['specific_links']))
                                 @foreach($themeFooterContent['specific_links'] as $specificLink1Data)
                                     @if(!empty($specificLink1Data['title']) and !empty($specificLink1Data['url']))
-                                        <a href="{{ $specificLink1Data['url'] }}" target="_blank" class="btn-flip-effect btn-flip-effect__slow-effect btn-flip-effect__left-0 d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}" data-text="{{ $specificLink1Data['title'] }}">
-                                            <span class="btn-flip-effect__text">{{ $specificLink1Data['title'] }}</span>
+                                        <a href="{{ $specificLink1Data['url'] }}" target="_blank" class="btn-flip-effect btn-flip-effect__slow-effect btn-flip-effect__left-0 d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}" data-text="{{ trans('footer.' . strtolower($specificLink1Data['title'])) }}">
+                                            <span class="btn-flip-effect__text">{{ trans('footer.' . strtolower($specificLink1Data['title'])) }}</span>
                                         </a>
                                     @endif
                                 @endforeach
@@ -81,14 +81,14 @@
 
                         <div class="col-6 col-lg-2 mt-32 mt-lg-0">
                             @if(!empty($themeFooterContent['links_2_section_title']))
-                                <h4 class="font-16 text-white">{{ $themeFooterContent['links_2_section_title'] }}</h4>
+                                <h4 class="font-16 text-white">{{ trans('footer.popular_categories') }}</h4>
                             @endif
 
                             @if(!empty($themeFooterContent['specific_links_2']) and is_array($themeFooterContent['specific_links_2']))
                                 @foreach($themeFooterContent['specific_links_2'] as $specificLink2Data)
                                     @if(!empty($specificLink2Data['title']) and !empty($specificLink2Data['url']))
-                                        <a href="{{ $specificLink2Data['url'] }}" target="_blank" class="btn-flip-effect btn-flip-effect__slow-effect btn-flip-effect__left-0 d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}" data-text="{{ $specificLink2Data['title'] }}">
-                                            <span class="btn-flip-effect__text">{{ $specificLink2Data['title'] }}</span>
+                                        <a href="{{ $specificLink2Data['url'] }}" target="_blank" class="btn-flip-effect btn-flip-effect__slow-effect btn-flip-effect__left-0 d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}" data-text="{{ trans('footer.' . strtolower($specificLink2Data['title'])) }}">
+                                            <span class="btn-flip-effect__text">{{ trans('footer.' . strtolower($specificLink2Data['title'])) }}</span>
                                         </a>
                                     @endif
                                 @endforeach
@@ -98,7 +98,7 @@
                         <div class="col-12 col-lg-3 mt-32 mt-lg-0">
                             @if(!empty($themeFooterContent['contact']))
                                 @if(!empty($themeFooterContent['contact']['section_title']))
-                                    <h4 class="font-16 text-white">{{ $themeFooterContent['contact']['section_title'] }}</h4>
+                                    <h4 class="font-16 text-white">{{ trans('footer.contact_us') }}</h4>
                                 @endif
 
                                 @if(!empty($themeFooterContent['contact']['address']))
@@ -147,7 +147,7 @@
 
                 <div class="container d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between py-24 px-16 gap-16">
                     @if(!empty($themeFooterContent['copyright_text']))
-                        <div class="font-14 text-white opacity-70">{{ $themeFooterContent['copyright_text'] }}</div>
+                        <div class="font-14 text-white opacity-70">{{ trans($themeFooterContent['copyright_text']) }}</div>
                     @endif
 
                     <div class="d-flex align-items-center justify-content-center gap-16 gap-lg-24">

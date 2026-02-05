@@ -160,7 +160,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.instructor')}}</label>
                                     <select name="teacher_ids[]" multiple="multiple" data-search-option="just_teacher_role" class="form-control search-user-select2"
-                                            data-placeholder="Search teachers">
+                                            data-placeholder="{{ trans('admin/main.search_teachers') }}">
 
                                         @if(!empty($teachers) and $teachers->count() > 0)
                                             @foreach($teachers as $teacher)

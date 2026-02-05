@@ -8,7 +8,7 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{!empty($tag) ?trans('/admin/main.edit'): trans('admin/main.new') }} {{ trans('admin/main.tag') }}</h1>
+            <h1>{{ !empty($tag) ? (trans('/admin/main.edit') . ' ' . trans('admin/main.tag')) : trans('admin/main.tag_new_page_title') }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a>
                 </div>

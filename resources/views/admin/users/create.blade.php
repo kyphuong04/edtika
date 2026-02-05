@@ -7,7 +7,7 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{!empty($user) ?trans('/admin/main.edit'): trans('admin/main.new') }} {{ trans('admin/main.user') }}</h1>
+            <h1>{{ !empty($user) ? (trans('/admin/main.edit') . ' ' . trans('admin/main.user')) : trans('admin/main.user_new_page_title') }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a>
                 </div>
@@ -78,7 +78,7 @@
                                             <select class="form-control select2 @error('role_id') is-invalid @enderror" id="roleId" name="role_id">
                                                 <option disabled selected>{{ trans('admin/main.select_role') }}</option>
                                                 @foreach ($roles as $role)
-                                                    <option value="{{ $role->id }}" {{ old('role_id') === $role->id ? 'selected' :''}}>{{ $role->name }} - {{ $role->caption }}</option>
+                                                    <option value="{{ $role->id }}" {{ old('role_id') === $role->id ? 'selected' :''}}>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                                 @endforeach
                                             </select>
                                             @error('role_id')
@@ -105,7 +105,7 @@
                                             <select class="form-control @error('status') is-invalid @enderror" id="status" name="status">
                                                 <option disabled selected>{{ trans('admin/main.select_status') }}</option>
                                                 @foreach (\App\User::$statuses as $status)
-                                                    <option value="{{ $status }}" {{ old('status') === $status ? 'selected' :''}}>{{  $status }}</option>
+                                                    <option value="{{ $status }}" {{ old('status') === $status ? 'selected' :''}}>{{ trans('admin/main.'.$status) }}</option>
                                                 @endforeach
                                             </select>
                                             @error('status')

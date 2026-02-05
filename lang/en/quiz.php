@@ -49,9 +49,10 @@ return [
 
 'new_descriptive_question' => 'New Descriptive Question',
 'student' => 'Student',
-'students' => 'Students',
-'instructors' => 'Mentors',
-'student_results' => 'Student Results',
+    'students' => 'Students',
+    'instructors' => 'Mentors',
+    'teachers' => 'Teachers',
+    'student_results' => 'Student Results',
 'average' => 'Average',
 'average_grade' => 'Average Grade',
 'minimum_grade' => 'Minimum Grade',

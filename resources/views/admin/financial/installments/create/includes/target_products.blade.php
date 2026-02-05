@@ -122,7 +122,7 @@
         <div class="form-group js-specific-courses-field {{ (!empty($installment) and $installment->target == "specific_courses") ? '' : 'd-none' }}">
             <label class="input-label">{{ trans('update.specific_courses') }}</label>
             <select name="webinar_ids[]" multiple="multiple" class="form-control search-webinar-select2"
-                    data-placeholder="Search classes">
+                    data-placeholder="{{ trans('admin/main.search_webinar') }}">
 
                 @if(!empty($installment) and count($installment->webinars))
                     @foreach($installment->webinars as $webinar)

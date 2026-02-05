@@ -63,7 +63,7 @@ class SidebarItems
                 if ($user->can('panel_organization_instructors') || $user->can('panel_organization_teachers')) {
                     $items['teachers'] = [
                         'icon' => self::getIcon('instructors'),
-                        'text' => trans('teachers'),
+                        'text' => trans('panel.teacher'),
                         'url' => '/panel/manage/teachers',
                         'items' => []
                     ];
@@ -232,19 +232,19 @@ class SidebarItems
             // Admin/Teacher/Manager/CEO → Panel management with dropdown
             if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
                 $ieltsItems = [
-                    ['text' => 'My Tests', 'url' => '/panel/my-ielts-tests'],
-                    ['text' => 'Create from Bank', 'url' => '/panel/my-ielts-tests/create'],
-                    ['text' => 'Grade Tests', 'url' => '/panel/ielts-grading'],
+                    ['text' => trans('update.my_tests'), 'url' => '/panel/my-ielts-tests'],
+                    ['text' => trans('update.create_from_bank'), 'url' => '/panel/my-ielts-tests/create'],
+                    ['text' => trans('update.grade_tests'), 'url' => '/panel/ielts-grading'],
                 ];
                 
                 // Manager/CEO/Admin get additional menu for All Tests Overview
                 if ($user->isAdmin() || $user->isManager() || $user->isCeo()) {
-                    $ieltsItems[] = ['text' => 'All Tests', 'url' => '/admin/ielts-tests'];
+                    $ieltsItems[] = ['text' => trans('update.all_tests'), 'url' => '/admin/ielts-tests'];
                 }
                 
                 $items['ielts_tests'] = [
                     'icon' => self::getIcon('ielts_tests'),
-                    'text' => 'IELTS Tests',
+                    'text' => trans('update.ielts_tests'),
                     'url' => '/panel/my-ielts-tests',
                     'items' => $ieltsItems
                 ];
@@ -253,11 +253,11 @@ class SidebarItems
             else {
                 $items['ielts_tests'] = [
                     'icon' => self::getIcon('ielts_tests'),
-                    'text' => 'IELTS Tests',
+                    'text' => trans('update.ielts_tests'),
                     'url' => '/panel/ielts-tests',
                     'items' => [
-                        ['text' => 'Mock Tests', 'url' => '/panel/ielts-tests/mock'],
-                        ['text' => 'Practice Tests', 'url' => '/panel/ielts-tests/practice'],
+                        ['text' => trans('update.mock_tests'), 'url' => '/panel/ielts-tests/mock'],
+                        ['text' => trans('update.practice_tests'), 'url' => '/panel/ielts-tests/practice'],
                     ]
                 ];
             }
@@ -266,20 +266,20 @@ class SidebarItems
         // Question Bank - For Teachers, Organizations, Admins, Managers, CEOs (role hierarchy)
         if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
             $questionBankItems = [
-                ['text' => 'Dashboard', 'url' => '/panel/question-bank'],
-                ['text' => 'Mock Groups', 'url' => '/panel/question-groups?type=mock'],
-                ['text' => 'Practice Groups', 'url' => '/panel/question-groups?type=practice'],
-                ['text' => 'Import Questions', 'url' => '/panel/question-bank/import'],
+                ['text' => trans('panel.dashboard'), 'url' => '/panel/question-bank'],
+                ['text' => trans('update.mock_groups'), 'url' => '/panel/question-groups?type=mock'],
+                ['text' => trans('update.practice_groups'), 'url' => '/panel/question-groups?type=practice'],
+                ['text' => trans('update.import_questions'), 'url' => '/panel/question-bank/import'],
             ];
             
             // Admin/Manager/CEO can see Pending Approval for Question Bank
             if ($user->isAdmin() || $user->isManager() || $user->isCeo()) {
-                $questionBankItems[] = ['text' => 'Pending Approval', 'url' => '/admin/question-groups/pending'];
+                $questionBankItems[] = ['text' => trans('update.pending_approval'), 'url' => '/admin/question-groups/pending'];
             }
             
             $items['question_bank'] = [
                 'icon' => self::getIcon('question_bank'),
-                'text' => 'Question Bank',
+                'text' => trans('update.question_bank'),
                 'url' => '/panel/question-bank',
                 'items' => $questionBankItems
             ];

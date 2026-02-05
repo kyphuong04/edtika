@@ -10,7 +10,7 @@
         <div class="section-header-breadcrumb">
             <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">Dashboard</a></div>
             <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.index') }}">IELTS Tests</a></div>
-            <div class="breadcrumb-item">Sections</div>
+            <div class="breadcrumb-item">{{ trans('update.ielts_manage_sections') }}</div>
         </div>
     </div>
 
@@ -19,7 +19,7 @@
             <div class="card-header justify-content-between">
                 <div>
                     <h4 class="mb-0">{{ $test->title }}</h4>
-                    <p class="text-gray mb-0 mt-1">Configure test sections and content</p>
+                    <p class="text-gray mb-0 mt-1">{{ trans('update.ielts_manage_sections_hint') }}</p>
                 </div>
                 <div>
                     <a href="{{ route('admin.ielts_tests.edit', $test->id) }}" class="btn btn-secondary">
@@ -36,21 +36,21 @@
                 @if($test->sections->isEmpty())
                     <div class="text-center py-5">
                         <i class="fas fa-folder-open fa-3x text-gray mb-3"></i>
-                        <h5>No sections yet</h5>
-                        <p class="text-gray">Create your first section to start adding questions</p>
+                        <h5>{{ trans('update.ielts_no_sections_yet') }}</h5>
+                        <p class="text-gray">{{ trans('update.ielts_create_first_section_hint') }}</p>
                     </div>
                 @else
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Order</th>
-                                    <th>Title</th>
-                                    <th>Skill</th>
-                                    <th>Questions</th>
-                                    <th>Duration</th>
-                                    <th>Media</th>
-                                    <th>Actions</th>
+                                    <th>{{ trans('update.ielts_section_order') }}</th>
+                                    <th>{{ trans('update.ielts_title') }}</th>
+                                    <th>{{ trans('update.ielts_section_skill') }}</th>
+                                    <th>{{ trans('update.ielts_section_questions') }}</th>
+                                    <th>{{ trans('update.ielts_duration') }}</th>
+                                    <th>{{ trans('update.ielts_section_media') }}</th>
+                                    <th>{{ trans('update.ielts_section_actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -75,7 +75,7 @@
                                     </td>
                                     <td>
                                         @if($section->duration_minutes)
-                                            {{ $section->duration_minutes }} min
+                                            {{ $section->duration_minutes }} {{ trans('update.ielts_min') }}
                                         @else
                                             <span class="text-gray">-</span>
                                         @endif
@@ -122,7 +122,7 @@
         @if($test->isMockTest())
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">Mock Test Requirements</h5>
+                <h5 class="mb-0">{{ trans('update.ielts_mock_test_requirements') }}</h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -175,7 +175,7 @@
                     @if($test->isMockTest())
                         <div class="alert alert-warning mb-3">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <strong>Mock Test - Follow LRWS Order:</strong>
+                            <strong>{{ trans('update.ielts_follow_lrws_order') }}:</strong>
                             <ol class="mb-0 mt-2">
                                 <li>Create Listening sections first (30 min total)</li>
                                 <li>Then Reading sections (60 min total)</li>
@@ -247,7 +247,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Duration (minutes)</label>
+                                <label>{{ trans('update.ielts_duration_minutes') }}</label>
                                 <input type="number" name="duration_minutes" class="form-control">
                             </div>
                         </div>

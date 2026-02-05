@@ -946,52 +946,52 @@
     // Helper function to get question instruction based on type
     function getQuestionInstruction($type, $maxWords = null) {
         $instructions = [
-            'true_false_not_given' => 'Choose <strong>TRUE</strong> if the statement agrees with the information given in the text, choose <strong>FALSE</strong> if the statement contradicts the information, or choose <strong>NOT GIVEN</strong> if there is no information on this.',
+            'true_false_not_given' => trans('update.ielts_instr_true_false_not_given'),
             
-            'yes_no_not_given' => 'Choose <strong>YES</strong> if the statement agrees with the views of the writer, choose <strong>NO</strong> if the statement contradicts the views of the writer, or choose <strong>NOT GIVEN</strong> if it is impossible to say what the writer thinks about this.',
+            'yes_no_not_given' => trans('update.ielts_instr_yes_no_not_given'),
             
-            'multiple_choice_single' => 'Choose the correct answer.',
+            'multiple_choice_single' => trans('update.ielts_instr_multiple_choice_single'),
             
-            'multiple_choice_multiple' => 'Choose <strong>TWO</strong> correct answers.',
+            'multiple_choice_multiple' => trans('update.ielts_instr_multiple_choice_multiple'),
             
-            'sentence_completion' => 'Complete the sentences. Write <strong>ONE WORD ONLY</strong> from the text for each answer.',
+            'sentence_completion' => trans('update.ielts_instr_sentence_completion'),
             
-            'sentence_completion_two_words' => 'Complete the sentences. Write <strong>NO MORE THAN TWO WORDS</strong> from the text for each answer.',
+            'sentence_completion_two_words' => trans('update.ielts_instr_sentence_completion_two_words'),
             
-            'sentence_completion_three_words' => 'Complete the sentences. Write <strong>NO MORE THAN THREE WORDS</strong> from the text for each answer.',
+            'sentence_completion_three_words' => trans('update.ielts_instr_sentence_completion_three_words'),
             
-            'sentence_endings' => 'Complete each sentence with the correct ending. Choose the correct answer and move it into the gap.',
+            'sentence_endings' => trans('update.ielts_instr_sentence_endings'),
             
-            'note_completion' => 'Complete the notes. Write <strong>ONE WORD ONLY</strong> from the text for each answer.',
+            'note_completion' => trans('update.ielts_instr_note_completion'),
             
-            'note_completion_two_words' => 'Complete the notes. Write <strong>NO MORE THAN TWO WORDS</strong> from the text for each answer.',
+            'note_completion_two_words' => trans('update.ielts_instr_note_completion_two_words'),
             
-            'note_completion_three_words' => 'Complete the notes. Write <strong>NO MORE THAN THREE WORDS AND/OR A NUMBER</strong> from the text for each answer.',
+            'note_completion_three_words' => trans('update.ielts_instr_note_completion_three_words'),
             
-            'summary_completion_list' => 'Complete the summary using the list of words. Choose the correct answer and move it into the gap.',
+            'summary_completion_list' => trans('update.ielts_instr_summary_completion_list'),
             
-            'summary_completion_text' => 'Complete the summary. Write <strong>NO MORE THAN TWO WORDS</strong> from the text for each answer.',
+            'summary_completion_text' => trans('update.ielts_instr_summary_completion_text'),
             
-            'table_completion' => 'Complete the table. Write <strong>NO MORE THAN TWO WORDS</strong> from the text for each answer.',
+            'table_completion' => trans('update.ielts_instr_table_completion'),
             
-            'flow_chart_completion' => 'Complete the flow-chart. Write <strong>NO MORE THAN TWO WORDS</strong> from the text for each answer.',
+            'flow_chart_completion' => trans('update.ielts_instr_flow_chart_completion'),
             
-            'diagram_completion' => 'Label the diagram. Write <strong>NO MORE THAN TWO WORDS</strong> from the text for each answer.',
+            'diagram_completion' => trans('update.ielts_instr_diagram_completion'),
             
-            'matching_headings' => 'Choose the correct heading for each paragraph from the list of headings.',
+            'matching_headings' => trans('update.ielts_instr_matching_headings'),
             
-            'matching_information' => 'Match each statement with the correct paragraph.',
+            'matching_information' => trans('update.ielts_instr_matching_information'),
             
-            'matching_features' => 'Match each statement with the correct option. You may use any option more than once.',
+            'matching_features' => trans('update.ielts_instr_matching_features'),
             
-            'matching_sentence_endings' => 'Complete each sentence with the correct ending.',
+            'matching_sentence_endings' => trans('update.ielts_instr_matching_sentence_endings'),
             
-            'short_answer' => 'Answer the questions. Write <strong>NO MORE THAN THREE WORDS AND/OR A NUMBER</strong> for each answer.',
+            'short_answer' => trans('update.ielts_instr_short_answer'),
             
-            'plan_map_diagram_labelling' => 'Label the plan/map/diagram. Choose the correct labels from the box and write them in the correct gap.',
+            'plan_map_diagram_labelling' => trans('update.ielts_instr_plan_map_diagram_labelling'),
         ];
         
-        return $instructions[$type] ?? 'Answer the questions below.';
+        return $instructions[$type] ?? trans('update.ielts_instr_default');
     }
     
     // Helper to group consecutive questions of same type
@@ -1038,10 +1038,10 @@
         <div class="idp-header-left">
             <div class="idp-logo">IELTS</div>
             <div class="idp-test-taker">
-                <span class="idp-test-taker-label">Test taker ID</span>
+                <span class="idp-test-taker-label">{{ trans('update.ielts_test_taker_id') }}</span>
             </div>
             @if(($currentSection->skill ?? '') === 'listening')
-                <div class="idp-audio-indicator">Audio is playing</div>
+                <div class="idp-audio-indicator">{{ trans('update.ielts_audio_is_playing') }}</div>
             @endif
         </div>
         <div class="idp-header-right">
@@ -1054,14 +1054,14 @@
     {{-- Part Bar --}}
     <div class="idp-part-bar">
         <div class="idp-part-info">
-            <div class="idp-part-title">Part {{ $currentPart ?? 1 }}</div>
+            <div class="idp-part-title">{{ trans('update.ielts_part', ['part' => $currentPart ?? 1]) }}</div>
             <div class="idp-part-instruction">
                 @if(($currentSection->skill ?? '') === 'reading')
-                    Read the text and answer questions <a href="#">{{ $questionStart ?? 1 }}-{{ $questionEnd ?? 3 }}</a>.
+                    {{ trans('update.ielts_read_text_and_answer', ['start' => $questionStart ?? 1, 'end' => $questionEnd ?? 3]) }}
                 @elseif(($currentSection->skill ?? '') === 'listening')
-                    Listen and answer questions {{ $questionStart ?? 1 }}-{{ $questionEnd ?? 10 }}.
+                    {{ trans('update.ielts_listen_and_answer', ['start' => $questionStart ?? 1, 'end' => $questionEnd ?? 10]) }}
                 @elseif(($currentSection->skill ?? '') === 'writing')
-                    You should spend about {{ $taskTime ?? 20 }} minutes on this task. Write at least {{ $minWords ?? 150 }} words.
+                    {!! trans('update.ielts_writing_task_instruction', ['duration' => $taskTime ?? 20, 'min_words' => $minWords ?? 150]) !!}
                 @endif
             </div>
         </div>
@@ -1077,7 +1077,7 @@
                         <img src="{{ $taskImage }}" alt="Task Image" class="idp-task-image">
                     @endif
                     <div class="idp-writing-task">
-                        {!! $taskContent ?? 'Write about the following topic...' !!}
+                        {!! $taskContent ?? trans('update.ielts_write_about_topic') !!}
                     </div>
                 </div>
                 <div class="idp-divider">
@@ -1086,16 +1086,16 @@
                 <div class="idp-writing-right">
                     <textarea class="idp-writing-textarea" 
                               id="writingAnswer" 
-                              placeholder="Start writing here..."
+                              placeholder="{{ trans('update.ielts_start_writing') }}"
                               oninput="updateWordCount()"></textarea>
-                    <div class="idp-word-count">Words: <span id="wordCount">0</span></div>
+                    <div class="idp-word-count">{!! trans('update.ielts_words_count', ['count' => '<span id="wordCount">0</span>']) !!}</div>
                 </div>
             </div>
         @else
             {{-- Reading/Listening Layout --}}
             <div class="idp-panel-left">
                 @if(($currentSection->skill ?? '') === 'reading')
-                    <h2 class="idp-passage-title">{{ $passageTitle ?? 'Reading Passage' }}</h2>
+                    <h2 class="idp-passage-title">{{ $passageTitle ?? trans('update.ielts_reading_passage') }}</h2>
                     @if(!empty($passageNote))
                         <p class="idp-passage-note">{{ $passageNote }}</p>
                     @endif
@@ -1124,8 +1124,8 @@
                 @foreach($questionGroups as $group)
                     {{-- Question Group Header --}}
                     <div class="idp-question-header">
-                        <a href="#" class="idp-help-btn">📧 Help</a>
-                        <div class="idp-question-range">Questions {{ $group['start'] }}-{{ $group['end'] }}</div>
+                        <a href="#" class="idp-help-btn">📧 {{ trans('update.ielts_help') }}</a>
+                        <div class="idp-question-range">{{ trans('update.ielts_questions_range', ['start' => $group['start'], 'end' => $group['end']]) }}</div>
                         <div class="idp-question-instruction">
                             {!! getQuestionInstruction($group['type']) !!}
                         </div>
@@ -1149,7 +1149,7 @@
             @foreach($parts ?? [] as $partNum => $part)
                 <div class="idp-part-tab">
                     <span class="idp-part-tab-label {{ $partNum == ($currentPart ?? 1) ? 'active' : '' }}">
-                        Part {{ $partNum }}
+                        {{ trans('update.ielts_part', ['part' => $partNum]) }}
                     </span>
                     <div class="idp-question-numbers">
                         @foreach($part['questions'] ?? [] as $qNum)
@@ -1181,12 +1181,12 @@
         <div class="idp-audio-overlay" id="audioOverlay">
             <div class="idp-audio-icon">🎧</div>
             <div class="idp-audio-message">
-                You will be listening to an audio clip during this test. You will not be permitted to pause or rewind the audio while answering the questions.
+                {{ trans('update.ielts_audio_overlay_message') }}
                 <br><br>
-                To continue, click Play.
+                {{ trans('update.ielts_continue_click_play') }}
             </div>
             <button class="idp-audio-btn" onclick="startAudio()">
-                ▶ Play
+                ▶ {{ trans('update.ielts_play') }}
             </button>
         </div>
     @endif
@@ -1215,7 +1215,7 @@
         }
         
         function confirmSubmit() {
-            if (confirm('Are you sure you want to submit this section?')) {
+            if (confirm('{{ trans('update.ielts_submit_confirm') }}')) {
                 // Submit section
             }
         }

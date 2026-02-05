@@ -20,7 +20,7 @@
             <div class="js-content-fields js-field-course form-group {{ (!empty($content) and $content->type == "course") ? '' : 'd-none' }}">
                 <label class="input-label">{{trans('admin/main.class')}}</label>
                 <select name="course" class="js-ajax-course form-control modal-search-webinar-select2"
-                        data-placeholder="Search classes">
+                        data-placeholder="{{ trans('admin/main.search_webinar') }}">
 
                 </select>
                 <div class="invalid-feedback"></div>

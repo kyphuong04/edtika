@@ -282,11 +282,11 @@
                         </div>
                         <div>
                             <h1 class="font-20 font-weight-bold text-dark mb-4">
-                                Create IELTS Test
+                                {{ trans('update.create_ielts_test') }}
                             </h1>
                             <p class="text-gray-500 font-13 mb-0">
                                 <x-iconsax-lin-info-circle class="icons mr-4" width="14px" height="14px"/>
-                                Build a complete IELTS test by selecting question groups from your Question Bank
+                                {{ trans('update.create_ielts_test_hint') }}
                             </p>
                         </div>
                     </div>
@@ -295,7 +295,7 @@
                     <a href="{{ route('panel.my_ielts_tests.index') }}" 
                     class="btn btn-outline-secondary"
                     style="background: #f3f4f6; border: 1px solid #e5e7eb;">
-                        <x-iconsax-lin-arrow-left class="icons mr-8" width="16px" height="16px"/>Back
+                        <x-iconsax-lin-arrow-left class="icons mr-8" width="16px" height="16px"/>{{ trans('update.back') }}
                     </a>
                 </div>
             </div>
@@ -311,8 +311,8 @@
                     </div>
                     <div class="step-connector"></div>
                     <div class="step-label">
-                        <div class="step-number">Step 1</div>
-                        <div class="step-title">Test Information</div>
+                        <div class="step-number">{{ trans('update.step') }} 1</div>
+                        <div class="step-title">{{ trans('update.test_information') }}</div>
                     </div>
                 </div>
                 
@@ -323,8 +323,8 @@
                     </div>
                     <div class="step-connector"></div>
                     <div class="step-label">
-                        <div class="step-number">Step 2</div>
-                        <div class="step-title">Select Groups</div>
+                        <div class="step-number">{{ trans('update.step') }} 2</div>
+                        <div class="step-title">{{ trans('update.select_groups') }}</div>
                     </div>
                 </div>
                 
@@ -334,8 +334,8 @@
                         <x-iconsax-bul-tick-circle class="icons" width="20px" height="20px"/>
                     </div>
                     <div class="step-label">
-                        <div class="step-number">Step 3</div>
-                        <div class="step-title">Review & Submit</div>
+                        <div class="step-number">{{ trans('update.step') }} 3</div>
+                        <div class="step-title">{{ trans('update.review_submit') }}</div>
                     </div>
                 </div>
             </div>
@@ -351,8 +351,8 @@
                         <x-iconsax-bul-info-circle class="icons text-white" width="28px" height="28px"/>
                     </div>
                     <div class="card-title-section">
-                        <h3 class="card-title-modern">Test Information</h3>
-                        <p class="card-subtitle">Configure the basic details of your IELTS test</p>
+                        <h3 class="card-title-modern">{{ trans('update.test_information') }}</h3>
+                        <p class="card-subtitle">{{ trans('update.test_information_hint') }}</p>
                     </div>
                 </div>
                 
@@ -362,7 +362,7 @@
                             <div class="form-group-modern">
                                 <label class="form-label-modern">
                                     <x-iconsax-lin-text class="icons label-icon" width="16px" height="16px"/>
-                                    Test Title
+                                    {{ trans('update.test_title') }}
                                     <span class="required-star">*</span>
                                 </label>
                                 <input 
@@ -372,7 +372,7 @@
                                     placeholder="e.g., IELTS Academic Mock Test - December 2024" 
                                     required
                                 >
-                                <small class="form-hint">Choose a descriptive title that helps identify this test</small>
+                                <small class="form-hint">{{ trans('update.test_title_hint') }}</small>
                             </div>
                         </div>
                         
@@ -380,14 +380,14 @@
                             <div class="form-group-modern">
                                 <label class="form-label-modern">
                                     <x-iconsax-lin-category class="icons label-icon" width="16px" height="16px"/>
-                                    Test Type
+                                    {{ trans('update.test_type') }}
                                     <span class="required-star">*</span>
                                 </label>
                                 <div class="select-wrapper-modern">
                                     <select name="type" id="testType" class="form-control-modern" required>
-                                        <option value="mock">Mock Test</option>
-                                        <option value="practice">Practice Test</option>
-                                        <option value="diagnostic">Diagnostic Test</option>
+                                        <option value="mock">{{ trans('update.mock_test') }}</option>
+                                        <option value="practice">{{ trans('update.practice_test') }}</option>
+                                        <option value="diagnostic">{{ trans('update.diagnostic_test') }}</option>
                                     </select>
                                     <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                 </div>
@@ -400,23 +400,23 @@
                                 <div class="requirements-mock" style="display: block;">
                                     <div class="req-header">
                                         <x-iconsax-bul-info-circle class="icons" width="18px" height="18px"/>
-                                        <strong>Mock Test Requirements (Full IELTS Simulation):</strong>
+                                        <strong>{{ trans('update.mock_test_requirements_full') }}</strong>
                                     </div>
                                     <ul class="req-list">
-                                        <li><x-iconsax-bul-headphone class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> <strong>Listening:</strong> 4 sections (Part 1-4) • 40 questions • 30 minutes</li>
-                                        <li><x-iconsax-bul-book class="icons" width="18px" height="18px" style="color: #10b981;"/> <strong>Reading:</strong> 3 passages • 40 questions • 60 minutes</li>
-                                        <li><x-iconsax-bul-edit-2 class="icons" width="18px" height="18px" style="color: #f59e0b;"/> <strong>Writing:</strong> Task 1 + Task 2 • 60 minutes</li>
-                                        <li><x-iconsax-bul-microphone-2 class="icons" width="18px" height="18px" style="color: #8b5cf6;"/> <strong>Speaking:</strong> Part 1 + Part 2 + Part 3 • 11-14 minutes</li>
+                                        <li><x-iconsax-bul-headphone class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> <strong>{{ trans('update.listening') }}:</strong> 4 sections (Part 1-4) • 40 {{ trans('update.questions_count') }} • 30 {{ trans('update.min') }}</li>
+                                        <li><x-iconsax-bul-book class="icons" width="18px" height="18px" style="color: #10b981;"/> <strong>{{ trans('update.reading') }}:</strong> 3 passages • 40 {{ trans('update.questions_count') }} • 60 {{ trans('update.min') }}</li>
+                                        <li><x-iconsax-bul-edit-2 class="icons" width="18px" height="18px" style="color: #f59e0b;"/> <strong>{{ trans('update.writing') }}:</strong> Task 1 + Task 2 • 60 {{ trans('update.min') }}</li>
+                                        <li><x-iconsax-bul-microphone-2 class="icons" width="18px" height="18px" style="color: #8b5cf6;"/> <strong>{{ trans('update.speaking') }}:</strong> Part 1 + Part 2 + Part 3 • 11-14 {{ trans('update.min') }}</li>
                                     </ul>
                                     <div class="req-note">
                                         <x-iconsax-lin-info-circle class="icons" width="16px" height="16px"/>
-                                        <span>You must select groups from <strong>Mock Bank only</strong> and include all 4 skills.</span>
+                                        <span>{!! trans('update.mock_bank_only_hint') !!}</span>
                                     </div>
                                 </div>
                                 <div class="requirements-practice" style="display: none;">
                                     <div class="req-header">
                                         <x-iconsax-lin-info-circle class="icons" width="18px" height="18px"/>
-                                        <strong>Practice Test Guidelines:</strong>
+                                        <strong>{{ trans('update.practice_test_guidelines') }}</strong>
                                     </div>
                                     <ul class="req-list">
                                         <li><x-iconsax-bul-tick-circle class="icons" width="18px" height="18px" style="color: #10b981;"/> Focus on specific skills or question types</li>
@@ -426,19 +426,19 @@
                                     </ul>
                                     <div class="req-note">
                                         <x-iconsax-lin-info-circle class="icons" width="16px" height="16px"/>
-                                        <span>You must select groups from <strong>Practice Bank only</strong>.</span>
+                                        <span>{!! trans('update.practice_bank_only_hint') !!}</span>
                                     </div>
                                 </div>
                                 <div class="requirements-diagnostic" style="display: none;">
                                     <div class="req-header">
                                         <x-iconsax-bul-clipboard-tick class="icons" width="18px" height="18px"/>
-                                        <strong>Diagnostic Test Guidelines:</strong>
+                                        <strong>{{ trans('update.diagnostic_test_guidelines') }}</strong>
                                     </div>
                                     <ul class="req-list">
                                         <li><x-iconsax-bul-chart class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> Designed to assess student's current level</li>
                                         <li><x-iconsax-bul-chart class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> Mix of question types and difficulties</li>
                                         <li><x-iconsax-bul-chart class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> Results help identify strengths and weaknesses</li>
-                                        <li><x-iconsax-bul-chart class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> Can use both Mock and Practice bank groups</li>
+                                        <li><x-iconsax-bul-chart class="icons" width="18px" height="18px" style="color: #1a3a5c;"/> {{ trans('update.diagnostic_bank_hint') }}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -448,13 +448,13 @@
                             <div class="form-group-modern">
                                 <label class="form-label-modern">
                                     <x-iconsax-lin-book class="icons label-icon" width="16px" height="16px"/>
-                                    Format
+                                    {{ trans('update.format') }}
                                     <span class="required-star">*</span>
                                 </label>
                                 <div class="select-wrapper-modern">
                                     <select name="format" class="form-control-modern" required>
-                                        <option value="academic">Academic</option>
-                                        <option value="general">General Training</option>
+                                        <option value="academic">{{ trans('update.academic') }}</option>
+                                        <option value="general">{{ trans('update.general_training') }}</option>
                                     </select>
                                     <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                 </div>
@@ -466,20 +466,20 @@
                             <div class="time-settings-card">
                                 <div class="time-settings-header">
                                     <x-iconsax-lin-clock class="icons" width="18px" height="18px"/>
-                                    <strong>Practice Test Time Settings</strong>
+                                    <strong>{{ trans('update.practice_time_settings') }}</strong>
                                 </div>
                                 <div class="row mt-12">
                                     <div class="col-md-4">
                                         <div class="form-group-modern">
                                             <label class="form-label-modern">
                                                 <x-iconsax-lin-timer class="icons label-icon" width="16px" height="16px"/>
-                                                Practice Mode
+                                                {{ trans('update.practice_mode') }}
                                             </label>
                                             <div class="select-wrapper-modern">
                                                 <select name="practice_mode" class="form-control-modern">
-                                                    <option value="untimed">Untimed (No time limit)</option>
-                                                    <option value="timed">Timed (Custom duration)</option>
-                                                    <option value="exam_mode">Exam Mode (Standard IELTS timing)</option>
+                                                    <option value="untimed">{{ trans('update.untimed') }}</option>
+                                                    <option value="timed">{{ trans('update.timed') }}</option>
+                                                    <option value="exam_mode">{{ trans('update.exam_mode') }}</option>
                                                 </select>
                                                 <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                             </div>
@@ -499,12 +499,12 @@
                                         <div class="form-group-modern">
                                             <label class="form-label-modern">
                                                 <x-iconsax-lin-eye class="icons label-icon" width="16px" height="16px"/>
-                                                Show Answers
+                                                {{ trans('update.show_answers') }}
                                             </label>
                                             <div class="select-wrapper-modern">
                                                 <select name="show_answers_immediately" class="form-control-modern">
-                                                    <option value="0">After submission</option>
-                                                    <option value="1">Immediately after each question</option>
+                                                    <option value="0">{{ trans('update.after_submission') }}</option>
+                                                    <option value="1">{{ trans('update.immediately') }}</option>
                                                 </select>
                                                 <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                             </div>
@@ -518,15 +518,15 @@
                             <div class="form-group-modern mb-0">
                                 <label class="form-label-modern">
                                     <x-iconsax-lin-document-text class="icons label-icon" width="16px" height="16px"/>
-                                    Description
-                                    <span class="optional-badge">Optional</span>
+                                    {{ trans('update.description') }}
+                                    <span class="optional-badge">{{ trans('update.optional') }}</span>
                                 </label>
                                 <textarea 
                                     name="description" 
                                     class="form-control-modern" 
                                     rows="3" 
-                                    placeholder="Add any additional information about this test..."></textarea>
-                                <small class="form-hint">Provide context or special instructions for test takers</small>
+                                    placeholder="{{ trans('update.description_placeholder') }}"></textarea>
+                                <small class="form-hint">{{ trans('update.description_hint') }}</small>
                             </div>
                         </div>
                     </div>
@@ -540,8 +540,8 @@
                         <x-iconsax-bul-task-square class="icons text-white" width="28px" height="28px"/>
                     </div>
                     <div class="card-title-section">
-                        <h3 class="card-title-modern">Select Question Groups</h3>
-                        <p class="card-subtitle">Choose question groups for each skill section</p>
+                        <h3 class="card-title-modern">{{ trans('update.select_groups') }}</h3>
+                        <p class="card-subtitle">{{ trans('update.select_groups_hint') }}</p>
                     </div>
                 </div>
                 
@@ -554,13 +554,13 @@
                                     <x-iconsax-lin-filter width="20px" height="20px"/>
                                 </div>
                                 <div>
-                                    <h6 class="font-15 font-weight-bold text-dark mb-0">Smart Filters</h6>
-                                    <p class="text-gray-500 font-12 mb-0" id="filterResultCount">Showing all question groups</p>
+                                    <h6 class="font-15 font-weight-bold text-dark mb-0">{{ trans('update.smart_filters') }}</h6>
+                                    <p class="text-gray-500 font-12 mb-0" id="filterResultCount">{{ trans('update.showing_all_groups') }}</p>
                                 </div>
                             </div>
                             <button type="button" class="btn-clear-link" id="clearFiltersBtn">
                                 <x-iconsax-lin-close-circle class="mr-4" width="16px" height="16px"/>
-                                Clear all filters
+                                {{ trans('update.clear_all_filters') }}
                             </button>
                         </div>
 
@@ -568,10 +568,10 @@
                             {{-- Search Input --}}
                             <div class="col-md-4">
                                 <div class="filter-group">
-                                    <label class="filter-label">Search Title</label>
+                                    <label class="filter-label">{{ trans('update.search_title') }}</label>
                                     <div class="filter-input-wrapper">
                                         <x-iconsax-lin-search-normal class="input-icon-inner" width="16px" height="16px"/>
-                                        <input type="text" class="form-control-modern" id="filterSearch" placeholder="Topic, title or keywords...">
+                                        <input type="text" class="form-control-modern" id="filterSearch" placeholder="{{ trans('update.topic_placeholder') }}">
                                     </div>
                                 </div>
                             </div>
@@ -579,13 +579,13 @@
                             {{-- Band Select --}}
                             <div class="col-md-3">
                                 <div class="filter-group">
-                                    <label class="filter-label">Target Band</label>
+                                    <label class="filter-label">{{ trans('update.target_band') }}</label>
                                     <div class="filter-input-wrapper">
                                         <x-iconsax-lin-medal-star class="input-icon-inner" width="16px" height="16px"/>
                                         <select class="form-control-modern select-modern" id="filterBand">
-                                            <option value="">All Band Scores</option>
+                                            <option value="">{{ trans('update.all_bands') }}</option>
                                             @foreach([5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0] as $band)
-                                                <option value="{{ $band }}">Band {{ $band }}</option>
+                                                <option value="{{ $band }}">{{ trans('update.band_score', ['score' => $band]) }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -595,16 +595,16 @@
                             {{-- Task/Part Select --}}
                             <div class="col-md-5">
                                 <div class="filter-group">
-                                    <label class="filter-label">Category & Section</label>
+                                    <label class="filter-label">{{ trans('update.category_section') }}</label>
                                     <div class="filter-input-wrapper">
                                         <x-iconsax-lin-category class="input-icon-inner" width="16px" height="16px"/>
                                         <select class="form-control-modern select-modern" id="filterTaskPart">
-                                            <option value="">All Tasks / Parts</option>
-                                            <optgroup label="Writing Skills">
+                                            <option value="">{{ trans('update.all_tasks') }}</option>
+                                            <optgroup label="{{ trans('update.writing_skills') }}">
                                                 <option value="task1">Writing Task 1 (Academic/General)</option>
                                                 <option value="task2">Writing Task 2 (Essay)</option>
                                             </optgroup>
-                                            <optgroup label="Speaking Skills">
+                                            <optgroup label="{{ trans('update.speaking_skills') }}">
                                                 <option value="part1">Speaking Part 1 (Interview)</option>
                                                 <option value="part2">Speaking Part 2 (Cue Card)</option>
                                                 <option value="part3">Speaking Part 3 (Discussion)</option>
@@ -624,8 +624,8 @@
                                     <x-iconsax-bul-headphone class="icons" width="20px" height="20px"/>
                                 </div>
                                 <div class="skill-tab-content">
-                                    <div class="skill-tab-title">Listening</div>
-                                    <div class="skill-tab-count" data-count="listening">0 selected</div>
+                                    <div class="skill-tab-title">{{ trans('update.listening') }}</div>
+                                    <div class="skill-tab-count" data-count="listening">0 {{ trans('update.selected') }}</div>
                                 </div>
                             </button>
                             
@@ -634,8 +634,8 @@
                                     <x-iconsax-bul-book class="icons" width="20px" height="20px"/>
                                 </div>
                                 <div class="skill-tab-content">
-                                    <div class="skill-tab-title">Reading</div>
-                                    <div class="skill-tab-count" data-count="reading">0 selected</div>
+                                    <div class="skill-tab-title">{{ trans('update.reading') }}</div>
+                                    <div class="skill-tab-count" data-count="reading">0 {{ trans('update.selected') }}</div>
                                 </div>
                             </button>
                             
@@ -644,8 +644,8 @@
                                     <x-iconsax-bul-edit-2 class="icons" width="20px" height="20px"/>
                                 </div>
                                 <div class="skill-tab-content">
-                                    <div class="skill-tab-title">Writing</div>
-                                    <div class="skill-tab-count" data-count="writing">0 selected</div>
+                                    <div class="skill-tab-title">{{ trans('update.writing') }}</div>
+                                    <div class="skill-tab-count" data-count="writing">0 {{ trans('update.selected') }}</div>
                                 </div>
                             </button>
                             
@@ -654,8 +654,8 @@
                                     <x-iconsax-bul-microphone-2 class="icons" width="20px" height="20px"/>
                                 </div>
                                 <div class="skill-tab-content">
-                                    <div class="skill-tab-title">Speaking</div>
-                                    <div class="skill-tab-count" data-count="speaking">0 selected</div>
+                                    <div class="skill-tab-title">{{ trans('update.speaking') }}</div>
+                                    <div class="skill-tab-count" data-count="speaking">0 {{ trans('update.selected') }}</div>
                                 </div>
                             </button>
                         </div>
@@ -675,9 +675,9 @@
                                     <div class="empty-icon">
                                         <x-iconsax-bul-box class="icons" width="36px" height="36px"/>
                                     </div>
-                                    <h4 class="empty-title">No Listening Groups Available</h4>
-                                    <p class="empty-text">You need to have Listening question groups in your Question Bank before creating a test.</p>
-                                    <p class="empty-hint">Go to <strong>Question Bank → Listening</strong> to manage your question groups.</p>
+                                    <h4 class="empty-title">{{ trans('update.no_groups_available', ['skill' => trans('update.listening')]) }}</h4>
+                                    <p class="empty-text">{{ trans('update.no_groups_hint', ['skill' => trans('update.listening')]) }}</p>
+                                    <p class="empty-hint">{!! trans('update.manage_bank_hint', ['skill' => trans('update.listening')]) !!}</p>
                                 </div>
                             @else
                                 {{-- Mock Bank Groups --}}
@@ -693,16 +693,16 @@
                                             </div>
                                             <div class="group-meta">
                                                 <span class="group-badge badge-primary">
-                                                    <x-iconsax-lin-teacher class="icons mr-4" width="14px" height="14px"/>Mock Bank
+                                                    <x-iconsax-lin-teacher class="icons mr-4" width="14px" height="14px"/>{{ trans('update.mock_bank') }}
                                                 </span>
                                                 <span class="group-info">
                                                     <x-iconsax-lin-message-question class="icons" width="14px" height="14px"/>
-                                                    {{ $group->question_count }} questions
+                                                    {{ $group->question_count }} {{ trans('update.questions_count') }}
                                                 </span>
                                                 @if($group->target_band)
                                                     <span class="group-info">
                                                         <x-iconsax-lin-chart class="icons" width="14px" height="14px"/>
-                                                        Band {{ $group->target_band }}
+                                                        {{ trans('update.band_score', ['score' => $group->target_band]) }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -723,16 +723,16 @@
                                             </div>
                                             <div class="group-meta">
                                                 <span class="group-badge badge-success">
-                                                    <x-iconsax-lin-weight class="icons mr-4" width="14px" height="14px"/>Practice Bank
+                                                    <x-iconsax-lin-weight class="icons mr-4" width="14px" height="14px"/>{{ trans('update.practice_bank') }}
                                                 </span>
                                                 <span class="group-info">
                                                     <x-iconsax-lin-message-question class="icons" width="14px" height="14px"/>
-                                                    {{ $group->question_count }} questions
+                                                    {{ $group->question_count }} {{ trans('update.questions_count') }}
                                                 </span>
                                                 @if($group->target_band)
                                                     <span class="group-info">
                                                         <x-iconsax-lin-chart class="icons" width="14px" height="14px"/>
-                                                        Band {{ $group->target_band }}
+                                                        {{ trans('update.band_score', ['score' => $group->target_band]) }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -754,9 +754,9 @@
                                     <div class="empty-icon">
                                         <x-iconsax-bul-box class="icons" width="36px" height="36px"/>
                                     </div>
-                                    <h4 class="empty-title">No Reading Groups Available</h4>
-                                    <p class="empty-text">You need to have Reading question groups in your Question Bank before creating a test.</p>
-                                    <p class="empty-hint">Go to <strong>Question Bank → Reading</strong> to manage your question groups.</p>
+                                    <h4 class="empty-title">{{ trans('update.no_groups_available', ['skill' => trans('update.reading')]) }}</h4>
+                                    <p class="empty-text">{{ trans('update.no_groups_hint', ['skill' => trans('update.reading')]) }}</p>
+                                    <p class="empty-hint">{!! trans('update.manage_bank_hint', ['skill' => trans('update.reading')]) !!}</p>
                                 </div>
                             @else
                                 {{-- Mock Bank Groups --}}
@@ -833,9 +833,9 @@
                                     <div class="empty-icon">
                                         <x-iconsax-bul-box class="icons" width="36px" height="36px"/>
                                     </div>
-                                    <h4 class="empty-title">No Writing Groups Available</h4>
-                                    <p class="empty-text">You need to have Writing question groups in your Question Bank before creating a test.</p>
-                                    <p class="empty-hint">Go to <strong>Question Bank → Writing</strong> to manage your question groups.</p>
+                                    <h4 class="empty-title">{{ trans('update.no_groups_available', ['skill' => trans('update.writing')]) }}</h4>
+                                    <p class="empty-text">{{ trans('update.no_groups_hint', ['skill' => trans('update.writing')]) }}</p>
+                                    <p class="empty-hint">{!! trans('update.manage_bank_hint', ['skill' => trans('update.writing')]) !!}</p>
                                 </div>
                             @else
                                 {{-- Mock Bank Groups --}}
@@ -863,7 +863,7 @@
                                                 </span>
                                                 <span class="group-info">
                                                     <x-iconsax-lin-document-text class="icons" width="14px" height="14px"/>
-                                                    {{ $taskType === 'task1' ? 'Task 1' : 'Task 2' }}
+                                                    {{ $taskType === 'task1' ? trans('update.task').' 1' : trans('update.task').' 2' }}
                                                 </span>
                                                 @if($group->target_band)
                                                     <span class="group-info">
@@ -925,13 +925,13 @@
                             
                             @if($speakingMock->isEmpty() && $speakingPractice->isEmpty())
                                 <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <x-iconsax-bul-box class="icons" width="36px" height="36px"/>
-                                    </div>
-                                    <h4 class="empty-title">No Speaking Groups Available</h4>
-                                    <p class="empty-text">You need to have Speaking question groups in your Question Bank before creating a test.</p>
-                                    <p class="empty-hint">Go to <strong>Question Bank → Speaking</strong> to manage your question groups.</p>
-                                </div>
+                                                    <div class="empty-icon">
+                                                        <x-iconsax-bul-box class="icons" width="36px" height="36px"/>
+                                                    </div>
+                                                    <h4 class="empty-title">{{ trans('update.no_groups_available', ['skill' => trans('update.speaking')]) }}</h4>
+                                                    <p class="empty-text">{{ trans('update.no_groups_hint', ['skill' => trans('update.speaking')]) }}</p>
+                                                    <p class="empty-hint">{!! trans('update.manage_bank_hint', ['skill' => trans('update.speaking')]) !!}</p>
+                                                </div>
                             @else
                                 {{-- Mock Bank Groups --}}
                                 @foreach($speakingMock as $group)
@@ -963,7 +963,7 @@
                                                 </span>
                                                 <span class="group-info">
                                                     <x-iconsax-lin-microphone-2 class="icons" width="14px" height="14px"/>
-                                                    {{ $partType === 'part1' ? 'Part 1' : ($partType === 'part2' ? 'Part 2' : 'Part 3') }}
+                                                    {{ $partType === 'part1' ? trans('update.part').' 1' : ($partType === 'part2' ? trans('update.part').' 2' : trans('update.part').' 3') }}
                                                 </span>
                                                 @if($group->target_band)
                                                     <span class="group-info">
@@ -1029,19 +1029,19 @@
                                 <x-iconsax-bul-clipboard-tick class="icons" width="20px" height="20px"/>
                             </div>
                             <div class="summary-title">
-                                <h4>Selection Summary</h4>
-                                <p id="summaryCount">0 question groups selected</p>
-                            </div>
+                                 <h4>{{ trans('update.selection_summary') }}</h4>
+                                 <p id="summaryCount">{{ trans('update.selected_groups_count', ['count' => 0]) }}</p>
+                             </div>
                         </div>
                         <div class="summary-content" id="summaryContent">
-                            <p class="text-muted">No question groups selected yet. Select groups from the tabs above.</p>
-                        </div>
+                             <p class="text-muted">{{ trans('update.no_groups_selected_yet') }}</p>
+                         </div>
                         
                         {{-- Validation Status --}}
                         <div class="validation-status mt-16 pt-16 border-top" id="validationStatus" style="display: none;">
                             <div class="validation-header d-flex align-items-center mb-12">
                                 <x-iconsax-bul-shield-tick class="icons text-success mr-8" width="18px" height="18px"/>
-                                <strong class="font-14">Validation Status</strong>
+                                 <strong class="font-14">{{ trans('update.validation_status') }}</strong>
                             </div>
                             <div class="validation-items" id="validationItems">
                                 {{-- Filled by JS --}}
@@ -1058,19 +1058,19 @@
                                         <x-iconsax-bul-magic-star class="icons text-white" width="28px" height="28px"/>
                                     </div>
                                     <div>
-                                        <h4 class="font-16 font-weight-bold text-dark mb-4">
-                                            <x-iconsax-lin-cpu class="icons mr-8" width="18px" height="18px"/>
-                                            Auto Generate Test
-                                        </h4>
-                                        <p class="text-gray-600 font-13 mb-0">
-                                            Automatically select optimal question groups using AI algorithms
-                                        </p>
-                                    </div>
+                                         <h4 class="font-16 font-weight-bold text-dark mb-4">
+                                             <x-iconsax-lin-cpu class="icons mr-8" width="18px" height="18px"/>
+                                             {{ trans('update.auto_generate_test') }}
+                                         </h4>
+                                         <p class="text-gray-600 font-13 mb-0">
+                                             {{ trans('update.auto_generate_hint') }}
+                                         </p>
+                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-info" id="btnAutoGenerate" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; padding: 12px 24px; border-radius: 10px;">
-                                    <x-iconsax-lin-flash class="icons mr-8" width="18px" height="18px"/>
-                                    Auto Generate
-                                </button>
+                                     <x-iconsax-lin-flash class="icons mr-8" width="18px" height="18px"/>
+                                     {{ trans('update.auto_generate') }}
+                                 </button>
                             </div>
                             
                             {{-- Auto Generate Options --}}
@@ -1078,46 +1078,46 @@
                                 <div class="row">
                                     <div class="col-md-4 mb-16">
                                         <label class="form-label-modern">
-                                            <x-iconsax-lin-chart class="icons label-icon" width="16px" height="16px"/>
-                                            Target Band Score
-                                        </label>
+                                             <x-iconsax-lin-chart class="icons label-icon" width="16px" height="16px"/>
+                                             {{ trans('update.target_band_score') }}
+                                         </label>
                                         <div class="select-wrapper-modern">
                                             <select id="autoTargetBand" class="form-control-modern">
-                                                <option value="">Any Band Score</option>
-                                                @foreach([5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0] as $band)
-                                                    <option value="{{ $band }}">Band {{ $band }}</option>
-                                                @endforeach
-                                            </select>
+                                                 <option value="">{{ trans('update.any_band_score') }}</option>
+                                                 @foreach([5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0] as $band)
+                                                     <option value="{{ $band }}">{{ trans('update.band_score', ['score' => $band]) }}</option>
+                                                 @endforeach
+                                             </select>
                                             <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                         </div>
                                     </div>
                                     <div class="col-md-4 mb-16">
                                         <label class="form-label-modern">
-                                            <x-iconsax-lin-setting-3 class="icons label-icon" width="16px" height="16px"/>
-                                            Selection Strategy
-                                        </label>
+                                             <x-iconsax-lin-setting-3 class="icons label-icon" width="16px" height="16px"/>
+                                             {{ trans('update.selection_strategy') }}
+                                         </label>
                                         <div class="select-wrapper-modern">
                                             <select id="autoStrategy" class="form-control-modern">
-                                                <option value="hybrid" selected>🚀 Hybrid (All algorithms - Recommended)</option>
-                                                <option value="optimal">Optimal (Greedy)</option>
-                                                <option value="diverse">Diverse (Backtracking)</option>
-                                                <option value="random">Random (Weighted)</option>
-                                            </select>
+                                                 <option value="hybrid" selected>🚀 {{ trans('update.hybrid') }} ({{ trans('update.recommended') }})</option>
+                                                 <option value="optimal">{{ trans('update.optimal') }}</option>
+                                                 <option value="diverse">{{ trans('update.diverse') }}</option>
+                                                 <option value="random">{{ trans('update.random') }}</option>
+                                             </select>
                                             <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                         </div>
                                     </div>
                                     <div class="col-md-4 mb-16">
                                         <label class="form-label-modern">
-                                            <x-iconsax-lin-refresh-2 class="icons label-icon" width="16px" height="16px"/>
-                                            Avoid Recently Used
-                                        </label>
+                                             <x-iconsax-lin-refresh-2 class="icons label-icon" width="16px" height="16px"/>
+                                             {{ trans('update.avoid_recently_used') }}
+                                         </label>
                                         <div class="select-wrapper-modern">
                                             <select id="autoAvoidRecent" class="form-control-modern">
-                                                <option value="0">No Restriction</option>
-                                                <option value="7">Last 7 days</option>
-                                                <option value="14">Last 14 days</option>
-                                                <option value="30" selected>Last 30 days</option>
-                                            </select>
+                                                 <option value="0">{{ trans('update.no_restriction') }}</option>
+                                                 <option value="7">{{ trans('update.last_n_days', ['days' => 7]) }}</option>
+                                                 <option value="14">{{ trans('update.last_n_days', ['days' => 14]) }}</option>
+                                                 <option value="30" selected>{{ trans('update.last_n_days', ['days' => 30]) }}</option>
+                                             </select>
                                             <x-iconsax-lin-arrow-down class="icons select-arrow" width="16px" height="16px"/>
                                         </div>
                                     </div>
@@ -1127,26 +1127,26 @@
                                     <div class="d-flex align-items-start gap-12">
                                         <x-iconsax-lin-info-circle class="icons text-info" width="20px" height="20px"/>
                                         <div>
-                                            <strong class="font-13 text-dark">Algorithm Information:</strong>
-                                            <ul class="font-12 text-gray-600 mb-0 mt-8 pl-16">
-                                                <li><strong>Optimal (Greedy):</strong> Selects best-matching groups first based on band score and question quality</li>
-                                                <li><strong>Diverse (Backtracking):</strong> Ensures no duplicate question types and checks for content variety</li>
-                                                <li><strong>Random (Weighted):</strong> Weighted selection ensuring rarely-used groups get priority</li>
-                                                <li><strong>Hybrid:</strong> Combines all algorithms for balanced optimal selection</li>
-                                            </ul>
-                                        </div>
+                                             <strong class="font-13 text-dark">{{ trans('update.algorithm_information') }}:</strong>
+                                             <ul class="font-12 text-gray-600 mb-0 mt-8 pl-16">
+                                                 <li><strong>{{ trans('update.optimal') }}:</strong> {{ trans('update.optimal_greedy_hint') }}</li>
+                                                 <li><strong>{{ trans('update.diverse') }}:</strong> {{ trans('update.diverse_backtracking_hint') }}</li>
+                                                 <li><strong>{{ trans('update.random') }}:</strong> {{ trans('update.random_weighted_hint') }}</li>
+                                                 <li><strong>{{ trans('update.hybrid') }}:</strong> {{ trans('update.hybrid_hint') }}</li>
+                                             </ul>
+                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="d-flex justify-content-end gap-12 mt-16">
                                     <button type="button" class="btn btn-light" id="btnCancelAutoGenerate">
-                                        <x-iconsax-lin-close-circle class="icons mr-4" width="16px" height="16px"/>
-                                        Cancel
-                                    </button>
+                                         <x-iconsax-lin-close-circle class="icons mr-4" width="16px" height="16px"/>
+                                         {{ trans('admin/main.cancel') }}
+                                     </button>
                                     <button type="button" class="btn btn-info" id="btnConfirmAutoGenerate" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none;">
-                                        <x-iconsax-lin-tick-circle class="icons mr-8" width="16px" height="16px"/>
-                                        Generate Selection
-                                    </button>
+                                         <x-iconsax-lin-tick-circle class="icons mr-8" width="16px" height="16px"/>
+                                         {{ trans('update.generate_selection') }}
+                                     </button>
                                 </div>
                             </div>
                         </div>
@@ -1158,11 +1158,11 @@
             <div class="form-actions">
                 <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn-modern btn-secondary btn-lg">
                     <x-iconsax-lin-close-circle class="icons" width="18px" height="18px"/>
-                    <span>Cancel</span>
+                    <span>{{ trans('admin/main.cancel') }}</span>
                 </a>
                 <button type="submit" class="btn-modern btn-primary btn-lg" id="submitBtn">
                     <x-iconsax-lin-tick-circle class="icons" width="18px" height="18px"/>
-                    <span>Create Test</span>
+                    <span>{{ trans('update.create_test') }}</span>
                 </button>
             </div>
         </form>
@@ -1171,6 +1171,14 @@
 
 
     <script>
+    const ieltsTranslations = {
+        showing_all: "{{ trans('update.showing_all_groups') }}",
+        showing_n_of_m: "{{ trans('update.showing_n_of_m', ['n' => ':n', 'm' => ':m']) }}",
+        groups_selected: "{{ trans('update.selected_groups_count', ['count' => ':count']) }}",
+        selected: "{{ trans('update.selected') }}",
+        no_groups_selected_yet: "{{ trans('update.no_groups_selected_yet') }}"
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         // Test Type Requirements Toggle
         const testTypeSelect = document.getElementById('testType');
@@ -1258,9 +1266,11 @@
             // Update count display
             if (filterResultCount) {
                 if (!searchTerm && !bandFilter && !taskPartFilter) {
-                    filterResultCount.textContent = 'Showing all';
+                    filterResultCount.textContent = ieltsTranslations.showing_all;
                 } else {
-                    filterResultCount.textContent = `Showing ${visibleCount} of ${totalCount}`;
+                    filterResultCount.textContent = ieltsTranslations.showing_n_of_m
+                        .replace(':n', visibleCount)
+                        .replace(':m', totalCount);
                 }
             }
         }
@@ -1888,7 +1898,7 @@
                 });
                 const countEl = document.querySelector(`[data-count="${skill}"]`);
                 if (countEl) {
-                    countEl.textContent = `${skillChecked.length} selected`;
+                    countEl.textContent = `${skillChecked.length} ${ieltsTranslations.selected}`;
                 }
                 skillsWithSelection[skill] = skillChecked.length > 0;
             });
@@ -1897,10 +1907,10 @@
             const summaryCount = document.getElementById('summaryCount');
             const summaryContent = document.getElementById('summaryContent');
             
-            summaryCount.textContent = `${totalCount} question group${totalCount !== 1 ? 's' : ''} selected`;
+            summaryCount.textContent = ieltsTranslations.groups_selected.replace(':count', totalCount);
             
             if (totalCount === 0) {
-                summaryContent.innerHTML = '<p class="text-muted">No question groups selected yet. Select groups from the tabs above.</p>';
+                summaryContent.innerHTML = `<p class="text-muted">${ieltsTranslations.no_groups_selected_yet}</p>`;
             } else {
                 const groupNames = allChecked.map(cb => {
                     const card = cb.closest('.question-group-card');

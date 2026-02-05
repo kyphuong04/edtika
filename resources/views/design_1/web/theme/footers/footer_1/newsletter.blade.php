@@ -8,7 +8,7 @@
                     <div class="">
                         <div class="d-flex align-items-center gap-4">
                             @if(!empty($newsletterData['title']))
-                                <h4 class="font-20">{{ $newsletterData['title'] }}</h4>
+                                <h4 class="font-20">{{ trans('footer.join_newsletter') }}</h4>
                             @endif
 
                             @if(!empty($newsletterData['emoji']))
@@ -19,7 +19,7 @@
                         </div>
 
                         @if(!empty($newsletterData['subtitle']))
-                            <div class="mt-8 font-14 text-gray-500">{{ $newsletterData['subtitle'] }}</div>
+                            <div class="mt-8 font-14 text-gray-500">{{ trans('footer.newsletter_desc') }}</div>
                         @endif
 
                     </div>

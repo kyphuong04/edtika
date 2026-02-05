@@ -123,25 +123,25 @@
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <x-iconsax-bul-clipboard-text class="icons" width="24px" height="24px"/>
-                        <span>IELTS Tests</span>
+                        <span>{{ trans('update.ielts_tests') }}</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests', false))) ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests">All Tests</a>
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests">{{ trans('update.all_tests') }}</a>
                         </li>
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/create', false))) ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/create">Create New</a>
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/create">{{ trans('admin/main.new') }}</a>
                         </li>
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/attempts*', false))) ? 'active' : '' }}">
                             <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/attempts">
-                                <span>Student Grading</span>
+                                <span>{{ trans('update.student_grading') }}</span>
                             </a>
                         </li>
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests/pending-approval', false))) ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/pending-approval">Pending Approval</a>
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/pending-approval">{{ trans('update.pending_approval') }}</a>
                         </li>
                         <li class="{{ (request()->is(getAdminPanelUrl('/practice-categories', false))) ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/practice-categories">Practice Categories</a>
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/practice-categories">{{ trans('update.practice_categories') }}</a>
                         </li>
                     </ul>
                 </li>
