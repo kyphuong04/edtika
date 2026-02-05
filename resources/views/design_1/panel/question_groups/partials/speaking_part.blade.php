@@ -2,9 +2,16 @@
 @php
     $partType = 'Part 1'; 
     if ($group->question_type) {
-        if ($group->question_type === 'part1') { $partType = 'Part 1'; }
-        elseif ($group->question_type === 'part2') { $partType = 'Part 2'; }
-        elseif ($group->question_type === 'part3') { $partType = 'Part 3'; }
+        // Support both old format (part1, part2, part3) and new format (part1_questions, part2_cue_card, part3_discussion)
+        if ($group->question_type === 'part1' || $group->question_type === 'part1_questions') { 
+            $partType = 'Part 1'; 
+        }
+        elseif ($group->question_type === 'part2' || $group->question_type === 'part2_cue_card') { 
+            $partType = 'Part 2'; 
+        }
+        elseif ($group->question_type === 'part3' || $group->question_type === 'part3_discussion') { 
+            $partType = 'Part 3'; 
+        }
     } elseif (strpos($group->title ?? '', 'Part 2') !== false || strpos($group->title ?? '', 'Part2') !== false) {
         $partType = 'Part 2';
     } elseif (strpos($group->title ?? '', 'Part 3') !== false || strpos($group->title ?? '', 'Part3') !== false) {

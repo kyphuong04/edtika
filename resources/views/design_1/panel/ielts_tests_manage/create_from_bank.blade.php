@@ -937,9 +937,10 @@
                                 @foreach($speakingMock as $group)
                                     @php
                                         $partType = 'part1';
-                                        if ($group->question_type === 'part2') {
+                                        // Support both old format (part1, part2, part3) and new format (part1_questions, part2_cue_card, part3_discussion)
+                                        if ($group->question_type === 'part2' || $group->question_type === 'part2_cue_card') {
                                             $partType = 'part2';
-                                        } elseif ($group->question_type === 'part3') {
+                                        } elseif ($group->question_type === 'part3' || $group->question_type === 'part3_discussion') {
                                             $partType = 'part3';
                                         } elseif (strpos($group->title, 'Part 2') !== false) {
                                             $partType = 'part2';
@@ -979,9 +980,10 @@
                                 @foreach($speakingPractice as $group)
                                     @php
                                         $partType = 'part1';
-                                        if ($group->question_type === 'part2') {
+                                        // Support both old format (part1, part2, part3) and new format (part1_questions, part2_cue_card, part3_discussion)
+                                        if ($group->question_type === 'part2' || $group->question_type === 'part2_cue_card') {
                                             $partType = 'part2';
-                                        } elseif ($group->question_type === 'part3') {
+                                        } elseif ($group->question_type === 'part3' || $group->question_type === 'part3_discussion') {
                                             $partType = 'part3';
                                         } elseif (strpos($group->title, 'Part 2') !== false) {
                                             $partType = 'part2';

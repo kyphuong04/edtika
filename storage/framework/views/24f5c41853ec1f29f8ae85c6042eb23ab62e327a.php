@@ -206,20 +206,101 @@
                 <div class="invalid-feedback"></div>
             </div>
 
-            <div class="form-group">
-                <label class="form-group-label"><?php echo e(trans('public.summary')); ?></label>
-                <textarea name="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][summary]" class="js-ajax-summary form-control" rows="6"><?php echo e(!empty($textLesson) ? $textLesson->summary : ''); ?></textarea>
-                <div class="invalid-feedback"></div>
-            </div>
+            <div class="interactive-content-section mt-24">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="text-desc-tab-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" data-toggle="tab" href="#text-desc-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" role="tab" aria-controls="text-desc-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" aria-selected="true">Description</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="text-quiz-tab-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" data-toggle="tab" href="#text-quiz-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" role="tab" aria-controls="text-quiz-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" aria-selected="false">Interactive Quiz</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="text-notes-tab-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" data-toggle="tab" href="#text-notes-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" role="tab" aria-controls="text-notes-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" aria-selected="false">Lecture Notes</a>
+                    </li>
+                </ul>
 
+                <div class="tab-content p-16 border border-gray-200 rounded-16">
+                    <div class="tab-pane fade show active" id="text-desc-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" role="tabpanel" aria-labelledby="text-desc-tab-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>">
+                        <div class="form-group">
+                            <label class="form-group-label"><?php echo e(trans('public.summary')); ?></label>
+                            <textarea name="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][summary]" class="js-ajax-summary form-control" rows="6"><?php echo e(!empty($textLesson) ? $textLesson->summary : ''); ?></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
 
-            <div class="form-group">
-                <label class="form-group-label"><?php echo e(trans('public.content')); ?></label>
-                <div class="content-summernote js-ajax-file_path">
-                    <textarea class="js-content-summernote-input form-control <?php echo e(!empty($textLesson) ? 'js-content-summernote' : ''); ?>"><?php echo e(!empty($textLesson) ? $textLesson->content : ''); ?></textarea>
-                    <textarea name="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][content]" class="js-hidden-content-summernote <?php echo e(!empty($textLesson) ? 'js-hidden-content-'.$textLesson->id : ''); ?> d-none"><?php echo e(!empty($textLesson) ? $textLesson->content : ''); ?></textarea>
+                        <div class="form-group">
+                            <label class="form-group-label"><?php echo e(trans('public.content')); ?></label>
+                            <div class="content-summernote js-ajax-file_path">
+                                <textarea class="js-content-summernote-input form-control <?php echo e(!empty($textLesson) ? 'js-content-summernote' : ''); ?>"><?php echo e(!empty($textLesson) ? $textLesson->content : ''); ?></textarea>
+                                <textarea name="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][content]" class="js-hidden-content-summernote <?php echo e(!empty($textLesson) ? 'js-hidden-content-'.$textLesson->id : ''); ?> d-none"><?php echo e(!empty($textLesson) ? $textLesson->content : ''); ?></textarea>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="text-quiz-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" role="tabpanel" aria-labelledby="text-quiz-tab-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>">
+                        <div class="interactive-quiz-builder" data-name-prefix="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][interactive_quiz]">
+                            <div class="form-group">
+                                <label class="form-group-label">Quiz title</label>
+                                <input type="text" name="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][interactive_quiz][title]" class="form-control" placeholder="Enter quiz title">
+                            </div>
+
+                            <div class="quiz-questions-wrapper">
+                                <div class="d-flex align-items-center justify-content-between mb-8">
+                                    <label class="form-group-label mb-0">Questions</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary js-add-quiz-question">
+                                        <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
+<?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
+<?php $component->withName('iconsax-lin-add'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
+<?php $attributes = $attributes->except(collect($constructor->getParameters())->map->getName()->all()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'icons','width' => '14px','height' => '14px']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e)): ?>
+<?php $component = $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e; ?>
+<?php unset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e); ?>
+<?php endif; ?>
+                                        Add question
+                                    </button>
+                                </div>
+
+                                <div class="quiz-questions-list"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="text-notes-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>" role="tabpanel" aria-labelledby="text-notes-tab-<?php echo e(!empty($textLesson) ? $textLesson->id : 'record'); ?>">
+                        <div class="lecture-notes-builder" data-name-prefix="ajax[<?php echo e(!empty($textLesson) ? $textLesson->id : 'new'); ?>][lecture_notes]">
+                            <div class="d-flex align-items-center justify-content-between mb-8">
+                                <label class="form-group-label mb-0">Lecture Notes</label>
+                                <button type="button" class="btn btn-sm btn-outline-primary js-add-lecture-note">
+                                    <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
+<?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
+<?php $component->withName('iconsax-lin-add'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
+<?php $attributes = $attributes->except(collect($constructor->getParameters())->map->getName()->all()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['class' => 'icons','width' => '14px','height' => '14px']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e)): ?>
+<?php $component = $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e; ?>
+<?php unset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e); ?>
+<?php endif; ?>
+                                    Add note
+                                </button>
+                            </div>
+
+                            <div class="lecture-notes-list"></div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="invalid-feedback"></div>
             </div>
 
             <div class="form-group d-flex align-items-center">

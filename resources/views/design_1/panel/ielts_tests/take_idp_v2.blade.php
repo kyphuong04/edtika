@@ -537,6 +537,87 @@
             background: #ffffff;
         }
         
+        /* Table Completion - New IDP Style */
+        .table-completion-container {
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .idp-table-completion-styled {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: #ffffff;
+        }
+
+        .idp-table-completion-styled thead {
+            background: #e8e8e8;
+        }
+
+        .idp-table-completion-styled th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #c0c0c0;
+            color: #000000;
+        }
+
+        .idp-table-completion-styled td {
+            padding: 12px 16px;
+            border: 1px solid #c0c0c0;
+            vertical-align: top;
+            line-height: 1.6;
+            white-space: nowrap;
+        }
+
+        .idp-table-completion-styled td .cell-text {
+            display: inline;
+            margin-bottom: 8px;
+            white-space: nowrap;
+        }
+
+        .tc-input-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .tc-question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            background: #000000;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 50%;
+            padding: 4px;
+        }
+
+        .idp-table-input {
+            border: 2px dashed #000000;
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 14px;
+            min-width: 120px;
+            background: #ffffff;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .idp-table-input:focus {
+            outline: none;
+            border-color: #333333;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+        
         /* Map/Diagram Labeling */
         .idp-map-container {
             position: relative;
