@@ -356,23 +356,23 @@
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                 </svg>
             </div>
-            <h2 class="mic-check-title">Microphone Check</h2>
-            <p class="mic-check-subtitle">Please test your microphone before starting the speaking test</p>
+            <h2 class="mic-check-title">{{ trans('update.ielts_mic_check') }}</h2>
+            <p class="mic-check-subtitle">{{ trans('update.ielts_mic_check_subtitle') }}</p>
         </div>
         
         <!-- Steps Indicator -->
         <div class="mic-check-steps">
             <div class="mic-step active" id="step1">
                 <span class="mic-step-num">1</span>
-                <span>Record</span>
+                <span>{{ trans('update.ielts_record') }}</span>
             </div>
             <div class="mic-step" id="step2">
                 <span class="mic-step-num">2</span>
-                <span>Listen</span>
+                <span>{{ trans('update.ielts_listen') }}</span>
             </div>
             <div class="mic-step" id="step3">
                 <span class="mic-step-num">3</span>
-                <span>Confirm</span>
+                <span>{{ trans('update.ielts_confirm') }}</span>
             </div>
         </div>
         
@@ -395,16 +395,16 @@
             </div>
             
             <div class="mic-timer" id="micTimer">00:10</div>
-            <div class="mic-timer-label">Recording Time</div>
+            <div class="mic-timer-label">{{ trans('update.ielts_recording_time') }}</div>
             
             <div class="mic-status info" id="micStatus">
                 <span>ℹ️</span>
-                <span id="micStatusText">Click the button below to start recording</span>
+                <span id="micStatusText">{{ trans('update.ielts_mic_check_instruction') }}</span>
             </div>
             
             <!-- Playback Section -->
             <div class="mic-playback hidden" id="playbackSection">
-                <div class="mic-playback-label">Listen to your recording:</div>
+                <div class="mic-playback-label">{{ trans('update.ielts_listen_recording') }}</div>
                 <audio id="checkPlayback" controls></audio>
             </div>
         </div>
@@ -412,21 +412,21 @@
         <!-- Buttons -->
         <div class="mic-check-buttons" id="micButtons">
             <button type="button" class="mic-btn mic-btn-record" id="btnStartRecord" onclick="MicCheck.startRecording()">
-                <span>🎤</span> Start Recording
+                <span>🎤</span> {{ trans('update.ielts_speaking_start_recording') }}
             </button>
             
             <div class="mic-post-record-btns hidden" id="postRecordBtns">
                 <button type="button" class="mic-btn mic-btn-retry" id="btnRetry" onclick="MicCheck.retry()">
-                    <span>🔄</span> Try Again
+                    <span>🔄</span> {{ trans('update.ielts_retry') }}
                 </button>
                 
                 <button type="button" class="mic-btn mic-btn-continue" id="btnContinue" onclick="MicCheck.proceed()">
-                    <span>✓</span> Sounds Good
+                    <span>✓</span> {{ trans('update.ielts_sounds_good') }}
                 </button>
             </div>
             
             <button type="button" class="mic-btn mic-btn-skip" id="btnSkip" onclick="MicCheck.skip()">
-                Skip Check
+                {{ trans('update.ielts_skip_check') }}
             </button>
         </div>
     </div>
@@ -472,7 +472,7 @@ const MicCheck = {
             document.getElementById('btnStartRecord').classList.add('hidden');
             document.getElementById('btnSkip').classList.add('hidden');
             
-            this.updateStatus('recording', '🔴 Recording... Speak something to test your microphone');
+            this.updateStatus('recording', '🔴 {{ trans('update.ielts_recording') }}... {{ trans('update.ielts_mic_test_speak_instruction') }}');
             
             // Start timer
             this.timerInterval = setInterval(() => {
@@ -526,7 +526,7 @@ const MicCheck = {
         
         // Update UI
         document.getElementById('micVisual').classList.add('success');
-        this.updateStatus('success', '✅ Recording complete! Listen to check the quality.');
+        this.updateStatus('success', '✅ {{ trans('update.ielts_recording_complete') }}! {{ trans('update.ielts_listen_quality_check') }}');
         
         // Show buttons
         document.getElementById('postRecordBtns').classList.remove('hidden');
@@ -555,7 +555,7 @@ const MicCheck = {
         document.getElementById('step1').classList.add('active');
         document.getElementById('step2').classList.remove('active');
         
-        this.updateStatus('info', 'ℹ️ Click the button below to start recording');
+        this.updateStatus('info', 'ℹ️ {{ trans('update.ielts_mic_check_instruction') }}');
     },
     
     proceed: function() {

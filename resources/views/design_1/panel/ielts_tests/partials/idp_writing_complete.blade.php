@@ -33,16 +33,16 @@
         <div style="padding: 24px 32px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="background: #004f9f; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">WRITING</span>
-                    <span style="color: #4b5563; font-weight: 600; font-size: 14px;">Academic {{ $taskType }}</span>
+                    <span style="background: #004f9f; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">{{ trans('update.ielts_writing') }}</span>
+                    <span style="color: #4b5563; font-weight: 600; font-size: 14px;">{{ trans('update.academic_writing_task', ['type' => $taskType]) }}</span>
                 </div>
                 <div style="color: #6b7280; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-                    Recommended: {{ $recommendedTime }} mins
+                    {{ trans('update.recommended_time_mins', ['time' => $recommendedTime]) }}
                 </div>
             </div>
 
             <div class="task-content-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; color: #1f2937; line-height: 1.6;">
-                <p style="font-weight: 600; margin-bottom: 16px; color: #111827;">You should spend about {{ $recommendedTime }} minutes on this task.</p>
+                <p style="font-weight: 600; margin-bottom: 16px; color: #111827;">{{ trans('update.ielts_writing_task_time_instruction', ['time' => $recommendedTime]) }}</p>
                 <div style="font-size: 15px; margin-bottom: 20px; white-space: pre-line;">{!! $taskText !!}</div>
 
                 @if(!empty($imageUrl))
@@ -52,12 +52,12 @@
                 @endif
 
                 <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px; font-size: 14px; color: #4b5563;">
-                    Write at least <strong>{{ $minWords }} words</strong>.
+                    {!! trans('update.ielts_writing_task_word_instruction', ['min_words' => '<strong>' . $minWords . ' ' . trans('update.words_count', ['count' => '']) . '</strong>']) !!}
                 </div>
             </div>
 
             <div style="margin-top: 24px; padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                <h4 style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px;">TIPS:</h4>
+                <h4 style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 8px;">{{ trans('update.ielts_writing_tips') }}:</h4>
                 <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #1e40af; line-height: 1.5;">
                     @if($partNum == 1)
                         <li>Describe the main trends/features.</li>
@@ -85,7 +85,7 @@
                 <button type="button" onclick="WritingTest.decreaseFontSize()" style="padding: 4px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer;">A-</button>
                 <button type="button" onclick="WritingTest.increaseFontSize()" style="padding: 4px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer;">A+</button>
                 <span style="height: 20px; width: 1px; background: #e5e7eb; margin: 0 12px;"></span>
-                <span style="font-size: 13px; font-weight: 600; color: #374151;">Your Response</span>
+                <span style="font-size: 13px; font-weight: 600; color: #374151;">{{ trans('update.ielts_writing_your_response') }}</span>
                 <span id="autoSaveStatus" style="font-size: 12px; color: #9ca3af; margin-left: 15px;">● Saving...</span>
             </div>
         </div>
@@ -96,7 +96,7 @@
                 id="writingAnswer" 
                 data-question-id="{{ $task->id ?? 0 }}"
                 style="flex: 1; border: none; padding: 32px; font-size: 16px; font-family: 'Georgia', serif; line-height: 1.8; outline: none; resize: none; width: 100%;"
-                placeholder="Type your essay here..."
+                placeholder="{{ trans('update.ielts_write_essay') }}"
                 oninput="WritingTest.onInput()"
             >{{ $savedAnswer }}</textarea>
         </div>
@@ -106,13 +106,13 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 20px;">
                     <div style="font-size: 14px; color: #111827;">
-                        Word Count: <strong id="currentWordCount">0</strong>
+                        {{ trans('update.ielts_writing_word_count') }}: <strong id="currentWordCount">0</strong>
                     </div>
-                    <div id="wordCountStatus" style="font-size: 12px; font-weight: 500;">No input</div>
+                    <div id="wordCountStatus" style="font-size: 12px; font-weight: 500;">...</div>
                 </div>
                 <div style="display: flex; gap: 20px; font-size: 12px; color: #6b7280;">
-                    <span>Chars: <span id="charCount">0</span></span>
-                    <span>Paras: <span id="paraCount">0</span></span>
+                    <span>{{ trans('update.characters') }}: <span id="charCount">0</span></span>
+                    <span>{{ trans('update.paragraphs') }}: <span id="paraCount">0</span></span>
                 </div>
             </div>
             <div style="height: 4px; width: 100%; background: #e5e7eb; border-radius: 2px; margin-top: 10px;">
@@ -157,10 +157,10 @@ const WritingTest = {
         const statusEl = document.getElementById('wordCountStatus');
         if (words >= this.minWords) {
             statusEl.style.color = '#10b981';
-            statusEl.innerText = '✓ Word limit met';
+            statusEl.innerText = '{{ trans('update.ielts_writing_limit_met') }}';
         } else {
             statusEl.style.color = '#f59e0b';
-            statusEl.innerText = (this.minWords - words) + ' words left';
+            statusEl.innerText = (this.minWords - words) + ' {{ trans('update.words_count', ['count' => '']) }} {{ trans('update.remaining') }}';
         }
     },
     
