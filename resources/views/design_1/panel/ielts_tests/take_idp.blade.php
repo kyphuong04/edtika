@@ -657,11 +657,11 @@
     <header class="idp-header">
         <div class="idp-header-left">
             <span class="idp-logo">IELTS</span>
-            <span class="idp-test-taker">Test taker ID</span>
+            <span class="idp-test-taker">{{ trans('update.ielts_test_taker_id') }}</span>
             @if($skill === 'listening')
-                <span class="idp-audio-playing">Audio is playing</span>
+                <span class="idp-audio-playing">{{ trans('update.ielts_audio_is_playing') }}</span>
             @elseif($skill === 'speaking')
-                <span class="idp-audio-playing" style="color: #E31837;">🎤 Speaking Mode</span>
+                <span class="idp-audio-playing" style="color: #E31837;">🎤 {{ trans('update.ielts_speaking_mode') }}</span>
             @endif
         </div>
         <div class="idp-header-right">
@@ -673,25 +673,25 @@
 
     {{-- PART BAR --}}
     <div class="idp-part-bar">
-        <span class="idp-part-title">Part {{ $partNum }}</span>
+        <span class="idp-part-title">{{ trans('update.ielts_part', ['part' => $partNum]) }}</span>
         <span class="idp-part-instruction">
             @if($skill === 'reading')
-                Read the text and answer questions <a href="#">{{ $qStart }}-{{ $qEnd }}</a>.
+                {!! trans('update.ielts_read_text_and_answer', ['start' => '<a href="#">' . $qStart . '</a>', 'end' => '<a href="#">' . $qEnd . '</a>']) !!}
             @elseif($skill === 'listening')
-                Listen and answer questions {{ $qStart }}-{{ $qEnd }}.
+                {{ trans('update.ielts_listen_and_answer', ['start' => $qStart, 'end' => $qEnd]) }}
             @elseif($skill === 'writing')
                 @if($partNum == 1)
-                    You should spend about 20 minutes on this task. Write at least 150 words.
+                    {{ trans('update.writing_task_instruction_p1') }}
                 @else
-                    You should spend about 40 minutes on this task. Write at least 250 words.
+                    {{ trans('update.writing_task_instruction_p2') }}
                 @endif
             @elseif($skill === 'speaking')
                 @if($partNum == 1)
-                    Answer the examiner's questions about yourself and familiar topics.
+                    {{ trans('update.ielts_speaking_part1_instruction') }}
                 @elseif($partNum == 2)
-                    You have 1 minute to prepare, then speak for 1-2 minutes on the topic.
+                    {{ trans('update.ielts_speaking_part2_instruction') }}
                 @else
-                    Discuss more abstract ideas and issues related to Part 2.
+                    {{ trans('update.ielts_speaking_part3_instruction') }}
                 @endif
             @endif
         </span>
@@ -771,7 +771,7 @@
         <div class="idp-parts-nav">
             @foreach($partsData as $pNum => $pInfo)
                 <div class="idp-part-group">
-                    <span class="idp-part-label {{ $pNum == $partNum ? 'active' : '' }}">Part {{ $pNum }}</span>
+                    <span class="idp-part-label {{ $pNum == $partNum ? 'active' : '' }}">{{ trans('update.ielts_part', ['part' => $pNum]) }}</span>
                     <div class="idp-q-nums">
                         @foreach($pInfo['questions'] as $qn)
                             <span class="idp-q-num-footer">{{ $qn }}</span>
@@ -791,8 +791,8 @@
     @if($skill === 'listening')
         <div class="idp-audio-overlay" id="audioOverlay">
             <div class="idp-audio-icon">🎧</div>
-            <p class="idp-audio-msg">You will be listening to an audio clip during this test. You will not be permitted to pause or rewind the audio while answering the questions.<br><br>To continue, click Play.</p>
-            <button class="idp-play-btn" onclick="playAudio()">▶ Play</button>
+            <p class="idp-audio-msg">{!! trans('update.ielts_audio_overlay_message') !!}</p>
+            <button class="idp-play-btn" onclick="playAudio()">▶ {{ trans('update.ielts_play') }}</button>
         </div>
         <audio id="audioPlayer" src="{{ $currentSection->audio_url ?? '' }}"></audio>
     @endif
@@ -800,11 +800,11 @@
     {{-- SUBMIT MODAL --}}
     <div class="idp-modal hidden" id="submitModal">
         <div class="idp-modal-box">
-            <div class="idp-modal-title">Submit Section?</div>
-            <p class="idp-modal-text">Are you sure you want to submit? You cannot change your answers after submission.</p>
+            <div class="idp-modal-title">{{ trans('admin/main.submit') }}</div>
+            <p class="idp-modal-text">{{ trans('update.ielts_submit_confirm') }}</p>
             <div class="idp-modal-btns">
-                <button class="idp-modal-btn cancel" onclick="hideModal()">Cancel</button>
-                <button class="idp-modal-btn confirm" onclick="submitSection()">Submit</button>
+                <button class="idp-modal-btn cancel" onclick="hideModal()">{{ trans('admin/main.cancel') }}</button>
+                <button class="idp-modal-btn confirm" onclick="submitSection()">{{ trans('admin/main.submit') }}</button>
             </div>
         </div>
     </div>
