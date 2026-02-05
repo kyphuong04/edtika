@@ -80,6 +80,118 @@
 
     </script>
 
+    <script>
+        (function ($) {
+            "use strict";
+
+            function generateId(prefix) {
+                return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+            }
+
+            function getNamePrefix($el) {
+                return $el.data('name-prefix');
+            }
+
+            function renderAnswerRow(namePrefix, questionIndex, answerIndex) {
+                const correctId = generateId('quiz_correct');
+                return `
+                    <div class="quiz-answer-row d-flex align-items-center" data-answer-index="${answerIndex}">
+                        <input type="text" class="form-control form-control-sm" name="${namePrefix}[questions][${questionIndex}][answers][${answerIndex}][title]" placeholder="Answer">
+                        <div class="custom-control custom-radio ml-8">
+                            <input type="radio" class="custom-control-input" id="${correctId}" name="${namePrefix}[questions][${questionIndex}][correct_answer]" value="${answerIndex}">
+                            <label class="custom-control__label cursor-pointer" for="${correctId}">Correct</label>
+                        </div>
+                        <button type="button" class="btn btn-xs btn-outline-danger ml-8 js-remove-quiz-answer">Remove</button>
+                    </div>
+                `;
+            }
+
+            function renderQuestionItem(namePrefix, questionIndex) {
+                return `
+                    <div class="quiz-question-item border rounded-8 p-12 mb-12" data-question-index="${questionIndex}">
+                        <div class="d-flex align-items-center justify-content-between mb-8">
+                            <label class="form-group-label mb-0">Question</label>
+                            <button type="button" class="btn btn-xs btn-outline-danger js-remove-quiz-question">Remove</button>
+                        </div>
+                        <input type="text" class="form-control" name="${namePrefix}[questions][${questionIndex}][title]" placeholder="Question text">
+
+                        <div class="quiz-answers-wrapper mt-12">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label class="form-group-label mb-0">Answers</label>
+                                <button type="button" class="btn btn-xs btn-outline-primary js-add-quiz-answer">Add answer</button>
+                            </div>
+                            <div class="quiz-answers-list mt-8"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            $('body').on('click', '.js-add-quiz-question', function (e) {
+                e.preventDefault();
+
+                const $builder = $(this).closest('.interactive-quiz-builder');
+                const namePrefix = getNamePrefix($builder);
+                const $list = $builder.find('.quiz-questions-list');
+                const index = $list.find('.quiz-question-item').length;
+
+                $list.append(renderQuestionItem(namePrefix, index));
+            });
+
+            $('body').on('click', '.js-remove-quiz-question', function (e) {
+                e.preventDefault();
+                $(this).closest('.quiz-question-item').remove();
+            });
+
+            $('body').on('click', '.js-add-quiz-answer', function (e) {
+                e.preventDefault();
+
+                const $questionItem = $(this).closest('.quiz-question-item');
+                const $builder = $(this).closest('.interactive-quiz-builder');
+                const namePrefix = getNamePrefix($builder);
+                const questionIndex = $questionItem.data('question-index');
+                const $answersList = $questionItem.find('.quiz-answers-list');
+                const answerIndex = $answersList.find('.quiz-answer-row').length;
+
+                $answersList.append(renderAnswerRow(namePrefix, questionIndex, answerIndex));
+            });
+
+            $('body').on('click', '.js-remove-quiz-answer', function (e) {
+                e.preventDefault();
+                $(this).closest('.quiz-answer-row').remove();
+            });
+
+            function renderLectureNoteItem(namePrefix, index) {
+                return `
+                    <div class="lecture-note-item border rounded-8 p-12 mb-12" data-note-index="${index}">
+                        <div class="d-flex align-items-center justify-content-between mb-8">
+                            <label class="form-group-label mb-0">Note</label>
+                            <button type="button" class="btn btn-xs btn-outline-danger js-remove-lecture-note">Remove</button>
+                        </div>
+                        <input type="text" class="form-control mb-8" name="${namePrefix}[${index}][title]" placeholder="Note title">
+                        <textarea class="form-control" name="${namePrefix}[${index}][content]" rows="4" placeholder="Note content"></textarea>
+                    </div>
+                `;
+            }
+
+            $('body').on('click', '.js-add-lecture-note', function (e) {
+                e.preventDefault();
+
+                const $builder = $(this).closest('.lecture-notes-builder');
+                const namePrefix = getNamePrefix($builder);
+                const $list = $builder.find('.lecture-notes-list');
+                const index = $list.find('.lecture-note-item').length;
+
+                $list.append(renderLectureNoteItem(namePrefix, index));
+            });
+
+            $('body').on('click', '.js-remove-lecture-note', function (e) {
+                e.preventDefault();
+                $(this).closest('.lecture-note-item').remove();
+            });
+
+        })(jQuery);
+    </script>
+
     <script src="/assets/default/vendors/moment.min.js"></script>
     <script src="/assets/default/vendors/daterangepicker/daterangepicker.min.js"></script>
     <script src="/assets/default/vendors/sortable/jquery-ui.min.js"></script>
