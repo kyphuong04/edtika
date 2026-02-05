@@ -19,7 +19,17 @@
             <ul class="idp-note-list">
                 @foreach($section['items'] ?? [] as $itemIndex => $item)
                     <li>
-                        @if(is_array($item) && isset($item['blank']))
+                        @php
+                            $rowType = is_array($item) && isset($item['row_type']) ? $item['row_type'] : 'question';
+                        @endphp
+                        
+                        @if($rowType === 'header')
+                            {{-- Header row - just display text, no input --}}
+                            <div style="font-weight: 600; color: #333; margin-top: 8px;">
+                                {{ is_array($item) ? ($item['text'] ?? '') : $item }}
+                            </div>
+                        @elseif(is_array($item) && isset($item['blank']))
+                            {{-- Question row - has blank and input --}}
                             @php
                                 $itemId = $item['id'] ?? $question->id . '_' . $sectionIndex . '_' . $itemIndex;
                                 $qNum = $item['number'] ?? '';

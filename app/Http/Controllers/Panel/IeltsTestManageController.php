@@ -563,6 +563,8 @@ class IeltsTestManageController extends Controller
                         'instruction' => $question->instruction ?? null,
                         'correct_answer' => is_array($question->correct_answer) ? json_encode($question->correct_answer) : $question->correct_answer,
                         'answer_options' => $answerOptions,
+                        'table_structure' => $question->table_structure ?? null,
+                        'question_data' => $question->question_data ?? null,
                         'accept_synonyms' => $question->accept_synonyms ?? 0,
                         'case_sensitive' => $question->case_sensitive ?? 0,
                         'max_words' => $question->max_words ?? $group->max_words ?? null,
