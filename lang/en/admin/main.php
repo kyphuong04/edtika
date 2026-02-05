@@ -1633,4 +1633,6 @@ return [
     'admin_filters_create' => 'Create Filter',
     'admin_filters_edit' => 'Edit Filter',
     'admin_filters_delete' => 'Delete Filter',
+    'completed' => 'Completed',
+    'complete' => 'Complete',
 ];
