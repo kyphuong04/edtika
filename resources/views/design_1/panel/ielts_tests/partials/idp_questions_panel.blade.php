@@ -38,8 +38,8 @@
 
     {{-- Group Headers & Instructions --}}
     <div class="idp-questions-header">
-        Questions {{ $questions->first()->question_number ?? '' }}–{{ $questions->last()->question_number ?? '' }}
-        <a href="#" class="idp-help-link">📧 Help</a>
+        {{ trans('update.ielts_questions') }} {{ $questions->first()->question_number ?? '' }}–{{ $questions->last()->question_number ?? '' }}
+        <a href="#" class="idp-help-link">{{ trans('admin/main.help') }}</a>
     </div>
     <div class="idp-questions-instruction">
         {!! !empty($instructions) ? $instructions : getQuestionInstruction($questionType) !!}
