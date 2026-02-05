@@ -271,19 +271,19 @@
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-start">
             <div>
-                <h1>Mock Tests</h1>
-                <p>Mô phỏng bài thi IELTS thực tế với đầy đủ 4 kỹ năng</p>
+                <h1>{{ trans('update.mock_tests') }}</h1>
+                <p>{{ trans('update.mock_tests_hint') }}</p>
             </div>
             <div class="daily-limit-badge">
                 @if(isset($remainingToday) && $remainingToday > 0)
                     <div class="limit-box success">
                         <i class="fas fa-check-circle"></i>
-                        <span>Còn <strong>{{ $remainingToday }}</strong>/{{ $dailyLimit ?? 2 }} lượt hôm nay</span>
+                        <span>{{ trans('update.remaining_attempts_today_count', ['remaining' => $remainingToday, 'total' => $dailyLimit ?? 2]) }}</span>
                     </div>
                 @else
                     <div class="limit-box warning">
                         <i class="fas fa-exclamation-circle"></i>
-                        <span>Hết lượt hôm nay</span>
+                        <span>{{ trans('update.no_attempts_left_today') }}</span>
                     </div>
                 @endif
             </div>
@@ -293,8 +293,8 @@
     @if($mockTests->isEmpty())
         <div class="empty-state">
             <img src="/assets/default/img/no-results/support.png" alt="">
-            <h3>Chưa có Mock Tests</h3>
-            <p>Mock tests sẽ được thêm sớm!</p>
+            <h3>{{ trans('update.no_mock_tests_available') }}</h3>
+            <p>{{ trans('update.no_mock_tests_hint') }}</p>
         </div>
     @else
         @foreach($mockTests as $test)
@@ -303,9 +303,9 @@
                 <h2 class="mock-card-title">{{ $test->title }}</h2>
                 <span class="mock-badge">
                     @if($test->is_free)
-                        Free
+                        {{ trans('update.free') }}
                     @else
-                        Mock Test
+                        {{ trans('update.mock_test') }}
                     @endif
                 </span>
             </div>
@@ -314,12 +314,12 @@
             <div class="attempts-info">
                 <span>
                     <i class="fas fa-history mr-2"></i>
-                    Đã làm {{ $test->user_attempts }} lần
+                    {{ trans('admin/main.completed') }} {{ $test->user_attempts }}x
                     @if($test->best_attempt && $test->best_attempt->overall_band)
-                        • Điểm cao nhất: Band {{ $test->best_attempt->overall_band }}
+                        • {{ trans('update.best_score') }}: {{ trans('update.band') }} {{ $test->best_attempt->overall_band }}
                     @endif
                 </span>
-                <a href="#" class="text-warning font-weight-bold">Xem kết quả</a>
+                <a href="{{ route('panel.ielts_tests.index') }}" class="text-warning font-weight-bold">{{ trans('update.view_results') }}</a>
             </div>
             @endif
 
@@ -329,10 +329,10 @@
                     <div class="skill-icon">
                         <i class="fas fa-headphones"></i>
                     </div>
-                    <div class="skill-name">Listening</div>
-                    <div class="skill-duration">{{ $test->listening_duration ?? 30 }} phút</div>
+                    <div class="skill-name">{{ trans('update.listening') }}</div>
+                    <div class="skill-duration">{{ $test->listening_duration ?? 30 }} {{ trans('update.min') }}</div>
                     <div class="skill-status pending">
-                        <i class="far fa-clock"></i> Chờ làm
+                        <i class="far fa-clock"></i> {{ trans('update.waiting_to_take') }}
                     </div>
                 </div>
 
@@ -341,10 +341,10 @@
                     <div class="skill-icon">
                         <i class="fas fa-book-open"></i>
                     </div>
-                    <div class="skill-name">Reading</div>
-                    <div class="skill-duration">{{ $test->reading_duration ?? 60 }} phút</div>
+                    <div class="skill-name">{{ trans('update.reading') }}</div>
+                    <div class="skill-duration">{{ $test->reading_duration ?? 60 }} {{ trans('update.min') }}</div>
                     <div class="skill-status pending">
-                        <i class="far fa-clock"></i> Chờ làm
+                        <i class="far fa-clock"></i> {{ trans('update.waiting_to_take') }}
                     </div>
                 </div>
 
@@ -353,10 +353,10 @@
                     <div class="skill-icon">
                         <i class="fas fa-pen-fancy"></i>
                     </div>
-                    <div class="skill-name">Writing</div>
-                    <div class="skill-duration">{{ $test->writing_duration ?? 60 }} phút</div>
+                    <div class="skill-name">{{ trans('update.writing') }}</div>
+                    <div class="skill-duration">{{ $test->writing_duration ?? 60 }} {{ trans('update.min') }}</div>
                     <div class="skill-status pending">
-                        <i class="far fa-clock"></i> Chờ làm
+                        <i class="far fa-clock"></i> {{ trans('update.waiting_to_take') }}
                     </div>
                 </div>
 
@@ -365,10 +365,10 @@
                     <div class="skill-icon">
                         <i class="fas fa-microphone"></i>
                     </div>
-                    <div class="skill-name">Speaking</div>
-                    <div class="skill-duration">{{ $test->speaking_duration ?? 15 }} phút</div>
+                    <div class="skill-name">{{ trans('update.speaking') }}</div>
+                    <div class="skill-duration">{{ $test->speaking_duration ?? 15 }} {{ trans('update.min') }}</div>
                     <div class="skill-status pending">
-                        <i class="far fa-clock"></i> Chờ làm
+                        <i class="far fa-clock"></i> {{ trans('update.waiting_to_take') }}
                     </div>
                 </div>
             </div>
@@ -378,34 +378,34 @@
                 <div class="full-test-info">
                     <span class="full-test-icon"><i class="fas fa-th-large"></i></span>
                     <div class="full-test-details">
-                        <h4>Full Test</h4>
-                        <p>{{ $test->total_duration }} phút • 4 kỹ năng liên tiếp</p>
+                        <h4>{{ trans('update.full_test') }}</h4>
+                        <p>{{ $test->total_duration }} {{ trans('update.min') }} • {{ trans('update.four_skills_consecutive') }}</p>
                     </div>
                 </div>
                 @if($test->can_take === true)
                 <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST">
                     @csrf
                     <button type="submit" class="btn-full-start">
-                        <i class="fas fa-play"></i> Bắt đầu làm bài
+                        <i class="fas fa-play"></i> {{ trans('update.start_test') }}
                     </button>
                 </form>
                 @elseif($test->can_take === 'daily_limit')
                 <div class="cannot-take-reason">
                     <i class="fas fa-clock"></i>
-                    <span>Hết lượt hôm nay, quay lại ngày mai!</span>
+                    <span>{{ trans('update.daily_limit_reached_hint') }}</span>
                 </div>
                 @elseif($test->can_take === 'max_attempts')
                 <div class="cannot-take-reason">
                     <i class="fas fa-lock"></i>
-                    <span>Đã đạt giới hạn 3 lần làm bài</span>
+                    <span>{{ trans('update.max_attempts_reached_hint') }}</span>
                 </div>
                 @elseif($test->can_take === 'not_enrolled')
                 <a href="#" class="btn-full-start" style="background: #fef3c7; color: #92400e;">
-                    <i class="fas fa-shopping-cart"></i> Đăng ký khóa học
+                    <i class="fas fa-shopping-cart"></i> {{ trans('update.enroll_in_course') }}
                 </a>
                 @else
                 <span class="btn-full-start" style="opacity: 0.6; cursor: not-allowed;">
-                    <i class="fas fa-lock"></i> Không khả dụng
+                    <i class="fas fa-lock"></i> {{ trans('site.not_available') }}
                 </span>
                 @endif
             </div>
