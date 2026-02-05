@@ -151,8 +151,4 @@
         </div>
     </div>
 <?php endif; ?>
-<<<<<<<< HEAD:storage/framework/views/69c2e18aba339d62376b629ed9144553f236ce0e.php
 <?php /**PATH D:\xampp\htdocs\edtika\resources\views/design_1/panel/webinars/my_courses/upcoming_live_sessions.blade.php ENDPATH**/ ?>
-========
-<?php /**PATH D:\xampp\htdocs\edtika\resources\views/design_1/panel/webinars/my_purchases/upcoming_live_sessions.blade.php ENDPATH**/ ?>
->>>>>>>> frontend:storage/framework/views/b8ff38e852ea5f718c8686c50bad0a3eb15981fe.php

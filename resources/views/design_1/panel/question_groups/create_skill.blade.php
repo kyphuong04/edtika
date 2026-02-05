@@ -143,8 +143,9 @@
                             <label class="form-group-label is-required">Task Type</label>
                             <select name="section_type" class="form-control" required>
                                 <option value="task1_graph">Task 1 - Graph/Chart (Academic)</option>
-                                <option value="task1_letter">Task 1 - Letter (General)</option>
+                                <option value="task1_map">Task 1 - Map/Diagram</option>
                                 <option value="task1_process">Task 1 - Process/Diagram</option>
+                                <option value="task1_letter">Task 1 - Letter (General)</option>
                                 <option value="task2_essay">Task 2 - Essay</option>
                             </select>
                         </div>
