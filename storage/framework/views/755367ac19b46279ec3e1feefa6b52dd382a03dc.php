@@ -7,12 +7,8 @@
                 $authUser->can('admin_reviews_lists') or
                 $authUser->can('admin_webinar_assignments') or
                 $authUser->can('admin_enrollment') or
-<<<<<<< HEAD
-                $authUser->can('admin_waitlists')
-=======
                 $authUser->can('admin_waitlists') or
                 $authUser->can('admin_dictionary')
->>>>>>> frontend
             ): ?>
     <li class="menu-header"><?php echo e(trans('site.education')); ?></li>
 <?php endif; ?>
@@ -526,8 +522,6 @@
                     </a>
                 </li>
             <?php endif; ?>
-<<<<<<< HEAD
-=======
 
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('admin_dictionary')): ?>
                 <li class="<?php echo e((request()->is(getAdminPanelUrl('/dictionary*', false))) ? 'active' : ''); ?>">
@@ -551,5 +545,4 @@
                     </a>
                 </li>
             <?php endif; ?>
->>>>>>> frontend
 <?php /**PATH D:\xampp\htdocs\edtika\resources\views/admin/includes/sidebar/education.blade.php ENDPATH**/ ?>

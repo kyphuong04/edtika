@@ -4312,5 +4312,25 @@ return [
 'check_course_learning_page' => 'Check course learning page',
 'reset_your_password_alert_hint' => 'Don’t be worried, Please enter your new password; we will change your password.',
 
+// Interactive Quiz & Content Tabs
+'add_interactive_quiz' => 'Add Interactive Quiz',
+'interactive_quiz' => 'Interactive Quizz',
+'lecture_notes' => 'Lectures Notes',
+'dictionary' => 'Dictionary',
+'start_quiz' => 'Start Quiz',
+'retake_quiz' => 'Retake Quiz',
+'previous' => 'Previous',
+'next' => 'Next',
+'submit_quiz' => 'Submit Quiz',
+'time_remaining' => 'Time Remaining',
+'question' => 'Question',
+'your_grade' => 'Your Grade',
+'interactive_quiz_start_hint' => 'Click the button below to start the interactive quiz. You can navigate between questions and submit when ready.',
+'interactive_quiz_instructor_view' => 'Students can take this quiz directly while learning the course.',
+'this_is_a_standard_quiz' => 'This is a standard quiz. Please complete it from the quiz section.',
+'no_description_available' => 'No description available',
+'no_lecture_notes_available' => 'No lecture notes available for this lesson yet.',
+'no_dictionary_items_available' => 'No dictionary items available for this lesson yet.',
+'example' => 'Example',
 
 ];
