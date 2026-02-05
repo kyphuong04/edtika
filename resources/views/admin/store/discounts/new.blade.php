@@ -38,7 +38,7 @@
                                     <label>{{ trans('update.product') }}</label>
 
                                     <select name="product_id" class="form-control search-product-select2 @error('product_id')  is-invalid @enderror"
-                                            data-placeholder="Search and Select Product">
+                                            data-placeholder="{{ trans('admin/main.search_and_select_product') }}">
 
                                         @if(!empty($discount) and !empty($discount->product))
                                             <option value="{{ $discount->product->id }}" selected>{{ $discount->product->title }}</option>

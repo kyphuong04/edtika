@@ -128,7 +128,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.user')}}</label>
                                     <select name="user_ids[]" multiple="multiple" class="form-control search-user-select2"
-                                            data-placeholder="Search users">
+                                            data-placeholder="{{ trans('admin/main.search_users') }}">
 
                                         @if(!empty($selectedUsers) and $selectedUsers->count() > 0)
                                             @foreach($selectedUsers as $user)
@@ -141,13 +141,13 @@
 
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label class="input-label">{{trans('admin/main.user')}}</label>
+                                    <label class="input-label">{{trans('admin/main.role')}}</label>
                                     <select name="role_id" class="form-control select2" data-allow-clear="true"
                                             data-placeholder="{{ trans('update.select_user_role') }}">
                                         <option value="">{{ trans('admin/main.all') }}</option>
 
                                         @foreach($roles as $role)
-                                            <option value="{{ $role->id }}" {{ (request()->get('role_id') == $role->id) ? 'selected' : '' }}>{{ $role->caption }}</option>
+                                            <option value="{{ $role->id }}" {{ (request()->get('role_id') == $role->id) ? 'selected' : '' }}>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -259,7 +259,7 @@
                                                 </div>
                                             </td>
 
-                                            <td class="text-left">{{ $user->role->caption }}</td>
+                                            <td class="text-left">{{ (Lang::has('admin/main.'.strtolower($user->role->name))) ? trans('admin/main.'.strtolower($user->role->name)) : $user->role->caption }}</td>
 
                                             <td>
                                                 {{ handlePrice($user->registration_bonus_amount ?? 0) }}

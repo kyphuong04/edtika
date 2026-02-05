@@ -27,7 +27,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.expiration_from') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="fsdate" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="Start Date">
+                                        <input type="date" id="fsdate" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.start_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -35,7 +35,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.expiration_to') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="lsdate" class="text-center form-control" name="to" value="{{ request()->get('from') }}" placeholder="End Date">
+                                        <input type="date" id="lsdate" class="text-center form-control" name="to" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.end_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -67,7 +67,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.user') }}</label>
                                     <select name="user_ids[]" multiple="multiple" class="form-control search-user-select2"
-                                            data-placeholder="Search users">
+                                            data-placeholder="{{ trans('admin/main.search_users') }}">
 
                                         @if(!empty($users) and $users->count() > 0)
                                             @foreach($users as $user)
@@ -84,8 +84,8 @@
                                     <label class="input-label">{{ trans('admin/main.status') }}</label>
                                     <select name="status" data-plugin-selectTwo class="form-control populate">
                                         <option value="">{{ trans('admin/main.all_status') }}</option>
-                                        <option value="active" @if(request()->get('status') == 'active') selected @endif>Active</option>
-                                        <option value="expired" @if(request()->get('status') == 'expired') selected @endif>Expired</option>
+                                        <option value="active" @if(request()->get('status') == 'active') selected @endif>{{ trans('admin/main.active') }}</option>
+                                        <option value="expired" @if(request()->get('status') == 'expired') selected @endif>{{ trans('panel.expired') }}</option>
                                     </select>
                                 </div>
                             </div>

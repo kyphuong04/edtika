@@ -98,44 +98,65 @@
 <script src="/assets/default/vendors/select2/select2.min.js"></script>
 
 <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
-<!-- Template JS File -->
-<script src="/assets/admin/js/scripts.js"></script>
+    <script>
+        window.adminPanelPrefix = '{{ getAdminPanelUrl() }}';
+        var inputTooShortLang = '{{ trans('public.input_too_short') }}';
+        var noResultsLang = '{{ trans('admin/main.no_result_found') }}';
+        var searchingLang = '{{ trans('admin/main.searching') }}';
+    </script>
+
+    <!-- Template JS File -->
+    <script src="/assets/admin/js/scripts.js"></script>
+    <script src="/assets/admin/js/admin.min.js"></script>
+
+    <script>
+        if (jQuery().select2) {
+            $.fn.select2.defaults.set('language', {
+                inputTooShort: function () {
+                    return inputTooShortLang;
+                },
+                noResults: function () {
+                    return noResultsLang;
+                },
+                searching: function () {
+                    return searchingLang;
+                }
+            });
+        }
+    </script>
+
+    @stack('styles_bottom')
+    @stack('scripts_bottom')
+
+    <script>
+        (function () {
+            "use strict";
+
+            @if(session()->has('toast'))
+            showToast('{{ session()->get('toast')['status'] }}', '{{ session()->get('toast')['title'] ?? '' }}', '{{ session()->get('toast')['msg'] ?? '' }}')
+            @endif
+        })(jQuery);
 
 
-<script src="/assets/admin/js/admin.min.js"></script>
+        var siteDomain = '{{ url('') }}';
+        var deleteAlertTitle = '{{ trans('public.are_you_sure') }}';
+        var deleteAlertHint = '{{ trans('public.deleteAlertHint') }}';
+        var deleteAlertConfirm = '{{ trans('public.deleteAlertConfirm') }}';
+        var deleteAlertCancel = '{{ trans('public.cancel') }}';
+        var deleteAlertSuccess = '{{ trans('public.success') }}';
+        var deleteAlertFail = '{{ trans('public.fail') }}';
+        var deleteAlertFailHint = '{{ trans('public.deleteAlertFailHint') }}';
+        var deleteAlertSuccessHint = '{{ trans('public.deleteAlertSuccessHint') }}';
+        var forbiddenRequestToastTitleLang = '{{ trans('public.forbidden_request_toast_lang') }}';
+        var forbiddenRequestToastMsgLang = '{{ trans('public.forbidden_request_toast_msg_lang') }}';
+        var generatedContentLang = '{{ trans('update.generated_content') }}';
+        var copyLang = '{{ trans('public.copy') }}';
+        var doneLang = '{{ trans('public.done') }}';
+        var priceInvalidHintLang = '{{ trans('update.price_invalid_hint') }}';
+    </script>
 
-@stack('styles_bottom')
-@stack('scripts_bottom')
-
-<script>
-    (function () {
-        "use strict";
-
-        @if(session()->has('toast'))
-        showToast('{{ session()->get('toast')['status'] }}', '{{ session()->get('toast')['title'] ?? '' }}', '{{ session()->get('toast')['msg'] ?? '' }}')
-        @endif
-    })(jQuery);
-
-
-    var siteDomain = '{{ url('') }}';
-    var deleteAlertTitle = '{{ trans('public.are_you_sure') }}';
-    var deleteAlertHint = '{{ trans('public.deleteAlertHint') }}';
-    var deleteAlertConfirm = '{{ trans('public.deleteAlertConfirm') }}';
-    var deleteAlertCancel = '{{ trans('public.cancel') }}';
-    var deleteAlertSuccess = '{{ trans('public.success') }}';
-    var deleteAlertFail = '{{ trans('public.fail') }}';
-    var deleteAlertFailHint = '{{ trans('public.deleteAlertFailHint') }}';
-    var deleteAlertSuccessHint = '{{ trans('public.deleteAlertSuccessHint') }}';
-    var forbiddenRequestToastTitleLang = '{{ trans('public.forbidden_request_toast_lang') }}';
-    var forbiddenRequestToastMsgLang = '{{ trans('public.forbidden_request_toast_msg_lang') }}';
-    var generatedContentLang = '{{ trans('update.generated_content') }}';
-    var copyLang = '{{ trans('public.copy') }}';
-    var doneLang = '{{ trans('public.done') }}';
-    var priceInvalidHintLang = '{{ trans('update.price_invalid_hint') }}';
-</script>
-
-<script src="/assets/admin/js/custom.js?v={{ time() }}"></script>
-<script src="/assets/admin/js/parts/ai-content-generator.min.js"></script>
+    <script src="/assets/admin/js/custom.js?v={{ time() }}"></script>
+    <script src="/assets/admin/js/parts/ai-content-generator.min.js"></script>
 
 <script>
     {!! !empty($themeCustomCssAndJs['js']) ? $themeCustomCssAndJs['js'] : '' !!}

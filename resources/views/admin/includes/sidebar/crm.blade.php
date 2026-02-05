@@ -85,7 +85,7 @@
                     <ul class="dropdown-menu">
                         @can('admin_webinar_reports')
                             <li class="{{ (request()->is(getAdminPanelUrl('/reports/webinars', false))) ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ getAdminPanelUrl() }}/reports/webinars">{{ trans('panel.classes') }}</a>
+                                <a class="nav-link" href="{{ getAdminPanelUrl() }}/reports/webinars">{{ trans('admin/main.classes_reports') }}</a>
                             </li>
                         @endcan
 

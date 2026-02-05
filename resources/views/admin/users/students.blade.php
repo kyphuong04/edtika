@@ -11,9 +11,9 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{ trans('admin/main.students') }} {{ trans('admin/main.list') }}</h1>
+            <h1>{{ trans('admin/main.students_list') }}</h1>
             <div class="section-header-breadcrumb">
-                <div class="breadcrumb-item active"><a>{{ trans('admin/main.students') }}</a></div>
+                <div class="breadcrumb-item active"><a>{{ trans('admin/main.students_list') }}</a></div>
                 <div class="breadcrumb-item"><a href="#">{{ trans('admin/main.users_list') }}</a></div>
             </div>
         </div>
@@ -208,7 +208,7 @@
                                @can('admin_quizzes_create')
                                    <a href="{{ getAdminPanelUrl() }}/users/create" target="_blank" class="btn btn-primary">
                                        <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                                       <span class="ml-4 font-12">{{ trans('admin/main.new') }} {{ trans('admin/main.user') }}</span>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.new_user') }}</span>
                                    </a>
                                @endcan
 
@@ -289,7 +289,7 @@
                             <td>
                                 @if($user->ban and !empty($user->ban_end_at) and $user->ban_end_at > time())
                                     <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.ban') }}</span>
-                                    <div class="text-small font-12 text-gray-500">Until {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
+                                    <div class="text-small font-12 text-gray-500">{{ trans('admin/main.until') }} {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
                                 @else
                                     <span class="badge-status {{ ($user->status == 'active') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ trans('admin/main.'.$user->status) }}</span>
                                 @endif

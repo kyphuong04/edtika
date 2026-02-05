@@ -187,6 +187,17 @@
                     placeholder: $el.attr('data-placeholder'),
                     minimumInputLength: 3,
                     allowClear: true,
+                    language: {
+                        inputTooShort: function () {
+                            return inputTooShortLang;
+                        },
+                        noResults: function () {
+                             return noResultsLang;
+                        },
+                        searching: function () {
+                             return searchingLang;
+                        }
+                    },
                     ajax: {
                         url: path,
                         dataType: 'json',

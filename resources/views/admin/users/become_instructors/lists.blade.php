@@ -33,7 +33,7 @@
                                         @if(!empty($become->user->full_name))
                                         <td>{{ $become->user->full_name }}</td>
                                                @else
-                                                <td class="text-danger">User Deleted</td>
+                                                <td class="text-danger">{{ trans('update.user_deleted') }}</td>
                                                 @endif
 
 

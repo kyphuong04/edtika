@@ -344,7 +344,7 @@ trait DashboardTrait
 
     private function getGrowPercent($last, $new)
     {
-        $percent = 'No previous value';
+        $percent = trans('admin/main.no_previous_value');
         $status = 'up';
 
         if ($last != 0) {

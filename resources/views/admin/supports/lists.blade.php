@@ -93,7 +93,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{trans('admin/main.date')}}</label>
                                     <div class="input-group">
-                                        <input type="date" id="fsdate" class="text-center form-control" name="date" value="{{ request()->get('date') }}" placeholder="Date">
+                                        <input type="date" id="fsdate" class="text-center form-control" name="date" value="{{ request()->get('date') }}" placeholder="{{ trans('admin/main.date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -118,7 +118,7 @@
                                     <select name="role_id" data-plugin-selectTwo class="form-control populate">
                                         <option value="">{{trans('admin/main.all_user_roles')}}</option>
                                         @foreach($roles as $role)
-                                            <option value="{{ $role->id }}" @if(request()->get('role_id') == $role->id) selected @endif>{{ $role->caption }}</option>
+                                            <option value="{{ $role->id }}" @if(request()->get('role_id') == $role->id) selected @endif>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -204,11 +204,11 @@
 
                                     <td class="text-center">
                                         @if($support->user->isUser())
-                                            Student
+                                            {{ trans('admin/main.student') }}
                                         @elseif($support->user->isTeacher())
-                                            Teacher
+                                            {{ trans('admin/main.teacher') }}
                                         @elseif($support->user->isAdmin())
-                                            Organization
+                                            {{ trans('admin/main.organization') }}
                                         @endif
                                     </td>
 

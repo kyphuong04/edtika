@@ -7,7 +7,7 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{!empty($forum) ?trans('/admin/main.edit'): trans('admin/main.new') }} {{ trans('update.forum') }}</h1>
+            <h1>{{ !empty($forum) ? trans('/admin/main.edit') .' '. trans('update.forum') : trans('admin/main.create_new_forum') }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a>
                 </div>

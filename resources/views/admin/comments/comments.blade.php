@@ -87,7 +87,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.date') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="fsdate" class="text-center form-control" name="date" value="{{ request()->get('date') }}" placeholder="Date">
+                                        <input type="date" id="fsdate" class="text-center form-control" name="date" value="{{ request()->get('date') }}" placeholder="{{ trans('admin/main.date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -121,7 +121,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="input-label">{{ trans('update.bundle') }}</label>
-                                        <select name="bundle_ids[]" multiple="multiple" class="form-control search-bundle-select2 " data-placeholder="Search bundles">
+                                        <select name="bundle_ids[]" multiple="multiple" class="form-control search-bundle-select2 " data-placeholder="{{ trans('admin/main.search_bundles') }}">
 
                                             @if(!empty($bundles) and $bundles->count() > 0)
                                                 @foreach($bundles as $bundle)
@@ -135,7 +135,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="input-label">{{ trans('admin/main.blog') }}</label>
-                                        <select name="post_ids[]" multiple="multiple" class="form-control search-blog-select2 " data-placeholder="Search blog">
+                                        <select name="post_ids[]" multiple="multiple" class="form-control search-blog-select2 " data-placeholder="{{ trans('admin/main.search_blog') }}">
 
                                             @if(!empty($blog) and $blog->count() > 0)
                                                 @foreach($blog as $post)
@@ -149,7 +149,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label class="input-label">{{ trans('update.products') }}</label>
-                                        <select name="product_ids[]" multiple="multiple" class="form-control search-product-select2 " data-placeholder="Search products">
+                                        <select name="product_ids[]" multiple="multiple" class="form-control search-product-select2 " data-placeholder="{{ trans('admin/main.search_products') }}">
 
                                             @if(!empty($products) and $products->count() > 0)
                                                 @foreach($products as $product)
@@ -166,7 +166,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.user') }}</label>
                                     <select name="user_ids[]" multiple="multiple" class="form-control search-user-select2"
-                                            data-placeholder="Search users">
+                                            data-placeholder="{{ trans('admin/main.search_users') }}">
 
                                         @if(!empty($users) and $users->count() > 0)
                                             @foreach($users as $user)

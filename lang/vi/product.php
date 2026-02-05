@@ -8,37 +8,37 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'course' => 'Course',
-    'courses' => 'Courses',
-    'text_course' => 'Text Course',
-    'video_course' => 'Video Course',
-    'information' => 'Information',
-    'content' => 'Content',
-    'review' => 'Review',
-    'reviews' => 'Reviews',
+    'course' => 'Khóa học',
+    'courses' => 'Khóa học',
+    'text_course' => 'Khóa học văn bản',
+    'video_course' => 'Khóa học video',
+    'information' => 'Thông tin',
+    'content' => 'Nội dung',
+    'review' => 'Đánh giá',
+    'reviews' => 'Đánh giá',
 
-    'Webinar_description' => 'About this course',
+    'Webinar_description' => 'Về khóa học này',
 
-    'post_comment' => 'Post a comment',
-    'post_review' => 'Post a review',
+    'post_comment' => 'Đăng bình luận',
+    'post_review' => 'Đăng đánh giá',
 
-    'comment_success_store' => 'Comment submitted successfully!',
-    'comment_success_store_msg' => 'Your comment will be published after it is approved by the admin.',
+    'comment_success_store' => 'Bình luận đã được gửi thành công!',
+    'comment_success_store_msg' => 'Bình luận của bạn sẽ được hiển thị sau khi được quản trị viên phê duyệt.',
 
-    'guarantee_text' => '5-day money-back guarantee',
+    'guarantee_text' => 'Hoàn tiền trong 5 ngày',
 
-    'product_designer' => 'Product Designer',
+    'product_designer' => 'Nhà thiết kế sản phẩm',
 
-    'content_quality' => 'Content Quality',
-    'instructor_skills' => 'Instructor Skills',
-    'purchase_worth' => 'Value for Money',
-    'support_quality' => 'Support Quality',
+    'content_quality' => 'Chất lượng nội dung',
+    'instructor_skills' => 'Kỹ năng giảng viên',
+    'purchase_worth' => 'Giá trị đồng tiền',
+    'support_quality' => 'Chất lượng hỗ trợ',
 
-    'report_the_course' => 'Report this course',
-    'reason' => 'Reason',
-    'select_reason' => 'Select a reason',
-    'report_modal_hint' => 'Briefly describe the issue you want to report.',
-    'product_quality' => 'Product Quality',
-    'delivery_quality' => 'Delivery Quality',
-    'seller_quality' => 'Seller Quality',
+    'report_the_course' => 'Báo cáo khóa học này',
+    'reason' => 'Lý do',
+    'select_reason' => 'Chọn lý do',
+    'report_modal_hint' => 'Mô tả ngắn gọn vấn đề bạn muốn báo cáo.',
+    'product_quality' => 'Chất lượng sản phẩm',
+    'delivery_quality' => 'Chất lượng giao hàng',
+    'seller_quality' => 'Chất lượng người bán',
 ];

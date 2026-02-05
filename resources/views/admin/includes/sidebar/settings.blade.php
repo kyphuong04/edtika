@@ -15,7 +15,7 @@
     <li class="nav-item {{ (request()->is(getAdminPanelUrl('/licenses', false))) ? 'active' : '' }}">
         <a href="{{ getAdminPanelUrl() }}/licenses" class="nav-link">
         <x-iconsax-bul-key class="icons" width="24px" height="24px"/>
-            <span>Licenses</span>
+            <span>{{ trans('admin/main.licenses') }}</span>
         </a>
     </li>
 @endcan

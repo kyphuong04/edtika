@@ -190,7 +190,7 @@
 
                 <select name="role_ids[]" class="custom-select select2" multiple data-placeholder="{{ trans('update.select_user_roles') }}">
                     @foreach($roles as $role)
-                        <option value="{{ $role->id }}" {{ in_array($role->id, $selectedRoleIds) ? 'selected' : '' }}>{{ $role->caption }}</option>
+                        <option value="{{ $role->id }}" {{ in_array($role->id, $selectedRoleIds) ? 'selected' : '' }}>{{ (Lang::has('admin/main.'.strtolower($role->name))) ? trans('admin/main.'.strtolower($role->name)) : $role->caption }}</option>
                     @endforeach
                 </select>
 
