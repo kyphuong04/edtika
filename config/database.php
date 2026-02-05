@@ -58,12 +58,18 @@ return [
             'prefix_indexes' => true,
             'strict' => false,
             'engine' => "InnoDB",
-            'modes' => [
-                'STRICT_ALL_TABLES',
-            ],
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => (function() {
+                $options = [];
+                if (extension_loaded('pdo_mysql')) {
+                    if ($ssl_ca = env('MYSQL_ATTR_SSL_CA')) {
+                        if (file_exists($ssl_ca)) {
+                            $options[PDO::MYSQL_ATTR_SSL_CA] = $ssl_ca;
+                        }
+                    }
+                    $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                }
+                return $options;
+            })(),
         ],
 
         'pgsql' => [

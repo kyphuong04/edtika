@@ -8,7 +8,7 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{!empty($role) ?trans('/admin/main.edit'): trans('admin/main.new') }} {{ trans('admin/main.role') }}</h1>
+            <h1>{{ !empty($role) ? (trans('/admin/main.edit') . ' ' . trans('admin/main.role')) : trans('admin/main.role_new_page_title') }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a>
                 </div>
@@ -114,7 +114,7 @@
                                                         <input type="checkbox" name="permissions[]" id="permissions_{{ $section->id }}" value="{{ $section->id }}"
                                                                {{isset($permissions[$section->id]) ? 'checked' : ''}} class="form-check-input mt-0 section-parent">
                                                         <label class="form-check-label font-16 font-weight-bold cursor-pointer" for="permissions_{{ $section->id }}">
-                                                            {{ $section->caption }}
+                                                            {{ \Illuminate\Support\Facades\Lang::has('admin/main.role_permission_'.$section->name) ? trans('admin/main.role_permission_'.$section->name) : $section->caption }}
                                                         </label>
                                                     </div>
 
@@ -126,7 +126,7 @@
                                                                     <input type="checkbox" name="permissions[]" id="permissions_{{ $child->id }}" value="{{ $child->id }}"
                                                                            {{ isset($permissions[$child->id]) ? 'checked' : '' }} class="form-check-input section-child">
                                                                     <label class="form-check-label cursor-pointer mt-0" for="permissions_{{ $child->id }}">
-                                                                        {{ $child->caption }}
+                                                                        {{ \Illuminate\Support\Facades\Lang::has('admin/main.role_permission_'.$child->name) ? trans('admin/main.role_permission_'.$child->name) : $child->caption }}
                                                                     </label>
                                                                 </div>
                                                             @endforeach

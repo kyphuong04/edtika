@@ -38,8 +38,8 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.instructor') }}</label>
-                                <select name="teacher_ids[]" multiple="multiple" data-search-option="just_teacher_role" class="form-control search-user-select2"
-                                        data-placeholder="Search teachers">
+                                    <select name="teacher_ids[]" multiple="multiple" data-search-option="just_teacher_role" class="form-control search-user-select2"
+                                            data-placeholder="{{ trans('admin/main.search_teachers') }}">
 
                                     @if(!empty($teachers) and $teachers->count() > 0)
                                         @foreach($teachers as $teacher)
@@ -55,7 +55,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.student') }}</label>
                                 <select name="student_ids[]" multiple="multiple" data-search-option="just_student_role" class="form-control search-user-select2"
-                                        data-placeholder="Search students">
+                                        data-placeholder="{{ trans('admin/main.search_students') }}">
 
                                     @if(!empty($students) and $students->count() > 0)
                                         @foreach($students as $student)

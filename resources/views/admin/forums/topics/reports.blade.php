@@ -32,7 +32,7 @@
                                             @if (!empty($report->user))
                                                 <td>{{ $report->user->id .' - '.$report->user->full_name }}</td>
                                             @else
-                                                <td class="text-danger">Deleted User</td>
+                                                <td class="text-danger">{{ trans('update.user_deleted') }}</td>
                                             @endif
 
                                             <td class="text-left" width="30%">

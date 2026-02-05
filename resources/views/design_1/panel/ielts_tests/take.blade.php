@@ -211,7 +211,7 @@
                     <div class="progress-fill" :style="`width: ${progress}%`"></div>
                 </div>
                 <p class="mb-0 mt-2 font-12">
-                    <span x-text="answeredCount"></span> / <span x-text="totalQuestions"></span> answered
+                    {!! trans('update.ielts_answered_count', ['answered' => '<span x-text="answeredCount"></span>', 'total' => '<span x-text="totalQuestions"></span>']) !!}
                     (<span x-text="Math.round(progress)"></span>%)
                 </p>
             </div>
@@ -221,19 +221,19 @@
             <div class="audio-player">
                 <h4 class="mb-3">
                     <i class="fas fa-headphones mr-2"></i>
-                    Audio Section
+                    {{ trans('update.ielts_audio_section') }}
                 </h4>
                 <audio id="listeningAudio" controls class="w-100" 
                        @if($test->isMockTest()) 
                        controlsList="nodownload noplaybackrate"
                        @endif>
                     <source src="{{ $currentSection->audio_file }}" type="audio/mpeg">
-                    Your browser does not support audio.
+                    {{ trans('update.ielts_browser_no_audio_support') }}
                 </audio>
                 @if($test->isMockTest())
                 <p class="text-warning font-12 mt-2 mb-0">
                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                    Mock test: Audio will play only once
+                    {{ trans('update.ielts_mock_test_audio_warning') }}
                 </p>
                 @endif
             </div>
@@ -257,7 +257,7 @@
                 {{-- Writing Header --}}
                 <div class="writing-section-header">
                     <h3>{{ $currentSection->title }}</h3>
-                    <p>You should spend about <strong>{{ $currentSection->duration ?? 20 }} minutes</strong> on this task. Write at least <strong>{{ $questions->first()->min_words ?? 150 }} words</strong>.</p>
+                    <p>{!! trans('update.ielts_writing_task_instruction', ['duration' => '<strong>' . ($currentSection->duration ?? 20) . '</strong>', 'min_words' => '<strong>' . ($questions->first()->min_words ?? 150) . '</strong>']) !!}</p>
                 </div>
 
                 {{-- Two Column Layout --}}
@@ -281,13 +281,12 @@
                                 <textarea 
                                     x-model="answers[question.id]"
                                     @input.debounce.1000ms="saveAnswer(question.id)"
-                                    placeholder="Write your response here..."></textarea>
+                                    x-model="answers[question.id]"
+                                    @input.debounce.1000ms="saveAnswer(question.id)"
+                                    placeholder="{{ trans('update.ielts_write_essay') }}"></textarea>
                                 <div class="word-counter" 
                                      :class="countWords(answers[question.id] || '') < (question.min_words || 0) ? 'warning' : ''">
-                                    Words: <strong x-text="countWords(answers[question.id] || '')"></strong>
-                                    <template x-if="question.min_words">
-                                        <span> / <span x-text="question.min_words"></span> minimum</span>
-                                    </template>
+                                    {!! trans('update.ielts_word_count_min', ['count' => '<strong x-text="countWords(answers[question.id] || \'\')"></strong>', 'min' => '<span x-text="question.min_words"></span>']) !!}
                                 </div>
                             </div>
                         </template>
@@ -300,20 +299,20 @@
                             @click="previousQuestion()"
                             x-show="questions.length > 1">
                         <i class="fas fa-arrow-left mr-2"></i>
-                        Previous
+                        {{ trans('public.previous') }}
                     </button>
                     
                     <button class="btn btn-primary" 
                             @click="nextQuestion()"
                             x-show="currentQuestionIndex < questions.length - 1">
-                        Next
+                        {{ trans('public.next') }}
                         <i class="fas fa-arrow-right ml-2"></i>
                     </button>
 
                     <button class="btn btn-success" 
                             @click="finishSection()"
                             x-show="currentQuestionIndex === questions.length - 1">
-                        Finish Section
+                        {{ trans('update.ielts_finish_section') }}
                         <i class="fas fa-check ml-2"></i>
                     </button>
                 </div>
@@ -325,8 +324,8 @@
             <div class="question-card text-center">
                 <div class="py-5">  
                     <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
-                    <h3 class="text-gray">No Questions Available</h3>
-                    <p class="text-gray">This section does not have any questions yet.</p>
+                    <h3 class="text-gray">{{ trans('update.ielts_no_questions_available') }}</h3>
+                    <p class="text-gray">{{ trans('update.ielts_section_no_questions') }}</p>
                     <hr class="my-4">
                     <p class="text-muted font-12">
                         <strong>Debug Info:</strong><br>
@@ -337,12 +336,12 @@
                     </p>
                     <div class="mt-4">
                         <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="btn btn-secondary mr-2">
-                            <i class="fas fa-arrow-left mr-1"></i> Back to Test
+                            <i class="fas fa-arrow-left mr-1"></i> {{ trans('update.ielts_back_to_test') }}
                         </a>
                         <form action="{{ route('panel.ielts_tests.finish_section', $attempt->id) }}" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-primary">
-                                Skip to Next Section <i class="fas fa-arrow-right ml-1"></i>
+                                {{ trans('update.ielts_skip_to_next_section') }} <i class="fas fa-arrow-right ml-1"></i>
                             </button>
                         </form>
                     </div>
@@ -360,10 +359,10 @@
                     
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h4 class="mb-0">
-                            Question <span x-text="index + 1"></span>
+                            {!! trans('update.ielts_question_number', ['number' => '<span x-text="index + 1"></span>']) !!}
                         </h4>
                         <span class="badge badge-primary">
-                            <span x-text="question.points"></span> point(s)
+                            {!! trans('update.ielts_points', ['points' => '<span x-text="question.points"></span>']) !!}
                         </span>
                     </div>
 
@@ -399,9 +398,9 @@
                                        class="form-control form-control-lg"
                                        x-model="answers[question.id]"
                                        @input.debounce.500ms="saveAnswer(question.id)"
-                                       placeholder="Type your answer here...">
+                                       placeholder="{{ trans('update.ielts_type_answer') }}">
                                 <small class="text-gray mt-2" x-show="question.max_words">
-                                    Maximum words: <span x-text="question.max_words"></span>
+                                    {!! trans('update.ielts_max_words', ['max' => '<span x-text="question.max_words"></span>']) !!}
                                 </small>
                             </div>
                         </template>
@@ -433,18 +432,14 @@
                         {{-- Essay (Writing) --}}
                         <template x-if="question.question_type === 'essay'">
                             <div class="form-group">
-                                <textarea 
                                     class="form-control" 
                                     rows="12"
                                     x-model="answers[question.id]"
                                     @input.debounce.1000ms="saveAnswer(question.id)"
-                                    placeholder="Write your essay here..."></textarea>
+                                    placeholder="{{ trans('update.ielts_write_essay') }}"></textarea>
                                 <div class="d-flex justify-content-between mt-2">
                                     <small class="text-gray">
-                                        Words: <span x-text="countWords(answers[question.id] || '')"></span>
-                                        <template x-if="question.max_words">
-                                            / <span x-text="question.max_words"></span>
-                                        </template>
+                                        {!! trans('update.ielts_word_count_max', ['count' => '<span x-text="countWords(answers[question.id] || \'\')"></span>', 'max' => '<span x-text="question.max_words"></span>']) !!}
                                     </small>
                                 </div>
                             </div>
@@ -457,20 +452,20 @@
                                 @click="previousQuestion()"
                                 :disabled="currentQuestionIndex === 0">
                             <i class="fas fa-arrow-left mr-2"></i>
-                            Previous
+                            {{ trans('public.previous') }}
                         </button>
                         
                         <button class="btn btn-primary" 
                                 @click="nextQuestion()"
                                 x-show="currentQuestionIndex < questions.length - 1">
-                            Next
+                            {{ trans('public.next') }}
                             <i class="fas fa-arrow-right ml-2"></i>
                         </button>
 
                         <button class="btn btn-success" 
                                 @click="finishSection()"
                                 x-show="currentQuestionIndex === questions.length - 1">
-                            Finish Section
+                            {{ trans('update.ielts_finish_section') }}
                             <i class="fas fa-check ml-2"></i>
                         </button>
                     </div>
@@ -483,12 +478,12 @@
         <div class="col-lg-3">
             {{-- Timer --}}
             <div class="timer-box" :class="timeWarning ? 'timer-warning' : ''">
-                <p class="mb-2 text-center opacity-90">Time Remaining</p>
+                <p class="mb-2 text-center opacity-90">{{ trans('update.ielts_time_remaining') }}</p>
                 <div class="timer-display" x-text="formatTime(timeRemaining)"></div>
                 <template x-if="timeWarning">
                     <p class="mb-0 mt-2 text-center font-12 animate-pulse">
                         <i class="fas fa-exclamation-triangle mr-1"></i>
-                        Hurry up!
+                        {{ trans('update.ielts_hurry_up') }}
                     </p>
                 </template>
             </div>
@@ -496,7 +491,7 @@
             {{-- Question Navigation --}}
             <div class="card mt-3">
                 <div class="card-body">
-                    <h5 class="mb-3">Questions</h5>
+                    <h5 class="mb-3">{{ trans('update.ielts_questions_list') }}</h5>
                     <div class="question-nav">
                         <template x-for="(question, index) in questions" :key="index">
                             <button 
@@ -513,11 +508,11 @@
                     <div class="mt-3">
                         <small class="d-block text-gray">
                             <span class="bg-success" style="display:inline-block; width:12px; height:12px; border-radius:2px;"></span>
-                            Answered
+                            {{ trans('update.ielts_answered') }}
                         </small>
                         <small class="d-block text-gray mt-1">
                             <span class="bg-primary" style="display:inline-block; width:12px; height:12px; border-radius:2px;"></span>
-                            Current
+                            {{ trans('update.ielts_current') }}
                         </small>
                     </div>
                 </div>
@@ -528,7 +523,7 @@
     {{-- Save Indicator --}}
     <div class="save-indicator" :class="{'show': showSaveIndicator}">
         <i class="fas fa-check-circle mr-2"></i>
-        Answer saved
+        {{ trans('update.ielts_answer_saved') }}
     </div>
 </div>
 @endsection
@@ -646,7 +641,7 @@ function testTakingApp() {
         },
 
         finishSection() {
-            if (confirm('Are you sure you want to finish this section? You cannot return to it.')) {
+            if (confirm('{{ trans('update.ielts_confirm_finish_section') }}')) {
                 fetch('{{ route("panel.ielts_tests.finish_section", $attempt->id) }}', {
                     method: 'POST',
                     headers: {
@@ -668,8 +663,8 @@ function testTakingApp() {
         autoSubmit() {
             clearInterval(this.timer);
             Swal.fire({
-                title: 'Time\'s Up!',
-                text: 'Your test will be submitted automatically.',
+                title: '{{ trans('update.ielts_times_up') }}',
+                text: '{{ trans('update.ielts_auto_submit_message') }}',
                 icon: 'warning',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#1a3a5c',

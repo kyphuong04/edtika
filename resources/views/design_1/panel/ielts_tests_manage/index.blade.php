@@ -6,7 +6,7 @@
     @if(session('mock_parts_warning'))
     <div class="alert alert-warning alert-dismissible fade show mb-20" role="alert">
         <i class="fas fa-exclamation-triangle mr-10"></i>
-        <strong>Test Created!</strong> {{ session('mock_parts_warning') }}
+        <strong>{{ trans('update.test_created') }}</strong> {{ session('mock_parts_warning') }}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
@@ -16,12 +16,12 @@
     {{-- Header --}}
     <div class="d-flex align-items-center justify-content-between mb-25">
         <div>
-            <h1 class="section-title font-24 text-dark-blue">My IELTS Tests</h1>
-            <p class="text-black font-14">Manage and monitor your IELTS practice and mock exams.</p>
+            <h1 class="section-title font-24 text-dark-blue">{{ trans('update.ielts_tests_manage_title') }}</h1>
+            <p class="text-black font-14">{{ trans('update.ielts_tests_manage_hint') }}</p>
         </div>
         <a href="{{ route('panel.my_ielts_tests.create') }}" class="btn btn-primary shadow-primary d-flex align-items-center">
             <i class="fas fa-plus-circle mr-5"></i>
-            <span>Create New Test</span>
+            <span>{{ trans('update.create_new_test') }}</span>
         </a>
     </div>
 
@@ -30,7 +30,7 @@
     <div class="col-lg-3 col-md-6 col-sm-6 col-12 mt-20">
         <div class="bg-white rounded-16 p-20 d-flex align-items-center justify-content-between border">
             <div>
-                <span class="d-block text-gray-500 font-12 mb-5">Total Tests</span>
+                <span class="d-block text-gray-500 font-12 mb-5">{{ trans('update.total_tests') }}</span>
                 <h3 class="font-30 font-weight-bold text-dark-blue">{{ $stats['total'] }}</h3>
             </div>
             <div class="d-flex-center size-48 bg-info-light rounded-circle">
@@ -42,7 +42,7 @@
     <div class="col-lg-3 col-md-6 col-sm-6 col-12 mt-20">
         <div class="bg-white rounded-16 p-20 d-flex align-items-center justify-content-between border">
             <div>
-                <span class="d-block text-gray-500 font-12 mb-5">Mock Tests</span>
+                <span class="d-block text-gray-500 font-12 mb-5">{{ trans('update.mock_tests') }}</span>
                 <h3 class="font-30 font-weight-bold text-dark-blue">{{ $tests->where('type', 'mock')->count() }}</h3>
            </div>
             <div class="d-flex-center size-48 bg-success-light rounded-circle">
@@ -54,7 +54,7 @@
     <div class="col-lg-3 col-md-6 col-sm-6 col-12 mt-20">
         <div class="bg-white rounded-16 p-20 d-flex align-items-center justify-content-between border">
             <div>
-                <span class="d-block text-gray-500 font-12 mb-5">Practice Tests</span>
+                <span class="d-block text-gray-500 font-12 mb-5">{{ trans('update.practice_tests') }}</span>
                 <h3 class="font-30 font-weight-bold text-dark-blue">{{ $tests->where('type', 'practice')->count() }}</h3>
             </div>
             <div class="d-flex-center size-48 bg-danger-light rounded-circle">
@@ -66,7 +66,7 @@
     <div class="col-lg-3 col-md-6 col-sm-6 col-12 mt-20">
         <div class="bg-white rounded-16 p-20 d-flex align-items-center justify-content-between border">
             <div>
-                <span class="d-block text-gray-500 font-12 mb-5">Published</span>
+                <span class="d-block text-gray-500 font-12 mb-5">{{ trans('update.published') }}</span>
                 <h3 class="font-30 font-weight-bold text-dark-blue">{{ $stats['published'] }}</h3>
             </div>
             <div class="d-flex-center size-48 bg-success-light rounded-circle">
@@ -83,34 +83,34 @@
                 <form method="GET" class="m-0">
                     <div class="row align-items-end">
                         <div class="col-md-3">
-                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Type</label>
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">{{ trans('update.type') }}</label>
                             <select name="type" class="form-control">
-                                <option value="">All Types</option>
-                                <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>Mock Test</option>
-                                <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>Practice</option>
-                                <option value="diagnostic" {{ request('type') == 'diagnostic' ? 'selected' : '' }}>Diagnostic</option>
+                                <option value="">{{ trans('update.all_types') }}</option>
+                                <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>{{ trans('update.mock_test') }}</option>
+                                <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>{{ trans('update.practice') }}</option>
+                                <option value="diagnostic" {{ request('type') == 'diagnostic' ? 'selected' : '' }}>{{ trans('update.diagnostic') }}</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Status</label>
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">{{ trans('public.status') }}</label>
                             <select name="status" class="form-control">
-                                <option value="">All Status</option>
-                                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                                <option value="pending_approval" {{ request('status') == 'pending_approval' ? 'selected' : '' }}>Pending</option>
-                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>Published</option>
-                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                <option value="">{{ trans('update.all_status') }}</option>
+                                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>{{ trans('update.draft') }}</option>
+                                <option value="pending_approval" {{ request('status') == 'pending_approval' ? 'selected' : '' }}>{{ trans('update.pending_approval') }}</option>
+                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>{{ trans('update.approved') }}</option>
+                                <option value="published" {{ request('status') == 'published' ? 'selected' : '' }}>{{ trans('update.published') }}</option>
+                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>{{ trans('update.rejected') }}</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Search</label>
+                            <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">{{ trans('update.search') }}</label>
                             <input type="text" name="search" class="form-control" 
-                                   placeholder="Search by title..." value="{{ request('search') }}">
+                                   placeholder="{{ trans('update.search_by_title') }}" value="{{ request('search') }}">
                         </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-primary w-100" 
                                     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-                                <i class="fas fa-filter mr-8"></i>Filter
+                                <i class="fas fa-filter mr-8"></i>{{ trans('update.filter') }}
                             </button>
                         </div>
                     </div>
@@ -126,9 +126,9 @@
                 <div class="bg-white shadow-sm rounded-16 p-30">
                     @include('design_1.panel.includes.no-result',[
                         'file_name' => 'support.svg',
-                        'title' => 'No tests yet!',
-                        'hint' => 'Create your first IELTS test to get started.',
-                        'btn' => ['url' => route('panel.my_ielts_tests.create'),'text' => 'Create Test']
+                        'title' => trans('update.no_tests_yet'),
+                        'hint' => trans('update.create_your_first_ielts_test_hint'),
+                        'btn' => ['url' => route('panel.my_ielts_tests.create'),'text' => trans('update.create_test')]
                     ])
                 </div>
             @else
@@ -138,12 +138,12 @@
                             <table class="table custom-table mb-0" style="min-width: 900px;">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th class="pl-25" width="30%">Test Information</th>
-                                        <th class="text-center" width="13%">Type</th>
-                                        <th class="text-center" width="13%">Duration</th>
-                                        <th class="text-center" width="10%">Attempts</th>
-                                        <th class="text-center" width="13%">Status</th>
-                                        <th class="text-center pr-25" width="16%">Actions</th>
+                                        <th class="pl-25" width="30%">{{ trans('update.test_information') }}</th>
+                                        <th class="text-center" width="13%">{{ trans('update.type') }}</th>
+                                        <th class="text-center" width="13%">{{ trans('update.duration') }}</th>
+                                        <th class="text-center" width="10%">{{ trans('update.attempts') }}</th>
+                                        <th class="text-center" width="13%">{{ trans('public.status') }}</th>
+                                        <th class="text-center pr-25" width="16%">{{ trans('update.actions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -174,17 +174,17 @@
 
                                             <td class="text-center">
                                                 @if($test->type === 'mock')
-                                                    <span class="badge text-black badge-soft-primary" style="min-width: 90px; display: inline-block;">Mock Test</span>
+                                                    <span class="badge text-black badge-soft-primary" style="min-width: 90px; display: inline-block;">{{ trans('update.mock_test') }}</span>
                                                 @elseif($test->type === 'practice')
-                                                    <span class="badge text-black badge-soft-info" style="min-width: 90px; display: inline-block;">Practice</span>
+                                                    <span class="badge text-black badge-soft-info" style="min-width: 90px; display: inline-block;">{{ trans('update.practice') }}</span>
                                                 @else
-                                                    <span class="badge text-black badge-soft-secondary" style="min-width: 90px; display: inline-block;">Diagnostic</span>
+                                                    <span class="badge text-black badge-soft-secondary" style="min-width: 90px; display: inline-block;">{{ trans('update.diagnostic') }}</span>
                                                 @endif
                                             </td>
 
                                             <td class="text-center">
-                                                <div class="text-dark-blue font-weight-500">{{ $test->total_duration }} min</div>
-                                                <small class="text-gray">{{ $test->sections->count() }} sections</small>
+                                                <div class="text-dark-blue font-weight-500">{{ $test->total_duration }} {{ trans('update.ielts_min') }}</div>
+                                                <small class="text-gray">{{ trans('update.ielts_sections_count', ['count' => $test->sections->count()]) }}</small>
                                             </td>
 
                                             <td class="text-center">
@@ -201,11 +201,11 @@
                                                         'draft' => 'badge-soft-secondary'
                                                     ];
                                                     $statusLabel = [
-                                                        'published' => 'Published',
-                                                        'pending_approval' => 'Pending',
-                                                        'approved' => 'Approved',
-                                                        'rejected' => 'Rejected',
-                                                        'draft' => 'Draft'
+                                                        'published' => trans('update.published'),
+                                                        'pending_approval' => trans('update.pending_approval'),
+                                                        'approved' => trans('update.approved'),
+                                                        'rejected' => trans('update.rejected'),
+                                                        'draft' => trans('update.draft')
                                                     ];
                                                     $class = $statusClasses[$test->status] ?? 'badge-soft-secondary';
                                                     $label = $statusLabel[$test->status] ?? ucfirst($test->status);
@@ -221,26 +221,26 @@
                                                     <div class="dropdown-menu dropdown-menu-right">
                                                         <a href="{{ route('panel.my_ielts_tests.sections', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                             <x-iconsax-lin-hierarchy-square class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">Manage Sections</span>
+                                                            <span class="text-gray-500 font-14">{{ trans('update.manage_sections') }}</span>
                                                         </a>
 
                                                         <a href="{{ route('panel.my_ielts_tests.edit', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                             <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">Edit</span>
+                                                            <span class="text-gray-500 font-14">{{ trans('update.edit') }}</span>
                                                         </a>
                                                         
                                                         @if(($test->status === 'draft' || $test->status === 'rejected') && $test->sections->count() > 0)
                                                             <a href="{{ route('panel.my_ielts_tests.submit_approval', $test->id) }}" 
-                                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 submit-approval-btn"
+                                                               <class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 submit-approval-btn"
                                                                data-test-title="{{ $test->title }}">
                                                                 <x-iconsax-lin-send-2 class="icons text-success mr-2" width="18px" height="18px"/>
-                                                                <span class="text-success font-14 font-weight-bold">Submit for Approval</span>
+                                                                <span class="text-success font-14 font-weight-bold">{{ trans('update.submit_for_approval') }}</span>
                                                             </a>
                                                         @endif
 
                                                         <!-- <a href="{{ route('panel.my_ielts_tests.duplicate', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                             <x-iconsax-lin-copy class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">Duplicate</span>
+                                                            <span class="text-gray-500 font-14">{{ trans('update.ielts_duplicate') }}</span>
                                                         </a> -->
 
                                                         @if($test->canBeEdited())
@@ -248,7 +248,7 @@
                                                                class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4 delete-test-btn"
                                                                data-test-title="{{ $test->title }}">
                                                                 <x-iconsax-lin-trash class="icons text-danger mr-2" width="18px" height="18px"/>
-                                                                <span class="text-danger font-14">Delete</span>
+                                                                <span class="text-danger font-14">{{ trans('update.delete') }}</span>
                                                             </a>
                                                         @endif
                                                     </div>
@@ -283,7 +283,7 @@
                 <h4 id="modalTitle" class="font-20 font-weight-bold text-dark-blue mb-10"></h4>
                 <p id="modalMessage" class="text-gray font-14 mb-20"></p>
                 <div class="d-flex justify-content-center gap-10">
-                    <button type="button" class="btn btn-light px-30" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-light px-30" data-dismiss="modal">{{ trans('update.cancel') }}</button>
                     <button type="button" id="modalConfirmBtn" class="btn px-30"></button>
                 </div>
             </div>
@@ -329,9 +329,9 @@ $(document).ready(function() {
         
         showConfirmModal({
             type: 'success',
-            title: 'Submit for Approval?',
-            message: `Are you sure you want to submit "${testTitle}" for approval? You won't be able to edit it until it's reviewed.`,
-            confirmText: 'Yes, Submit',
+            title: '{{ trans('update.submit_approval_confirmation_title') }}',
+            message: '{{ trans('update.submit_approval_confirmation_msg') }}'.replace(':title', testTitle),
+            confirmText: '{{ trans('update.yes_submit') }}',
             onConfirm: function() {
                 window.location.href = url;
             }
@@ -346,9 +346,9 @@ $(document).ready(function() {
         
         showConfirmModal({
             type: 'danger',
-            title: 'Delete Test?',
-            message: `Are you sure you want to delete "${testTitle}"? This action cannot be undone.`,
-            confirmText: 'Yes, Delete',
+            title: '{{ trans('update.delete_test_confirmation_title') }}',
+            message: '{{ trans('update.delete_test_confirmation_msg') }}'.replace(':title', testTitle),
+            confirmText: '{{ trans('update.yes_delete') }}',
             onConfirm: function() {
                 window.location.href = url;
             }

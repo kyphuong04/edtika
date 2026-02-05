@@ -12,6 +12,9 @@
     <title>{{ $pageTitle ?? '' }}{{ !empty($generalSettings['site_name']) ? (' | '.$generalSettings['site_name']) : '' }}</title>
 
     <!-- General CSS File -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/default/vendors/simplebar/simplebar.css">
     <link rel="stylesheet" href="/assets/design_1/css/app.min.css">
 
@@ -36,6 +39,13 @@
         {!! getThemeFontsSettings() !!}
 
         {!! getThemeColorsSettings() !!}
+
+        :root {
+            --main-font-family: 'Roboto', sans-serif !important;
+        }
+        body, h1, h2, h3, h4, h5, h6, p, a, span, button, input, textarea, select, .btn, div {
+            font-family: 'Roboto', sans-serif !important;
+        }
     </style>
 
 </head>
@@ -151,6 +161,39 @@
     @endif
 
     {!! !empty($themeCustomCssAndJs['js']) ? $themeCustomCssAndJs['js'] : '' !!}
+
+    (function ($) {
+        if ($.fn.select2) {
+            $.fn.select2.defaults.set('language', {
+                errorLoading: function () {
+                    return '{{ trans('update.select2_error_loading') }}';
+                },
+                inputTooLong: function (args) {
+                    var overChars = args.input.length - args.maximum;
+                    return '{{ trans('update.select2_input_too_long') }}'.replace(':count', overChars);
+                },
+                inputTooShort: function (args) {
+                    var remaining = args.minimum - args.input.length;
+                    return '{{ trans('update.select2_input_too_short') }}'.replace(':count', remaining);
+                },
+                loadingMore: function () {
+                    return '{{ trans('update.select2_loading_more') }}';
+                },
+                maximumSelected: function (args) {
+                    return '{{ trans('update.select2_maximum_selected') }}'.replace(':count', args.maximum);
+                },
+                noResults: function () {
+                    return '{{ trans('update.select2_no_results') }}';
+                },
+                searching: function () {
+                    return '{{ trans('update.select2_searching') }}';
+                },
+                removeAllItems: function () {
+                    return '{{ trans('update.select2_remove_all_items') }}';
+                }
+            });
+        }
+    })(jQuery);
 </script>
 
 <script src="/assets/design_1/js/parts/general.min.js"></script>

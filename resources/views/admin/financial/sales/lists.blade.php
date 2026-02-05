@@ -92,7 +92,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.start_date') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="fsdate" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="Start Date">
+                                        <input type="date" id="fsdate" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.start_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -100,7 +100,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.end_date') }}</label>
                                     <div class="input-group">
-                                        <input type="date" id="lsdate" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="End Date">
+                                        <input type="date" id="lsdate" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="{{ trans('admin/main.end_date') }}">
                                     </div>
                                 </div>
                             </div>
@@ -123,7 +123,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.class') }}</label>
                                     <select name="webinar_ids[]" multiple="multiple" class="form-control search-webinar-select2"
-                                            data-placeholder="Search classes">
+                                            data-placeholder="{{ trans('admin/main.search_classes') }}">
 
                                         @if(!empty($webinars) and $webinars->count() > 0)
                                             @foreach($webinars as $webinar)
@@ -139,7 +139,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.instructor') }}</label>
                                     <select name="teacher_ids[]" multiple="multiple" data-search-option="just_teacher_role" class="form-control search-user-select2"
-                                            data-placeholder="Search teachers">
+                                            data-placeholder="{{ trans('admin/main.search_teachers') }}">
 
                                         @if(!empty($teachers) and $teachers->count() > 0)
                                             @foreach($teachers as $teacher)
@@ -155,7 +155,7 @@
                                 <div class="form-group">
                                     <label class="input-label">{{ trans('admin/main.student') }}</label>
                                     <select name="student_ids[]" multiple="multiple" data-search-option="just_student_role" class="form-control search-user-select2"
-                                            data-placeholder="Search students">
+                                            data-placeholder="{{ trans('admin/main.search_students') }}">
 
                                         @if(!empty($students) and $students->count() > 0)
                                             @foreach($students as $student)

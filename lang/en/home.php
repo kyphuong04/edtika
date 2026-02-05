@@ -85,4 +85,18 @@ return [
     'platform_address' => 'Address',
     'order_summary' => 'Order Summary',
     'blog_search_placeholder' => 'Search blog posts...',
+
+    // Hero Section
+    'hero_badge' => 'Our Design Course Released!',
+    'hero_title' => 'Learn and Build Your Expertise',
+    'hero_desc' => 'Gain practical, real-world knowledge in different subjects, guided by expert instructors. Whether you\'re a beginner or upskilling, our courses help you grow with confidence and unlock your creative potential.',
+    'start_learning' => 'Start Learning',
+    'explore_courses' => 'Explore Courses',
+    'book_a_meeting' => 'Book a Meeting',
+
+    // Statistics (snake_case from title)
+    'skillful_instructors' => 'Skillful Instructors',
+    // 'happy_students' already exists
+    'professional_courses' => 'Professional Courses',
+    'official_organizations' => 'Official Organizations',
 ];

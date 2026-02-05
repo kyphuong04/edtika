@@ -11,10 +11,10 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>Regular Users {{ trans('admin/main.list') }}</h1>
+            <h1>{{ trans('admin/main.regular_users_list') }}</h1>
             <div class="section-header-breadcrumb">
-                <div class="breadcrumb-item active"><a>Regular Users</a></div>
-                <div class="breadcrumb-item"><a href="#">{{ trans('admin/main.users_list') }}</a></div>
+                <div class="breadcrumb-item active"><a>{{ trans('admin/main.regular_users') }}</a></div>
+                <div class="breadcrumb-item"><a href="{{ getAdminPanelUrl() }}/all-users">{{ trans('admin/main.users_list') }}</a></div>
             </div>
         </div>
     </section>
@@ -27,7 +27,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Total Regular Users</span>
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.total_regular_users') }}</span>
                             <div class="d-flex-center size-48 bg-primary-30 rounded-12">
                                 <x-iconsax-bul-profile-2user class="icons text-primary" width="24px" height="24px"/>
                             </div>
@@ -42,7 +42,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap"> 
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Organizations Regular Users</span>
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.organizations_regular_users') }}</span>
                             <div class="d-flex-center size-48 bg-success-30 rounded-12">
                                 <x-iconsax-bul-courthouse class="icons text-success" width="24px" height="24px"/>
                             </div>
@@ -57,7 +57,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Inactive Regular Users</span>
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.inactive_regular_users') }}</span>
                             <div class="d-flex-center size-48 bg-accent-30 rounded-12">
                                 <x-iconsax-bul-user-remove class="icons text-accent" width="24px" height="24px"/>
                             </div>
@@ -72,7 +72,7 @@
                     <div class="card-statistic__mask"></div>
                     <div class="card-statistic__wrap">
                         <div class="d-flex align-items-start justify-content-between">
-                            <span class="text-gray-500 mt-8">Banned Regular Users</span>
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.ban_regular_users') }}</span>
                             <div class="d-flex-center size-48 bg-danger-30 rounded-12">
                                 <x-iconsax-bul-user-minus class="icons text-danger" width="24px" height="24px"/>
                             </div>
@@ -99,7 +99,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.start_date') }}</label>
                                 <div class="input-group">
-                                    <input type="date" id="from" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="Start Date">
+                                    <input type="date" id="from" class="text-center form-control" name="from" value="{{ request()->get('from') }}" placeholder="{{ trans('admin/main.start_date') }}">
                                 </div>
                             </div>
                         </div>
@@ -107,7 +107,7 @@
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.end_date') }}</label>
                                 <div class="input-group">
-                                    <input type="date" id="to" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="End Date">
+                                    <input type="date" id="to" class="text-center form-control" name="to" value="{{ request()->get('to') }}" placeholder="{{ trans('admin/main.end_date') }}">
                                 </div>
                             </div>
                         </div>
@@ -192,8 +192,8 @@
     <div class="card-header justify-content-between">
                             
                             <div>
-                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
-                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_students_in_a_single_place') }}</p>
+                               <h5 class="font-14 mb-0">{{ trans('admin/main.regular_users') }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_regular_users_in_a_single_place') }}</p>
                            </div>
                            
                             <div class="d-flex align-items-center gap-12">
@@ -289,7 +289,7 @@
                             <td>
                                 @if($user->ban and !empty($user->ban_end_at) and $user->ban_end_at > time())
                                     <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.ban') }}</span>
-                                    <div class="text-small font-12 text-gray-500">Until {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
+                                    <div class="text-small font-12 text-gray-500">{{ trans('admin/main.until') }} {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
                                 @else
                                     <span class="badge-status {{ ($user->status == 'active') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ trans('admin/main.'.$user->status) }}</span>
                                 @endif

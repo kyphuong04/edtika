@@ -18,5 +18,11 @@ return [
     'menu' => 'Menu',
     'title' => 'Title',
     'start_a_live_class' => 'Start a New Course',
-
+    'courses' => 'Courses',
+    'instructors' => 'Instructors',
+    'store' => 'Store',
+    'forums' => 'Forums',
+    'login' => 'Login',
+    'register' => 'Register',
+    'about' => 'About',
 ];
