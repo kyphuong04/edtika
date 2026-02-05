@@ -186,33 +186,55 @@
     </div>
 </div>
 
-<?php if(!empty($itemType) and $itemType == 'text_lesson'): ?>
-    <?php if(!empty($item->summary)): ?>
-        <div class="mt-16 text-gray-500"><?php echo nl2br($item->summary); ?></div>
-    <?php endif; ?>
+<div class="learning-page__content-tabs mt-16">
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="lp-quiz-tab-<?php echo e($item->id); ?>" data-toggle="tab" href="#lp-quiz-<?php echo e($item->id); ?>" role="tab" aria-controls="lp-quiz-<?php echo e($item->id); ?>" aria-selected="true">Interactive Quizz</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="lp-desc-tab-<?php echo e($item->id); ?>" data-toggle="tab" href="#lp-desc-<?php echo e($item->id); ?>" role="tab" aria-controls="lp-desc-<?php echo e($item->id); ?>" aria-selected="false">Description</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="lp-notes-tab-<?php echo e($item->id); ?>" data-toggle="tab" href="#lp-notes-<?php echo e($item->id); ?>" role="tab" aria-controls="lp-notes-<?php echo e($item->id); ?>" aria-selected="false">Lecture Notes</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="lp-dict-tab-<?php echo e($item->id); ?>" data-toggle="tab" href="#lp-dict-<?php echo e($item->id); ?>" role="tab" aria-controls="lp-dict-<?php echo e($item->id); ?>" aria-selected="false">Dictionary</a>
+        </li>
+    </ul>
 
-    <?php if(!empty($item->content)): ?>
-        <div class="mt-16 text-gray-500"><?php echo nl2br($item->content); ?></div>
-    <?php endif; ?>
-<?php else: ?>
-    <?php if(!empty($item->description)): ?>
-        <div class="mt-16 text-gray-500"><?php echo nl2br($item->description); ?></div>
-    <?php endif; ?>
-<?php endif; ?>
+    <div class="tab-content mt-12">
+        <div class="tab-pane fade show active" id="lp-quiz-<?php echo e($item->id); ?>" role="tabpanel" aria-labelledby="lp-quiz-tab-<?php echo e($item->id); ?>">
+            <div class="learning-page__empty-tab">
+                Chưa có nội dung Interactive Quizz cho bài học này.
+            </div>
+        </div>
 
+        <div class="tab-pane fade" id="lp-desc-<?php echo e($item->id); ?>" role="tabpanel" aria-labelledby="lp-desc-tab-<?php echo e($item->id); ?>">
+            <?php if(!empty($itemType) and $itemType == 'text_lesson'): ?>
+                <?php if(!empty($item->summary)): ?>
+                    <div class="mt-12 text-gray-500"><?php echo nl2br($item->summary); ?></div>
+                <?php endif; ?>
 
+                <?php if(!empty($item->content)): ?>
+                    <div class="mt-12 text-gray-500"><?php echo nl2br($item->content); ?></div>
+                <?php endif; ?>
+            <?php else: ?>
+                <?php if(!empty($item->description)): ?>
+                    <div class="mt-12 text-gray-500"><?php echo nl2br($item->description); ?></div>
+                <?php endif; ?>
+            <?php endif; ?>
 
-<?php if(!empty($item->attachments) and count($item->attachments)): ?>
-    <div class="bg-gray-100 p-12 rounded-16 mt-24">
-        <h4 class="font-14 text-dark"><?php echo e(trans('update.attachments')); ?></h4>
+            <?php if(!empty($item->attachments) and count($item->attachments)): ?>
+                <div class="bg-gray-100 p-12 rounded-16 mt-16">
+                    <h4 class="font-14 text-dark"><?php echo e(trans('update.attachments')); ?></h4>
 
-        <div class="d-grid grid-columns-auto grid-lg-columns-4 gap-12 mt-12">
-            <?php $__currentLoopData = $item->attachments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $itemAttachment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <?php if(!empty($itemAttachment->file)): ?>
-                    <a href="<?php echo e($courseUrl); ?>/file/<?php echo e($itemAttachment->file->id); ?>/download" target="_blank" class="d-flex align-items-center p-16 rounded-16 bg-white text-dark">
-                        <div class="d-flex-center size-56 bg-gray-100 rounded-circle">
-                            <div class="d-flex-center size-40 bg-gray-200 rounded-circle">
-                                <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
+                    <div class="d-grid grid-columns-auto grid-lg-columns-4 gap-12 mt-12">
+                        <?php $__currentLoopData = $item->attachments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $itemAttachment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php if(!empty($itemAttachment->file)): ?>
+                                <a href="<?php echo e($courseUrl); ?>/file/<?php echo e($itemAttachment->file->id); ?>/download" target="_blank" class="d-flex align-items-center p-16 rounded-16 bg-white text-dark">
+                                    <div class="d-flex-center size-56 bg-gray-100 rounded-circle">
+                                        <div class="d-flex-center size-40 bg-gray-200 rounded-circle">
+                                            <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
 <?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
 <?php $component->withName('iconsax-bul-document-download'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -227,24 +249,75 @@
 <?php $component = $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e; ?>
 <?php unset($__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e); ?>
 <?php endif; ?>
-                            </div>
-                        </div>
-                        <div class="ml-8">
-                            <h5 class="font-14 text-dark"><?php echo e($itemAttachment->file->title); ?></h5>
-                            <div class="d-flex align-items-center gap-4 font-12 text-gray-500 mt-4">
-                                <span class=""><?php echo e(trans("update.file_type_{$itemAttachment->file->file_type}")); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-8">
+                                        <h5 class="font-14 text-dark"><?php echo e($itemAttachment->file->title); ?></h5>
+                                        <div class="d-flex align-items-center gap-4 font-12 text-gray-500 mt-4">
+                                            <span class=""><?php echo e(trans("update.file_type_{$itemAttachment->file->file_type}")); ?></span>
 
-                                <?php if(!empty($itemAttachment->file->volume)): ?>
-                                    <span class="">| <?php echo e($itemAttachment->file->getVolume()); ?></span>
-                                <?php endif; ?>
+                                            <?php if(!empty($itemAttachment->file->volume)): ?>
+                                                <span class="">| <?php echo e($itemAttachment->file->getVolume()); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="tab-pane fade" id="lp-notes-<?php echo e($item->id); ?>" role="tabpanel" aria-labelledby="lp-notes-tab-<?php echo e($item->id); ?>">
+            <div class="learning-page__empty-tab">
+                Chưa có Lecture Notes cho bài học này.
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="lp-dict-<?php echo e($item->id); ?>" role="tabpanel" aria-labelledby="lp-dict-tab-<?php echo e($item->id); ?>">
+            <div class="learning-page__dictionary">
+                <div class="learning-page__dictionary-search bg-gray-100 rounded-16 p-16">
+                    <h4 class="font-16 text-dark">Search English</h4>
+
+                    <div class="d-flex flex-column flex-md-row gap-12 mt-12">
+                        <input type="text" class="form-control" placeholder="Oxford">
+                        <button type="button" class="btn btn-dark">Search</button>
+                    </div>
+
+                    <div class="learning-page__dictionary-results bg-white rounded-16 p-16 mt-16">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <div class="d-flex align-items-center gap-16">
+                                    <h3 class="font-24">Oxford</h3>
+                                    <div class="text-gray-500 font-12">
+                                        UK /ˈɒks.fəd/ <br>
+                                        US /ˈɑːks.fɚd/
+                                    </div>
+                                </div>
+                                <div class="text-gray-500 font-12 mt-4">noun</div>
                             </div>
                         </div>
-                    </a>
-                <?php endif; ?>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                        <div class="mt-12 border-top pt-12">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-gray-700">a city in south east England, famous for its university</div>
+                                <button type="button" class="btn btn-sm btn-dark">Save</button>
+                            </div>
+                        </div>
+
+                        <div class="mt-12 border-top pt-12">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="text-gray-700">(also Oxford shoe) a type of fairly formal man's shoe, usually made of leather, that fastens with laces</div>
+                                <button type="button" class="btn btn-sm btn-dark">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-<?php endif; ?>
+</div>
 
 
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between mt-24 pt-16 border-top-gray-100">

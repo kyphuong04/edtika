@@ -1,11 +1,21 @@
 {{-- Writing Task View - Final Perfect UI --}}
 @php
-    $taskType = 'Task 2'; 
+    // Determine task type from question_type or title
+    $taskType = 'Task 1'; // Default to Task 1
+    
     if ($group->question_type) {
-        if (str_starts_with($group->question_type, 'task1_')) { $taskType = 'Task 1'; }
-        elseif ($group->question_type === 'task2_essay') { $taskType = 'Task 2'; }
-    } elseif (strpos($group->title ?? '', 'Task 1') !== false || strpos($group->title ?? '', 'Task1') !== false) {
-        $taskType = 'Task 1';
+        // Check if it's a Task 1 type (graph, map, process, letter)
+        if (in_array($group->question_type, ['task1_graph', 'task1_map', 'task1_process', 'task1_letter'])) {
+            $taskType = 'Task 1';
+        }
+        // Check if it's Task 2 (essay)
+        elseif ($group->question_type === 'task2_essay') {
+            $taskType = 'Task 2';
+        }
+    } 
+    // Fallback: check title if question_type is not set
+    elseif (strpos($group->title ?? '', 'Task 2') !== false || strpos($group->title ?? '', 'Task2') !== false) {
+        $taskType = 'Task 2';
     }
     
     $taskInfo = [

@@ -2,7 +2,7 @@
     <div class="col-6 col-lg-3">
         <div class="bg-white p-16 rounded-24">
             <div class="d-flex align-items-start justify-content-between">
-                <span class="text-gray-500 mt-8"><?php echo e(trans('panel.purchased')); ?></span>
+                <span class="text-gray-500 mt-8"><?php echo e(trans('update.total_courses')); ?></span>
                 <div class="size-48 d-flex-center bg-primary-30 rounded-12">
                     <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
 <?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
@@ -22,7 +22,7 @@
                 </div>
             </div>
 
-            <h5 class="font-24 mt-12 line-height-1"><?php echo e($totalPurchasedCount); ?></h5>
+            <h5 class="font-24 mt-12 line-height-1"><?php echo e($totalCoursesCount); ?></h5>
         </div>
     </div>
 
@@ -53,14 +53,14 @@
         </div>
     </div>
 
-    <div class="col-6 col-lg-3 mt-16 mt-md-0">
+    <div class="col-6 col-lg-3 mt-16 mt-lg-0">
         <div class="bg-white p-16 rounded-24">
             <div class="d-flex align-items-start justify-content-between">
-                <span class="text-gray-500 mt-8"><?php echo e(trans('panel.upcoming')); ?></span>
+                <span class="text-gray-500 mt-8"><?php echo e(trans('update.total_live_classes_sales')); ?></span>
                 <div class="size-48 d-flex-center bg-warning-30 rounded-12">
                     <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
 <?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
-<?php $component->withName('iconsax-bul-video-time'); ?>
+<?php $component->withName('iconsax-bul-bag'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
@@ -76,19 +76,18 @@
                 </div>
             </div>
 
-            <h5 class="font-24 mt-12 line-height-1"><?php echo e($totalUpcomingCount); ?></h5>
+            <h5 class="font-24 mt-12 line-height-1"><?php echo e(handlePrice($totalLiveCoursesSalesAmount)); ?></h5>
         </div>
     </div>
 
-    <div class="col-6 col-lg-3 mt-16 mt-md-0">
+    <div class="col-6 col-lg-3 mt-16 mt-lg-0">
         <div class="bg-white p-16 rounded-24">
             <div class="d-flex align-items-start justify-content-between">
-                <span class="text-gray-500 mt-8"><?php echo e(trans('update.total_purchased_amount')); ?></span>
-
+                <span class="text-gray-500 mt-8"><?php echo e(trans('update.total_course_sales')); ?></span>
                 <div class="size-48 d-flex-center bg-secondary-30 rounded-12">
                     <?php if (isset($component)) { $__componentOriginalcd9972c8156dfa6e5fd36675ca7bf5f21b506e2e = $component; } ?>
 <?php $component = BladeUI\Icons\Components\Svg::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
-<?php $component->withName('iconsax-bul-dollar-square'); ?>
+<?php $component->withName('iconsax-bul-bag'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(BladeUI\Icons\Components\Svg::class))->getConstructor()): ?>
@@ -104,12 +103,8 @@
                 </div>
             </div>
 
-            <h5 class="font-24 mt-12 line-height-1"><?php echo e(handlePrice($totalPurchasedAmount)); ?></h5>
+            <h5 class="font-24 mt-12 line-height-1"><?php echo e(handlePrice($totalCoursesSalesAmount)); ?></h5>
         </div>
     </div>
 </div>
-<<<<<<<< HEAD:storage/framework/views/85a22c286b35d21f88108f46717787e32d0d138f.php
 <?php /**PATH D:\xampp\htdocs\edtika\resources\views/design_1/panel/webinars/my_courses/top_stats.blade.php ENDPATH**/ ?>
-========
-<?php /**PATH D:\xampp\htdocs\edtika\resources\views/design_1/panel/webinars/my_purchases/top_stats.blade.php ENDPATH**/ ?>
->>>>>>>> frontend:storage/framework/views/f01425dd190d6eb9e180cdc652c37dca6bf884cf.php

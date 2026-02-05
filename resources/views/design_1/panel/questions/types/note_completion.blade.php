@@ -10,7 +10,7 @@
     
     <div class="info-box secondary">
         <x-iconsax-lin-flash class="icons" width="16px" height="16px"/>
-        <span><strong>Batch Mode:</strong> Thêm nhiều notes/bullet points cần điền. Sử dụng <code>_____</code> để đánh dấu chỗ trống. <kbd>Alt+A</kbd> để thêm nhanh.</span>
+        <span><strong>Batch Mode:</strong> Thêm nhiều notes/bullet points cần điền. Sử dụng <code>_____</code> để đánh dấu chỗ trống cho Question. Chọn <strong>Header</strong> để tạo hàng tiêu đề không có blank. <kbd>Alt+A</kbd> để thêm nhanh.</span>
     </div>
     
     {{-- Shared Word Limit --}}
@@ -41,8 +41,9 @@
             <input type="checkbox" id="ncSelectAll" class="batch-check" title="Chọn tất cả" checked>
         </div>
         <div style="width: 50px; text-align: center;">Q.</div>
-        <div class="flex-fill">Note với blank <code>_____</code> <span class="text-danger">*</span></div>
-        <div style="width: 150px; text-align: center;">Đáp án <span class="text-danger">*</span></div>
+        <div style="width: 100px;">Loại</div>
+        <div class="flex-fill">Nội dung (dùng <code>_____</code> cho blank)</div>
+        <div style="width: 150px; text-align: center;">Đáp án</div>
         <div style="width: 40px;"></div>
     </div>
     
@@ -70,6 +71,13 @@
 
 <style>
 .info-box.secondary { background: rgba(108, 117, 125, 0.08); border-left-color: #6c757d; }
+.batch-row[data-row-type="header"] { 
+    background: rgba(108, 117, 125, 0.05); 
+    border-left: 3px solid #6c757d;
+}
+.batch-row[data-row-type="header"] .nc-note {
+    font-weight: 600;
+}
 </style>
 
 <script>
@@ -79,17 +87,28 @@ setTimeout(function() {
     var startQNum = parseInt($('#question_number').val()) || 1;
     
     function validateRow($row) {
+        var rowType = $row.find('.nc-type').val() || 'question'; // Fallback to 'question'
         var note = $.trim($row.find('.nc-note').val());
         var answer = $.trim($row.find('.nc-answer').val());
         var hasBlank = note.indexOf('_____') !== -1 || note.indexOf('____') !== -1 || note.indexOf('___') !== -1;
-        var isValid = note.length >= 5 && hasBlank && answer.length >= 1;
         
-        $row.find('.nc-note').toggleClass('is-invalid', note.length > 0 && (!hasBlank || note.length < 5))
-            .toggleClass('is-valid', note.length >= 5 && hasBlank);
-        $row.find('.nc-answer').toggleClass('is-invalid', answer.length === 0 && note.length > 0)
-            .toggleClass('is-valid', answer.length >= 1);
+        var isValid;
+        if (rowType === 'header') {
+            // Header chỉ cần có nội dung, không cần blank và đáp án
+            isValid = note.length >= 3;
+            $row.find('.nc-note').toggleClass('is-invalid', note.length > 0 && note.length < 3)
+                .toggleClass('is-valid', note.length >= 3);
+            $row.find('.nc-answer').removeClass('is-invalid is-valid');
+        } else {
+            // Question cần có blank và đáp án
+            isValid = note.length >= 5 && hasBlank && answer.length >= 1;
+            $row.find('.nc-note').toggleClass('is-invalid', note.length > 0 && (!hasBlank || note.length < 5))
+                .toggleClass('is-valid', note.length >= 5 && hasBlank);
+            $row.find('.nc-answer').toggleClass('is-invalid', answer.length === 0 && note.length > 0)
+                .toggleClass('is-valid', answer.length >= 1);
+        }
         
-        $row.toggleClass('has-error', !isValid && (note.length > 0 || answer.length > 0));
+        $row.toggleClass('has-error', !isValid && note.length > 0);
         return isValid;
     }
     
@@ -101,10 +120,16 @@ setTimeout(function() {
         var qNum = startQNum + rowCount;
         rowCount++;
         
-        var html = '<div class="batch-row selected" data-qnum="'+qNum+'" style="animation: slideIn 0.2s ease-out;">' +
+        var html = '<div class="batch-row selected" data-qnum="'+qNum+'" data-row-type="question" style="animation: slideIn 0.2s ease-out;">' +
             '<div style="width: 40px; text-align: center;"><input type="checkbox" class="batch-check nc-checkbox" checked></div>' +
             '<div style="width: 50px; text-align: center;"><span class="q-badge" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);">Q'+qNum+'</span></div>' +
-            '<div class="flex-fill mx-12"><input type="text" class="form-control nc-note" placeholder="Ví dụ: Main materials: wood and _____" maxlength="400"></div>' +
+            '<div style="width: 100px; padding-right: 8px;">' +
+                '<select class="form-control form-control-sm nc-type">' +
+                    '<option value="question" selected>Question</option>' +
+                    '<option value="header">Header</option>' +
+                '</select>' +
+            '</div>' +
+            '<div class="flex-fill mx-8"><input type="text" class="form-control nc-note" placeholder="Ví dụ: Main materials: wood and _____" maxlength="400"></div>' +
             '<div style="width: 150px;"><input type="text" class="form-control nc-answer" placeholder="Đáp án" maxlength="100"></div>' +
             '<button type="button" class="btn btn-remove ml-8"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>' +
         '</div>';
@@ -126,18 +151,28 @@ setTimeout(function() {
         
         $('.batch-row').each(function() {
             var $row = $(this);
+            var rowType = $row.find('.nc-type').val() || 'question'; // Fallback to 'question' if undefined
             var isValid = validateRow($row);
             
             if ($row.find('.nc-checkbox').is(':checked') && isValid) {
                 validCount++;
-                questions.push({
-                    question_number: $row.data('qnum'),
+                var item = {
+                    row_type: rowType,
                     question_text: $.trim($row.find('.nc-note').val()),
-                    correct_answer: $.trim($row.find('.nc-answer').val()),
-                    word_limit: wordLimit,
                     question_type: 'note_completion',
                     question_type_label: 'Note Completion'
-                });
+                };
+                
+                if (rowType === 'question') {
+                    item.question_number = $row.data('qnum');
+                    item.correct_answer = $.trim($row.find('.nc-answer').val());
+                    item.word_limit = wordLimit;
+                } else {
+                    // Header rows: không gửi question_number, correct_answer, word_limit
+                    item.marks = 0; // Header không có điểm
+                }
+                
+                questions.push(item);
             }
         });
         
@@ -181,6 +216,28 @@ setTimeout(function() {
     
     $(document).off('input.nc', '.nc-note, .nc-answer').on('input.nc', '.nc-note, .nc-answer', function() {
         validateRow($(this).closest('.batch-row'));
+        updateUI();
+    });
+    
+    $(document).off('change.nc', '.nc-type').on('change.nc', '.nc-type', function() {
+        var $row = $(this).closest('.batch-row');
+        var rowType = $(this).val();
+        var $answer = $row.find('.nc-answer');
+        var $qBadge = $row.find('.q-badge');
+        
+        $row.attr('data-row-type', rowType);
+        
+        if (rowType === 'header') {
+            $answer.prop('disabled', true).val('').removeClass('is-invalid is-valid');
+            $qBadge.css('opacity', '0.3');
+            $row.find('.nc-note').attr('placeholder', 'Ví dụ: Part 1: Personal Information');
+        } else {
+            $answer.prop('disabled', false);
+            $qBadge.css('opacity', '1');
+            $row.find('.nc-note').attr('placeholder', 'Ví dụ: Main materials: wood and _____');
+        }
+        
+        validateRow($row);
         updateUI();
     });
     

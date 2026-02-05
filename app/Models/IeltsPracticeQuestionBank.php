@@ -18,6 +18,7 @@ class IeltsPracticeQuestionBank extends Model
         'question_type',
         'question_text',
         'question_data',
+        'table_structure',
         'instruction',
         'passage_text',
         'audio_file',
@@ -45,6 +46,8 @@ class IeltsPracticeQuestionBank extends Model
     
     protected $casts = [
         'answer_options' => 'array',
+        'table_structure' => 'array',
+        'question_data' => 'array',
         'tags' => 'array',
         'points' => 'decimal:1',
         'usage_count' => 'integer',
