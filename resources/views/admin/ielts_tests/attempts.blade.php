@@ -132,7 +132,7 @@
                                     <th>#</th>
                                     <th>{{ trans('admin/main.student') }}</th>
                                     <th>{{ trans('update.ielts_test') }}</th>
-                                    <th>{{ trans('admin/main.completed') }}</th>
+                                    <th>{{ trans('update.completed') }}</th>
                                     <th class="text-center">{{ trans('update.L') }}</th>
                                     <th class="text-center">{{ trans('update.R') }}</th>
                                     <th class="text-center">{{ trans('update.W') }}</th>
@@ -226,7 +226,7 @@
                                             @else
                                                 <span class="badge badge-success">
                                                     <x-iconsax-lin-tick-circle width="14" height="14" class="mr-1"/>
-                                                    {{ trans('admin/main.complete') }}
+                                                    {{ trans('update.complete') }}
                                                 </span>
                                             @endif
                                         </td>
