@@ -922,10 +922,10 @@
         <div class="col-lg-8">
             <!-- Search Section -->
             <div class="search-section">
-                <h3 class="search-title">Search English</h3>
+                <h3 class="search-title">{{ trans('panel.search_english') }}</h3>
                 <div class="search-wrapper">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search the word...">
-                    <button class="search-btn" id="searchBtn">Search</button>
+                    <input type="text" class="search-input" id="searchInput" placeholder="{{ trans('panel.search_the_word') }}">
+                    <button class="search-btn" id="searchBtn">{{ trans('panel.search') }}</button>
                 </div>
             </div>
 
@@ -941,8 +941,8 @@
             <!-- Academic Word Lists Section -->
             <div class="word-lists-section" id="academicWordListsSection">
                 <div class="section-header">
-                    <h2 class="section-title">Essential IELTS Academic Word List</h2>
-                    <button class="toggle-btn active" id="toggleMyWordListBtn">My Word List</button>
+                    <h2 class="section-title">{{ trans('panel.essential_ielts_academic_word_list') }}</h2>
+                    <button class="toggle-btn active" id="toggleMyWordListBtn">{{ trans('panel.my_word_list') }}</button>
                 </div>
                 
                 @foreach($academicWordLists as $wordList)
@@ -972,9 +972,9 @@
                         </div>
                         
                         <div class="action-bar">
-                            <button class="action-btn btn-select-all">Select All</button>
-                            <button class="action-btn btn-deselect-all">Deselect All</button>
-                            <button class="action-btn btn-practice">Practice</button>
+                            <button class="action-btn btn-select-all">{{ trans('panel.select_all') }}</button>
+                            <button class="action-btn btn-deselect-all">{{ trans('panel.deselect_all') }}</button>
+                            <button class="action-btn btn-practice">{{ trans('panel.practice') }}</button>
                         </div>
                     </div>
                 </div>
@@ -1008,10 +1008,10 @@
                         </div>
                         
                         <div class="action-bar">
-                            <button class="action-btn btn-select-all">Select All</button>
-                            <button class="action-btn btn-deselect-all">Deselect All</button>
-                            <button class="action-btn btn-delete">Delete</button>
-                            <button class="action-btn btn-practice">Practice</button>
+                            <button class="action-btn btn-select-all">{{ trans('panel.select_all') }}</button>
+                            <button class="action-btn btn-deselect-all">{{ trans('panel.deselect_all') }}</button>
+                            <button class="action-btn btn-delete">{{ trans('panel.delete') }}</button>
+                            <button class="action-btn btn-practice">{{ trans('panel.practice') }}</button>
                         </div>
                     </div>
                 </div>
@@ -1021,10 +1021,10 @@
             <div class="practice-mode-container hidden" id="practiceModeContainer">
                 <div class="score-board">
                     <div class="score-item">
-                        <div class="score-label">CORRECT: <span class="score-value correct" id="correctCount">0</span></div>
+                        <div class="score-label">{{ trans('panel.correct') }}: <span class="score-value correct" id="correctCount">0</span></div>
                     </div>
                     <div class="score-item">
-                        <div class="score-label">INCORRECT: <span class="score-value incorrect" id="incorrectCount">0</span></div>
+                        <div class="score-label">{{ trans('panel.incorrect') }}: <span class="score-value incorrect" id="incorrectCount">0</span></div>
                     </div>
                 </div>
                 
@@ -1035,8 +1035,8 @@
                 </div>
                 
                 <div class="practice-actions">
-                    <button class="practice-btn btn-exit" id="exitPracticeBtn">Exit</button>
-                    <button class="practice-btn btn-next" id="nextQuestionBtn" disabled>Next</button>
+                    <button class="practice-btn btn-exit" id="exitPracticeBtn">{{ trans('panel.exit') }}</button>
+                    <button class="practice-btn btn-next" id="nextQuestionBtn" disabled>{{ trans('panel.next') }}</button>
                 </div>
             </div>
         </div>
@@ -1045,22 +1045,22 @@
         <div class="col-lg-4">
             <!-- Flashcards Widget -->
             <div class="stats-widget">
-                <h3 class="widget-title">FLASHCARDS</h3>
+                <h3 class="widget-title">{{ trans('panel.flashcards') }}</h3>
                 <div class="flashcard-preview">
                     <div class="flashcard-info">
-                        <p class="mb-2">📚 Based on your Band {{ number_format($userStats['band_estimate'], 1) }} level</p>
-                        <p class="mb-0 text-muted">Build your vocabulary with smart flashcards</p>
+                        <p class="mb-2">📚 {{ trans('panel.based_on_band_level', ['score' => number_format($userStats['band_estimate'], 1)]) }}</p>
+                        <p class="mb-0 text-muted">{{ trans('panel.vocabulary_hint') }}</p>
                     </div>
                     <a href="/panel/dictionary/flashcards" class="btn btn-sm btn-primary mt-3 w-100">
                         <i class="iconsax mr-1" data-icon="cards"></i>
-                        View All Flashcards
+                        {{ trans('panel.view_all_flashcards') }}
                     </a>
                 </div>
             </div>
 
             <!-- Streak Widget -->
             <div class="stats-widget">
-                <h3 class="widget-title">STREAK</h3>
+                <h3 class="widget-title">{{ trans('panel.streak') }}</h3>
                 <div class="streak-circles">
                     @for($i = 1; $i <= 7; $i++)
                         <div class="streak-circle {{ $i <= $userStats['streak'] ? 'active' : '' }}">{{ $i }}</div>
@@ -1070,9 +1070,9 @@
 
             <!-- Ranking Widget -->
             <div class="stats-widget">
-                <h3 class="widget-title">RANKING</h3>
+                <h3 class="widget-title">{{ trans('panel.ranking') }}</h3>
                 <div class="ranking-placeholder">
-                    <p>Your ranking will appear here</p>
+                    <p>{{ trans('panel.ranking_hint') }}</p>
                 </div>
             </div>
         </div>
@@ -1131,27 +1131,27 @@
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
             beforeSend: function() {
-                $('#searchBtn').prop('disabled', true).text('Searching...');
+                $('#searchBtn').prop('disabled', true).text('{{ trans('panel.searching') }}...');
             },
             success: function(response) {
                 if (response.success && response.data) {
                     displaySearchResult(response.data);
                     $('#dictionaryResult').removeClass('hidden');
                 } else {
-                    alert('No results found for: ' + searchTerm);
+                    alert('{{ trans('panel.word_not_found') }}: ' + searchTerm);
                 }
             },
             error: function(xhr, status, error) {
                 console.error('Search error:', xhr.responseText);
                 
-                let errorMessage = 'An error occurred while searching';
+                let errorMessage = '{{ trans('panel.search_error') }}';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
                 alert(errorMessage);
             },
             complete: function() {
-                $('#searchBtn').prop('disabled', false).text('Search');
+                $('#searchBtn').prop('disabled', false).text('{{ trans('panel.search') }}');
                 isSearching = false;
             }
         });
@@ -1217,11 +1217,11 @@
             <div class="result-actions">
                 <button class="result-btn result-btn-primary" id="saveToFlashcard" data-word="${data.headword || data.word}">
                     <i class="iconsax" data-icon="bookmark"></i>
-                    Save to Flashcard
+                    {{ trans('panel.save_to_flashcard') }}
                 </button>
                 <button class="result-btn result-btn-secondary" id="addToWordList" data-word="${data.headword || data.word}">
                     <i class="iconsax" data-icon="add-circle"></i>
-                    Add to Word List
+                    {{ trans('panel.add_to_list') }}
                 </button>
             </div>
         `;
@@ -1261,7 +1261,7 @@
     // Click on word list card to expand/collapse
     $('.word-list-card').on('click', function(e) {
         if ($(this).hasClass('locked')) {
-            alert('This word list is locked. Please purchase the corresponding IELTS course to unlock it.');
+            alert('{{ trans('panel.word_list_locked_hint') }}');
             return;
         }
 
@@ -1336,7 +1336,7 @@
                     </div>
                     <div class="learned-badge ${word.is_learned ? 'show' : ''}" 
                          data-word-id="${word.id}" 
-                         title="Đánh dấu đã học">
+                         title="{{ trans('panel.mark_as_learned') }}">
                         <i class="iconsax" data-icon="tick-circle"></i>
                     </div>
                 </div>
@@ -1391,11 +1391,11 @@
         });
 
         if (selectedIds.length === 0) {
-            alert('Please select words to delete');
+            alert('{{ trans('panel.please_select_words_to_delete') }}');
             return;
         }
 
-        if (!confirm('Are you sure you want to delete these words?')) {
+        if (!confirm('{{ trans('panel.confirm_bulk_delete_words') }}')) {
             return;
         }
 
@@ -1413,7 +1413,7 @@
         });
 
         if (selectedIds.length === 0) {
-            alert('Please select words to practice');
+            alert('{{ trans('panel.please_select_words_to_practice') }}');
             return;
         }
 
@@ -1457,7 +1457,7 @@
             },
             error: function(error) {
                 console.error('Error starting practice:', error);
-                alert('Failed to start practice session');
+                alert('{{ trans('panel.failed_to_start_practice') }}');
             }
         });
     }
