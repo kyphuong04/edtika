@@ -1,8 +1,9 @@
 .interactive-content-section {
     .nav-tabs {
-        border-bottom: 0;
+        border-bottom: 1px solid var(--gray-300);
         gap: 16px;
-        display: inline-flex;
+        display: flex;
+        width: 100%;
         max-width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
@@ -32,20 +33,14 @@
             color: var(--gray-900);
             border-color: transparent !important;
             box-shadow: none !important;
+
+            &::after {
+                display: none !important;
+            }
         }
 
         &::after {
             display: none !important;
         }
-    }
-
-    .nav-tabs .nav-link::after,
-    .nav-tabs .nav-link.active::after,
-    .nav-tabs .nav-item .nav-link::after,
-    .nav-tabs .nav-item .nav-link.active::after {
-        display: none !important;
-        content: none !important;
-        border: 0 !important;
-        box-shadow: none !important;
     }
 }
