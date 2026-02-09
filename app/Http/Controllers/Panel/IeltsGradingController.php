@@ -79,7 +79,7 @@ class IeltsGradingController extends Controller
             ->count();
         
         return view('design_1.panel.ielts_grading.index', [
-            'pageTitle' => 'IELTS Grading',
+            'pageTitle' => trans('update.ielts_grading'),
             'attempts' => $attempts,
             'pendingWriting' => $pendingWriting,
             'pendingSpeaking' => $pendingSpeaking,
@@ -129,7 +129,7 @@ class IeltsGradingController extends Controller
             ->get();
         
         return view('design_1.panel.ielts_grading.grade', [
-            'pageTitle' => 'Grade ' . ucfirst($skill) . ' - ' . $attempt->user->full_name,
+            'pageTitle' => trans('update.grade') . ' ' . trans('update.' . $skill) . ' - ' . $attempt->user->full_name,
             'attempt' => $attempt,
             'test' => $attempt->test,
             'user' => $attempt->user,

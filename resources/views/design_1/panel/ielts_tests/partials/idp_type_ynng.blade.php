@@ -16,19 +16,19 @@
                 <input type="radio" name="q_{{ $q->id }}" value="YES" 
                        {{ $saved === 'YES' ? 'checked' : '' }}
                        onchange="saveAnswer({{ $q->id }}, 'YES')">
-                <span>YES</span>
+                <span>{{ trans('update.ielts_yes') }}</span>
             </label>
             <label class="idp-option">
                 <input type="radio" name="q_{{ $q->id }}" value="NO"
                        {{ $saved === 'NO' ? 'checked' : '' }}
                        onchange="saveAnswer({{ $q->id }}, 'NO')">
-                <span>NO</span>
+                <span>{{ trans('update.ielts_no') }}</span>
             </label>
             <label class="idp-option">
                 <input type="radio" name="q_{{ $q->id }}" value="NOT GIVEN"
                        {{ $saved === 'NOT GIVEN' ? 'checked' : '' }}
                        onchange="saveAnswer({{ $q->id }}, 'NOT GIVEN')">
-                <span>NOT GIVEN</span>
+                <span>{{ trans('update.ielts_not_given') }}</span>
             </label>
         </div>
     </div>
