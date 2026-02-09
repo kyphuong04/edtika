@@ -283,21 +283,21 @@
 <div class="grading-container mt-20">
     {{-- Header --}}
     <div class="grading-header">
-        <h1 class="mb-2">IELTS Grading Dashboard</h1>
-        <p class="mb-0 opacity-85">Review and grade student writing and speaking submissions</p>
+        <h1 class="mb-2">{{ trans('update.ielts_grading_dashboard') }}</h1>
+        <p class="mb-0 opacity-85">{{ trans('update.ielts_grading_dashboard_hint') }}</p>
         
         <div class="grading-stats">
             <div class="stat-card">
                 <div class="stat-number">{{ $pendingWriting }}</div>
-                <div class="stat-label">✍️ Writing Pending</div>
+                <div class="stat-label">✍️ {{ trans('update.writing_pending') }}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">{{ $pendingSpeaking }}</div>
-                <div class="stat-label">🎤 Speaking Pending</div>
+                <div class="stat-label">🎤 {{ trans('update.speaking_pending') }}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">{{ $pendingWriting + $pendingSpeaking }}</div>
-                <div class="stat-label">📋 Total Pending</div>
+                <div class="stat-label">📋 {{ trans('update.total_pending') }}</div>
             </div>
         </div>
     </div>
@@ -305,29 +305,29 @@
     {{-- Filters --}}
     <div class="filter-bar">
         <div class="filter-group">
-            <label>Status:</label>
+            <label>{{ trans('admin/main.status') }}:</label>
             <select onchange="applyFilter('status', this.value)">
-                <option value="pending" {{ $currentStatus === 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="graded" {{ $currentStatus === 'graded' ? 'selected' : '' }}>Graded</option>
-                <option value="all" {{ $currentStatus === 'all' ? 'selected' : '' }}>All</option>
+                <option value="pending" {{ $currentStatus === 'pending' ? 'selected' : '' }}>{{ trans('admin/main.pending') }}</option>
+                <option value="graded" {{ $currentStatus === 'graded' ? 'selected' : '' }}>{{ trans('update.graded') }}</option>
+                <option value="all" {{ $currentStatus === 'all' ? 'selected' : '' }}>{{ trans('update.ielts_all') }}</option>
             </select>
         </div>
         
         <div class="filter-group">
-            <label>Test Type:</label>
+            <label>{{ trans('update.test_type') }}:</label>
             <select onchange="applyFilter('type', this.value)">
-                <option value="all" {{ $currentType === 'all' ? 'selected' : '' }}>All Types</option>
-                <option value="mock" {{ $currentType === 'mock' ? 'selected' : '' }}>Mock Tests</option>
-                <option value="practice" {{ $currentType === 'practice' ? 'selected' : '' }}>Practice Tests</option>
+                <option value="all" {{ $currentType === 'all' ? 'selected' : '' }}>{{ trans('update.all_types') }}</option>
+                <option value="mock" {{ $currentType === 'mock' ? 'selected' : '' }}>{{ trans('update.mock_tests') }}</option>
+                <option value="practice" {{ $currentType === 'practice' ? 'selected' : '' }}>{{ trans('update.practice_tests') }}</option>
             </select>
         </div>
         
         <div class="filter-group">
-            <label>Skill:</label>
+            <label>{{ trans('update.section_skill') }}:</label>
             <select onchange="applyFilter('skill', this.value)">
-                <option value="all" {{ $currentSkill === 'all' ? 'selected' : '' }}>All Skills</option>
-                <option value="writing" {{ $currentSkill === 'writing' ? 'selected' : '' }}>Writing Only</option>
-                <option value="speaking" {{ $currentSkill === 'speaking' ? 'selected' : '' }}>Speaking Only</option>
+                <option value="all" {{ $currentSkill === 'all' ? 'selected' : '' }}>{{ trans('update.ielts_all_skills') }}</option>
+                <option value="writing" {{ $currentSkill === 'writing' ? 'selected' : '' }}>{{ trans('update.writing_only') }}</option>
+                <option value="speaking" {{ $currentSkill === 'speaking' ? 'selected' : '' }}>{{ trans('update.speaking_only') }}</option>
             </select>
         </div>
     </div>
@@ -348,19 +348,19 @@
                             {{ strtoupper(substr($attempt->user->full_name ?? 'U', 0, 1)) }}
                         </div>
                         <div>
-                            <div class="student-name">{{ $attempt->user->full_name ?? 'Unknown User' }}</div>
-                            <div class="test-name">{{ $attempt->test->title ?? 'Unknown Test' }}</div>
+                            <div class="student-name">{{ $attempt->user->full_name ?? trans('update.unknown_user') }}</div>
+                            <div class="test-name">{{ $attempt->test->title ?? trans('update.unknown_test') }}</div>
                         </div>
                     </div>
                     
                     <div class="attempt-badges">
                         <span class="badge {{ $attempt->test->test_type === 'mock' ? 'badge-mock' : 'badge-practice' }}">
-                            {{ ucfirst($attempt->test->test_type ?? 'Test') }}
+                            {{ trans('update.' . ($attempt->test->test_type ?? 'test')) }}
                         </span>
                         @if($needsWriting || $needsSpeaking)
-                            <span class="badge badge-pending">Pending Grading</span>
+                            <span class="badge badge-pending">{{ trans('update.pending_grading') }}</span>
                         @else
-                            <span class="badge badge-graded">Graded</span>
+                            <span class="badge badge-graded">{{ trans('update.graded') }}</span>
                         @endif
                     </div>
                 </div>
@@ -375,30 +375,30 @@
                     @if($attempt->test->has_listening)
                         <div class="skill-item graded">
                             <span>🎧</span>
-                            Listening: <strong>{{ $attempt->listening_score ?? 0 }}/40</strong>
-                            <small class="text-muted">({{ $listeningAnswers }} answered)</small>
+                            {{ trans('update.listening') }}: <strong>{{ $attempt->listening_score ?? 0 }}/40</strong>
+                            <small class="text-muted">({{ $listeningAnswers }} {{ trans('update.ielts_answered') }})</small>
                         </div>
                     @endif
                     
                     @if($attempt->test->has_reading)
                         <div class="skill-item graded">
                             <span>📖</span>
-                            Reading: <strong>{{ $attempt->reading_score ?? 0 }}/40</strong>
-                            <small class="text-muted">({{ $readingAnswers }} answered)</small>
+                            {{ trans('update.reading') }}: <strong>{{ $attempt->reading_score ?? 0 }}/40</strong>
+                            <small class="text-muted">({{ $readingAnswers }} {{ trans('update.ielts_answered') }})</small>
                         </div>
                     @endif
                     
                     @if($attempt->test->has_writing)
                         <div class="skill-item {{ $needsWriting ? 'needs-grading' : 'graded' }}">
                             <span>✍️</span>
-                            Writing: <strong>{{ $attempt->writing_band ? 'Band ' . $attempt->writing_band : 'Needs Grading' }}</strong>
+                            {{ trans('update.writing') }}: <strong>{{ $attempt->writing_band ? trans('update.band_score', ['score' => $attempt->writing_band]) : trans('update.needs_grading') }}</strong>
                         </div>
                     @endif
                     
                     @if($attempt->test->has_speaking)
                         <div class="skill-item {{ $needsSpeaking ? 'needs-grading' : 'graded' }}">
                             <span>🎤</span>
-                            Speaking: <strong>{{ $attempt->speaking_band ? 'Band ' . $attempt->speaking_band : 'Needs Grading' }}</strong>
+                            {{ trans('update.speaking') }}: <strong>{{ $attempt->speaking_band ? trans('update.band_score', ['score' => $attempt->speaking_band]) : trans('update.needs_grading') }}</strong>
                         </div>
                     @endif
                 </div>
@@ -406,23 +406,23 @@
                 <div class="attempt-actions">
                     @if($needsWriting)
                         <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'writing']) }}" class="btn-grade btn-grade-writing">
-                            <span>✍️</span> Grade Writing
+                            <span>✍️</span> {{ trans('update.grade_writing') }}
                         </a>
                     @endif
                     
                     @if($needsSpeaking)
                         <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'speaking']) }}" class="btn-grade btn-grade-speaking">
-                            <span>🎤</span> Grade Speaking
+                            <span>🎤</span> {{ trans('update.grade_speaking') }}
                         </a>
                     @endif
                     
                     <a href="{{ route('panel.ielts_tests.review', $attempt->id) }}" class="btn-grade btn-view" target="_blank">
-                        <span>👁️</span> View Full Attempt
+                        <span>👁️</span> {{ trans('update.view_full_attempt') }}
                     </a>
                 </div>
                 
                 <div class="completed-date">
-                    Completed: {{ $attempt->completed_at ? date('M j, Y \a\t g:i A', $attempt->completed_at) : 'N/A' }}
+                    {{ trans('admin/main.completed') }}: {{ $attempt->completed_at ? date('M j, Y \a\t g:i A', $attempt->completed_at) : 'N/A' }}
                 </div>
             </div>
         @endforeach
@@ -434,8 +434,8 @@
     @else
         <div class="empty-state">
             <div class="empty-state-icon">📋</div>
-            <h3>No Attempts Found</h3>
-            <p>There are no test attempts matching your current filters.</p>
+            <h3>{{ trans('update.no_attempts_found') }}</h3>
+            <p>{{ trans('update.no_attempts_matching_filters') }}</p>
         </div>
     @endif
 </div>

@@ -2375,4 +2375,6 @@ return [
     'select_sender' => 'Chọn người gửi',
     'search_and_select_product' => 'Tìm kiếm và chọn sản phẩm',
     'categories_list_page_title' => 'Danh sách danh mục',
+    'completed' => 'Ngày hoàn thành',
+    'complete' => 'Hoàn thành',
 ];

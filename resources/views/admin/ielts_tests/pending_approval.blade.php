@@ -11,17 +11,17 @@
                 </div>
                 <div>
                     <h1 class="font-20 font-weight-bold text-dark mb-4">
-                        Question Groups - Pending Approval
+                        {{ trans('update.ielts_question_groups_pending_approval') }}
                     </h1>
                     <p class="text-gray-500 font-13 mb-0">
                         <i class="fas fa-info-circle mr-4" style="font-size: 14px;"></i>
-                        Review and approve submitted question groups
+                        {{ trans('update.ielts_review_approve_question_groups_hint') }}
                     </p>
                 </div>
             </div>
             <div>
                 <span class="badge badge-warning" style="padding: 10px 20px; font-size: 14px; border-radius: 20px; font-weight: 600;">
-                    {{ $groups->total() }} Pending
+                    {{ trans('update.pending_count', ['count' => $groups->total()]) }}
                 </span>
             </div>
         </div>
@@ -47,7 +47,7 @@
                         <div class="font-24 font-weight-bold" style="color: {{ $skillStats[$skill]['color'] }};">
                             {{ $skillStats[$skill]['count'] }}
                         </div>
-                        <div class="font-12 text-gray-500 text-uppercase">{{ ucfirst($skill) }}</div>
+                        <div class="font-12 text-gray-500 text-uppercase">{{ trans('update.'.$skill) }}</div>
                     </div>
                 </div>
             </div>
@@ -59,40 +59,40 @@
         <form method="GET" class="m-0">
             <div class="row align-items-end">
                 <div class="col-md-3">
-                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Skill</label>
+                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">{{ trans('update.skill') }}</label>
                     <select name="skill" class="form-control">
-                        <option value="">All Skills</option>
+                        <option value="">{{ trans('update.ielts_all_skills') }}</option>
                         <option value="reading" {{ request('skill') == 'reading' ? 'selected' : '' }}>
-                            <i class="fas fa-book"></i> Reading
+                            <i class="fas fa-book"></i> {{ trans('update.reading') }}
                         </option>
                         <option value="listening" {{ request('skill') == 'listening' ? 'selected' : '' }}>
-                            <i class="fas fa-headphones"></i> Listening
+                            <i class="fas fa-headphones"></i> {{ trans('update.listening') }}
                         </option>
                         <option value="writing" {{ request('skill') == 'writing' ? 'selected' : '' }}>
-                            <i class="fas fa-pen"></i> Writing
+                            <i class="fas fa-pen"></i> {{ trans('update.writing') }}
                         </option>
                         <option value="speaking" {{ request('skill') == 'speaking' ? 'selected' : '' }}>
-                            <i class="fas fa-microphone"></i> Speaking
+                            <i class="fas fa-microphone"></i> {{ trans('update.speaking') }}
                         </option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Type</label>
+                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">{{ trans('update.type') }}</label>
                     <select name="type" class="form-control">
-                        <option value="">All Types</option>
-                        <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>Mock</option>
-                        <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>Practice</option>
+                        <option value="">{{ trans('update.ielts_all_types') }}</option>
+                        <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>{{ trans('update.mock') }}</option>
+                        <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>{{ trans('update.practice') }}</option>
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">Search</label>
+                    <label class="font-12 font-weight-bold text-gray-600 text-uppercase mb-8">{{ trans('update.search') }}</label>
                     <input type="text" name="search" class="form-control" 
-                           placeholder="Search by title or creator..." value="{{ request('search') }}">
+                           placeholder="{{ trans('update.search_by_title_or_creator') }}" value="{{ request('search') }}">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100" 
                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-                        <i class="fas fa-filter mr-8"></i>Filter
+                        <i class="fas fa-filter mr-8"></i>{{ trans('update.filter') }}
                     </button>
                 </div>
             </div>
@@ -104,21 +104,21 @@
         @if($groups->isEmpty())
             <div class="text-center py-5">
                 <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-                <h5 style="font-weight: 600;">All caught up!</h5>
-                <p class="text-muted">No question groups pending approval</p>
+                <h5 style="font-weight: 600;">{{ trans('update.all_caught_up') }}</h5>
+                <p class="text-muted">{{ trans('update.no_pending_question_groups') }}</p>
             </div>
         @else
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
-                            <th class="font-11 text-gray-600 text-uppercase py-16 px-20 font-weight-bold border-0">Group</th>
-                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Type</th>
-                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Skill</th>
-                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Created By</th>
-                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Submitted</th>
-                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">Questions</th>
-                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center" style="width: 250px;">Actions</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 px-20 font-weight-bold border-0">{{ trans('update.group') }}</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">{{ trans('update.type') }}</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">{{ trans('update.skill') }}</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">{{ trans('update.created_by') }}</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">{{ trans('update.submitted') }}</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center">{{ trans('update.questions') }}</th>
+                            <th class="font-11 text-gray-600 text-uppercase py-16 font-weight-bold border-0 text-center" style="width: 250px;">{{ trans('update.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -148,7 +148,7 @@
                             </td>
                             <td class="text-center">
                                 <span class="badge" style="display: inline-block; width: 70px; padding: 5px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; {{ $group->bank_type === 'mock' ? 'background: #e3f2fd; color: #1976d2;' : 'background: #e8f5e9; color: #388e3c;' }}">
-                                    {{ $group->bank_type === 'mock' ? 'Mock' : 'Practice' }}
+                                    {{ $group->bank_type === 'mock' ? trans('update.mock') : trans('update.practice') }}
                                 </span>
                             </td>
                             <td class="text-center">
@@ -159,7 +159,7 @@
                                     @elseif($group->skill === 'speaking') background: #d1fae5; color: #065f46;
                                     @endif">
                                     <i class="fas {{ $currentSkill['icon'] }} mr-1" style="font-size: 10px;"></i>
-                                    {{ ucfirst($group->skill) }}
+                                    {{ trans('update.'.$group->skill) }}
                                 </span>
                             </td>
                             <td class="text-center">
@@ -209,22 +209,22 @@
                             <div class="modal-dialog">
                                 <div class="modal-content" style="border-radius: 12px; border: none; overflow: hidden;">
                                     <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; border: none;">
-                                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle mr-2"></i>Reject Question Group</h5>
+                                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle mr-2"></i>{{ trans('update.reject_question_group') }}</h5>
                                         <button type="button" class="close" data-dismiss="modal" style="color: white; opacity: 1;">&times;</button>
                                     </div>
                                     <form action="{{ route('admin.question_groups.reject', $group->id) }}" method="POST">
                                         @csrf
                                         <div class="modal-body" style="padding: 24px;">
-                                            <p style="margin-bottom: 8px;"><strong>Group:</strong> {{ $group->title }}</p>
-                                            <p style="color: #6c757d; font-size: 14px; margin-bottom: 16px;">Please provide a reason for rejecting this question group:</p>
+                                            <p style="margin-bottom: 8px;"><strong>{{ trans('update.group') }}:</strong> {{ $group->title }}</p>
+                                            <p style="color: #6c757d; font-size: 14px; margin-bottom: 16px;">{{ trans('update.rejection_reason_desc') }}</p>
                                             <textarea name="rejection_reason" class="form-control" rows="4" required 
-                                                      placeholder="Enter rejection reason..." 
+                                                      placeholder="{{ trans('update.rejection_reason_placeholder') }}" 
                                                       style="border-radius: 8px; border: 1px solid #dee2e6; font-size: 14px;"></textarea>
                                         </div>
                                         <div class="modal-footer" style="border-top: 1px solid #f0f0f0; padding: 16px 24px;">
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 6px;">Cancel</button>
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 6px;">{{ trans('admin/main.cancel') }}</button>
                                             <button type="submit" class="btn btn-danger" style="border-radius: 6px;">
-                                                <i class="fas fa-ban mr-1"></i> Reject Group
+                                                <i class="fas fa-ban mr-1"></i> {{ trans('update.reject_group') }}
                                             </button>
                                         </div>
                                     </form>

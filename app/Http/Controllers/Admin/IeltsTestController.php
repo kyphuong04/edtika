@@ -941,7 +941,7 @@ class IeltsTestController extends Controller
             ->paginate(20);
         
         $data = [
-            'pageTitle' => 'Question Groups - Pending Approval',
+            'pageTitle' => trans('update.ielts_question_groups_pending_approval'),
             'groups' => $groups,
         ];
         
@@ -971,7 +971,6 @@ class IeltsTestController extends Controller
                 'type' => 'single',
                 'created_at' => time(),
             ]);
-        }
         
         return back()->with(['toast' => [
             'title' => 'Success',
@@ -1086,7 +1085,7 @@ class IeltsTestController extends Controller
             })->count();
         
         $data = [
-            'pageTitle' => 'Test Attempts & Grading',
+            'pageTitle' => trans('update.ielts_grading_dashboard'),
             'attempts' => $attempts,
             'tests' => $tests,
             'pendingCount' => $pendingCount,
