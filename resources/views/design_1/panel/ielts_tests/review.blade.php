@@ -304,11 +304,11 @@
     <div class="review-header">
         <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap: 16px;">
             <div>
-                <h1>📋 Review Answers</h1>
-                <p class="subtitle">{{ $test->title }} • Attempt #{{ $attempt->attempt_number }}</p>
+                <h1>{{ trans('update.review_answers') }}</h1>
+                <p class="subtitle">{{ $test->title }} • {{ trans('update.attempt_number', ['number' => $attempt->attempt_number]) }}</p>
                 @if(!$isOwner && $isTeacher)
                     <p class="subtitle mt-1">
-                        <strong>Student:</strong> {{ $attempt->user->full_name ?? 'Unknown' }}
+                        <strong>{{ trans('update.student') }}:</strong> {{ $attempt->user->full_name ?? trans('update.unknown') }}
                         ({{ $attempt->user->email ?? '' }})
                     </p>
                 @endif
@@ -317,17 +317,17 @@
                 @if($isTeacher)
                     @if($test->has_writing && !$attempt->writing_band)
                         <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'writing']) }}" class="btn-grade btn-grade-writing">
-                            ✍️ Grade Writing
+                            {{ trans('update.grade_writing') }}
                         </a>
                     @endif
                     @if($test->has_speaking && !$attempt->speaking_band)
                         <a href="{{ route('panel.ielts_grading.grade', ['attemptId' => $attempt->id, 'skill' => 'speaking']) }}" class="btn-grade btn-grade-speaking">
-                            🎤 Grade Speaking
+                            {{ trans('update.grade_speaking') }}
                         </a>
                     @endif
                 @endif
                 <a href="{{ route('panel.ielts_tests.results', $attempt->id) }}" class="btn-grade btn-back">
-                    ← Back to Results
+                    ← {{ trans('update.back_to_results') }}
                 </a>
             </div>
         </div>
@@ -335,24 +335,24 @@
         <div class="stats-summary">
             <div class="stat-item">
                 <div class="stat-value">{{ $totalQuestions }}</div>
-                <div class="stat-label">Total Questions</div>
+                <div class="stat-label">{{ trans('update.total_questions') }}</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">{{ $answeredQuestions }}</div>
-                <div class="stat-label">Answered</div>
+                <div class="stat-label">{{ trans('update.answered_stat') }}</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">{{ $correctAnswers }}</div>
-                <div class="stat-label">✓ Correct</div>
+                <div class="stat-label">✓ {{ trans('update.correct') }}</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value">{{ $incorrectAnswers }}</div>
-                <div class="stat-label">✗ Incorrect</div>
+                <div class="stat-label">✗ {{ trans('update.incorrect') }}</div>
             </div>
             @if($pendingGrading > 0)
                 <div class="stat-item">
                     <div class="stat-value">{{ $pendingGrading }}</div>
-                    <div class="stat-label">⏳ Pending</div>
+                    <div class="stat-label">⏳ {{ trans('admin/main.pending') }}</div>
                 </div>
             @endif
         </div>
@@ -376,13 +376,13 @@
         <div class="section-card">
             <div class="section-header">
                 <div>
-                    <h3 class="section-title">{{ $section->title ?: 'Section ' . $loop->iteration }}</h3>
-                    <span class="section-skill skill-{{ $section->skill }}">{{ ucfirst($section->skill) }}</span>
+                    <h3 class="section-title">{{ $section->title ?: trans('update.part') . ' ' . $loop->iteration }}</h3>
+                    <span class="section-skill skill-{{ $section->skill }}">{{ mb_strtoupper(trans('update.' . $section->skill)) }}</span>
                 </div>
                 <div class="section-stats">
-                    {{ $sectionAnswered }}/{{ $sectionTotal }} answered
+                    {{ $sectionAnswered }}/{{ $sectionTotal }} {{ trans('update.ielts_answered') }}
                     @if($section->skill === 'reading' || $section->skill === 'listening')
-                        • {{ $sectionCorrect }} correct
+                        • {{ $sectionCorrect }} {{ trans('update.correct') }}
                     @endif
                 </div>
             </div>
@@ -398,26 +398,26 @@
                         // Determine status
                         if(!$hasAnswer) {
                             $status = 'no-answer';
-                            $statusLabel = 'No Answer';
+                            $statusLabel = trans('update.no_answer');
                             $badgeClass = 'badge-no-answer';
                         } elseif($isPending) {
                             $status = 'pending';
-                            $statusLabel = 'Pending';
+                            $statusLabel = trans('admin/main.pending');
                             $badgeClass = 'badge-pending';
                         } elseif($isCorrect) {
                             $status = 'correct';
-                            $statusLabel = 'Correct';
+                            $statusLabel = trans('update.correct');
                             $badgeClass = 'badge-correct';
                         } else {
                             $status = 'incorrect';
-                            $statusLabel = 'Incorrect';
+                            $statusLabel = trans('update.incorrect');
                             $badgeClass = 'badge-incorrect';
                         }
                     @endphp
                     
                     <div class="question-item">
                         <div class="question-header">
-                            <span class="question-number">Question {{ $question->question_number }}</span>
+                            <span class="question-number">{{ trans('update.question') }} {{ $question->question_number }}</span>
                             <span class="status-badge {{ $badgeClass }}">{{ $statusLabel }}</span>
                         </div>
                         
@@ -434,7 +434,7 @@
                             @endphp
                             @if(is_array($options))
                                 <div class="mb-3">
-                                    <div class="answer-label">Options</div>
+                                    <div class="answer-label">{{ trans('update.options') }}</div>
                                     @foreach($options as $key => $option)
                                         @php
                                             $optionText = is_array($option) ? ($option['text'] ?? $option['label'] ?? '') : $option;
@@ -443,7 +443,7 @@
                                         @endphp
                                         <div style="padding: 6px 0; {{ $isSelected ? 'font-weight: 600; color: #1e40af;' : '' }}">
                                             {{ $optionKey }}. {{ $optionText }}
-                                            @if($isSelected) <span style="color: #3b82f6;">(Selected)</span> @endif
+                                            @if($isSelected) <span style="color: #3b82f6;">({{ trans('update.selected') }})</span> @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -452,18 +452,18 @@
                         
                         {{-- Student's Answer --}}
                         <div class="answer-box answer-student {{ $status }}">
-                            <div class="answer-label">{{ $isOwner ? 'Your Answer' : 'Student Answer' }}</div>
+                            <div class="answer-label">{{ $isOwner ? trans('update.your_answer') : trans('update.students_answer') }}</div>
                             @if($hasAnswer)
                                 <div class="answer-text">{{ $answer->answer_text }}</div>
                             @else
-                                <div class="answer-text no-answer">No answer provided</div>
+                                <div class="answer-text no-answer">{{ trans('update.no_answer_provided') }}</div>
                             @endif
                         </div>
                         
                         {{-- Correct Answer (for auto-graded questions) --}}
                         @if($hasAnswer && !$isPending && $question->auto_gradable && $question->correct_answer && !$isCorrect)
                             <div class="answer-box answer-correct-ref">
-                                <div class="answer-label">Correct Answer</div>
+                                <div class="answer-label">{{ trans('update.correct_answer') }}</div>
                                 <div class="answer-text">{{ $question->correct_answer }}</div>
                             </div>
                         @endif
@@ -471,7 +471,7 @@
                         {{-- Feedback from teacher --}}
                         @if($answer && $answer->feedback)
                             <div class="explanation-box" style="background: #fef3c7; border-left-color: #f59e0b;">
-                                <strong style="color: #92400e;">Teacher Feedback</strong>
+                                <strong style="color: #92400e;">{{ trans('update.teacher_feedback_box') }}</strong>
                                 <p>{{ $answer->feedback }}</p>
                             </div>
                         @endif
@@ -479,14 +479,14 @@
                         {{-- Explanation (for practice tests) --}}
                         @if($question->explanation && method_exists($test, 'isPracticeTest') && $test->isPracticeTest())
                             <div class="explanation-box">
-                                <strong>💡 Explanation</strong>
+                                <strong>{{ trans('update.explanation_label') }}</strong>
                                 <p>{{ $question->explanation }}</p>
                             </div>
                         @endif
                     </div>
                 @empty
                     <div class="text-center text-gray py-4">
-                        No questions in this section.
+                        {{ trans('update.no_questions_in_section') }}
                     </div>
                 @endforelse
             </div>
@@ -495,17 +495,17 @@
 
     {{-- Next Actions --}}
     <div class="next-actions">
-        <h4>What's Next?</h4>
+        <h4>{{ trans('update.whats_next') }}</h4>
         <div class="actions">
             <a href="{{ route('panel.ielts_tests.results', $attempt->id) }}" class="btn btn-primary">
-                📊 View Full Results
+                {{ trans('update.view_full_results') }}
             </a>
             <a href="{{ route('panel.ielts_tests.index') }}" class="btn btn-outline-primary">
-                📚 Browse More Tests
+                {{ trans('update.browse_more_tests') }}
             </a>
             @if($isTeacher)
                 <a href="{{ route('panel.ielts_grading.index') }}" class="btn btn-outline-secondary">
-                    ✍️ Grading Dashboard
+                {{ trans('update.grading_dashboard') }}
                 </a>
             @endif
         </div>

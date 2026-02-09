@@ -114,9 +114,9 @@
             <h1>{{ $pageTitle }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a></div>
-                <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.index') }}">IELTS Tests</a></div>
-                <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.attempts') }}">Grading</a></div>
-                <div class="breadcrumb-item">View Attempt</div>
+                <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.index') }}">{{ trans('update.ielts_tests') }}</a></div>
+                <div class="breadcrumb-item"><a href="{{ route('admin.ielts_tests.attempts') }}">{{ trans('update.ielts_grading') }}</a></div>
+                <div class="breadcrumb-item">{{ trans('update.view_attempt') }}</div>
             </div>
         </div>
 
@@ -134,12 +134,12 @@
                     <hr>
                     <div class="row text-center">
                         <div class="col-6">
-                            <small class="text-muted d-block">Test</small>
+                            <small class="text-muted d-block">{{ trans('update.ielts_test') }}</small>
                             <span class="font-weight-bold">{{ $attempt->test->title }}</span>
                         </div>
                         <div class="col-6">
-                            <small class="text-muted d-block">Completed</small>
-                            <span class="font-weight-bold">{{ $attempt->completed_at ? date('d/m/Y H:i', $attempt->completed_at) : '-' }}</span>
+                            <small class="text-muted d-block">{{ trans('admin/main.completed') }}</small>
+                            <span class="font-weight-bold">{{ $attempt->completed_at ? dateTimeFormat($attempt->completed_at, 'd/m/Y H:i') : '-' }}</span>
                         </div>
                     </div>
                 </div>
@@ -147,49 +147,49 @@
             
             <div class="col-lg-8">
                 <div class="summary-card">
-                    <h6 class="mb-3">Score Summary</h6>
+                    <h6 class="mb-3">{{ trans('update.score_summary') }}</h6>
                     <div class="row">
                         <div class="col-md-2 col-4 text-center mb-3">
                             <div class="skill-badge" style="background: #1a3a5c; color: white;">
-                                L: {{ $attempt->listening_score ? number_format($attempt->listening_score, 1) : '-' }}
+                                {{ trans('update.L') }}: {{ $attempt->listening_score ? number_format($attempt->listening_score, 1) : '-' }}
                             </div>
                         </div>
                         <div class="col-md-2 col-4 text-center mb-3">
                             <div class="skill-badge" style="background: #3b82f6; color: white;">
-                                R: {{ $attempt->reading_score ? number_format($attempt->reading_score, 1) : '-' }}
+                                {{ trans('update.R') }}: {{ $attempt->reading_score ? number_format($attempt->reading_score, 1) : '-' }}
                             </div>
                         </div>
                         <div class="col-md-2 col-4 text-center mb-3">
                             <div class="skill-badge" style="background: #8b5cf6; color: white;">
-                                W: {{ $attempt->writing_score ? number_format($attempt->writing_score, 1) : '-' }}
+                                {{ trans('update.W') }}: {{ $attempt->writing_score ? number_format($attempt->writing_score, 1) : '-' }}
                             </div>
                         </div>
                         <div class="col-md-2 col-4 text-center mb-3">
                             <div class="skill-badge" style="background: #10b981; color: white;">
-                                S: {{ $attempt->speaking_score ? number_format($attempt->speaking_score, 1) : '-' }}
+                                {{ trans('update.S') }}: {{ $attempt->speaking_score ? number_format($attempt->speaking_score, 1) : '-' }}
                             </div>
                         </div>
                         <div class="col-md-4 col-8 text-center mb-3">
                             <div class="skill-badge" style="background: #1f2937; color: white; font-size: 20px; padding: 10px 24px;">
-                                Overall: {{ $attempt->overall_band ? number_format($attempt->overall_band, 1) : '-' }}
+                                {{ trans('update.overall') }}: {{ $attempt->overall_band ? number_format($attempt->overall_band, 1) : '-' }}
                             </div>
                         </div>
                     </div>
                     
                     <div class="row mt-3">
                         <div class="col-md-6">
-                            <label class="text-muted small">Writing Grading Progress</label>
+                            <label class="text-muted small">{{ trans('update.writing_grading_progress') }}</label>
                             <div class="progress" style="height: 8px;">
                                 <div class="progress-bar" style="width: {{ $writingProgress }}%; background: #8b5cf6;"></div>
                             </div>
-                            <small class="text-muted">{{ $writingProgress }}% completed</small>
+                            <small class="text-muted">{{ trans('update.grading_completed', ['progress' => $writingProgress]) }}</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-muted small">Speaking Grading Progress</label>
+                            <label class="text-muted small">{{ trans('update.speaking_grading_progress') }}</label>
                             <div class="progress" style="height: 8px;">
                                 <div class="progress-bar" style="width: {{ $speakingProgress }}%; background: #10b981;"></div>
                             </div>
-                            <small class="text-muted">{{ $speakingProgress }}% completed</small>
+                            <small class="text-muted">{{ trans('update.grading_completed', ['progress' => $speakingProgress]) }}</small>
                         </div>
                     </div>
                 </div>
@@ -199,16 +199,16 @@
         {{-- Quick Navigation --}}
         <div class="mb-4">
             <a href="#listening-section" class="btn btn-sm mr-2" style="background: #1a3a5c; color: white;">
-                <x-iconsax-lin-headphones width="16" height="16"/> Listening ({{ count($answersBySkill['listening']) }})
+                <x-iconsax-lin-headphones width="16" height="16"/> {{ trans('update.listening') }} ({{ count($answersBySkill['listening']) }})
             </a>
             <a href="#reading-section" class="btn btn-sm mr-2" style="background: #3b82f6; color: white;">
-                <x-iconsax-lin-book width="16" height="16"/> Reading ({{ count($answersBySkill['reading']) }})
+                <x-iconsax-lin-book width="16" height="16"/> {{ trans('update.reading') }} ({{ count($answersBySkill['reading']) }})
             </a>
             <a href="#writing-section" class="btn btn-sm mr-2" style="background: #8b5cf6; color: white;">
-                <x-iconsax-lin-edit width="16" height="16"/> Writing ({{ count($answersBySkill['writing']) }})
+                <x-iconsax-lin-edit width="16" height="16"/> {{ trans('update.writing') }} ({{ count($answersBySkill['writing']) }})
             </a>
             <a href="#speaking-section" class="btn btn-sm" style="background: #10b981; color: white;">
-                <x-iconsax-lin-microphone width="16" height="16"/> Speaking ({{ count($answersBySkill['speaking']) }})
+                <x-iconsax-lin-microphone width="16" height="16"/> {{ trans('update.speaking') }} ({{ count($answersBySkill['speaking']) }})
             </a>
         </div>
 
@@ -216,9 +216,9 @@
         @if(count($answersBySkill['listening']) > 0)
         <div class="skill-card" id="listening-section">
             <div class="skill-header listening">
-                <h5><x-iconsax-bul-headphones width="24" height="24" class="mr-2"/> Listening Answers</h5>
+                <h5><x-iconsax-bul-headphones width="24" height="24" class="mr-2"/> {{ trans('update.listening_answers') }}</h5>
                 <span class="skill-badge bg-white text-dark">
-                    {{ $attempt->listening_score ? number_format($attempt->listening_score, 1) : 'Auto-graded' }}
+                    {{ $attempt->listening_score ? number_format($attempt->listening_score, 1) : trans('update.auto_graded') }}
                 </span>
             </div>
             <div class="card-body">
@@ -231,18 +231,18 @@
                             </div>
                             @if($answer->is_correct !== null)
                                 @if($answer->is_correct)
-                                    <span class="badge badge-success"><x-iconsax-lin-tick-circle width="14" height="14"/> Correct</span>
+                                    <span class="badge badge-success"><x-iconsax-lin-tick-circle width="14" height="14"/> {{ trans('update.correct') }}</span>
                                 @else
-                                    <span class="badge badge-danger"><x-iconsax-lin-close-circle width="14" height="14"/> Incorrect</span>
+                                    <span class="badge badge-danger"><x-iconsax-lin-close-circle width="14" height="14"/> {{ trans('update.incorrect') }}</span>
                                 @endif
                             @endif
                         </div>
                         <div class="mt-2">
-                            <small class="text-muted">Student's Answer:</small>
-                            <strong class="ml-2">{{ $answer->answer_text ?: 'No answer' }}</strong>
+                            <small class="text-muted">{{ trans('update.students_answer') }}:</small>
+                            <strong class="ml-2">{{ $answer->answer_text ?: trans('update.no_answer') }}</strong>
                             @if(!$answer->is_correct && $answer->question->correct_answer)
                                 <span class="text-success ml-3">
-                                    <small>Correct:</small> <strong>{{ $answer->question->correct_answer }}</strong>
+                                    <small>{{ trans('update.correct') }}:</small> <strong>{{ $answer->question->correct_answer }}</strong>
                                 </span>
                             @endif
                         </div>
@@ -256,9 +256,9 @@
         @if(count($answersBySkill['reading']) > 0)
         <div class="skill-card" id="reading-section">
             <div class="skill-header reading">
-                <h5><x-iconsax-bul-book width="24" height="24" class="mr-2"/> Reading Answers</h5>
+                <h5><x-iconsax-bul-book width="24" height="24" class="mr-2"/> {{ trans('update.reading_answers') }}</h5>
                 <span class="skill-badge bg-white text-dark">
-                    {{ $attempt->reading_score ? number_format($attempt->reading_score, 1) : 'Auto-graded' }}
+                    {{ $attempt->reading_score ? number_format($attempt->reading_score, 1) : trans('update.auto_graded') }}
                 </span>
             </div>
             <div class="card-body">
@@ -271,18 +271,18 @@
                             </div>
                             @if($answer->is_correct !== null)
                                 @if($answer->is_correct)
-                                    <span class="badge badge-success"><x-iconsax-lin-tick-circle width="14" height="14"/> Correct</span>
+                                    <span class="badge badge-success"><x-iconsax-lin-tick-circle width="14" height="14"/> {{ trans('update.correct') }}</span>
                                 @else
-                                    <span class="badge badge-danger"><x-iconsax-lin-close-circle width="14" height="14"/> Incorrect</span>
+                                    <span class="badge badge-danger"><x-iconsax-lin-close-circle width="14" height="14"/> {{ trans('update.incorrect') }}</span>
                                 @endif
                             @endif
                         </div>
                         <div class="mt-2">
-                            <small class="text-muted">Student's Answer:</small>
-                            <strong class="ml-2">{{ $answer->answer_text ?: 'No answer' }}</strong>
+                            <small class="text-muted">{{ trans('update.students_answer') }}:</small>
+                            <strong class="ml-2">{{ $answer->answer_text ?: trans('update.no_answer') }}</strong>
                             @if(!$answer->is_correct && $answer->question->correct_answer)
                                 <span class="text-success ml-3">
-                                    <small>Correct:</small> <strong>{{ $answer->question->correct_answer }}</strong>
+                                    <small>{{ trans('update.correct') }}:</small> <strong>{{ $answer->question->correct_answer }}</strong>
                                 </span>
                             @endif
                         </div>
@@ -296,9 +296,9 @@
         @if(count($answersBySkill['writing']) > 0)
         <div class="skill-card" id="writing-section">
             <div class="skill-header writing">
-                <h5><x-iconsax-bul-edit width="24" height="24" class="mr-2"/> Writing Answers</h5>
+                <h5><x-iconsax-bul-edit width="24" height="24" class="mr-2"/> {{ trans('update.writing_answers') }}</h5>
                 <span class="skill-badge bg-white text-dark">
-                    {{ $attempt->writing_score ? number_format($attempt->writing_score, 1) : 'Needs Grading' }}
+                    {{ $attempt->writing_score ? number_format($attempt->writing_score, 1) : trans('update.needs_grading') }}
                 </span>
             </div>
             <div class="card-body">
@@ -307,34 +307,34 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <span class="badge badge-purple mr-2" style="background: #8b5cf6; color: white;">
-                                    Task {{ $answer->question->question_number ?? $loop->iteration }}
+                                    {{ trans('update.task') }} {{ $answer->question->question_number ?? $loop->iteration }}
                                 </span>
                                 @if($answer->graded_at)
                                     <span class="graded-badge">
                                         <x-iconsax-lin-tick-circle width="16" height="16"/>
-                                        Graded by {{ $answer->grader->full_name ?? 'System' }}
+                                        {{ trans('update.graded_by', ['name' => $answer->grader->full_name ?? 'System']) }}
                                     </span>
                                 @endif
                             </div>
                             @if($answer->points_earned)
                                 <span class="skill-badge" style="background: #8b5cf6; color: white;">
-                                    Band {{ number_format($answer->points_earned, 1) }}
+                                    {{ trans('update.band') }} {{ number_format($answer->points_earned, 1) }}
                                 </span>
                             @endif
                         </div>
                         
                         {{-- Question --}}
                         <div class="question-text">
-                            <strong>Task:</strong><br>
+                            <strong>{{ trans('update.task') }}:</strong><br>
                             {!! nl2br(e($answer->question->question_text)) !!}
                         </div>
                         
                         {{-- Student's Answer --}}
                         <div class="student-answer">
-                            <strong>Student's Response:</strong>
-                            <div class="mt-2" style="white-space: pre-wrap;">{{ $answer->answer_text ?: 'No response submitted' }}</div>
+                            <strong>{{ trans('update.students_response') }}:</strong>
+                            <div class="mt-2" style="white-space: pre-wrap;">{{ $answer->answer_text ?: trans('update.no_response_submitted') }}</div>
                             @if($answer->answer_text)
-                                <small class="text-muted">Word count: {{ str_word_count($answer->answer_text) }}</small>
+                                <small class="text-muted">{{ trans('update.word_count', ['count' => str_word_count($answer->answer_text)]) }}</small>
                             @endif
                         </div>
                         
@@ -342,23 +342,23 @@
                         @if($answer->graded_at)
                             {{-- Show existing grades --}}
                             <div class="grading-form">
-                                <h6 class="mb-3">Grading Details</h6>
+                                <h6 class="mb-3">{{ trans('update.grading_details') }}</h6>
                                 <div class="row">
                                     @php $bands = $answer->writing_bands ?? []; @endphp
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Task Achievement</small>
+                                        <small class="text-muted d-block">{{ trans('update.task_achievement') }}</small>
                                         <span class="font-weight-bold">{{ $bands['task_achievement'] ?? '-' }}</span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Coherence & Cohesion</small>
+                                        <small class="text-muted d-block">{{ trans('update.coherence_cohesion') }}</small>
                                         <span class="font-weight-bold">{{ $bands['coherence_cohesion'] ?? '-' }}</span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Lexical Resource</small>
+                                        <small class="text-muted d-block">{{ trans('update.lexical_resource') }}</small>
                                         <span class="font-weight-bold">{{ $bands['lexical_resource'] ?? '-' }}</span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Grammar</small>
+                                        <small class="text-muted d-block">{{ trans('update.grammar') }}</small>
                                         <span class="font-weight-bold">{{ $bands['grammatical_range'] ?? '-' }}</span>
                                     </div>
                                 </div>
@@ -369,17 +369,17 @@
                                     </div>
                                 @endif
                                 <button type="button" class="btn btn-sm btn-outline-primary mt-3" onclick="showGradingForm('writing', {{ $answer->id }})">
-                                    <x-iconsax-lin-edit width="16" height="16"/> Re-grade
+                                    <x-iconsax-lin-edit width="16" height="16"/> {{ trans('update.re_grade') }}
                                 </button>
                             </div>
                         @else
                             {{-- Grading form --}}
                             <div class="grading-form" id="grading-form-writing-{{ $answer->id }}">
-                                <h6 class="mb-3"><x-iconsax-lin-award width="18" height="18"/> Grade Writing</h6>
+                                <h6 class="mb-3"><x-iconsax-lin-award width="18" height="18"/> {{ trans('update.grade_writing') }}</h6>
                                 <form class="grading-form-writing" data-answer-id="{{ $answer->id }}">
                                     <div class="row">
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Task Achievement</label>
+                                            <label class="small font-weight-bold">{{ trans('update.task_achievement') }}</label>
                                             <select name="task_achievement" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -388,7 +388,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Coherence & Cohesion</label>
+                                            <label class="small font-weight-bold">{{ trans('update.coherence_cohesion') }}</label>
                                             <select name="coherence_cohesion" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -397,7 +397,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Lexical Resource</label>
+                                            <label class="small font-weight-bold">{{ trans('update.lexical_resource') }}</label>
                                             <select name="lexical_resource" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -406,7 +406,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Grammar</label>
+                                            <label class="small font-weight-bold">{{ trans('update.grammar') }}</label>
                                             <select name="grammatical_range" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -416,11 +416,11 @@
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="small font-weight-bold">Feedback (optional)</label>
-                                        <textarea name="feedback" class="form-control" rows="3" placeholder="Provide feedback for the student..."></textarea>
+                                        <label class="small font-weight-bold">{{ trans('public.feedback') }} ({{ trans('public.optional') }})</label>
+                                        <textarea name="feedback" class="form-control" rows="3" placeholder="{{ trans('update.feedback_placeholder') }}"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-primary">
-                                        <x-iconsax-lin-tick-circle width="18" height="18"/> Submit Grade
+                                        <x-iconsax-lin-tick-circle width="18" height="18"/> {{ trans('update.submit_grade') }}
                                     </button>
                                 </form>
                             </div>
@@ -435,9 +435,9 @@
         @if(count($answersBySkill['speaking']) > 0)
         <div class="skill-card" id="speaking-section">
             <div class="skill-header speaking">
-                <h5><x-iconsax-bul-microphone width="24" height="24" class="mr-2"/> Speaking Answers</h5>
+                <h5><x-iconsax-bul-microphone width="24" height="24" class="mr-2"/> {{ trans('update.speaking_answers') }}</h5>
                 <span class="skill-badge bg-white text-dark">
-                    {{ $attempt->speaking_score ? number_format($attempt->speaking_score, 1) : 'Needs Grading' }}
+                    {{ $attempt->speaking_score ? number_format($attempt->speaking_score, 1) : trans('update.needs_grading') }}
                 </span>
             </div>
             <div class="card-body">
@@ -446,54 +446,54 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <span class="badge mr-2" style="background: #10b981; color: white;">
-                                    Part {{ $answer->question->question_number ?? $loop->iteration }}
+                                    {{ trans('update.part') }} {{ $answer->question->question_number ?? $loop->iteration }}
                                 </span>
                                 @if($answer->graded_at)
                                     <span class="graded-badge">
                                         <x-iconsax-lin-tick-circle width="16" height="16"/>
-                                        Graded by {{ $answer->grader->full_name ?? 'System' }}
+                                        {{ trans('update.graded_by', ['name' => $answer->grader->full_name ?? 'System']) }}
                                     </span>
                                 @endif
                             </div>
                             @if($answer->points_earned)
                                 <span class="skill-badge" style="background: #10b981; color: white;">
-                                    Band {{ number_format($answer->points_earned, 1) }}
+                                    {{ trans('update.band') }} {{ number_format($answer->points_earned, 1) }}
                                 </span>
                             @endif
                         </div>
                         
                         {{-- Question --}}
                         <div class="question-text">
-                            <strong>Question:</strong><br>
+                            <strong>{{ trans('update.question') }}:</strong><br>
                             {!! nl2br(e($answer->question->question_text)) !!}
                         </div>
                         
                         {{-- Audio Recording --}}
                         @if($answer->audio_url)
                             <div class="audio-player-container">
-                                <strong><x-iconsax-lin-microphone-2 width="18" height="18"/> Student's Recording:</strong>
+                                <strong><x-iconsax-lin-microphone-2 width="18" height="18"/> {{ trans('update.student_recording') }}:</strong>
                                 <audio controls class="w-100 mt-2">
                                     <source src="{{ $answer->audio_url }}" type="audio/webm">
                                     <source src="{{ $answer->audio_url }}" type="audio/mp3">
-                                    Your browser does not support audio playback.
+                                    {{ trans('update.browser_not_support_audio') }}
                                 </audio>
                             </div>
                         @else
                             <div class="alert alert-warning">
-                                <x-iconsax-lin-warning-2 width="18" height="18"/> No audio recording submitted
+                                <x-iconsax-lin-warning-2 width="18" height="18"/> {{ trans('update.no_audio_recording') }}
                             </div>
                         @endif
                         
                         {{-- Transcript if available (only show if answer_text is not an audio URL) --}}
                         @if($answer->answer_text && !$answer->hasAudioRecording())
                             <div class="student-answer">
-                                <strong>Transcript:</strong>
+                                <strong>{{ trans('update.transcript') }}:</strong>
                                 <div class="mt-2">{{ $answer->answer_text }}</div>
                             </div>
                         @elseif($answer->answer_text && $answer->hasAudioRecording() && $answer->answer_text !== $answer->audio_url)
                             {{-- Show transcript if it exists and is different from audio URL --}}
                             <div class="student-answer">
-                                <strong>Transcript:</strong>
+                                <strong>{{ trans('update.transcript') }}:</strong>
                                 <div class="mt-2">{{ $answer->answer_text }}</div>
                             </div>
                         @endif
@@ -502,23 +502,23 @@
                         @if($answer->graded_at)
                             {{-- Show existing grades --}}
                             <div class="grading-form">
-                                <h6 class="mb-3">Grading Details</h6>
+                                <h6 class="mb-3">{{ trans('update.grading_details') }}</h6>
                                 <div class="row">
                                     @php $bands = $answer->speaking_bands ?? []; @endphp
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Fluency & Coherence</small>
+                                        <small class="text-muted d-block">{{ trans('update.fluency_coherence') }}</small>
                                         <span class="font-weight-bold">{{ $bands['fluency_coherence'] ?? '-' }}</span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Lexical Resource</small>
+                                        <small class="text-muted d-block">{{ trans('update.lexical_resource') }}</small>
                                         <span class="font-weight-bold">{{ $bands['lexical_resource'] ?? '-' }}</span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Grammar</small>
+                                        <small class="text-muted d-block">{{ trans('update.grammar') }}</small>
                                         <span class="font-weight-bold">{{ $bands['grammatical_range'] ?? '-' }}</span>
                                     </div>
                                     <div class="col-md-3 col-6 mb-2">
-                                        <small class="text-muted d-block">Pronunciation</small>
+                                        <small class="text-muted d-block">{{ trans('update.pronunciation') }}</small>
                                         <span class="font-weight-bold">{{ $bands['pronunciation'] ?? '-' }}</span>
                                     </div>
                                 </div>
@@ -529,17 +529,17 @@
                                     </div>
                                 @endif
                                 <button type="button" class="btn btn-sm btn-outline-primary mt-3" onclick="showGradingForm('speaking', {{ $answer->id }})">
-                                    <x-iconsax-lin-edit width="16" height="16"/> Re-grade
+                                    <x-iconsax-lin-edit width="16" height="16"/> {{ trans('update.re_grade') }}
                                 </button>
                             </div>
                         @else
                             {{-- Grading form --}}
                             <div class="grading-form" id="grading-form-speaking-{{ $answer->id }}">
-                                <h6 class="mb-3"><x-iconsax-lin-award width="18" height="18"/> Grade Speaking</h6>
+                                <h6 class="mb-3"><x-iconsax-lin-award width="18" height="18"/> {{ trans('update.grade_speaking') }}</h6>
                                 <form class="grading-form-speaking" data-answer-id="{{ $answer->id }}">
                                     <div class="row">
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Fluency & Coherence</label>
+                                            <label class="small font-weight-bold">{{ trans('update.fluency_coherence') }}</label>
                                             <select name="fluency_coherence" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -548,7 +548,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Lexical Resource</label>
+                                            <label class="small font-weight-bold">{{ trans('update.lexical_resource') }}</label>
                                             <select name="lexical_resource" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -557,7 +557,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Grammar</label>
+                                            <label class="small font-weight-bold">{{ trans('update.grammar') }}</label>
                                             <select name="grammatical_range" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -566,7 +566,7 @@
                                             </select>
                                         </div>
                                         <div class="col-md-3 col-6 mb-3">
-                                            <label class="small font-weight-bold">Pronunciation</label>
+                                            <label class="small font-weight-bold">{{ trans('update.pronunciation') }}</label>
                                             <select name="pronunciation" class="form-control band-input" required>
                                                 <option value="">-</option>
                                                 @for($i = 0; $i <= 9; $i += 0.5)
@@ -576,11 +576,11 @@
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="small font-weight-bold">Feedback (optional)</label>
-                                        <textarea name="feedback" class="form-control" rows="3" placeholder="Provide feedback for the student..."></textarea>
+                                        <label class="small font-weight-bold">{{ trans('public.feedback') }} ({{ trans('public.optional') }})</label>
+                                        <textarea name="feedback" class="form-control" rows="3" placeholder="{{ trans('update.feedback_placeholder') }}"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-primary">
-                                        <x-iconsax-lin-tick-circle width="18" height="18"/> Submit Grade
+                                        <x-iconsax-lin-tick-circle width="18" height="18"/> {{ trans('update.submit_grade') }}
                                     </button>
                                 </form>
                             </div>
@@ -594,7 +594,7 @@
         {{-- Back Button --}}
         <div class="mt-4">
             <a href="{{ route('admin.ielts_tests.attempts') }}" class="btn btn-secondary">
-                <x-iconsax-lin-arrow-left width="18" height="18"/> Back to Attempts
+                <x-iconsax-lin-arrow-left width="18" height="18"/> {{ trans('update.back_to_attempts') }}
             </a>
         </div>
     </section>

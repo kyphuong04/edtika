@@ -210,30 +210,30 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap">
             <div>
                 <h1>{{ $test->title }}</h1>
-                <p>{{ $test->description ?? 'Complete IELTS practice with all 4 skills' }}</p>
+                <p>{{ $test->description ?? trans('update.ielts_practice_all_skills_hint') }}</p>
             </div>
             <span class="badge badge-{{ $test->type === 'mock' ? 'primary' : 'info' }} badge-lg">
-                {{ ucfirst($test->type) }} Test
+                {{ trans('update.' . $test->type) }} {{ trans('update.test') }}
             </span>
         </div>
         <div class="test-meta">
             <div class="test-meta-item">
                 <i class="far fa-clock"></i>
-                <span>{{ $test->total_duration }} minutes</span>
+                <span>{{ $test->total_duration }} {{ trans('update.minutes') }}</span>
             </div>
             <div class="test-meta-item">
                 <i class="fas fa-signal"></i>
-                <span>{{ ucfirst($test->difficulty_level ?? 'intermediate') }}</span>
+                <span>{{ trans('update.' . ($test->difficulty_level ?? 'intermediate')) }}</span>
             </div>
             @if($test->target_band_min && $test->target_band_max)
             <div class="test-meta-item">
                 <i class="fas fa-bullseye"></i>
-                <span>Band {{ $test->target_band_min }} - {{ $test->target_band_max }}</span>
+                <span>{{ trans('update.band') }} {{ $test->target_band_min }} - {{ $test->target_band_max }}</span>
             </div>
             @endif
             <div class="test-meta-item">
                 <i class="fas fa-redo"></i>
-                <span>{{ $attempts->count() }} attempt(s)</span>
+                <span>{{ $attempts->count() }} {{ trans('update.attempts') }}</span>
             </div>
         </div>
     </div>
@@ -245,19 +245,19 @@
             <div class="skill-icon">
                 <i class="fas fa-headphones"></i>
             </div>
-            <div class="skill-name">Listening</div>
-            <div class="skill-duration">{{ $test->listening_duration ?? 30 }} minutes</div>
+            <div class="skill-name">{{ trans('update.listening') }}</div>
+            <div class="skill-duration">{{ $test->listening_duration ?? 30 }} {{ trans('update.minutes') }}</div>
             @if($canTake)
             <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" class="d-inline">
                 @csrf
                 <input type="hidden" name="skill" value="listening">
                 <button type="submit" class="btn-skill listening">
-                    <i class="fas fa-bolt"></i> Làm bài
+                    <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                 </button>
             </form>
             @else
             <span class="btn-skill disabled">
-                <i class="fas fa-lock"></i> Locked
+                <i class="fas fa-lock"></i> {{ trans('update.locked') }}
             </span>
             @endif
             <div class="skill-status unlocked">
@@ -271,19 +271,19 @@
             <div class="skill-icon">
                 <i class="fas fa-book-open"></i>
             </div>
-            <div class="skill-name">Reading</div>
-            <div class="skill-duration">{{ $test->reading_duration ?? 60 }} minutes</div>
+            <div class="skill-name">{{ trans('update.reading') }}</div>
+            <div class="skill-duration">{{ $test->reading_duration ?? 60 }} {{ trans('update.minutes') }}</div>
             @if($canTake)
             <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" class="d-inline">
                 @csrf
                 <input type="hidden" name="skill" value="reading">
                 <button type="submit" class="btn-skill reading">
-                    <i class="fas fa-bolt"></i> Làm bài
+                    <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                 </button>
             </form>
             @else
             <span class="btn-skill disabled">
-                <i class="fas fa-lock"></i> Locked
+                <i class="fas fa-lock"></i> {{ trans('update.locked') }}
             </span>
             @endif
             <div class="skill-status unlocked">
@@ -297,19 +297,19 @@
             <div class="skill-icon">
                 <i class="fas fa-pen-fancy"></i>
             </div>
-            <div class="skill-name">Writing</div>
-            <div class="skill-duration">{{ $test->writing_duration ?? 60 }} minutes</div>
+            <div class="skill-name">{{ trans('update.writing') }}</div>
+            <div class="skill-duration">{{ $test->writing_duration ?? 60 }} {{ trans('update.minutes') }}</div>
             @if($canTake)
             <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" class="d-inline">
                 @csrf
                 <input type="hidden" name="skill" value="writing">
                 <button type="submit" class="btn-skill writing">
-                    <i class="fas fa-bolt"></i> Làm bài
+                    <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                 </button>
             </form>
             @else
             <span class="btn-skill disabled">
-                <i class="fas fa-lock"></i> Locked
+                <i class="fas fa-lock"></i> {{ trans('update.locked') }}
             </span>
             @endif
             <div class="skill-status unlocked">
@@ -323,19 +323,19 @@
             <div class="skill-icon">
                 <i class="fas fa-microphone"></i>
             </div>
-            <div class="skill-name">Speaking</div>
-            <div class="skill-duration">{{ $test->speaking_duration ?? 15 }} minutes</div>
+            <div class="skill-name">{{ trans('update.speaking') }}</div>
+            <div class="skill-duration">{{ $test->speaking_duration ?? 15 }} {{ trans('update.minutes') }}</div>
             @if($canTake)
             <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" class="d-inline">
                 @csrf
                 <input type="hidden" name="skill" value="speaking">
                 <button type="submit" class="btn-skill speaking">
-                    <i class="fas fa-bolt"></i> Làm bài
+                    <i class="fas fa-bolt"></i> {{ trans('update.take_test') }}
                 </button>
             </form>
             @else
             <span class="btn-skill disabled">
-                <i class="fas fa-lock"></i> Locked
+                <i class="fas fa-lock"></i> {{ trans('update.locked') }}
             </span>
             @endif
             <div class="skill-status unlocked">
@@ -348,12 +348,12 @@
     <!-- Previous Attempts -->
     @if($attempts->isNotEmpty())
     <div class="attempts-section">
-        <h3><i class="fas fa-history mr-2"></i>Previous Attempts</h3>
+        <h3><i class="fas fa-history mr-2"></i>{{ trans('update.previous_attempts') }}</h3>
         @foreach($attempts as $attempt)
         <div class="attempt-item">
             <div class="attempt-info">
-                <h4>Attempt #{{ $attempt->attempt_number }}</h4>
-                <p>{{ dateTimeFormat($attempt->created_at, 'j M Y, H:i') }} • {{ ucfirst($attempt->status) }}</p>
+                <h4>{{ trans('update.attempt_number', ['number' => $attempt->attempt_number]) }}</h4>
+                <p>{{ dateTimeFormat($attempt->created_at, 'j M Y, H:i') }} • {{ trans('admin/main.' . $attempt->status) }}</p>
             </div>
             <div class="d-flex align-items-center gap-3">
                 @if($attempt->status === 'completed')
@@ -363,11 +363,11 @@
                     </div>
                     @endif
                     <a href="{{ route('panel.ielts_tests.results', $attempt->id) }}" class="btn btn-sm btn-primary">
-                        View Results
+                        {{ trans('update.view_results') }}
                     </a>
                 @elseif($attempt->status === 'in_progress')
                     <a href="{{ route('panel.ielts_tests.take', $attempt->id) }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-play mr-1"></i> Continue
+                        <i class="fas fa-play mr-1"></i> {{ trans('admin/main.continue') }}
                     </a>
                 @endif
             </div>

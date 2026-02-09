@@ -20,7 +20,7 @@
 
 <div class="idp-question" data-q-num="{{ $startQ }}">
     <div style="margin-bottom: 8px;">
-        <strong>Questions {{ $startQ }}-{{ $endQ }}</strong>
+        <strong>{{ trans('update.ielts_questions') }} {{ $startQ }}-{{ $endQ }}</strong>
     </div>
     <div class="idp-options">
         @foreach($options as $key => $text)
