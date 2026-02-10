@@ -53,8 +53,9 @@
 @endphp
 
 @if(!empty($tableStructure) && !empty($tableStructure['rows']))
-    <table class="idp-table-completion-styled">
-        @if(!empty($tableStructure['headers']))
+    <div class="table-completion-container">
+        <table class="idp-table-completion-styled">
+            @if(!empty($tableStructure['headers']))
             <thead>
                 <tr>
                     @foreach($tableStructure['headers'] as $header)
@@ -121,6 +122,7 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 @else
     {{-- Fallback: Simple list when no table structure --}}
     <div class="idp-questions-list">
