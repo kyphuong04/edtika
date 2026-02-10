@@ -46,6 +46,33 @@
         .idp-header-right { display: flex; align-items: center; gap: 12px; }
         .idp-header-icon { color: #666; font-size: 18px; cursor: pointer; }
         
+        /* Finish Button */
+        .idp-finish-btn {
+            padding: 5px 16px;
+            background: #fff;
+            border: 1.5px solid #333;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+        
+        .idp-finish-btn:hover {
+            background: #f5f5f5;
+            border-color: #000;
+        }
+        
+        .idp-finish-btn::after {
+            content: '→';
+            font-size: 14px;
+        }
+        
         /* ========== PART BAR ========== */
         .idp-part-bar {
             height: 50px;
@@ -65,7 +92,7 @@
         .idp-main {
             display: flex;
             position: fixed;
-            top: 90px; left: 0; right: 0; bottom: 44px;
+            top: 90px; left: 0; right: 0; bottom: 80px;
         }
         
         /* Left Panel */
@@ -130,6 +157,7 @@
             flex: 1;
             background: rgb(249, 249, 249);
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 20px 28px;
         }
         
@@ -296,8 +324,10 @@
         /* Table Completion */
         .idp-table {
             width: 100%;
+            max-width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            table-layout: auto;
         }
         .idp-table th {
             background: #e8e8e8;
@@ -305,11 +335,15 @@
             text-align: left;
             border: 1px solid #ccc;
             font-weight: bold;
+            word-wrap: break-word;
+            max-width: 200px;
         }
         .idp-table td {
             padding: 8px 10px;
             border: 1px solid #ccc;
             background: #fff;
+            word-wrap: break-word;
+            max-width: 250px;
         }
         
         /* Map/Diagram - Two column layout */
@@ -384,70 +418,139 @@
         
         /* ========== FOOTER ========== */
         .idp-footer {
-            height: 44px;
-            background: #fff;
+            height: 80px;
+            background: #e8e8e8;
             border-top: 1px solid #ccc;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 24px;
             position: fixed;
             bottom: 0; left: 0; right: 0;
             z-index: 1000;
-        }
-        .idp-parts-nav { display: flex; align-items: center; gap: 16px; }
-        .idp-part-group { display: flex; align-items: center; gap: 8px; }
-        .idp-part-label { font-size: 13px; color: #000; font-weight: normal; }
-        .idp-part-label.active { font-weight: bold; }
-        .idp-q-nums { 
-            display: flex; 
-            align-items: center;
-            gap: 4px;
-        }
-        .idp-q-num-footer {
-            font-size: 13px;
-            color: #666;
-            font-weight: normal;
+            gap: 20px;
         }
         
-        .idp-nav-btns { display: flex; align-items: center; gap: 8px; }
-        .idp-nav-arrow {
-            width: 40px; height: 40px;
-            border-radius: 4px;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
+        /* Question Numbers Container */
+        .idp-question-numbers {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        
+        /* Circular Question Button */
+        .idp-q-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #999;
+            color: #000;
+            font-size: 16px;
+            font-weight: 500;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-        }
-        .idp-nav-arrow.prev { background: #d8d8d8; color: #fff; }
-        .idp-nav-arrow.next { background: #1a1a1a; color: #fff; }
-        .idp-nav-arrow:hover { opacity: 0.85; }
-        .idp-submit-btn {
-            width: 40px; height: 40px;
-            background: #f0f0f0;
-            border: 1px solid #d0d0d0;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 18px;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
-        .idp-submit-btn:hover { background: #e5e5e5; }
+        
+        .idp-q-circle:hover {
+            border-color: #666;
+            background: #f5f5f5;
+        }
+        
+        .idp-q-circle.active {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
+        
+        .idp-q-circle.answered {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        .idp-q-circle.answered.active {
+            background: #28a745;
+            color: #fff;
+            border-color: #28a745;
+        }
+        
+        /* Navigation Buttons */
+        .idp-nav-btns {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        
+        .idp-nav-text-btn {
+            padding: 12px 24px;
+            background: #fff;
+            border: 1px solid #999;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .idp-nav-text-btn:hover {
+            background: #f5f5f5;
+            border-color: #666;
+        }
+        
+        .idp-nav-text-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .idp-nav-text-btn.prev::before {
+            content: '←';
+        }
+        
+        .idp-nav-text-btn.next::after {
+            content: '→';
+        }
+        
+        /* Scrollbar for question numbers */
+        .idp-question-numbers::-webkit-scrollbar {
+            height: 6px;
+        }
+        .idp-question-numbers::-webkit-scrollbar-thumb {
+            background: #999;
+            border-radius: 3px;
+        }
+        .idp-question-numbers::-webkit-scrollbar-track {
+            background: transparent;
+        }
         
         /* ========== TABLE COMPLETION STYLES ========== */
         .table-completion-container {
             margin: 20px 0;
             overflow-x: auto;
+            width: 100%;
+            max-width: 100%;
         }
 
         .idp-table-completion-styled {
             width: 100%;
+            max-width: 100%;
             border-collapse: collapse;
             font-size: 14px;
             background: #ffffff;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            table-layout: auto;
         }
 
         .idp-table-completion-styled thead {
@@ -455,40 +558,43 @@
         }
 
         .idp-table-completion-styled th {
-            padding: 12px 16px;
+            padding: 10px 12px;
             text-align: left;
             font-weight: 600;
             border: 1px solid #c0c0c0;
             color: #000000;
-            font-size: 14px;
+            font-size: 13px;
+            word-wrap: break-word;
+            max-width: 200px;
         }
 
         .idp-table-completion-styled td {
-            padding: 12px 16px;
+            padding: 10px 12px;
             border: 1px solid #c0c0c0;
             vertical-align: top;
             line-height: 1.6;
-            font-size: 14px;
+            font-size: 13px;
             color: #333;
-            white-space: nowrap;
+            word-wrap: break-word;
+            max-width: 250px;
         }
 
         .idp-table-completion-styled td .cell-text {
             display: inline;
             margin-bottom: 8px;
-            white-space: nowrap;
+            word-wrap: break-word;
         }
 
         .tc-input-wrapper {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             background: transparent;
-            padding: 6px 10px;
+            padding: 4px 6px;
             border-radius: 4px;
             border: none;
             margin: 4px 0;
-            white-space: nowrap;
+            flex-wrap: nowrap;
         }
 
         .tc-question-number {
@@ -508,14 +614,15 @@
 
         .idp-table-input {
             border: 2px dashed #000000;
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 3px;
-            font-size: 14px;
-            min-width: 120px;
+            font-size: 13px;
+            min-width: 100px;
+            max-width: 180px;
+            width: 100%;
             background: #ffffff;
             transition: all 0.2s ease;
             font-family: inherit;
-            white-space: nowrap;
         }
 
         .idp-table-input:focus {
@@ -561,6 +668,153 @@
         .idp-modal-btn { padding: 8px 24px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
         .idp-modal-btn.cancel { background: #ddd; }
         .idp-modal-btn.confirm { background: #CC6600; color: #fff; }
+        
+        /* ========== RESPONSIVE STYLES ========== */
+        @media (max-width: 1200px) {
+            .idp-table-completion-styled th {
+                padding: 8px 10px;
+                font-size: 12px;
+                max-width: 150px;
+            }
+            
+            .idp-table-completion-styled td {
+                padding: 8px 10px;
+                font-size: 12px;
+                max-width: 180px;
+            }
+            
+            .idp-table-input {
+                min-width: 80px;
+                max-width: 150px;
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+            
+            .tc-question-number {
+                min-width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .idp-table-completion-styled {
+                font-size: 11px;
+            }
+            
+            .idp-table-completion-styled th,
+            .idp-table-completion-styled td {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+            
+            .idp-table-completion-styled th {
+                max-width: 120px;
+            }
+            
+            .idp-table-completion-styled td {
+                max-width: 140px;
+            }
+            
+            .idp-table-input {
+                min-width: 70px;
+                max-width: 120px;
+                font-size: 11px;
+                padding: 4px 6px;
+            }
+            
+            .tc-question-number {
+                min-width: 22px;
+                height: 22px;
+                font-size: 11px;
+            }
+            
+            .tc-input-wrapper {
+                gap: 4px;
+                padding: 3px 4px;
+            }
+            
+            /* Header responsive */
+            .idp-header {
+                padding: 0 12px;
+            }
+            
+            .idp-finish-btn {
+                padding: 4px 12px;
+                font-size: 12px;
+            }
+            
+            .idp-header-icon {
+                font-size: 16px;
+            }
+            
+            /* Footer responsive */
+            .idp-footer {
+                height: 70px;
+                padding: 0 12px;
+                gap: 10px;
+            }
+            
+            .idp-q-circle {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            .idp-nav-text-btn {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+            
+            .idp-main {
+                bottom: 70px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .idp-header {
+                padding: 0 8px;
+            }
+            
+            .idp-logo {
+                font-size: 18px;
+            }
+            
+            .idp-finish-btn {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
+            
+            .idp-header-icon {
+                font-size: 14px;
+            }
+            
+            .idp-footer {
+                height: 60px;
+                padding: 0 8px;
+                gap: 8px;
+            }
+            
+            .idp-question-numbers {
+                gap: 8px;
+            }
+            
+            .idp-q-circle {
+                width: 36px;
+                height: 36px;
+                font-size: 13px;
+                border-width: 1px;
+            }
+            
+            .idp-nav-text-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+            
+            .idp-main {
+                bottom: 60px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -668,6 +922,7 @@
             <span class="idp-header-icon">📶</span>
             <span class="idp-header-icon">🔔</span>
             <span class="idp-header-icon">☰</span>
+            <button class="idp-finish-btn" onclick="showModal()">Finish</button>
         </div>
     </header>
 
@@ -750,40 +1005,41 @@
 
     {{-- FOOTER --}}
     @php
-        $sections = $test->sections()->where('skill', $skill)->orderBy('sort_order')->get();
-        $partsData = [];
-        foreach($sections as $idx => $sec) {
-            $secQs = $sec->questions()->orderBy('question_number')->pluck('question_number', 'id')->toArray();
-            $answered = 0;
-            foreach($secQs as $qid => $qnum) {
-                if(!empty($userAnswers[$qid] ?? null)) $answered++;
-            }
-            $partsData[$sec->section_number ?? ($idx+1)] = [
-                'section_id' => $sec->id,
-                'questions' => array_values($secQs),
-                'answered' => $answered,
-                'total' => count($secQs)
+        // Get all questions from current section with their IDs and numbers
+        $currentQuestions = $allQuestions->map(function($q) use ($userAnswers) {
+            return [
+                'id' => $q->id,
+                'number' => $q->question_number ?? 0,
+                'answered' => !empty($userAnswers[$q->id] ?? null)
             ];
-        }
+        })->sortBy('number')->values();
+        
+        $questionNumbers = $currentQuestions->pluck('number')->toArray();
+        $firstQuestionNum = $currentQuestions->first()['number'] ?? 1;
     @endphp
     
     <footer class="idp-footer">
-        <div class="idp-parts-nav">
-            @foreach($partsData as $pNum => $pInfo)
-                <div class="idp-part-group">
-                    <span class="idp-part-label {{ $pNum == $partNum ? 'active' : '' }}">{{ trans('update.ielts_part', ['part' => $pNum]) }}</span>
-                    <div class="idp-q-nums">
-                        @foreach($pInfo['questions'] as $qn)
-                            <span class="idp-q-num-footer">{{ $qn }}</span>
-                        @endforeach
-                    </div>
-                </div>
+        {{-- Question Number Circles --}}
+        <div class="idp-question-numbers">
+            @foreach($currentQuestions as $index => $qData)
+                <button 
+                    class="idp-q-circle {{ $index === 0 ? 'active' : '' }} {{ $qData['answered'] ? 'answered' : '' }}" 
+                    data-q-num="{{ $qData['number'] }}"
+                    data-q-index="{{ $index }}"
+                    onclick="goToQuestion({{ $qData['number'] }}, {{ $index }})">
+                    {{ $qData['number'] }}
+                </button>
             @endforeach
         </div>
+        
+        {{-- Navigation Buttons --}}
         <div class="idp-nav-btns">
-            <button class="idp-nav-arrow prev" onclick="prevQ()">←</button>
-            <button class="idp-nav-arrow next" onclick="nextQ()">→</button>
-            <button class="idp-submit-btn" onclick="showModal()">✓</button>
+            <button class="idp-nav-text-btn prev" onclick="prevQ()" id="prevBtn">
+                Previous question
+            </button>
+            <button class="idp-nav-text-btn next" onclick="nextQ()" id="nextBtn">
+                Next question
+            </button>
         </div>
     </footer>
 
@@ -815,6 +1071,12 @@
         const saveUrl = '{{ route("panel.ielts_tests.save_answer", $attempt->id) }}';
         const submitUrl = '{{ route("panel.ielts_tests.finish_section", $attempt->id) }}';
         
+        // Create map of question ID to question number
+        const questionIdToNumber = {};
+        @foreach($currentQuestions as $qData)
+            questionIdToNumber[{{ $qData['id'] }}] = {{ $qData['number'] }};
+        @endforeach
+        
         // Save answer with error handling and logging
         function saveAnswer(qId, value) {
             console.log('💾 Saving answer:', { questionId: qId, value: value });
@@ -837,10 +1099,21 @@
             })
             .then(d => {
                 console.log('✅ Answer saved successfully:', d);
-                const btn = document.querySelector(`.idp-q-btn[data-num="${qId}"]`);
-                if(btn && value) btn.classList.add('answered');
                 
-                // Visual feedback
+                // Mark question circle as answered if value is not empty
+                const qNum = questionIdToNumber[qId];
+                if(qNum) {
+                    const circle = document.querySelector(`.idp-q-circle[data-q-num="${qNum}"]`);
+                    if(circle) {
+                        if(value && value.trim()) {
+                            circle.classList.add('answered');
+                        } else {
+                            circle.classList.remove('answered');
+                        }
+                    }
+                }
+                
+                // Visual feedback on input
                 const input = document.querySelector(`[data-qid="${qId}"]`);
                 if (input) {
                     input.style.borderColor = '#10b981';
@@ -864,13 +1137,63 @@
             saveTimer = setTimeout(() => saveAnswer(qId, value), 600);
         }
         
-        // Navigation
-        function goTo(num) {
-            const el = document.querySelector(`[data-q-num="${num}"]`);
-            if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Navigation - Track current question
+        let currentQuestionIndex = 0;
+        const questionNumbers = @json($questionNumbers);
+        
+        function goToQuestion(num, index) {
+            // Scroll to question in the content area
+            const questionEl = document.querySelector(`.idp-question-item[data-q-num="${num}"], tr[data-q-num="${num}"], .idp-q-item[data-q-num="${num}"]`);
+            if(questionEl) {
+                questionEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // Update active state on circles
+            document.querySelectorAll('.idp-q-circle').forEach(circle => {
+                circle.classList.remove('active');
+            });
+            const activeCircle = document.querySelector(`.idp-q-circle[data-q-num="${num}"]`);
+            if(activeCircle) {
+                activeCircle.classList.add('active');
+            }
+            
+            // Update current index
+            currentQuestionIndex = index;
+            updateNavButtons();
         }
-        function prevQ() { /* implement */ }
-        function nextQ() { /* implement */ }
+        
+        function prevQ() {
+            if(currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                const prevNum = questionNumbers[currentQuestionIndex];
+                goToQuestion(prevNum, currentQuestionIndex);
+            }
+        }
+        
+        function nextQ() {
+            if(currentQuestionIndex < questionNumbers.length - 1) {
+                currentQuestionIndex++;
+                const nextNum = questionNumbers[currentQuestionIndex];
+                goToQuestion(nextNum, currentQuestionIndex);
+            }
+        }
+        
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if(prevBtn) {
+                prevBtn.disabled = currentQuestionIndex === 0;
+            }
+            if(nextBtn) {
+                nextBtn.disabled = currentQuestionIndex === questionNumbers.length - 1;
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNavButtons();
+        });
         
         // Modal
         function showModal() { document.getElementById('submitModal').classList.remove('hidden'); }
