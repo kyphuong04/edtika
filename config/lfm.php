@@ -133,7 +133,7 @@ return [
     |--------------------------------------------------------------------------
      */
 
-    'rename_file' => false,
+    'rename_file' => true,
 
     'rename_duplicates' => false,
 
