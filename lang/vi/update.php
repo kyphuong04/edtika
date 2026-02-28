@@ -4339,6 +4339,7 @@ return [
     'select2_remove_all_items' => 'Xóa tất cả các mục',
 
     'ielts_tests' => 'Bài thi IELTS',
+    'tests' => 'Bài Kiểm Tra',
     'my_tests' => 'Bài thi của tôi',
     'create_from_bank' => 'Tạo từ ngân hàng câu hỏi',
     'grade_tests' => 'Chấm điểm bài thi',
@@ -5018,4 +5019,13 @@ return [
     'ielts_instr_drag_drop' => 'Kéo câu trả lời đúng vào mỗi chỗ trống.',
     'ielts_instr_dragdrop' => 'Kéo câu trả lời đúng vào mỗi chỗ trống.',
     'ielts_instr_fill_blank' => 'Hoàn thành các chỗ trống. Viết câu trả lời của bạn vào ô được cung cấp.',
+    'no_purchased_courses' => 'Bạn chưa mua khóa học nào.',
+    'go_to_notes' => 'Đến Ghi chú',
+    'no_login_history' => 'Không tìm thấy lịch sử đăng nhập.',
+    'edit_profile' => 'Chỉnh sửa hồ sơ',
+    'change_avatar' => 'Đổi ảnh đại diện',
+    'current_password' => 'Mật khẩu hiện tại',
+    'change_password' => 'Đổi mật khẩu',
+    'session_ended_label' => 'Đã kết thúc',
+    'leave_blank_password_hint' => 'Để trống các ô mật khẩu nếu bạn không muốn thay đổi.',
 ];

@@ -35,6 +35,12 @@ class CoursePersonalNote extends Model
      * ==========*/
     public function getItemType()
     {
+        $shortAliases = ['session', 'file', 'quiz', 'text_lesson', 'assignment'];
+
+        if (in_array($this->targetable_type, $shortAliases)) {
+            return $this->targetable_type;
+        }
+
         $type = "";
 
         switch ($this->targetable_type) {

@@ -2245,6 +2245,7 @@ return [
 
 // Course Note
 'course_notes' => 'Course Notes',
+'no_course_notes' => 'No course notes yet.',
 'course_notes_status_hint' => 'Allow users to create notes for specific sections and content within a course.',
 'course_notes_attachment_hint' => 'Enable users to add attachments to their course notes.',
 'personal_note' => 'Personal Note',
@@ -4353,6 +4354,7 @@ return [
     'select2_remove_all_items' => 'Remove all items',
 
     'ielts_tests' => 'IELTS Tests',
+    'tests' => 'Tests',
     'my_tests' => 'My Tests',
     'create_from_bank' => 'Create from Bank',
     'grade_tests' => 'Grade Tests',
@@ -5007,4 +5009,16 @@ return [
     'ielts_instr_drag_drop' => 'Drag the correct answer to each gap.',
     'ielts_instr_dragdrop' => 'Drag the correct answer to each gap.',
     'ielts_instr_fill_blank' => 'Complete the gaps. Write your answer in the box provided.',
+    'no_purchased_courses' => 'You have not purchased any courses yet.',
+    'go_to_notes' => 'Go to Notes',
+    'no_login_history' => 'No login history found.',
+    'edit_profile' => 'Edit Profile',
+    'change_avatar' => 'Change Avatar',
+    'current_password' => 'Current Password',
+    'change_password' => 'Change Password',
+    'session_ended_label' => 'Ended',
+    'leave_blank_password_hint' => 'Leave password fields blank to keep your current password.',
+    'my_profile_and_password' => 'My Profile & Password',
+    'confirm_password' => 'Confirm Password',
+    'confirm_new_password' => 'Confirm new password',
 ];

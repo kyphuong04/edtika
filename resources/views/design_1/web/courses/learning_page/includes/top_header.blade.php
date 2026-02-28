@@ -11,10 +11,10 @@
 
     <div class="d-flex align-items-center gap-16">
 
-        {{-- Course Tools --}}
-        <div class="d-none d-lg-block">
+        {{-- Course Tools (hidden) --}}
+        {{-- <div class="d-none d-lg-block">
             @include('design_1.web.courses.learning_page.includes.top_header.course_tools')
-        </div>
+        </div> --}}
 
         <div class="learning-page__line-separator d-none d-lg-block"></div>
 

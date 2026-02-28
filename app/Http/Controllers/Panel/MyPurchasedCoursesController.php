@@ -31,7 +31,7 @@ class MyPurchasedCoursesController extends Controller
 
         $topStats = $this->handlePageTopStats($user);
 
-        $pageTitle = trans('panel.my_purchases');
+        $pageTitle = trans('panel.my_courses');
         $breadcrumbs = [
             ['text' => trans('update.platform'), 'url' => '/'],
             ['text' => trans('panel.dashboard'), 'url' => '/panel'],
