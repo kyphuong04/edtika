@@ -120,6 +120,9 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
            Route::post('/learning/{slug}/itemInfo', 'LearningPageController@getItemInfo');
             Route::post('/learning/{slug}/track-time', 'LearningPageController@trackTime');
             Route::post('/learning/personalNotes', 'LearningPageController@personalNotes');
+            Route::get('/learning/{slug}/personal-note/get-form', 'LearningPageController@getPersonalNoteForm');
+            Route::get('/learning/{slug}/personal-note/get-details', 'LearningPageController@getPersonalNoteDetails');
+            Route::post('/learning/{slug}/personal-note/store', 'LearningPageController@storePersonalNote');
             Route::get('/learning/{slug}', 'LearningPageController@index');
             Route::get('/learning/{slug}/noticeboards', 'LearningPageController@noticeboards');
             Route::get('/assignment/{assignmentId}/download/{id}/attach', 'LearningPageController@downloadAssignment');
@@ -148,6 +151,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
 
             Route::group(['prefix' => 'personal-notes'], function () {
                 Route::get('/{id}/download-attachment', 'CoursePersonalNotesController@downloadAttachment');
+                Route::get('/{id}/delete', 'CoursePersonalNotesController@deleteAttachment');
             });
         });
     });

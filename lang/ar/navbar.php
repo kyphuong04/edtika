@@ -9,4 +9,9 @@
   'menu' => 'قائمة طعام',
   'title' => 'عنوان',
   'start_a_live_class' => 'ابدأ دورة جديدة',
+  'tests' => 'الاختبارات',
+  'diagnostic_tests' => 'اختبارات تشخيصية',
+  'mock_tests' => 'اختبارات تجريبية',
+  'dictionary_flashcard' => 'القاموس والبطاقات التعليمية',
+  'articles' => 'المقالات',
 );

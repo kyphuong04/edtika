@@ -21,7 +21,9 @@ use App\Models\UserMeta;
 use App\Models\UserOccupation;
 use App\Models\UserSelectedBank;
 use App\Models\UserSelectedBankSpecification;
+use App\Models\CoursePersonalNote;
 use App\Models\UserZoomApi;
+use App\Models\Webinar;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +39,68 @@ class UserController extends Controller
         $this->authorize("panel_others_profile_setting");
 
         $user = auth()->user();
+
+        if ($user->isUser() || $user->isStudent()) {
+            // Load user metas onto $user so $user->gender etc. are populated
+            $userMetas = $user->userMetas;
+            if (!empty($userMetas)) {
+                foreach ($userMetas as $meta) {
+                    $user->{$meta->name} = $meta->value;
+                }
+            }
+
+            $userLoginHistories = UserLoginHistory::query()
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $userBoughtWebinarsIds = $user->getPurchasedCoursesIds();
+
+            $purchasedCourses = collect();
+            if (count($userBoughtWebinarsIds)) {
+                $purchasedCourses = Webinar::query()
+                    ->whereIn('id', $userBoughtWebinarsIds)
+                    ->with('teacher')
+                    ->latest()
+                    ->take(6)
+                    ->get();
+            }
+
+            $continueLearningCourse = null;
+            if (count($userBoughtWebinarsIds)) {
+                $continueLearningCourse = Webinar::query()
+                    ->whereIn('id', $userBoughtWebinarsIds)
+                    ->with('teacher')
+                    ->inRandomOrder()
+                    ->get()
+                    ->first(function ($course) {
+                        return $course->getProgress(true) < 100;
+                    });
+            }
+
+            $userLanguages = getGeneralSettings('user_languages');
+            if (!empty($userLanguages) && is_array($userLanguages)) {
+                $userLanguages = getLanguages($userLanguages);
+            } else {
+                $userLanguages = [];
+            }
+
+            $recentNotes = CoursePersonalNote::query()
+                ->with('course')
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('design_1.panel.settings.user_profile', [
+                'pageTitle' => trans('public.my_profile'),
+                'user' => $user,
+                'userLoginHistories' => $userLoginHistories,
+                'purchasedCourses' => $purchasedCourses,
+                'continueLearningCourse' => $continueLearningCourse,
+                'userLanguages' => $userLanguages,
+                'recentNotes' => $recentNotes,
+            ]);
+        }
 
         $data = [
             'pageTitle' => trans('panel.settings'),
@@ -188,6 +252,14 @@ class UserController extends Controller
                     'enable_profile_statistics' => (!empty($data['enable_profile_statistics']) and $data['enable_profile_statistics'] == 'on'),
                 ];
 
+                // Handle avatar upload from profile modal
+                if (!empty($request->file('avatar'))) {
+                    $updateData['avatar'] = $this->handleUploadImagesAndFiles($request, $user, "avatar");
+                }
+
+                // Handle gender (stored as UserMeta, same as extra_information step)
+                $updateUserMeta['gender'] = $data['gender'] ?? null;
+
                 $this->handleNewsletter($data['email'], $user->id, $joinNewsletter);
             } elseif ($step == "extra_information") {
                 $updateData = [
@@ -298,7 +370,11 @@ class UserController extends Controller
                 }
             }
 
-            $url = "/panel/setting/step/{$step}";
+            if ($user->isUser() || $user->isStudent()) {
+                $url = "/panel/setting";
+            } else {
+                $url = "/panel/setting/step/{$step}";
+            }
             if (!empty($organization)) {
                 $userType = $user->isTeacher() ? 'instructors' : 'students';
                 $url = "/panel/manage/{$userType}/{$user->id}/edit";

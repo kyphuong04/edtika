@@ -9,4 +9,9 @@
   'menu' => 'Menü',
   'title' => 'Başlık',
   'start_a_live_class' => 'Yeni bir kursa başlayın',
+  'tests' => 'Testler',
+  'diagnostic_tests' => 'Tanı Testleri',
+  'mock_tests' => 'Deneme Testleri',
+  'dictionary_flashcard' => 'Sözlük ve Flaş Kartlar',
+  'articles' => 'Makaleler',
 );

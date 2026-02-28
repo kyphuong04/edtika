@@ -25,4 +25,11 @@ return [
     'terms' => 'Điều khoản dịch vụ',
     'menu' => 'Menu',
     'title' => 'Tiêu đề',
+
+    // Custom nav
+    'tests' => 'Bài thi',
+    'diagnostic_tests' => 'Bài thi Chẩn đoán',
+    'mock_tests' => 'Bài thi Thử',
+    'dictionary_flashcard' => 'Từ điển & Flashcard',
+    'articles' => 'Bài viết',
 ];

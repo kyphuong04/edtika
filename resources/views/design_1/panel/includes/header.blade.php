@@ -15,28 +15,6 @@
     <div class="panel-header__contents d-flex align-items-center justify-content-between h-100 border-bottom-gray-200">
 
         <div class="d-flex align-items-center">
-
-            {{-- Multi Color (Dark,Light) --}}
-            <div class="js-theme-color-toggle theme-color-toggle theme-color-toggle__panel {{ "{$userThemeColorMode}-mode" }} d-flex-center size-16 bg-gray-100 rounded-8 mr-16 mr-lg-32">
-                <x-iconsax-lin-moon class="dark-icon icons text-gray-500" width="20px" height="20px"/>
-                <x-iconsax-lin-sun-1 class="light-icon icons text-gray-500" width="20px" height="20px"/>
-            </div>
-
-            @if(!empty($navbarPages) and count($navbarPages))
-                <div class="d-none d-lg-flex align-items-center">
-                    @foreach($navbarPages as $navbarPage)
-                        @php
-                            $navTitle = $navbarPage['title'];
-                            $navKey = 'navbar.' . strtolower($navTitle);
-                            if (\Illuminate\Support\Facades\Lang::has($navKey)) {
-                                 $navTitle = trans($navKey);
-                            }
-                        @endphp
-                        <a href="{{ $navbarPage['link'] }}" class="navbar-item navbar-item-h-70 d-flex align-items-center mr-16 mr-lg-32 text-gray-500">{{ $navTitle }}</a>
-                    @endforeach
-                </div>
-            @endif
-
         </div>
 
         <div class="d-flex align-items-center">
@@ -51,7 +29,13 @@
             @include('design_1.panel.includes.header.currency')
 
 
-            <div class="mx-16">
+            {{-- Multi Color (Dark,Light) --}}
+            <div class="js-theme-color-toggle theme-color-toggle theme-color-toggle__panel {{ "{$userThemeColorMode}-mode" }} d-flex-center size-16 bg-gray-100 rounded-8 mx-16">
+                <x-iconsax-lin-moon class="dark-icon icons text-gray-500" width="20px" height="20px"/>
+                <x-iconsax-lin-sun-1 class="light-icon icons text-gray-500" width="20px" height="20px"/>
+            </div>
+
+            <div class="mr-16">
                 @include('design_1.panel.includes.header.language')
             </div>
 
