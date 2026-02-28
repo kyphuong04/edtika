@@ -6,7 +6,7 @@
 
 @section("content")
     <div class="dashboard-body">
-        @if($authUser->isUser())
+        @if($authUser->isUser() || $authUser->isStudent())
             <div class="student-dashboard">
                 @include('design_1.panel.dashboard.student.index')
             </div>

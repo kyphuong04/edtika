@@ -30,7 +30,7 @@ class DashboardController extends Controller
             'pageTitle' => trans('panel.dashboard'),
         ];
 
-        if ($user->isUser()) {
+        if ($user->isUser() || $user->isStudent()) {
             $data = array_merge($data, $this->getStudentDashboardData($request, $user));
         } else {
             $data = array_merge($data, $this->getInstructorDashboardData($request, $user));

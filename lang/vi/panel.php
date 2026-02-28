@@ -16,7 +16,7 @@ return [
     'follow' => 'Theo dõi',
     'unfollow' => 'Bỏ theo dõi',
 
-    'webinars' => 'Khóa học',
+    'webinars' => 'Chương trình học',
     'webinar' => 'Khóa học',
     'webinar_sales' => 'Doanh số khóa học trực tiếp',
     'content_sales' => 'Doanh số nội dung',
@@ -56,6 +56,7 @@ return [
     'start_learning' => 'Bắt đầu học',
 
     'my_purchases' => 'Khóa học đã mua',
+    'my_courses' => 'Khóa học của tôi',
     'my_purchases_no_result' => 'Chưa mua khóa học nào!',
     'my_purchases_no_result_hint' => 'Bắt đầu học từ những giảng viên hàng đầu và tận hưởng trải nghiệm.',
 

@@ -7,6 +7,8 @@
         handleDefaultItemLoaded();
 
         handleTrackSpentTime();
+
+        initSidebarNoteEditor();
     });
 
     function handleTrackSpentTime() {
@@ -182,6 +184,8 @@
                 handleLoadingHtml();
                 handleContentItemHtml(id, type, extraData)
             }
+
+            loadSidebarPersonalNote(id, type);
         }
     })
 
@@ -538,5 +542,95 @@
         const $sidebar = $('#learningPageSidebar');
         $sidebar.toggleClass('show-drawer')
     })
+
+    /***************
+     * Sidebar Personal Note Panel
+     ***************/
+    function initSidebarNoteEditor() {
+        const $textarea = $('#sidebarNoteEditor');
+        if (!$textarea.length) return;
+
+        $textarea.summernote({
+            toolbar: [
+                ['style', ['bold', 'italic', 'underline', 'strikethrough']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['misc', ['undo', 'redo']],
+            ],
+            height: 180,
+            minHeight: 120,
+            maxHeight: 350,
+            focus: false,
+            placeholder: saveNoteLang + '...',
+        });
+    }
+
+    function loadSidebarPersonalNote(itemId, itemType) {
+        const $panel = $('#sidebarNotePanel');
+        if (!$panel.length) return;
+
+        const $placeholder = $panel.find('.js-sidebar-note-placeholder');
+        const $editorWrap = $panel.find('.js-sidebar-note-editor');
+
+        $('#sidebarNoteItemId').val(itemId);
+        $('#sidebarNoteItemType').val(itemType);
+
+        $placeholder.addClass('d-none');
+        $editorWrap.removeClass('d-none');
+
+        const path = `${courseLearningUrl}/personal-note/get-form?item_id=${itemId}&item_type=${itemType}`;
+
+        $.get(path, function (result) {
+            if (result && result.code === 200) {
+                const $parsed = $('<div>').html(result.html);
+                const noteContent = $parsed.find('textarea[name="details"]').val() ||
+                    $parsed.find('textarea[name="details"]').text() || '';
+                $('#sidebarNoteEditor').summernote('code', noteContent);
+            } else {
+                $('#sidebarNoteEditor').summernote('code', '');
+            }
+        }).fail(function () {
+            $('#sidebarNoteEditor').summernote('code', '');
+        });
+    }
+
+    $('body').on('click', '.js-sidebar-save-note', function (e) {
+        e.preventDefault();
+        const $this = $(this);
+        $this.prop('disabled', true);
+
+        const itemId = $('#sidebarNoteItemId').val();
+        const itemType = $('#sidebarNoteItemType').val();
+        const noteContent = $('#sidebarNoteEditor').summernote('code');
+
+        if (!itemId || !itemType) {
+            $this.prop('disabled', false);
+            return;
+        }
+
+        const path = `${courseLearningUrl}/personal-note/store`;
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        $.ajax({
+            url: path,
+            type: 'POST',
+            data: {
+                item_id: itemId,
+                item_type: itemType,
+                details: noteContent,
+                _token: csrfToken,
+            },
+            success: function (result) {
+                $this.prop('disabled', false);
+                if (result && result.code === 200) {
+                    showToast('success', result.title, result.msg);
+                }
+            },
+            error: function () {
+                $this.prop('disabled', false);
+                showToast('error', oopsLang, somethingWentWrongLang);
+            }
+        });
+    });
 
 })(jQuery)

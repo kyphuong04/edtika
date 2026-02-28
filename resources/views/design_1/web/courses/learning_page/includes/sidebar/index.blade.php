@@ -1,9 +1,9 @@
 <div id="learningPageSidebar" class="learning-page__sidebar">
     <div class="learning-page__sidebar-header px-16 border-bottom-gray-200">
-        {{-- Course Tools --}}
-        <div class="d-block d-lg-none">
+        {{-- Course Tools (hidden) --}}
+        {{-- <div class="d-block d-lg-none">
             @include('design_1.web.courses.learning_page.includes.top_header.course_tools')
-        </div>
+        </div> --}}
 
 
         <div class="js-toggle-show-learning-page-sidebar-drawer cursor-pointer">
@@ -104,5 +104,30 @@
             </div>
 
         </div>
+
+        {{-- Your Notes Panel --}}
+        <div class="mt-16 pt-16 px-12 border-top-gray-100" id="sidebarNotePanel">
+            <div class="d-flex align-items-center mb-12">
+                <x-iconsax-lin-document-text class="icons text-gray-500" width="20px" height="20px"/>
+                <h4 class="font-14 font-weight-bold text-dark ml-8">{{ trans('update.personal_note') }}</h4>
+            </div>
+
+            <div class="js-sidebar-note-placeholder text-center py-20">
+                <x-iconsax-lin-note-1 class="icons text-gray-300 mb-8" width="32px" height="32px"/>
+                <p class="font-12 text-gray-400">{{ trans('update.no_course_notes') }}</p>
+            </div>
+
+            <div class="js-sidebar-note-editor d-none">
+                <input type="hidden" id="sidebarNoteItemId" value="">
+                <input type="hidden" id="sidebarNoteItemType" value="">
+                <textarea id="sidebarNoteEditor" class="w-100"></textarea>
+                <div class="d-flex align-items-center justify-content-end mt-12 mb-16">
+                    <button type="button" class="js-sidebar-save-note btn btn-primary btn-sm px-20">
+                        {{ trans('update.save_note') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>

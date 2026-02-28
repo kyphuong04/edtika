@@ -16,7 +16,7 @@ return [
 'follow' => 'Follow',
 'unfollow' => 'Unfollow',
 
-'webinars' => 'Courses',
+'webinars' => 'Curriculums',
 'webinar' => 'Course',
 'webinar_sales' => 'Live course sales',
 'content_sales' => 'Sales',
@@ -56,6 +56,7 @@ return [
 'start_learning' => 'Start learning',
 
 'my_purchases' => 'My purchases',
+'my_courses' => 'My Courses',
 'my_purchases_no_result' => 'No purchased course!',
 'my_purchases_no_result_hint' => 'Start learning from top instructors and enjoy the experience.',
 

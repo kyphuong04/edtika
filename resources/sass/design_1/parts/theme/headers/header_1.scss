@@ -296,4 +296,72 @@
         }
 
     }
+
+    // Custom navigation links
+    .custom-nav-link {
+        position: relative;
+        font-size: 15px;
+        text-decoration: none;
+        color: #000;
+        transition: color .25s ease;
+        white-space: nowrap;
+
+        // chevron icon inside dropdown trigger
+        .icons {
+            color: #000;
+            transition: color .25s ease;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #0066cc;
+            border-radius: 2px;
+            transition: width .3s ease;
+        }
+
+        &:hover,
+        .theme-header-1__dropdown:hover > div > &,
+        .theme-header-1__dropdown:hover > &  {
+            color: #0066cc;
+
+            .icons {
+                color: #0066cc;
+            }
+
+            &::after {
+                width: 100%;
+            }
+        }
+
+        &.active {
+            color: #0066cc;
+
+            &::after {
+                width: 100%;
+            }
+        }
+    }
+
+    // When hovering the dropdown wrapper, colour the trigger's custom-nav-link
+    .theme-header-1__dropdown:hover .custom-nav-link {
+        color: #0066cc;
+
+        .icons {
+            color: #0066cc;
+        }
+    }
+
+    // Tests dropdown positioning inside nav links bar
+    .theme-header-1__nav-dropdown {
+        .header-1-dropdown-menu {
+            top: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    }
 }
