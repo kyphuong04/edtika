@@ -3,6 +3,7 @@
 @push('styles_top')
     <link rel="stylesheet" href="/assets/default/vendors/simplebar/simplebar.css">
     <link rel="stylesheet" href="/assets/vendors/plyr.io/plyr.min.css">
+    <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
     <link rel="stylesheet" href="{{ getDesign1StylePath("learning_page_noticeboards") }}">
     <link rel="stylesheet" href="{{ getDesign1StylePath("learning_page") }}">
 @endpush
@@ -57,6 +58,7 @@
 
     <script type="text/javascript" src="/assets/default/vendors/simplebar/simplebar.min.js"></script>
     <script src="/assets/vendors/plyr.io/plyr.min.js"></script>
+    <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
 
     <script src="{{ getDesign1ScriptPath("video_player_helpers") }}"></script>
     <script src="{{ getDesign1ScriptPath("learning_page_noticeboards") }}"></script>

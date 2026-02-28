@@ -9,4 +9,9 @@
   'menu' => 'Menú',
   'title' => 'Título',
   'start_a_live_class' => 'Iniciar un nuevo curso',
+  'tests' => 'Pruebas',
+  'diagnostic_tests' => 'Pruebas de Diagnóstico',
+  'mock_tests' => 'Pruebas de Práctica',
+  'dictionary_flashcard' => 'Diccionario y Tarjetas',
+  'articles' => 'Artículos',
 );

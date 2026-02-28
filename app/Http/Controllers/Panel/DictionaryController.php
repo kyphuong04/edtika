@@ -16,14 +16,8 @@ use Illuminate\Support\Facades\Log;
 
 class DictionaryController extends Controller
 {
-    // Using Cambridge Dictionary API
-    private $baseUrl = 'https://dictionary.cambridge.org/api/v1';
-    private $accessKey;
-
-    public function __construct()
-    {
-        $this->accessKey = env('CAMBRIDGE_DICT_ACCESS_KEY', '');
-    }
+    // Using Free Dictionary API - free, no key required, has UK + US pronunciation audio
+    private $freeDictBaseUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
     public function index()
     {
@@ -69,7 +63,7 @@ class DictionaryController extends Controller
 
         $data = [
             'pageTitle' => trans('panel.dictionary_and_flashcard'),
-            'hasApiKey' => !empty($this->accessKey),
+            'hasApiKey' => true, // Free Dictionary API – no key required
             'academicWordLists' => $academicWordLists,
             'myWordList' => $myWordList,
             'userStats' => $userStats,
@@ -108,25 +102,16 @@ class DictionaryController extends Controller
 
     /**
      * Get available dictionaries
+     * (Cambridge removed – returns a static list)
      */
     public function getDictionaries()
     {
-        try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'accessKey' => $this->accessKey
-            ])->get($this->baseUrl . '/dictionaries');
-
-            return response()->json([
-                'success' => true,
-                'data' => $response->json()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => [
+                ['code' => 'english', 'name' => 'English (Free Dictionary API)']
+            ]
+        ]);
     }
 
     /**
@@ -146,45 +131,19 @@ class DictionaryController extends Controller
             ], 400);
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'accessKey' => $this->accessKey
-            ])->timeout(10)->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/search", [
-                'q' => $query,
-                'page' => $page,
-                'pagesize' => $pageSize
-            ]);
-
-            if (!$response->successful()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'API request failed',
-                    'status' => $response->status()
-                ], 500);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $response->json()
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Dictionary search error', ['message' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        // Delegate to searchFirst which uses Free Dictionary API
+        return $this->searchFirst(new Request(['query' => $query]));
     }
 
     /**
-     * Get best matching entry
+     * Get best matching entry using Free Dictionary API
+     * Free, unlimited, supports UK + US pronunciation audio
+     * Source: https://api.dictionaryapi.dev
      */
     public function searchFirst(Request $request)
     {
         // Accept both 'query', 'word', and 'q' parameters
-        $query = $request->input('query', $request->input('word', $request->get('q', '')));
-        $format = $request->get('format', 'json');
+        $query = strtolower(trim($request->input('query', $request->input('word', $request->get('q', '')))));
 
         if (empty($query)) {
             return response()->json([
@@ -193,98 +152,56 @@ class DictionaryController extends Controller
             ], 400);
         }
 
-        // Try Cambridge Dictionary API first (if key is available)
-        if (!empty($this->accessKey)) {
-            try {
-                $url = $this->baseUrl . "/dictionaries/english/entries/{$query}";
-                
-                $response = Http::timeout(10)
-                    ->withHeaders([
-                        'accessKey' => $this->accessKey,
-                        'Accept' => 'application/json',
-                    ])
-                    ->get($url);
-
-                Log::info('Cambridge Dictionary API Response', [
-                    'status' => $response->status(),
-                    'url' => $url,
-                    'query' => $query,
-                ]);
-
-                // If successful, process Cambridge data
-                if ($response->successful() && !empty($response->json())) {
-                    $apiData = $response->json();
-                    $transformedData = $this->transformCambridgeData($apiData);
-
-                    return response()->json([
-                        'success' => true,
-                        'data' => $transformedData
-                    ]);
-                }
-                
-                // Log Cambridge API failure and fall through to Free Dictionary
-                Log::warning('Cambridge Dictionary API failed, falling back to Free Dictionary', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-            } catch (\Exception $e) {
-                // Log error and fall through to Free Dictionary
-                Log::warning('Cambridge Dictionary API error, falling back to Free Dictionary', [
-                    'message' => $e->getMessage()
-                ]);
-            }
-        }
-
-        // Fallback to Free Dictionary API
         try {
-            $freeDictUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en/' . $query;
-            
-            $response = Http::timeout(10)->get($freeDictUrl);
+            $url = $this->freeDictBaseUrl . '/' . urlencode($query);
 
-            Log::info('Free Dictionary API Response', [
-                'status' => $response->status(),
-                'url' => $freeDictUrl,
+            $response = Http::timeout(10)->get($url);
+
+            Log::info('Free Dictionary API Request', [
+                'url'   => $url,
                 'query' => $query,
+                'status' => $response->status(),
             ]);
 
-            if (!$response->successful()) {
-                if ($response->status() === 404) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No definition found for "' . $query . '"',
-                        'data' => null
-                    ]);
-                }
-                
+            if ($response->status() === 404) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Dictionary API request failed',
+                    'message' => 'No definition found for "' . $query . '"',
+                    'data'    => null
+                ]);
+            }
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dictionary API request failed (HTTP ' . $response->status() . ')',
                 ], 500);
             }
 
             $apiData = $response->json();
-            
-            if (empty($apiData)) {
+
+            if (empty($apiData) || !is_array($apiData)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No definition found for "' . $query . '"',
-                    'data' => null
+                    'data'    => null
                 ]);
             }
 
-            // Transform Free Dictionary API data
-            $transformedData = $this->transformDictionaryData($apiData[0]);
+            // Merge all entries for the same word (different parts of speech come as separate items)
+            $transformedData = $this->transformDictionaryData($apiData[0], $apiData);
 
             return response()->json([
                 'success' => true,
-                'data' => $transformedData
+                'data'    => $transformedData
             ]);
+
         } catch (\Exception $e) {
-            Log::error('All Dictionary APIs failed', [
+            Log::error('Dictionary API error', [
+                'query'   => $query,
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -370,89 +287,120 @@ class DictionaryController extends Controller
     }
 
     /**
-     * Transform Free Dictionary API data to our format (fallback)
+     * Transform Free Dictionary API data to our format.
+     * $data = first entry, $allEntries = full array for merging pronunciations across entries.
      */
-    private function transformDictionaryData($data)
+    private function transformDictionaryData($data, array $allEntries = [])
     {
         $transformed = [
-            'headword' => $data['word'] ?? '',
+            'headword'      => $data['word'] ?? '',
             'pronunciations' => [],
-            'meanings' => []
+            'meanings'      => [],
+            'synonyms'      => [],
+            'antonyms'      => [],
         ];
 
-        // Transform pronunciations
-        if (isset($data['phonetics']) && is_array($data['phonetics'])) {
-            $ukPron = null;
-            $usPron = null;
-            
-            foreach ($data['phonetics'] as $phonetic) {
-                if (!empty($phonetic['text'])) {
-                    $audioUrl = $phonetic['audio'] ?? '';
-                    
-                    // Determine if UK or US based on audio URL
-                    if (strpos($audioUrl, '-uk') !== false || strpos($audioUrl, '-gb') !== false) {
-                        $ukPron = [
-                            'label' => 'UK',
-                            'ipa' => $phonetic['text'],
-                            'audio' => $audioUrl
-                        ];
-                    } elseif (strpos($audioUrl, '-us') !== false) {
-                        $usPron = [
-                            'label' => 'US',
-                            'ipa' => $phonetic['text'],
-                            'audio' => $audioUrl
-                        ];
-                    } else {
-                        // If no specific marker, treat as general pronunciation
-                        if (!$ukPron && !$usPron) {
-                            $transformed['pronunciations'][] = [
-                                'label' => '',
-                                'ipa' => $phonetic['text'],
-                                'audio' => $audioUrl
-                            ];
-                        }
-                    }
+        // Collect phonetics from ALL returned entries to maximise UK + US coverage
+        $phoneticsPool = [];
+        foreach ($allEntries as $entry) {
+            if (!empty($entry['phonetics']) && is_array($entry['phonetics'])) {
+                foreach ($entry['phonetics'] as $ph) {
+                    $phoneticsPool[] = $ph;
                 }
             }
-            
-            // Add UK first, then US
-            if ($ukPron) {
-                $transformed['pronunciations'][] = $ukPron;
+        }
+        // If no allEntries supplied, fall back to first entry
+        if (empty($phoneticsPool) && isset($data['phonetics'])) {
+            $phoneticsPool = $data['phonetics'];
+        }
+
+        // Build UK / US pronunciation objects
+        $ukPron  = null;
+        $usPron  = null;
+        $genPron = null;
+
+        foreach ($phoneticsPool as $phonetic) {
+            $audioUrl = $phonetic['audio'] ?? '';
+            $ipaText  = $phonetic['text']  ?? '';
+
+            if (empty($audioUrl) && empty($ipaText)) {
+                continue;
             }
-            if ($usPron) {
-                $transformed['pronunciations'][] = $usPron;
+
+            // Fix protocol-relative URLs returned by dictionaryapi.dev  (e.g. //api.dictionaryapi.dev/...)
+            if (!empty($audioUrl) && str_starts_with($audioUrl, '//')) {
+                $audioUrl = 'https:' . $audioUrl;
+            }
+
+            $lowerAudio = strtolower($audioUrl);
+
+            if (strpos($lowerAudio, '-uk') !== false || strpos($lowerAudio, '-gb') !== false) {
+                if (!$ukPron || (empty($ukPron['audio']) && !empty($audioUrl))) {
+                    $ukPron = ['label' => 'UK', 'ipa' => $ipaText, 'audio' => $audioUrl];
+                }
+            } elseif (strpos($lowerAudio, '-us') !== false || strpos($lowerAudio, '-au') !== false) {
+                if (!$usPron || (empty($usPron['audio']) && !empty($audioUrl))) {
+                    $usPron = ['label' => 'US', 'ipa' => $ipaText, 'audio' => $audioUrl];
+                }
+            } else {
+                // Generic (no region in URL) – keep as fallback
+                if (!$genPron && !empty($ipaText)) {
+                    $genPron = ['label' => '', 'ipa' => $ipaText, 'audio' => $audioUrl];
+                }
             }
         }
 
-        // Transform meanings
-        if (isset($data['meanings']) && is_array($data['meanings'])) {
-            foreach ($data['meanings'] as $meaning) {
+        // Add UK first, then US; if neither found use generic
+        if ($ukPron)  { $transformed['pronunciations'][] = $ukPron;  }
+        if ($usPron)  { $transformed['pronunciations'][] = $usPron;  }
+        if (!$ukPron && !$usPron && $genPron) {
+            $transformed['pronunciations'][] = $genPron;
+        }
+
+        // Merge meanings from ALL entries
+        $entriesToMerge = !empty($allEntries) ? $allEntries : [$data];
+        foreach ($entriesToMerge as $entry) {
+            if (!isset($entry['meanings']) || !is_array($entry['meanings'])) {
+                continue;
+            }
+            foreach ($entry['meanings'] as $meaning) {
                 $partOfSpeech = $meaning['partOfSpeech'] ?? '';
-                
+
                 $definitions = [];
                 if (isset($meaning['definitions']) && is_array($meaning['definitions'])) {
                     foreach ($meaning['definitions'] as $def) {
+                        $defSynonyms = array_slice($def['synonyms'] ?? [], 0, 5);
+                        $defAntonyms = array_slice($def['antonyms'] ?? [], 0, 5);
                         $definitions[] = [
                             'definition' => $def['definition'] ?? '',
-                            'example' => $def['example'] ?? '',
-                            'synonyms' => $def['synonyms'] ?? [],
-                            'antonyms' => $def['antonyms'] ?? []
+                            'example'    => $def['example']    ?? '',
+                            'synonyms'   => $defSynonyms,
+                            'antonyms'   => $defAntonyms,
                         ];
                     }
                 }
 
+                $meaningSynonyms = array_slice($meaning['synonyms'] ?? [], 0, 8);
+                $meaningAntonyms = array_slice($meaning['antonyms'] ?? [], 0, 8);
+
+                // Merge into top-level synonym/antonym pools
+                $transformed['synonyms'] = array_unique(array_merge($transformed['synonyms'], $meaningSynonyms));
+                $transformed['antonyms'] = array_unique(array_merge($transformed['antonyms'], $meaningAntonyms));
+
                 $transformed['meanings'][] = [
                     'partOfSpeech' => $partOfSpeech,
-                    'definitions' => $definitions,
-                    'synonyms' => $meaning['synonyms'] ?? [],
-                    'antonyms' => $meaning['antonyms'] ?? []
+                    'definitions'  => $definitions,
+                    'synonyms'     => $meaningSynonyms,
+                    'antonyms'     => $meaningAntonyms,
                 ];
             }
         }
 
-        // Add HTML content if format is html
-        $htmlContent = $this->generateHtmlContent($transformed);
-        $transformed['htmlContent'] = $htmlContent;
+        $transformed['synonyms'] = array_values(array_slice($transformed['synonyms'], 0, 10));
+        $transformed['antonyms'] = array_values(array_slice($transformed['antonyms'], 0, 10));
+
+        // Generate HTML fallback
+        $transformed['htmlContent'] = $this->generateHtmlContent($transformed);
 
         return $transformed;
     }
@@ -587,24 +535,8 @@ class DictionaryController extends Controller
             ], 400);
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'accessKey' => $this->accessKey
-            ])->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/entries/{$entryId}/nearbyentries", [
-                'max' => $max
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'data' => $response->json()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        // Nearby entries not supported by Free Dictionary API
+        return response()->json(['success' => true, 'data' => []]);
     }
 
     /**
@@ -623,24 +555,8 @@ class DictionaryController extends Controller
             ], 400);
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'accessKey' => $this->accessKey
-            ])->get($this->baseUrl . "/dictionaries/{$dictionaryCode}/entries/{$entryId}", [
-                'format' => $format
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'data' => $response->json()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        // Delegate to searchFirst which queries Free Dictionary API
+        return $this->searchFirst(new Request(['query' => $entryId]));
     }
 
     /**
