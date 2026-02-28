@@ -16,11 +16,9 @@
     </div>
 
     <div class="col-12 col-lg-3 mt-32 mt-lg-0">
-        {{-- Subscribe Plan --}}
-        @include('design_1.panel.dashboard.student.includes.subscribe_plan')
+        {{-- Subscribe Plan - hidden for user/student --}}
 
-        {{-- Current Balance --}}
-        @include('design_1.panel.dashboard.student.includes.current_balance')
+        {{-- Current Balance - hidden for user/student --}}
 
         {{-- Noticeboard --}}
         @include('design_1.panel.dashboard.student.includes.noticeboard')
@@ -36,11 +34,9 @@
         {{-- Events Calendar --}}
         @include('design_1.panel.dashboard.student.includes.events_calendar')
 
-        {{-- Upcoming Live Sessions --}}
-        @include('design_1.panel.dashboard.student.includes.upcoming_live_sessions')
+        {{-- Upcoming Live Sessions - hidden for user/student --}}
 
-        {{-- Open Meetings --}}
-        @include('design_1.panel.dashboard.student.includes.open_meetings')
+        {{-- Open Meetings - hidden for user/student --}}
 
 
     </div>

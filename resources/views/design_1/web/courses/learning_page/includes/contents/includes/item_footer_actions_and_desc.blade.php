@@ -72,7 +72,8 @@
             </a>
         @endif
 
-        @if(!empty(getFeaturesSettings('course_notes_status')))
+        {{-- Personal Note icon (hidden) --}}
+        {{-- @if(!empty(getFeaturesSettings('course_notes_status')))
             <div class="position-relative d-flex-center size-48 rounded-circle bg-white cursor-pointer {{ $itemHasPersonalNote ? 'js-edit-personal-note' : 'js-add-personal-note' }}"
                  data-item-id="{{ $item->id }}"
                  data-item-type="{{ $item->getMorphClass() }}"
@@ -84,7 +85,7 @@
                     <div class="has-personal-note-beep"></div>
                 @endif
             </div>
-        @endif
+        @endif --}}
     </div>
 </div>
 
