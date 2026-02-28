@@ -15,6 +15,7 @@
                 <span class="">{{ trans('update.content') }}</span>
             </div>
 
+            @if(!auth()->check() || (!auth()->user()->isUser() && !auth()->user()->isStudent()))
             <div class="navbar-item d-flex-center cursor-pointer {{ ($activePageTab == "comments") ? 'active' : '' }}" data-tab-toggle data-tab-href="#commentsTab">
                 <span class="ml-4">{{ trans('panel.comments') }}</span>
 
@@ -22,6 +23,7 @@
                     {{ (!empty($courseComments) and !empty($courseComments['comments_count'])) ? $courseComments['comments_count'] : 0 }}
                 </span>
             </div>
+            @endif
 
             <div id="showCourseReviewsTab" class="navbar-item d-flex-center cursor-pointer {{ ($activePageTab == "reviews") ? 'active' : '' }}" data-tab-toggle data-tab-href="#reviewsTab">
                 <span class="ml-4">{{ trans('product.reviews') }}</span>
@@ -43,9 +45,11 @@
             @include('design_1.web.courses.show.tabs.content')
         </div>
 
+        @if(!auth()->check() || (!auth()->user()->isUser() && !auth()->user()->isStudent()))
         <div class="custom-tabs-content {{ ($activePageTab == "comments") ? 'active' : '' }}" id="commentsTab">
             @include('design_1.web.courses.show.tabs.comments')
         </div>
+        @endif
 
         <div class="custom-tabs-content {{ ($activePageTab == "reviews") ? 'active' : '' }}" id="reviewsTab">
             @include('design_1.web.courses.show.tabs.reviews')

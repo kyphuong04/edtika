@@ -25,4 +25,11 @@ return [
     'login' => 'Login',
     'register' => 'Register',
     'about' => 'About',
+
+    // Custom nav
+    'tests' => 'Tests',
+    'diagnostic_tests' => 'Diagnostic Tests',
+    'mock_tests' => 'Mock Tests',
+    'dictionary_flashcard' => 'Dictionary & Flashcard',
+    'articles' => 'Articles',
 ];

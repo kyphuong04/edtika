@@ -305,6 +305,9 @@
     @include('design_1.web.cart.drawer.index')
 
     @include('design_1.web.includes.advertise_modal.index')
+
+    {{-- Page-level modals (rendered outside simplebar to avoid stacking-context issues) --}}
+    @stack('panel_modals')
 </div>
 <!-- Template JS File -->
 

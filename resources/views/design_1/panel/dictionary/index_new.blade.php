@@ -859,6 +859,128 @@
         color: #cbd5e1;
     }
 
+    /* Pronunciation row with UK / US audio buttons */
+    .pronunciations-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+        align-items: center;
+    }
+
+    .pronunciation-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 12px;
+    }
+
+    .dark-mode .pronunciation-item {
+        background: #0f172a;
+        border-color: #334155;
+    }
+
+    .pron-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #3b82f6;
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .pron-ipa {
+        font-size: 16px;
+        color: #3b82f6;
+        font-style: italic;
+    }
+
+    .dark-mode .pron-ipa {
+        color: #60a5fa;
+    }
+
+    .pron-audio-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #3b82f6;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .pron-audio-btn:hover {
+        background: #dbeafe;
+    }
+
+    .dark-mode .pron-audio-btn {
+        color: #60a5fa;
+    }
+
+    .dark-mode .pron-audio-btn:hover {
+        background: #1e3a5f;
+    }
+
+    .pron-audio-btn.playing {
+        color: #16a34a;
+        animation: pulse-audio 0.6s ease infinite alternate;
+    }
+
+    @keyframes pulse-audio {
+        from { opacity: 1; }
+        to   { opacity: 0.5; }
+    }
+
+    .result-meaning-group {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .dark-mode .result-meaning-group {
+        border-bottom-color: #1e293b;
+    }
+
+    .result-meaning-group:last-child {
+        border-bottom: none;
+    }
+
+    .def-num {
+        font-weight: 700;
+        color: #3b82f6;
+        margin-right: 4px;
+    }
+
+    .result-synonyms,
+    .result-antonyms {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 6px;
+    }
+
+    .dark-mode .result-synonyms,
+    .dark-mode .result-antonyms {
+        color: #94a3b8;
+    }
+
+    .result-synonyms strong,
+    .result-antonyms strong {
+        color: #475569;
+    }
+
+    .dark-mode .result-synonyms strong,
+    .dark-mode .result-antonyms strong {
+        color: #94a3b8;
+    }
+
     /* Responsive adjustments */
     @media (max-width: 991px) {
         .col-lg-8,
@@ -1159,37 +1281,82 @@
 
     function displaySearchResult(data) {
         console.log('Dictionary data:', data); // Debug log
-        
-        let html = `
-            <div class="result-word">${data.headword || data.word || 'Unknown'}</div>
-        `;
 
-        // Handle pronunciations
+        // Word heading
+        let html = `<div class="result-word">${data.headword || data.word || 'Unknown'}</div>`;
+
+        // ── Pronunciations: UK / US buttons with audio ──────────────────
         if (data.pronunciations && data.pronunciations.length > 0) {
-            const pronText = data.pronunciations[0].ipa || data.pronunciations[0].text || '';
-            if (pronText) {
-                html += `<div class="result-pronunciation">/${pronText}/</div>`;
-            }
+            html += '<div class="pronunciations-row">';
+            const wordForSpeech = data.headword || data.word || '';
+
+            data.pronunciations.forEach(function(pron) {
+                let label = pron.label || '';
+                let ipa   = pron.ipa   || pron.text || '';
+                let audio = pron.audio || '';
+
+                // Fix protocol-relative URL on client side too
+                if (audio && audio.startsWith('//')) {
+                    audio = 'https:' + audio;
+                }
+
+                html += '<div class="pronunciation-item">';
+                if (label) {
+                    html += `<span class="pron-label">${label}</span>`;
+                }
+                if (ipa) {
+                    html += `<span class="pron-ipa">/${ipa}/</span>`;
+                }
+                // Always show audio button (fallback to TTS if no URL)
+                html += `<button class="pron-audio-btn" data-audio="${audio}" data-word="${wordForSpeech}" title="Play ${label} pronunciation" onclick="playAudio(this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                </button>`;
+                html += '</div>';
+            });
+
+            html += '</div>';
         }
 
-        // Handle meanings (new API structure)
+        // ── Meanings ─────────────────────────────────────────────────────
         if (data.meanings && data.meanings.length > 0) {
             data.meanings.forEach(function(meaning) {
+                html += '<div class="result-meaning-group">';
+
                 if (meaning.partOfSpeech) {
                     html += `<div class="result-pos">${meaning.partOfSpeech}</div>`;
                 }
 
                 if (meaning.definitions && meaning.definitions.length > 0) {
-                    meaning.definitions.forEach(function(defObj) {
+                    // Show max 4 definitions per part-of-speech
+                    meaning.definitions.slice(0, 4).forEach(function(defObj, i) {
                         if (defObj.definition) {
-                            html += `<div class="result-definition">${defObj.definition}</div>`;
+                            html += `<div class="result-definition"><span class="def-num">${i + 1}.</span> ${defObj.definition}</div>`;
                         }
-                        
                         if (defObj.example) {
                             html += `<div class="result-example">"${defObj.example}"</div>`;
                         }
+                        if (defObj.synonyms && defObj.synonyms.length > 0) {
+                            html += `<div class="result-synonyms"><strong>Synonyms:</strong> ${defObj.synonyms.join(', ')}</div>`;
+                        }
+                        if (defObj.antonyms && defObj.antonyms.length > 0) {
+                            html += `<div class="result-antonyms"><strong>Antonyms:</strong> ${defObj.antonyms.join(', ')}</div>`;
+                        }
                     });
                 }
+
+                // Part-of-speech level synonyms/antonyms
+                if (meaning.synonyms && meaning.synonyms.length > 0) {
+                    html += `<div class="result-synonyms"><strong>Synonyms:</strong> ${meaning.synonyms.join(', ')}</div>`;
+                }
+                if (meaning.antonyms && meaning.antonyms.length > 0) {
+                    html += `<div class="result-antonyms"><strong>Antonyms:</strong> ${meaning.antonyms.join(', ')}</div>`;
+                }
+
+                html += '</div>';
             });
         }
         // Fallback to old senses structure
@@ -1198,13 +1365,11 @@
                 if (sense.part_of_speech) {
                     html += `<div class="result-pos">${sense.part_of_speech}</div>`;
                 }
-
                 if (sense.definitions && sense.definitions.length > 0) {
                     sense.definitions.forEach(function(definition) {
                         html += `<div class="result-definition">${definition}</div>`;
                     });
                 }
-
                 if (sense.examples && sense.examples.length > 0) {
                     sense.examples.forEach(function(example) {
                         html += `<div class="result-example">"${example}"</div>`;
@@ -1213,13 +1378,15 @@
             });
         }
 
+        // Action buttons
+        const wordLabel = data.headword || data.word || '';
         html += `
             <div class="result-actions">
-                <button class="result-btn result-btn-primary" id="saveToFlashcard" data-word="${data.headword || data.word}">
+                <button class="result-btn result-btn-primary" id="saveToFlashcard" data-word="${wordLabel}">
                     <i class="iconsax" data-icon="bookmark"></i>
                     {{ trans('panel.save_to_flashcard') }}
                 </button>
-                <button class="result-btn result-btn-secondary" id="addToWordList" data-word="${data.headword || data.word}">
+                <button class="result-btn result-btn-secondary" id="addToWordList" data-word="${wordLabel}">
                     <i class="iconsax" data-icon="add-circle"></i>
                     {{ trans('panel.add_to_list') }}
                 </button>
@@ -1227,6 +1394,65 @@
         `;
 
         $('#dictionaryResult').html(html);
+
+        // Re-init icon rendering if iconsax is available
+        if (typeof iconsax !== 'undefined') { try { iconsax.replace(); } catch(e) {} }
+    }
+
+    // Play pronunciation audio
+    function playAudio(btnEl) {
+        let url = btnEl ? btnEl.getAttribute('data-audio') : null;
+        const wordText = btnEl ? btnEl.getAttribute('data-word') : null;
+
+        // Fix protocol-relative URLs (e.g. //api.dictionaryapi.dev/...)
+        if (url && url.startsWith('//')) {
+            url = 'https:' + url;
+        }
+
+        console.log('Playing audio:', url);
+
+        // Mark button as playing
+        document.querySelectorAll('.pron-audio-btn.playing').forEach(function(b) {
+            b.classList.remove('playing');
+        });
+        btnEl.classList.add('playing');
+
+        if (url) {
+            // Use audio file from API
+            const audio = new Audio(url);
+            audio.volume = 1.0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(function(e) {
+                    console.warn('Audio file failed, trying TTS fallback:', e, 'URL:', url);
+                    // Fallback to browser TTS
+                    speakWord(wordText || document.querySelector('.result-word')?.textContent, btnEl);
+                });
+            }
+            audio.addEventListener('ended', function() {
+                btnEl.classList.remove('playing');
+            });
+        } else if (wordText || document.querySelector('.result-word')) {
+            // No audio URL — use browser speech synthesis
+            speakWord(wordText || document.querySelector('.result-word').textContent, btnEl);
+        } else {
+            btnEl.classList.remove('playing');
+        }
+    }
+
+    // Browser speech synthesis fallback
+    function speakWord(word, btnEl) {
+        if (!word || !window.speechSynthesis) {
+            if (btnEl) btnEl.classList.remove('playing');
+            return;
+        }
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(word.trim());
+        utter.lang = 'en-US';
+        utter.rate = 0.9;
+        utter.onend = function() { if (btnEl) btnEl.classList.remove('playing'); };
+        utter.onerror = function() { if (btnEl) btnEl.classList.remove('playing'); };
+        window.speechSynthesis.speak(utter);
     }
 
     // Save to flashcard
