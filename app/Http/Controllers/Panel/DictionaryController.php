@@ -67,6 +67,7 @@ class DictionaryController extends Controller
             'academicWordLists' => $academicWordLists,
             'myWordList' => $myWordList,
             'userStats' => $userStats,
+            'authUser' => $user,
         ];
 
         return view('design_1.panel.dictionary.index_new', $data);
@@ -736,6 +737,71 @@ class DictionaryController extends Controller
         ];
 
         return view('design_1.panel.dictionary.word-list-detail', $data);
+    }
+
+    /**
+     * Add a word directly to the user's "My Word List" in one step.
+     * Creates a flashcard entry behind the scenes – user never sees it.
+     */
+    public function addWordToMyList(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'word'        => 'required|string|max:255',
+            'definition'  => 'required|string',
+            'part_of_speech' => 'nullable|string|max:50',
+            'pronunciation'  => 'nullable|string|max:255',
+            'example'        => 'nullable|string',
+        ]);
+
+        // Get or create the user's personal word list
+        $wordList = WordList::firstOrCreate(
+            [
+                'user_id'  => $user->id,
+                'category' => 'user',
+                'name'     => 'My Word List',
+            ],
+            [
+                'description' => 'My personal vocabulary collection',
+                'is_public'   => false,
+                'word_count'  => 0,
+            ]
+        );
+
+        // Upsert the underlying flashcard record
+        $flashcard = Flashcard::updateOrCreate(
+            [
+                'user_id'        => $user->id,
+                'word'           => $request->word,
+                'part_of_speech' => $request->part_of_speech,
+            ],
+            [
+                'definition'    => $request->definition,
+                'pronunciation' => $request->pronunciation,
+                'example'       => $request->example,
+            ]
+        );
+
+        // Already in list?
+        if ($wordList->flashcards()->where('user_flashcards.id', $flashcard->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => trans('panel.word_already_in_list'),
+            ], 400);
+        }
+
+        $maxOrder = $wordList->flashcards()->max('flashcard_word_list.order') ?? 0;
+        $wordList->flashcards()->attach($flashcard->id, ['order' => $maxOrder + 1]);
+        $wordList->updateWordCount();
+
+        return response()->json([
+            'success' => true,
+            'message' => trans('panel.word_added_to_list_successfully'),
+            'data'    => [
+                'word_count' => $wordList->word_count,
+            ],
+        ]);
     }
 
     /**
