@@ -398,6 +398,7 @@ return [
     'example' => 'Ví dụ',
     'webinar_not_found_or_access_denied' => 'Không tìm thấy khóa học hoặc bạn không có quyền truy cập.',
     'something_went_wrong' => 'Đã xảy ra lỗi!',
+    'turn' => 'Lật thẻ',
     'translation' => 'Dịch nghĩa',
     'message_sent_successfully' => 'Gửi tin nhắn thành công',
     'no_quiz_results_found' => 'Không tìm thấy kết quả kiểm tra nào',

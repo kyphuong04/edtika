@@ -53,6 +53,96 @@
     .dark-mode .user-name {
         color: #f1f5f9;
     }
+
+    /* ── Dictionary Profile Card ─────────────────────────────── */
+    .dict-profile-card {
+        position: relative;
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .dark-mode .dict-profile-card {
+        background: #1e293b;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .dict-profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .dict-profile-avatar {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        flex-shrink: 0;
+    }
+    .dict-profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .dict-profile-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .dict-profile-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .dark-mode .dict-profile-name { color: #f1f5f9; }
+    .dict-profile-band {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+    .dark-mode .dict-profile-band { color: #94a3b8; }
+    .dict-profile-chevron {
+        flex-shrink: 0;
+        color: #94a3b8;
+        transition: transform 0.25s ease;
+    }
+    .dict-profile-card.open .dict-profile-chevron {
+        transform: rotate(180deg);
+    }
+    .dict-profile-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        padding-bottom: 6px;
+    }
+    .dark-mode .dict-profile-dropdown {
+        background: #1e293b;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .dict-profile-card.open .dict-profile-dropdown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
     
     .band-estimate {
         font-size: 14px;
@@ -177,14 +267,13 @@
         padding: 20px;
         margin-bottom: 15px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        cursor: pointer;
+        cursor: default;
         transition: all 0.3s;
         position: relative;
     }
     
     .word-list-card:hover {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
     }
     
     .dark-mode .word-list-card {
@@ -213,6 +302,12 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 10px;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .word-list-header:hover .word-list-name {
+        color: #3b82f6;
     }
     
     .word-list-name {
@@ -257,213 +352,196 @@
         margin-top: 15px;
         display: none;
     }
-    
+
     .dark-mode .word-list-expanded {
         background: #0f172a;
     }
-    
+
     .word-list-expanded.show {
         display: block;
     }
-    
+
     .filter-bar {
         display: flex;
         gap: 10px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
+        margin-bottom: 16px;
     }
-    
+
     .filter-input {
         flex: 1;
-        min-width: 200px;
-        padding: 10px 15px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+        padding: 10px 18px;
+        border: 1px solid #d1d5db;
+        border-radius: 50px;
         font-size: 14px;
+        background: #fff;
+        color: #1e293b;
+        outline: none;
+        transition: border-color 0.2s;
     }
-    
+    .filter-input:focus { border-color: #3b82f6; }
+
     .dark-mode .filter-input {
         background: #1e293b;
         border-color: #334155;
         color: #f1f5f9;
     }
-    
-    .filter-btn {
-        padding: 10px 20px;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+
+    .filter-select {
+        padding: 10px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 50px;
         font-size: 14px;
+        background: #fff;
+        color: #475569;
         cursor: pointer;
-        transition: all 0.3s;
+        outline: none;
+        min-width: 110px;
+        transition: border-color 0.2s;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 32px;
     }
-    
-    .filter-btn:hover,
-    .filter-btn.active {
-        background: #3b82f6;
-        color: white;
-        border-color: #3b82f6;
-    }
-    
-    .dark-mode .filter-btn {
-        background: #1e293b;
+    .filter-select:focus { border-color: #3b82f6; }
+    .dark-mode .filter-select {
+        background-color: #1e293b;
         border-color: #334155;
         color: #f1f5f9;
     }
-    
+
+    /* ── Word item card ── */
     .word-item {
         background: #fff;
-        border-radius: 8px;
-        padding: 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 40px 14px 14px; /* right padding leaves room for badge */
         margin-bottom: 10px;
         display: flex;
-        align-items: center;
-        gap: 15px;
+        align-items: flex-start;
+        gap: 12px;
         position: relative;
-        transition: all 0.3s;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
-    
     .word-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-color: #93c5fd;
+        box-shadow: 0 2px 8px rgba(59,130,246,0.08);
     }
-    
     .dark-mode .word-item {
         background: #1e293b;
+        border-color: #334155;
     }
-    
+    .dark-mode .word-item:hover { border-color: #3b82f6; }
+
     .word-checkbox {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
+        margin-top: 3px;   /* align with first text line */
+        flex-shrink: 0;
         cursor: pointer;
+        accent-color: #3b82f6;
     }
-    
-    .word-content {
-        flex: 1;
+
+    .word-content { flex: 1; min-width: 0; }
+
+    /* Word + pronunciation on SAME line */
+    .word-title-row {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 4px;
     }
-    
     .word-text {
-        font-size: 16px;
-        font-weight: 600;
+        font-size: 15px;
+        font-weight: 700;
         color: #1e293b;
-        margin-bottom: 5px;
     }
-    
-    .dark-mode .word-text {
-        color: #f1f5f9;
-    }
-    
+    .dark-mode .word-text { color: #f1f5f9; }
+
     .word-pronunciation {
-        font-size: 14px;
+        font-size: 13px;
         color: #64748b;
         font-style: italic;
     }
-    
-    .dark-mode .word-pronunciation {
-        color: #94a3b8;
-    }
-    
+    .dark-mode .word-pronunciation { color: #94a3b8; }
+
     .word-definition {
-        font-size: 14px;
+        font-size: 13px;
         color: #475569;
-        margin-top: 5px;
+        line-height: 1.5;
     }
-    
-    .dark-mode .word-definition {
-        color: #cbd5e1;
-    }
-    
+    .dark-mode .word-definition { color: #cbd5e1; }
+
+    /* Learned tick — plain ✓ at top-right, no circle */
     .learned-badge {
         position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 24px;
-        height: 24px;
-        background: #10b981;
-        border-radius: 50%;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        color: white;
+        top: 12px;
+        right: 12px;
         font-size: 14px;
+        font-weight: 700;
+        color: #10b981;
+        display: none;
         cursor: pointer;
-        transition: all 0.3s;
+        line-height: 1;
+        transition: opacity 0.2s;
     }
-    
-    .learned-badge.show {
-        display: flex;
-    }
-    
-    .learned-badge:hover::after {
-        content: 'Đánh dấu đã học';
-        position: absolute;
-        bottom: 100%;
-        right: 0;
-        background: #1e293b;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        white-space: nowrap;
-        margin-bottom: 5px;
-    }
-    
+    .learned-badge.show { display: block; }
+    .learned-badge:hover { opacity: 0.7; }
+
     .action-bar {
         display: flex;
         gap: 10px;
         justify-content: center;
+        flex-wrap: wrap;
         margin-top: 20px;
         padding-top: 20px;
         border-top: 1px solid #e2e8f0;
     }
-    
-    .dark-mode .action-bar {
-        border-color: #334155;
-    }
-    
+    .dark-mode .action-bar { border-color: #334155; }
+
     .action-btn {
-        padding: 10px 24px;
-        border-radius: 8px;
+        padding: 9px 22px;
+        border-radius: 50px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s;
-        border: none;
+        transition: all 0.2s;
+        background: transparent;
     }
-    
-    .btn-select-all {
-        background: #f1f5f9;
+    .btn-select-all, .btn-deselect-all {
+        border: 1.5px solid #94a3b8;
         color: #475569;
     }
-    
-    .btn-deselect-all {
+    .btn-select-all:hover, .btn-deselect-all:hover {
+        border-color: #64748b;
         background: #f1f5f9;
-        color: #475569;
     }
-    
     .btn-delete {
-        background: #fee2e2;
+        border: 1.5px solid #dc2626;
         color: #dc2626;
     }
-    
+    .btn-delete:hover { background: #fee2e2; }
     .btn-practice {
+        border: none;
         background: #3b82f6;
-        color: white;
+        color: #fff;
     }
-    
-    .btn-practice:hover {
-        background: #2563eb;
-    }
-    
+    .btn-practice:hover { background: #2563eb; }
+
     .dark-mode .btn-select-all,
     .dark-mode .btn-deselect-all {
-        background: #0f172a;
+        border-color: #475569;
         color: #cbd5e1;
     }
-    
+    .dark-mode .btn-select-all:hover,
+    .dark-mode .btn-deselect-all:hover { background: #0f172a; }
     .dark-mode .btn-delete {
-        background: #7f1d1d;
-        color: #fca5a5;
+        border-color: #f87171;
+        color: #f87171;
     }
+    .dark-mode .btn-delete:hover { background: #7f1d1d; }
     
     .stats-widget {
         background: #fff;
@@ -1033,6 +1111,185 @@
             padding: 0 50px;
         }
     }
+
+    /* ── Sidebar Flashcard Widget ─────────────────────────── */
+    .sidebar-flashcard-widget { padding: 0; }
+    .sidebar-card-display {
+        background: #e2e8f0;
+        border-radius: 10px;
+        min-height: 140px;
+        margin-bottom: 14px;
+        position: relative;
+        overflow: hidden;
+    }
+    .dark-mode .sidebar-card-display { background: #0f172a; }
+
+    .sidebar-card-image {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        display: block;
+        border-radius: 10px;
+        transition: opacity 0.3s;
+    }
+    .sidebar-card-image.loading {
+        opacity: 0;
+    }
+    /* placeholder shown while image loads or when no word */
+    .sidebar-card-img-placeholder {
+        width: 100%;
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e2e8f0;
+        border-radius: 10px;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    /* definition overlay that appears when card is turned */
+    .sidebar-card-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.78);
+        border-radius: 10px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 14px;
+        backdrop-filter: blur(2px);
+    }
+    .sidebar-card-overlay.show { display: flex; }
+    .sidebar-card-display-text {
+        font-size: 13px;
+        color: #f1f5f9;
+        text-align: center;
+        line-height: 1.6;
+    }
+    .sidebar-card-meta { text-align: center; margin-bottom: 10px; }
+    .sidebar-card-word {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .dark-mode .sidebar-card-word { color: #f1f5f9; }
+    .sidebar-card-pron {
+        font-size: 13px;
+        color: #64748b;
+        font-style: italic;
+        margin-top: 2px;
+    }
+    .dark-mode .sidebar-card-pron { color: #94a3b8; }
+    .sidebar-card-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .sidebar-nav-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+    .sidebar-nav-btn:hover { color: #3b82f6; }
+    .sidebar-nav-btn:disabled { color: #cbd5e1; cursor: not-allowed; }
+    .dark-mode .sidebar-nav-btn { color: #94a3b8; }
+    .sidebar-card-counter { font-size: 13px; color: #64748b; }
+    .dark-mode .sidebar-card-counter { color: #94a3b8; }
+
+    /* ── Profile Card (same height as search section) ─────── */
+    .dict-profile-card {
+        position: relative;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 16px;
+        cursor: pointer;
+        /* same padding as .search-section; JS equalises min-height via outerHeight() */
+        padding: 30px 24px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+    }
+    .dark-mode .dict-profile-card {
+        background: #1e293b;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .dict-profile-card__trigger {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        user-select: none;
+        width: 100%;
+    }
+    .dict-profile-card__avatar {
+        width: 52px;
+        min-width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: 2px solid #e2e8f0;
+        overflow: hidden;
+        background: #f1f5f9;
+        flex-shrink: 0;
+    }
+    .dict-profile-card__avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .dict-profile-card__info { flex: 1; min-width: 0; }
+    .dict-profile-card__name {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .dark-mode .dict-profile-card__name { color: #f1f5f9; }
+    .dict-profile-card__band {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 3px;
+    }
+    .dark-mode .dict-profile-card__band { color: #94a3b8; }
+    /* Chevron rotates when open */
+    .dict-profile-card__chevron {
+        flex-shrink: 0;
+        color: #94a3b8;
+        transition: transform 0.25s ease;
+        margin-left: auto;
+    }
+    .dict-profile-card.open .dict-profile-card__chevron {
+        transform: rotate(180deg);
+    }
+    /* Dropdown – reuses .navbar-auth-user__dropdown styles from the global sheet */
+    .dict-profile-card .navbar-auth-user__dropdown {
+        /* override navbar default positioning for our taller card */
+        top: calc(100% + 4px) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+    }
+    /* Click-open state overrides the hover-only :not(:hover) rule */
+    .dict-profile-card.open > .navbar-auth-user__dropdown {
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
 </style>
 @endpush
 
@@ -1055,16 +1312,12 @@
             <div class="dictionary-result-container hidden" id="dictionaryResult">
                 <!-- Search results will be displayed here -->
             </div>
-            <!-- Dictionary Result Container (hidden by default) -->
-            <div class="dictionary-result-container hidden" id="dictionaryResult">
-                <!-- Search results will be displayed here -->
-            </div>
 
             <!-- Academic Word Lists Section -->
-            <div class="word-lists-section" id="academicWordListsSection">
+            <div class="word-lists-section hidden" id="academicWordListsSection">
                 <div class="section-header">
                     <h2 class="section-title">{{ trans('panel.essential_ielts_academic_word_list') }}</h2>
-                    <button class="toggle-btn active" id="toggleMyWordListBtn">{{ trans('panel.my_word_list') }}</button>
+                    <button class="toggle-btn" id="toggleMyWordListBtn">{{ trans('panel.my_word_list') }}</button>
                 </div>
                 
                 @foreach($academicWordLists as $wordList)
@@ -1084,9 +1337,12 @@
                     <!-- Expanded Content (hidden by default) -->
                     <div class="word-list-expanded" id="expanded-{{ $wordList['id'] }}">
                         <div class="filter-bar">
-                            <input type="text" class="filter-input" placeholder="Search the word...">
-                            <button class="filter-btn" data-filter="alphabet">A-Z</button>
-                            <button class="filter-btn" data-filter="learned">Đã học</button>
+                            <input type="text" class="filter-input" placeholder="{{ trans('panel.search_the_word') }}">
+                            <select class="filter-select" data-list-id="{{ $wordList['id'] }}" data-list-type="academic">
+                                <option value="">Filter</option>
+                                <option value="alphabet">A-Z</option>
+                                <option value="learned">Đã học</option>
+                            </select>
                         </div>
                         
                         <div class="words-container" id="words-{{ $wordList['id'] }}">
@@ -1103,26 +1359,27 @@
                 @endforeach
             </div>
 
-            <!-- My Word List Section (hidden by default) -->
-            <div class="word-lists-section hidden" id="myWordListSection">
-                <div class="section-header">
-                    <h2 class="section-title">My Word List</h2>
-                    <button class="toggle-btn" id="toggleAcademicListBtn">Academic Word List</button>
-                </div>
-                
+            <!-- My Word List Section (default view) -->
+            <div class="word-lists-section" id="myWordListSection">
                 <div class="word-list-card" data-list-id="{{ $myWordList->id }}" data-list-type="my">
                     <div class="word-list-header">
                         <h3 class="word-list-name">{{ $myWordList->name }}</h3>
-                        <span class="word-count-badge">Tổng số từ: {{ $myWordList->word_count }} từ</span>
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <span class="word-count-badge">Tổng số từ: {{ $myWordList->word_count }} từ</span>
+                            <button class="toggle-btn active" id="toggleAcademicListBtn">Academic Word List</button>
+                        </div>
                     </div>
                     <p class="word-list-description">{{ $myWordList->description }}</p>
                     
-                    <!-- Expanded Content -->
-                    <div class="word-list-expanded" id="expanded-my-{{ $myWordList->id }}">
+                    <!-- Expanded Content (shown by default) -->
+                    <div class="word-list-expanded show" id="expanded-my-{{ $myWordList->id }}">
                         <div class="filter-bar">
-                            <input type="text" class="filter-input" placeholder="Search the word...">
-                            <button class="filter-btn" data-filter="alphabet">A-Z</button>
-                            <button class="filter-btn" data-filter="learned">Đã học</button>
+                            <input type="text" class="filter-input" placeholder="{{ trans('panel.search_the_word') }}">
+                            <select class="filter-select" data-list-id="{{ $myWordList->id }}" data-list-type="my">
+                                <option value="">Filter</option>
+                                <option value="alphabet">A-Z</option>
+                                <option value="learned">Đã học</option>
+                            </select>
                         </div>
                         
                         <div class="words-container" id="words-my-{{ $myWordList->id }}">
@@ -1165,18 +1422,130 @@
 
         <!-- Right Column: Flashcards, Streak, Ranking (33%) -->
         <div class="col-lg-4">
+
+            <!-- User Profile Card (same height as search section, with dropdown) -->
+            <div class="navbar-auth-user dict-profile-card" id="dictProfileCard">
+
+                <!-- Trigger -->
+                <div class="dict-profile-card__trigger" id="dictProfileTrigger">
+                    <div class="dict-profile-card__avatar">
+                        <img src="{{ $authUser->getAvatar(52) }}" alt="{{ $authUser->full_name }}" class="img-cover rounded-circle">
+                    </div>
+                    <div class="dict-profile-card__info">
+                        <div class="dict-profile-card__name">{{ strtoupper($authUser->full_name) }}</div>
+                        <div class="dict-profile-card__band">BAND ESTIMATE: {{ number_format($userStats['band_estimate'], 1) }}</div>
+                    </div>
+                    <x-iconsax-lin-arrow-down class="dict-profile-card__chevron icons text-gray-500" width="14px" height="14px"/>
+                </div>
+
+                <!-- Dropdown – reuses existing navbar-auth-user__dropdown global styles -->
+                <div class="navbar-auth-user__dropdown is-panel-nav" id="dictProfileDropdown">
+                    <div class="d-flex align-items-center m-4 rounded-10 bg-gray p-12">
+                        <div class="dropdown__user-avatar position-relative">
+                            <img src="{{ $authUser->getAvatar(38) }}" class="img-cover rounded-circle" alt="{{ $authUser->full_name }}">
+                            @if($authUser->verified)
+                                <div class="dropdown__user-avatar__badge d-flex-center rounded-circle size-16 p-2 bg-primary">
+                                    <x-tick-icon class="icons text-white"/>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="ml-8 flex-1">
+                            <div class="font-14 font-weight-bold text-dark">{{ $authUser->full_name }}</div>
+                            <span class="mt-4 text-gray-500 font-12">{{ $authUser->role->caption }}</span>
+                        </div>
+                    </div>
+
+                    <ul class="my-8">
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl('/') : '/panel' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-chart-2 class="icons" width="24px" height="24px"/>
+                                <span class="ml-8">{{ trans('panel.dashboard') }}</span>
+                            </a>
+                        </li>
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="/panel/notifications" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-notification class="icons" width="24px" height="24px"/>
+                                <span class="ml-8">{{ trans('panel.notifications') }}</span>
+                            </a>
+                        </li>
+                        @if(!$authUser->isUser())
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="/panel/courses" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
+                                <span class="ml-8">{{ trans('update.my_courses') }}</span>
+                            </a>
+                        </li>
+                        @else
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="/panel/courses/purchases" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
+                                <span class="ml-8">{{ trans('panel.my_classes') }}</span>
+                            </a>
+                        </li>
+                        @endif
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="{{ $authUser->getProfileUrl() }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-profile class="icons" width="24px" height="24px"/>
+                                <span class="ml-8">{{ trans('public.profile') }}</span>
+                            </a>
+                        </li>
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="/panel/setting" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-setting-2 class="icons" width="24px" height="24px"/>
+                                <span class="ml-8">{{ trans('panel.settings') }}</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div style="border-top:1px solid #f0f0f0;margin:4px 0;"></div>
+
+                    <ul class="my-4">
+                        <li class="navbar-auth-user__dropdown-item">
+                            <a href="/logout" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                                <x-iconsax-lin-logout class="icons text-danger" width="24px" height="24px"/>
+                                <span class="ml-8 text-danger">{{ trans('panel.log_out') }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- Flashcards Widget -->
             <div class="stats-widget">
                 <h3 class="widget-title">{{ trans('panel.flashcards') }}</h3>
-                <div class="flashcard-preview">
-                    <div class="flashcard-info">
-                        <p class="mb-2">📚 {{ trans('panel.based_on_band_level', ['score' => number_format($userStats['band_estimate'], 1)]) }}</p>
-                        <p class="mb-0 text-muted">{{ trans('panel.vocabulary_hint') }}</p>
+                <div class="sidebar-flashcard-widget" id="sidebarFlashcardWidget">
+
+                    <!-- Card Display Area -->
+                    <div class="sidebar-card-display" id="sidebarCardDisplay">
+                        <!-- Word illustration image -->
+                        <div class="sidebar-card-img-placeholder" id="sidebarCardPlaceholder"></div>
+                        <img id="sidebarCardImage" class="sidebar-card-image" src="" alt="" style="display:none;">
+                        <!-- Definition overlay (shown when card is turned) -->
+                        <div class="sidebar-card-overlay" id="sidebarCardOverlay">
+                            <span class="sidebar-card-display-text" id="sidebarCardDisplayText"></span>
+                        </div>
                     </div>
-                    <a href="/panel/dictionary/flashcards" class="btn btn-sm btn-primary mt-3 w-100">
-                        <i class="iconsax mr-1" data-icon="cards"></i>
-                        {{ trans('panel.view_all_flashcards') }}
-                    </a>
+
+                    <!-- Word + Pronunciation -->
+                    <div class="sidebar-card-meta">
+                        <div class="sidebar-card-word" id="sidebarCardWord">-</div>
+                        <div class="sidebar-card-pron" id="sidebarCardPron"></div>
+                    </div>
+
+                    <!-- Turn Button -->
+                    <div class="text-center" style="margin: 8px 0 10px;">
+                        <button class="btn btn-outline-secondary btn-sm px-4" id="sidebarTurnBtn"
+                                style="border-radius: 20px; min-width: 90px;">
+                            {{ trans('panel.turn') }}
+                        </button>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="sidebar-card-nav">
+                        <button class="sidebar-nav-btn" id="sidebarPrevBtn" disabled>&#8249;</button>
+                        <span class="sidebar-card-counter" id="sidebarCardCounter">Card 0 of 0</span>
+                        <button class="sidebar-nav-btn" id="sidebarNextBtn" disabled>&#8250;</button>
+                    </div>
                 </div>
             </div>
 
@@ -1210,10 +1579,120 @@
     let currentWordListId = null;
     let currentWordListType = null;
     let currentQuestions = [];
+    let currentWordData = null;
     let currentQuestionIndex = 0;
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let selectedAnswer = null;
+
+    // ── Profile card: hover (CSS handles it) + click toggle (JS) ──────
+    $('#dictProfileTrigger').on('click', function(e) {
+        e.stopPropagation();
+        $('#dictProfileCard').toggleClass('open');
+    });
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#dictProfileCard').length) {
+            $('#dictProfileCard').removeClass('open');
+        }
+    });
+
+    // ── Equalise profile-card height to search-section height ──────
+    function equalizeTopCards() {
+        var h = $('.search-section').outerHeight();
+        if (h) { $('#dictProfileCard').css('min-height', h + 'px'); }
+    }
+    $(window).on('load resize', equalizeTopCards);
+    equalizeTopCards();
+
+    // ── Sidebar Flashcard Widget ──────────────────────────────────────
+    let sidebarCards = [];
+    let sidebarIndex = 0;
+    let sidebarFlipped = false;
+
+    function loadSidebarFlashcards() {
+        $.ajax({
+            url: '/panel/dictionary/my-word-list',
+            method: 'GET',
+            success: function(response) {
+                if (response.success && response.data && response.data.flashcards) {
+                    sidebarCards = response.data.flashcards;
+                    sidebarIndex = 0;
+                    renderSidebarCard();
+                }
+            }
+        });
+    }
+
+    function renderSidebarCard() {
+        if (!sidebarCards.length) {
+            $('#sidebarCardWord').text('-');
+            $('#sidebarCardPron').text('');
+            $('#sidebarCardDisplayText').text('');
+            $('#sidebarCardOverlay').removeClass('show');
+            $('#sidebarCardImage').hide();
+            $('#sidebarCardPlaceholder').show();
+            $('#sidebarCardCounter').text('Card 0 of 0');
+            $('#sidebarPrevBtn, #sidebarNextBtn').prop('disabled', true);
+            return;
+        }
+        sidebarFlipped = false;
+        const card = sidebarCards[sidebarIndex];
+        const posLabel = card.part_of_speech ? ' (' + card.part_of_speech + ')' : '';
+        $('#sidebarCardWord').text((card.word || '') + posLabel);
+        $('#sidebarCardPron').text(card.pronunciation ? '/' + card.pronunciation + '/' : '');
+        $('#sidebarCardDisplayText').text('');
+        $('#sidebarCardOverlay').removeClass('show');
+        $('#sidebarCardCounter').text('Card ' + (sidebarIndex + 1) + ' of ' + sidebarCards.length);
+        $('#sidebarPrevBtn').prop('disabled', sidebarIndex === 0);
+        $('#sidebarNextBtn').prop('disabled', sidebarIndex === sidebarCards.length - 1);
+
+        // Load word illustration
+        if (card.word) {
+            const word = encodeURIComponent(card.word.toLowerCase());
+            const img = document.getElementById('sidebarCardImage');
+            const placeholder = document.getElementById('sidebarCardPlaceholder');
+            img.style.display = 'none';
+            placeholder.style.display = 'flex';
+            img.onload = function() {
+                placeholder.style.display = 'none';
+                img.style.display = 'block';
+            };
+            img.onerror = function() {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+            img.src = 'https://loremflickr.com/280/140/' + word + '?lock=' + sidebarIndex;
+            img.alt = card.word;
+        }
+    }
+
+    $('#sidebarTurnBtn').on('click', function() {
+        if (!sidebarCards.length) return;
+        const card = sidebarCards[sidebarIndex];
+        if (!sidebarFlipped) {
+            sidebarFlipped = true;
+            $('#sidebarCardDisplayText').text(card.definition || '');
+            $('#sidebarCardOverlay').addClass('show');
+        } else {
+            sidebarFlipped = false;
+            $('#sidebarCardDisplayText').text('');
+            $('#sidebarCardOverlay').removeClass('show');
+        }
+    });
+
+    $('#sidebarNextBtn').on('click', function() {
+        if (sidebarIndex < sidebarCards.length - 1) { sidebarIndex++; renderSidebarCard(); }
+    });
+
+    $('#sidebarPrevBtn').on('click', function() {
+        if (sidebarIndex > 0) { sidebarIndex--; renderSidebarCard(); }
+    });
+
+    // ── Page init ────────────────────────────────────────────────────────
+
+    // Auto-load My Word List on page init
+    loadMyWordList();
+    loadSidebarFlashcards();
 
     // Search functionality
     let isSearching = false; // Prevent duplicate searches
@@ -1382,16 +1861,15 @@
         const wordLabel = data.headword || data.word || '';
         html += `
             <div class="result-actions">
-                <button class="result-btn result-btn-primary" id="saveToFlashcard" data-word="${wordLabel}">
-                    <i class="iconsax" data-icon="bookmark"></i>
-                    {{ trans('panel.save_to_flashcard') }}
-                </button>
                 <button class="result-btn result-btn-secondary" id="addToWordList" data-word="${wordLabel}">
                     <i class="iconsax" data-icon="add-circle"></i>
                     {{ trans('panel.add_to_list') }}
                 </button>
             </div>
         `;
+
+        // Store current word data for use by action buttons
+        currentWordData = data;
 
         $('#dictionaryResult').html(html);
 
@@ -1455,18 +1933,79 @@
         window.speechSynthesis.speak(utter);
     }
 
-    // Save to flashcard
-    $(document).on('click', '#saveToFlashcard', function() {
-        const word = $('.result-word').text();
-        // Implement save to flashcard logic
-        alert('Saving "' + word + '" to flashcard...');
-    });
-
-    // Add to word list
+    // Add to My Word List
     $(document).on('click', '#addToWordList', function() {
-        const word = $('.result-word').text();
-        // Implement add to word list logic
-        alert('Adding "' + word + '" to word list...');
+        if (!currentWordData) {
+            alert('{{ trans('panel.no_word_selected') }}');
+            return;
+        }
+
+        const $btn = $(this);
+        const word = currentWordData.headword || currentWordData.word || '';
+
+        let definition = '', partOfSpeech = '', example = '', pronunciation = '';
+
+        if (currentWordData.meanings && currentWordData.meanings.length > 0) {
+            const m = currentWordData.meanings[0];
+            partOfSpeech = m.partOfSpeech || '';
+            if (m.definitions && m.definitions.length > 0) {
+                definition = m.definitions[0].definition || '';
+                example   = m.definitions[0].example   || '';
+            }
+        } else if (currentWordData.senses && currentWordData.senses.length > 0) {
+            const s = currentWordData.senses[0];
+            partOfSpeech = s.part_of_speech || '';
+            definition   = (s.definitions && s.definitions[0]) || '';
+        }
+
+        if (currentWordData.pronunciations && currentWordData.pronunciations.length > 0) {
+            pronunciation = currentWordData.pronunciations[0].ipa || currentWordData.pronunciations[0].text || '';
+        }
+
+        if (!definition) {
+            alert('{{ trans('panel.word_definition_not_found') }}');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('{{ trans('panel.adding') }}...');
+
+        $.ajax({
+            url: '/panel/dictionary/my-word-list/add-word',
+            method: 'POST',
+            data: {
+                word: word,
+                definition: definition,
+                part_of_speech: partOfSpeech,
+                example: example,
+                pronunciation: pronunciation,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(res) {
+                if (res.success) {
+                    $btn.text('{{ trans('panel.added') }} ✓').css('background', '#22c55e').prop('disabled', true);
+                    // Refresh word list if currently expanded
+                    if ($('#words-my-{{ $myWordList->id }}').closest('.word-list-expanded').hasClass('show')) {
+                        loadMyWordList();
+                    }
+                } else {
+                    if (res.message && res.message.toLowerCase().indexOf('already') !== -1) {
+                        $btn.text('{{ trans('panel.already_in_list') }}').prop('disabled', true);
+                    } else {
+                        alert(res.message || '{{ trans('panel.failed_to_add_word') }}');
+                        $btn.prop('disabled', false).html('<i class="iconsax" data-icon="add-circle"></i> {{ trans('panel.add_to_list') }}');
+                    }
+                }
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '{{ trans('panel.failed_to_add_word') }}';
+                if (msg.toLowerCase().indexOf('already') !== -1) {
+                    $btn.text('{{ trans('panel.already_in_list') }}').prop('disabled', true);
+                } else {
+                    alert(msg);
+                    $btn.prop('disabled', false).html('<i class="iconsax" data-icon="add-circle"></i> {{ trans('panel.add_to_list') }}');
+                }
+            }
+        });
     });
 
     // Toggle between Academic and My Word List
@@ -1475,6 +2014,14 @@
         $('#myWordListSection').removeClass('hidden');
         $(this).removeClass('active');
         $('#toggleAcademicListBtn').addClass('active');
+
+        // Auto-expand My Word List
+        const $myCard = $('#myWordListSection .word-list-card');
+        const $expanded = $myCard.find('.word-list-expanded');
+        if (!$expanded.hasClass('show')) {
+            $expanded.addClass('show');
+            loadMyWordList();
+        }
     });
 
     $('#toggleAcademicListBtn').on('click', function() {
@@ -1484,31 +2031,35 @@
         $('#toggleMyWordListBtn').addClass('active');
     });
 
-    // Click on word list card to expand/collapse
-    $('.word-list-card').on('click', function(e) {
-        if ($(this).hasClass('locked')) {
+    // Click on word list HEADER to expand/collapse (not the whole card)
+    $(document).on('click', '.word-list-card .word-list-header, .word-list-card .word-list-description', function(e) {
+        const $card = $(this).closest('.word-list-card');
+
+        if ($card.hasClass('locked')) {
             alert('{{ trans('panel.word_list_locked_hint') }}');
             return;
         }
 
-        let listId = $(this).data('list-id');
-        let listType = $(this).data('list-type');
-        let expandedSection = $(this).find('.word-list-expanded');
+        let listId   = $card.data('list-id');
+        let listType = $card.data('list-type');
+        let expandedSection = $card.find('.word-list-expanded');
 
         if (expandedSection.hasClass('show')) {
             expandedSection.removeClass('show');
         } else {
-            // Collapse other expanded sections
             $('.word-list-expanded').removeClass('show');
             expandedSection.addClass('show');
-            
-            // Load words if not already loaded
             if (listType === 'academic') {
                 loadAcademicWordList(listId);
             } else {
                 loadMyWordList();
             }
         }
+    });
+
+    // Prevent any click inside the expanded content from bubbling to the card
+    $(document).on('click', '.word-list-expanded', function(e) {
+        e.stopPropagation();
     });
 
     // Load Academic Word List
@@ -1552,19 +2103,20 @@
         container.empty();
 
         words.forEach(function(word) {
+            let pronunciation = word.pronunciation ? `<span class="word-pronunciation">/${word.pronunciation}/</span>` : '';
             let wordHtml = `
                 <div class="word-item" data-word-id="${word.id}" data-word="${word.word}">
                     <input type="checkbox" class="word-checkbox" data-word-id="${word.id}">
                     <div class="word-content">
-                        <div class="word-text">${word.word}</div>
-                        ${word.pronunciation ? `<div class="word-pronunciation">${word.pronunciation}</div>` : ''}
+                        <div class="word-title-row">
+                            <span class="word-text">${word.word}</span>
+                            ${pronunciation}
+                        </div>
                         <div class="word-definition">${word.definition}</div>
                     </div>
-                    <div class="learned-badge ${word.is_learned ? 'show' : ''}" 
-                         data-word-id="${word.id}" 
-                         title="{{ trans('panel.mark_as_learned') }}">
-                        <i class="iconsax" data-icon="tick-circle"></i>
-                    </div>
+                    <span class="learned-badge ${word.is_learned ? 'show' : ''}"
+                          data-word-id="${word.id}"
+                          title="{{ trans('panel.mark_as_learned') }}">&#10003;</span>
                 </div>
             `;
             container.append(wordHtml);
@@ -1787,50 +2339,29 @@
         }
     }
 
-    // Search functionality
-    $('#searchBtn').on('click', function() {
-        let searchTerm = $('#searchInput').val().trim();
-        if (searchTerm) {
-            // Implement dictionary search (existing functionality)
-            console.log('Searching for:', searchTerm);
-        }
-    });
-
-    $('#searchInput').on('keypress', function(e) {
-        if (e.which === 13) {
-            $('#searchBtn').click();
-        }
-    });
-
-    // Filter functionality
-    $(document).on('click', '.filter-btn', function(e) {
+    // Filter select handler (replaces old .filter-btn click)
+    $(document).on('change', '.filter-select', function(e) {
         e.stopPropagation();
-        
-        let filter = $(this).data('filter');
-        let container = $(this).closest('.word-list-expanded').find('.words-container');
-        let words = container.find('.word-item');
-        
+        const filter = $(this).val();
+        const container = $(this).closest('.word-list-expanded').find('.words-container');
+        const words = container.find('.word-item');
+
+        // Reset visibility first
+        words.show();
+
         if (filter === 'alphabet') {
-            // Sort alphabetically
-            words.sort(function(a, b) {
-                let aText = $(a).find('.word-text').text();
-                let bText = $(b).find('.word-text').text();
-                return aText.localeCompare(bText);
+            const sorted = words.get().sort(function(a, b) {
+                return $(a).data('word').localeCompare($(b).data('word'));
             });
-            container.html(words);
+            container.append(sorted);
         } else if (filter === 'learned') {
-            // Show only learned words
             words.each(function() {
-                if ($(this).find('.learned-badge').hasClass('show')) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
+                if (!$(this).find('.learned-badge').hasClass('show')) $(this).hide();
             });
         }
-        
-        $(this).toggleClass('active');
     });
+
+    // Filter functionality (old .filter-btn — kept for backward compat)
 
     // Search within word list
     $(document).on('keyup', '.filter-input', function(e) {
