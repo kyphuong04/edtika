@@ -254,6 +254,61 @@ class MyPurchasedCoursesController extends Controller
         return $sale;
     }
 
+    public function showLearning(Request $request, $slug)
+    {
+        $this->authorize("panel_webinars_my_purchases");
+
+        /** @var \App\Http\Controllers\Web\LearningPageController $learningController */
+        $learningController = app(\App\Http\Controllers\Web\LearningPageController::class);
+        $data = $learningController->index($request, $slug, true);
+
+        if ($data === false) {
+            abort(404);
+        }
+
+        $course = $data['course'];
+
+        $data['breadcrumbs'] = [
+            ['text' => trans('update.platform'), 'url' => '/'],
+            ['text' => trans('panel.dashboard'), 'url' => '/panel'],
+            ['text' => trans('panel.my_courses'), 'url' => '/panel/courses/purchases'],
+            ['text' => $course->title, 'url' => url('/panel/courses/purchases/' . $course->slug)],
+            ['text' => trans('update.learning_page'), 'url' => null],
+        ];
+
+        // Panel-specific learning URL (for JS override)
+        $data['panelCourseLearningUrl'] = url('/panel/courses/purchases/learning/' . $course->slug);
+        $data['panelCourseDetailUrl'] = url('/panel/courses/purchases/' . $course->slug);
+
+        return view('design_1.panel.webinars.my_purchases.course_learning', $data);
+    }
+
+    public function showCourse(Request $request, $slug)
+    {
+        $this->authorize("panel_webinars_my_purchases");
+
+        /** @var \App\Http\Controllers\Web\WebinarController $webinarController */
+        $webinarController = app(\App\Http\Controllers\Web\WebinarController::class);
+        $courseData = $webinarController->course($request, $slug, true);
+
+        if ($courseData === false) {
+            abort(404);
+        }
+
+        $pageTitle = $courseData['pageTitle'] ?? trans('panel.my_courses');
+
+        $breadcrumbs = [
+            ['text' => trans('update.platform'), 'url' => '/'],
+            ['text' => trans('panel.dashboard'), 'url' => '/panel'],
+            ['text' => trans('panel.my_courses'), 'url' => '/panel/courses/purchases'],
+            ['text' => $pageTitle, 'url' => null],
+        ];
+
+        $courseData['breadcrumbs'] = $breadcrumbs;
+
+        return view('design_1.panel.webinars.my_purchases.course_detail', $courseData);
+    }
+
     public function getJoinInfo(Request $request)
     {
         $data = $request->all();

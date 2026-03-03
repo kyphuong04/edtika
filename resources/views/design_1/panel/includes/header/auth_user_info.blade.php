@@ -98,7 +98,34 @@
                     <span class="ml-8">{{ trans('panel.settings') }}</span>
                 </a>
             </li>
+        </ul>
 
+        {{-- Separator --}}
+        <div style="border-top: 1px solid #f0f0f0; margin: 4px 0;"></div>
+
+        <ul class="my-4">
+            {{-- Dark / Light mode toggle --}}
+            <li class="navbar-auth-user__dropdown-item">
+                <div class="js-theme-color-toggle theme-color-toggle theme-color-toggle__panel {{ "{$userThemeColorMode}-mode" }} d-flex align-items-center w-100 px-16 py-8 cursor-pointer bg-transparent">
+                    <x-iconsax-lin-moon class="dark-icon icons" width="24px" height="24px"/>
+                    <x-iconsax-lin-sun-1 class="light-icon icons" width="24px" height="24px"/>
+                    <span class="ml-8 dark-icon">Light Mode</span>
+                    <span class="ml-8 light-icon">Dark Mode</span>
+                </div>
+            </li>
+
+            {{-- Language switcher --}}
+            <li class="navbar-auth-user__dropdown-item">
+                <div style="padding: 0 8px;">
+                    @php $langClassName = 'w-100'; @endphp
+                    @include('design_1.panel.includes.header.language')
+                </div>
+            </li>
+        </ul>
+
+        <div style="border-top: 1px solid #f0f0f0; margin: 4px 0;"></div>
+
+        <ul class="my-4">
             <li class="navbar-auth-user__dropdown-item">
                 <a href="/logout" class="d-flex align-items-center w-100 px-16 py-8  bg-transparent">
                     <x-iconsax-lin-logout class="icons text-danger" width="24px" height="24px"/>
