@@ -2,6 +2,54 @@
 
 @push('styles_top')
     <link rel="stylesheet" href="/assets/default/vendors/persian-datepicker/persian-datepicker.min.css"/>
+    <style>
+        /* ── IELTS Dashboard Styles ───────────────────────────────────── */
+        .ielts-dashboard { padding-bottom: 32px; }
+
+        /* Welcome bar */
+        .ielts-welcome-bar { min-height: 64px; }
+        .ielts-welcome-bar__bell { text-decoration: none; }
+        .ielts-welcome-bar__bell:hover { background: #E5E7EB !important; }
+
+        /* Row gap overrides */
+        .gx-16 { --bs-gutter-x: 16px; }
+
+        /* Skill progress circles button hover */
+        .ielts-skill-circle-btn { transition: transform .18s; color: inherit; }
+        .ielts-skill-circle-btn:hover { transform: translateY(-3px); }
+        .ielts-skill-circle-btn:hover span { color: var(--primary) !important; }
+
+        /* Weak-point bars */
+        .ielts-weak-bar:hover { opacity: .85; }
+
+        /* Misc card touches */
+        .border-left-primary { border-left: 3px solid var(--primary) !important; }
+        .border-success-200  { border-color: #A7F3D0 !important; }
+
+        /* Right column spacing */
+        .col-xl-4 .bg-white + .bg-white,
+        .col-xl-4 .bg-white { word-break: break-word; }
+
+        .font-10 { font-size: 10px !important; }
+        .font-11 { font-size: 11px !important; }
+        .font-22 { font-size: 22px !important; }
+        .font-28 { font-size: 28px !important; }
+        .gap-10  { gap: 10px !important; }
+        .gap-12  { gap: 12px !important; }
+        .gap-16  { gap: 16px !important; }
+        .g-12    { gap: 12px !important; }
+        .g-12.row { margin: -6px; }
+        .g-12.row > [class*="col"] { padding: 6px; }
+
+        /* badge utils */
+        .badge-warning-light  { background:#FEF3C7; color:#92400E; border-radius:8px; padding:2px 8px; }
+        .badge-success-light  { background:#D1FAE5; color:#065F46; border-radius:8px; padding:2px 8px; }
+        .badge-danger-light   { background:#FEE2E2; color:#991B1B; border-radius:8px; padding:2px 8px; }
+
+        @media (max-width: 575px) {
+            .ielts-welcome-bar { flex-direction: column; align-items: flex-start !important; }
+        }
+    </style>
 @endpush
 
 @section("content")

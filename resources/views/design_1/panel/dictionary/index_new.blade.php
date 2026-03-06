@@ -524,11 +524,10 @@
     }
     .btn-delete:hover { background: #fee2e2; }
     .btn-practice {
-        border: none;
-        background: #3b82f6;
-        color: #fff;
+        border: 1.5px solid #3b82f6;
+        color: #3b82f6;
     }
-    .btn-practice:hover { background: #2563eb; }
+    .btn-practice:hover { background: #dbeafe; }
 
     .dark-mode .btn-select-all,
     .dark-mode .btn-deselect-all {
@@ -542,6 +541,11 @@
         color: #f87171;
     }
     .dark-mode .btn-delete:hover { background: #7f1d1d; }
+    .dark-mode .btn-practice {
+        border-color: #60a5fa;
+        color: #60a5fa;
+    }
+    .dark-mode .btn-practice:hover { background: #1e3a5f; }
     
     .stats-widget {
         background: #fff;
@@ -656,9 +660,8 @@
     .practice-mode-container {
         background: #fff;
         border-radius: 12px;
-        padding: 40px;
-        max-width: 800px;
-        margin: 0 auto;
+        padding: 40px 30px;
+        margin-bottom: 30px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
@@ -668,39 +671,58 @@
     
     .score-board {
         display: flex;
-        justify-content: space-around;
-        margin-bottom: 30px;
+        justify-content: center;
+        gap: 50px;
+        margin-bottom: 40px;
+        margin-top: 0;
     }
     
     .score-item {
         text-align: center;
+        border: 2px solid #cbd5e1;
+        border-radius: 30px;
+        padding: 12px 40px;
+        min-width: 160px;
+    }
+
+    .dark-mode .score-item {
+        border-color: #334155;
     }
     
     .score-label {
         font-size: 14px;
-        color: #64748b;
-        margin-bottom: 5px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .dark-mode .score-label {
+        color: #94a3b8;
     }
     
     .score-value {
-        font-size: 24px;
-        font-weight: 700;
+        font-size: inherit;
+        font-weight: inherit;
+        color: inherit;
     }
     
     .score-value.correct {
-        color: #10b981;
+        color: inherit;
     }
     
     .score-value.incorrect {
-        color: #ef4444;
+        color: inherit;
     }
     
     .question-text {
-        font-size: 18px;
+        font-size: 16px;
         color: #1e293b;
         text-align: center;
-        margin-bottom: 40px;
+        margin-bottom: 45px;
+        margin-top: 10px;
         line-height: 1.6;
+        font-weight: 500;
     }
     
     .dark-mode .question-text {
@@ -710,15 +732,15 @@
     .answers-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 30px;
+        gap: 28px;
+        margin-bottom: 40px;
     }
     
     .answer-card {
         background: #f8fafc;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 18px;
+        padding: 18px 14px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s;
@@ -750,10 +772,10 @@
     }
     
     .answer-word {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         color: #1e293b;
-        margin-bottom: 5px;
+        margin-bottom: 4px;
     }
     
     .dark-mode .answer-word {
@@ -761,7 +783,7 @@
     }
     
     .answer-pronunciation {
-        font-size: 14px;
+        font-size: 13px;
         color: #64748b;
         font-style: italic;
     }
@@ -772,47 +794,72 @@
     
     .practice-actions {
         display: flex;
-        justify-content: space-between;
-        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        gap: 35px;
+        margin-top: 25px;
+        padding-top: 15px;
     }
     
     .practice-btn {
-        flex: 1;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 16px;
+        padding: 8px 26px;
+        border-radius: 25px;
+        font-size: 14px;
         font-weight: 600;
-        border: none;
         cursor: pointer;
         transition: all 0.3s;
+        white-space: nowrap;
     }
     
     .btn-exit {
-        background: #f1f5f9;
+        background: transparent;
         color: #475569;
+        border: 2px solid #cbd5e1;
     }
     
     .btn-exit:hover {
-        background: #e2e8f0;
+        background: #f1f5f9;
+        border-color: #94a3b8;
     }
     
     .btn-next {
-        background: #3b82f6;
-        color: white;
+        background: transparent;
+        color: #475569;
+        border: 2px solid #cbd5e1;
     }
     
     .btn-next:hover {
-        background: #2563eb;
+        background: #f1f5f9;
+        border-color: #94a3b8;
     }
     
     .btn-next:disabled {
-        background: #cbd5e1;
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #94a3b8;
         cursor: not-allowed;
     }
     
     .dark-mode .btn-exit {
-        background: #0f172a;
+        background: transparent;
         color: #cbd5e1;
+        border-color: #475569;
+    }
+    
+    .dark-mode .btn-exit:hover {
+        background: #0f172a;
+        border-color: #64748b;
+    }
+    
+    .dark-mode .btn-next {
+        background: transparent;
+        color: #cbd5e1;
+        border-color: #475569;
+    }
+    
+    .dark-mode .btn-next:hover {
+        background: #0f172a;
+        border-color: #64748b;
     }
     
     .hidden {
@@ -1031,6 +1078,60 @@
         border-bottom: none;
     }
 
+    .def-entry {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .dark-mode .def-entry {
+        border-bottom-color: #1e293b;
+    }
+
+    .def-entry:last-of-type {
+        border-bottom: none;
+    }
+
+    .def-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .btn-save-def {
+        flex-shrink: 0;
+        align-self: flex-start;
+        padding: 6px 18px;
+        background: #374151;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+        margin-top: 2px;
+    }
+
+    .btn-save-def:hover {
+        background: #1f2937;
+    }
+
+    .btn-save-def:disabled {
+        cursor: default;
+    }
+
+    .dark-mode .btn-save-def {
+        background: #475569;
+    }
+
+    .dark-mode .btn-save-def:hover {
+        background: #334155;
+    }
+
     .def-num {
         font-weight: 700;
         color: #3b82f6;
@@ -1057,6 +1158,38 @@
     .dark-mode .result-synonyms strong,
     .dark-mode .result-antonyms strong {
         color: #94a3b8;
+    }
+
+    /* Back button at bottom of dictionary result */
+    .dict-result-back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin: 24px auto 4px;
+        padding: 10px 32px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50px;
+        background: transparent;
+        color: #475569;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .dict-result-back-btn:hover {
+        border-color: #94a3b8;
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    .dark-mode .dict-result-back-btn {
+        border-color: #475569;
+        color: #94a3b8;
+    }
+    .dark-mode .dict-result-back-btn:hover {
+        border-color: #64748b;
+        background: #0f172a;
+        color: #f1f5f9;
     }
 
     /* Responsive adjustments */
@@ -1208,15 +1341,16 @@
     .dict-profile-card {
         position: relative;
         background: #fff;
-        border-radius: 12px;
+        border-radius: 16px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         margin-bottom: 16px;
         cursor: pointer;
-        /* same padding as .search-section; JS equalises min-height via outerHeight() */
-        padding: 30px 24px;
+        padding: 24px 28px;
         box-sizing: border-box;
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        width: 100%;
     }
     .dark-mode .dict-profile-card {
         background: #1e293b;
@@ -1225,18 +1359,19 @@
     .dict-profile-card__trigger {
         display: flex;
         align-items: center;
-        gap: 14px;
+        justify-content: center;
+        gap: 20px;
         user-select: none;
-        width: 100%;
+        flex: 1;
     }
     .dict-profile-card__avatar {
-        width: 52px;
-        min-width: 52px;
-        height: 52px;
+        width: 72px;
+        min-width: 72px;
+        height: 72px;
         border-radius: 50%;
-        border: 2px solid #e2e8f0;
+        border: 3px solid #e2e8f0;
         overflow: hidden;
-        background: #f1f5f9;
+        background: #e5e7eb;
         flex-shrink: 0;
     }
     .dict-profile-card__avatar img {
@@ -1245,9 +1380,9 @@
         object-fit: cover;
         display: block;
     }
-    .dict-profile-card__info { flex: 1; min-width: 0; }
+    .dict-profile-card__info { text-align: center; }
     .dict-profile-card__name {
-        font-size: 14px;
+        font-size: 17px;
         font-weight: 800;
         color: #1e293b;
         letter-spacing: 0.5px;
@@ -1258,12 +1393,12 @@
     }
     .dark-mode .dict-profile-card__name { color: #f1f5f9; }
     .dict-profile-card__band {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.3px;
-        margin-top: 3px;
+        margin-top: 5px;
     }
     .dark-mode .dict-profile-card__band { color: #94a3b8; }
     /* Chevron rotates when open */
@@ -1271,7 +1406,6 @@
         flex-shrink: 0;
         color: #94a3b8;
         transition: transform 0.25s ease;
-        margin-left: auto;
     }
     .dict-profile-card.open .dict-profile-card__chevron {
         transform: rotate(180deg);
@@ -1400,10 +1534,10 @@
             <div class="practice-mode-container hidden" id="practiceModeContainer">
                 <div class="score-board">
                     <div class="score-item">
-                        <div class="score-label">{{ trans('panel.correct') }}: <span class="score-value correct" id="correctCount">0</span></div>
+                        <div class="score-label">{{ strtoupper(trans('panel.correct')) }}: <span class="score-value correct" id="correctCount">0</span></div>
                     </div>
                     <div class="score-item">
-                        <div class="score-label">{{ trans('panel.incorrect') }}: <span class="score-value incorrect" id="incorrectCount">0</span></div>
+                        <div class="score-label">{{ strtoupper(trans('panel.incorrect')) }}: <span class="score-value incorrect" id="incorrectCount">0</span></div>
                     </div>
                 </div>
                 
@@ -1429,7 +1563,7 @@
                 <!-- Trigger -->
                 <div class="dict-profile-card__trigger" id="dictProfileTrigger">
                     <div class="dict-profile-card__avatar">
-                        <img src="{{ $authUser->getAvatar(52) }}" alt="{{ $authUser->full_name }}" class="img-cover rounded-circle">
+                        <img src="{{ $authUser->getAvatar(72) }}" alt="{{ $authUser->full_name }}" class="img-cover rounded-circle">
                     </div>
                     <div class="dict-profile-card__info">
                         <div class="dict-profile-card__name">{{ strtoupper($authUser->full_name) }}</div>
@@ -1484,15 +1618,9 @@
                         </li>
                         @endif
                         <li class="navbar-auth-user__dropdown-item">
-                            <a href="{{ $authUser->getProfileUrl() }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                            <a href="/panel/setting" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                                 <x-iconsax-lin-profile class="icons" width="24px" height="24px"/>
                                 <span class="ml-8">{{ trans('public.profile') }}</span>
-                            </a>
-                        </li>
-                        <li class="navbar-auth-user__dropdown-item">
-                            <a href="/panel/setting" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
-                                <x-iconsax-lin-setting-2 class="icons" width="24px" height="24px"/>
-                                <span class="ml-8">{{ trans('panel.settings') }}</span>
                             </a>
                         </li>
                     </ul>
@@ -1584,6 +1712,7 @@
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let selectedAnswer = null;
+    let practicedCorrectIds = new Set(); // flashcard IDs answered correctly in practice
 
     // ── Profile card: hover (CSS handles it) + click toggle (JS) ──────
     $('#dictProfileTrigger').on('click', function(e) {
@@ -1801,6 +1930,9 @@
         }
 
         // ── Meanings ─────────────────────────────────────────────────────
+        const wordLabel = data.headword || data.word || '';
+        function escAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+
         if (data.meanings && data.meanings.length > 0) {
             data.meanings.forEach(function(meaning) {
                 html += '<div class="result-meaning-group">';
@@ -1810,8 +1942,10 @@
                 }
 
                 if (meaning.definitions && meaning.definitions.length > 0) {
-                    // Show max 4 definitions per part-of-speech
+                    // Show max 4 definitions per part-of-speech, each with its own Save button
                     meaning.definitions.slice(0, 4).forEach(function(defObj, i) {
+                        html += '<div class="def-entry">';
+                        html += '<div class="def-content">';
                         if (defObj.definition) {
                             html += `<div class="result-definition"><span class="def-num">${i + 1}.</span> ${defObj.definition}</div>`;
                         }
@@ -1824,6 +1958,9 @@
                         if (defObj.antonyms && defObj.antonyms.length > 0) {
                             html += `<div class="result-antonyms"><strong>Antonyms:</strong> ${defObj.antonyms.join(', ')}</div>`;
                         }
+                        html += '</div>'; // .def-content
+                        html += `<button class="btn-save-def save-definition-btn" data-word="${escAttr(wordLabel)}" data-definition="${escAttr(defObj.definition)}" data-pos="${escAttr(meaning.partOfSpeech)}" data-example="${escAttr(defObj.example)}">Save</button>`;
+                        html += '</div>'; // .def-entry
                     });
                 }
 
@@ -1846,7 +1983,12 @@
                 }
                 if (sense.definitions && sense.definitions.length > 0) {
                     sense.definitions.forEach(function(definition) {
+                        html += '<div class="def-entry">';
+                        html += '<div class="def-content">';
                         html += `<div class="result-definition">${definition}</div>`;
+                        html += '</div>';
+                        html += `<button class="btn-save-def save-definition-btn" data-word="${escAttr(wordLabel)}" data-definition="${escAttr(definition)}" data-pos="${escAttr(sense.part_of_speech)}" data-example="">Save</button>`;
+                        html += '</div>';
                     });
                 }
                 if (sense.examples && sense.examples.length > 0) {
@@ -1857,21 +1999,23 @@
             });
         }
 
-        // Action buttons
-        const wordLabel = data.headword || data.word || '';
-        html += `
-            <div class="result-actions">
-                <button class="result-btn result-btn-secondary" id="addToWordList" data-word="${wordLabel}">
-                    <i class="iconsax" data-icon="add-circle"></i>
-                    {{ trans('panel.add_to_list') }}
-                </button>
-            </div>
-        `;
+        // Back button
+        html += `<div class="text-center mt-8 mb-4">
+            <button class="dict-result-back-btn" id="dictResultBackBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                {{ trans('panel.back') }}
+            </button>
+        </div>`;
 
         // Store current word data for use by action buttons
         currentWordData = data;
 
         $('#dictionaryResult').html(html);
+
+        // Back button handler
+        $('#dictResultBackBtn').on('click', function() {
+            $('#dictionaryResult').addClass('hidden').html('');
+        });
 
         // Re-init icon rendering if iconsax is available
         if (typeof iconsax !== 'undefined') { try { iconsax.replace(); } catch(e) {} }
@@ -1933,38 +2077,26 @@
         window.speechSynthesis.speak(utter);
     }
 
-    // Add to My Word List
-    $(document).on('click', '#addToWordList', function() {
-        if (!currentWordData) {
+    // Save individual definition to My Word List
+    $(document).on('click', '.save-definition-btn', function() {
+        const $btn = $(this);
+        const word         = $btn.data('word')       || '';
+        const definition   = $btn.data('definition') || '';
+        const partOfSpeech = $btn.data('pos')        || '';
+        const example      = $btn.data('example')    || '';
+        let pronunciation  = '';
+
+        if (!word) {
             alert('{{ trans('panel.no_word_selected') }}');
             return;
         }
-
-        const $btn = $(this);
-        const word = currentWordData.headword || currentWordData.word || '';
-
-        let definition = '', partOfSpeech = '', example = '', pronunciation = '';
-
-        if (currentWordData.meanings && currentWordData.meanings.length > 0) {
-            const m = currentWordData.meanings[0];
-            partOfSpeech = m.partOfSpeech || '';
-            if (m.definitions && m.definitions.length > 0) {
-                definition = m.definitions[0].definition || '';
-                example   = m.definitions[0].example   || '';
-            }
-        } else if (currentWordData.senses && currentWordData.senses.length > 0) {
-            const s = currentWordData.senses[0];
-            partOfSpeech = s.part_of_speech || '';
-            definition   = (s.definitions && s.definitions[0]) || '';
-        }
-
-        if (currentWordData.pronunciations && currentWordData.pronunciations.length > 0) {
-            pronunciation = currentWordData.pronunciations[0].ipa || currentWordData.pronunciations[0].text || '';
-        }
-
         if (!definition) {
             alert('{{ trans('panel.word_definition_not_found') }}');
             return;
+        }
+
+        if (currentWordData && currentWordData.pronunciations && currentWordData.pronunciations.length > 0) {
+            pronunciation = currentWordData.pronunciations[0].ipa || currentWordData.pronunciations[0].text || '';
         }
 
         $btn.prop('disabled', true).text('{{ trans('panel.adding') }}...');
@@ -1982,27 +2114,27 @@
             },
             success: function(res) {
                 if (res.success) {
-                    $btn.text('{{ trans('panel.added') }} ✓').css('background', '#22c55e').prop('disabled', true);
+                    $btn.text('{{ trans('panel.added') }} ✓').css({'background': '#22c55e', 'color': '#fff'}).prop('disabled', true);
                     // Refresh word list if currently expanded
                     if ($('#words-my-{{ $myWordList->id }}').closest('.word-list-expanded').hasClass('show')) {
                         loadMyWordList();
                     }
                 } else {
                     if (res.message && res.message.toLowerCase().indexOf('already') !== -1) {
-                        $btn.text('{{ trans('panel.already_in_list') }}').prop('disabled', true);
+                        $btn.text('{{ trans('panel.already_in_list') }}').css({'background': '#94a3b8', 'color': '#fff'}).prop('disabled', true);
                     } else {
                         alert(res.message || '{{ trans('panel.failed_to_add_word') }}');
-                        $btn.prop('disabled', false).html('<i class="iconsax" data-icon="add-circle"></i> {{ trans('panel.add_to_list') }}');
+                        $btn.prop('disabled', false).text('Save').removeAttr('style');
                     }
                 }
             },
             error: function(xhr) {
                 const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '{{ trans('panel.failed_to_add_word') }}';
                 if (msg.toLowerCase().indexOf('already') !== -1) {
-                    $btn.text('{{ trans('panel.already_in_list') }}').prop('disabled', true);
+                    $btn.text('{{ trans('panel.already_in_list') }}').css({'background': '#94a3b8', 'color': '#fff'}).prop('disabled', true);
                 } else {
                     alert(msg);
-                    $btn.prop('disabled', false).html('<i class="iconsax" data-icon="add-circle"></i> {{ trans('panel.add_to_list') }}');
+                    $btn.prop('disabled', false).text('Save').removeAttr('style');
                 }
             }
         });
@@ -2104,6 +2236,7 @@
 
         words.forEach(function(word) {
             let pronunciation = word.pronunciation ? `<span class="word-pronunciation">/${word.pronunciation}/</span>` : '';
+            let showTick = word.is_learned || (listType === 'my' && practicedCorrectIds.has(word.id));
             let wordHtml = `
                 <div class="word-item" data-word-id="${word.id}" data-word="${word.word}">
                     <input type="checkbox" class="word-checkbox" data-word-id="${word.id}">
@@ -2114,7 +2247,7 @@
                         </div>
                         <div class="word-definition">${word.definition}</div>
                     </div>
-                    <span class="learned-badge ${word.is_learned ? 'show' : ''}"
+                    <span class="learned-badge ${showTick ? 'show' : ''}"
                           data-word-id="${word.id}"
                           title="{{ trans('panel.mark_as_learned') }}">&#10003;</span>
                 </div>
@@ -2164,7 +2297,7 @@
         e.stopPropagation();
         
         let selectedIds = [];
-        $('.word-checkbox:checked').each(function() {
+        $(this).closest('.word-list-expanded').find('.word-checkbox:checked').each(function() {
             selectedIds.push($(this).data('word-id'));
         });
 
@@ -2177,8 +2310,38 @@
             return;
         }
 
-        // TODO: Implement bulk delete API
-        console.log('Deleting words:', selectedIds);
+        const $btn = $(this);
+        $btn.prop('disabled', true).text('...');
+
+        $.ajax({
+            url: '/panel/dictionary/my-word-list/bulk-delete',
+            method: 'POST',
+            data: {
+                flashcard_ids: selectedIds,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Remove deleted word items from DOM immediately
+                    selectedIds.forEach(function(id) {
+                        $(`.word-item[data-word-id="${id}"]`).fadeOut(200, function() { $(this).remove(); });
+                    });
+                    // Refresh to update word count badge
+                    setTimeout(function() { loadMyWordList(); }, 300);
+                } else {
+                    alert(response.message || '{{ trans('panel.failed_to_delete_word') }}');
+                }
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : '{{ trans('panel.failed_to_delete_word') }}';
+                alert(msg);
+            },
+            complete: function() {
+                $btn.prop('disabled', false).text('{{ trans('panel.delete') }}');
+            }
+        });
     });
 
     // Start Practice
@@ -2243,8 +2406,17 @@
     // Show Question
     function showQuestion() {
         if (currentQuestionIndex >= currentQuestions.length) {
-            // Practice finished
-            exitPractice();
+            // Practice finished – show results
+            const total = currentQuestions.length;
+            $('#questionText').html(
+                `<div style="text-align:center;padding:20px 0;">
+                    <div style="font-size:48px;margin-bottom:10px;">🎉</div>
+                    <div style="font-size:22px;font-weight:700;margin-bottom:8px;">{{ trans('panel.practice') }} Complete!</div>
+                    <div style="font-size:16px;color:#64748b;">${correctAnswers} / ${total} correct</div>
+                </div>`
+            );
+            $('#answersGrid').html('');
+            $('#nextQuestionBtn').prop('disabled', true);
             return;
         }
 
@@ -2258,10 +2430,13 @@
         
         let answersHtml = '';
         question.answers.forEach(function(answer) {
+            const answerWord = (typeof answer === 'object' && answer !== null) ? answer.word : answer;
+            const answerPron = (typeof answer === 'object' && answer !== null && answer.pronunciation) ? answer.pronunciation : '';
+            const pronHtml = answerPron ? `<div class="answer-pronunciation">/${answerPron}/</div>` : '';
             answersHtml += `
-                <div class="answer-card" data-answer="${answer}">
-                    <div class="answer-word">${answer}</div>
-                    <div class="answer-pronunciation">${question.correct_answer === answer ? '' : ''}</div>
+                <div class="answer-card" data-answer="${answerWord}">
+                    <div class="answer-word">${answerWord}</div>
+                    ${pronHtml}
                 </div>
             `;
         });
@@ -2287,6 +2462,11 @@
         // Update scores
         if (isCorrect) {
             correctAnswers++;
+            // Show the green tick on the word item in My Word List and remember it
+            if (currentWordListType === 'my' && question.flashcard_id) {
+                practicedCorrectIds.add(question.flashcard_id);
+                $(`.learned-badge[data-word-id="${question.flashcard_id}"]`).addClass('show');
+            }
         } else {
             incorrectAnswers++;
         }
@@ -2331,11 +2511,14 @@
             $('#myWordListSection').removeClass('hidden');
         }
         
-        // Reload the word list to show updated learned status
+        // Reload the word list to show updated learned/tick status
         if (currentWordListType === 'academic') {
             loadAcademicWordList(currentWordListId);
+            practicedCorrectIds.clear();
         } else {
-            loadMyWordList();
+            loadMyWordList(); // renderWords will re-apply ticks from practicedCorrectIds
+            // Clear after a brief delay so renderWords finishes first
+            setTimeout(function() { practicedCorrectIds.clear(); }, 1500);
         }
     }
 

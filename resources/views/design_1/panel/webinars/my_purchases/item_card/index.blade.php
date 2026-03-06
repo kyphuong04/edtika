@@ -71,8 +71,7 @@
                             ])
                         </div>
 
-                        {{-- Actions Dropdown --}}
-                        @include("design_1.panel.webinars.my_purchases.item_card.actions_dropdown")
+                        {{-- actions dropdown removed per user preference --}}
                     </div>
                     {{-- Stats --}}
                     <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="text-decoration-none">
@@ -89,7 +88,8 @@
                     {{-- Continue Learning Button --}}
                     @if(!empty($sale->webinar))
                         <div class="col-2 d-flex align-items-center justify-content-end">
-                            <a href="{{ $panelLearningUrl }}" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
+                            {{-- link now points to the course detail page instead of learning page --}}
+                            <a href="{{ $panelDetailUrl }}" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
                                 <span class="font-12 text-primary mr-4">{{ trans('update.continue_learning') }}</span>
                                 <x-iconsax-lin-arrow-right class="icons text-primary mt-2" width="16px" height="16px"/>
                             </a>

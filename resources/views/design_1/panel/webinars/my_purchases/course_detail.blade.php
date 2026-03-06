@@ -107,7 +107,7 @@
             background: #fff;
             border-radius: 12px;
             border: 1.5px solid #eee;
-            padding: 16px 20px;
+            padding: 26px 24px;
             cursor: pointer;
             transition: border-color .2s;
         }
@@ -119,7 +119,7 @@
             gap: 16px;
         }
         .cd-section-card__left { flex: 1; min-width: 0; }
-        .cd-section-card__title { font-size: 14px; font-weight: 700; letter-spacing: .4px; }
+        .cd-section-card__title { font-size: 16px; font-weight: 700; letter-spacing: .4px; }
         .cd-section-card__meta { font-size: 12px; color: #888; margin-top: 3px; }
         .cd-section-card__bar {
             width: 100%;
@@ -382,7 +382,7 @@
                 {{-- actions --}}
                 <div class="d-flex align-items-center flex-wrap gap-8">
                     <a href="/panel/courses/purchases" class="cd-btn-outline">
-                        {{ trans('panel.my_courses') }}
+                        {{ trans('panel.switch_courses') }}
                     </a>
 
                     <a href="{{ $panelLearnUrl }}" class="cd-btn-outline">

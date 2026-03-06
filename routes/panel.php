@@ -12,6 +12,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
     /* Dashboard */
     Route::get('/', 'DashboardController@index');
+    Route::post('/dashboard/save-settings', 'DashboardController@saveSettings');
+    Route::get('/dashboard/weak-points', 'DashboardController@weakPoints');
 
     /* Events */
     Route::group(['prefix' => 'events'], function () {
@@ -735,6 +737,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/word-lists/add-word', 'DictionaryController@addWordToList');
         Route::post('/word-lists/remove-word', 'DictionaryController@removeWordFromList');
         Route::post('/my-word-list/add-word', 'DictionaryController@addWordToMyList');
+        Route::post('/my-word-list/bulk-delete', 'DictionaryController@bulkDeleteFromMyWordList');
         Route::get('/word-lists-dropdown', 'DictionaryController@getUserWordLists');
 
         // Academic Word Lists (Band-based)
