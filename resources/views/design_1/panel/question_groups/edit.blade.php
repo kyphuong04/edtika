@@ -173,6 +173,26 @@
                 </div>
                 <small class="form-text text-muted">Upload graph, chart, diagram, or map for Writing Task 1</small>
             </div>
+            
+            @if($group->skill === 'speaking')
+            <div class="form-group">
+                <label class="form-group-label">Video File (for Speaking)</label>
+                @if($group->video_file)
+                    <div class="mb-8">
+                        <video controls class="w-100 rounded" style="max-height: 240px;">
+                            <source src="{{ \Storage::disk('public')->url($group->video_file) }}" type="video/mp4">
+                        </video>
+                    </div>
+                @endif
+                <div class="custom-file bg-white">
+                    <input type="file" name="video_file" class="custom-file-input" id="videoFile" accept="video/*">
+                    <label class="custom-file-label" for="videoFile">
+                        {{ $group->video_file ? 'Replace video...' : 'Choose video file...' }}
+                    </label>
+                </div>
+                <small class="text-gray-500">MP4, WebM, MOV - Max 200MB.</small>
+            </div>
+            @endif
         </div>
         
         {{-- Actions --}}

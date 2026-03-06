@@ -57,6 +57,10 @@ return [
 
 'my_purchases' => 'My purchases',
 'my_courses' => 'My Courses',
+
+    // label for the panel header button that lets user switch to course list
+    'switch_courses' => 'Switch Courses',
+
 'my_purchases_no_result' => 'No purchased course!',
 'my_purchases_no_result_hint' => 'Start learning from top instructors and enjoy the experience.',
 

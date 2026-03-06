@@ -165,6 +165,7 @@ return [
 
 'test_lesson' => 'Text Lesson',
 'lesson' => 'Lesson',
+'lessons' => 'Lessons',
 'add_test_lesson' => 'Add Text Lesson',
 'add_new_test_lesson' => 'Add New Text Lesson',
 'text_lesson_no_result' => 'No text lessons added!',

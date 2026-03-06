@@ -74,6 +74,7 @@ class QuestionGroupController extends Controller
             'passage' => 'nullable|string',
             'audio_file' => 'nullable|file|mimes:mp3,wav,m4a|max:51200',
             'task_image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:10240',
+            'video_file' => 'nullable|file|mimes:mp4,webm,mov,avi|max:204800',
         ]);
         
         // Debug log AFTER validation
@@ -106,6 +107,11 @@ class QuestionGroupController extends Controller
         // task image upload (for writing tasks)
         if ($request->hasFile('task_image')) {
             $validated['task_image'] = $request->file('task_image')->store('question_bank/images', 'public');
+        }
+        
+        // video file upload (for speaking)
+        if ($request->hasFile('video_file')) {
+            $validated['video_file'] = $request->file('video_file')->store('question_bank/videos', 'public');
         }
         
         $validated['creator_id'] = auth()->id();
@@ -164,6 +170,7 @@ class QuestionGroupController extends Controller
                 'status' => 'nullable|in:draft,pending,approved',
                 'audio_file' => 'nullable|file|mimes:mp3,wav,m4a|max:51200',
                 'task_image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:10240',
+                'video_file' => 'nullable|file|mimes:mp4,webm,mov,avi|max:204800',
             ]);
             
             // IMPORTANT: If question_type is empty/null, don't update it (keep old value)
@@ -181,6 +188,10 @@ class QuestionGroupController extends Controller
             
             if ($request->hasFile('task_image')) {
                 $validated['task_image'] = $request->file('task_image')->store('question_bank/images', 'public');
+            }
+            
+            if ($request->hasFile('video_file')) {
+                $validated['video_file'] = $request->file('video_file')->store('question_bank/videos', 'public');
             }
             
             // Debug log - remove after testing

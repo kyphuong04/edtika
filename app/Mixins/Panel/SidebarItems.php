@@ -545,11 +545,6 @@ class SidebarItems
 
     static public function getCommunicationsSectionItems($user)
     {
-        // Hide entire Communications section for user role
-        if ($user->isUser()) {
-            return [];
-        }
-
         $items = [];
 
         // Support

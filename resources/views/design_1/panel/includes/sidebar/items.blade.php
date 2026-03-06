@@ -1,4 +1,6 @@
+@php $excludeSections = $excludeSections ?? []; @endphp
 @foreach(\App\Mixins\Panel\SidebarItems::getItems() as $sidebarSection => $sidebarMenus)
+    @if(in_array($sidebarSection, $excludeSections)) @continue @endif
     @if(!empty($sidebarMenus) and count($sidebarMenus))
         <div class="mt-16">
             <span class="sidebar-section-title d-block font-12 font-weight-bold text-gray-400 text-uppercase pl-32 pr-20 mb-8">{{ trans("update.{$sidebarSection}") }}</span>
@@ -33,7 +35,7 @@
                             </span>
                         </div>
 
-                        <div id="collapseSidebar{{ $sidebarMenuName }}" class="accordion__collapse border-top-0 pt-0 mt-0 {{ $isActiveMainManu ? 'show' : '' }}" role="tabpanel">
+                        <div id="collapseSidebar{{ $sidebarMenuName }}" class="collapse accordion__collapse border-top-0 pt-0 mt-0 {{ $isActiveMainManu ? 'show' : '' }}" role="tabpanel">
 
                             @foreach($sidebarMenu['items'] as $sidebarMenuItem)
                                 @php

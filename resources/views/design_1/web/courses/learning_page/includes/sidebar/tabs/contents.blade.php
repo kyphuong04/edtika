@@ -15,23 +15,25 @@
         </div>
     </div>
 @else
-    @if(!empty($sessionsWithoutChapter) and count($sessionsWithoutChapter))
-        @foreach($sessionsWithoutChapter as $sessionRow)
-            @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.session',['session' => $sessionRow, 'type' => \App\Models\WebinarChapter::$chapterSession])
-        @endforeach
-    @endif
+    <div class="sidebar-timeline-list">
+        @if(!empty($sessionsWithoutChapter) and count($sessionsWithoutChapter))
+            @foreach($sessionsWithoutChapter as $sessionRow)
+                @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.session',['session' => $sessionRow, 'type' => \App\Models\WebinarChapter::$chapterSession, 'isLast' => $loop->last && empty($textLessonsWithoutChapter) && empty($filesWithoutChapter)])
+            @endforeach
+        @endif
 
-    @if(!empty($textLessonsWithoutChapter) and count($textLessonsWithoutChapter))
-        @foreach($textLessonsWithoutChapter as $textLessonRow)
-            @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.text_lesson',['textLesson' => $textLessonRow, 'type' => \App\Models\WebinarChapter::$chapterTextLesson])
-        @endforeach
-    @endif
+        @if(!empty($textLessonsWithoutChapter) and count($textLessonsWithoutChapter))
+            @foreach($textLessonsWithoutChapter as $textLessonRow)
+                @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.text_lesson',['textLesson' => $textLessonRow, 'type' => \App\Models\WebinarChapter::$chapterTextLesson, 'isLast' => $loop->last && empty($filesWithoutChapter)])
+            @endforeach
+        @endif
 
-    @if(!empty($filesWithoutChapter) and count($filesWithoutChapter))
-        @foreach($filesWithoutChapter as $fileRow)
-            @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.file',['file' => $fileRow, 'type' => \App\Models\WebinarChapter::$chapterFile])
-        @endforeach
-    @endif
+        @if(!empty($filesWithoutChapter) and count($filesWithoutChapter))
+            @foreach($filesWithoutChapter as $fileRow)
+                @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.file',['file' => $fileRow, 'type' => \App\Models\WebinarChapter::$chapterFile, 'isLast' => $loop->last])
+            @endforeach
+        @endif
+    </div>
 
     @if(!empty($course->chapters) and count($course->chapters))
         @include('design_1.web.courses.learning_page.includes.sidebar.tabs.contents.chapters')

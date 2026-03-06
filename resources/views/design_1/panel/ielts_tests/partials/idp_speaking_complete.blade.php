@@ -1,521 +1,302 @@
-{{-- 
-    IELTS Speaking Section - Complete Interface
-    Includes: Mic Check Modal, Question Display, Recording Interface
---}}
+{{-- Speaking Section - Wireframe Design --}}
 @php
-    $task = $question ?? $section ?? null;
-    $taskText = $task->question_text ?? $task->content ?? $section->content ?? '';
-    $partNum = $section->part_number ?? 1;
-    
-    // Preparation and speaking times based on part
-    $prepTime = $task->preparation_time ?? ($partNum == 2 ? 60 : 0);
-    $speakTime = $task->speaking_time ?? ($partNum == 2 ? 120 : ($partNum == 3 ? 90 : 60));
-    
-    // Get cue card points for Part 2
-    $cueCardPoints = $task->cue_card_points ?? '';
-    if (is_string($cueCardPoints) && !empty($cueCardPoints)) {
-        $cueCardPoints = explode("\n", $cueCardPoints);
-    } else {
-        $cueCardPoints = [];
-    }
-    
-    // Get audio URL for examiner question (if any)
-    $audioUrl = $task->audio_url ?? $section->audio_url ?? '';
-    
-    // Get saved answer
-    $savedAnswer = $userAnswer ?? '';
+    $partNum = $section->part_number ?? $section->section_number ?? 1;
+    $speakQuestions = isset($allQuestions) ? $allQuestions->sortBy('question_number')->values() : collect();
+    $sectionVideoUrl = $section->video_url ?? null;
 @endphp
 
-{{-- Include Mic Check Modal --}}
-@include('design_1.panel.ielts_tests.partials.speaking_mic_check')
+<style>
+    .spk-layout{display:flex;flex:1;min-width:0;height:100%;background:#ececec;overflow:hidden;}
+    .spk-left{width:50%;flex-shrink:0;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+    .spk-instruction{font-size:13px;color:#333;line-height:1.5;width:100%;}
+    .spk-instruction strong{font-size:13px;font-weight:700;}
+    .spk-player-wrap{background:#d4d4d4;border-radius:8px;overflow:hidden;width:100%;max-width:490px;}
+    .spk-player-wrap video{width:100%;display:block;background:#d4d4d4;max-height:190px;}
+    .spk-player-placeholder{width:100%;max-width:490px;aspect-ratio:16/9;background:#d4d4d4;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+    .spk-mic-btn-wrap{display:flex;justify-content:center;width:100%;max-width:490px;}
+    .spk-mic-btn{width:64px;height:64px;border-radius:50%;background:#b0b0b0;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,transform .15s;}
+    .spk-mic-btn:hover{background:#999;transform:scale(1.05);}
+    .spk-mic-btn.recording{background:#e53935;animation:spkPulse 1.2s ease-in-out infinite;}
+    .spk-mic-btn.done{background:#43a047;}
+    @keyframes spkPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,57,53,.5)}50%{box-shadow:0 0 0 14px rgba(229,57,53,0)}}
+    .spk-answer-box{background:#d4d4d4;border-radius:10px;padding:12px 14px;width:100%;max-width:490px;}
+    .spk-answer-label{font-size:12px;font-weight:700;color:#555;text-align:center;margin-bottom:10px;}
+    .spk-answer-player{display:flex;align-items:center;gap:10px;background:#fff;border-radius:6px;padding:8px 12px;margin-bottom:10px;}
+    .spk-play-mini{width:28px;height:28px;border-radius:50%;background:#333;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .spk-answer-time{font-size:12px;color:#444;white-space:nowrap;flex-shrink:0;}
+    .spk-answer-progress{flex:1;height:4px;background:#ccc;border-radius:2px;overflow:hidden;}
+    .spk-answer-progress-fill{height:100%;width:0%;background:#555;border-radius:2px;transition:width .2s;}
+    .spk-answer-btns{display:flex;gap:10px;}
+    .spk-answer-btns button{flex:1;padding:8px 12px;border-radius:6px;border:1.5px solid #888;background:transparent;font-size:12px;font-weight:600;color:#333;cursor:pointer;transition:background .15s;}
+    .spk-answer-btns button:hover{background:rgba(0,0,0,.07);}
+    .spk-no-recording{font-size:12px;color:#888;text-align:center;padding:6px 0 4px;}
+    .spk-right{width:50%;flex-shrink:0;border-left:1px solid #ccc;overflow-y:hidden;padding:20px;display:flex;flex-direction:column;gap:14px;background:#ececec;}
+    .spk-notes-label,.spk-model-label{font-size:13px;font-weight:700;color:#222;margin-bottom:6px;}
+    .spk-right-notes{flex:1;display:flex;flex-direction:column;min-height:0;}
+    .spk-right-model{flex-shrink:0;}
+    .spk-notes-area{width:100%;flex:1;min-height:0;padding:10px 12px;border:1px solid #bbb;border-radius:6px;background:#fff;font-size:13px;color:#333;resize:none;font-family:Arial,sans-serif;line-height:1.5;}
+    .spk-notes-area:focus{outline:none;border-color:#888;}
+    .spk-model-box{background:#fff;border:1px solid #ccc;border-radius:6px;padding:12px;font-size:13px;color:#444;line-height:1.6;}
+    .spk-model-box.empty{color:#aaa;font-style:italic;}
+    .spk-q-panel{display:none;height:100%;width:100%;}
+    .spk-q-panel.active{display:flex;flex:1;min-width:0;height:100%;width:100%;}
+</style>
 
-<div class="speaking-container" style="display: flex; height: 100%; background: #f5f5f5;">
-    {{-- LEFT PANEL - Question/Prompt Display --}}
-    <div class="speaking-question-panel" style="flex: 1; background: #fff; overflow-y: auto; padding: 30px 36px; border-right: 1px solid #ddd;">
-        
-        {{-- Part Header --}}
-        <div class="part-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #E31837;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                <span style="background: #E31837; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">
-                    {{ trans('update.ielts_speaking') }}
-                </span>
-                <span style="background: #f3f4f6; color: #1f2937; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">
-                    {{ trans('update.ielts_part', ['part' => $partNum]) }}
-                </span>
-            </div>
-            
-            <h2 style="font-size: 20px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px 0;">
-                @if($partNum == 1)
-                    {{ trans('update.ielts_speaking_intro') }}
-                @elseif($partNum == 2)
-                    {{ trans('update.ielts_speaking_cue_card') }}
-                @else
-                    {{ trans('update.ielts_speaking_discussion') }}
-                @endif
-            </h2>
-            
-            <p style="font-size: 14px; color: #666; margin: 0; line-height: 1.5;">
-                @if($partNum == 1)
-                    {{ trans('update.ielts_speaking_part1_instruction') }}
-                @elseif($partNum == 2)
-                    {!! trans('update.ielts_speaking_part2_instruction') !!}
-                @else
-                    {{ trans('update.ielts_speaking_part3_instruction') }}
-                @endif
-            </p>
-        </div>
-        
-        {{-- Part 2: Cue Card --}}
-        @if($partNum == 2)
-            <div class="cue-card" style="background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-                    <span style="font-size: 24px;">📝</span>
-                    <span style="font-size: 15px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">{{ trans('update.ielts_speaking_topic_card') }}</span>
-                </div>
-                
-                <div style="font-size: 17px; color: #78350f; line-height: 1.7; font-weight: 500; margin-bottom: 16px;">
+<div class="spk-layout" id="spkLayout">
+    @foreach($speakQuestions as $qIndex => $task)
+    @php
+        $qNum      = $task->question_number ?? ($qIndex + 1);
+        $qId       = $task->id;
+        $taskText  = $task->question_text ?? $task->content ?? '';
+        $audioUrl  = $task->audio_url ?? $section->audio_url ?? '';
+        // Prefer question group video, then section video, then audio fallback
+        $groupVideoFile = $task->questionGroup->video_file ?? null;
+        $videoUrl  = $groupVideoFile 
+            ? \Storage::disk('public')->url($groupVideoFile) 
+            : ($sectionVideoUrl ?? $audioUrl);
+        $modelAns  = $task->model_answer ?? '';
+        $savedAns  = $userAnswers[$qId] ?? '';
+        $speakTime = $task->speaking_time ?? ($partNum == 2 ? 120 : ($partNum == 3 ? 90 : 60));
+    @endphp
+    <div class="spk-q-panel {{ $qIndex === 0 ? 'active' : '' }}"
+         id="spk-q-panel-{{ $qNum }}"
+         data-q-num="{{ $qNum }}"
+         data-q-id="{{ $qId }}">
+
+        {{-- LEFT --}}
+        <div class="spk-left">
+            <div class="spk-instruction">
+                <strong>Questions {{ $qNum }}:</strong><br>
+                @if(!empty($taskText))
                     {!! nl2br(e($taskText)) !!}
-                </div>
-                
-                @if(!empty($cueCardPoints))
-                    <div style="background: rgba(255,255,255,0.7); border-radius: 8px; padding: 16px; margin-top: 16px;">
-                        <p style="font-size: 14px; font-weight: 600; color: #92400e; margin: 0 0 12px 0;">{{ trans('update.ielts_write_about_topic') }}</p>
-                        <ul style="margin: 0; padding-left: 24px; color: #78350f; font-size: 15px; line-height: 2;">
-                            @foreach($cueCardPoints as $point)
-                                @if(trim($point))
-                                    <li>{{ trim($point) }}</li>
-                                @endif
+                @else
+                    Press the play button to listen to the question and then record your answer.
+                @endif
+                @if(!empty($task->cue_card_points))
+                    <div style="margin-top:10px;padding:10px 12px;background:#fff;border-radius:6px;border:1px solid #ccc;">
+                        <div style="font-weight:700;margin-bottom:6px;">You should say:</div>
+                        <ul style="padding-left:18px;margin:0;line-height:1.8;">
+                            @foreach(explode("\n", $task->cue_card_points) as $pt)
+                                @if(trim($pt))<li>{{ trim($pt) }}</li>@endif
                             @endforeach
                         </ul>
                     </div>
                 @endif
-                
-                <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #d97706;">
-                    <p style="font-size: 13px; color: #92400e; margin: 0; font-style: italic;">
-                        {{ trans('update.ielts_speaking_part2_instruction') }}
-                    </p>
+            </div>
+
+            @if(!empty($videoUrl))
+                <div class="spk-player-wrap">
+                    <video controls controlsList="nodownload" style="width:100%;border-radius:8px;background:#000;">
+                        <source src="{{ $videoUrl }}" type="video/mp4">
+                        <source src="{{ $videoUrl }}" type="video/webm">
+                        <source src="{{ $videoUrl }}" type="audio/mpeg">
+                        <source src="{{ $videoUrl }}" type="audio/webm">
+                        Your browser does not support the video element.
+                    </video>
                 </div>
-            </div>
-        @else
-            {{-- Part 1 & 3: Question Display --}}
-            <div class="question-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: flex-start; gap: 12px;">
-                    <span style="background: #E31837; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
-                        Q
-                    </span>
-                    <div style="font-size: 17px; color: #1a1a1a; line-height: 1.7;">
-                        {!! nl2br(e($taskText)) !!}
-                    </div>
-                </div>
-            </div>
-        @endif
-        
-        {{-- Examiner Audio (if available) --}}
-        @if(!empty($audioUrl))
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
-                <p style="font-size: 14px; color: #1e40af; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                    <span>🔊</span>
-                    <span>{{ trans('update.ielts_listen_and_answer', ['start' => '', 'end' => '']) }}</span>
-                </p>
-                <audio controls style="width: 100%;">
-                    <source src="{{ $audioUrl }}" type="audio/mpeg">
-                    {{ trans('update.ielts_browser_no_audio_support') }}
-                </audio>
-            </div>
-        @endif
-        
-        {{-- Image (if available) --}}
-        @if(!empty($task->image_url))
-            <div style="margin-top: 16px;">
-                <img src="{{ $task->image_url }}" alt="Task image" style="max-width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;">
-            </div>
-        @endif
-        
-        {{-- Tips Box --}}
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px; margin-top: 20px;">
-            <p style="font-size: 14px; font-weight: 600; color: #166534; margin: 0 0 8px 0;">💡 {{ trans('update.ielts_speaking_tips') }}:</p>
-            <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #166534; line-height: 1.8;">
-                @if($partNum == 1)
-                    <li>Answer in complete sentences, not just "yes" or "no"</li>
-                    <li>Give reasons and examples for your answers</li>
-                    <li>Speak naturally and at a normal pace</li>
-                @elseif($partNum == 2)
-                    <li>Use the preparation time to make brief notes</li>
-                    <li>Cover all the points on the card</li>
-                    <li>Aim to speak for the full 2 minutes</li>
-                @else
-                    <li>Discuss ideas in depth with examples</li>
-                    <li>Use a range of vocabulary and structures</li>
-                    <li>Give balanced arguments where appropriate</li>
-                @endif
-            </ul>
-        </div>
-    </div>
-    
-    {{-- RIGHT PANEL - Recording Interface --}}
-    <div class="speaking-record-panel" style="flex: 1; display: flex; flex-direction: column; padding: 40px; background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%); align-items: center; justify-content: center;">
-        
-        {{-- Timer Section --}}
-        <div id="speakingTimerSection" style="text-align: center; margin-bottom: 32px;">
-            @if($prepTime > 0)
-                <div id="prepPhaseSection">
-                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">{{ trans('update.ielts_speaking_prep_time') }}</p>
-                    <div id="prepTimerDisplay" style="font-size: 56px; font-weight: 700; color: #3b82f6; font-variant-numeric: tabular-nums; text-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);">
-                        {{ sprintf('%02d:%02d', floor($prepTime/60), $prepTime%60) }}
-                    </div>
-                    <div style="width: 200px; height: 6px; background: #e5e7eb; border-radius: 3px; margin: 16px auto;">
-                        <div id="prepProgressBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 3px; transition: width 1s linear;"></div>
-                    </div>
+            @else
+                <div class="spk-player-placeholder">
+                    <svg width="48" height="48" fill="#888" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
+                    </svg>
                 </div>
             @endif
-            
-            <div id="speakPhaseSection" style="{{ $prepTime > 0 ? 'display: none;' : '' }}">
-                <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">{{ trans('update.ielts_speaking_speak_time') }}</p>
-                <div id="speakTimerDisplay" style="font-size: 56px; font-weight: 700; color: #1f2937; font-variant-numeric: tabular-nums;">
-                    {{ sprintf('%02d:%02d', floor($speakTime/60), $speakTime%60) }}
-                </div>
-                <div style="width: 200px; height: 6px; background: #e5e7eb; border-radius: 3px; margin: 16px auto;">
-                    <div id="speakProgressBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 3px; transition: width 1s linear;"></div>
-                </div>
-            </div>
-        </div>
-        
-        {{-- Microphone Visualization --}}
-        <div id="micVisualization" style="margin-bottom: 32px;">
-            <div id="speakingMicIcon" style="width: 140px; height: 140px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(102, 126, 234, 0.35); transition: all 0.3s ease; margin: 0 auto;">
-                <svg width="56" height="56" fill="white" viewBox="0 0 24 24">
-                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                </svg>
-            </div>
-            
-            {{-- Audio Wave Animation --}}
-            <div id="speakingAudioBars" style="display: none; justify-content: center; gap: 6px; margin-top: 24px; height: 60px; align-items: flex-end;">
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite;"></div>
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite 0.1s;"></div>
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite 0.2s;"></div>
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite 0.3s;"></div>
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite 0.4s;"></div>
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite 0.5s;"></div>
-                <div class="speak-bar" style="width: 6px; background: linear-gradient(to top, #ef4444, #f87171); border-radius: 3px; animation: speakWave 0.8s ease-in-out infinite 0.4s;"></div>
-            </div>
-        </div>
-        
-        {{-- Status Message --}}
-        <div id="speakingStatus" style="text-align: center; margin-bottom: 24px;">
-            <div id="speakingStatusBadge" style="display: inline-flex; align-items: center; padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 500; background: #dbeafe; color: #1e40af;">
-                <span style="margin-right: 10px;">ℹ️</span>
-                <span id="speakingStatusText">{{ trans('update.ielts_speaking_mic_check_hint') }}</span>
-            </div>
-        </div>
-        
-        {{-- Control Buttons --}}
-        <div id="speakingControls" style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
-            @if($prepTime > 0)
-                <button type="button" id="btnStartPrep" onclick="SpeakingTest.startPreparation()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35); transition: all 0.2s;">
-                    <span>▶</span> {{ trans('update.ielts_speaking_start_prep') }}
+
+            <div class="spk-mic-btn-wrap">
+                <button type="button" class="spk-mic-btn" id="spk-mic-{{ $qId }}"
+                    onclick="SpkTest.toggleMic({{ $qId }}, {{ $speakTime }})" title="Click to record">
+                    <svg width="26" height="26" fill="white" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
                 </button>
-            @endif
-            
-            <button type="button" id="btnStartRecording" onclick="SpeakingTest.toggleRecording()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(135deg, #E31837 0%, #be123c 100%); color: white; display: {{ $prepTime > 0 ? 'none' : 'flex' }}; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(227, 24, 55, 0.35); transition: all 0.2s;">
-                <span>🎤</span> <span id="recordBtnLabel">{{ trans('update.ielts_speaking_start_recording') }}</span>
-            </button>
-            
-            <button type="button" id="btnPlayRecording" onclick="SpeakingTest.playRecording()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; display: none; align-items: center; gap: 10px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); transition: all 0.2s;">
-                <span>▶</span> {{ trans('update.ielts_speaking_play_recording') }}
-            </button>
-            
-            <button type="button" id="btnReRecord" onclick="SpeakingTest.reRecord()" style="padding: 16px 32px; font-size: 16px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; background: #f3f4f6; color: #374151; display: none; align-items: center; gap: 10px; transition: all 0.2s;">
-                <span>🔄</span> {{ trans('update.ielts_speaking_re_record') }}
-            </button>
+            </div>
+
+            <div class="spk-answer-box">
+                <div class="spk-answer-label">Your answer</div>
+                <div id="spk-no-rec-{{ $qId }}" class="spk-no-recording"
+                     style="{{ !empty($savedAns) ? 'display:none' : '' }}">No recording yet</div>
+                <div id="spk-player-row-{{ $qId }}"
+                     style="display:{{ !empty($savedAns) ? 'flex' : 'none' }};flex-direction:column;gap:10px;">
+                    <div class="spk-answer-player">
+                        <button class="spk-play-mini" onclick="SpkTest.playBack({{ $qId }})">
+                            <svg width="10" height="12" viewBox="0 0 10 12" fill="white">
+                                <polygon points="0,0 10,6 0,12"/>
+                            </svg>
+                        </button>
+                        <span class="spk-answer-time" id="spk-time-{{ $qId }}">0:00 / 0:00</span>
+                        <div class="spk-answer-progress">
+                            <div class="spk-answer-progress-fill" id="spk-prog-{{ $qId }}"></div>
+                        </div>
+                    </div>
+                    <div class="spk-answer-btns">
+                        <button onclick="SpkTest.reRecord({{ $qId }})">Record again</button>
+                        <button onclick="SpkTest.saveAnswer({{ $qId }})">Save answer</button>
+                    </div>
+                </div>
+                <audio id="spk-audio-{{ $qId }}"
+                       src="{{ !empty($savedAns) ? $savedAns : '' }}"
+                       style="display:none;"></audio>
+                <input type="hidden" id="spk-input-{{ $qId }}"
+                       data-q-id="{{ $qId }}" value="{{ $savedAns }}">
+            </div>
         </div>
-        
-        {{-- Hidden Audio Element --}}
-        <audio id="speakingRecordedAudio" style="display: none;"></audio>
-        
-        {{-- Hidden input for answer data --}}
-        <input type="hidden" id="speakingAnswerInput" name="speaking_answer" data-question-id="{{ $task->id ?? 0 }}" value="{{ $savedAnswer }}">
+
+        {{-- RIGHT --}}
+        <div class="spk-right">
+            <div class="spk-right-notes">
+                <div class="spk-notes-label">Take notes</div>
+                <textarea class="spk-notes-area" id="spk-notes-{{ $qId }}"
+                    oninput="SpkTest.saveNote({{ $qId }}, this.value)"
+                    placeholder=""></textarea>
+            </div>
+            <div class="spk-right-model">
+                <div class="spk-model-label">Model answer</div>
+                <div class="spk-model-box {{ empty($modelAns) ? 'empty' : '' }}">
+                    {!! !empty($modelAns) ? nl2br(e($modelAns)) : 'No model answer available.' !!}
+                </div>
+            </div>
+        </div>
     </div>
+    @endforeach
 </div>
 
-<style>
-    @keyframes speakWave {
-        0%, 100% { height: 15px; }
-        50% { height: 55px; }
-    }
-    
-    @keyframes recordingPulse {
-        0%, 100% { transform: scale(1); box-shadow: 0 12px 32px rgba(239, 68, 68, 0.35); }
-        50% { transform: scale(1.05); box-shadow: 0 16px 40px rgba(239, 68, 68, 0.5); }
-    }
-    
-    #speakingMicIcon.recording {
-        animation: recordingPulse 1.5s ease-in-out infinite;
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-    }
-    
-    #speakingMicIcon.success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-    }
-    
-    #speakTimerDisplay.warning {
-        color: #f59e0b !important;
-    }
-    
-    #speakTimerDisplay.danger {
-        color: #ef4444 !important;
-        animation: timerBlink 1s infinite;
-    }
-    
-    @keyframes timerBlink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-</style>
-
 <script>
-const SpeakingTest = {
-    mediaRecorder: null,
-    audioStream: null,
-    audioChunks: [],
-    prepTimeRemaining: {{ $prepTime }},
-    speakTimeRemaining: {{ $speakTime }},
-    totalPrepTime: {{ $prepTime }},
-    totalSpeakTime: {{ $speakTime }},
-    timerInterval: null,
-    isRecording: false,
-    hasRecording: false,
-    questionId: {{ $task->id ?? 0 }},
-    
-    init: function() {
-        // Wait for mic check to complete before enabling controls
-        window.onMicCheckComplete = () => {
-            this.enableControls();
-            this.updateStatus('info', '✅ Microphone ready. Click to start!');
+(function(){
+    var state = {};
+    function gs(q) {
+        if (!state[q]) state[q] = {
+            mediaRecorder: null, audioStream: null, audioChunks: [],
+            isRecording: false, timerInterval: null, blob: null, url: null
         };
-    },
-    
-    enableControls: function() {
-        const startBtn = document.getElementById('btnStartPrep') || document.getElementById('btnStartRecording');
-        if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.style.opacity = '1';
-        }
-    },
-    
-    startPreparation: function() {
-        document.getElementById('btnStartPrep').style.display = 'none';
-        this.updateStatus('info', '📝 Preparation time - plan your answer...');
-        
-        this.timerInterval = setInterval(() => {
-            this.prepTimeRemaining--;
-            this.updatePrepTimer();
-            
-            // Update progress bar
-            const pct = (this.prepTimeRemaining / this.totalPrepTime) * 100;
-            document.getElementById('prepProgressBar').style.width = pct + '%';
-            
-            if (this.prepTimeRemaining <= 10) {
-                document.getElementById('prepTimerDisplay').style.color = '#f59e0b';
-            }
-            
-            if (this.prepTimeRemaining <= 0) {
-                clearInterval(this.timerInterval);
-                this.endPreparation();
-            }
-        }, 1000);
-    },
-    
-    updatePrepTimer: function() {
-        const mins = Math.floor(this.prepTimeRemaining / 60);
-        const secs = this.prepTimeRemaining % 60;
-        document.getElementById('prepTimerDisplay').textContent = 
-            String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-    },
-    
-    endPreparation: function() {
-        document.getElementById('prepPhaseSection').style.display = 'none';
-        document.getElementById('speakPhaseSection').style.display = 'block';
-        document.getElementById('btnStartRecording').style.display = 'flex';
-        this.updateStatus('success', '✅ Preparation complete! Click to start recording.');
-    },
-    
-    toggleRecording: async function() {
-        if (!this.isRecording) {
-            await this.startRecording();
-        } else {
-            this.stopRecording();
-        }
-    },
-    
-    startRecording: async function() {
-        try {
-            this.audioStream = await navigator.mediaDevices.getUserMedia({
-                audio: { echoCancellation: true, noiseSuppression: true }
-            });
-            
-            this.mediaRecorder = new MediaRecorder(this.audioStream);
-            this.audioChunks = [];
-            
-            this.mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) this.audioChunks.push(e.data);
-            };
-            
-            this.mediaRecorder.onstop = () => this.onRecordingComplete();
-            
-            this.mediaRecorder.start();
-            this.isRecording = true;
-            
-            // Update UI
-            document.getElementById('speakingMicIcon').classList.add('recording');
-            document.getElementById('speakingAudioBars').style.display = 'flex';
-            document.getElementById('recordBtnLabel').textContent = 'Stop Recording';
-            this.updateStatus('recording', '🔴 Recording in progress...');
-            
-            // Start speaking timer
-            this.timerInterval = setInterval(() => {
-                this.speakTimeRemaining--;
-                this.updateSpeakTimer();
-                
-                // Update progress bar
-                const pct = (this.speakTimeRemaining / this.totalSpeakTime) * 100;
-                document.getElementById('speakProgressBar').style.width = pct + '%';
-                
-                if (this.speakTimeRemaining <= 30) {
-                    document.getElementById('speakTimerDisplay').classList.add('warning');
-                }
-                
-                if (this.speakTimeRemaining <= 10) {
-                    document.getElementById('speakTimerDisplay').classList.remove('warning');
-                    document.getElementById('speakTimerDisplay').classList.add('danger');
-                }
-                
-                if (this.speakTimeRemaining <= 0) {
-                    this.stopRecording();
-                }
-            }, 1000);
-            
-        } catch (err) {
-            console.error('Microphone error:', err);
-            this.updateStatus('error', '❌ Microphone access denied. Please allow permission.');
-        }
-    },
-    
-    updateSpeakTimer: function() {
-        const mins = Math.floor(this.speakTimeRemaining / 60);
-        const secs = this.speakTimeRemaining % 60;
-        document.getElementById('speakTimerDisplay').textContent = 
-            String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-    },
-    
-    stopRecording: function() {
-        clearInterval(this.timerInterval);
-        this.isRecording = false;
-        
-        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-            this.mediaRecorder.stop();
-        }
-        
-        if (this.audioStream) {
-            this.audioStream.getTracks().forEach(track => track.stop());
-        }
-    },
-    
-    onRecordingComplete: function() {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        document.getElementById('speakingRecordedAudio').src = audioUrl;
-        this.hasRecording = true;
-        
-        // Update UI
-        document.getElementById('speakingMicIcon').classList.remove('recording');
-        document.getElementById('speakingMicIcon').classList.add('success');
-        document.getElementById('speakingAudioBars').style.display = 'none';
-        
-        document.getElementById('btnStartRecording').style.display = 'none';
-        document.getElementById('btnPlayRecording').style.display = 'flex';
-        document.getElementById('btnReRecord').style.display = 'flex';
-        
-        this.updateStatus('success', '✅ Recording complete! You can play it back or continue.');
-        
-        // Upload the audio
-        this.uploadAudio(audioBlob);
-    },
-    
-    playRecording: function() {
-        const audio = document.getElementById('speakingRecordedAudio');
-        if (audio.src) {
-            audio.play();
-        }
-    },
-    
-    reRecord: function() {
-        // Reset
-        this.speakTimeRemaining = this.totalSpeakTime;
-        this.hasRecording = false;
-        
-        document.getElementById('speakingMicIcon').classList.remove('success');
-        document.getElementById('speakTimerDisplay').classList.remove('warning', 'danger');
-        this.updateSpeakTimer();
-        
-        // Update progress bar
-        document.getElementById('speakProgressBar').style.width = '100%';
-        
-        // Show/hide buttons
-        document.getElementById('btnPlayRecording').style.display = 'none';
-        document.getElementById('btnReRecord').style.display = 'none';
-        document.getElementById('btnStartRecording').style.display = 'flex';
-        document.getElementById('recordBtnLabel').textContent = 'Start Recording';
-        
-        this.updateStatus('info', 'ℹ️ Click to start a new recording');
-    },
-    
-    uploadAudio: function(audioBlob) {
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'speaking_' + this.questionId + '.webm');
-        formData.append('question_id', this.questionId);
-        
-        fetch(saveUrl, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf },
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-            console.log('Audio uploaded:', data);
-            if (data.audio_url) {
-                document.getElementById('speakingAnswerInput').value = data.audio_url;
-            }
-        })
-        .catch(err => console.error('Upload error:', err));
-    },
-    
-    updateStatus: function(type, message) {
-        const badge = document.getElementById('speakingStatusBadge');
-        const bgColors = {
-            info: '#dbeafe',
-            recording: '#fee2e2',
-            success: '#d1fae5',
-            error: '#fee2e2'
-        };
-        const textColors = {
-            info: '#1e40af',
-            recording: '#991b1b',
-            success: '#065f46',
-            error: '#991b1b'
-        };
-        
-        badge.style.background = bgColors[type] || bgColors.info;
-        badge.style.color = textColors[type] || textColors.info;
-        
-        const icon = message.match(/^[^\s]+/)[0];
-        const text = message.replace(/^[^\s]+\s/, '');
-        badge.innerHTML = '<span style="margin-right: 10px;">' + icon + '</span><span id="speakingStatusText">' + text + '</span>';
+        return state[q];
     }
-};
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    SpeakingTest.init();
-});
+    window.SpkTest = {
+        toggleMic: async function(qId, maxSecs) {
+            var s = gs(qId);
+            if (s.isRecording) this.stopRecording(qId);
+            else await this.startRecording(qId, maxSecs);
+        },
+        startRecording: async function(qId, maxSecs) {
+            var s = gs(qId), self = this;
+            try {
+                s.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                s.mediaRecorder = new MediaRecorder(s.audioStream);
+                s.audioChunks = [];
+                var elapsed = 0;
+                s.mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) s.audioChunks.push(e.data);
+                };
+                s.mediaRecorder.onstop = function() { self.onDone(qId, elapsed); };
+                s.mediaRecorder.start();
+                s.isRecording = true;
+                var btn = document.getElementById('spk-mic-' + qId);
+                if (btn) btn.className = 'spk-mic-btn recording';
+                s.timerInterval = setInterval(function() {
+                    elapsed++;
+                    if (elapsed >= maxSecs) self.stopRecording(qId);
+                }, 1000);
+            } catch(e) {
+                console.error(e);
+                alert('Microphone access denied. Please allow microphone access.');
+            }
+        },
+        stopRecording: function(qId) {
+            var s = gs(qId);
+            clearInterval(s.timerInterval);
+            s.isRecording = false;
+            if (s.mediaRecorder && s.mediaRecorder.state !== 'inactive') s.mediaRecorder.stop();
+            if (s.audioStream) s.audioStream.getTracks().forEach(function(t) { t.stop(); });
+        },
+        onDone: function(qId, elapsed) {
+            var s = gs(qId), self = this;
+            s.blob = new Blob(s.audioChunks, { type: 'audio/webm' });
+            s.url  = URL.createObjectURL(s.blob);
+            var audio = document.getElementById('spk-audio-' + qId);
+            if (audio) {
+                audio.src = s.url;
+                audio.load();
+                audio.addEventListener('timeupdate', function() { self.updateProg(qId, audio); });
+                audio.addEventListener('loadedmetadata', function() {
+                    var t = document.getElementById('spk-time-' + qId);
+                    if (t) t.textContent = '0:00 / ' + self.fmt(audio.duration);
+                });
+            }
+            document.getElementById('spk-no-rec-' + qId).style.display = 'none';
+            document.getElementById('spk-player-row-' + qId).style.display = 'flex';
+            var btn = document.getElementById('spk-mic-' + qId);
+            if (btn) btn.className = 'spk-mic-btn done';
+            var panel = document.querySelector('.spk-q-panel[data-q-id="' + qId + '"]');
+            if (panel) {
+                var n = panel.dataset.qNum;
+                var c = document.querySelector('.idp-q-circle[data-q-num="' + n + '"]');
+                if (c) c.classList.add('answered');
+            }
+        },
+        updateProg: function(qId, audio) {
+            if (!audio.duration) return;
+            var p = document.getElementById('spk-prog-' + qId);
+            var t = document.getElementById('spk-time-' + qId);
+            if (p) p.style.width = (audio.currentTime / audio.duration * 100) + '%';
+            if (t) t.textContent = this.fmt(audio.currentTime) + ' / ' + this.fmt(audio.duration);
+        },
+        playBack: function(qId) {
+            var a = document.getElementById('spk-audio-' + qId);
+            if (a && a.src) a.play();
+        },
+        reRecord: function(qId) {
+            var s = gs(qId);
+            s.blob = null; s.url = null;
+            document.getElementById('spk-no-rec-' + qId).style.display = '';
+            document.getElementById('spk-player-row-' + qId).style.display = 'none';
+            var btn = document.getElementById('spk-mic-' + qId);
+            if (btn) btn.className = 'spk-mic-btn';
+        },
+        saveAnswer: function(qId) {
+            var s = gs(qId);
+            if (!s.blob) { alert('No recording to save yet.'); return; }
+            var fd = new FormData();
+            fd.append('audio', s.blob, 'speaking_' + qId + '.webm');
+            fd.append('question_id', qId);
+            fetch(saveUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.audio_url) document.getElementById('spk-input-' + qId).value = d.audio_url;
+                    var panel = document.querySelector('.spk-q-panel[data-q-id="' + qId + '"]');
+                    if (panel) {
+                        var n = panel.dataset.qNum;
+                        var c = document.querySelector('.idp-q-circle[data-q-num="' + n + '"]');
+                        if (c) c.classList.add('answered');
+                    }
+                })
+                .catch(function(e) { console.error(e); });
+        },
+        saveNote: function(qId, val) {
+            try { localStorage.setItem('spk_note_' + qId, val); } catch(e) {}
+        },
+        fmt: function(s) {
+            if (!s || isNaN(s)) return '0:00';
+            return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+        }
+    };
+
+    // Restore notes from localStorage
+    document.querySelectorAll('[id^="spk-notes-"]').forEach(function(ta) {
+        var qId = ta.id.replace('spk-notes-', '');
+        var v = localStorage.getItem('spk_note_' + qId);
+        if (v) ta.value = v;
+    });
+
+    // Override goToQuestion for speaking navigation
+    window.currentQuestionIndex = 0;
+    window.goToQuestion = function(num, index) {
+        document.querySelectorAll('.spk-q-panel').forEach(function(p) { p.classList.remove('active'); });
+        var t = document.getElementById('spk-q-panel-' + num);
+        if (t) t.classList.add('active');
+        document.querySelectorAll('.idp-q-circle').forEach(function(c) { c.classList.remove('active'); });
+        var c = document.querySelector('.idp-q-circle[data-q-num="' + num + '"]');
+        if (c) c.classList.add('active');
+        window.currentQuestionIndex = index;
+    };
+})();
 </script>

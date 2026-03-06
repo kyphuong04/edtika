@@ -39,7 +39,6 @@
     {{-- Group Headers & Instructions --}}
     <div class="idp-questions-header">
         {{ trans('update.ielts_questions') }} {{ $questions->first()->question_number ?? '' }}–{{ $questions->last()->question_number ?? '' }}
-        <a href="#" class="idp-help-link">{{ trans('admin/main.help') }}</a>
     </div>
     <div class="idp-questions-instruction">
         {!! !empty($instructions) ? $instructions : getQuestionInstruction($questionType) !!}
@@ -48,6 +47,7 @@
     {{-- Render questions based on type --}}
     @switch($questionType)
         @case('true_false_not_given')
+        @case('true_false_ng')
         @case('tfng')
             @include('design_1.panel.ielts_tests.partials.idp_type_tfng', [
                 'questions' => $questions,
@@ -56,6 +56,7 @@
             @break
             
         @case('yes_no_not_given')
+        @case('yes_no_ng')
         @case('ynng')
             @include('design_1.panel.ielts_tests.partials.idp_type_ynng', [
                 'questions' => $questions,
@@ -66,6 +67,7 @@
         @case('multiple_choice')
         @case('mcq')
         @case('single_choice')
+        @case('multiple_choice_single')
             @include('design_1.panel.ielts_tests.partials.idp_type_mcq', [
                 'questions' => $questions,
                 'userAnswers' => $userAnswers
@@ -73,6 +75,7 @@
             @break
             
         @case('multiple_choice_multiple')
+        @case('multiple_select')
         @case('mcq_multiple')
         @case('choose_two')
         @case('choose_three')
@@ -102,6 +105,7 @@
         @case('matching')
         @case('matching_features')
         @case('matching_information')
+        @case('matching_sentence_endings')
             @include('design_1.panel.ielts_tests.partials.idp_type_matching', [
                 'questions' => $questions,
                 'userAnswers' => $userAnswers,
@@ -145,6 +149,7 @@
             
         @case('map_labeling')
         @case('diagram_labeling')
+        @case('diagram_label')
             @include('design_1.panel.ielts_tests.partials.idp_type_map', [
                 'questions' => $questions,
                 'userAnswers' => $userAnswers,

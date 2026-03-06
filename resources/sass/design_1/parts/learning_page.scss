@@ -26,7 +26,7 @@ body {
     &__sidebar {
         width: 394px;
         height: 100vh;
-        background-color: var(--white);
+        background-color: transparent;
         overflow-x: hidden;
         overflow-y: auto;
         transition: all 0.4s cubic-bezier(0.43, 0.83, 0.54, 1.02), opacity .4s linear;
@@ -145,7 +145,7 @@ body {
 
         &-content {
             width: 100%;
-            height: calc(100% - 71px);
+            height: 100%;
             padding: 16px;
             background-color: var(--gray);
             transition: all .3s ease;
@@ -155,11 +155,52 @@ body {
 
         @media (max-width: $screen-sm-max) {
             width: 100%;
+
+            &-content {
+                height: calc(100% - 52px);
+            }
         }
     }
 
     &__top-header {
-        height: 71px;
+        display: none;
+        height: 52px;
+        border-bottom: 1px solid var(--gray-200);
+
+        @media (max-width: $screen-sm-max) {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+    }
+
+    &__content-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    &__nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray-700);
+        background-color: var(--white);
+        border: 1.5px solid var(--gray-300);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all .2s ease;
+        line-height: 1;
+
+        &:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background-color: var(--primary-10, rgba(0,0,0,.04));
+        }
     }
 
     &__file-player-card {
@@ -428,8 +469,10 @@ body {
 .learning-page__content-tabs {
     .nav-tabs {
         border-bottom: 0;
-        gap: 24px;
-        display: inline-flex;
+        gap: 0;
+        display: flex !important;
+        justify-content: space-around !important;
+        width: 100% !important;
         max-width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
@@ -490,3 +533,293 @@ body {
     color: var(--gray-500);
     font-size: 14px;
 }
+
+/* ─────────────────────────────────────────
+   Card 1 – Section info (title + count + progress)
+───────────────────────────────────────── */
+.learning-section-info-card {
+    background: #f7f7f7;
+    border: 1px solid #e4e4e4;
+    border-radius: 16px;
+    padding: 20px 20px 18px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.learning-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--dark);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.learning-section-count {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+.learning-section-progress-track {
+    width: 68px;
+    height: 4px;
+    background: var(--gray-300);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 12px auto 0;
+}
+
+.learning-section-progress-fill {
+    height: 4px;
+    background: var(--primary);
+    border-radius: 99px;
+    transition: width .3s ease;
+}
+
+/* ─────────────────────────────────────────
+   Card 2 – Lesson timeline list
+───────────────────────────────────────── */
+.learning-timeline-card {
+    background: var(--white);
+    border: 1px solid #e4e4e4;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+/* ─────────────────────────────────────────
+   Timeline
+───────────────────────────────────────── */
+.learning-timeline {
+    padding: 16px 16px 4px;
+
+    &__item {
+        display: flex;
+        align-items: flex-start;
+
+        &.active .learning-timeline__title {
+            color: var(--primary);
+        }
+    }
+
+    &__track {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: 40px;
+        margin-right: 14px;
+
+        .rtl & {
+            margin-right: 0;
+            margin-left: 14px;
+        }
+    }
+
+    &__circle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 2px solid #d0d0d0;
+        background: var(--white);
+        flex-shrink: 0;
+        transition: all .2s ease;
+        box-sizing: border-box;
+
+        &.is-passed {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+    }
+
+    &__line {
+        width: 2px;
+        flex-grow: 1;
+        min-height: 24px;
+        background: #d0d0d0;
+        margin-top: 3px;
+        margin-bottom: 3px;
+    }
+
+    &__body {
+        flex: 1;
+        padding-bottom: 24px;
+        padding-top: 6px;
+        min-width: 0;
+
+        &:hover .learning-timeline__title {
+            color: var(--primary);
+        }
+    }
+
+    &__title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dark);
+        line-height: 1.4;
+        transition: color .15s ease;
+    }
+
+    &__sub {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+        margin-top: 4px;
+
+        .tl-sub-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--gray-500);
+            line-height: 1.3;
+
+            &::before {
+                content: "●";
+                font-size: 6px;
+                color: var(--gray-400);
+                flex-shrink: 0;
+                position: relative;
+                top: -1px;
+            }
+        }
+
+        .tl-sub-row--locked {
+            &::before { display: none; }
+        }
+    }
+}
+
+/* ─────────────────────────────────────────
+   Your Notes Panel
+───────────────────────────────────────── */
+.learning-notes-panel {
+    background: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 20px 16px 20px;
+    margin-top: 0;
+    box-shadow: none;
+
+    &__title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 14px;
+    }
+
+    // Note Title pill input
+    .notes-title-input {
+        display: block;
+        width: 100%;
+        height: 48px;
+        padding: 0 20px;
+        background: #f1f3f7;
+        border: none;
+        border-radius: 50px;
+        font-size: 14px;
+        color: var(--dark);
+        outline: none;
+        box-shadow: none;
+        &::placeholder { color: #b0b0b0; }
+        &:focus { box-shadow: 0 0 0 2px rgba(var(--primary-rgb), .2); }
+    }
+
+    // Summernote editor wrapper
+    .note-frame {
+        border: none;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: none;
+    }
+    .note-editor.note-frame {
+        border: none;
+    }
+    .note-toolbar {
+        background: #fff;
+        border: none;
+        border-radius: 14px 14px 0 0;
+        padding: 10px 12px 6px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+
+        .note-btn-group {
+            display: flex;
+            gap: 2px;
+            margin: 0;
+        }
+        .note-btn {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e2d4f;
+            padding: 0;
+            transition: background .15s;
+            &:hover, &.active { background: #f0f0f0; }
+        }
+        .note-icon-bold        { font-weight: 900; font-size: 17px; }
+        .note-icon-italic      { font-style: italic; }
+    }
+    .note-editing-area {
+        background: #f1f3f7;
+    }
+    .note-editable {
+        background: #f1f3f7;
+        border-radius: 0 0 14px 14px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--dark);
+        min-height: 160px;
+        &[data-placeholder]:empty::before {
+            color: #b0b0b0;
+        }
+    }
+    .note-statusbar {
+        background: #f1f3f7;
+        border: none;
+        border-radius: 0 0 14px 14px;
+    }
+    .note-resizebar { opacity: .3; }
+    .note-editor-wrap textarea { resize: none; }
+
+    // Save button
+    .notes-save-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 130px;
+        height: 46px;
+        padding: 0 32px;
+        background: #3a3d47;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background .2s;
+        &:hover { background: #2a2d35; }
+        &:disabled { opacity: .6; cursor: not-allowed; }
+    }
+}
+
+/* ─────────────────────────────────────────
+   Utilities
+───────────────────────────────────────── */
+.lh-1-4 { line-height: 1.4; }
+.gap-6 { gap: 6px; }

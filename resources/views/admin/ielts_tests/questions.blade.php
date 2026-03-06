@@ -108,7 +108,10 @@
                                 </div>
                                 
                                 <div class="btn-group ml-3">
-                                    <button class="btn btn-sm btn-warning" onclick="editQuestion({{ $question->id }})">
+                                    <button class="btn btn-sm btn-warning"
+                                            onclick="editQuestion(this)"
+                                            data-update-url="{{ route('admin.ielts_tests.questions.update', $question->id) }}"
+                                            data-question="{{ json_encode(['id'=>$question->id,'question_number'=>$question->question_number,'question_type'=>$question->question_type,'question_text'=>$question->question_text,'correct_answer'=>$question->correct_answer,'explanation'=>$question->explanation,'instruction'=>$question->instruction,'points'=>$question->points,'auto_gradable'=>$question->auto_gradable]) }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <form action="{{ route('admin.ielts_tests.questions.delete', $question->id) }}" method="POST" class="d-inline">
@@ -232,8 +235,9 @@
                     </div>
 
                     <div class="form-group mt-3">
-                        <label>Explanation (for practice tests)</label>
-                        <textarea name="explanation" class="form-control" rows="3"></textarea>
+                        <label>Answer Explanation <small class="text-gray">(Shown in review results – explain why the answer is correct or incorrect)</small></label>
+                        <textarea name="explanation" class="form-control" rows="3" placeholder="e.g., According to paragraph 2: 'Alexander spent much of his childhood in the area...' which contradicts 'rarely visited'."></textarea>
+                        <small class="text-info"><i class="fas fa-info-circle"></i> This explanation will appear in the ANSWER HELP box when students review their results.</small>
                     </div>
 
                     <div class="form-group">
@@ -255,15 +259,117 @@
 <script>
 document.getElementById('questionType').addEventListener('change', function() {
     const optionsDiv = document.getElementById('multipleChoiceOptions');
-    if (this.value === 'multiple_choice') {
-        optionsDiv.style.display = 'block';
-    } else {
-        optionsDiv.style.display = 'none';
-    }
+    optionsDiv.style.display = (this.value === 'multiple_choice') ? 'block' : 'none';
 });
 
-function editQuestion(questionId) {
-    alert('Edit functionality coming soon. Use delete and re-create for now.');
+function editQuestion(btn) {
+    const data = JSON.parse(btn.dataset.question);
+    document.getElementById('editQuestionForm').action = btn.dataset.updateUrl;
+    document.getElementById('editQuestionId').value     = data.id;
+    document.getElementById('editQuestionNumber').value = data.question_number ?? '';
+    document.getElementById('editQuestionType').value   = data.question_type ?? '';
+    document.getElementById('editQuestionText').value   = data.question_text ?? '';
+    document.getElementById('editCorrectAnswer').value  = data.correct_answer ?? '';
+    document.getElementById('editPoints').value         = data.points ?? 1;
+    document.getElementById('editExplanation').value    = data.explanation ?? '';
+    document.getElementById('editInstruction').value    = data.instruction ?? '';
+    document.getElementById('editAutoGrade').checked    = !!data.auto_gradable;
+    $('#editQuestionModal').modal('show');
 }
 </script>
 @endpush
+
+{{-- Edit Question Modal --}}
+<div class="modal fade" id="editQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Question</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form id="editQuestionForm" method="POST">
+                @csrf
+                <input type="hidden" id="editQuestionId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Question Number *</label>
+                                <input type="number" id="editQuestionNumber" name="question_number" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Question Type *</label>
+                                <select id="editQuestionType" name="question_type" class="form-control" required>
+                                    <option value="multiple_choice">Multiple Choice</option>
+                                    <option value="true_false_not_given">True / False / Not Given</option>
+                                    <option value="yes_no_not_given">Yes / No / Not Given</option>
+                                    <option value="fill_blank">Fill in the Blank</option>
+                                    <option value="sentence_completion">Sentence Completion</option>
+                                    <option value="note_completion">Note Completion</option>
+                                    <option value="matching">Matching</option>
+                                    <option value="matching_features">Matching Features</option>
+                                    <option value="short_answer">Short Answer</option>
+                                    <option value="essay">Essay</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Points *</label>
+                                <input type="number" id="editPoints" name="points" class="form-control" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Question Text *</label>
+                        <textarea id="editQuestionText" name="question_text" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instructions (Optional)</label>
+                        <textarea id="editInstruction" name="instruction" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Correct Answer</label>
+                                <input type="text" id="editCorrectAnswer" name="correct_answer" class="form-control">
+                                <small class="text-gray">For auto-gradable questions only</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mt-2">
+                                <div class="custom-control custom-checkbox mt-4">
+                                    <input type="checkbox" id="editAutoGrade" name="auto_gradable" class="custom-control-input" value="1">
+                                    <label class="custom-control-label" for="editAutoGrade">Auto-gradable</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Explanation field --}}
+                    <div class="form-group mt-2">
+                        <label>
+                            Answer Explanation
+                            <small class="text-gray">(Shown in ANSWER HELP box when students review results)</small>
+                        </label>
+                        <textarea id="editExplanation" name="explanation" class="form-control" rows="4"
+                                  placeholder="Explain why this answer is correct or incorrect. E.g.: According to paragraph 3, the text states '...' which means the answer is FALSE because..."></textarea>
+                        <small class="text-info">
+                            <i class="fas fa-lightbulb"></i>
+                            Tip: Quote relevant text from the passage and explain the reasoning clearly so students understand their mistakes.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Update Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

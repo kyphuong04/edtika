@@ -186,6 +186,15 @@
                     <label class="form-group-label">Description / Notes</label>
                     <textarea name="passage" class="form-control" rows="3">{{ old('passage') }}</textarea>
                 </div>
+                
+                <div class="form-group">
+                    <label class="form-group-label">Video File (for Speaking)</label>
+                    <div class="custom-file bg-white">
+                        <input type="file" name="video_file" class="custom-file-input" id="videoFile" accept="video/*">
+                        <label class="custom-file-label" for="videoFile">Choose video file...</label>
+                    </div>
+                    <small class="text-gray-500">MP4, WebM, MOV - Max 200MB. Upload an example speaking video or prompt recording.</small>
+                </div>
             @endif
         </div>
         
