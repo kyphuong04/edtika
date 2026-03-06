@@ -263,6 +263,15 @@
                     </div>
                     <small class="form-text text-muted">Upload graph, chart, diagram, or map for Writing Task 1</small>
                 </div>
+                
+                <div class="form-group" id="videoFileRowCreate" style="display: none;">
+                    <label class="form-group-label">Video File (for Speaking)</label>
+                    <div class="custom-file bg-white">
+                        <input type="file" name="video_file" class="custom-file-input" id="videoFile" accept="video/*">
+                        <label class="custom-file-label" for="videoFile">Choose video file...</label>
+                    </div>
+                    <small class="text-gray-500">MP4, WebM, MOV - Max 200MB. Upload an example speaking video or prompt recording.</small>
+                </div>
             </div>
             
             <div class="d-flex justify-content-end">
@@ -310,16 +319,19 @@
                     $('#writingTaskTypeCreate').prop('required', true);
                     $('#speakingPartTypeRowCreate').slideUp();
                     $('#speakingPartTypeCreate').prop('required', false).val('');
+                    $('#videoFileRowCreate').slideUp();
                 } else if (skill === 'speaking') {
                     $('#speakingPartTypeRowCreate').slideDown();
                     $('#speakingPartTypeCreate').prop('required', true);
                     $('#writingTaskTypeRowCreate').slideUp();
                     $('#writingTaskTypeCreate').prop('required', false).val('');
+                    $('#videoFileRowCreate').slideDown();
                 } else {
                     $('#writingTaskTypeRowCreate').slideUp();
                     $('#writingTaskTypeCreate').prop('required', false).val('');
                     $('#speakingPartTypeRowCreate').slideUp();
                     $('#speakingPartTypeCreate').prop('required', false).val('');
+                    $('#videoFileRowCreate').slideUp();
                 }
             });
         });

@@ -2249,6 +2249,8 @@ return [
 'course_notes_status_hint' => 'Allow users to create notes for specific sections and content within a course.',
 'course_notes_attachment_hint' => 'Enable users to add attachments to their course notes.',
 'personal_note' => 'Personal Note',
+'your_notes' => 'Your Notes',
+'note_title' => 'Note Title',
 'this_note_will_be_displayed_for_you_privately' => 'This note is private and visible only to you.',
 'save_note' => 'Save Note',
 'clear_note' => 'Clear Note',
@@ -5021,4 +5023,5 @@ return [
     'my_profile_and_password' => 'My Profile & Password',
     'confirm_password' => 'Confirm Password',
     'confirm_new_password' => 'Confirm new password',
+    'retake' => 'Retake',
 ];

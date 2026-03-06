@@ -84,6 +84,9 @@
                                         @if($section->audio_file)
                                             <i class="fas fa-volume-up text-primary" title="Has audio"></i>
                                         @endif
+                                        @if($section->video_file)
+                                            <i class="fas fa-video text-danger" title="Has video"></i>
+                                        @endif
                                         @if($section->image_file)
                                             <i class="fas fa-image text-success" title="Has image"></i>
                                         @endif
@@ -299,6 +302,11 @@
                                 <option value="part2">Part 2 - Long Turn (Cue Card)</option>
                                 <option value="part3">Part 3 - Discussion</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Video File <span class="text-muted">(Optional – shown to students during the speaking test)</span></label>
+                            <input type="file" name="video_file" class="form-control" accept="video/*">
+                            <small class="text-gray">Upload a video prompt/question for this speaking section (MP4 recommended).</small>
                         </div>
                     </div>
 

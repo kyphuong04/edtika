@@ -60,6 +60,20 @@
                     </div>
                 @endif
                 
+                {{-- Speaking Video --}}
+                @if($group->video_file)
+                    <div class="mb-20">
+                        <div class="font-12 font-weight-bold text-uppercase text-gray-400 mb-8 tracking-wider">
+                            <i class="fas fa-video mr-6"></i>Speaking Video
+                        </div>
+                        <video controls class="w-100 rounded-12" style="max-height: 260px; background: #000;">
+                            <source src="{{ \Storage::disk('public')->url($group->video_file) }}" type="video/mp4">
+                            <source src="{{ \Storage::disk('public')->url($group->video_file) }}" type="video/webm">
+                            Your browser does not support the video element.
+                        </video>
+                    </div>
+                @endif
+                
                 {{-- The Cue Card / Topic Section --}}
                 @if($group->passage)
                     <div class="cue-card-container">

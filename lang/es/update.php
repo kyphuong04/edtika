@@ -2465,6 +2465,7 @@ return [
 'restrictions_hint_description_2' => 'You can define an IP range and block all IPs in the range with a single click',
 'restrictions_hint_title_3' => 'Block Country IPs',
 'restrictions_hint_description_3' => 'We have a database of country IPs, so you can easily block IP ranges from specific countries',
+'retake' => 'Reintentar',
 
 
 ];

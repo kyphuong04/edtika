@@ -657,6 +657,39 @@ class DictionaryController extends Controller
     }
 
     /**
+     * Bulk delete flashcards from My Word List
+     */
+    public function bulkDeleteFromMyWordList(Request $request)
+    {
+        $request->validate([
+            'flashcard_ids'   => 'required|array|min:1',
+            'flashcard_ids.*' => 'exists:user_flashcards,id',
+        ]);
+
+        $user = Auth::user();
+
+        $deleted = Flashcard::where('user_id', $user->id)
+            ->whereIn('id', $request->flashcard_ids)
+            ->delete();
+
+        // Recalculate word_count on My Word List
+        $myWordList = WordList::where('user_id', $user->id)
+            ->where('category', 'user')
+            ->where('name', 'My Word List')
+            ->first();
+
+        if ($myWordList) {
+            $myWordList->updateWordCount();
+        }
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+            'message' => $deleted . ' word(s) deleted successfully',
+        ]);
+    }
+
+    /**
      * Word Lists Management
      */
     public function wordLists()
@@ -1259,7 +1292,7 @@ class DictionaryController extends Controller
     {
         $request->validate([
             'flashcard_ids' => 'nullable|array',
-            'flashcard_ids.*' => 'exists:flashcards,id',
+            'flashcard_ids.*' => 'exists:user_flashcards,id',
         ]);
 
         $user = Auth::user();
@@ -1294,23 +1327,27 @@ class DictionaryController extends Controller
 
         // Generate practice questions
         $questions = [];
+        $allFlashcards = $myWordList->flashcards;
         foreach ($practiceFlashcards as $flashcard) {
-            // Get 3 random wrong answers from My Word List
-            $wrongAnswers = $myWordList->flashcards
+            // Get up to 3 random wrong answers from My Word List (with pronunciation)
+            $wrongFlashcards = $allFlashcards
                 ->where('id', '!=', $flashcard->id)
-                ->random(min(3, $myWordList->flashcards->count() - 1))
-                ->pluck('word')
-                ->toArray();
+                ->random(min(3, max(0, $allFlashcards->count() - 1)));
 
-            // Combine with correct answer and shuffle
-            $answers = array_merge([$flashcard->word], $wrongAnswers);
-            shuffle($answers);
+            // Build answer objects (word + pronunciation)
+            $answersData = [
+                ['word' => $flashcard->word, 'pronunciation' => $flashcard->pronunciation ?? ''],
+            ];
+            foreach ($wrongFlashcards as $wf) {
+                $answersData[] = ['word' => $wf->word, 'pronunciation' => $wf->pronunciation ?? ''];
+            }
+            shuffle($answersData);
 
             $questions[] = [
                 'flashcard_id' => $flashcard->id,
                 'question' => $flashcard->definition,
                 'correct_answer' => $flashcard->word,
-                'answers' => $answers,
+                'answers' => $answersData,
             ];
         }
 
@@ -1335,7 +1372,7 @@ class DictionaryController extends Controller
     {
         $request->validate([
             'word_id' => 'nullable|exists:academic_word_list_words,id',
-            'flashcard_id' => 'nullable|exists:flashcards,id',
+            'flashcard_id' => 'nullable|exists:user_flashcards,id',
             'selected_answer' => 'required|string',
             'correct_answer' => 'required|string',
         ]);

@@ -80,8 +80,6 @@
         </a>
     </div>
 
-    {{-- Actions Dropdown (positioned outside the link) --}}
-    <div class="actions-dropdown-container position-absolute" style="top: 28px; right: 28px; z-index: 10;">
-        @include("design_1.panel.webinars.my_courses.course_card.actions_dropdown")
-    </div>
+    {{-- Actions dropdown removed per request
+         to hide the three-dot menu and its items --}}
 </div>

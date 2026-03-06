@@ -194,4 +194,37 @@ class IeltsTestSection extends Model
     {
         return !empty($this->image_file);
     }
+
+    public function hasVideo()
+    {
+        return !empty($this->attributes['video_file'] ?? null);
+    }
+
+    /**
+     * Get a properly formatted URL for video playback.
+     *
+     * @return string|null
+     */
+    public function getVideoUrlAttribute()
+    {
+        $videoFile = $this->attributes['video_file'] ?? null;
+
+        if (!$videoFile) {
+            // Fallback: check the linked question group's video_file
+            if ($this->question_group_id && $this->questionGroup && $this->questionGroup->video_file) {
+                $groupVideo = $this->questionGroup->video_file;
+                if (str_starts_with($groupVideo, '/') || str_starts_with($groupVideo, 'http')) {
+                    return $groupVideo;
+                }
+                return \Storage::disk('public')->url($groupVideo);
+            }
+            return null;
+        }
+
+        if (str_starts_with($videoFile, '/') || str_starts_with($videoFile, 'http')) {
+            return $videoFile;
+        }
+
+        return \Storage::disk('public')->url($videoFile);
+    }
 }

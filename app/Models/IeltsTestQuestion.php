@@ -98,6 +98,16 @@ class IeltsTestQuestion extends Model
         }
         
         $correctAnswers = $this->correct_answer_array;
+
+        // If no correct answer is stored, cannot grade
+        if (empty($correctAnswers)) {
+            return false;
+        }
+
+        // Ensure it's an array
+        if (!is_array($correctAnswers)) {
+            $correctAnswers = [$correctAnswers];
+        }
         
         // Normalize answer
         $userAnswer = $this->normalizeAnswer($userAnswer);
@@ -105,6 +115,9 @@ class IeltsTestQuestion extends Model
         // For multiple select, check all selections
         if ($this->isMultipleSelect()) {
             $userSelections = is_array($userAnswer) ? $userAnswer : json_decode($userAnswer, true);
+            if (!is_array($userSelections)) {
+                return false;
+            }
             sort($userSelections);
             sort($correctAnswers);
             return $userSelections === $correctAnswers;
