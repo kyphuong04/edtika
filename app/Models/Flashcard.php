@@ -7,7 +7,7 @@ use App\User;
 
 class Flashcard extends Model
 {
-    protected $table = 'flashcards';
+    protected $table = 'user_flashcards';
 
     protected $guarded = ['id'];
 

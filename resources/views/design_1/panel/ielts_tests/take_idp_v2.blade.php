@@ -291,6 +291,7 @@
         
         .idp-question-text {
             font-size: 15px;
+            font-weight: 700;
             color: #0066CC;
             display: inline;
         }

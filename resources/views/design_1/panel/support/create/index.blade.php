@@ -92,7 +92,7 @@
                             </div>
                             <div class="ml-8">
                                 <h5 class="font-14">{{ trans('update.notice') }}</h5>
-                                <p class="mt-2 font-12 text-gray-500">{{ trans('update.the_support_message_sending_hint') }}</p>
+                                <p class="mt-2 font-12 text-gray-500">{{ trans('update.the_Support_message_sending_hint') }}</p>
                             </div>
                         </div>
 

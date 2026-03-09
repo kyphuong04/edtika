@@ -57,7 +57,7 @@
                     @endif
 
                     <li class="actions-dropdown__dropdown-menu-item">
-                        <a href="{{ $quizResult->quiz->webinar->getUrl() }}" class="">{{ trans('webinars.webinar_page') }}</a>
+                        <a href="/panel/courses/purchases/{{ $quizResult->quiz->webinar->slug }}" class="">Course Detail</a>
                     </li>
 
                 </ul>

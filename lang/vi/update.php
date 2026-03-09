@@ -5028,4 +5028,5 @@ return [
     'change_password' => 'Đổi mật khẩu',
     'session_ended_label' => 'Đã kết thúc',
     'leave_blank_password_hint' => 'Để trống các ô mật khẩu nếu bạn không muốn thay đổi.',
+    'retake' => 'Làm lại',
 ];

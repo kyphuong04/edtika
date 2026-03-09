@@ -82,20 +82,49 @@
     }
 
     function activeAccordionByItem($item) {
-        const $accordion = $item.closest('.js-accordion-parent');
-
-        if ($accordion.length) {
-            const $btn = $accordion.find('.js-accordion-collapse-arrow');
-            $btn.trigger('click');
-
-            const $scroller = $('#learningPageSidebar .simplebar-content-wrapper');
-            setTimeout(function () {
+        // Timeline layout: just scroll to the active item
+        const $scroller = $('#learningPageSidebar .simplebar-content-wrapper');
+        setTimeout(function () {
+            if ($scroller.length && $item.length) {
                 $scroller.animate({
-                    scrollTop: $item.offset().top - 200
-                }, 500);
-            }, 1500)
+                    scrollTop: $item.offset().top - $scroller.offset().top + $scroller.scrollTop() - 80
+                }, 400);
+            }
+        }, 300);
+    }
+
+    // Back / Next navigation buttons
+    function navigateToSibling(direction) {
+        const $allItems = $('.js-content-tab-item');
+        const $active = $allItems.filter('.active');
+        let $target;
+
+        if ($active.length) {
+            const idx = $allItems.index($active);
+            if (direction === 'prev' && idx > 0) {
+                $target = $allItems.eq(idx - 1);
+            } else if (direction === 'next' && idx < $allItems.length - 1) {
+                $target = $allItems.eq(idx + 1);
+            }
+        } else if ($allItems.length) {
+            $target = direction === 'next' ? $allItems.first() : $allItems.last();
+        }
+
+        if ($target && $target.length) {
+            $target.trigger('click');
+            activeAccordionByItem($target);
         }
     }
+
+    $('body').on('click', '.js-learning-page-prev-item', function (e) {
+        e.preventDefault();
+        navigateToSibling('prev');
+    });
+
+    $('body').on('click', '.js-learning-page-next-item', function (e) {
+        e.preventDefault();
+        navigateToSibling('next');
+    });
 
     function handleLoadingHtml() {
         const html = `<div class="bg-white rounded-24 p-16">
@@ -116,7 +145,8 @@
         let currentPath = window.location.pathname;
         let newPath = currentPath.replace('/forum', ''); // when i forum page
 
-        const params = new URLSearchParams();
+        // Start from the current query string so we preserve ?chapter= (and any other params)
+        const params = new URLSearchParams(window.location.search);
         params.set('type', itemType);
         params.set('item', itemId);
 
@@ -543,6 +573,15 @@
         $sidebar.toggleClass('show-drawer')
     })
 
+    // Show selected attachment file name in the sidebar notes panel
+    $('body').on('change', '#sidebarNoteAttachInput', function () {
+        const files = this.files;
+        if (files && files.length) {
+            const $display = $('#sidebarNoteCurrentAttach');
+            $display.removeClass('d-none').find('.attach-name').text(files[0].name);
+        }
+    });
+
     /***************
      * Sidebar Personal Note Panel
      ***************/
@@ -553,15 +592,13 @@
         $textarea.summernote({
             toolbar: [
                 ['style', ['bold', 'italic', 'underline', 'strikethrough']],
-                ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
-                ['misc', ['undo', 'redo']],
             ],
-            height: 180,
-            minHeight: 120,
-            maxHeight: 350,
+            height: 200,
+            minHeight: 160,
+            maxHeight: 320,
             focus: false,
-            placeholder: saveNoteLang + '...',
+            placeholder: 'Type your notes...',
         });
     }
 
@@ -574,6 +611,7 @@
 
         $('#sidebarNoteItemId').val(itemId);
         $('#sidebarNoteItemType').val(itemType);
+        $('#sidebarNoteTitleInput').val('');
 
         $placeholder.addClass('d-none');
         $editorWrap.removeClass('d-none');
@@ -583,8 +621,18 @@
         $.get(path, function (result) {
             if (result && result.code === 200) {
                 const $parsed = $('<div>').html(result.html);
-                const noteContent = $parsed.find('textarea[name="details"]').val() ||
+                let noteContent = $parsed.find('textarea[name="details"]').val() ||
                     $parsed.find('textarea[name="details"]').text() || '';
+
+                // Extract saved title from note content (stored as <h4 data-note-title="1">)
+                const $temp = $('<div>').html(noteContent);
+                const $titleEl = $temp.find('h4[data-note-title="1"]');
+                if ($titleEl.length) {
+                    $('#sidebarNoteTitleInput').val($titleEl.text());
+                    $titleEl.remove();
+                    noteContent = $temp.html();
+                }
+
                 $('#sidebarNoteEditor').summernote('code', noteContent);
             } else {
                 $('#sidebarNoteEditor').summernote('code', '');
@@ -599,27 +647,29 @@
         const $this = $(this);
         $this.prop('disabled', true);
 
-        const itemId = $('#sidebarNoteItemId').val();
+        const itemId   = $('#sidebarNoteItemId').val();
         const itemType = $('#sidebarNoteItemType').val();
-        const noteContent = $('#sidebarNoteEditor').summernote('code');
+        const noteTitle = $('#sidebarNoteTitleInput').val().trim();
+        let noteContent = $('#sidebarNoteEditor').summernote('code');
+
+        // Prepend title as a tagged element so it can be extracted on reload
+        if (noteTitle) {
+            noteContent = `<h4 data-note-title="1">${noteTitle}</h4>${noteContent}`;
+        }
 
         if (!itemId || !itemType) {
             $this.prop('disabled', false);
             return;
         }
 
-        const path = `${courseLearningUrl}/personal-note/store`;
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        const path = `${courseLearningUrl}/personal-note/store`;
 
         $.ajax({
             url: path,
             type: 'POST',
-            data: {
-                item_id: itemId,
-                item_type: itemType,
-                details: noteContent,
-                _token: csrfToken,
-            },
+            data: { item_id: itemId, item_type: itemType, details: noteContent, _token: csrfToken },
             success: function (result) {
                 $this.prop('disabled', false);
                 if (result && result.code === 200) {

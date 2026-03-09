@@ -8,6 +8,15 @@
     if(!empty($sale->webinar) and $sale->webinar->start_date <= time() and !empty($lastSession) and $lastSession->date > time()) {
         $isProgressing = true;
     }
+
+    // Use panel-embedded detail page for webinars; fall back to original URL for bundles
+    $panelDetailUrl   = !empty($sale->webinar)
+        ? url('/panel/courses/purchases/' . $saleItem->slug)
+        : $saleItem->getUrl();
+    $panelDetailTarget = !empty($sale->webinar) ? '' : 'target="_blank"';
+    $panelLearningUrl  = !empty($sale->webinar)
+        ? url('/panel/courses/purchases/learning/' . $saleItem->slug)
+        : $saleItem->getUrl();
 @endphp
 
 @if(!empty($saleItem))
@@ -17,7 +26,7 @@
         <div class="position-relative d-flex flex-column flex-lg-row  gap-12 z-index-2 bg-white p-12 rounded-24">
             {{-- Image --}}
             <div class="panel-course-card-1__image position-relative rounded-16 bg-gray-100">
-                <a href="{{ $saleItem->getUrl() }}" target="_blank">
+                <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }}>
                     <img src="{{ $saleItem->getImage() }}" alt="" class="img-cover rounded-16">
                 </a>
                 {{-- Badges On Image --}}
@@ -25,19 +34,19 @@
 
                 @if($saleItem->type == 'webinar')
                     <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                        <a href="{{ $saleItem->getUrl() }}" target="_blank" class="d-flex-center w-100 h-100">
+                        <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="d-flex-center w-100 h-100">
                             <x-iconsax-bol-video class="icons text-white" width="24px" height="24px"/>
                         </a>
                     </div>
                 @elseif($saleItem->type == "text_lesson")
                     <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                        <a href="{{ $saleItem->getUrl() }}" target="_blank" class="d-flex-center w-100 h-100">
+                        <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="d-flex-center w-100 h-100">
                             <x-iconsax-bol-note-2 class="icons text-white" width="24px" height="24px"/>
                         </a>
                     </div>
                 @elseif($saleItem->type == "course")
                     <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                        <a href="{{ $saleItem->getUrl() }}" target="_blank" class="d-flex-center w-100 h-100">
+                        <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="d-flex-center w-100 h-100">
                             <x-iconsax-bol-video-play class="icons text-white" width="24px" height="24px"/>
                         </a>
                     </div>
@@ -50,7 +59,7 @@
                     <div class="d-flex align-items-start justify-content-between gap-12">
                         <div class="">
                             <h3 class="font-16 text-dark">
-                                <a href="{{ $saleItem->getUrl() }}" target="_blank" class="text-decoration-none text-dark">
+                                <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="text-decoration-none text-dark">
                                     {{ truncate($saleItem->title, 46) }}
                                 </a>
                             </h3>
@@ -62,11 +71,10 @@
                             ])
                         </div>
 
-                        {{-- Actions Dropdown --}}
-                        @include("design_1.panel.webinars.my_purchases.item_card.actions_dropdown")
+                        {{-- actions dropdown removed per user preference --}}
                     </div>
                     {{-- Stats --}}
-                    <a href="{{ $saleItem->getUrl() }}" target="_blank" class="text-decoration-none">
+                    <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="text-decoration-none">
                         @include("design_1.panel.webinars.my_purchases.item_card.stats")
                     </a>
                 </div>
@@ -80,7 +88,8 @@
                     {{-- Continue Learning Button --}}
                     @if(!empty($sale->webinar))
                         <div class="col-2 d-flex align-items-center justify-content-end">
-                            <a href="{{ $saleItem->getLearningPageUrl() }}" target="_blank" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
+                            {{-- link now points to the course detail page instead of learning page --}}
+                            <a href="{{ $panelDetailUrl }}" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
                                 <span class="font-12 text-primary mr-4">{{ trans('update.continue_learning') }}</span>
                                 <x-iconsax-lin-arrow-right class="icons text-primary mt-2" width="16px" height="16px"/>
                             </a>

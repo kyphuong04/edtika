@@ -17,7 +17,7 @@
             font-family: Arial, sans-serif;
             font-size: 16px;
             color: #000;
-            background: #fff;
+            background: #e5e5e5;
             line-height: 1.5;
             overflow: hidden;
             height: 100vh;
@@ -27,40 +27,71 @@
         
         /* ========== HEADER ========== */
         .idp-header {
-            height: 40px;
+            height: 60px;
             background: #fff;
-            border-bottom: 1px solid #ddd;
+            border-radius: 50px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 16px;
             position: fixed;
-            top: 0; left: 0; right: 0;
+            top: 12px; left: 12px; right: 12px;
             z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.10);
         }
-        .idp-header-left { display: flex; align-items: center; gap: 16px; }
-        .idp-logo { font-size: 22px; font-weight: bold; color: #E31837; font-style: italic; font-family: serif; }
-        .idp-test-taker { color: #333; font-size: 13px; }
-        .idp-audio-playing { color: #333; font-size: 12px; display: flex; align-items: center; gap: 4px; }
-        .idp-audio-playing::before { content: "🔊"; }
-        .idp-header-right { display: flex; align-items: center; gap: 12px; }
-        .idp-header-icon { color: #666; font-size: 18px; cursor: pointer; }
+        .idp-header-user { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .idp-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #d9d9d9;
+            border: 2px solid #bbb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: bold;
+            color: #555;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .idp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .idp-username {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .idp-timer {
+            font-size: 17px;
+            font-weight: 700;
+            color: #111;
+            letter-spacing: 2px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
         
         /* Finish Button */
         .idp-finish-btn {
-            padding: 5px 16px;
+            padding: 8px 20px;
             background: #fff;
             border: 1.5px solid #333;
             border-radius: 50px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             color: #333;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-left: auto;
+            flex-shrink: 0;
         }
         
         .idp-finish-btn:hover {
@@ -73,26 +104,38 @@
             font-size: 14px;
         }
         
-        /* ========== PART BAR ========== */
-        .idp-part-bar {
+        /* ========== PART BAR (hidden) ========== */
+        .idp-part-bar { display: none; }
+        .idp-part-title { display: none; }
+        .idp-part-instruction { display: none; }
+        
+        /* ========== SECTION LABEL BAR ========== */
+        .idp-section-label-bar {
+            position: fixed;
+            top: 84px; left: 12px; right: 12px;
             height: 50px;
-            background: #e8e8e8;
+            background: #d8d8d8;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            position: fixed;
-            top: 40px; left: 0; right: 0;
-            z-index: 999;
+            padding: 0 24px;
+            z-index: 998;
         }
-        .idp-part-title { color: #000; font-size: 15px; font-weight: bold; }
-        .idp-part-instruction { color: #000; font-size: 13px; margin-left: 8px; }
-        .idp-part-instruction a { color: #0066CC; }
+        .idp-section-label {
+            font-size: 18px;
+            font-weight: 900;
+            color: #111;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
         
         /* ========== MAIN LAYOUT ========== */
         .idp-main {
             display: flex;
             position: fixed;
-            top: 90px; left: 0; right: 0; bottom: 80px;
+            top: 142px; left: 12px; right: 12px; bottom: 104px;
+            border-radius: 12px;
+            overflow: hidden;
         }
         
         /* Left Panel */
@@ -419,38 +462,48 @@
         /* ========== FOOTER ========== */
         .idp-footer {
             height: 80px;
-            background: #e8e8e8;
-            border-top: 1px solid #ccc;
+            background: transparent;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
+            padding: 0 4px;
             position: fixed;
-            bottom: 0; left: 0; right: 0;
+            bottom: 12px; left: 12px; right: 12px;
             z-index: 1000;
-            gap: 20px;
         }
         
-        /* Question Numbers Container */
+        /* Two equal halves */
+        .idp-footer-half {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+        
+        /* Question Numbers — pill auto-sizes to content */
         .idp-question-numbers {
             display: flex;
             align-items: center;
-            gap: 12px;
-            flex: 1;
+            gap: 10px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px 16px;
             overflow-x: auto;
-            padding: 8px 0;
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 100%;
         }
         
         /* Circular Question Button */
         .idp-q-circle {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: #fff;
-            border: 2px solid #999;
-            color: #000;
-            font-size: 16px;
-            font-weight: 500;
+            border: 1.5px solid #555;
+            color: #111;
+            font-size: 15px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -481,19 +534,19 @@
             border-color: #28a745;
         }
         
-        /* Navigation Buttons */
+        /* Navigation Buttons — centered in right half */
         .idp-nav-btns {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 28px;
             flex-shrink: 0;
         }
         
         .idp-nav-text-btn {
-            padding: 12px 24px;
+            padding: 13px 22px;
             background: #fff;
-            border: 1px solid #999;
-            border-radius: 6px;
+            border: 1.5px solid #bbb;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
             color: #333;
@@ -507,11 +560,11 @@
         
         .idp-nav-text-btn:hover {
             background: #f5f5f5;
-            border-color: #666;
+            border-color: #888;
         }
         
         .idp-nav-text-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
         
@@ -525,10 +578,10 @@
         
         /* Scrollbar for question numbers */
         .idp-question-numbers::-webkit-scrollbar {
-            height: 6px;
+            height: 5px;
         }
         .idp-question-numbers::-webkit-scrollbar-thumb {
-            background: #999;
+            background: #bbb;
             border-radius: 3px;
         }
         .idp-question-numbers::-webkit-scrollbar-track {
@@ -737,28 +790,38 @@
             /* Header responsive */
             .idp-header {
                 padding: 0 12px;
+                top: 8px; left: 8px; right: 8px;
             }
             
             .idp-finish-btn {
-                padding: 4px 12px;
+                padding: 6px 14px;
                 font-size: 12px;
             }
             
-            .idp-header-icon {
-                font-size: 16px;
+            .idp-username {
+                font-size: 12px;
+            }
+            
+            .idp-section-label-bar {
+                top: 78px; left: 8px; right: 8px;
             }
             
             /* Footer responsive */
             .idp-footer {
-                height: 70px;
-                padding: 0 12px;
-                gap: 10px;
+                height: 72px;
+                padding: 0 4px;
+                bottom: 8px; left: 8px; right: 8px;
+            }
+            
+            .idp-question-numbers {
+                padding: 10px 12px;
+                gap: 8px;
             }
             
             .idp-q-circle {
-                width: 40px;
-                height: 40px;
-                font-size: 14px;
+                width: 38px;
+                height: 38px;
+                font-size: 13px;
             }
             
             .idp-nav-text-btn {
@@ -767,52 +830,54 @@
             }
             
             .idp-main {
-                bottom: 70px;
+                bottom: 88px;
+                top: 136px;
+                left: 8px; right: 8px;
             }
         }
         
         @media (max-width: 480px) {
             .idp-header {
-                padding: 0 8px;
-            }
-            
-            .idp-logo {
-                font-size: 18px;
+                padding: 0 10px;
             }
             
             .idp-finish-btn {
-                padding: 4px 10px;
+                padding: 6px 10px;
                 font-size: 11px;
             }
             
-            .idp-header-icon {
-                font-size: 14px;
+            .idp-timer {
+                font-size: 13px;
+                letter-spacing: 1px;
             }
             
             .idp-footer {
-                height: 60px;
-                padding: 0 8px;
+                height: 64px;
+                padding: 0 4px;
                 gap: 8px;
             }
             
             .idp-question-numbers {
-                gap: 8px;
+                padding: 8px 10px;
+                gap: 6px;
+                border-radius: 12px;
             }
             
             .idp-q-circle {
-                width: 36px;
-                height: 36px;
-                font-size: 13px;
+                width: 34px;
+                height: 34px;
+                font-size: 12px;
                 border-width: 1px;
             }
             
             .idp-nav-text-btn {
                 padding: 8px 12px;
                 font-size: 11px;
+                border-radius: 6px;
             }
             
             .idp-main {
-                bottom: 60px;
+                bottom: 80px;
             }
         }
     </style>
@@ -908,58 +973,52 @@
     @endphp
 
     {{-- HEADER --}}
+    @php
+        $authUser = auth()->user();
+        $userName = strtoupper($authUser->full_name ?? $authUser->name ?? 'TEST TAKER');
+        $userAvatar = $authUser->avatar ?? null;
+        $userInitial = strtoupper(substr($authUser->full_name ?? $authUser->name ?? 'T', 0, 1));
+    @endphp
     <header class="idp-header">
-        <div class="idp-header-left">
-            <span class="idp-logo">IELTS</span>
-            <span class="idp-test-taker">{{ trans('update.ielts_test_taker_id') }}</span>
-            @if($skill === 'listening')
-                <span class="idp-audio-playing">{{ trans('update.ielts_audio_is_playing') }}</span>
-            @elseif($skill === 'speaking')
-                <span class="idp-audio-playing" style="color: #E31837;">🎤 {{ trans('update.ielts_speaking_mode') }}</span>
+        <div class="idp-header-user">
+            <div class="idp-avatar">
+                @if($userAvatar)
+                    <img src="{{ $userAvatar }}" alt="{{ $userName }}">
+                @else
+                    {{ $userInitial }}
+                @endif
+            </div>
+            <span class="idp-username">{{ $userName }}</span>
+        </div>
+        <div class="idp-timer" id="examTimer">TIME: 00:00:00</div>
+        <button class="idp-finish-btn" onclick="showModal()">
+            @if($test->isMockTest())
+                Finish Section
+            @else
+                Finish
             @endif
-        </div>
-        <div class="idp-header-right">
-            <span class="idp-header-icon">📶</span>
-            <span class="idp-header-icon">🔔</span>
-            <span class="idp-header-icon">☰</span>
-            <button class="idp-finish-btn" onclick="showModal()">Finish</button>
-        </div>
+        </button>
     </header>
 
-    {{-- PART BAR --}}
-    <div class="idp-part-bar">
-        <span class="idp-part-title">{{ trans('update.ielts_part', ['part' => $partNum]) }}</span>
-        <span class="idp-part-instruction">
-            @if($skill === 'reading')
-                {!! trans('update.ielts_read_text_and_answer', ['start' => '<a href="#">' . $qStart . '</a>', 'end' => '<a href="#">' . $qEnd . '</a>']) !!}
-            @elseif($skill === 'listening')
-                {{ trans('update.ielts_listen_and_answer', ['start' => $qStart, 'end' => $qEnd]) }}
-            @elseif($skill === 'writing')
-                @if($partNum == 1)
-                    {{ trans('update.writing_task_instruction_p1') }}
-                @else
-                    {{ trans('update.writing_task_instruction_p2') }}
-                @endif
-            @elseif($skill === 'speaking')
-                @if($partNum == 1)
-                    {{ trans('update.ielts_speaking_part1_instruction') }}
-                @elseif($partNum == 2)
-                    {{ trans('update.ielts_speaking_part2_instruction') }}
-                @else
-                    {{ trans('update.ielts_speaking_part3_instruction') }}
-                @endif
-            @endif
-        </span>
+    {{-- SECTION LABEL BAR --}}
+    @if($skill !== 'writing')
+    <div class="idp-section-label-bar">
+        @if($skill === 'speaking')
+            <span class="idp-section-label">SPEAKING: PART {{ $currentSection->part_number ?? 1 }}</span>
+        @else
+            <span class="idp-section-label">{{ strtoupper($skill ?? 'listening') }}</span>
+        @endif
     </div>
+    @endif
 
     {{-- MAIN CONTENT --}}
-    <main class="idp-main">
+    <main class="idp-main" @if($skill === 'writing') style="top: 84px;" @endif>
         @if($skill === 'speaking')
-            {{-- SPEAKING LAYOUT - Complete with Mic Check --}}
+            {{-- SPEAKING LAYOUT --}}
             @include('design_1.panel.ielts_tests.partials.idp_speaking_complete', [
-                'section' => $currentSection,
-                'question' => $firstQ,
-                'userAnswer' => $userAnswers[$firstQ->id ?? 0] ?? ''
+                'section'      => $currentSection,
+                'allQuestions' => $allQuestions,
+                'userAnswers'  => $userAnswers,
             ])
         @elseif($skill === 'writing')
             {{-- WRITING LAYOUT - Complete with Word Count --}}
@@ -1019,27 +1078,31 @@
     @endphp
     
     <footer class="idp-footer">
-        {{-- Question Number Circles --}}
-        <div class="idp-question-numbers">
-            @foreach($currentQuestions as $index => $qData)
-                <button 
-                    class="idp-q-circle {{ $index === 0 ? 'active' : '' }} {{ $qData['answered'] ? 'answered' : '' }}" 
-                    data-q-num="{{ $qData['number'] }}"
-                    data-q-index="{{ $index }}"
-                    onclick="goToQuestion({{ $qData['number'] }}, {{ $index }})">
-                    {{ $qData['number'] }}
-                </button>
-            @endforeach
+        {{-- Left half: Question Number Circles --}}
+        <div class="idp-footer-half">
+            <div class="idp-question-numbers">
+                @foreach($currentQuestions as $index => $qData)
+                    <button 
+                        class="idp-q-circle {{ $index === 0 ? 'active' : '' }} {{ $qData['answered'] ? 'answered' : '' }}" 
+                        data-q-num="{{ $qData['number'] }}"
+                        data-q-index="{{ $index }}"
+                        onclick="goToQuestion({{ $qData['number'] }}, {{ $index }})">
+                        {{ $qData['number'] }}
+                    </button>
+                @endforeach
+            </div>
         </div>
-        
-        {{-- Navigation Buttons --}}
-        <div class="idp-nav-btns">
-            <button class="idp-nav-text-btn prev" onclick="prevQ()" id="prevBtn">
-                Previous question
-            </button>
-            <button class="idp-nav-text-btn next" onclick="nextQ()" id="nextBtn">
-                Next question
-            </button>
+
+        {{-- Right half: Navigation Buttons --}}
+        <div class="idp-footer-half">
+            <div class="idp-nav-btns">
+                <button class="idp-nav-text-btn prev" onclick="prevQ()" id="prevBtn">
+                    Previous question
+                </button>
+                <button class="idp-nav-text-btn next" onclick="nextQ()" id="nextBtn">
+                    Next question
+                </button>
+            </div>
         </div>
     </footer>
 
@@ -1195,9 +1258,21 @@
             updateNavButtons();
         });
         
+        // Exam timer - counts up from 00:00:00
+        let timerSeconds = 0;
+        function tickTimer() {
+            timerSeconds++;
+            const h = Math.floor(timerSeconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((timerSeconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            const el = document.getElementById('examTimer');
+            if (el) el.textContent = 'TIME: ' + h + ':' + m + ':' + s;
+        }
+        let timerInterval = setInterval(tickTimer, 1000);
+        
         // Modal
-        function showModal() { document.getElementById('submitModal').classList.remove('hidden'); }
-        function hideModal() { document.getElementById('submitModal').classList.add('hidden'); }
+        function showModal() { clearInterval(timerInterval); document.getElementById('submitModal').classList.remove('hidden'); }
+        function hideModal() { document.getElementById('submitModal').classList.add('hidden'); timerInterval = setInterval(tickTimer, 1000); }
         function submitSection() {
             const btn = document.querySelector('#submitModal .confirm');
             if(btn) {
