@@ -7,6 +7,8 @@ use App\Models\IeltsTest;
 use App\Models\IeltsTestAttempt;
 use App\Models\IeltsTestAnswer;
 use App\Models\IeltsTestSection;
+use App\Models\AcademicWordListWord;
+use App\Models\Sale;
 use App\QuizzesResult;
 use Illuminate\Http\Request;
 
@@ -84,6 +86,11 @@ class IeltsTestController extends Controller
         foreach ($mockTests as $test) {
             $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
             $test->best_attempt = $test->getUserBestAttempt($authUser->id);
+            $test->last_attempt = \App\Models\IeltsTestAttempt::where('test_id', $test->id)
+                ->where('user_id', $authUser->id)
+                ->where('status', 'completed')
+                ->orderBy('id', 'desc')
+                ->first();
             $test->can_take = $test->canUserTake($authUser->id);
         }
         
@@ -91,12 +98,15 @@ class IeltsTestController extends Controller
         $dailyLimit = getIeltsSettings('mock_tests_per_day') ?? 2;
         $remainingToday = IeltsTest::getRemainingMockTestsToday($authUser->id);
         
+        $sidebarData = $this->getSidebarData($authUser);
+
         $data = [
             'pageTitle' => 'Mock Tests',
             'mockTests' => $mockTests,
             'dailyLimit' => $dailyLimit,
             'remainingToday' => $remainingToday,
-        ];
+            'authUser' => $authUser,
+        ] + $sidebarData;
         
         return view('design_1.panel.ielts_tests.mock', $data);
     }
@@ -131,17 +141,82 @@ class IeltsTestController extends Controller
         foreach ($practiceTests as $test) {
             $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
             $test->best_attempt = $test->getUserBestAttempt($authUser->id);
+            $test->last_attempt = \App\Models\IeltsTestAttempt::where('test_id', $test->id)
+                ->where('user_id', $authUser->id)
+                ->where('status', 'completed')
+                ->orderBy('id', 'desc')
+                ->first();
             $test->can_take = $test->canUserTake($authUser->id);
         }
         
+        $sidebarData = $this->getSidebarData($authUser);
+
         $data = [
             'pageTitle' => 'Practice Tests',
             'practiceTests' => $practiceTests,
-        ];
+            'authUser' => $authUser,
+        ] + $sidebarData;
         
         return view('design_1.panel.ielts_tests.practice', $data);
     }
     
+    /**
+     * Get common sidebar data for test listing pages.
+     */
+    private function getSidebarData($authUser): array
+    {
+        $randomWord = AcademicWordListWord::inRandomOrder()->first();
+
+        $streak = $this->getUserStreak($authUser->id);
+
+        $enrolledCourses = Sale::where('buyer_id', $authUser->id)
+            ->where('type', 'webinar')
+            ->whereNull('refund_at')
+            ->whereNotNull('webinar_id')
+            ->with('webinar')
+            ->get()
+            ->filter(fn ($s) => !is_null($s->webinar))
+            ->map(fn ($s) => $s->webinar)
+            ->unique('id')
+            ->values();
+
+        return [
+            'bandEstimate'    => $authUser->band_estimate ?? 5.0,
+            'streak'          => $streak,
+            'randomWord'      => $randomWord,
+            'enrolledCourses' => $enrolledCourses,
+        ];
+    }
+
+    /**
+     * Calculate consecutive-day streak from completed test attempts.
+     */
+    private function getUserStreak($userId): int
+    {
+        $attempts = IeltsTestAttempt::where('user_id', $userId)
+            ->where('status', 'completed')
+            ->whereNotNull('completed_at')
+            ->orderBy('completed_at', 'desc')
+            ->get()
+            ->groupBy(fn ($item) => \Carbon\Carbon::createFromTimestamp($item->completed_at)->format('Y-m-d'));
+
+        $streak = 0;
+        $currentDate = now()->startOfDay();
+
+        foreach ($attempts as $date => $dayAttempts) {
+            $attemptDate = \Carbon\Carbon::parse($date);
+            $daysDiff = $currentDate->diffInDays($attemptDate, false);
+
+            if ($daysDiff == -$streak) {
+                $streak++;
+            } else {
+                break;
+            }
+        }
+
+        return $streak;
+    }
+
     /**
      * Show test details
      */
@@ -157,7 +232,7 @@ class IeltsTestController extends Controller
         $canTake = $test->canUserTake($authUser->id);
         $attempts = IeltsTestAttempt::where('test_id', $test->id)
             ->where('user_id', $authUser->id)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
         
         $data = [
@@ -310,6 +385,19 @@ class IeltsTestController extends Controller
             ->orderBy('question_number')
             ->orderBy('id')
             ->get();
+
+        // If no direct questions found, try to populate from question bank
+        // This handles the newer bank-based workflow where questions are stored in IeltsMockQuestionBank
+        if ($questions->isEmpty() && $currentSection->question_group_id) {
+            $this->populateQuestionsFromBank($currentSection);
+
+            // Reload questions after population
+            $questions = $currentSection->questions()
+                ->with('questionGroup')
+                ->orderBy('question_number')
+                ->orderBy('id')
+                ->get();
+        }
         
         // Get existing answers
         $userAnswers = $attempt->answers()->pluck('answer_text', 'question_id')->toArray();
@@ -458,6 +546,122 @@ class IeltsTestController extends Controller
     }
     
     /**
+     * Populate IeltsTestQuestion records from IeltsMockQuestionBank when the section
+     * was created using the newer question-bank workflow (section has question_group_id
+     * but no rows in ielts_test_questions yet).
+     */
+    private function populateQuestionsFromBank(IeltsTestSection $section): void
+    {
+        $group = $section->questionGroup;
+
+        if (!$group) {
+            return;
+        }
+
+        $bankQuestions = \App\Models\IeltsMockQuestionBank::where('group_id', $group->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $sourceBankType = 'mock';
+
+        if ($bankQuestions->isEmpty()) {
+            $bankQuestions = \App\Models\IeltsPracticeQuestionBank::where('group_id', $group->id)
+                ->orderBy('question_order')
+                ->orderBy('id')
+                ->get();
+            $sourceBankType = 'practice';
+        }
+
+        if ($bankQuestions->isEmpty()) {
+            return;
+        }
+
+        // Determine a base question number from the group (if set) or use 1
+        $baseNumber = ($group->question_start && $group->question_start > 0) ? (int) $group->question_start : 1;
+
+        foreach ($bankQuestions as $idx => $bankQ) {
+            $questionNumber = $baseNumber + $idx;
+            $questionType   = $bankQ->question_type ?? 'fill_blank';
+
+            // Normalise answer_options to JSON string if needed
+            $answerOptions = null;
+            if (!empty($bankQ->answer_options)) {
+                $answerOptions = is_array($bankQ->answer_options)
+                    ? json_encode($bankQ->answer_options)
+                    : $bankQ->answer_options;
+            }
+
+            // If answer_options is null, try to extract from question_data
+            // The bank stores MCQ options inside question_data as {"options[A]":"...", "options[B]":"...", ...}
+            if ($answerOptions === null && !empty($bankQ->question_data)) {
+                $rawData = $bankQ->question_data;
+                // question_data may be double-encoded
+                $decoded = is_array($rawData) ? $rawData : json_decode($rawData, true);
+                if (is_string($decoded)) {
+                    $decoded = json_decode($decoded, true);
+                }
+                if (is_array($decoded)) {
+                    $extractedOptions = [];
+                    foreach ($decoded as $key => $value) {
+                        // Handle keys like "options[A]" or "options[A" (broken, missing closing bracket) -> "A"
+                        if (preg_match('/options\[([A-Za-z0-9]+)\]?/', $key, $matches)) {
+                            $extractedOptions[$matches[1]] = $value;
+                        } elseif (in_array($key, ['A', 'B', 'C', 'D', 'E', 'F'])) {
+                            $extractedOptions[$key] = $value;
+                        }
+                    }
+                    if (!empty($extractedOptions)) {
+                        $answerOptions = json_encode($extractedOptions);
+                    }
+                }
+            }
+
+            $tableStructure = null;
+            if (!empty($bankQ->table_structure)) {
+                $tableStructure = is_array($bankQ->table_structure)
+                    ? json_encode($bankQ->table_structure)
+                    : $bankQ->table_structure;
+            }
+
+            $questionData = null;
+            if (!empty($bankQ->question_data)) {
+                $questionData = is_array($bankQ->question_data)
+                    ? json_encode($bankQ->question_data)
+                    : $bankQ->question_data;
+            }
+
+            \App\Models\IeltsTestQuestion::firstOrCreate(
+                [
+                    'section_id' => $section->id,
+                    'sort_order' => $questionNumber,
+                ],
+                [
+                    'question_group_id'  => $group->id,
+                    'question_number'    => $questionNumber,
+                    'question_order'     => $questionNumber,
+                    'question_type'      => $questionType,
+                    'question_text'      => $bankQ->question_text ?? '',
+                    'instruction'        => $bankQ->instruction ?? null,
+                    'correct_answer'     => $bankQ->correct_answer ?? '',
+                    'answer_options'     => $answerOptions,
+                    'table_structure'    => $tableStructure,
+                    'question_data'      => $questionData,
+                    'word_limit'         => $bankQ->word_limit ?? null,
+                    'auto_gradable'      => $bankQ->auto_gradable ?? (in_array($questionType, ['essay', 'speaking']) ? 0 : 1),
+                    'explanation'        => $bankQ->explanation ?? null,
+                    'points'             => $bankQ->marks ?? $bankQ->points ?? 1.0,
+                    'question_audio'     => $bankQ->audio_file ?? null,
+                    'question_image'     => $bankQ->image_file ?? null,
+                    'source_question_id' => $bankQ->id,
+                    'source_bank_type'   => $sourceBankType,
+                    'created_at'         => time(),
+                ]
+            );
+        }
+    }
+
+    /**
      * Auto-grade listening section
      */
     private function autoGradeListening($attempt)
@@ -596,7 +800,7 @@ class IeltsTestController extends Controller
      */
     public function reviewAnswers($attemptId)
     {
-        $attempt = IeltsTestAttempt::with(['test.sections.questions', 'answers'])
+        $attempt = IeltsTestAttempt::with(['test.sections.questions.questionGroup', 'answers', 'writingGrader'])
             ->findOrFail($attemptId);
         
         $authUser = auth()->user();

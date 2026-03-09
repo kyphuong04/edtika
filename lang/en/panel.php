@@ -57,6 +57,10 @@ return [
 
 'my_purchases' => 'My purchases',
 'my_courses' => 'My Courses',
+
+    // label for the panel header button that lets user switch to course list
+    'switch_courses' => 'Switch Courses',
+
 'my_purchases_no_result' => 'No purchased course!',
 'my_purchases_no_result_hint' => 'Start learning from top instructors and enjoy the experience.',
 
@@ -413,6 +417,7 @@ return [
 'flashcard_deleted_successfully' => 'Flashcard deleted successfully!',
 'flashcard_not_found' => 'Flashcard not found',
 'something_went_wrong' => 'Something went wrong!',
+'turn' => 'Turn',
 'dictionary_api_key_required' => 'To use the dictionary feature, you need to configure the Cambridge Dictionary API key.',
 'steps_to_configure' => 'Steps to configure',
 'reload_page' => 'Reload this page',
@@ -472,4 +477,11 @@ return [
     'please_select_words_to_practice' => 'Please select words to practice',
     'failed_to_start_practice' => 'Failed to start practice session',
     'mark_as_learned' => 'Mark as learned',
+    'no_word_selected' => 'No word selected. Please search for a word first.',
+    'word_definition_not_found' => 'Could not retrieve word definition.',
+    'adding' => 'Adding',
+    'added' => 'Added',
+    'already_in_list' => 'Already in list',
+    'failed_to_add_word' => 'Failed to add word to list.',
+    'failed_to_save_flashcard' => 'Failed to save flashcard.',
 ];

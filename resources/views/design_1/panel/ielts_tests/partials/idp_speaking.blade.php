@@ -4,10 +4,15 @@
 @php
     $task = $question ?? null;
     $taskText = $task->question_text ?? '';
-    $partNum = $section->part_number ?? 1;
+    $partNum = $section->part_number ?? $section->section_number ?? 1;
     $prepTime = $task->preparation_time ?? ($partNum == 2 ? 60 : 0); // Part 2 has 1 min prep
     $speakTime = $task->speaking_time ?? ($partNum == 2 ? 120 : 60); // Part 2 has 2 min speaking
     $audioUrl = $task->audio_url ?? $section->audio_url ?? '';
+    // Prefer question group video, then section video, then audio fallback
+    $groupVideoFile = $task->questionGroup->video_file ?? null;
+    $videoUrl = $groupVideoFile 
+        ? \Storage::disk('public')->url($groupVideoFile) 
+        : ($section->video_url ?? $audioUrl);
 @endphp
 
 <div class="idp-speaking-layout" style="display: flex; height: 100%;">
@@ -42,15 +47,14 @@
             </div>
         </div>
 
-        @if(!empty($audioUrl))
-            <div style="margin-top: 16px; padding: 12px; background: #e8f4fc; border-radius: 8px;">
-                <p style="font-size: 13px; color: #666; margin-bottom: 8px;">
-                    <span style="color: #0066CC;">🔊</span> Listen to the examiner's question:
-                </p>
-                <audio id="questionAudio" controls style="width: 100%;">
-                    <source src="{{ $audioUrl }}" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                </audio>
+        @if(!empty($videoUrl))
+            <div style="margin-top: 16px; border-radius: 8px; overflow: hidden; background: #000;">
+                <video controls controlsList="nodownload" style="width: 100%; max-height: 260px; display: block;">
+                    <source src="{{ $videoUrl }}" type="video/mp4">
+                    <source src="{{ $videoUrl }}" type="video/webm">
+                    <source src="{{ $videoUrl }}" type="audio/mpeg">
+                    Your browser does not support the video element.
+                </video>
             </div>
         @endif
 

@@ -40,6 +40,21 @@
 
         {!! getThemeColorsSettings() !!}
 
+        /* ── Hide top header + title bar globally ───────────────── */
+        .panel-header { display: none !important; }
+        .panel-title-and-breadcrumb { display: none !important; }
+        #panelSidebar  { top: 0 !important; height: 100vh !important; }
+        #panelSidebar .panel-sidebar__contents { max-height: 100vh !important; }
+        .panel-content__scrollable { height: 100vh !important; }
+
+        /* ── Collapsed sidebar: 90px wide + bigger icons (global) ── */
+        #panelSidebar.panel-sidebar--collapsed { width: 90px !important; }
+        #panelSidebar.panel-sidebar--collapsed:hover { width: 258px !important; }
+        #panelSidebar .sidebar-icon svg,
+        #panelSidebar .sidebar-icon .icons { width: 30px !important; height: 30px !important; }
+        #panelSidebar.panel-sidebar--collapsed .panel-sidebar__menu,
+        #panelSidebar.panel-sidebar--collapsed .panel-sidebar__menu-item { height: 52px !important; }
+
         /* Sidebar Default State - Expanded */
         .panel-sidebar:not(.panel-sidebar--collapsed) .sidebar-icon {
             margin-right: 8px !important;
@@ -222,8 +237,8 @@
         }
         
         .panel-sidebar.panel-sidebar--collapsed + .panel-content {
-            width: calc(100vw - 70px) !important;
-            margin-left: 70px !important;
+            width: calc(100vw - 90px) !important;
+            margin-left: 90px !important;
         }
         
         .panel-sidebar.panel-sidebar--collapsed:hover + .panel-content {
@@ -238,19 +253,59 @@
         }
         
         body:has(.panel-sidebar.panel-sidebar--collapsed) .panel-bottom-bar {
-            width: calc(100% - 70px) !important;
-            left: 70px !important;
+            width: calc(100% - 90px) !important;
+            left: 90px !important;
         }
         
         body:has(.panel-sidebar.panel-sidebar--collapsed:hover) .panel-bottom-bar {
             width: calc(100% - 258px) !important;
             left: 258px !important;
         }
+
+        /* ── Desktop: equal left gap for sidebar (matches right padding 28px) ── */
+        @media (min-width: 992px) {
+            #panelSidebar {
+                left: 28px !important;
+                top: 16px !important;
+                height: calc(100vh - 32px) !important;
+                border-radius: 16px;
+                overflow: hidden;
+            }
+            #panelSidebar .panel-sidebar__contents { max-height: calc(100vh - 32px) !important; }
+            .panel-content {
+                /* 258px sidebar + 28px left gap = 286px */
+                width: calc(100vw - 286px) !important;
+                margin-left: 286px !important;
+            }
+            .panel-sidebar.panel-sidebar--collapsed + .panel-content {
+                /* 90px sidebar + 28px left gap = 118px */
+                width: calc(100vw - 118px) !important;
+                margin-left: 118px !important;
+            }
+            .panel-sidebar.panel-sidebar--collapsed:hover + .panel-content {
+                width: calc(100vw - 286px) !important;
+                margin-left: 286px !important;
+            }
+            .panel-bottom-bar {
+                width: calc(100% - 286px) !important;
+                left: 286px !important;
+            }
+            body:has(.panel-sidebar.panel-sidebar--collapsed) .panel-bottom-bar {
+                width: calc(100% - 118px) !important;
+                left: 118px !important;
+            }
+            body:has(.panel-sidebar.panel-sidebar--collapsed:hover) .panel-bottom-bar {
+                width: calc(100% - 286px) !important;
+                left: 286px !important;
+            }
+        }
         
         @media (max-width: 991px) {
-            .panel-sidebar {
-                position: fixed !important;
+            #panelSidebar {
                 left: auto !important;
+                top: 0 !important;
+                height: 100vh !important;
+                border-radius: 0 !important;
             }
             .panel-content {
                 width: 100vw !important;
@@ -260,6 +315,22 @@
                 width: 100% !important;
                 left: 0 !important;
             }
+        }
+
+        /* ── Equal outer padding — both sides of all panel pages ── */
+        .panel-content {
+            box-sizing: border-box;
+            padding: 16px 20px 0;
+        }
+        @media (min-width: 992px) {
+            .panel-content {
+                padding: 16px 28px 0;
+            }
+        }
+        /* Remove internal padding from scrollable — outer .panel-content handles spacing */
+        #panelContentScrollable {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
     </style>
 
@@ -282,12 +353,14 @@
             @include('design_1.panel.includes.sidebar')
 
             <div class="panel-content flex-fill">
-                @include('design_1.panel.includes.title_and_breadcrumb')
+                @if(empty($hidePanelTitleBar))
+                    @include('design_1.panel.includes.title_and_breadcrumb')
+                @endif
 
                 @if(!empty($panelContentFull))
                     @yield('content')
                 @else
-                    <div id="panelContentScrollable" class="panel-content__scrollable px-24 px-lg-32 pt-20 pb-40" data-simplebar @if((!empty($isRtl))) data-simplebar-direction="rtl" @endif>
+                    <div id="panelContentScrollable" class="panel-content__scrollable px-24 px-lg-32 pb-40" data-simplebar @if((!empty($isRtl))) data-simplebar-direction="rtl" @endif>
                         @yield('content')
                     </div>
                 @endif

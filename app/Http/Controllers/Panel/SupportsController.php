@@ -432,6 +432,107 @@ class SupportsController extends Controller
 
         return back();
     }
+
+    public function ajaxCreate(Request $request)
+    {
+        $this->authorize("panel_support_create");
+        $user = auth()->user();
+
+        $this->validate($request, [
+            'webinar_id' => 'required|exists:webinars,id',
+            'message'    => 'required|min:2',
+        ]);
+
+        $webinar = Webinar::findOrFail($request->webinar_id);
+
+        $support = Support::create([
+            'user_id'    => $user->id,
+            'webinar_id' => $webinar->id,
+            'title'      => $request->input('title', 'Hỗ trợ khóa học: ' . $webinar->title),
+            'status'     => 'open',
+            'created_at' => time(),
+            'updated_at' => time(),
+        ]);
+
+        $conversation = SupportConversation::create([
+            'support_id' => $support->id,
+            'sender_id'  => $user->id,
+            'message'    => $request->message,
+            'attach'     => null,
+            'created_at' => time(),
+        ]);
+
+        if (!empty($webinar->teacher_id)) {
+            sendNotification('support_message', [
+                '[c.title]' => $webinar->title,
+                '[u.name]'  => $user->full_name,
+            ], $webinar->teacher_id);
+        }
+
+        return response()->json([
+            'support_id' => $support->id,
+            'message'    => [
+                'id'            => $conversation->id,
+                'message'       => $conversation->message,
+                'sender_name'   => $user->full_name,
+                'sender_avatar' => $user->getAvatar(28),
+                'is_me'         => true,
+                'created_at'    => date('H:i', $conversation->created_at),
+            ],
+        ]);
+    }
+
+    public function ajaxReply(Request $request, $id)
+    {
+        $this->validate($request, [
+            'message' => 'required|string|min:2',
+        ]);
+
+        $user = auth()->user();
+        $userWebinarsIds = $user->webinars->pluck('id')->toArray();
+
+        $support = Support::where('id', $id)
+            ->where(function ($query) use ($user, $userWebinarsIds) {
+                $query->where('user_id', $user->id)
+                    ->orWhereIn('webinar_id', $userWebinarsIds);
+            })->first();
+
+        if (empty($support)) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        $support->update([
+            'status'     => ($support->user_id == $user->id) ? 'open' : 'supporter_replied',
+            'updated_at' => time(),
+        ]);
+
+        $conversation = SupportConversation::create([
+            'support_id' => $support->id,
+            'sender_id'  => $user->id,
+            'message'    => $request->message,
+            'attach'     => null,
+            'created_at' => time(),
+        ]);
+
+        if (!empty($support->webinar_id)) {
+            $webinar = Webinar::find($support->webinar_id);
+            if ($webinar) {
+                $notifyUserId = ($support->user_id == $user->id) ? $webinar->teacher_id : $user->id;
+                sendNotification('support_message_replied', ['[c.title]' => $webinar->title], $notifyUserId);
+            }
+        }
+
+        return response()->json([
+            'message' => [
+                'id'            => $conversation->id,
+                'message'       => $conversation->message,
+                'sender_name'   => $user->full_name,
+                'sender_avatar' => $user->getAvatar(28),
+                'is_me'         => true,
+                'created_at'    => date('H:i', $conversation->created_at),
+            ],
+        ]);
+    }
 }
 
 

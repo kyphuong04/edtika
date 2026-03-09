@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <a href="{{ $webinar->getLearningPageUrl() }}" class="d-flex align-items-center text-gray-500 font-14">
+    <a href="/panel/courses/purchases/{{ $webinar->slug }}" class="d-flex align-items-center text-gray-500 font-14">
         <x-iconsax-lin-arrow-left class="icons text-gray-500" width="16px" height="16px"/>
         <span class="ml-4">{{ trans('update.back_to_the_course') }}</span>
     </a>

@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Panel\Traits\DashboardTrait;
 use App\Mixins\RegistrationPackage\UserPackage;
+use App\Models\AcademicWordListWord;
 use App\Models\Comment;
 use App\Models\Gift;
+use App\Models\IeltsTestAttempt;
 use App\Models\Meeting;
 use App\Models\ReserveMeeting;
 use App\Models\Sale;
 use App\Models\Subscribe;
 use App\Models\Support;
+use App\Models\UserMeta;
+use App\Models\UserWordProgress;
 use App\Models\Webinar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -84,7 +88,213 @@ class DashboardController extends Controller
         // Open Meetings
         $data['openMeetings'] = $this->getStudentOpenMeetingsData($user, $userBoughtWebinarsIds);
 
+        // IELTS Dashboard Data
+        $data['ieltsData'] = $this->getStudentIeltsData($user);
+
+        // User settings stored in meta
+        $data['aimBand']      = UserMeta::where('user_id', $user->id)->where('name', 'aim_band')->value('value');
+        $data['mockTestDate'] = UserMeta::where('user_id', $user->id)->where('name', 'mock_test_date')->value('value');
+
+        // Word of the Day (rotates daily, from academic word list)
+        $wordCount = AcademicWordListWord::count();
+        if ($wordCount > 0) {
+            $dayIndex        = (int) date('z') % $wordCount;
+            $data['wordOfDay'] = AcademicWordListWord::skip($dayIndex)->first();
+        } else {
+            $data['wordOfDay'] = null;
+        }
+
         return $data;
+    }
+
+    /**
+     * Save student dashboard settings (aim_band, mock_test_date).
+     */
+    public function saveSettings(Request $request)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'aim_band'       => 'nullable|numeric|min:0|max:9',
+            'mock_test_date' => 'nullable|date_format:Y-m-d',
+        ]);
+
+        foreach (['aim_band', 'mock_test_date'] as $key) {
+            if (array_key_exists($key, $validated) && $validated[$key] !== null) {
+                UserMeta::updateOrCreate(
+                    ['user_id' => $user->id, 'name' => $key],
+                    ['value'   => $validated[$key]]
+                );
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Weak-points detail page.
+     */
+    public function weakPoints()
+    {
+        $user      = auth()->user();
+        $ieltsData = $this->getStudentIeltsData($user);
+
+        return view('design_1.panel.dashboard.student.weak_points', [
+            'pageTitle' => 'Weak Points',
+            'ieltsData' => $ieltsData,
+            'authUser'  => $user,
+        ]);
+    }
+
+    // ─── IELTS Data Helpers ─────────────────────────────────────────────────────
+
+    private function getStudentIeltsData($user): array
+    {
+        $latestAttempt = IeltsTestAttempt::where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->orderBy('completed_at', 'desc')
+            ->first();
+
+        $skills = ['listening', 'reading', 'writing', 'speaking'];
+        $skillBands = [];
+        foreach ($skills as $skill) {
+            $skillBands[$skill] = $latestAttempt ? (float)($latestAttempt->{$skill . '_band'} ?? 0) : 0;
+        }
+
+        // Vocabulary: ratio of learned words mapped 0‑9
+        $totalWords   = UserWordProgress::where('user_id', $user->id)->count();
+        $learnedWords = UserWordProgress::where('user_id', $user->id)->where('is_learned', true)->count();
+        $skillBands['vocabulary'] = $totalWords > 0 ? round(($learnedWords / $totalWords) * 9, 1) : 0;
+        $skillBands['grammar']    = 0; // placeholder
+
+        $skillProgress = [];
+        foreach ($skillBands as $skill => $band) {
+            $skillProgress[$skill] = round($band / 9 * 100);
+        }
+
+        // Weakest first
+        $weakPointsSorted = collect($skillBands)->sortBy(fn($v) => $v)->keys()->toArray();
+
+        $activityData = $this->buildSkillActivityChart($user);
+
+        $radarData = [
+            'labels' => ['Listening', 'Reading', 'Writing', 'Speaking'],
+            'data'   => [
+                $skillBands['listening'],
+                $skillBands['reading'],
+                $skillBands['writing'],
+                $skillBands['speaking'],
+            ],
+        ];
+
+        $topStudents = IeltsTestAttempt::with('user')
+            ->whereNotNull('completed_at')
+            ->whereNotNull('overall_band')
+            ->select('user_id', DB::raw('MAX(overall_band) as best_band'))
+            ->groupBy('user_id')
+            ->orderBy('best_band', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(fn($item) => ['user' => $item->user, 'best_band' => $item->best_band]);
+
+        $userOverall = $latestAttempt ? (float)($latestAttempt->overall_band ?? 0) : 0;
+        $userRank    = IeltsTestAttempt::whereNotNull('completed_at')
+            ->whereNotNull('overall_band')
+            ->select('user_id', DB::raw('MAX(overall_band) as best_band'))
+            ->groupBy('user_id')
+            ->havingRaw('MAX(overall_band) > ?', [$userOverall])
+            ->get()
+            ->count() + 1;
+
+        $streak = $this->calculateLearningStreak($user);
+
+        return [
+            'latestAttempt' => $latestAttempt,
+            'skillBands'    => $skillBands,
+            'skillProgress' => $skillProgress,
+            'weakPoints'    => $weakPointsSorted,
+            'radarData'     => $radarData,
+            'activityData'  => $activityData,
+            'topStudents'   => $topStudents,
+            'userRank'      => $userRank,
+            'streak'        => $streak,
+            'overallBand'   => $userOverall,
+        ];
+    }
+
+    private function buildSkillActivityChart($user): array
+    {
+        $labels   = [];
+        $skillMap = ['listening' => [], 'reading' => [], 'writing' => [], 'speaking' => []];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $day    = Carbon::now()->subDays($i);
+            $labels[] = $day->format('j/n');
+            $start  = $day->copy()->startOfDay()->timestamp;
+            $end    = $day->copy()->endOfDay()->timestamp;
+
+            $attempts = IeltsTestAttempt::where('user_id', $user->id)
+                ->where(function ($q) use ($start, $end) {
+                    $q->whereBetween('listening_finished_at', [$start, $end])
+                      ->orWhereBetween('reading_finished_at',  [$start, $end])
+                      ->orWhereBetween('writing_finished_at',  [$start, $end])
+                      ->orWhereBetween('speaking_finished_at', [$start, $end]);
+                })
+                ->get();
+
+            foreach (array_keys($skillMap) as $skill) {
+                $mins = 0;
+                foreach ($attempts as $a) {
+                    $ft = $a->{$skill . '_finished_at'};
+                    if ($ft && $ft >= $start && $ft <= $end) {
+                        $mins += max(5, (int) round(($ft - ($a->started_at ?? $ft)) / 60));
+                    }
+                }
+                $skillMap[$skill][] = $mins;
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'series' => [
+                ['name' => 'Listening', 'data' => $skillMap['listening']],
+                ['name' => 'Reading',   'data' => $skillMap['reading']],
+                ['name' => 'Writing',   'data' => $skillMap['writing']],
+                ['name' => 'Speaking',  'data' => $skillMap['speaking']],
+            ],
+        ];
+    }
+
+    private function calculateLearningStreak($user): int
+    {
+        $streak = 0;
+        $day    = Carbon::now()->startOfDay();
+
+        for ($i = 0; $i <= 365; $i++) {
+            $start = $day->copy()->startOfDay()->timestamp;
+            $end   = $day->copy()->endOfDay()->timestamp;
+
+            $has = IeltsTestAttempt::where('user_id', $user->id)
+                ->where(function ($q) use ($start, $end) {
+                    $q->whereBetween('completed_at',           [$start, $end])
+                      ->orWhereBetween('listening_finished_at', [$start, $end])
+                      ->orWhereBetween('reading_finished_at',   [$start, $end]);
+                })
+                ->exists();
+
+            if (!$has) {
+                if ($i === 0) {
+                    $day->subDay();
+                    continue;
+                }
+                break;
+            }
+
+            $streak++;
+            $day->subDay();
+        }
+
+        return $streak;
     }
 
     private function getInstructorDashboardData(Request $request, $user): array

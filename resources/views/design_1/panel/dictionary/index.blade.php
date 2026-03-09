@@ -67,7 +67,7 @@
     .search-section {
         background: #fff;
         border-radius: 12px;
-        padding: 30px;
+        padding: 30px 30px 30px 0;
         margin-bottom: 30px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
@@ -77,10 +77,11 @@
     }
     
     .search-title {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 600;
         color: #1e293b;
         margin-bottom: 15px;
+        padding-left: 30px;
     }
     
     .dark-mode .search-title {
@@ -90,6 +91,7 @@
     .search-wrapper {
         display: flex;
         gap: 10px;
+        padding-left: 30px;
     }
     
     .search-input {
@@ -842,12 +844,12 @@
     }
     
     .practice-mode-container {
-        background: #fff;
-        border-radius: 12px;
-        padding: 40px;
-        max-width: 800px;
+        background: #ebebeb;
+        border-radius: 20px;
+        padding: 32px 28px;
+        max-width: 520px;
         margin: 0 auto;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     
     .dark-mode .practice-mode-container {
@@ -856,38 +858,50 @@
     
     .score-board {
         display: flex;
-        justify-content: space-around;
-        margin-bottom: 30px;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 28px;
     }
     
     .score-item {
-        text-align: center;
+        background: #d6d6d6;
+        border-radius: 999px;
+        padding: 8px 22px;
+        display: inline-flex;
+        align-items: center;
     }
     
     .score-label {
         font-size: 14px;
-        color: #64748b;
-        margin-bottom: 5px;
+        font-weight: 700;
+        color: #333;
+        letter-spacing: 0.4px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0;
     }
     
     .score-value {
-        font-size: 24px;
-        font-weight: 700;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #333 !important;
     }
     
     .score-value.correct {
-        color: #10b981;
+        color: #333 !important;
     }
     
     .score-value.incorrect {
-        color: #ef4444;
+        color: #333 !important;
     }
     
     .question-text {
-        font-size: 18px;
-        color: #1e293b;
+        font-size: 17px;
+        font-weight: 700;
+        color: #111;
         text-align: center;
-        margin-bottom: 40px;
+        margin-bottom: 28px;
         line-height: 1.6;
     }
     
@@ -898,22 +912,29 @@
     .answers-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 30px;
+        gap: 12px;
+        margin-bottom: 28px;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     .answer-card {
-        background: #f8fafc;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px;
+        background: #fff;
+        border: 1.5px solid #d1d5db;
+        border-radius: 14px;
+        padding: 18px 0;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
     
     .answer-card:hover {
-        border-color: #3b82f6;
+        border-color: #888;
         transform: scale(1.02);
     }
     
@@ -938,10 +959,10 @@
     }
     
     .answer-word {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 5px;
+        font-size: 17px;
+        font-weight: 700;
+        color: #111;
+        margin-bottom: 4px;
     }
     
     .dark-mode .answer-word {
@@ -949,8 +970,8 @@
     }
     
     .answer-pronunciation {
-        font-size: 14px;
-        color: #64748b;
+        font-size: 13px;
+        color: #555;
         font-style: italic;
     }
     
@@ -960,47 +981,50 @@
     
     .practice-actions {
         display: flex;
-        justify-content: space-between;
-        gap: 15px;
+        justify-content: center;
+        gap: 20px;
     }
     
     .practice-btn {
-        flex: 1;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        border: none;
+        flex: 0 0 auto;
+        padding: 9px 34px;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 500;
+        border: 1.5px solid #bbb;
+        background: #fff;
+        color: #333;
         cursor: pointer;
-        transition: all 0.3s;
-    }
-    
-    .btn-exit {
-        background: #f1f5f9;
-        color: #475569;
+        transition: all 0.2s;
     }
     
     .btn-exit:hover {
-        background: #e2e8f0;
+        background: #f1f5f9;
+        border-color: #999;
     }
     
     .btn-next {
-        background: #3b82f6;
-        color: white;
+        background: #fff;
+        color: #333;
+        border-color: #bbb;
     }
     
-    .btn-next:hover {
-        background: #2563eb;
+    .btn-next:hover:not(:disabled) {
+        background: #f1f5f9;
+        border-color: #999;
     }
     
     .btn-next:disabled {
-        background: #cbd5e1;
+        background: #e8e8e8;
+        color: #aaa;
+        border-color: #d1d5db;
         cursor: not-allowed;
     }
     
-    .dark-mode .btn-exit {
+    .dark-mode .practice-btn {
         background: #0f172a;
         color: #cbd5e1;
+        border-color: #334155;
     }
     
     .hidden {
@@ -1011,53 +1035,52 @@
 
 @section('content')
 <div class="dictionary-container">
-    <!-- Search Section -->
-    <div class="search-section">
-        <h3 class="search-title">Search English</h3>
-        <div class="search-wrapper">
-            <input type="text" class="search-input" id="searchInput" placeholder="Search the word...">
-            <button class="search-btn" id="searchBtn">Search</button>
-        </div>
-    </div>
-
-    <!-- Dictionary Search Result -->
-    <div class="dictionary-result-container hidden" id="dictionaryResult">
-        <div class="result-card">
-            <div class="result-header">
-                <h2 class="result-word" id="resultWord"></h2>
-            </div>
-            
-            <div class="pronunciation-section">
-                <div class="pronunciation-item">
-                    <span class="pronunciation-label">UK</span>
-                    <span class="pronunciation-text" id="pronunciationUK">/--/</span>
-                    <button class="pronunciation-audio-btn" id="audioUKBtn" disabled>
-                        <i class="iconsax" data-icon="volume-high"></i>
-                    </button>
-                </div>
-                <div class="pronunciation-item">
-                    <span class="pronunciation-label">US</span>
-                    <span class="pronunciation-text" id="pronunciationUS">/--/</span>
-                    <button class="pronunciation-audio-btn" id="audioUSBtn" disabled>
-                        <i class="iconsax" data-icon="volume-high"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="definitions-section" id="definitionsSection">
-                <!-- Definitions will be loaded here -->
-            </div>
-            
-            <button class="btn-back" id="backBtn">
-                <i class="iconsax" data-icon="arrow-left"></i> Back
-            </button>
-        </div>
-    </div>
-
     <!-- Main Content Grid -->
     <div class="row">
         <!-- Left Column: Word Lists -->
         <div class="col-lg-8">
+            <!-- Search Section -->
+            <div class="search-section">
+                <h3 class="search-title">Search English</h3>
+                <div class="search-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search the word...">
+                    <button class="search-btn" id="searchBtn">Search</button>
+                </div>
+            </div>
+
+            <!-- Dictionary Search Result -->
+            <div class="dictionary-result-container hidden" id="dictionaryResult">
+                <div class="result-card">
+                    <div class="result-header">
+                        <h2 class="result-word" id="resultWord"></h2>
+                    </div>
+                    
+                    <div class="pronunciation-section">
+                        <div class="pronunciation-item">
+                            <span class="pronunciation-label">UK</span>
+                            <span class="pronunciation-text" id="pronunciationUK">/--/</span>
+                            <button class="pronunciation-audio-btn" id="audioUKBtn" disabled>
+                                <i class="iconsax" data-icon="volume-high"></i>
+                            </button>
+                        </div>
+                        <div class="pronunciation-item">
+                            <span class="pronunciation-label">US</span>
+                            <span class="pronunciation-text" id="pronunciationUS">/--/</span>
+                            <button class="pronunciation-audio-btn" id="audioUSBtn" disabled>
+                                <i class="iconsax" data-icon="volume-high"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="definitions-section" id="definitionsSection">
+                        <!-- Definitions will be loaded here -->
+                    </div>
+                    
+                    <button class="btn-back" id="backBtn">
+                        <i class="iconsax" data-icon="arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
             <!-- Academic Word Lists Section -->
             <div class="word-lists-section" id="academicWordListsSection">
                 <div class="section-header">
@@ -1576,51 +1599,45 @@
         // Hide word lists and show dictionary result
         $('#academicWordListsSection, #myWordListSection, #practiceModeContainer').addClass('hidden');
         $('#dictionaryResult').removeClass('hidden');
-        
-        // Set word
-        $('#resultWord').text(data.word);
-        
-        // Set pronunciations with fallback to placeholder
-        let ukPhonetic = '/--/';
-        let usPhonetic = '/--/';
-        let ukAudio = '';
-        let usAudio = '';
-        
-        if (data.phonetics && data.phonetics.length > 0) {
-            data.phonetics.forEach(function(phonetic) {
-                if (phonetic.text) {
-                    // Check if it's UK pronunciation
-                    if (phonetic.text.toLowerCase().includes('uk') || phonetic.countryCode === 'uk') {
-                        ukPhonetic = phonetic.text;
-                        if (phonetic.audio) ukAudio = phonetic.audio;
-                    }
-                    // Check if it's US pronunciation
-                    else if (phonetic.text.toLowerCase().includes('us') || phonetic.countryCode === 'us') {
-                        usPhonetic = phonetic.text;
-                        if (phonetic.audio) usAudio = phonetic.audio;
-                    }
-                    // Use as default if no specific marker
-                    else if (ukPhonetic === '/--/') {
-                        ukPhonetic = phonetic.text;
-                        if (phonetic.audio) ukAudio = phonetic.audio;
-                        usPhonetic = phonetic.text;
-                        if (phonetic.audio) usAudio = phonetic.audio;
-                    }
+
+        // The controller's transformDictionaryData returns:
+        //   data.headword           — the word string
+        //   data.pronunciations[]   — [{label:'UK'|'US', ipa:'...', audio:'...'}]
+        //   data.meanings[]         — [{partOfSpeech, definitions:[{definition, example}]}]
+        let wordText = data.headword || data.word || '';
+        $('#resultWord').text(wordText);
+
+        // Pronunciations
+        let ukPhonetic = '/--/', usPhonetic = '/--/';
+        let ukAudio = '', usAudio = '';
+
+        if (data.pronunciations && data.pronunciations.length > 0) {
+            data.pronunciations.forEach(function(p) {
+                let lbl = (p.label || '').toUpperCase();
+                if (lbl === 'UK') {
+                    ukPhonetic = p.ipa || '/--/';
+                    ukAudio    = p.audio || '';
+                } else if (lbl === 'US') {
+                    usPhonetic = p.ipa || '/--/';
+                    usAudio    = p.audio || '';
+                } else if (ukPhonetic === '/--/') {
+                    ukPhonetic = p.ipa || '/--/';
+                    ukAudio    = p.audio || '';
                 }
             });
         }
-        
+
         $('#pronunciationUK').text(ukPhonetic);
         $('#pronunciationUS').text(usPhonetic);
-        
+
         // Store audio URLs
         currentAudioUK = ukAudio ? new Audio(ukAudio) : null;
         currentAudioUS = usAudio ? new Audio(usAudio) : null;
-        
+
         // Enable/disable audio buttons
         $('#audioUKBtn').prop('disabled', !currentAudioUK);
         $('#audioUSBtn').prop('disabled', !currentAudioUS);
-        
+
         // Display definitions grouped by part of speech
         let definitionsHtml = '';
         if (data.meanings && data.meanings.length > 0) {
@@ -1628,48 +1645,47 @@
                 definitionsHtml += '<div class="part-of-speech-section">';
                 definitionsHtml += '<div class="pos-header">';
                 definitionsHtml += '<span class="pos-title">' + meaning.partOfSpeech + '</span>';
-                definitionsHtml += '<button class="btn-save-pos" data-pos="' + meaning.partOfSpeech + '" data-word="' + data.word + '">';
+                definitionsHtml += '<button class="btn-save-pos" data-pos="' + meaning.partOfSpeech + '" data-word="' + wordText + '">';
                 definitionsHtml += 'Save</button>';
                 definitionsHtml += '</div>';
-                
+
                 if (meaning.definitions && meaning.definitions.length > 0) {
                     meaning.definitions.forEach(function(def, defIndex) {
                         definitionsHtml += '<div class="definition-item">';
                         definitionsHtml += '<div class="definition-text">' + (defIndex + 1) + '. ' + def.definition + '</div>';
-                        
+
                         if (def.example) {
                             definitionsHtml += '<div class="example-text">• ' + def.example + '</div>';
                         }
-                        
+
                         definitionsHtml += '</div>';
                     });
                 }
-                
+
                 definitionsHtml += '</div>';
             });
         } else {
             definitionsHtml = '<p>No definitions found.</p>';
         }
-        
+
         $('#definitionsSection').html(definitionsHtml);
-        
+
         // Bind save buttons
         $('.btn-save-pos').on('click', function(e) {
             e.stopPropagation();
             let btn = $(this);
             let word = btn.data('word');
             let partOfSpeech = btn.data('pos');
-            
-            // Get definitions for this part of speech
+
             let meaning = data.meanings.find(m => m.partOfSpeech === partOfSpeech);
             let definition = '';
             let example = '';
-            
+
             if (meaning && meaning.definitions && meaning.definitions.length > 0) {
                 definition = meaning.definitions[0].definition;
                 example = meaning.definitions[0].example || '';
             }
-            
+
             saveWordToFlashcard(word, partOfSpeech, definition, example, btn);
         });
     }

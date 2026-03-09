@@ -12,6 +12,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
     /* Dashboard */
     Route::get('/', 'DashboardController@index');
+    Route::post('/dashboard/save-settings', 'DashboardController@saveSettings');
+    Route::get('/dashboard/weak-points', 'DashboardController@weakPoints');
 
     /* Events */
     Route::group(['prefix' => 'events'], function () {
@@ -59,6 +61,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::group(['prefix' => 'purchases'], function () {
             Route::get('/', 'MyPurchasedCoursesController@index');
             Route::post('/getJoinInfo', 'MyPurchasedCoursesController@getJoinInfo');
+            Route::get('/learning/{slug}', 'MyPurchasedCoursesController@showLearning');
+            Route::get('/{slug}', 'MyPurchasedCoursesController@showCourse');
         });
 
         Route::post('/search', 'WebinarController@search');
@@ -358,6 +362,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('{id}/conversations', 'SupportsController@index');
         Route::post('{id}/conversations', 'SupportsController@storeConversations');
         Route::get('{id}/close', 'SupportsController@close');
+        Route::post('/ajax-create', 'SupportsController@ajaxCreate');
+        Route::post('{id}/ajax-reply', 'SupportsController@ajaxReply');
 
         Route::group(['prefix' => 'tickets'], function () {
             Route::get('/', 'SupportsController@tickets');
@@ -730,6 +736,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::delete('/word-lists/{id}', 'DictionaryController@deleteWordList');
         Route::post('/word-lists/add-word', 'DictionaryController@addWordToList');
         Route::post('/word-lists/remove-word', 'DictionaryController@removeWordFromList');
+        Route::post('/my-word-list/add-word', 'DictionaryController@addWordToMyList');
+        Route::post('/my-word-list/bulk-delete', 'DictionaryController@bulkDeleteFromMyWordList');
         Route::get('/word-lists-dropdown', 'DictionaryController@getUserWordLists');
 
         // Academic Word Lists (Band-based)

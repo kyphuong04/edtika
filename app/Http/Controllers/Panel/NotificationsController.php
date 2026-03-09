@@ -12,9 +12,11 @@ class NotificationsController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize("panel_notifications_lists");
-
         $user = auth()->user();
+
+        if (empty($user)) {
+            abort(403);
+        }
 
         $query = Notification::query()->where(function ($query) use ($user) {
             $query->where('notifications.user_id', $user->id)

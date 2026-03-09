@@ -134,6 +134,17 @@
                                 </div>
                             @endif
 
+                            @if($section->skill === 'speaking' && !empty($group->video_file))
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-video mr-1"></i>Video File:</strong>
+                                    <video controls controlsList="nodownload" class="w-100 mt-2" style="max-height:260px;border-radius:6px;background:#000;">
+                                        <source src="{{ $group->video_file }}" type="video/mp4">
+                                        <source src="{{ $group->video_file }}" type="video/webm">
+                                        Your browser does not support the video element.
+                                    </video>
+                                </div>
+                            @endif
+
                             @if($group->task_image)
                                 <div class="mb-3">
                                     <strong><i class="fas fa-image mr-1"></i>{{ trans('update.ielts_task_image') }}:</strong>
@@ -274,6 +285,15 @@
                             <label>Audio File (if different from section audio)</label>
                             <input type="file" name="audio_file" class="form-control" accept="audio/*">
                             <small class="text-gray">Leave empty to use section's main audio</small>
+                        </div>
+                    @endif
+
+                    {{-- Speaking Video --}}
+                    @if($section->skill === 'speaking')
+                        <div class="form-group">
+                            <label>Video File <span class="text-muted">(Optional &mdash; shown to students as the question prompt)</span></label>
+                            <input type="file" name="video_file" class="form-control" accept="video/*">
+                            <small class="text-gray">Upload a video question for this group (MP4 recommended). Overrides the section-level video for this group.</small>
                         </div>
                     @endif
 
