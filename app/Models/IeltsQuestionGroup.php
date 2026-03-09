@@ -28,6 +28,7 @@ class IeltsQuestionGroup extends Model
         'audio_file',
         'audio_path',
         'task_image',
+        'video_file',
         'max_words',
         'target_band',
         'practice_focus',

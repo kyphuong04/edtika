@@ -63,7 +63,7 @@ class LearningPageController extends Controller
         ]);
     }
 
-    public function index(Request $request, $slug)
+    public function index(Request $request, $slug, $justReturnData = false)
     {
         $user = auth()->user();
 
@@ -86,16 +86,17 @@ class LearningPageController extends Controller
                 'pageTitle' => trans('update.access_denied'),
                 'pageRobot' => getPageRobotNoIndex(),
             ];
-            return view('design_1.web.courses.not_access.index', $data);
+            return $justReturnData ? false : view('design_1.web.courses.not_access.index', $data);
         }
 
         $installmentLimitation = $webinarController->installmentContentLimitation($user, $course->id, 'webinar_id');
         if ($installmentLimitation != "ok") {
-            return $installmentLimitation;
+            return $justReturnData ? false : $installmentLimitation;
         }
 
 
         if (!$data or (!$data['hasBought'] and empty($course->getInstallmentOrder()))) {
+            if ($justReturnData) return false;
             abort(403);
         }
 
@@ -126,6 +127,10 @@ class LearningPageController extends Controller
 
         // Handle Start Tracking Time
         $this->handleStartTrackingTime($course->id, $user->id);
+
+        if ($justReturnData) {
+            return $data;
+        }
 
         return view('design_1.web.courses.learning_page.index', $data);
     }

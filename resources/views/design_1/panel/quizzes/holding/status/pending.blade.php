@@ -19,7 +19,7 @@
 
     <div class="d-flex align-items-center flex-wrap gap-16 mt-16">
         @if(!empty($webinar))
-            <a href="{{ $webinar->getLearningPageUrl() }}" class="btn btn-primary btn-lg">{{ trans('update.back_to_learning_page') }}</a>
+            <a href="/panel/courses/purchases/{{ $webinar->slug }}" class="btn btn-primary btn-lg">Course Detail</a>
         @endif
 
         <a href="/panel/quizzes/my-results" class="btn btn-outline-primary btn-lg">{{ trans('update.my_results') }}</a>

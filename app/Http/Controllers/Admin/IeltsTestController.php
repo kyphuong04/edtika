@@ -579,6 +579,17 @@ class IeltsTestController extends Controller
             $image->move(public_path('uploads/ielts/images'), $imageName);
             $data['image_file'] = '/uploads/ielts/images/' . $imageName;
         }
+
+        if ($request->hasFile('video_file')) {
+            $video = $request->file('video_file');
+            $videoName = time() . '_' . $video->getClientOriginalName();
+            $uploadPath = public_path('uploads/ielts/videos');
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            $video->move($uploadPath, $videoName);
+            $data['video_file'] = '/uploads/ielts/videos/' . $videoName;
+        }
         
         // Store skill-specific data
         if ($request->skill === 'reading') {
@@ -591,7 +602,11 @@ class IeltsTestController extends Controller
         }
 
         if ($request->skill === 'speaking') {
-            $data['speaking_part_type'] = $request->speaking_part_type;
+            // Map speaking_part_type to section_number if not explicitly given
+            if (!isset($data['section_number']) && $request->speaking_part_type) {
+                $partMap = ['part1' => 1, 'part2' => 2, 'part3' => 3];
+                $data['section_number'] = $partMap[$request->speaking_part_type] ?? $data['section_number'];
+            }
         }
         
         $section = IeltsTestSection::create($data);
@@ -674,6 +689,18 @@ class IeltsTestController extends Controller
             $data['task_image'] = '/uploads/ielts/images/' . $imageName;
         }
 
+        // Handle video file for speaking
+        if ($section->skill === 'speaking' && $request->hasFile('video_file')) {
+            $video = $request->file('video_file');
+            $videoName = time() . '_' . $video->getClientOriginalName();
+            $uploadPath = public_path('uploads/ielts/videos');
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            $video->move($uploadPath, $videoName);
+            $data['video_file'] = '/uploads/ielts/videos/' . $videoName;
+        }
+
         $questionGroup = \App\Models\IeltsQuestionGroup::create($data);
 
         return back()->with(['toast' => [
@@ -747,7 +774,54 @@ class IeltsTestController extends Controller
             'question' => $question
         ]);
     }
-    
+
+    /**
+     * Update question
+     */
+    public function updateQuestion(Request $request, $questionId)
+    {
+        $question = IeltsTestQuestion::findOrFail($questionId);
+
+        $this->validate($request, [
+            'question_number' => 'required|integer',
+            'question_type'   => 'required',
+            'question_text'   => 'required',
+        ]);
+
+        $question->update([
+            'question_number' => $request->question_number,
+            'question_type'   => $request->question_type,
+            'question_text'   => $request->question_text,
+            'instruction'     => $request->instruction,
+            'correct_answer'  => $request->correct_answer,
+            'points'          => $request->points ?? 1.0,
+            'auto_gradable'   => in_array($request->question_type, ['essay']) ? 0 : ($request->has('auto_gradable') ? 1 : 0),
+            'hint'            => $request->hint,
+            'explanation'     => $request->explanation,
+        ]);
+
+        return back()->with(['toast' => [
+            'title'  => 'Success',
+            'msg'    => 'Question updated successfully',
+            'status' => 'success',
+        ]]);
+    }
+
+    /**
+     * Delete question
+     */
+    public function deleteQuestion($questionId)
+    {
+        $question = IeltsTestQuestion::findOrFail($questionId);
+        $question->delete();
+
+        return back()->with(['toast' => [
+            'title'  => 'Success',
+            'msg'    => 'Question deleted successfully',
+            'status' => 'success',
+        ]]);
+    }
+
     /**
      * Submit test for approval
      */

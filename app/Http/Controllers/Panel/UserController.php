@@ -57,6 +57,7 @@ class UserController extends Controller
             $userBoughtWebinarsIds = $user->getPurchasedCoursesIds();
 
             $purchasedCourses = collect();
+            $purchaseSales = collect();
             if (count($userBoughtWebinarsIds)) {
                 $purchasedCourses = Webinar::query()
                     ->whereIn('id', $userBoughtWebinarsIds)
@@ -64,7 +65,22 @@ class UserController extends Controller
                     ->latest()
                     ->take(6)
                     ->get();
+
+                $purchaseSales = \App\Models\Sale::where('buyer_id', $user->id)
+                    ->whereIn('webinar_id', $userBoughtWebinarsIds)
+                    ->whereNotNull('webinar_id')
+                    ->orderBy('created_at', 'asc')
+                    ->get()
+                    ->keyBy('webinar_id');
             }
+
+            $suggestedCourses = Webinar::query()
+                ->where('status', 'active')
+                ->whereNotIn('id', $userBoughtWebinarsIds ?: [0])
+                ->with('teacher')
+                ->inRandomOrder()
+                ->take(6)
+                ->get();
 
             $continueLearningCourse = null;
             if (count($userBoughtWebinarsIds)) {
@@ -96,6 +112,8 @@ class UserController extends Controller
                 'user' => $user,
                 'userLoginHistories' => $userLoginHistories,
                 'purchasedCourses' => $purchasedCourses,
+                'purchaseSales' => $purchaseSales,
+                'suggestedCourses' => $suggestedCourses,
                 'continueLearningCourse' => $continueLearningCourse,
                 'userLanguages' => $userLanguages,
                 'recentNotes' => $recentNotes,
@@ -212,7 +230,7 @@ class UserController extends Controller
             $registerMethod = getGeneralSettings('register_method') ?? 'mobile';
 
             $rules = [
-                'full_name' => 'required|string',
+                'first_name' => 'required|string',
                 'email' => (($registerMethod == 'email') ? 'required' : 'nullable') . '|email|max:255|unique:users,email,' . $user->id,
                 'mobile' => (($registerMethod == 'mobile') ? 'required' : 'nullable') . '|numeric|unique:users,mobile,' . $user->id,
             ];
@@ -222,7 +240,7 @@ class UserController extends Controller
 
         if (!empty($user)) {
 
-            if (!empty($data['password'])) {
+            if (!empty($data['password']) && $step !== 'change_password') {
                 $this->validate($request, [
                     'password' => 'required|confirmed|min:6',
                 ]);
@@ -238,8 +256,13 @@ class UserController extends Controller
             if ($step == "basic_information") {
                 $joinNewsletter = (!empty($data['join_newsletter']) and $data['join_newsletter'] == 'on');
 
+                // Combine first_name + last_name into full_name (supports both old full_name and new split fields)
+                $firstName = trim($data['first_name'] ?? '');
+                $lastName  = trim($data['last_name'] ?? '');
+                $fullName  = $firstName . ($lastName ? ' ' . $lastName : '');
+
                 $updateData = [
-                    'full_name' => $data['full_name'],
+                    'full_name' => $fullName ?: ($data['full_name'] ?? null),
                     'email' => $data['email'],
                     'mobile' => $data['mobile'],
                     'language' => $data['language'] ?? null,
@@ -250,6 +273,7 @@ class UserController extends Controller
                     'newsletter' => $joinNewsletter,
                     'public_message' => (!empty($data['public_message']) and $data['public_message'] == 'on'),
                     'enable_profile_statistics' => (!empty($data['enable_profile_statistics']) and $data['enable_profile_statistics'] == 'on'),
+                    'bio' => $data['bio'] ?? null,
                 ];
 
                 // Handle avatar upload from profile modal
@@ -257,8 +281,9 @@ class UserController extends Controller
                     $updateData['avatar'] = $this->handleUploadImagesAndFiles($request, $user, "avatar");
                 }
 
-                // Handle gender (stored as UserMeta, same as extra_information step)
-                $updateUserMeta['gender'] = $data['gender'] ?? null;
+                // Handle gender and birthday (stored as UserMeta)
+                $updateUserMeta['gender']   = $data['gender'] ?? null;
+                $updateUserMeta['birthday'] = !empty($data['birthday']) ? convertTimeToUTCzone($data['birthday'])->getTimestamp() : null;
 
                 $this->handleNewsletter($data['email'], $user->id, $joinNewsletter);
             } elseif ($step == "extra_information") {
@@ -350,6 +375,28 @@ class UserController extends Controller
                 } else {
                     UserZoomApi::where('user_id', $user->id)->delete();
                 }
+            } elseif ($step == "change_password") {
+                if (!empty($data['password'])) {
+                    $this->validate($request, [
+                        'current_password' => 'required',
+                        'password'         => 'required|confirmed|min:6',
+                    ]);
+
+                    if (!empty($data['current_password']) && !Hash::check($data['current_password'], $user->password)) {
+                        return redirect()->back()->withErrors(['current_password' => trans('validation.current_password') ?: 'Current password is incorrect.'])->withInput();
+                    }
+
+                    $user->update([
+                        'password' => User::generatePassword($data['password'])
+                    ]);
+                }
+
+                $toastData = [
+                    'title'  => trans('public.request_success'),
+                    'msg'    => trans('panel.user_setting_success'),
+                    'status' => 'success'
+                ];
+                return redirect("/panel/setting")->with(['toast' => $toastData]);
             }
 
             if (!empty($updateData)) {
