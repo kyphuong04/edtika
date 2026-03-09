@@ -1602,21 +1602,12 @@
                                 <span class="ml-8">{{ trans('panel.notifications') }}</span>
                             </a>
                         </li>
-                        @if(!$authUser->isUser())
-                        <li class="navbar-auth-user__dropdown-item">
-                            <a href="/panel/courses" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
-                                <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
-                                <span class="ml-8">{{ trans('update.my_courses') }}</span>
-                            </a>
-                        </li>
-                        @else
                         <li class="navbar-auth-user__dropdown-item">
                             <a href="/panel/courses/purchases" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                                 <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
-                                <span class="ml-8">{{ trans('panel.my_classes') }}</span>
+                                <span class="ml-8">My Courses</span>
                             </a>
                         </li>
-                        @endif
                         <li class="navbar-auth-user__dropdown-item">
                             <a href="/panel/setting" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                                 <x-iconsax-lin-profile class="icons" width="24px" height="24px"/>
