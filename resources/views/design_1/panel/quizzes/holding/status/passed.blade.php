@@ -21,7 +21,7 @@
         @if($quiz->certificate)
             <a href="/panel/quizzes/results/{{ $quizResult->id }}/showCertificate" class="btn btn-primary btn-lg">{{ trans('quiz.download_certificate') }}</a>
         @elseif(!empty($webinar))
-            <a href="{{ $webinar->getLearningPageUrl() }}" class="btn btn-primary btn-lg">{{ trans('update.back_to_learning_page') }}</a>
+            <a href="/panel/courses/purchases/{{ $webinar->slug }}" class="btn btn-primary btn-lg">Course Detail</a>
         @endif
 
         <a href="/panel/quizzes/results/{{ $quizResult->id }}/details" class="btn btn-outline-primary btn-lg">{{ trans('update.view_answers') }}</a>

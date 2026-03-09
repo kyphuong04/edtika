@@ -184,21 +184,12 @@
                             @endif
                         </a>
                     </li>
-                    @if(!$authUser->isUser())
-                        <li class="navbar-auth-user__dropdown-item">
-                            <a href="/panel/courses" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
-                                <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
-                                <span class="ml-8">{{ trans('update.my_courses') }}</span>
-                            </a>
-                        </li>
-                    @else
-                        <li class="navbar-auth-user__dropdown-item">
-                            <a href="/panel/courses/purchases" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
-                                <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
-                                <span class="ml-8">{{ trans('panel.my_classes') }}</span>
-                            </a>
-                        </li>
-                    @endif
+                    <li class="navbar-auth-user__dropdown-item">
+                        <a href="/panel/courses/purchases" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
+                            <x-iconsax-lin-video-play class="icons" width="24px" height="24px"/>
+                            <span class="ml-8">My Courses</span>
+                        </a>
+                    </li>
                     <li class="navbar-auth-user__dropdown-item">
                         <a href="/panel/support/new" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
                             <x-iconsax-lin-message-question class="icons" width="24px" height="24px"/>
@@ -206,15 +197,9 @@
                         </a>
                     </li>
                     <li class="navbar-auth-user__dropdown-item">
-                        <a href="{{ $authUser->getProfileUrl() }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
+                        <a href="/panel/setting" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
                             <x-iconsax-lin-profile class="icons" width="24px" height="24px"/>
                             <span class="ml-8">{{ trans('public.profile') }}</span>
-                        </a>
-                    </li>
-                    <li class="navbar-auth-user__dropdown-item">
-                        <a href="/panel/setting" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
-                            <x-iconsax-lin-setting-2 class="icons" width="24px" height="24px"/>
-                            <span class="ml-8">{{ trans('panel.settings') }}</span>
                         </a>
                     </li>
                 </ul>
