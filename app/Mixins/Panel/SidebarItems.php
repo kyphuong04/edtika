@@ -17,6 +17,7 @@ class SidebarItems
             'financial_&_marketing' => self::getFinancialSectionItems($user),
             'communications' => self::getCommunicationsSectionItems($user),
             'user' => self::getOtherSectionItems($user),
+            'support' => self::getSupportSectionItems($user),
         ];
     }
 
@@ -31,7 +32,7 @@ class SidebarItems
             'items' => []
         ];
 
-        if (!$user->isUser() && !$user->isStudent()) {
+        if (!$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
             $items['events'] = [
                 'icon' => self::getIcon('events'),
                 'text' => trans('update.events_calendar'),
@@ -81,28 +82,38 @@ class SidebarItems
             }
 
             // Both Admin and Teacher can manage students
-            if ($user->can('panel_organization_students')) {
-                $items['students'] = [
-                    'icon' => self::getIcon('students'),
-                    'text' => trans('quiz.students'),
-                    'url' => '/panel/manage/students',
+            // Feedback & Grading - standalone item above Student Tracking
+            if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
+                $items['feedback_grading'] = [
+                    'icon' => self::getIcon('feedback_grading'),
+                    'text' => 'Feedback & grading',
+                    'url' => '/panel/ielts-grading',
                     'items' => []
                 ];
+            }
 
-                if ($user->can('panel_organization_students_create')) {
-                    $items['students']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/manage/students/new'];
-                }
-
-                if ($user->can('panel_organization_students_lists')) {
-                    $items['students']['items'][] = ['text' => trans('public.list'), 'url' => '/panel/manage/students'];
-                }
-
-                // Add "My Students" for teachers only - shows students enrolled in their courses
+            // Both Admin and Teacher can manage students
+            if ($user->can('panel_organization_students')) {
+                // For teachers: direct link to My Students, no dropdown
                 if ($user->isTeacher()) {
-                    $items['students']['items'][] = [
-                        'text' => trans('update.my_students'),
-                        'url' => '/panel/my-students'
+                    $items['students'] = [
+                        'icon' => self::getIcon('students'),
+                        'text' => trans('panel.students_tracking'),
+                        'url' => '/panel/my-students',
+                        'items' => []
                     ];
+                } else {
+                    // For admin and other roles: keep dropdown functionality
+                    $items['students'] = [
+                        'icon' => self::getIcon('students'),
+                        'text' => trans('panel.students_tracking'),
+                        'url' => '/panel/manage/students',
+                        'items' => []
+                    ];
+
+                    if ($user->can('panel_organization_students_create')) {
+                        $items['students']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/manage/students/new'];
+                    }
                 }
             }
 
@@ -115,7 +126,7 @@ class SidebarItems
     {
         $items = [];
 
-        if ($user->can('panel_webinars')) {
+        if ($user->can('panel_webinars') && !$user->isTeacher()) {
             // For user/student: direct link, no dropdown
             if ($user->isUser() || $user->isStudent()) {
                 $items['webinars'] = [
@@ -164,7 +175,7 @@ class SidebarItems
             } // end else
         }
 
-        if ($user->can('panel_upcoming_courses') && !$user->isUser() && !$user->isStudent()) {
+        if ($user->can('panel_upcoming_courses') && !$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
             $items['upcoming_courses'] = [
                 'icon' => self::getIcon('upcoming_courses'),
                 'text' => trans('update.upcoming_courses'),
@@ -195,17 +206,9 @@ class SidebarItems
                 'url' => '/panel/bundles',
                 'items' => []
             ];
-
-            if ($user->can('panel_bundles_create')) {
-                $items['bundles']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/bundles/new'];
-            }
-
-            if ($user->can('panel_bundles_lists')) {
-                $items['bundles']['items'][] = ['text' => trans('update.my_bundles'), 'url' => '/panel/bundles'];
-            }
         }
 
-        if ($user->can('panel_meetings') && !$user->isUser() && !$user->isStudent()) {
+        if ($user->can('panel_meetings') && !$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
 
             $items['meetings'] = [
                 'icon' => self::getIcon('meetings'),
@@ -236,7 +239,6 @@ class SidebarItems
                 $ieltsItems = [
                     ['text' => trans('update.my_tests'), 'url' => '/panel/my-ielts-tests'],
                     ['text' => trans('update.create_from_bank'), 'url' => '/panel/my-ielts-tests/create'],
-                    ['text' => trans('update.grade_tests'), 'url' => '/panel/ielts-grading'],
                 ];
                 
                 // Manager/CEO/Admin get additional menu for All Tests Overview
@@ -251,16 +253,19 @@ class SidebarItems
                     'items' => $ieltsItems
                 ];
             } 
-            // Student/User → Dropdown with Mock Tests and Practice Tests
+            // Student/User → Two separate flat items (no dropdown)
             else {
-                $items['ielts_tests'] = [
+                $items['mock_tests'] = [
                     'icon' => self::getIcon('ielts_tests'),
-                    'text' => trans('update.tests'),
-                    'url' => '/panel/ielts-tests',
-                    'items' => [
-                        ['text' => trans('update.mock_tests'), 'url' => '/panel/ielts-tests/mock'],
-                        ['text' => trans('update.practice_tests'), 'url' => '/panel/ielts-tests/practice'],
-                    ]
+                    'text' => trans('update.mock_tests'),
+                    'url' => '/panel/ielts-tests/mock',
+                    'items' => []
+                ];
+                $items['practice_tests'] = [
+                    'icon' => self::getIcon('ielts_tests'),
+                    'text' => trans('update.practice_tests'),
+                    'url' => '/panel/ielts-tests/practice',
+                    'items' => []
                 ];
             }
         }
@@ -271,8 +276,11 @@ class SidebarItems
                 ['text' => trans('panel.dashboard'), 'url' => '/panel/question-bank'],
                 ['text' => trans('update.mock_groups'), 'url' => '/panel/question-groups?type=mock'],
                 ['text' => trans('update.practice_groups'), 'url' => '/panel/question-groups?type=practice'],
-                ['text' => trans('update.import_questions'), 'url' => '/panel/question-bank/import'],
             ];
+
+            if (!$user->isTeacher()) {
+                $questionBankItems[] = ['text' => trans('update.import_questions'), 'url' => '/panel/question-bank/import'];
+            }
             
             // Admin/Manager/CEO can see Pending Approval for Question Bank
             if ($user->isAdmin() || $user->isManager() || $user->isCeo()) {
@@ -287,15 +295,17 @@ class SidebarItems
             ];
         }
 
-        // Dictionary & Flashcard - Available for all roles
-        $items['dictionary'] = [
-            'icon' => self::getIcon('dictionary'),
-            'text' => trans('panel.dictionary_and_flashcard'),
-            'url' => '/panel/dictionary',
-            'items' => []
-        ];
+        // Dictionary & Flashcard - Hidden for teacher role
+        if (!$user->isTeacher()) {
+            $items['dictionary'] = [
+                'icon' => self::getIcon('dictionary'),
+                'text' => trans('panel.dictionary_and_flashcard'),
+                'url' => '/panel/dictionary',
+                'items' => []
+            ];
+        }
 
-        if ($user->can('panel_quizzes')) {
+        if ($user->can('panel_quizzes') && !$user->isUser() && !$user->isStudent()) {
             $items['quizzes'] = [
                 'icon' => self::getIcon('quizzes'),
                 'text' => trans('panel.quizzes'),
@@ -326,7 +336,7 @@ class SidebarItems
             }
         }
 
-        if ($user->can('panel_certificates')) {
+        if ($user->can('panel_certificates') && !$user->isUser() && !$user->isStudent()) {
             $items['certificates'] = [
                 'icon' => self::getIcon('certificates'),
                 'text' => trans('panel.certificates'),
@@ -353,6 +363,10 @@ class SidebarItems
 
     static public function getEvaluationSectionItems($user)
     {
+        if ($user->isTeacher()) {
+            return [];
+        }
+
         $items = [];
 
         // Students Tracking for Instructors
@@ -389,8 +403,8 @@ class SidebarItems
 
     static public function getFinancialSectionItems($user)
     {
-        // Hide entire Financial & Marketing section for user/student roles
-        if ($user->isUser() || $user->isStudent()) {
+        // Hide entire Financial & Marketing section for user/student/teacher roles
+        if ($user->isUser() || $user->isStudent() || $user->isTeacher()) {
             return [];
         }
 
@@ -547,30 +561,8 @@ class SidebarItems
     {
         $items = [];
 
-        // Support
-        if ($user->can('panel_support')) {
-            $items['support'] = [
-                'icon' => self::getIcon('support'),
-                'text' => trans('panel.support'),
-                'url' => '/panel/support',
-                'items' => []
-            ];
-
-            if ($user->can('panel_support_create')) {
-                $items['support']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/support/new'];
-            }
-
-            if ($user->can('panel_support_lists')) {
-                $items['support']['items'][] = ['text' => trans('update.classes_support'), 'url' => '/panel/support'];
-            }
-
-            if ($user->can('panel_support_tickets')) {
-                $items['support']['items'][] = ['text' => trans('update.support_tickets'), 'url' => '/panel/support/tickets'];
-            }
-        }
-
         // Forums
-        if ($user->can('panel_forums') && !$user->isUser() && !$user->isStudent()) {
+        if ($user->can('panel_forums') && !$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
             $items['forums'] = [
                 'icon' => self::getIcon('forums'),
                 'text' => trans('update.forums'),
@@ -608,7 +600,7 @@ class SidebarItems
                 ]
             ];
 
-            if ($user->can('panel_blog_new_article')) {
+            if (!$user->isTeacher() && $user->can('panel_blog_new_article')) {
                 $items['blog']['items'][] = ['text' => trans('update.new_article'), 'url' => '/panel/blog/new'];
             }
 
@@ -660,7 +652,7 @@ class SidebarItems
             ];
         }
 
-        if ($user->can('panel_notifications') && !$user->isUser() && !$user->isStudent()) {
+        if ($user->can('panel_notifications') && !$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
             $items['notifications'] = [
                 'icon' => self::getIcon('notifications'),
                 'text' => trans('panel.notifications'),
@@ -672,11 +664,35 @@ class SidebarItems
         return $items;
     }
 
+    static public function getSupportSectionItems($user)
+    {
+        $items = [];
+
+        if ($user->can('panel_support')) {
+            $items['support'] = [
+                'icon' => self::getIcon('support'),
+                'text' => trans('panel.support'),
+                'url' => '/panel/support',
+                'items' => []
+            ];
+
+            if ($user->can('panel_support_lists')) {
+                $items['support']['items'][] = ['text' => trans('update.classes_support'), 'url' => '/panel/support'];
+            }
+
+            if ($user->can('panel_support_tickets')) {
+                $items['support']['items'][] = ['text' => trans('update.support_tickets'), 'url' => '/panel/support/tickets'];
+            }
+        }
+
+        return $items;
+    }
+
     static public function getOtherSectionItems($user)
     {
         $items = [];
 
-        if ($user->can('panel_others_profile_url') && !$user->isUser() && !$user->isStudent()) {
+        if ($user->can('panel_others_profile_url') && !$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
             $items['profile'] = [
                 'icon' => self::getIcon('profile'),
                 'text' => trans('public.my_profile'),
@@ -688,7 +704,7 @@ class SidebarItems
         if ($user->can('panel_others_profile_setting')) {
             $items['setting'] = [
                 'icon' => self::getIcon('setting'),
-                'text' => ($user->isUser() || $user->isStudent()) ? trans('public.my_profile') : trans('panel.settings'),
+                'text' => trans('public.my_profile'),
                 'url' => '/panel/setting',
                 'items' => []
             ];

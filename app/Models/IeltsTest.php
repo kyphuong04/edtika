@@ -56,7 +56,7 @@ class IeltsTest extends Model
     
     public function webinar()
     {
-        return $this->belongsTo(\App\Webinar::class, 'webinar_id');
+        return $this->belongsTo(\App\Models\Webinar::class, 'webinar_id');
     }
     
     public function creator()

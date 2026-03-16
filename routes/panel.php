@@ -39,6 +39,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
             Route::get('/new', 'WebinarController@create');
             Route::post('/store', 'WebinarController@store');
+            Route::get('/{id}/module-editor', 'WebinarController@moduleEditorView');
             Route::get('/{id}/step/{step?}', 'WebinarController@edit');
             Route::get('/{id}/edit', 'WebinarController@edit')->name('panel_edit_webinar');
             Route::post('/{id}/update', 'WebinarController@update');
@@ -293,7 +294,11 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     });
 
     // My Students - Teachers only (students enrolled in courses)
-    Route::get('/my-students', 'MyStudentsController@index');
+    Route::get('/my-students', 'MyStudentsController@dashboard');
+    Route::get('/my-students/list', 'MyStudentsController@index');
+    Route::get('/my-students/chart-data', 'MyStudentsController@chartData');
+    Route::get('/my-students/add-student', 'MyStudentsController@addStudentForm');
+    Route::post('/my-students/add-student', 'MyStudentsController@addStudentStore');
 
     Route::group(['prefix' => 'financial'], function () {
         Route::get('/sales', 'SaleController@index');
@@ -345,6 +350,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('metas/{meta_id}/delete', 'UserController@deleteMeta');
         Route::get('/deleteAccount', 'UserController@deleteAccount');
         Route::get('/media/{type}/delete', 'UserController@deleteUserMedia');
+
+        // Teacher-profile manager actions
+        Route::post('/{id}/kpi',   'UserController@updateTeacherKpi')->name('teacher-profile.kpi');
+        Route::post('/{id}/level', 'UserController@updateTeacherLevel')->name('teacher-profile.level');
 
         Route::group(['prefix' => '/attachments'], function () {
             Route::get('/get-form', 'UserProfileAttachmentsController@getForm');
@@ -519,6 +528,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{id}/delete', 'BundlesController@destroy');
             Route::post('/{id}/getContentItemByLocale', 'BundlesController@getContentItemByLocale');
             Route::get('/{id}/courses', 'BundlesController@courses');
+            Route::get('/{id}/modules', 'BundlesController@modules');
+            Route::get('/{bundleId}/module/create', 'BundlesController@moduleCreate');
+            Route::get('/{bundleId}/module/{courseId}/edit', 'BundlesController@moduleEdit');
+            Route::get('/{bundleId}/module/{courseId}/delete', 'BundlesController@moduleDestroy');
             Route::get('/{id}/export-students-list', 'BundlesController@exportStudentsList');
         });
     });
@@ -589,9 +602,11 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     // IELTS Grading (Teachers/Admins - grade speaking and writing answers)
     Route::group(['prefix' => 'ielts-grading'], function () {
         Route::get('/', 'IeltsGradingController@index')->name('panel.ielts_grading.index');
+        Route::get('/graded', 'IeltsGradingController@graded')->name('panel.ielts_grading.graded');
         Route::get('/{attemptId}/grade/{skill?}', 'IeltsGradingController@grade')->name('panel.ielts_grading.grade');
         Route::post('/{attemptId}/submit', 'IeltsGradingController@submitGrade')->name('panel.ielts_grading.submit');
         Route::get('/answer/{answerId}', 'IeltsGradingController@viewAnswer')->name('panel.ielts_grading.view_answer');
+        Route::post('/rate', 'IeltsGradingController@submitRating')->name('panel.ielts_grading.rate');
     });
 
     // IELTS Test Management (Teachers/Admins - create and manage their tests)
@@ -712,6 +727,9 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/type-form/{type}', 'QuestionController@getQuestionTypeForm')->name('panel.questions.type_form');
     });
     // Dictionary & Flashcard Routes
+    Route::get('/vocab-coming-soon', function () {
+        return view('design_1.panel.vocab_coming_soon');
+    });
     Route::group(['prefix' => 'dictionary'], function () {
         Route::get('/', 'DictionaryController@index');
         Route::get('/dictionaries', 'DictionaryController@getDictionaries');

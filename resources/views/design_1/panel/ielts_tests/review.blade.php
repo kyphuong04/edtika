@@ -246,6 +246,17 @@ body {
     color: #111; white-space: pre-wrap;
     font-family: Arial, sans-serif;
 }
+.wv-essay mark {
+    background: #fef9c3; border-radius: 3px; cursor: pointer; position: relative;
+}
+.wv-essay mark::after {
+    content: attr(data-comment);
+    display: none; position: absolute; left: 0; top: 100%; z-index: 100;
+    background: #1e293b; color: #fff; font-size: 12px; padding: 5px 9px;
+    border-radius: 5px; white-space: normal; min-width: 160px; max-width: 260px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+.wv-essay mark:hover::after { display: block; }
 .wv-no-essay { color: #aaa; font-style: italic; font-size: 14px; text-align: center; padding: 30px 0; }
 
 /* Writing right panel */
@@ -644,7 +655,7 @@ body {
 
         $spGrader = null;
         if (!empty($attempt->speaking_graded_by)) {
-            try { $spGrader = \App\Models\User::find($attempt->speaking_graded_by); } catch(\Exception $e) {}
+            try { $spGrader = \App\User::find($attempt->speaking_graded_by); } catch(\Exception $e) {}
         }
 
         $spCriteriaMap = [
@@ -673,15 +684,24 @@ body {
                 $answer = $attempt->answers->where('question_id', $question->id)->first();
                 $answerBands = $answer?->speaking_bands ?? null;
                 if (is_string($answerBands)) $answerBands = json_decode($answerBands, true);
+                // Normalize AI numeric bands [f,l,g,p] → associative so $spScoreFn can look up by name
+                if (is_array($answerBands) && count($answerBands) === 4 && array_keys($answerBands) === [0,1,2,3]) {
+                    $answerBands = array_combine(['fluency','lexical','grammar','pronunciation'], $answerBands);
+                }
+                // Mentor's per-section criteria from $spCriteria['sections']
+                $spSectionId       = (string)$section->id;
+                $mentorSectionData = $spCriteria['sections'][$spSectionId] ?? null;
                 $spQuestionsData[] = [
-                    'section'     => $section,
-                    'question'    => $question,
-                    'answer'      => $answer,
-                    'audioUrl'    => $answer?->file_url ?? null,
-                    'bands'       => $answerBands ?? [],
-                    'feedback'    => $answer?->grader_feedback ?? null,
-                    'modelAnswer' => $question->explanation ?? null,
-                    'nativeAudio' => (function() use ($question, $section) {
+                    'section'        => $section,
+                    'question'       => $question,
+                    'answer'         => $answer,
+                    'audioUrl'       => $answer?->file_url ?? null,
+                    'bands'          => $answerBands ?? [],         // AI per-question bands (assoc)
+                    'feedback'       => $answer?->grader_feedback ?? null,  // AI feedback
+                    'mentorBands'    => $mentorSectionData,         // teacher's per-section criteria
+                    'mentorFeedback' => $mentorSectionData['feedback'] ?? null,
+                    'modelAnswer'    => $question->explanation ?? null,
+                    'nativeAudio'    => (function() use ($question, $section) {
                         // Prefer question group video file
                         $groupVideoFile = $question->questionGroup->video_file ?? null;
                         if ($groupVideoFile) {
@@ -697,6 +717,22 @@ body {
                     })(),
                 ];
             }
+        }
+
+        // AI overall band + per-criterion averages for the header score block
+        $aiSpBand = $attempt->speaking_score ?? null;
+        $_aiSpKeys = ['fluency', 'lexical', 'grammar', 'pronunciation'];
+        $aiSpCriteriaAccum = array_fill_keys($_aiSpKeys, []);
+        foreach ($spQuestionsData as $_spQ) {
+            foreach ($_aiSpKeys as $k) {
+                $v = $spScoreFn([$k], $_spQ['bands']);
+                if ($v !== null) { $aiSpCriteriaAccum[$k][] = $v; }
+            }
+        }
+        $aiSpCriteria = [];
+        foreach ($_aiSpKeys as $k) {
+            $vals = $aiSpCriteriaAccum[$k];
+            $aiSpCriteria[$k] = !empty($vals) ? round(array_sum($vals) / count($vals) * 2) / 2 : null;
         }
     }
 
@@ -829,10 +865,19 @@ body {
             <div class="wv-card">
                 <div class="wv-card-head">YOUR WRITING</div>
                 <div class="wv-card-body">
-                    @if($wq['essay'])
-                        <div class="wv-essay">{{ $wq['essay'] }}</div>
+                    @php
+                        $reviewAnnotated = $writingCriteria['annotated_essays'] ?? [];
+                        $reviewAnswerId  = (string)($wq['answer']?->id ?? '');
+                        $reviewAnnotHtml = $reviewAnswerId !== '' ? ($reviewAnnotated[$reviewAnswerId] ?? null) : null;
+                    @endphp
+                    @if($wq['essay'] || $reviewAnnotHtml)
+                        @if($reviewAnnotHtml)
+                            <div class="wv-essay">{!! $reviewAnnotHtml !!}</div>
+                        @else
+                            <div class="wv-essay">{{ $wq['essay'] }}</div>
+                        @endif
                         @php
-                            $wordCount = str_word_count(strip_tags($wq['essay']));
+                            $wordCount = str_word_count(strip_tags($wq['essay'] ?? ''));
                         @endphp
                         <div style="margin-top:14px; font-size:12px; color:#9ca3af; border-top:1px solid #f3f4f6; padding-top:10px;">
                             Word count: <strong>{{ $wordCount }}</strong>
@@ -897,7 +942,7 @@ body {
                 <div class="wv-feedback-section">
                     <div class="wv-feedback-title">Feedback</div>
                     @if($writingFeedback)
-                        <div class="wv-feedback-body">{{ $writingFeedback }}</div>
+                        <div class="wv-feedback-body">{!! clean($writingFeedback) !!}</div>
                     @else
                         <div class="wv-feedback-empty">No feedback has been provided yet.</div>
                     @endif
@@ -1026,9 +1071,29 @@ function togglePrompt(idx) {
         </div>
     </div>
 
-    {{-- Block 3: Overall AI score + 4 criteria — sits above the card's right panel --}}
+    {{-- Block 3: Overall scores — AI version (default) + Mentor version, toggled by JS --}}
     <div class="sp-rv-hblock sp-rv-hblock-criteria">
-        <div class="sp-rv-score-3col">
+        {{-- AI version (shown when AI tab active) --}}
+        <div id="spHdrAI" class="sp-rv-score-3col">
+            <div class="sp-rv-s3c-circle">
+                <div class="sp-rv-overall-circle">
+                    {!! $aiSpBand ? number_format((float)$aiSpBand, 1) : '&mdash;' !!}
+                </div>
+            </div>
+            <div class="sp-rv-s3c-labels">
+                @foreach($spCriteriaMap as $critKey => $crit)
+                    <div class="sp-rv-s3c-lbl">{!! $crit['label'] !!}:</div>
+                @endforeach
+            </div>
+            <div class="sp-rv-s3c-boxes">
+                @foreach($spCriteriaMap as $critKey => $crit)
+                    @php $critScore = $spScoreFn($crit['keys'], $aiSpCriteria); @endphp
+                    <div class="sp-rv-crit-hbox">{!! $critScore !== null ? number_format($critScore, 1) : '&mdash;' !!}</div>
+                @endforeach
+            </div>
+        </div>
+        {{-- Mentor version (shown when Mentor tab active) --}}
+        <div id="spHdrMentor" class="sp-rv-score-3col" style="display:none;">
             <div class="sp-rv-s3c-circle">
                 <div class="sp-rv-overall-circle">
                     {!! $spBand ? number_format((float)$spBand, 1) : '&mdash;' !!}
@@ -1042,7 +1107,7 @@ function togglePrompt(idx) {
             <div class="sp-rv-s3c-boxes">
                 @foreach($spCriteriaMap as $critKey => $crit)
                     @php $critScore = $spScoreFn($crit['keys'], $spCriteria); @endphp
-                    <div class="sp-rv-crit-hbox">{{ $critScore !== null ? number_format($critScore, 1) : '' }}</div>
+                    <div class="sp-rv-crit-hbox">{!! $critScore !== null ? number_format($critScore, 1) : '&mdash;' !!}</div>
                 @endforeach
             </div>
         </div>
@@ -1128,7 +1193,7 @@ function togglePrompt(idx) {
                                     <div class="sp-rv-s3c-boxes">
                                         @foreach($spCriteriaMap as $critKey => $crit)
                                             @php $s = $spScoreFn($crit['keys'], $spQ['bands']); @endphp
-                                            <div class="sp-rv-crit-qbox">{{ $s !== null ? number_format($s, 1) : '' }}</div>
+                                            <div class="sp-rv-crit-qbox">{!! $s !== null ? number_format($s, 1) : '&mdash;' !!}</div>
                                         @endforeach
                                     </div>
                                 </div>
@@ -1138,7 +1203,7 @@ function togglePrompt(idx) {
                             <div class="sp-rv-stitle">Comments</div>
                             <div class="sp-rv-textbox">
                                 @if($spQ['feedback'])
-                                    {!! nl2br(e($spQ['feedback'])) !!}
+                                    {!! $spQ['feedback'] !!}
                                 @else
                                     <span class="sp-rv-textbox-empty">No comments yet.</span>
                                 @endif
@@ -1159,10 +1224,10 @@ function togglePrompt(idx) {
                         <div id="spMentor-{{ $spIdx }}" style="display:none;">
                             <div class="sp-rv-criteria-q" style="margin-bottom:20px;">
                                 @foreach($spCriteriaMap as $critKey => $crit)
-                                    @php $s = $spScoreFn($crit['keys'], $spQ['bands']); @endphp
+                                    @php $s = $spScoreFn($crit['keys'], $spQ['mentorBands']); @endphp
                                     <div class="sp-rv-crit-qrow">
                                         <span class="sp-rv-crit-qlabel">{!! $crit['label'] !!}:</span>
-                                        <div class="sp-rv-crit-qbox">{{ $s !== null ? number_format($s, 1) : '' }}</div>
+                                        <div class="sp-rv-crit-qbox">{!! $s !== null ? number_format($s, 1) : '&mdash;' !!}</div>
                                     </div>
                                 @endforeach
                             </div>
@@ -1170,8 +1235,8 @@ function togglePrompt(idx) {
                             <div class="sp-rv-sep"></div>
                             <div class="sp-rv-stitle">Comments</div>
                             <div class="sp-rv-textbox">
-                                @if($spQ['feedback'])
-                                    {!! nl2br(e($spQ['feedback'])) !!}
+                                @if(!empty($spQ['mentorFeedback']))
+                                    {!! $spQ['mentorFeedback'] !!}
                                 @else
                                     <span class="sp-rv-textbox-empty">No feedback yet.</span>
                                 @endif
@@ -1265,6 +1330,12 @@ function togglePrompt(idx) {
 
             // Native speaker audio/video wrap is always visible on both tabs
         }
+
+        // Header score block: show AI version or Mentor version
+        const hdrAI     = document.getElementById('spHdrAI');
+        const hdrMentor = document.getElementById('spHdrMentor');
+        if (hdrAI)     hdrAI.style.display     = (activeTab === 'ai')     ? '' : 'none';
+        if (hdrMentor) hdrMentor.style.display = (activeTab === 'mentor') ? '' : 'none';
 
         // Toggle label
         const lbl = document.getElementById('spGraderLabel');
@@ -1641,6 +1712,230 @@ function togglePrompt(idx) {
 })();
 </script>
 
+@endif
+
+@php
+    /* ── IELTS Grading Star-Rating Modal data ───────────────────────── */
+    $ratingInstructorId   = null;
+    $ratingInstructorName = '';
+    $ratingSkill          = null;
+
+    if ($isWritingReview && ($writingGrader ?? null)) {
+        $ratingInstructorId   = $writingGrader->id;
+        $ratingInstructorName = $writingGrader->full_name ?? $writingGrader->name ?? '';
+        $ratingSkill          = 'writing';
+    } elseif ($isSpeakingReview && ($spGrader ?? null)) {
+        $ratingInstructorId   = $spGrader->id;
+        $ratingInstructorName = $spGrader->full_name ?? $spGrader->name ?? '';
+        $ratingSkill          = 'speaking';
+    }
+
+    $showRatingModal = false;
+    if ($ratingInstructorId && $isOwner) {
+        $alreadyRated = \App\Models\IeltsGradingRating::where('attempt_id', $attempt->id)
+            ->where('student_id', auth()->id())
+            ->where('skill', $ratingSkill)
+            ->exists();
+        $showRatingModal = !$alreadyRated;
+    }
+@endphp
+
+@if($showRatingModal)
+{{-- ╔════════════════════════════════════════════╗
+     ║   IELTS GRADING STAR-RATING MODAL          ║
+     ╚════════════════════════════════════════════╝ --}}
+<style>
+#gradingRatingModal {
+    display: none;
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.45);
+    align-items: center; justify-content: center;
+}
+.grm-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 36px 32px 28px;
+    max-width: 400px; width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.22);
+    animation: grmIn .22s ease;
+}
+@keyframes grmIn { from { transform: scale(.92); opacity:0; } to { transform: scale(1); opacity:1; } }
+.grm-icon { font-size: 40px; margin-bottom: 10px; }
+.grm-title { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+.grm-sub   { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.5; }
+.grm-sub strong { color: #374151; }
+.grm-stars { display: flex; justify-content: center; gap: 6px; margin-bottom: 28px; }
+.grm-star {
+    background: none; border: none; cursor: pointer;
+    font-size: 42px; color: #d1d5db; padding: 2px;
+    transition: color .12s, transform .1s;
+    line-height: 1;
+}
+.grm-star:hover, .grm-star.active { color: #f59e0b; transform: scale(1.1); }
+.grm-actions { display: flex; gap: 10px; justify-content: center; }
+.grm-btn-send {
+    background: #4f46e5; color: #fff; border: none;
+    border-radius: 9px; padding: 11px 30px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .2s;
+}
+.grm-btn-send:hover:not(:disabled) { background: #4338ca; }
+.grm-btn-send:disabled { opacity: .55; cursor: not-allowed; }
+.grm-btn-skip {
+    background: #f3f4f6; color: #6b7280; border: none;
+    border-radius: 9px; padding: 11px 20px;
+    font-size: 15px; cursor: pointer;
+    transition: background .2s;
+}
+.grm-btn-skip:hover { background: #e5e7eb; }
+.grm-msg { margin-top: 12px; font-size: 13px; color: #ef4444; min-height: 16px; }
+</style>
+
+<div id="gradingRatingModal">
+    <div class="grm-card">
+        <div class="grm-icon">⭐</div>
+        <div class="grm-title">Đánh Giá Bài Chấm</div>
+        <div class="grm-sub">
+            Bài chấm của <strong>{{ $ratingInstructorName }}</strong><br>
+            có hữu ích với bạn không?
+        </div>
+        <div class="grm-stars" id="grmStars">
+            @for($i = 1; $i <= 5; $i++)
+                <button type="button" class="grm-star" data-val="{{ $i }}"
+                        onclick="grmSetStar({{ $i }})"
+                        aria-label="{{ $i }} sao">&#9733;</button>
+            @endfor
+        </div>
+        <div class="grm-actions">
+            <button type="button" class="grm-btn-send" id="grmSendBtn" onclick="grmSubmit()">
+                Gửi đánh giá
+            </button>
+            <button type="button" class="grm-btn-skip" onclick="grmSkip()">
+                Bỏ qua
+            </button>
+        </div>
+        <div class="grm-msg" id="grmMsg"></div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const GRM_ROUTE      = '{{ route("panel.ielts_grading.rate") }}';
+    const GRM_CSRF       = '{{ csrf_token() }}';
+    const GRM_ATTEMPT    = {{ (int) $attempt->id }};
+    const GRM_INSTRUCTOR = {{ (int) $ratingInstructorId }};
+    const GRM_SKILL      = '{{ $ratingSkill }}';
+    const GRM_RESULT_URL = '{{ route("panel.ielts_tests.results", $attempt->id) }}';
+
+    let grmSelected  = 0;
+    let grmTargetUrl = GRM_RESULT_URL;
+    const modal      = document.getElementById('gradingRatingModal');
+
+    /* ── Show modal ─────────────────────────────────────────── */
+    window.grmShow = function (url) {
+        grmTargetUrl = url || GRM_RESULT_URL;
+        grmSelected  = 0;
+        document.querySelectorAll('.grm-star').forEach(s => s.classList.remove('active'));
+        document.getElementById('grmMsg').textContent = '';
+        const btn = document.getElementById('grmSendBtn');
+        btn.disabled = false;
+        btn.textContent = 'Gửi đánh giá';
+        modal.style.display = 'flex';
+    };
+
+    /* ── Star rating ─────────────────────────────────────────── */
+    window.grmSetStar = function (val) {
+        grmSelected = val;
+        document.querySelectorAll('.grm-star').forEach(function (s) {
+            if (parseInt(s.dataset.val) <= val) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+        });
+    };
+
+    document.querySelectorAll('.grm-star').forEach(function (s) {
+        s.addEventListener('mouseover', function () {
+            const hov = parseInt(s.dataset.val);
+            document.querySelectorAll('.grm-star').forEach(function (b) {
+                b.style.color = parseInt(b.dataset.val) <= hov ? '#fbbf24' : '';
+            });
+        });
+        s.addEventListener('mouseleave', function () {
+            document.querySelectorAll('.grm-star').forEach(function (b) {
+                b.style.color = '';
+            });
+        });
+    });
+
+    /* ── Skip ───────────────────────────────────────────────── */
+    window.grmSkip = function () {
+        modal.style.display = 'none';
+        window.location.href = grmTargetUrl;
+    };
+
+    /* ── Submit ─────────────────────────────────────────────── */
+    window.grmSubmit = function () {
+        if (grmSelected === 0) {
+            document.getElementById('grmMsg').textContent = 'Vui lòng chọn số sao trước khi gửi.';
+            return;
+        }
+        const btn = document.getElementById('grmSendBtn');
+        btn.disabled = true;
+        btn.textContent = 'Đang gửi...';
+
+        fetch(GRM_ROUTE, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': GRM_CSRF,
+            },
+            body: JSON.stringify({
+                attempt_id:    GRM_ATTEMPT,
+                instructor_id: GRM_INSTRUCTOR,
+                skill:         GRM_SKILL,
+                rating:        grmSelected,
+            }),
+        })
+        .then(function () {
+            modal.style.display = 'none';
+            window.location.href = grmTargetUrl;
+        })
+        .catch(function () {
+            modal.style.display = 'none';
+            window.location.href = grmTargetUrl;
+        });
+    };
+
+    /* ── Intercept all "leave to results" navigation ─────────── */
+    document.addEventListener('click', function (e) {
+        const el = e.target.closest('a, button');
+        if (!el) return;
+
+        const isBackLink = el.tagName === 'A' && (
+            el.classList.contains('rv-back-btn') ||
+            (el.classList.contains('sp-rv-hbtn') && el.getAttribute('href'))
+        );
+        const isLastNextBtn = el.tagName === 'BUTTON' &&
+            (el.id === 'spBtnNext' || el.id === 'rvBtnNext') &&
+            el.textContent.trim() === 'Back to Results';
+
+        if (isBackLink || isLastNextBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dest = isBackLink ? (el.href || GRM_RESULT_URL) : GRM_RESULT_URL;
+            window.grmShow(dest);
+        }
+    }, true);
+
+    /* ── Close on backdrop click ─────────────────────────────── */
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) grmSkip();
+    });
+})();
+</script>
 @endif
 
 </body>
