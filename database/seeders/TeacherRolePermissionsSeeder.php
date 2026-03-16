@@ -175,10 +175,10 @@ class TeacherRolePermissionsSeeder extends Seeder
             
             // Blog
             'panel_blog',
-            'panel_blog_create',
-            'panel_blog_edit',
-            'panel_blog_delete',
-            'panel_blog_lists',
+            'panel_blog_new_article',    // created/edited in panel controller
+            'panel_blog_my_articles',    // list own posts
+            'panel_blog_delete_article', // delete own post
+            // 'panel_blog_lists',       // legacy, kept for backward compatibility
             'panel_blog_comments',
             
             // AI Contents

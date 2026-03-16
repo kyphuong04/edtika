@@ -12,6 +12,8 @@ use App\Models\Translation\BlogTranslation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class BlogPostsController extends Controller
 {
@@ -106,12 +108,19 @@ class BlogPostsController extends Controller
 
         $this->handleAuthorize($user);
 
-        $blogCategories = BlogCategory::all();
-
         $data = [
             'pageTitle' => trans('update.create_a_post'),
-            'blogCategories' => $blogCategories
+            'locale' => mb_strtolower(app()->getLocale()),
         ];
+
+        if (request()->ajax()) {
+            $html = (string)view()->make('design_1.panel.blog.posts.modals.form', $data);
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
+        }
 
         return view('design_1.panel.blog.posts.create.index', $data);
     }
@@ -124,18 +133,28 @@ class BlogPostsController extends Controller
 
         $this->handleAuthorize($user);
 
-        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
             'locale' => 'required',
             'title' => 'required|string|max:255',
-            'subtitle' => 'required|string',
-            'category_id' => 'required|numeric',
+            'subtitle' => 'nullable|string',
             'image' => 'required|file',
-            'description' => 'required|string',
             'content' => 'required|string',
             'study_time' => 'nullable|numeric',
         ]);
 
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'code' => 422,
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         $storeData = $this->makeStoreData($request, $user);
+        // if your table still has a category_id column it will default to null
         $blog = Blog::create($storeData);
 
         $this->handleStoreExtraData($request, $user, $blog);
@@ -157,6 +176,14 @@ class BlogPostsController extends Controller
             'msg' => trans('update.blog_created_success'),
             'status' => 'success'
         ];
+        if ($request->ajax()) {
+            return response()->json([
+                'code' => 200,
+                'message' => trans('update.blog_created_success'),
+                'redirect' => '/panel/blog',
+            ]);
+        }
+
         return redirect("/panel/blog/{$blog->id}/edit")->with(['toast' => $toastData]);
     }
 
@@ -183,11 +210,18 @@ class BlogPostsController extends Controller
 
             $data = [
                 'pageTitle' => trans('public.edit') . ' | ' . $post->title,
-                'blogCategories' => $blogCategories,
                 'locale' => mb_strtolower($locale),
                 'post' => $post,
-                'otherPosts' => $otherPosts,
             ];
+
+            if ($request->ajax()) {
+                $html = (string)view()->make('design_1.panel.blog.posts.modals.form', $data);
+
+                return response()->json([
+                    'code' => 200,
+                    'html' => $html,
+                ]);
+            }
 
             return view('design_1.panel.blog.posts.create.index', $data);
         }
@@ -203,15 +237,25 @@ class BlogPostsController extends Controller
 
         $this->handleAuthorize($user);
 
-        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
+            'locale' => 'required',
             'title' => 'required|string|max:255',
-            'subtitle' => 'required|string',
-            'category_id' => 'required|numeric',
+            'subtitle' => 'nullable|string',
             'image' => 'nullable|file',
-            'description' => 'required|string',
             'content' => 'required|string',
             'study_time' => 'nullable|numeric',
         ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'code' => 422,
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $blog = Blog::query()->where('id', $post_id)
             ->where('author_id', $user->id)
@@ -228,6 +272,14 @@ class BlogPostsController extends Controller
                 'msg' => trans('update.blog_updated_success'),
                 'status' => 'success'
             ];
+            if ($request->ajax()) {
+                return response()->json([
+                    'code' => 200,
+                    'message' => trans('update.blog_updated_success'),
+                    'redirect' => '/panel/blog',
+                ]);
+            }
+
             return redirect("/panel/blog/{$blog->id}/edit")->with(['toast' => $toastData]);
         }
 
@@ -275,7 +327,7 @@ class BlogPostsController extends Controller
 
         return [
             'slug' => !empty($blog) ? $blog->slug : Blog::makeSlug($data['title']),
-            'category_id' => $data['category_id'],
+            // remove category_id (not required)
             'author_id' => $user->id,
             'enable_comment' => true,
             'study_time' => $data['study_time'] ?? null,
@@ -288,6 +340,7 @@ class BlogPostsController extends Controller
     private function handleStoreExtraData(Request $request, $user, $blog)
     {
         $data = $request->all();
+        $description = !empty($data['description']) ? $data['description'] : Str::limit(trim(strip_tags($data['content'] ?? '')), 300, '');
 
         BlogTranslation::updateOrCreate([
             'blog_id' => $blog->id,
@@ -295,8 +348,8 @@ class BlogPostsController extends Controller
         ], [
             'title' => $data['title'],
             'subtitle' => $data['subtitle'] ?? null,
-            'description' => $data['description'],
-            'meta_description' => strip_tags($data['description']),
+            'description' => $description,
+            'meta_description' => strip_tags($description),
             'content' => $data['content'],
         ]);
 

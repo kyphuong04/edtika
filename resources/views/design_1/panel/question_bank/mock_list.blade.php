@@ -225,7 +225,10 @@
                         </table>
 
                         {{-- Pagination --}}
-                        <div class="table-pagination">
+                        <div class="table-pagination d-flex align-items-center justify-content-between">
+                            <p class="font-14 text-gray-500 mb-0">
+                                Showing {{ $questions->firstItem() }} - {{ $questions->lastItem() }} of {{ $questions->total() }} questions
+                            </p>
                             {{ $questions->appends(request()->query())->links() }}
                         </div>
                     </div>
@@ -568,6 +571,10 @@
     padding: 20px;
     border-top: 1px solid #f3f4f6;
 }
+.table-pagination .pagination { margin-bottom: 0; }
+.table-pagination .pagination .page-item .page-link { border-radius: 8px; margin: 0 2px; color: #1a3a5c; border-color: #e5e7eb; }
+.table-pagination .pagination .page-item.active .page-link { background-color: #1a3a5c; border-color: #1a3a5c; color: #fff; }
+.table-pagination .pagination .page-item.disabled .page-link { color: #adb5bd; }
 
 /* Empty State */
 .empty-state {

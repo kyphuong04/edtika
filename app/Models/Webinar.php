@@ -128,6 +128,11 @@ class Webinar extends Model implements TranslatableContract
         return $this->hasMany('App\Models\TextLesson', 'webinar_id', 'id');
     }
 
+    public function bundleWebinars()
+    {
+        return $this->hasMany('App\Models\BundleWebinar', 'webinar_id', 'id');
+    }
+
     public function faqs()
     {
         return $this->hasMany('App\Models\Faq', 'webinar_id', 'id');

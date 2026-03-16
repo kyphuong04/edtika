@@ -93,7 +93,7 @@ class BundlesController extends Controller
                         ->whereNull('refund_at');
                 }
             ])
-            ->orderBy('updated_at', 'desc')
+            ->orderBy('slug', 'asc')
             ->get();
 
         if ($request->ajax()) {
@@ -707,6 +707,184 @@ class BundlesController extends Controller
         }
 
         abort(404);
+    }
+
+    public function modules(Request $request, $id)
+    {
+        $this->authorize("panel_bundles_lists");
+
+        $user = auth()->user();
+
+        if ($user->isUser()) {
+            abort(404);
+        }
+
+        $bundle = Bundle::where('id', $id)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->with(['bundleWebinars.webinar' => function ($q) {
+                $q->with(['sessions', 'files', 'textLessons']);
+            }])
+            ->first();
+
+        if (empty($bundle)) {
+            abort(404);
+        }
+
+        $totalLessons = 0;
+        foreach ($bundle->bundleWebinars as $bw) {
+            $webinar = $bw->webinar;
+            if ($webinar) {
+                $totalLessons += $webinar->sessions->count()
+                    + $webinar->files->count()
+                    + $webinar->textLessons->count();
+            }
+        }
+
+        return view('design_1.panel.bundles.modules.index', [
+            'pageTitle' => $bundle->title,
+            'bundle'    => $bundle,
+            'totalLessons' => $totalLessons,
+        ]);
+    }
+
+    public function moduleCreate(Request $request, $bundleId)
+    {
+        $this->authorize("panel_webinars_create");
+
+        $user = auth()->user();
+
+        if ($user->isUser()) {
+            abort(404);
+        }
+
+        $bundle = \App\Models\Bundle::where('id', $bundleId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->firstOrFail();
+
+        $placeholderTitle = trans('public.new_chapter');
+
+        $webinar = \App\Models\Webinar::create([
+            'teacher_id'  => $user->id,
+            'creator_id'  => $user->id,
+            'slug'        => \App\Models\Webinar::makeSlug($placeholderTitle . ' ' . time()),
+            'type'        => 'course',
+            'private'     => false,
+            'status'      => \App\Models\Webinar::$isDraft,
+            'category_id' => $bundle->category_id,
+            'created_at'  => time(),
+        ]);
+
+        \App\Models\Translation\WebinarTranslation::create([
+            'webinar_id' => $webinar->id,
+            'locale'     => mb_strtolower(app()->getLocale()),
+            'title'      => $placeholderTitle,
+        ]);
+
+        \App\Models\BundleWebinar::create([
+            'bundle_id'  => $bundle->id,
+            'webinar_id' => $webinar->id,
+        ]);
+
+        return redirect('/panel/bundles/' . $bundleId . '/module/' . $webinar->id . '/edit');
+    }
+
+    public function moduleDestroy(Request $request, $bundleId, $courseId)
+    {
+        $this->authorize("panel_webinars_delete");
+
+        $user = auth()->user();
+
+        if ($user->isUser()) {
+            abort(404);
+        }
+
+        $bundle = Bundle::where('id', $bundleId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->firstOrFail();
+
+        $webinar = \App\Models\Webinar::where('id', $courseId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->firstOrFail();
+
+        \App\Models\BundleWebinar::where('bundle_id', $bundle->id)
+            ->where('webinar_id', $webinar->id)
+            ->delete();
+
+        $webinar->delete();
+
+        return response()->json([
+            'code'        => 200,
+            'redirect_to' => '/panel/bundles/' . $bundleId . '/modules',
+        ], 200);
+    }
+
+    public function moduleEdit(Request $request, $bundleId, $courseId)
+    {
+        $this->authorize("panel_webinars_create");
+
+        $user = auth()->user();
+
+        if ($user->isUser()) {
+            abort(404);
+        }
+
+        $bundle = Bundle::where('id', $bundleId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->firstOrFail();
+
+        $webinar = \App\Models\Webinar::where('id', $courseId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->with([
+                'chapters' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                    $query->with([
+                        'chapterItems' => function ($query) {
+                            $query->orderBy('order', 'asc');
+                            $query->with([
+                                'quiz' => function ($query) {
+                                    $query->with([
+                                        'quizQuestions' => function ($query) {
+                                            $query->orderBy('order', 'asc');
+                                        }
+                                    ]);
+                                }
+                            ]);
+                        }
+                    ]);
+                },
+            ])
+            ->firstOrFail();
+
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
+
+        return view('design_1.panel.bundles.module_editor.index', [
+            'pageTitle'    => $webinar->title,
+            'bundle'       => $bundle,
+            'webinar'      => $webinar,
+            'currentStep'  => 4,
+            'stepCount'    => $stepCount,
+            'locale'       => app()->getLocale(),
+            'defaultLocale' => getDefaultLocale(),
+            'userLanguages' => getUserLanguagesLists(),
+        ]);
     }
 }
 

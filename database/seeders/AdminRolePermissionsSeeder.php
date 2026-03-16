@@ -176,10 +176,10 @@ class AdminRolePermissionsSeeder extends Seeder
             'panel_notifications',
             
             'panel_blog',
-            'panel_blog_create',
-            'panel_blog_edit',
-            'panel_blog_delete',
-            'panel_blog_lists',
+            'panel_blog_new_article',
+            'panel_blog_my_articles',
+            'panel_blog_delete_article',
+            // 'panel_blog_lists', // legacy only
             'panel_blog_comments',
             
             'panel_ai_contents',

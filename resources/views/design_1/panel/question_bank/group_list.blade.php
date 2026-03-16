@@ -141,7 +141,12 @@
         </div>
 
         {{-- Pagination --}}
-        {{ $groups->appends(request()->query())->links() }}
+        <div class="d-flex align-items-center justify-content-between mt-8 px-4">
+            <p class="font-14 text-gray-500 mb-0">
+                Showing {{ $groups->firstItem() }} - {{ $groups->lastItem() }} of {{ $groups->total() }} groups
+            </p>
+            {{ $groups->appends(request()->query())->links() }}
+        </div>
     @else
         {{-- Empty State --}}
         <div class="bg-white p-40 rounded-24 text-center">
@@ -164,5 +169,9 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     transform: translateY(-2px);
 }
+.pagination { margin-bottom: 0; }
+.pagination .page-item .page-link { border-radius: 8px; margin: 0 2px; color: #1a3a5c; border-color: #e5e7eb; }
+.pagination .page-item.active .page-link { background-color: #1a3a5c; border-color: #1a3a5c; color: #fff; }
+.pagination .page-item.disabled .page-link { color: #adb5bd; }
 </style>
 @endsection

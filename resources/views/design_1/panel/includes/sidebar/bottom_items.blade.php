@@ -1,9 +1,17 @@
-@php $pinnedSections = ($authUser->isAdmin() || $authUser->isTeacher()) ? [] : ['communications']; @endphp
+@php
+if ($authUser->isUser() || $authUser->isStudent()) {
+    $pinnedSections = ['support']; // Students/Users: only Support pinned at bottom
+} else {
+    $pinnedSections = array_merge(($authUser->isAdmin() || $authUser->isTeacher()) ? [] : ['communications'], ['support']);
+}
+@endphp
 @foreach(\App\Mixins\Panel\SidebarItems::getItems() as $sidebarSection => $sidebarMenus)
     @if(!in_array($sidebarSection, $pinnedSections)) @continue @endif
     @if(!empty($sidebarMenus) and count($sidebarMenus))
         <div class="mt-16">
+            @if($sidebarSection !== 'support')
             <span class="sidebar-section-title d-block font-12 font-weight-bold text-gray-400 text-uppercase pl-32 pr-20 mb-8">{{ trans("update.{$sidebarSection}") }}</span>
+            @endif
 
             @foreach($sidebarMenus as $sidebarMenuName => $sidebarMenu)
                 @php

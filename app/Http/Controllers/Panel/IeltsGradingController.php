@@ -16,83 +16,120 @@ use Illuminate\Http\Request;
 class IeltsGradingController extends Controller
 {
     /**
-     * Show the list of attempts waiting to be graded.
+     * Show the Grade Tests dashboard for the teacher.
+     * Displays today's graded count, and two queues (alert / normal) for the active skill.
      */
     public function index(Request $request)
     {
         $authUser = auth()->user();
-        
-        // Only teachers can grade
+
         if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization()) {
             abort(403);
         }
-        
-        $status = $request->get('status', 'pending');
-        $testType = $request->get('type', 'all');
-        $skill = $request->get('skill', 'all');
-        
-        $query = IeltsTestAttempt::with(['test', 'user', 'answers.question.section'])
+
+        $skill = in_array($request->get('skill'), ['writing', 'speaking'])
+            ? $request->get('skill')
+            : 'writing';
+
+        // Today's graded count by this teacher for the active skill
+        $todayStart = strtotime(date('Y-m-d') . ' 00:00:00');
+        $todayEnd   = strtotime(date('Y-m-d') . ' 23:59:59');
+
+        if ($skill === 'writing') {
+            $gradedTodayCount = IeltsTestAttempt::where('writing_graded_by', $authUser->id)
+                ->whereBetween('writing_graded_at', [$todayStart, $todayEnd])
+                ->count();
+        } else {
+            $gradedTodayCount = IeltsTestAttempt::where('speaking_graded_by', $authUser->id)
+                ->whereBetween('speaking_graded_at', [$todayStart, $todayEnd])
+                ->count();
+        }
+
+        // Pending (ungraded) attempts for the active skill
+        $query = IeltsTestAttempt::with(['test.webinar', 'user.userMetas'])
             ->where('status', 'completed');
-        
-        // Filter by mock or practice
-        if ($testType === 'mock') {
-            $query->whereHas('test', fn($q) => $q->where('test_type', 'mock'));
-        } elseif ($testType === 'practice') {
-            $query->whereHas('test', fn($q) => $q->where('test_type', 'practice'));
-        }
-        
-        // Show only ungraded or already graded
-        if ($status === 'pending') {
-            $query->where(function($q) {
-                $q->where(function($sub) {
-                    $sub->whereHas('test', fn($t) => $t->where('has_writing', true))
-                        ->whereNull('writing_band');
-                })->orWhere(function($sub) {
-                    $sub->whereHas('test', fn($t) => $t->where('has_speaking', true))
-                        ->whereNull('speaking_band');
-                });
-            });
-        } elseif ($status === 'graded') {
-            $query->whereNotNull('overall_band');
-        }
-        
-        // Filter by skill type
+
         if ($skill === 'writing') {
             $query->whereHas('test', fn($q) => $q->where('has_writing', true))
                   ->whereNull('writing_band');
-        } elseif ($skill === 'speaking') {
+        } else {
             $query->whereHas('test', fn($q) => $q->where('has_speaking', true))
                   ->whereNull('speaking_band');
         }
-        
-        $attempts = $query->orderBy('completed_at', 'desc')->paginate(20);
-        
-        // Count how many are waiting
-        $pendingWriting = IeltsTestAttempt::where('status', 'completed')
-            ->whereHas('test', fn($q) => $q->where('has_writing', true))
-            ->whereNull('writing_band')
-            ->count();
-            
-        $pendingSpeaking = IeltsTestAttempt::where('status', 'completed')
-            ->whereHas('test', fn($q) => $q->where('has_speaking', true))
-            ->whereNull('speaking_band')
-            ->count();
-        
+
+        $pendingAttempts = $query->orderBy('completed_at', 'desc')->get();
+
+        // Split into alert queue (AI score < aim_band) and normal queue (AI score >= aim_band)
+        $alertAttempts  = collect();
+        $normalAttempts = collect();
+
+        foreach ($pendingAttempts as $attempt) {
+            $aimBand = $attempt->user && $attempt->user->userMetas
+                ? optional($attempt->user->userMetas->where('name', 'aim_band')->first())->value
+                : null;
+
+            $aiScore = $skill === 'writing' ? $attempt->writing_score : $attempt->speaking_score;
+
+            $attempt->aim_band_display = $aimBand;
+            $attempt->ai_score_display = $aiScore;
+
+            if ($aimBand !== null && $aiScore !== null && (float) $aiScore < (float) $aimBand) {
+                $alertAttempts->push($attempt);
+            } else {
+                $normalAttempts->push($attempt);
+            }
+        }
+
         return view('design_1.panel.ielts_grading.index', [
-            'pageTitle' => trans('update.ielts_grading'),
-            'attempts' => $attempts,
-            'pendingWriting' => $pendingWriting,
-            'pendingSpeaking' => $pendingSpeaking,
-            'currentStatus' => $status,
-            'currentType' => $testType,
-            'currentSkill' => $skill,
+            'pageTitle'        => 'Grade Tests',
+            'skill'            => $skill,
+            'gradedTodayCount' => $gradedTodayCount,
+            'alertAttempts'    => $alertAttempts,
+            'normalAttempts'   => $normalAttempts,
+        ]);
+    }
+
+    /**
+     * Show the list of attempts already graded by the current teacher.
+     */
+    public function graded(Request $request)
+    {
+        $authUser = auth()->user();
+
+        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization()) {
+            abort(403);
+        }
+
+        $skill = in_array($request->get('skill'), ['writing', 'speaking'])
+            ? $request->get('skill')
+            : 'writing';
+
+        $query = IeltsTestAttempt::with(['test.webinar', 'user'])
+            ->where('status', 'completed');
+
+        if ($skill === 'writing') {
+            $query->where('writing_graded_by', $authUser->id)
+                  ->whereNotNull('writing_band')
+                  ->orderByDesc('writing_graded_at');
+        } else {
+            $query->where('speaking_graded_by', $authUser->id)
+                  ->whereNotNull('speaking_band')
+                  ->orderByDesc('speaking_graded_at');
+        }
+
+        $attempts = $query->paginate(20);
+
+        return view('design_1.panel.ielts_grading.graded', [
+            'pageTitle' => 'Danh sách đã chấm',
+            'skill'     => $skill,
+            'attempts'  => $attempts,
         ]);
     }
     
     /**
      * Open grading form for one student's attempt.
      */
-    public function grade($attemptId, Request $request)
+    public function grade($attemptId, Request $request, $skill = null)
     {
         $authUser = auth()->user();
         
@@ -102,13 +139,17 @@ class IeltsGradingController extends Controller
         
         $attempt = IeltsTestAttempt::with([
             'test.sections.questions',
-            'user',
+            'test.sections.questionGroup',
+            'test.webinar',
+            'user.userMetas',
             'answers.question.section'
         ])->findOrFail($attemptId);
         
-        // Default: grade writing first, then speaking
-        $skill = $request->get('skill');
+        // Skill comes from route segment /{skill?} or query string ?skill=
         if (!$skill) {
+            $skill = $request->get('skill');
+        }
+        if (!$skill || !in_array($skill, ['writing', 'speaking'])) {
             if ($attempt->test->has_writing && !$attempt->writing_band) {
                 $skill = 'writing';
             } elseif ($attempt->test->has_speaking && !$attempt->speaking_band) {
@@ -125,17 +166,64 @@ class IeltsGradingController extends Controller
         
         $sections = $attempt->test->sections()
             ->where('skill', $skill)
+            ->with('questionGroup')
             ->orderBy('sort_order')
             ->get();
+
+        // Student aim band
+        $aimBand = optional(
+            $attempt->user && $attempt->user->userMetas
+                ? $attempt->user->userMetas->where('name', 'aim_band')->first()
+                : null
+        )->value;
+
+        // AI overall band
+        $aiOverallBand = $skill === 'writing' ? $attempt->writing_score : $attempt->speaking_score;
+
+        // AI per-criteria scores — stored as numeric array on each answer
+        // Writing: [0]=task_achievement [1]=coherence [2]=lexical [3]=grammar
+        // Speaking: [0]=fluency [1]=lexical [2]=grammar [3]=pronunciation
+        $aiCriteriaAccum = [];
+        $aiAnswerFeedback = [];
+        foreach ($answers as $ans) {
+            $bands = $skill === 'writing' ? ($ans->writing_bands ?? []) : ($ans->speaking_bands ?? []);
+            if (is_array($bands) && count($bands) === 4) {
+                if ($skill === 'writing') {
+                    $keys = ['task_achievement', 'coherence', 'lexical', 'grammar'];
+                } else {
+                    $keys = ['fluency', 'lexical', 'grammar', 'pronunciation'];
+                }
+                foreach ($keys as $i => $key) {
+                    $aiCriteriaAccum[$key][] = (float) $bands[$i];
+                }
+            }
+        }
+        // Average per criterion across all answers (usually 1 for writing, may be multiple for speaking)
+        $aiCriteria = [];
+        foreach ($aiCriteriaAccum as $key => $vals) {
+            $aiCriteria[$key] = count($vals) ? round(array_sum($vals) / count($vals) * 2) / 2 : null;
+        }
+
+        // Teacher's existing criteria + feedback + band
+        $teacherCriteria  = ($skill === 'writing' ? $attempt->writing_criteria  : $attempt->speaking_criteria)  ?? [];
+        $existingFeedback = ($skill === 'writing' ? $attempt->writing_feedback  : $attempt->speaking_feedback)  ?? '';
+        $existingBand     = ($skill === 'writing' ? $attempt->writing_band      : $attempt->speaking_band)      ?? '';
         
         return view('design_1.panel.ielts_grading.grade', [
-            'pageTitle' => trans('update.grade') . ' ' . trans('update.' . $skill) . ' - ' . $attempt->user->full_name,
-            'attempt' => $attempt,
-            'test' => $attempt->test,
-            'user' => $attempt->user,
-            'skill' => $skill,
-            'answers' => $answers,
-            'sections' => $sections,
+            'pageTitle'       => 'Grade ' . ucfirst($skill) . ' — ' . $attempt->user->full_name,
+            'attempt'         => $attempt,
+            'test'            => $attempt->test,
+            'user'            => $attempt->user,
+            'skill'           => $skill,
+            'answers'         => $answers,
+            'sections'        => $sections,
+            'aimBand'         => $aimBand,
+            'aiOverallBand'   => $aiOverallBand,
+            'aiCriteria'      => $aiCriteria,
+            'aiAnswerFeedback'=> $aiAnswerFeedback,
+            'teacherCriteria' => $teacherCriteria,
+            'existingFeedback'=> $existingFeedback,
+            'existingBand'    => $existingBand,
         ]);
     }
     
@@ -153,34 +241,97 @@ class IeltsGradingController extends Controller
         $attempt = IeltsTestAttempt::findOrFail($attemptId);
         
         $validated = $request->validate([
-            'skill' => 'required|in:writing,speaking',
-            'band_score' => 'required|numeric|min:0|max:9',
-            'feedback' => 'nullable|string|max:5000',
-            'criteria_scores' => 'nullable|array',
-            'criteria_scores.*' => 'nullable|numeric|min:0|max:9',
+            'skill'              => 'required|in:writing,speaking',
+            'band_score'         => 'nullable|numeric|min:0|max:9',
+            'feedback'           => 'nullable|string|max:50000',
+            'criteria_scores'    => 'nullable|array',
+            'section_feedback'   => 'nullable|array',
+            'section_feedback.*' => 'nullable|string|max:50000',
+            'annotated_essays'   => 'nullable|string',
         ]);
-        
-        $skill = $validated['skill'];
-        $bandScore = $validated['band_score'];
+
+        $skill    = $validated['skill'];
         $feedback = $validated['feedback'] ?? '';
         $criteria = $validated['criteria_scores'] ?? [];
-        
-        if ($skill === 'writing') {
-            $attempt->writing_band = $bandScore;
-            $attempt->writing_feedback = $feedback;
-            $attempt->writing_graded_by = $authUser->id;
-            $attempt->writing_graded_at = time();
-            if (!empty($criteria)) {
-                $attempt->writing_criteria = $criteria;
+
+        /* ── Speaking: per-section criteria → flat averages + nested sections store ── */
+        if ($skill === 'speaking') {
+            $spKeys          = ['fluency', 'lexical', 'grammar', 'pronunciation'];
+            $sectionFeedback = $validated['section_feedback'] ?? [];
+            $sectionsStore   = [];
+            $perCritAccum    = array_fill_keys($spKeys, []);
+
+            foreach ($criteria as $sectionId => $sectionScores) {
+                if (!is_array($sectionScores)) { continue; }
+                $sid = (string)$sectionId;
+                $secEntry = [];
+                foreach ($spKeys as $k) {
+                    $val = isset($sectionScores[$k]) && is_numeric($sectionScores[$k])
+                        ? (float)$sectionScores[$k]
+                        : null;
+                    $secEntry[$k] = $val;
+                    if ($val !== null) { $perCritAccum[$k][] = $val; }
+                }
+                $secEntry['feedback'] = $sectionFeedback[$sid] ?? '';
+                $sectionsStore[$sid]  = $secEntry;
+            }
+
+            // Flat averages (for backward compat with review.blade.php)
+            $flatCriteria = [];
+            foreach ($spKeys as $k) {
+                $vals = $perCritAccum[$k];
+                $flatCriteria[$k] = !empty($vals)
+                    ? round(array_sum($vals) / count($vals) * 2) / 2
+                    : null;
+            }
+            $flatCriteria['sections'] = $sectionsStore;
+            $criteria = $flatCriteria;
+
+            // Auto-derive band from criteria average if not provided
+            $allVals = array_filter(array_map(fn ($k) => $flatCriteria[$k], $spKeys), fn ($v) => $v !== null);
+            $bandScore = !empty($allVals)
+                ? round(array_sum($allVals) / count($allVals) * 2) / 2
+                : ($validated['band_score'] ?? 0);
+
+            // Build concatenated feedback from all sections
+            if (empty($feedback)) {
+                $parts = [];
+                foreach ($sectionsStore as $sf) {
+                    if (!empty($sf['feedback'])) { $parts[] = strip_tags($sf['feedback']); }
+                }
+                $feedback = implode("\n\n", $parts);
             }
         } else {
-            $attempt->speaking_band = $bandScore;
-            $attempt->speaking_feedback = $feedback;
+            $bandScore = $validated['band_score'] ?? 0;
+        }
+
+        // Merge annotated essays into criteria array (keyed by answer id)
+        $rawAnnotated = $request->input('annotated_essays');
+        if ($rawAnnotated) {
+            $decoded = json_decode($rawAnnotated, true);
+            if (is_array($decoded)) {
+                $criteria['annotated_essays'] = $decoded;
+            }
+        } else {
+            // Preserve existing annotations if none submitted
+            $existingCriteria = $skill === 'writing' ? ($attempt->writing_criteria ?? []) : ($attempt->speaking_criteria ?? []);
+            if (!empty($existingCriteria['annotated_essays'])) {
+                $criteria['annotated_essays'] = $existingCriteria['annotated_essays'];
+            }
+        }
+        
+        if ($skill === 'writing') {
+            $attempt->writing_band      = $bandScore;
+            $attempt->writing_feedback  = $feedback;
+            $attempt->writing_graded_by = $authUser->id;
+            $attempt->writing_graded_at = time();
+            $attempt->writing_criteria  = $criteria;
+        } else {
+            $attempt->speaking_band      = $bandScore;
+            $attempt->speaking_feedback  = $feedback;
             $attempt->speaking_graded_by = $authUser->id;
             $attempt->speaking_graded_at = time();
-            if (!empty($criteria)) {
-                $attempt->speaking_criteria = $criteria;
-            }
+            $attempt->speaking_criteria  = $criteria;
         }
         
         // Recalculate overall band if all sections done
@@ -278,5 +429,45 @@ class IeltsGradingController extends Controller
             'question' => $answer->question,
             'section' => $answer->question->section,
         ]);
+    }
+
+    /**
+     * Submit a student's star rating for a teacher's grading of their attempt.
+     */
+    public function submitRating(Request $request)
+    {
+        $validated = $request->validate([
+            'attempt_id'    => 'required|integer|exists:ielts_test_attempts,id',
+            'instructor_id' => 'required|integer|exists:users,id',
+            'skill'         => 'required|in:writing,speaking',
+            'rating'        => 'required|integer|min:1|max:5',
+        ]);
+
+        $studentId = auth()->id();
+
+        // Verify the attempt belongs to this student
+        $attempt = IeltsTestAttempt::where('id', $validated['attempt_id'])
+            ->where('user_id', $studentId)
+            ->firstOrFail();
+
+        // Verify the instructor actually graded this skill on this attempt
+        $gradedByField = $validated['skill'] === 'writing' ? 'writing_graded_by' : 'speaking_graded_by';
+        if ((int) $attempt->{$gradedByField} !== (int) $validated['instructor_id']) {
+            return response()->json(['error' => 'Invalid grader for this attempt.'], 422);
+        }
+
+        \App\Models\IeltsGradingRating::updateOrCreate(
+            [
+                'attempt_id' => $validated['attempt_id'],
+                'student_id' => $studentId,
+                'skill'      => $validated['skill'],
+            ],
+            [
+                'instructor_id' => $validated['instructor_id'],
+                'rating'        => $validated['rating'],
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 }
