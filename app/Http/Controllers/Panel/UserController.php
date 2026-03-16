@@ -22,9 +22,15 @@ use App\Models\UserOccupation;
 use App\Models\UserSelectedBank;
 use App\Models\UserSelectedBankSpecification;
 use App\Models\CoursePersonalNote;
+use App\Models\IeltsGradingRating;
+use App\Models\IeltsTestAttempt;
+use App\Models\Sale;
+use App\Models\SupportConversation;
 use App\Models\UserZoomApi;
 use App\Models\Webinar;
+use App\Models\WebinarReview;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -39,6 +45,14 @@ class UserController extends Controller
         $this->authorize("panel_others_profile_setting");
 
         $user = auth()->user();
+
+        if ($user->isTeacher()) {
+            return view('design_1.panel.settings.teacher_profile', [
+                'pageTitle'   => 'My Profile',
+                'user'        => $user,
+                'teacherData' => $this->getTeacherProfileData($user),
+            ]);
+        }
 
         if ($user->isUser() || $user->isStudent()) {
             // Load user metas onto $user so $user->gender etc. are populated
@@ -702,6 +716,287 @@ class UserController extends Controller
         }
 
         return response()->json([], 422);
+    }
+
+    /* =========================================================
+     *  TEACHER PROFILE  —  public actions (manager only)
+     * ========================================================= */
+
+    public function updateTeacherKpi(Request $request, $id)
+    {
+        abort_unless(auth()->user()->isManager() || auth()->user()->isAdmin(), 403);
+
+        $request->validate(['kpi_target' => 'required|integer|min:0|max:9999']);
+
+        UserMeta::updateOrCreate(
+            ['user_id' => $id, 'name' => 'teacher_kpi_target'],
+            ['value'   => $request->kpi_target]
+        );
+
+        return redirect()->back()->with('success', 'KPI đã được cập nhật.');
+    }
+
+    public function updateTeacherLevel(Request $request, $id)
+    {
+        abort_unless(auth()->user()->isManager() || auth()->user()->isAdmin(), 403);
+
+        $allowed = ['Junior', 'Mid', 'Senior', 'Expert', 'Master'];
+        $request->validate(['teacher_level' => 'required|in:' . implode(',', $allowed)]);
+
+        UserMeta::updateOrCreate(
+            ['user_id' => $id, 'name' => 'teacher_level'],
+            ['value'   => $request->teacher_level]
+        );
+
+        return redirect()->back()->with('success', 'Level đã được cập nhật.');
+    }
+
+    /* =========================================================
+     *  TEACHER PROFILE  —  private data helpers
+     * ========================================================= */
+
+    private function getTeacherProfileData(\App\User $user): array
+    {
+        $now        = Carbon::now();
+        $monthStart = $now->copy()->startOfMonth()->timestamp;
+        $monthEnd   = $now->copy()->endOfMonth()->timestamp;
+
+        // Teacher's webinar IDs
+        $webinarIds = Webinar::where('teacher_id', $user->id)->pluck('id')->toArray();
+
+        // ── Monthly stats ─────────────────────────────────────────────
+        $monthlyWriting = IeltsTestAttempt::where('writing_graded_by', $user->id)
+            ->whereBetween('writing_graded_at', [$monthStart, $monthEnd])
+            ->count();
+
+        $monthlySpeaking = IeltsTestAttempt::where('speaking_graded_by', $user->id)
+            ->whereBetween('speaking_graded_at', [$monthStart, $monthEnd])
+            ->count();
+
+        $monthlyStudents = 0;
+        if (!empty($webinarIds)) {
+            $monthlyStudents = Sale::whereIn('webinar_id', $webinarIds)
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->distinct('buyer_id')
+                ->count('buyer_id');
+        }
+
+        // ── KPI ───────────────────────────────────────────────────────
+        $kpiTarget  = (int)(UserMeta::where('user_id', $user->id)
+            ->where('name', 'teacher_kpi_target')->value('value') ?? 0);
+        $kpiCurrent = $monthlyWriting + $monthlySpeaking;
+
+        // ── Teacher level ─────────────────────────────────────────────
+        $teacherLevel = UserMeta::where('user_id', $user->id)
+            ->where('name', 'teacher_level')->value('value') ?? 'Junior';
+
+        // ── Rating ────────────────────────────────────────────────────
+        $webinarReviewCount = 0;
+        $webinarReviewSum   = 0.0;
+        if (!empty($webinarIds)) {
+            $rq = WebinarReview::whereIn('webinar_id', $webinarIds)->where('status', 'active');
+            $webinarReviewCount = (int)$rq->count();
+            $webinarReviewSum   = $webinarReviewCount > 0 ? (float)$rq->sum('rates') : 0.0;
+        }
+
+        $gradingRatingCount = (int)IeltsGradingRating::where('instructor_id', $user->id)->count();
+        $gradingRatingSum   = $gradingRatingCount > 0
+            ? (float)IeltsGradingRating::where('instructor_id', $user->id)->sum('rating')
+            : 0.0;
+
+        $totalRatings = $webinarReviewCount + $gradingRatingCount;
+        $avgRating    = $totalRatings > 0
+            ? min(round(($webinarReviewSum + $gradingRatingSum) / $totalRatings, 1), 5)
+            : 0.0;
+
+        // ── Team IDs for comparison ───────────────────────────────────
+        $teamIds = \App\User::where('role_name', 'teacher')->pluck('id')->toArray();
+
+        // ── Chart + metric data for all periods ───────────────────────
+        $chartData  = [];
+        $metricData = [];
+
+        foreach (['week', 'month', 'year'] as $period) {
+            $ranges = $this->buildPeriodRanges($period);
+
+            $chartData[$period]  = [];
+            $metricData[$period] = [];
+
+            foreach (['response_time', 'grading_wait', 'feedback_count', 'improvement'] as $metric) {
+                $teacherVals = [];
+                $teamVals    = [];
+
+                foreach ($ranges as $range) {
+                    [$rs, $re] = [$range['start'], $range['end']];
+
+                    switch ($metric) {
+                        case 'response_time':
+                            $teacherVals[] = $this->tpAvgResponseTime($user->id, $rs, $re);
+                            $teamVals[]    = $this->tpAvgResponseTime(null, $rs, $re, $teamIds);
+                            break;
+                        case 'grading_wait':
+                            $teacherVals[] = $this->tpAvgGradingWait($user->id, $rs, $re);
+                            $teamVals[]    = $this->tpAvgGradingWait(null, $rs, $re, $teamIds);
+                            break;
+                        case 'feedback_count':
+                            $teacherVals[] = $this->tpAvgFeedbackCount($user->id, $rs, $re);
+                            $teamVals[]    = $this->tpAvgFeedbackCount(null, $rs, $re, $teamIds);
+                            break;
+                        case 'improvement':
+                            $teacherVals[] = $this->tpAvgImprovement($user->id, $rs, $re);
+                            $teamVals[]    = $this->tpAvgImprovement(null, $rs, $re, $teamIds);
+                            break;
+                    }
+                }
+
+                $chartData[$period][$metric] = [
+                    'labels'  => array_column($ranges, 'label'),
+                    'teacher' => $teacherVals,
+                    'team'    => $teamVals,
+                ];
+            }
+
+            // Scalar metric values: use the MOST RECENT (last) range in the period
+            $last = end($ranges);
+            [$ls, $le] = [$last['start'], $last['end']];
+
+            $metricData[$period] = [
+                'response_time'  => $this->tpAvgResponseTime($user->id, $ls, $le),
+                'grading_wait'   => $this->tpAvgGradingWait($user->id, $ls, $le),
+                'feedback_count' => $this->tpAvgFeedbackCount($user->id, $ls, $le),
+                'improvement'    => $this->tpAvgImprovement($user->id, $ls, $le),
+            ];
+        }
+
+        return [
+            'kpiTarget'        => $kpiTarget,
+            'kpiCurrent'       => $kpiCurrent,
+            'monthlyStudents'  => $monthlyStudents,
+            'monthlyReferrals' => 0,
+            'monthlySpeaking'  => $monthlySpeaking,
+            'monthlyWriting'   => $monthlyWriting,
+            'teacherLevel'     => $teacherLevel,
+            'avgRating'        => $avgRating,
+            'reviewCount'      => $totalRatings,
+            'chartData'        => $chartData,
+            'metricData'       => $metricData,
+        ];
+    }
+
+    /**
+     * Returns array of { label, start (unix), end (unix) } for each data point in the given period.
+     */
+    private function buildPeriodRanges(string $period): array
+    {
+        $ranges = [];
+        $now    = Carbon::now();
+
+        if ($period === 'week') {
+            for ($i = 4; $i >= 0; $i--) {
+                $s = $now->copy()->subWeeks($i)->startOfWeek();
+                $e = $now->copy()->subWeeks($i)->endOfWeek();
+                $ranges[] = [
+                    'label' => $s->format('j/n') . '–' . $e->format('j/n'),
+                    'start' => $s->timestamp,
+                    'end'   => $e->timestamp,
+                ];
+            }
+        } elseif ($period === 'month') {
+            for ($i = 5; $i >= 0; $i--) {
+                $s = $now->copy()->subMonths($i)->startOfMonth();
+                $e = $now->copy()->subMonths($i)->endOfMonth();
+                $ranges[] = [
+                    'label' => $s->translatedFormat('M Y'),
+                    'start' => $s->timestamp,
+                    'end'   => $e->timestamp,
+                ];
+            }
+        } else {
+            for ($i = 3; $i >= 0; $i--) {
+                $s = $now->copy()->subYears($i)->startOfYear();
+                $e = $now->copy()->subYears($i)->endOfYear();
+                $ranges[] = [
+                    'label' => (string)$s->year,
+                    'start' => $s->timestamp,
+                    'end'   => $e->timestamp,
+                ];
+            }
+        }
+
+        return $ranges;
+    }
+
+    /** Avg response time in minutes (teacher replies to support tickets). */
+    private function tpAvgResponseTime(?int $teacherId, int $start, int $end, array $teamIds = []): float
+    {
+        $q = DB::table('support_conversations as sc')
+            ->join('supports as s', 's.id', '=', 'sc.support_id')
+            ->whereBetween('sc.created_at', [$start, $end])
+            ->whereRaw('sc.created_at > s.created_at');
+
+        if ($teacherId !== null) {
+            $q->where('sc.sender_id', $teacherId);
+        } elseif (!empty($teamIds)) {
+            $q->whereIn('sc.sender_id', $teamIds);
+        }
+
+        $avgSec = $q->avg(DB::raw('sc.created_at - s.created_at'));
+        return $avgSec ? round($avgSec / 60, 1) : 0.0;
+    }
+
+    /** Avg grading wait in hours (writing_graded_at − completed_at). */
+    private function tpAvgGradingWait(?int $teacherId, int $start, int $end, array $teamIds = []): float
+    {
+        $q = IeltsTestAttempt::whereNotNull('completed_at')
+            ->whereNotNull('writing_graded_at')
+            ->whereRaw('writing_graded_at > completed_at')
+            ->whereBetween('writing_graded_at', [$start, $end]);
+
+        if ($teacherId !== null) {
+            $q->where('writing_graded_by', $teacherId);
+        } elseif (!empty($teamIds)) {
+            $q->whereIn('writing_graded_by', $teamIds);
+        }
+
+        $avgSec = $q->avg(DB::raw('writing_graded_at - completed_at'));
+        return $avgSec ? round($avgSec / 3600, 1) : 0.0;
+    }
+
+    /** Avg number of writing_criteria items per graded attempt. */
+    private function tpAvgFeedbackCount(?int $teacherId, int $start, int $end, array $teamIds = []): float
+    {
+        $q = IeltsTestAttempt::whereNotNull('writing_criteria')
+            ->whereBetween('writing_graded_at', [$start, $end]);
+
+        if ($teacherId !== null) {
+            $q->where('writing_graded_by', $teacherId);
+        } elseif (!empty($teamIds)) {
+            $q->whereIn('writing_graded_by', $teamIds);
+        }
+
+        $attempts = $q->pluck('writing_criteria');
+        if ($attempts->isEmpty()) {
+            return 0.0;
+        }
+
+        $total = $attempts->sum(fn($c) => is_array($c) ? count($c) : 0);
+        return round($total / $attempts->count(), 1);
+    }
+
+    /** Avg writing band score for teacher's graded attempts (proxy for student improvement). */
+    private function tpAvgImprovement(?int $teacherId, int $start, int $end, array $teamIds = []): float
+    {
+        $q = IeltsTestAttempt::whereNotNull('writing_band')
+            ->whereBetween('writing_graded_at', [$start, $end]);
+
+        if ($teacherId !== null) {
+            $q->where('writing_graded_by', $teacherId);
+        } elseif (!empty($teamIds)) {
+            $q->whereIn('writing_graded_by', $teamIds);
+        }
+
+        $avg = $q->avg('writing_band');
+        return $avg ? round($avg, 2) : 0.0;
     }
 
 }

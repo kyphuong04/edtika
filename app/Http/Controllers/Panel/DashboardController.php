@@ -363,6 +363,13 @@ class DashboardController extends Controller
             // Open Meetings
             $data['openMeetings'] = $this->getInstructorOpenMeetingsData($user, $userWebinarsIds);
 
+            // ── IELTS Teacher Dashboard blocks ──────────────────────────
+            $data['teacherRating']             = $this->getTeacherAverageRating($user, $userWebinarsIds);
+            $data['teacherGradingChart']       = $this->getTeacherGradingChartData($user);
+            $data['teacherSpeakingQueue']      = $this->getTeacherSpeakingQueue($user);
+            $data['teacherWritingQueue']       = $this->getTeacherWritingQueue($user);
+            $data['teacherStudentsSupport']    = $this->getTeacherStudentsNeedingSupport($user, $userWebinarsIds);
+
         } elseif ($user->isAdmin()) {
             // Admin: Show organization-like features
             // Top Instructors

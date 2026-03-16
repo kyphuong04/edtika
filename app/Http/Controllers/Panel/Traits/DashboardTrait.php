@@ -17,8 +17,12 @@ use App\Models\TimeSpentOnCourse;
 use App\Models\UpcomingCourse;
 use App\Models\VisitLog;
 use App\Models\Webinar;
+use App\Models\IeltsTestAttempt;
+use App\Models\IeltsTest;
 use App\Models\WebinarAssignment;
 use App\Models\WebinarAssignmentHistory;
+use App\Models\WebinarReview;
+use App\Models\IeltsGradingRating;
 use App\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -820,6 +824,134 @@ trait DashboardTrait
             'totalActive' => $totalActive,
             'students' => $students,
         ];
+    }
+
+    /***************
+     * | Teacher (IELTS) Data
+     * ***********/
+
+    private function getTeacherAverageRating($user, $userWebinarsIds): array
+    {
+        // Webinar / course reviews
+        $webinarCount = 0;
+        $webinarSum   = 0;
+        if (!empty($userWebinarsIds)) {
+            $rQuery       = WebinarReview::whereIn('webinar_id', $userWebinarsIds)->where('status', 'active');
+            $webinarCount = deepClone($rQuery)->count();
+            $webinarSum   = $webinarCount > 0 ? (float) deepClone($rQuery)->sum('rates') : 0;
+        }
+
+        // IELTS grading ratings submitted by students
+        $gradingCount = IeltsGradingRating::where('instructor_id', $user->id)->count();
+        $gradingSum   = $gradingCount > 0
+            ? (float) IeltsGradingRating::where('instructor_id', $user->id)->sum('rating')
+            : 0;
+
+        $totalCount = $webinarCount + $gradingCount;
+        $avgRating  = $totalCount > 0 ? round(($webinarSum + $gradingSum) / $totalCount, 1) : 0;
+
+        return [
+            'avgRating'   => min($avgRating, 5),
+            'reviewCount' => $totalCount,
+        ];
+    }
+
+    private function getTeacherGradingChartData($user): array
+    {
+        $labels       = [];
+        $writingData  = [];
+        $speakingData = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $day        = Carbon::now()->subDays($i);
+            $labels[]   = $day->format('j/n');
+            $dayStart   = $day->copy()->startOfDay()->timestamp;
+            $dayEnd     = $day->copy()->endOfDay()->timestamp;
+
+            $writingData[]  = IeltsTestAttempt::where('writing_graded_by', $user->id)
+                ->whereBetween('writing_graded_at', [$dayStart, $dayEnd])
+                ->count();
+
+            $speakingData[] = IeltsTestAttempt::where('speaking_graded_by', $user->id)
+                ->whereBetween('speaking_graded_at', [$dayStart, $dayEnd])
+                ->count();
+        }
+
+        return [
+            'labels'       => $labels,
+            'writingData'  => $writingData,
+            'speakingData' => $speakingData,
+        ];
+    }
+
+    private function getTeacherSpeakingQueue($user)
+    {
+        return IeltsTestAttempt::where('status', 'completed')
+            ->whereNull('speaking_band')
+            ->whereHas('test', fn($q) => $q->where('has_speaking', true))
+            ->with('test')
+            ->select('test_id', DB::raw('COUNT(*) as pending_count'), DB::raw('MAX(completed_at) as latest_at'))
+            ->groupBy('test_id')
+            ->orderBy('latest_at', 'desc')
+            ->limit(6)
+            ->get();
+    }
+
+    private function getTeacherWritingQueue($user)
+    {
+        return IeltsTestAttempt::where('status', 'completed')
+            ->whereNull('writing_band')
+            ->whereHas('test', fn($q) => $q->where('has_writing', true))
+            ->with('test')
+            ->select('test_id', DB::raw('COUNT(*) as pending_count'), DB::raw('MAX(completed_at) as latest_at'))
+            ->groupBy('test_id')
+            ->orderBy('latest_at', 'desc')
+            ->limit(6)
+            ->get();
+    }
+
+    private function getTeacherStudentsNeedingSupport($user, $userWebinarsIds)
+    {
+        // 1. Students who failed quizzes in teacher's courses
+        $failedQuizItems = QuizzesResult::where('status', QuizzesResult::$failed)
+            ->whereHas('quiz', fn($q) => $q->whereIn('webinar_id', $userWebinarsIds))
+            ->with(['user', 'quiz'])
+            ->orderBy('created_at', 'desc')
+            ->limit(6)
+            ->get()
+            ->filter(fn($r) => !empty($r->user))
+            ->map(fn($r) => [
+                'user'   => $r->user,
+                'reason' => 'quiz_failed',
+                'detail' => $r->quiz->title ?? '',
+            ]);
+
+        // 2. Students who completed IELTS test with overall_band < 5.0
+        $lowBandItems = IeltsTestAttempt::whereNotNull('completed_at')
+            ->whereNotNull('overall_band')
+            ->where('overall_band', '<', 5.0)
+            ->with(['user', 'test'])
+            ->orderBy('completed_at', 'desc')
+            ->limit(6)
+            ->get()
+            ->filter(fn($a) => !empty($a->user))
+            ->map(fn($a) => [
+                'user'   => $a->user,
+                'reason' => 'low_band',
+                'detail' => number_format($a->overall_band, 1),
+            ]);
+
+        $seen     = [];
+        $combined = $failedQuizItems->concat($lowBandItems)->filter(function ($item) use (&$seen) {
+            $uid = $item['user']->id ?? null;
+            if (!$uid || isset($seen[$uid])) {
+                return false;
+            }
+            $seen[$uid] = true;
+            return true;
+        });
+
+        return $combined->take(6)->values();
     }
 
 }

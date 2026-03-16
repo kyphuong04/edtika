@@ -345,6 +345,63 @@ class WebinarController extends Controller
         return view('design_1.panel.webinars.create.index', $data);
     }
 
+    public function moduleEditorView(Request $request, $id)
+    {
+        $this->authorize("panel_webinars_create");
+
+        $user = auth()->user();
+
+        if (!$user->isTeacher() and !$user->isAdmin() and $user->role_name !== 'admin') {
+            abort(404);
+        }
+
+        $locale    = $request->get('locale', app()->getLocale());
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
+
+        $webinar = Webinar::where('id', $id)
+            ->where(function ($q) use ($user) {
+                $q->where('creator_id', $user->id)->orWhere('teacher_id', $user->id);
+            })
+            ->with([
+                'chapters' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                    $query->with([
+                        'chapterItems' => function ($query) {
+                            $query->orderBy('order', 'asc');
+                            $query->with([
+                                'quiz' => function ($query) {
+                                    $query->with([
+                                        'quizQuestions' => function ($query) {
+                                            $query->orderBy('order', 'asc');
+                                        }
+                                    ]);
+                                }
+                            ]);
+                        }
+                    ]);
+                },
+            ])
+            ->first();
+
+        if (empty($webinar)) {
+            abort(404);
+        }
+
+        $bundleWebinar = \App\Models\BundleWebinar::where('webinar_id', $webinar->id)->first();
+        $bundle        = $bundleWebinar ? $bundleWebinar->bundle : null;
+
+        return view('design_1.panel.bundles.module_editor.index', [
+            'pageTitle'     => $webinar->title,
+            'bundle'        => $bundle,
+            'webinar'       => $webinar,
+            'currentStep'   => 4,
+            'stepCount'     => $stepCount,
+            'locale'        => mb_strtolower($locale),
+            'defaultLocale' => getDefaultLocale(),
+            'userLanguages' => getUserLanguagesLists(),
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         $this->authorize("panel_webinars_create");
@@ -532,7 +589,7 @@ class WebinarController extends Controller
                 'title' => $data['title'],
                 'summary' => $data['summary'] ?? null,
                 'description' => $data['description'],
-                'seo_description' => $data['seo_description'],
+                'seo_description' => $data['seo_description'] ?? null,
             ]);
         }
 
