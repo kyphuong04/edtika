@@ -1,3 +1,40 @@
+@if($authUser->isTeacher())
+
+{{-- Main row: left 2/3 holds welcome/chart/queues, right 1/3 holds support + messages --}}
+<div class="row gx-16">
+    {{-- Left block (2/3) --}}
+    <div class="col-12 col-xl-8">
+        {{-- Welcome bar --}}
+        @include('design_1.panel.dashboard.instructor.includes.teacher_welcome_bar')
+
+        {{-- Stacked bar chart --}}
+        @include('design_1.panel.dashboard.instructor.includes.grading_chart')
+
+        {{-- Speaking + Writing queues --}}
+        <div class="row gx-16">
+            <div class="col-12 col-md-6">
+                @include('design_1.panel.dashboard.instructor.includes.speaking_queue')
+            </div>
+            <div class="col-12 col-md-6">
+                @include('design_1.panel.dashboard.instructor.includes.writing_queue')
+            </div>
+        </div>
+    </div>
+
+    {{-- Right block (1/3) --}}
+    <div class="col-12 col-xl-4">
+        {{-- Students needing support --}}
+        @include('design_1.panel.dashboard.instructor.includes.students_needing_support')
+
+        {{-- Messages (support tickets) --}}
+        @include('design_1.panel.dashboard.instructor.includes.teacher_messages')
+    </div>
+</div>
+
+@else
+{{-- ════════════════════════════════════════════════════════════
+     ORIGINAL ADMIN / ORGANIZATION DASHBOARD
+══════════════════════════════════════════════════════════════ --}}
 <div class="row">
     <div class="col-12 col-lg-6">
         {{-- Hello Box --}}
@@ -38,25 +75,14 @@
         {{-- Events Calendar  (No different with Student Dashboard) --}}
         @include('design_1.panel.dashboard.student.includes.events_calendar')
 
-        @if($authUser->isTeacher())
-            {{-- Upcoming Live Sessions --}}
-            @include('design_1.panel.dashboard.instructor.includes.upcoming_live_sessions')
+        {{-- Organization --}}
 
-            {{-- Review Student Quizzes --}}
-            @include('design_1.panel.dashboard.instructor.includes.review_student_quizzes')
+        {{-- Top Instructors --}}
+        @include('design_1.panel.dashboard.instructor.includes.top_instructors')
 
-            {{-- Open Meetings --}}
-            @include('design_1.panel.dashboard.instructor.includes.open_meetings')
+        {{-- Top Students --}}
+        @include('design_1.panel.dashboard.instructor.includes.top_students')
 
-        @else
-            {{-- Organization --}}
-
-            {{-- Top Instructors --}}
-            @include('design_1.panel.dashboard.instructor.includes.top_instructors')
-
-            {{-- Top Students --}}
-            @include('design_1.panel.dashboard.instructor.includes.top_students')
-
-        @endif
     </div>
 </div>
+@endif

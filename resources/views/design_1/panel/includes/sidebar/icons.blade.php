@@ -73,6 +73,9 @@
 @elseif($name == 'logout')
     <x-iconsax-lin-logout class="icons text-danger" width="20px" height="20px"/>
 
+@elseif($name == 'feedback_grading')
+    <x-iconsax-lin-note-favorite class="icons" width="20px" height="20px"/>
+
 @elseif($name == 'events')
     <x-iconsax-lin-calendar-2 class="icons" width="20px" height="20px"/>
 

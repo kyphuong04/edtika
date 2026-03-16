@@ -28,6 +28,18 @@
         <span class="invalid-feedback"></span>
     </div>
 
+    <div class="form-group">
+        <label class="form-group-label">{{ trans('update.band') }}</label>
+        <select name="ajax[chapter][band_range]" class="form-control">
+            @foreach(($bandRanges ?? \App\Models\WebinarChapter::$bandRanges) as $value => $label)
+                <option value="{{ $value }}" {{ (!empty($chapter) && $chapter->band_range === $value) ? 'selected' : '' }}>
+                    {{ $label }}
+                </option>
+            @endforeach
+        </select>
+        <span class="invalid-feedback"></span>
+    </div>
+
     <div class="form-group d-flex align-items-center">
         <div class="custom-switch mr-8">
             <input id="statusSwitch" type="checkbox" name="ajax[chapter][status]" class="custom-control-input" {{ (!empty($chapter) and $chapter->status == \App\Models\WebinarChapter::$chapterActive) ? 'checked' :  '' }}>

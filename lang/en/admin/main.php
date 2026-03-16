@@ -1288,7 +1288,7 @@ return [
 
 'full_advertising_banner' => 'Advertising Position #1',
 'half_advertising_banner' => 'Advertising Position #2',
-'latest_bundles' => 'Course Bundles',
+'latest_bundles' => 'Materials Management',
 'store_products' => 'Store (Marketplace)',
 'become_instructor' => 'Instructor Registration',
 'forum_section' => 'Forum',
@@ -1424,7 +1424,7 @@ return [
 'notification_upcoming_course_published' => 'Upcoming Course Published',
 'notification_upcoming_course_followed' => 'Upcoming Course Followed',
 'notification_cashback_confirmation_notification' => 'Cashback Confirmation Notification',
-'notification_bundles' => 'Bundles',
+'notification_bundles' => 'Materials',
 'notification_bundle_submission' => 'Bundle Submission',
 'notification_bundle_submission_for_admin' => 'Bundle Submission for Admin',
 'notification_bundle_approved' => 'Bundle Approved',
