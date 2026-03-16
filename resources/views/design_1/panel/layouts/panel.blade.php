@@ -44,7 +44,10 @@
         .panel-header { display: none !important; }
         .panel-title-and-breadcrumb { display: none !important; }
         #panelSidebar  { top: 0 !important; height: 100vh !important; }
-        #panelSidebar .panel-sidebar__contents { max-height: 100vh !important; }
+        #panelSidebar .panel-sidebar__contents { max-height: 100vh !important; display: flex !important; flex-direction: column !important; height: 100% !important; }
+        #panelSidebar .panel-sidebar__scroll-area { flex: 1 !important; display: flex !important; flex-direction: column !important; overflow-y: auto !important; overflow-x: hidden !important; min-height: 0 !important; }
+        #panelSidebar #sidebarAccordions { width: 100% !important; min-height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; padding: 8px 0 !important; }
+        #panelSidebar #sidebarAccordions > .mt-16 { margin-top: 0 !important; }
         .panel-content__scrollable { height: 100vh !important; }
 
         /* ── Collapsed sidebar: 90px wide + bigger icons (global) ── */
@@ -200,6 +203,9 @@
         
         .panel-sidebar__contents {
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         .sidebar-text,
@@ -262,41 +268,41 @@
             left: 258px !important;
         }
 
-        /* ── Desktop: equal left gap for sidebar (matches right padding 28px) ── */
+        /* ── Desktop: equal left gap for sidebar (matches right padding 40px) ── */
         @media (min-width: 992px) {
             #panelSidebar {
-                left: 28px !important;
+                left: 90px !important;
                 top: 16px !important;
                 height: calc(100vh - 32px) !important;
                 border-radius: 16px;
                 overflow: hidden;
             }
-            #panelSidebar .panel-sidebar__contents { max-height: calc(100vh - 32px) !important; }
+            #panelSidebar .panel-sidebar__contents { max-height: calc(100vh - 32px) !important; height: calc(100vh - 32px) !important; }
             .panel-content {
-                /* 258px sidebar + 28px left gap = 286px */
-                width: calc(100vw - 286px) !important;
-                margin-left: 286px !important;
+                /* 258px sidebar + 40px left gap = 298px */
+                width: calc(100vw - 298px) !important;
+                margin-left: 298px !important;
             }
             .panel-sidebar.panel-sidebar--collapsed + .panel-content {
-                /* 90px sidebar + 28px left gap = 118px */
-                width: calc(100vw - 118px) !important;
-                margin-left: 118px !important;
+                /* 90px sidebar + 40px left gap = 130px */
+                width: calc(100vw - 130px) !important;
+                margin-left: 130px !important;
             }
             .panel-sidebar.panel-sidebar--collapsed:hover + .panel-content {
-                width: calc(100vw - 286px) !important;
-                margin-left: 286px !important;
+                width: calc(100vw - 298px) !important;
+                margin-left: 298px !important;
             }
             .panel-bottom-bar {
-                width: calc(100% - 286px) !important;
-                left: 286px !important;
+                width: calc(100% - 298px) !important;
+                left: 298px !important;
             }
             body:has(.panel-sidebar.panel-sidebar--collapsed) .panel-bottom-bar {
-                width: calc(100% - 118px) !important;
-                left: 118px !important;
+                width: calc(100% - 130px) !important;
+                left: 130px !important;
             }
             body:has(.panel-sidebar.panel-sidebar--collapsed:hover) .panel-bottom-bar {
-                width: calc(100% - 286px) !important;
-                left: 286px !important;
+                width: calc(100% - 298px) !important;
+                left: 298px !important;
             }
         }
         
@@ -320,11 +326,11 @@
         /* ── Equal outer padding — both sides of all panel pages ── */
         .panel-content {
             box-sizing: border-box;
-            padding: 16px 20px 0;
+            padding: 16px 28px 0;
         }
         @media (min-width: 992px) {
             .panel-content {
-                padding: 16px 28px 0;
+                padding: 16px 70px 0;
             }
         }
         /* Remove internal padding from scrollable — outer .panel-content handles spacing */
@@ -496,6 +502,14 @@
                 content.style.marginLeft = '258px';
             }
         }
+    })();
+</script>
+<script>
+    // Force sidebar to always remain expanded - disable collapse/expand behaviour
+    (function() {
+        localStorage.setItem('panelSidebarCollapsed', 'false');
+        var s = document.getElementById('panelSidebar');
+        if (s) s.classList.remove('panel-sidebar--collapsed');
     })();
 </script>
 </body>

@@ -46,8 +46,15 @@
         .badge-success-light  { background:#D1FAE5; color:#065F46; border-radius:8px; padding:2px 8px; }
         .badge-danger-light   { background:#FEE2E2; color:#991B1B; border-radius:8px; padding:2px 8px; }
 
-        @media (max-width: 575px) {
-            .ielts-welcome-bar { flex-direction: column; align-items: flex-start !important; }
+        /* Teacher IELTS dashboard specific */
+        .teacher-welcome-bar { min-height: 120px; border: 1px solid #f3f4f6; padding: 16px 0; }
+        .teacher-welcome-bar .language-select { position: relative; }
+        .teacher-welcome-bar .language-dropdown { right: 0; left: auto; }
+        .gx-16 { --bs-gutter-x: 1rem; }
+        .badge-gray { background:#f3f4f6; color:#374151; border-radius:8px; padding:2px 8px; }
+
+        @media (max-width: 767px) {
+            .teacher-welcome-bar { flex-direction: column; align-items: flex-start !important; gap: 12px; }
         }
     </style>
 @endpush

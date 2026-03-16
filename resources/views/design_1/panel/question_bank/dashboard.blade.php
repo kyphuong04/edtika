@@ -8,33 +8,6 @@
             <h1 class="font-20 font-weight-bold text-dark">Question Bank</h1>
             <p class="text-gray-500 font-14 mt-4">Centralized repository for Mock and Practice test questions</p>
         </div>
-        <div class="d-flex align-items-center gap-12">
-            <a href="{{ route('panel.question_bank.create') }}" class="btn btn-primary">
-                <x-iconsax-bul-add-circle class="icons mr-8" width="18px" height="18px"/>
-                Add Question
-            </a>
-            <div class="dropdown">
-                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown">
-                    <x-iconsax-bul-document-upload class="icons mr-8" width="18px" height="18px"/>
-                    Import
-                </button>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <h6 class="dropdown-header">Import by Skill</h6>
-                    <a class="dropdown-item" href="{{ route('panel.question_bank.import', 'listening') }}">
-                        <x-iconsax-bul-headphone class="icons mr-8 text-primary" width="16px" height="16px"/> Listening
-                    </a>
-                    <a class="dropdown-item" href="{{ route('panel.question_bank.import', 'reading') }}">
-                        <x-iconsax-bul-book class="icons mr-8 text-primary" width="16px" height="16px"/> Reading
-                    </a>
-                    <a class="dropdown-item" href="{{ route('panel.question_bank.import', 'writing') }}">
-                        <x-iconsax-bul-edit-2 class="icons mr-8 text-primary" width="16px" height="16px"/> Writing
-                    </a>
-                    <a class="dropdown-item" href="{{ route('panel.question_bank.import', 'speaking') }}">
-                        <x-iconsax-bul-microphone-2 class="icons mr-8 text-primary" width="16px" height="16px"/> Speaking
-                    </a>
-                </div>
-            </div>
-        </div>
     </div>
 
     {{-- KPI Cards - Modern Style --}}
@@ -177,6 +150,7 @@
         </div>
     </div>
 
+    @if(!auth()->user()->isTeacher())
     <div class="row">
         {{-- Skills Distribution --}}
         <div class="col-lg-8 mb-24">
@@ -366,6 +340,7 @@
             </div>
         </div>
     </div>
+    @endif
 </section>
 
 <style>

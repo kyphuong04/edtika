@@ -28,6 +28,15 @@ class WebinarChapter extends Model implements TranslatableContract
 
     static $chapterStatus = ['active', 'inactive'];
 
+    static $bandRanges = [
+        '0-3.0' => 'Band: 0 - 3.0',
+        '3.5-4.5' => 'Band: 3.5 - 4.5',
+        '5.0-5.5' => 'Band: 5.0 - 5.5',
+        '6.0-6.5' => 'Band: 6.0 - 6.5',
+        '7.0-7.5' => 'Band: 7.0 - 7.5',
+        '8.0-9.0' => 'Band: 8.0 - 9.0',
+    ];
+
     public $translatedAttributes = ['title'];
 
     public function getTitleAttribute()

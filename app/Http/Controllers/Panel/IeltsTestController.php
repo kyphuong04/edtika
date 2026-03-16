@@ -566,10 +566,12 @@ class IeltsTestController extends Controller
         $sourceBankType = 'mock';
 
         if ($bankQuestions->isEmpty()) {
-            $bankQuestions = \App\Models\IeltsPracticeQuestionBank::where('group_id', $group->id)
-                ->orderBy('question_order')
-                ->orderBy('id')
-                ->get();
+            // practice bank may not have question_order column in older databases
+            $practiceQuery = \App\Models\IeltsPracticeQuestionBank::where('group_id', $group->id);
+            if (\Illuminate\Support\Facades\Schema::hasColumn((new \App\Models\IeltsPracticeQuestionBank())->getTable(), 'question_order')) {
+                $practiceQuery->orderBy('question_order');
+            }
+            $bankQuestions = $practiceQuery->orderBy('id')->get();
             $sourceBankType = 'practice';
         }
 

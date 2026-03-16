@@ -57,26 +57,40 @@ class MyCoursesController extends Controller
             return $pageListData;
         }
 
-        $topStats = $this->handleMyCoursesListTopStats($user);
+        // My courses (teacher's own)
+        $myCourses = Webinar::where(function ($q) use ($user) {
+            $q->where('creator_id', $user->id)->orWhere('teacher_id', $user->id);
+        })->with(['sessions', 'files', 'textLessons', 'purchases', 'sales', 'bundleWebinars'])->orderBy('updated_at', 'desc')->get();
 
-        $upcomingLiveSessions = null;
-        if (!$isInvitedCoursesPage) {
-            $upcomingLiveSessions = $this->getMyCoursesListUpcomingLiveSessions();
+        $myTotalLessons = 0;
+        foreach ($myCourses as $c) {
+            $myTotalLessons += $c->sessions->count() + $c->files->count() + $c->textLessons->count();
         }
 
+        // All published courses (explore section)
+        $exploreCourses = Webinar::where('status', Webinar::$active)
+            ->with(['sessions', 'files', 'textLessons', 'purchases', 'sales'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $exploreTotalLessons = 0;
+        foreach ($exploreCourses as $c) {
+            $exploreTotalLessons += $c->sessions->count() + $c->files->count() + $c->textLessons->count();
+        }
+
+        $myBundles = \App\Models\Bundle::where(function ($q) use ($user) {
+            $q->where('creator_id', $user->id)->orWhere('teacher_id', $user->id);
+        })->orderBy('updated_at', 'desc')->get();
+
         $pageTitle = $isInvitedCoursesPage ? trans('panel.invited_classes') : trans('update.my_courses');
-        $breadcrumbs = [
-            ['text' => trans('update.platform'), 'url' => '/'],
-            ['text' => trans('panel.dashboard'), 'url' => '/panel'],
-            ['text' => $pageTitle, 'url' => null],
-        ];
 
         $data = [
-            'pageTitle' => $pageTitle,
-            'breadcrumbs' => $breadcrumbs,
-            'upcomingLiveSessions' => $upcomingLiveSessions,
-            'isInvitedCoursesPage' => $isInvitedCoursesPage,
-            ...$topStats,
+            'pageTitle'           => $pageTitle,
+            'myCourses'           => $myCourses,
+            'myTotalLessons'      => $myTotalLessons,
+            'exploreCourses'      => $exploreCourses,
+            'exploreTotalLessons' => $exploreTotalLessons,
+            'myBundles'           => $myBundles,
             ...$pageListData,
         ];
 

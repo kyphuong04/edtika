@@ -21,7 +21,9 @@ class ChapterController extends Controller
 
     public function getForm(Request $request)
     {
-        $html = (string)view()->make("design_1.panel.webinars.create.modals.chapter");
+        $html = (string)view()->make("design_1.panel.webinars.create.modals.chapter", [
+            'bandRanges' => WebinarChapter::$bandRanges,
+        ]);
 
         return response()->json([
             'code' => 200,
@@ -107,6 +109,7 @@ class ChapterController extends Controller
             'webinar_id' => 'required',
             //'type' => 'required|' . Rule::in(WebinarChapter::$chapterTypes),
             'title' => 'required|max:255',
+            'band_range' => ['nullable', Rule::in(array_keys(WebinarChapter::$bandRanges))],
         ]);
 
         if ($validator->fails()) {
@@ -126,6 +129,7 @@ class ChapterController extends Controller
                 'webinar_id' => $webinar->id,
                 //'type' => $data['type'],
                 'status' => $status,
+                'band_range' => $data['band_range'] ?? null,
                 'check_all_contents_pass' => (!empty($data['check_all_contents_pass']) and $data['check_all_contents_pass'] == 'on'),
                 'created_at' => time(),
             ]);
@@ -160,6 +164,7 @@ class ChapterController extends Controller
             $data = [
                 'title' => $chapter->title,
                 'chapter' => $chapter,
+                'bandRanges' => WebinarChapter::$bandRanges,
             ];
 
             $html = (string)view()->make("design_1.panel.webinars.create.modals.chapter", $data);
@@ -183,6 +188,7 @@ class ChapterController extends Controller
             'webinar_id' => 'required',
             //'type' => 'required|' . Rule::in(WebinarChapter::$chapterTypes),
             'title' => 'required|max:255',
+            'band_range' => ['nullable', Rule::in(array_keys(WebinarChapter::$bandRanges))],
         ]);
 
         if ($validator->fails()) {
@@ -210,6 +216,7 @@ class ChapterController extends Controller
 
                 $chapter->update([
                     'status' => $status,
+                    'band_range' => $data['band_range'] ?? null,
                     'check_all_contents_pass' => (!empty($data['check_all_contents_pass']) and $data['check_all_contents_pass'] == 'on'),
                 ]);
 

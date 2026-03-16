@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Exports\WebinarStudents;
 use App\Http\Controllers\Controller;
 use App\Models\CourseLearning;
+use App\Models\IeltsTestAttempt;
 use App\Models\Quiz;
 use App\Models\QuizzesResult;
 use App\Models\Sale;
@@ -144,84 +145,236 @@ class StudentTrackingController extends Controller
     }
 
     /**
-     * Show detailed information for a specific student
+     * Show detailed performance page for a specific student (teacher role).
      */
-    public function show($studentId)
+    public function details($student_id)
     {
         $user = auth()->user();
-        
+
         if (!$user->isTeacher() && !$user->isOrganization()) {
             abort(403);
         }
 
-        $student = User::findOrFail($studentId);
+        $student = User::findOrFail($student_id);
 
-        // Get instructor's courses
-        $instructorWebinars = Webinar::where(function ($query) use ($user) {
-            $query->where('creator_id', $user->id)
-                ->orWhere('teacher_id', $user->id);
-        })->where('status', 'active')->pluck('id');
+        $instructorWebinarIds = Webinar::where(function ($q) use ($user) {
+            $q->where('creator_id', $user->id)->orWhere('teacher_id', $user->id);
+        })->where('status', 'active')->pluck('id')->toArray();
 
-        // Verify student is enrolled in instructor's courses
-        $enrolledCourses = Sale::where('buyer_id', $studentId)
-            ->whereIn('webinar_id', $instructorWebinars)
+        $enrolledCourses = Sale::where('buyer_id', $student_id)
+            ->whereIn('webinar_id', $instructorWebinarIds)
             ->whereNull('refund_at')
-            ->with(['webinar' => function ($q) {
-                $q->with(['chapters.chapterItems']);
-            }])
+            ->with('webinar')
             ->get();
 
         if ($enrolledCourses->isEmpty()) {
-            abort(404, 'Student not enrolled in your courses');
+            abort(404, 'Student is not enrolled in any of your courses.');
         }
 
-        $coursesData = [];
-        foreach ($enrolledCourses as $sale) {
-            if ($sale->webinar) {
-                $progress = $this->calculateCourseProgress($studentId, $sale->webinar_id);
-                $quizResults = QuizzesResult::whereHas('quiz', function ($q) use ($sale) {
-                    $q->where('webinar_id', $sale->webinar_id);
-                })->where('user_id', $studentId)->get();
+        // ── Student meta data ──────────────────────────────────────────────
+        $metas = DB::table('users_metas')
+            ->where('user_id', $student_id)
+            ->whereIn('name', ['aim_band', 'mock_test_date'])
+            ->pluck('value', 'name')
+            ->toArray();
+        $student->aim_band  = $metas['aim_band']       ?? null;
+        $student->exam_date = $metas['mock_test_date']  ?? null;
 
-                $coursesData[] = [
-                    'webinar' => $sale->webinar,
-                    'progress' => $progress,
-                    'quiz_count' => $quizResults->count(),
-                    'average_grade' => $quizResults->count() > 0 ? round($quizResults->avg('user_grade'), 2) : 0,
-                    'enrolled_at' => $sale->created_at,
-                ];
+        // ── Quiz Accuracy ──────────────────────────────────────────────────
+        $quizAccuracy = round((float) (DB::table('quizzes_results')
+            ->join('quizzes', 'quizzes.id', '=', 'quizzes_results.quiz_id')
+            ->whereIn('quizzes.webinar_id', $instructorWebinarIds)
+            ->where('quizzes_results.user_id', $student_id)
+            ->where('quizzes.total_mark', '>', 0)
+            ->whereNotNull('quizzes_results.user_grade')
+            ->selectRaw('AVG(quizzes_results.user_grade / quizzes.total_mark * 100) as v')
+            ->value('v') ?? 0), 1);
+
+        // ── Satisfaction Rate (avg star rating by this student for instructor's courses) ──
+        $satisfactionRate = round((float) (DB::table('webinar_reviews')
+            ->whereIn('webinar_id', $instructorWebinarIds)
+            ->where('creator_id', $student_id)
+            ->where('status', 'active')
+            ->where('rates', '>', 0)
+            ->selectRaw('AVG(rates / 5 * 100) as v')
+            ->value('v') ?? 0), 1);
+
+        // ── Exercise Accuracy (IELTS practice tests) ───────────────────────
+        $exerciseAccuracy = round((float) (DB::table('ielts_test_attempts')
+            ->join('ielts_tests', 'ielts_tests.id', '=', 'ielts_test_attempts.test_id')
+            ->where('ielts_tests.type', 'practice')
+            ->where('ielts_test_attempts.user_id', $student_id)
+            ->whereNotNull('ielts_test_attempts.overall_band')
+            ->selectRaw('AVG(ielts_test_attempts.overall_band / 9 * 100) as v')
+            ->value('v') ?? 0), 1);
+
+        // ── Improvement Rate ───────────────────────────────────────────────
+        $improvementRate = 0.0;
+        $mockBands = DB::table('ielts_test_attempts')
+            ->join('ielts_tests', 'ielts_tests.id', '=', 'ielts_test_attempts.test_id')
+            ->where('ielts_tests.type', 'mock')
+            ->where('ielts_test_attempts.user_id', $student_id)
+            ->whereNotNull('ielts_test_attempts.overall_band')
+            ->where('ielts_test_attempts.overall_band', '>', 0)
+            ->whereNotNull('ielts_test_attempts.completed_at')
+            ->orderBy('ielts_test_attempts.completed_at', 'asc')
+            ->pluck('ielts_test_attempts.overall_band');
+        if ($mockBands->count() >= 2) {
+            $first = (float) $mockBands->first();
+            $last  = (float) $mockBands->last();
+            if ($first > 0) {
+                $improvementRate = round((($last - $first) / $first) * 100, 1);
             }
         }
 
-        // Get recent activities
-        $recentQuizResults = QuizzesResult::where('user_id', $studentId)
-            ->whereHas('quiz', function ($q) use ($instructorWebinars) {
-                $q->whereIn('webinar_id', $instructorWebinars);
-            })
-            ->with(['quiz.webinar'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Get support tickets
-        $supportTickets = Support::where('user_id', $studentId)
-            ->whereHas('webinar', function ($q) use ($instructorWebinars) {
-                $q->whereIn('id', $instructorWebinars);
-            })
-            ->with('webinar')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        $data = [
-            'pageTitle' => trans('panel.student_details') . ' - ' . $student->full_name,
-            'student' => $student,
-            'coursesData' => $coursesData,
-            'recentQuizResults' => $recentQuizResults,
-            'supportTickets' => $supportTickets,
+        // ── Skill bands avg for radar (mock tests) ─────────────────────────
+        $sbRow = DB::table('ielts_test_attempts')
+            ->join('ielts_tests', 'ielts_tests.id', '=', 'ielts_test_attempts.test_id')
+            ->where('ielts_tests.type', 'mock')
+            ->where('ielts_test_attempts.user_id', $student_id)
+            ->whereNotNull('ielts_test_attempts.completed_at')
+            ->selectRaw('
+                ROUND(AVG(listening_band),2) as l,
+                ROUND(AVG(reading_band),2)   as r,
+                ROUND(AVG(writing_band),2)   as w,
+                ROUND(AVG(speaking_band),2)  as s,
+                ROUND(AVG(overall_band),2)   as o
+            ')
+            ->first();
+        $skillBands = [
+            'listening' => (float)($sbRow->l ?? 0),
+            'reading'   => (float)($sbRow->r ?? 0),
+            'writing'   => (float)($sbRow->w ?? 0),
+            'speaking'  => (float)($sbRow->s ?? 0),
+            'overall'   => (float)($sbRow->o ?? 0),
         ];
 
-        return view('design_1.panel.students_tracking.details', $data);
+        // Estimated band: avg overall from mocks, fallback to latest attempt
+        $student->estimated_band = $skillBands['overall'] > 0
+            ? $skillBands['overall']
+            : (float)(DB::table('ielts_test_attempts')
+                ->where('user_id', $student_id)
+                ->whereNotNull('overall_band')
+                ->orderByDesc('completed_at')
+                ->value('overall_band') ?? 0);
+
+        // ── Weak Points: skills sorted ascending by band ───────────────────
+        $weakPoints = collect([
+            ['skill' => 'listening', 'label' => 'Listening', 'band' => $skillBands['listening']],
+            ['skill' => 'reading',   'label' => 'Reading',   'band' => $skillBands['reading']],
+            ['skill' => 'writing',   'label' => 'Writing',   'band' => $skillBands['writing']],
+            ['skill' => 'speaking',  'label' => 'Speaking',  'band' => $skillBands['speaking']],
+        ])->sortBy('band')->values()->toArray();
+
+        // ── Mock test results list ─────────────────────────────────────────
+        $mockTestResults = DB::table('ielts_test_attempts')
+            ->join('ielts_tests', 'ielts_tests.id', '=', 'ielts_test_attempts.test_id')
+            ->where('ielts_tests.type', 'mock')
+            ->where('ielts_test_attempts.user_id', $student_id)
+            ->whereNotNull('ielts_test_attempts.completed_at')
+            ->select(
+                'ielts_test_attempts.id',
+                'ielts_tests.title as test_title',
+                'ielts_test_attempts.overall_band',
+                'ielts_test_attempts.listening_band',
+                'ielts_test_attempts.reading_band',
+                'ielts_test_attempts.writing_band',
+                'ielts_test_attempts.speaking_band',
+                'ielts_test_attempts.completed_at'
+            )
+            ->orderBy('ielts_test_attempts.completed_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // ── Speaking & Writing history ─────────────────────────────────────
+        $swHistory = DB::table('ielts_test_attempts')
+            ->join('ielts_tests', 'ielts_tests.id', '=', 'ielts_test_attempts.test_id')
+            ->where('ielts_test_attempts.user_id', $student_id)
+            ->where(function ($q) {
+                $q->where('ielts_test_attempts.speaking_completed', 1)
+                  ->orWhere('ielts_test_attempts.writing_completed', 1);
+            })
+            ->whereNotNull('ielts_test_attempts.completed_at')
+            ->select(
+                'ielts_test_attempts.id',
+                'ielts_tests.title as test_title',
+                'ielts_test_attempts.writing_band',
+                'ielts_test_attempts.speaking_band',
+                'ielts_test_attempts.writing_completed',
+                'ielts_test_attempts.speaking_completed',
+                'ielts_test_attempts.completed_at'
+            )
+            ->orderBy('ielts_test_attempts.completed_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // ── Ranking among instructor's students (by best overall_band) ─────
+        $allBuyers = Sale::whereIn('webinar_id', $instructorWebinarIds)
+            ->whereNull('refund_at')->distinct()->pluck('buyer_id')->toArray();
+        $allBands = DB::table('ielts_test_attempts')
+            ->join('ielts_tests', 'ielts_tests.id', '=', 'ielts_test_attempts.test_id')
+            ->where('ielts_tests.type', 'mock')
+            ->whereIn('ielts_test_attempts.user_id', $allBuyers)
+            ->whereNotNull('ielts_test_attempts.overall_band')
+            ->selectRaw('ielts_test_attempts.user_id, MAX(overall_band) as top_band')
+            ->groupBy('ielts_test_attempts.user_id')
+            ->pluck('top_band', 'user_id')
+            ->toArray();
+        $myBand      = (float)($allBands[$student_id] ?? 0);
+        $rank        = 1 + collect($allBands)->filter(fn($b, $uid) => $uid != $student_id && (float)$b > $myBand)->count();
+        $totalRanked = count($allBands);
+        $rankDisplay = $totalRanked > 0 ? '#' . $rank : '—';
+
+        // ── Courses data ───────────────────────────────────────────────────
+        $coursesData = [];
+        foreach ($enrolledCourses as $sale) {
+            if (!$sale->webinar) continue;
+            $wid      = $sale->webinar->id;
+            $progress = $this->calculateCourseProgress($student_id, $wid);
+
+            $completedLessons = DB::table('course_learning as cl')
+                ->join('text_lessons as tl', 'tl.id', '=', 'cl.text_lesson_id')
+                ->join('webinar_chapters as wc', 'wc.id', '=', 'tl.chapter_id')
+                ->where('cl.user_id', $student_id)
+                ->where('wc.webinar_id', $wid)
+                ->whereNotNull('cl.text_lesson_id')
+                ->count();
+
+            $exercisesDone = QuizzesResult::whereHas('quiz', fn($q) => $q->where('webinar_id', $wid))
+                ->where('user_id', $student_id)
+                ->count();
+
+            $coursesData[] = [
+                'webinar'           => $sale->webinar,
+                'progress'          => $progress,
+                'completed_lessons' => $completedLessons,
+                'exercises_done'    => $exercisesDone,
+                'enrolled_at'       => $sale->created_at,
+            ];
+        }
+
+        return view('design_1.panel.students_tracking.details', [
+            'pageTitle'         => $student->full_name . ' — Performance',
+            'student'           => $student,
+            'rankDisplay'       => $rankDisplay,
+            'quizAccuracy'      => $quizAccuracy,
+            'exerciseAccuracy'  => $exerciseAccuracy,
+            'improvementRate'   => $improvementRate,
+            'satisfactionRate'  => $satisfactionRate,
+            'skillBands'        => $skillBands,
+            'weakPoints'        => $weakPoints,
+            'mockTestResults'   => $mockTestResults,
+            'coursesData'       => $coursesData,
+            'swHistory'         => $swHistory,
+        ]);
+    }
+
+    /**
+     * @deprecated – kept for any existing links; calls details() internally.
+     */
+    public function show($studentId)
+    {
+        return $this->details($studentId);
     }
 
     /**

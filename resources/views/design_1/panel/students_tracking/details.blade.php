@@ -1,422 +1,455 @@
-@extends('design_1.panel.layouts.panel')
+﻿@extends('design_1.panel.layouts.panel')
+
+@push('styles_top')
+<style>
+/* ── Layout ─────────────────────────────────────────── */
+.sd-page { display: flex; gap: 20px; align-items: flex-start; }
+.sd-left  { flex: 2; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.sd-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 991px) {
+    .sd-page { flex-direction: column; }
+    .sd-left, .sd-right { flex: unset; width: 100%; }
+}
+
+/* ── Shared card shell ──────────────────────────────── */
+.sd-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f0f0f0;
+    padding: 18px 20px;
+}
+.sd-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e2a3b;
+    margin: 0 0 14px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    text-align: center;
+}
+
+/* ── Stat boxes row ─────────────────────────────────── */
+.sd-stats { display: flex; gap: 12px; }
+.sd-stat-box {
+    flex: 1;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid #f0f0f0;
+}
+.sd-stat-box .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8896b0;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    text-align: center;
+}
+.sd-stat-box .stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #5482ff;
+    line-height: 1.1;
+    text-align: center;
+}
+.sd-stat-box .stat-value.negative { color: #e74c3c; }
+.sd-stat-box .stat-value.positive { color: #27ae60; }
+.sd-stat-box .stat-unit {
+    font-size: 13px;
+    font-weight: 600;
+    color: #adb5bd;
+}
+.sd-stat-box .stat-hint { text-align: center; }
+
+/* ── Middle row ─────────────────────────────────────── */
+.sd-mid { display: flex; gap: 14px; }
+.sd-mid > div { flex: 1; min-width: 0; }
+
+/* ── Mock test table ────────────────────────────────── */
+.sd-mock-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sd-mock-table th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #8896b0;
+    padding: 4px 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: center;
+}
+.sd-mock-table th:first-child { text-align: left; }
+.sd-mock-table td {
+    padding: 7px 6px;
+    border-bottom: 1px solid #f8f9fa;
+    color: #495057;
+    text-align: center;
+    vertical-align: middle;
+}
+.sd-mock-table td:first-child { text-align: left; font-weight: 600; color: #1e2a3b; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sd-mock-table tr:last-child td { border-bottom: none; }
+.sd-band-pill {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #f0f3ff;
+    color: #5482ff;
+}
+.sd-band-pill.overall { background: #5482ff; color: #fff; }
+
+/* ── Weak points ────────────────────────────────────── */
+.sd-weak-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+.sd-weak-item:last-child { border-bottom: none; }
+.sd-weak-label {
+    width: 80px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+}
+.sd-weak-bar { flex: 1; height: 8px; background: #f0f0f0; border-radius: 20px; overflow: hidden; }
+.sd-weak-bar-fill { height: 100%; border-radius: 20px; transition: width .6s; }
+.sd-weak-band { width: 32px; flex-shrink: 0; font-size: 12px; font-weight: 700; text-align: right; }
+
+/* ── Profile card ───────────────────────────────────── */
+.sd-profile { text-align: center; padding: 24px 20px 18px; }
+.sd-profile-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%; object-fit: cover;
+    border: 3px solid #f0f0f0;
+    margin: 0 auto 10px;
+    display: block;
+}
+.sd-profile-name { font-size: 15px; font-weight: 800; color: #1e2a3b; margin: 0 0 4px; }
+.sd-profile-meta { font-size: 12px; color: #8896b0; margin: 0 0 12px; }
+.sd-profile-stats { display: flex; flex-direction: column; gap: 5px; text-align: center; margin-top: 12px; }
+.sd-pstat { font-size: 13px; color: #8896b0; }
+.sd-pstat .ps-label { font-weight: 400; }
+.sd-pstat .ps-val { font-weight: 600; color: #1e2a3b; }
+.sd-rank-badge {
+    display: inline-block;
+    background: linear-gradient(135deg,#5482ff,#7fa3ff);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+}
+
+/* ── Course card ────────────────────────────────────── */
+.sd-course-name { font-size: 13px; font-weight: 700; color: #1e2a3b; margin: 0 0 10px; line-height: 1.4; text-align: center; }
+.sd-course-stats { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: #8896b0; margin-bottom: 12px; text-align: center; }
+.sd-course-stats span strong { color: #5482ff; font-size: 14px; }
+.sd-course-progress { height: 6px; background: #f0f0f0; border-radius: 20px; overflow: hidden; }
+.sd-course-progress-bar { height: 100%; background: linear-gradient(90deg,#5482ff,#7fa3ff); border-radius: 20px; transition: width .6s; }
+.sd-course-pct { font-size: 11px; color: #adb5bd; margin-top: 4px; text-align: right; }
+
+/* ── S&W History ────────────────────────────────────── */
+.sd-sw-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; font-size: 12px;
+    border-radius: 10px;
+    border: 1px solid #f0f0f0;
+    margin-bottom: 8px;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    transition: box-shadow .15s, border-color .15s;
+    cursor: pointer;
+}
+.sd-sw-item:hover { border-color: #c7d4ff; box-shadow: 0 2px 10px rgba(84,130,255,.1); color: inherit; text-decoration: none; }
+.sd-sw-item-left { flex: 1; min-width: 0; }
+.sd-sw-title { font-weight: 600; color: #1e2a3b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.sd-sw-meta { color: #8896b0; font-size: 11px; margin-top: 2px; }
+.sd-sw-bands { display: flex; gap: 6px; align-items: center; flex-shrink: 0; margin-left: 10px; }
+.sd-sw-band-pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: #f0f3ff; color: #5482ff; white-space: nowrap; }
+.sd-sw-band-pill.s-pill { background: #fff0f6; color: #e84393; }
+.sd-sw-band-pill.w-pill { background: #f0f8ff; color: #0084d1; }
+.sd-sw-action { font-size: 10px; font-weight: 700; color: #5482ff; margin-left: 8px; white-space: nowrap; background: #f0f3ff; padding: 3px 8px; border-radius: 20px; flex-shrink: 0; }
+/* toggle more button */
+.sd-sw-more-btn { display: block; width: 100%; text-align: center; font-size: 12px; font-weight: 600; color: #5482ff; background: #f6f8ff; border: 1px solid #e0e7ff; border-radius: 10px; padding: 7px; cursor: pointer; margin-top: 4px; transition: background .15s; }
+.sd-sw-more-btn:hover { background: #eef1ff; }
+.sd-empty { text-align: center; color: #adb5bd; font-size: 12px; padding: 20px 0; }
+</style>
+@endpush
 
 @section('content')
     <section>
-        <div class="d-flex align-items-start align-items-md-center justify-content-between flex-column flex-md-row">
-            <h2 class="section-title">{{ trans('panel.student_details') }}</h2>
-            <a href="/panel/my-students" class="btn btn-sm btn-primary">
-                <i class="fa fa-arrow-left mr-2"></i>{{ trans('panel.back_to_list') }}
-            </a>
-        </div>
 
-        {{-- Student Info Card --}}
-        <div class="activities-container mt-25 p-20 p-lg-35">
-            <div class="row">
-                <div class="col-12 col-md-3 text-center">
-                    <div class="avatar-lg mx-auto">
-                        <img src="{{ $student->avatar ?? '/assets/default/img/user/avatar_default.png' }}" 
-                             class="img-cover rounded-circle" 
-                             alt="{{ $student->full_name }}">
+        {{-- ██ MAIN 2-COLUMN LAYOUT ██ --}}
+        <div class="sd-page">
+
+            {{-- ════════ LEFT 2/3 ════════ --}}
+            <div class="sd-left">
+
+                {{-- ── Stat boxes ────────────────────────────────────────── --}}
+                <div class="sd-stats">
+                    <div class="sd-stat-box">
+                        <span class="stat-label">Quizz Accuracy</span>
+                        <div class="stat-value">{{ $quizAccuracy }}<span class="stat-unit">%</span></div>
+                        <span class="stat-hint" style="font-size:11px;color:#adb5bd;">Độ chính xác khi làm Quiz</span>
                     </div>
-                    <h3 class="mt-15 font-weight-bold">{{ $student->full_name }}</h3>
-                    <p class="text-gray">{{ $student->email }}</p>
-                    @if(!empty($student->bio))
-                        <p class="text-gray font-14 mt-10">{{ $student->bio }}</p>
+                    <div class="sd-stat-box">
+                        <span class="stat-label">Exercise Accuracy</span>
+                        <div class="stat-value">{{ $exerciseAccuracy }}<span class="stat-unit">%</span></div>
+                        <span class="stat-hint" style="font-size:11px;color:#adb5bd;">Độ chính xác luyện tập</span>
+                    </div>
+                    <div class="sd-stat-box">
+                        <span class="stat-label">Improvement Rate</span>
+                        <div class="stat-value {{ $improvementRate >= 0 ? 'positive' : 'negative' }}">{{ $improvementRate >= 0 ? '+' : '' }}{{ $improvementRate }}<span class="stat-unit">%</span></div>
+                        <span class="stat-hint" style="font-size:11px;color:#adb5bd;">(Cuối - Đầu) / Đầu × 100</span>
+                    </div>
+                    <div class="sd-stat-box">
+                        <span class="stat-label">Satisfaction Rate</span>
+                        <div class="stat-value {{ $satisfactionRate >= 80 ? 'positive' : ($satisfactionRate >= 50 ? '' : 'negative') }}">{{ $satisfactionRate }}<span class="stat-unit">%</span></div>
+                        <span class="stat-hint" style="font-size:11px;color:#adb5bd;">Đánh giá trung bình của học viên</span>
+                    </div>
+                </div>
+
+                {{-- ── Radar Chart + Mock Test Results ────────────────────── --}}
+                <div class="sd-mid">
+
+                    {{-- Radar --}}
+                    <div class="sd-card">
+                        <p class="sd-card-title">Radar 4 Skills</p>
+                        <div id="sdRadarChart" style="min-height:220px;"></div>
+                    </div>
+
+                    {{-- Mock Tests --}}
+                    <div class="sd-card" style="overflow-x:auto;">
+                        <p class="sd-card-title">Kết quả Mock Test</p>
+                        @if($mockTestResults->isEmpty())
+                            <div class="sd-empty">Chưa có bài thi Mock Test nào.</div>
+                        @else
+                            <table class="sd-mock-table">
+                                <thead>
+                                    <tr>
+                                        <th>Đề thi</th>
+                                        <th>L</th><th>R</th><th>W</th><th>S</th>
+                                        <th>Overall</th>
+                                        <th>Ngày</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($mockTestResults as $mt)
+                                    <tr>
+                                        <td title="{{ $mt->test_title }}">{{ $mt->test_title }}</td>
+                                        <td><span class="sd-band-pill">{{ $mt->listening_band ?? '–' }}</span></td>
+                                        <td><span class="sd-band-pill">{{ $mt->reading_band   ?? '–' }}</span></td>
+                                        <td><span class="sd-band-pill">{{ $mt->writing_band   ?? '–' }}</span></td>
+                                        <td><span class="sd-band-pill">{{ $mt->speaking_band  ?? '–' }}</span></td>
+                                        <td><span class="sd-band-pill overall">{{ $mt->overall_band ?? '–' }}</span></td>
+                                        <td style="color:#adb5bd;white-space:nowrap;">
+                                            @if($mt->completed_at)
+                                                {{ date('d/m/Y', (int)$mt->completed_at) }}
+                                            @else —
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- ── Weak Points ─────────────────────────────────────────── --}}
+                <div class="sd-card">
+                    <p class="sd-card-title">Weak Point (Kỹ năng yếu nhất)</p>
+                    @php $hasAnyBand = collect($skillBands)->except('overall')->sum() > 0; @endphp
+                    @if(!$hasAnyBand)
+                        <div class="sd-empty">Chưa có dữ liệu kỹ năng từ Mock Test.</div>
+                    @else
+                        @foreach($weakPoints as $wp)
+                            @php
+                                $pct   = $wp['band'] > 0 ? round($wp['band'] / 9 * 100) : 0;
+                                $color = $wp['band'] >= 6 ? '#27ae60' : ($wp['band'] >= 4 ? '#f39c12' : '#e74c3c');
+                            @endphp
+                            <div class="sd-weak-item">
+                                <span class="sd-weak-label">{{ $wp['label'] }}</span>
+                                <div class="sd-weak-bar">
+                                    <div class="sd-weak-bar-fill" style="width:{{ $pct }}%;background:{{ $color }};"></div>
+                                </div>
+                                <span class="sd-weak-band" style="color:{{ $color }}">{{ $wp['band'] > 0 ? $wp['band'] : '—' }}</span>
+                            </div>
+                        @endforeach
                     @endif
                 </div>
 
-                <div class="col-12 col-md-9 mt-20 mt-md-0">
-                    <div class="row">
-                        <div class="col-6 col-lg-3 mb-20">
-                            <div class="d-flex flex-column">
-                                <span class="font-weight-500 text-secondary font-14">{{ trans('panel.enrolled_courses') }}</span>
-                                <span class="font-30 font-weight-bold text-dark-blue mt-5">{{ count($coursesData) }}</span>
-                            </div>
-                        </div>
-
-                        <div class="col-6 col-lg-3 mb-20">
-                            <div class="d-flex flex-column">
-                                <span class="font-weight-500 text-secondary font-14">{{ trans('panel.completed_courses') }}</span>
-                                <span class="font-30 font-weight-bold text-success mt-5">
-                                    {{ collect($coursesData)->where('progress', '>=', 100)->count() }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="col-6 col-lg-3 mb-20">
-                            <div class="d-flex flex-column">
-                                <span class="font-weight-500 text-secondary font-14">{{ trans('panel.average_progress') }}</span>
-                                <span class="font-30 font-weight-bold text-primary mt-5">
-                                    {{ count($coursesData) > 0 ? number_format(collect($coursesData)->avg('progress'), 1) : 0 }}%
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="col-6 col-lg-3 mb-20">
-                            <div class="d-flex flex-column">
-                                <span class="font-weight-500 text-secondary font-14">{{ trans('panel.average_quiz_grade') }}</span>
-                                <span class="font-30 font-weight-bold text-warning mt-5">
-                                    {{ count($coursesData) > 0 ? number_format(collect($coursesData)->avg('average_grade'), 1) : 0 }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mt-20">
-                        <div class="col-12">
-                            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#supportMessageModal">
-                                <i class="fa fa-envelope mr-2"></i>{{ trans('panel.send_support_message') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Enrolled Courses --}}
-        <div class="mt-30">
-            <h3 class="section-title">{{ trans('panel.enrolled_courses') }}</h3>
-            
-            @if(!empty($coursesData) && count($coursesData) > 0)
-                <div class="panel-section-card py-20 px-25 mt-20">
-                    <div class="row">
-                        @foreach($coursesData as $courseData)
-                            <div class="col-12 col-lg-6 mb-20">
-                                <div class="webinar-card">
-                                    <div class="webinar-card-body p-15">
-                                        <div class="d-flex align-items-start justify-content-between">
-                                            <div class="flex-grow-1">
-                                                <h4 class="font-16 font-weight-bold text-dark-blue">
-                                                    {{ $courseData['webinar']->title }}
-                                                </h4>
-                                                <div class="mt-10">
-                                                    <div class="d-flex align-items-center justify-content-between mb-10">
-                                                        <span class="font-14 text-gray">{{ trans('panel.progress') }}</span>
-                                                        <span class="font-14 font-weight-500">{{ number_format($courseData['progress'], 1) }}%</span>
-                                                    </div>
-                                                    <div class="progress">
-                                                        <div class="progress-bar" role="progressbar" 
-                                                             style="width: {{ $courseData['progress'] }}%">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-15 d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <span class="font-12 text-gray">{{ trans('panel.quizzes') }}: </span>
-                                                        <span class="font-12 font-weight-500">{{ $courseData['quiz_count'] }}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="font-12 text-gray">{{ trans('panel.avg_grade') }}: </span>
-                                                        <span class="font-12 font-weight-500">{{ number_format($courseData['average_grade'], 1) }}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="font-12 text-gray">{{ trans('panel.enrolled') }}: </span>
-                                                        <span class="font-12 font-weight-500">{{ dateTimeFormat($courseData['enrolled_at'], 'j M Y') }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mt-15">
-                                            <a href="/panel/students-tracking/{{ $student->id }}/progress/{{ $courseData['webinar']->id }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                {{ trans('panel.view_detailed_progress') }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @else
-                @include('design_1.panel.includes.no-result',[
-                    'file_name' => 'course_list.svg',
-                    'title' => trans('panel.no_courses_found'),
-                ])
-            @endif
-        </div>
-
-        {{-- Recent Quiz Results --}}
-        @if(!empty($recentQuizResults) && $recentQuizResults->count() > 0)
-            <div class="mt-30">
-                <div class="d-flex align-items-center justify-content-between">
-                    <h3 class="section-title">{{ trans('panel.recent_quiz_results') }}</h3>
-                    <a href="/panel/students-tracking/{{ $student->id }}/quiz-results" class="btn btn-sm btn-outline-primary">
-                        {{ trans('panel.view_all') }}
+                {{-- ── Back button ──────────────────────────────────────── --}}
+                <div class="text-center mt-2">
+                    <a href="/panel/my-students/list" class="d-inline-flex align-items-center justify-content-center"
+                       style="font-size:13px;color:#1e2a3b;text-decoration:none;gap:6px;
+                              border:1.5px solid #d0d7e2;border-radius:999px;
+                              padding:7px 20px;background:#fff;
+                              transition:border-color .2s,box-shadow .2s;"
+                       onmouseover="this.style.borderColor='#5482ff';this.style.boxShadow='0 2px 8px rgba(84,130,255,.15)'"
+                       onmouseout="this.style.borderColor='#d0d7e2';this.style.boxShadow='none'">
+                        ← Quay lại danh sách
                     </a>
                 </div>
 
-                <div class="panel-section-card py-20 px-25 mt-20">
-                    <div class="table-responsive">
-                        <table class="table custom-table text-center">
-                            <thead>
-                                <tr>
-                                    <th class="text-left">{{ trans('panel.quiz') }}</th>
-                                    <th>{{ trans('panel.course') }}</th>
-                                    <th>{{ trans('panel.grade') }}</th>
-                                    <th>{{ trans('panel.status') }}</th>
-                                    <th>{{ trans('panel.date') }}</th>
-                                    <th>{{ trans('public.action') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($recentQuizResults as $result)
-                                    <tr>
-                                        <td class="text-left">{{ $result->quiz->title }}</td>
-                                        <td>{{ $result->quiz->webinar->title ?? 'N/A' }}</td>
-                                        <td>
-                                            <span class="font-weight-bold">{{ $result->user_grade }}</span>
-                                        </td>
-                                        <td>
-                                            @if($result->status == 'passed')
-                                                <span class="badge badge-success">{{ trans('quiz.passed') }}</span>
-                                            @elseif($result->status == 'failed')
-                                                <span class="badge badge-danger">{{ trans('quiz.failed') }}</span>
-                                            @else
-                                                <span class="badge badge-warning">{{ trans('quiz.waiting') }}</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ dateTimeFormat($result->created_at, 'j M Y H:i') }}</td>
-                                        <td>
-                                            <a href="/panel/quizzes/results/{{ $result->id }}/details" 
-                                               class="btn btn-sm btn-primary">
-                                                {{ trans('panel.view') }}
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+            </div>{{-- /sd-left --}}
+
+            {{-- ════════ RIGHT 1/3 ════════ --}}
+            <div class="sd-right">
+
+                {{-- ── Student Profile ──────────────────────────────────── --}}
+                <div class="sd-card sd-profile">
+                    <img src="{{ $student->getAvatar(80) }}" class="sd-profile-avatar"
+                         alt="{{ $student->full_name }}"
+                         onerror="this.src='/assets/default/img/user/avatar_default.png'">
+                    <p class="sd-profile-name">{{ $student->full_name }}</p>
+                    <p class="sd-profile-meta">{{ $student->email }}</p>
+                    <div class="sd-profile-stats">
+                        <div class="sd-pstat">
+                            <span class="ps-label">Estimate Band: </span><span class="ps-val" style="color:#5482ff;">{{ $student->estimated_band > 0 ? $student->estimated_band : '—' }}</span>
+                        </div>
+                        <div class="sd-pstat">
+                            <span class="ps-label">Aim Band: </span><span class="ps-val">{{ $student->aim_band ?? '—' }}</span>
+                        </div>
+                        <div class="sd-pstat">
+                            <span class="ps-label">Ngày thi: </span><span class="ps-val">@if(!empty($student->exam_date) && $student->exam_date !== '0000-00-00'){{ \Carbon\Carbon::parse($student->exam_date)->format('d/m/Y') }}@else—@endif</span>
+                        </div>
+                        <div class="sd-pstat">
+                            <span class="ps-label">Ranking: </span><span class="ps-val">@if($rankDisplay !== '—')<span class="sd-rank-badge">{{ $rankDisplay }}</span>@else—@endif</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endif
 
-        {{-- Support Tickets --}}
-        @if(!empty($supportTickets) && $supportTickets->count() > 0)
-            <div class="mt-30">
-                <h3 class="section-title">{{ trans('panel.recent_support_tickets') }}</h3>
-
-                <div class="panel-section-card py-20 px-25 mt-20">
-                    <div class="table-responsive">
-                        <table class="table custom-table">
-                            <thead>
-                                <tr>
-                                    <th>{{ trans('panel.title') }}</th>
-                                    <th>{{ trans('panel.course') }}</th>
-                                    <th>{{ trans('panel.status') }}</th>
-                                    <th>{{ trans('panel.date') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($supportTickets as $ticket)
-                                    <tr>
-                                        <td>{{ $ticket->title }}</td>
-                                        <td>{{ $ticket->webinar->title ?? 'N/A' }}</td>
-                                        <td>
-                                            @if($ticket->status == 'open')
-                                                <span class="badge badge-primary">{{ trans('panel.open') }}</span>
-                                            @elseif($ticket->status == 'close')
-                                                <span class="badge badge-secondary">{{ trans('panel.closed') }}</span>
-                                            @else
-                                                <span class="badge badge-info">{{ trans('panel.supporter_replied') }}</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ dateTimeFormat($ticket->created_at, 'j M Y') }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                {{-- ── Khóa học đang học ────────────────────────────────── --}}
+                <div class="sd-card">
+                    <p class="sd-card-title">Khóa học đang học</p>
+                    @if(empty($coursesData))
+                        <div class="sd-empty">Chưa đăng ký khóa nào.</div>
+                    @else
+                        @foreach($coursesData as $cd)
+                            <div class="{{ !$loop->first ? 'mt-14 pt-14' : '' }}" style="{{ !$loop->first ? 'border-top:1px solid #f8f9fa;' : '' }}">
+                                <p class="sd-course-name" style="text-decoration:none;">{{ $cd['webinar']->title }}</p>
+                                <div class="sd-course-stats">
+                                    <span>Số bài học: <strong>{{ $cd['completed_lessons'] }}</strong></span>
+                                    <span>Số đề luyện tập: <strong>{{ $cd['exercises_done'] }}</strong></span>
+                                </div>
+                                <div class="sd-course-progress">
+                                    <div class="sd-course-progress-bar" style="width:{{ min(100, max(0, $cd['progress'])) }}%"></div>
+                                </div>
+                                <div class="sd-course-pct">{{ number_format($cd['progress'], 1) }}% hoàn thành</div>
+                            </div>
+                        @endforeach
+                    @endif
                 </div>
-            </div>
-        @endif
+
+                {{-- ── Lịch sử Speaking & Writing ──────────────────────── --}}
+                <div class="sd-card">
+                    <p class="sd-card-title">Lịch sử Speaking &amp; Writing</p>
+                    @if($swHistory->isEmpty())
+                        <div class="sd-empty">Chưa có lịch sử Speaking / Writing.</div>
+                    @else
+                        @php $swAll = $swHistory; $swCount = $swAll->count(); @endphp
+                        <div id="swList">
+                        @foreach($swAll as $i => $sw)
+                            @php
+                                $gradeUrl = '/panel/ielts-grading/' . $sw->id . '/grade';
+                                $resultUrl = '/panel/ielts-tests/attempt/' . $sw->id . '/results';
+                                $skillLabel = ($sw->speaking_completed && $sw->writing_completed)
+                                    ? 'Speaking + Writing'
+                                    : ($sw->speaking_completed ? 'Speaking' : 'Writing');
+                                $linkUrl = $gradeUrl;
+                            @endphp
+                            <a href="{{ $linkUrl }}" class="sd-sw-item{{ $i >= 3 ? ' sd-sw-extra d-none' : '' }}" target="_blank">
+                                <div class="sd-sw-item-left">
+                                    <span class="sd-sw-title" title="{{ $sw->test_title }}">{{ $sw->test_title }}</span>
+                                    <div class="sd-sw-meta">
+                                        {{ $skillLabel }}
+                                        @if($sw->completed_at)
+                                            &nbsp;·&nbsp;{{ date('d/m/Y', (int)$sw->completed_at) }}
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="sd-sw-bands">
+                                    @if($sw->speaking_completed)
+                                        <span class="sd-sw-band-pill s-pill">S: {{ $sw->speaking_band ?? '—' }}</span>
+                                    @endif
+                                    @if($sw->writing_completed)
+                                        <span class="sd-sw-band-pill w-pill">W: {{ $sw->writing_band ?? '—' }}</span>
+                                    @endif
+                                </div>
+                                <span class="sd-sw-action">Xem / Chấm →</span>
+                            </a>
+                        @endforeach
+                        </div>
+                        @if($swCount > 3)
+                            <button class="sd-sw-more-btn" id="swMoreBtn" onclick="sdSwToggle()">Xem thêm {{ $swCount - 3 }} bài ▾</button>
+                        @endif
+                    @endif
+                </div>
+
+            </div>{{-- /sd-right --}}
+
+        </div>{{-- /sd-page --}}
+
     </section>
-
-    {{-- Support Message Modal --}}
-    <div class="modal fade" id="supportMessageModal" tabindex="-1" role="dialog" aria-labelledby="supportMessageModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content" style="border-radius: 15px; border: none;">
-                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
-                    <h5 class="modal-title font-weight-bold" id="supportMessageModalLabel">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                        </svg>
-                        {{ trans('panel.send_support_message') }}
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="supportMessageForm">
-                    <div class="modal-body" style="padding: 30px;">
-                        <div class="alert alert-info" style="border-left: 4px solid #17a2b8;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                            {{ trans('panel.support_message_info') }}
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="font-weight-bold">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                </svg>
-                                {{ trans('panel.select_course') }}
-                            </label>
-                            <select name="webinar_id" class="form-control" style="border-radius: 8px; padding: 10px;" required>
-                                <option value="">{{ trans('panel.select_course') }}</option>
-                                @foreach($coursesData as $courseData)
-                                    <option value="{{ $courseData['webinar']->id }}">{{ $courseData['webinar']->title }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="font-weight-bold">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                {{ trans('panel.message') }}
-                            </label>
-                            <textarea name="message" class="form-control" rows="6" style="border-radius: 8px; padding: 12px;" placeholder="{{ trans('panel.type_your_message_here') }}" required></textarea>
-                            <small class="text-muted">{{ trans('panel.min_characters', ['count' => 10]) }}</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 20px 30px;">
-                        <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius: 8px; padding: 10px 20px;">
-                            {{ trans('panel.close') }}
-                        </button>
-                        <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 10px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
-                            {{ trans('panel.send') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts_bottom')
-    <script>
-        $(document).ready(function() {
-            $('#supportMessageForm').on('submit', function(e) {
-                e.preventDefault();
-                
-                console.log('Form submitted'); // Debug
-                
-                var form = $(this);
-                var submitBtn = form.find('button[type="submit"]');
-                var originalBtnText = submitBtn.html();
-                var message = form.find('textarea[name="message"]').val().trim();
-                var webinarId = form.find('select[name="webinar_id"]').val();
-                
-                console.log('Message:', message); // Debug
-                console.log('Webinar ID:', webinarId); // Debug
-                
-                // Validate course selection
-                if(!webinarId) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '{{ trans('panel.validation_error') }}',
-                        text: '{{ trans('panel.please_select_course') }}'
-                    });
-                    return;
-                }
-                
-                // Validate message length
-                if(message.length < 10) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '{{ trans('panel.validation_error') }}',
-                        text: '{{ trans('panel.message_too_short') }}'
-                    });
-                    return;
-                }
-                
-                // Disable button and show loading
-                submitBtn.prop('disabled', true).html(
-                    '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>{{ trans('panel.sending') }}...'
-                );
-                
-                var formData = {
-                    webinar_id: webinarId,
-                    message: message,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                };
-                
-                console.log('Sending data:', formData); // Debug
-                
-                $.ajax({
-                    url: '/panel/students-tracking/{{ $student->id }}/support-message',
-                    method: 'POST',
-                    data: formData,
-                    dataType: 'json',
-                    success: function(response) {
-                        console.log('Success response:', response); // Debug
-                        
-                        if(response.success) {
-                            $('#supportMessageModal').modal('hide');
-                            form[0].reset();
-                            
-                            Swal.fire({
-                                icon: 'success',
-                                title: '{{ trans('panel.success') }}',
-                                text: response.message,
-                                timer: 2000,
-                                showConfirmButton: false
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: '{{ trans('panel.error') }}',
-                                text: response.message || '{{ trans('panel.error_occurred') }}'
-                            });
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', xhr.responseText); // Debug
-                        console.error('Status:', status); // Debug
-                        console.error('Error:', error); // Debug
-                        
-                        var errorMsg = '{{ trans('panel.error_occurred') }}';
-                        
-                        if(xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                            // Validation errors
-                            var errors = xhr.responseJSON.errors;
-                            errorMsg = Object.values(errors).flat().join('<br>');
-                        } else if(xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
-                        } else if(xhr.status === 403) {
-                            errorMsg = '{{ trans('panel.access_denied') }}';
-                        } else if(xhr.status === 500) {
-                            errorMsg = '{{ trans('panel.server_error') }}';
-                        }
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ trans('panel.error') }}',
-                            html: errorMsg
-                        });
-                    },
-                    complete: function() {
-                        // Re-enable button
-                        submitBtn.prop('disabled', false).html(originalBtnText);
-                    }
-                });
-            });
-            
-            // Reset form when modal is closed
-            $('#supportMessageModal').on('hidden.bs.modal', function() {
-                $('#supportMessageForm')[0].reset();
-            });
-        });
-    </script>
+<script src="/assets/design_1/vendor/apexcharts/apexcharts.js"></script>
+<script>
+(function () {
+    'use strict';
+    var el = document.getElementById('sdRadarChart');
+    if (!el || typeof ApexCharts === 'undefined') return;
+    var bands  = @json(array_values($skillBands));
+    var labels = ['Listening', 'Reading', 'Writing', 'Speaking', 'Overall'];
+    new ApexCharts(el, {
+        chart: {
+            type: 'radar',
+            height: 230,
+            toolbar: { show: false },
+            fontFamily: 'Roboto, sans-serif',
+            background: 'transparent',
+        },
+        series: [{ name: 'Band', data: bands }],
+        xaxis: { categories: labels },
+        yaxis: { show: false, min: 0, max: 9 },
+        fill:    { opacity: 0.18, colors: ['#5482ff'] },
+        stroke:  { width: 2,  colors: ['#5482ff'] },
+        markers: { size: 4,   colors: ['#5482ff'], hover: { size: 6 } },
+        plotOptions: {
+            radar: { polygons: { strokeColors: '#e9ecef', connectorColors: '#e9ecef' } }
+        },
+        dataLabels: {
+            enabled: true,
+            style: { fontSize: '10px', colors: ['#374151'] },
+            formatter: function (v) { return v > 0 ? v : ''; },
+        },
+        tooltip: { y: { formatter: function (v) { return v + ' / 9'; } } },
+    }).render();
+})();
+
+// S&W toggle expand/collapse
+function sdSwToggle() {
+    var extras = document.querySelectorAll('.sd-sw-extra');
+    var btn    = document.getElementById('swMoreBtn');
+    var hidden = extras.length > 0 && extras[0].classList.contains('d-none');
+    extras.forEach(function(el) {
+        el.classList.toggle('d-none', !hidden);
+    });
+    if (hidden) {
+        btn.textContent = 'Thu gọn ▴';
+    } else {
+        var n = extras.length;
+        btn.textContent = 'Xem thêm ' + n + ' bài ▾';
+    }
+}
+</script>
 @endpush
