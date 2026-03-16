@@ -3,7 +3,7 @@
 @endphp
 
 
-<div id="panelSidebar" class="panel-sidebar panel-sidebar--collapsed bg-white">
+<div id="panelSidebar" class="panel-sidebar bg-white">
     <div class="panel-sidebar__contents bg-white {{ (empty($getPanelSidebarSettings) or empty($getPanelSidebarSettings['background'])) ? 'without-bottom-image' : '' }}">
 
         <div class="js-show-panel-sidebar cursor-pointer d-flex d-lg-none">
@@ -23,10 +23,10 @@
         </div>
 
         {{-- Scrollable main menu area --}}
-        <div class="panel-sidebar__scroll-area" data-simplebar @if((!empty($isRtl))) data-simplebar-direction="rtl" @endif>
+        <div class="panel-sidebar__scroll-area">
             <div id="sidebarAccordions">
                 {{-- Menu Items (Communications pinned at bottom for students; shown inline for admin/teacher) --}}
-                @include('design_1.panel.includes.sidebar.items', ['excludeSections' => ($authUser->isAdmin() || $authUser->isTeacher()) ? [] : ['communications']])
+                @include('design_1.panel.includes.sidebar.items', ['excludeSections' => array_merge(($authUser->isAdmin() || $authUser->isTeacher()) ? [] : ['communications'], ['support'])])
             </div>
         </div>
 

@@ -1,4 +1,4 @@
-@extends(getTemplate().'.panel.layouts.panel_layout')
+@extends('design_1.panel.layouts.panel')
 
 @section('content')
 <div class="container-fluid">

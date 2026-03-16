@@ -23,7 +23,7 @@
 
 .support-conversation-card {
     position: relative;
-    height: calc(100vh - 315px);
+    height: calc(100vh - 168px);
     overflow-y: auto;
     padding-bottom: 44px;
 
@@ -49,6 +49,6 @@
 
 .support-conversation-messages {
     position: relative;
-    height: calc(100vh - 404px);
-    padding-bottom: 44px;
+    /* height is managed by flexbox inside .chat-panel */
+    padding-bottom: 8px;
 }
