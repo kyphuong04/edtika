@@ -22,6 +22,13 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
         $user = auth()->user();
 
+        if ($user->role_name === Role::$manager) {
+            return view('admin.organization_dashboard', [
+                'pageTitle' => trans('admin/main.general_dashboard_title'),
+                'managerDashboard' => $this->getManagerOrganizationDashboardData(),
+            ]);
+        }
+
         if ($user->can('admin_general_dashboard_daily_sales_statistics')) {
             $dailySalesTypeStatistics = $this->dailySalesTypeStatistics();
         }
@@ -100,60 +107,90 @@ class DashboardController extends Controller
     {
         $this->authorize('admin_marketing_dashboard_show');
 
-        $buyerIds = Sale::whereNull('refund_at')
-            ->pluck('buyer_id')
-            ->toArray();
-        $teacherIdsHasClass = Webinar::where('status', Webinar::$active)
-            ->pluck('creator_id', 'teacher_id')
-            ->toArray();
-        $teacherIdsHasClass = array_merge(array_keys($teacherIdsHasClass), $teacherIdsHasClass);
-
-
-        $usersWithoutPurchases = User::whereNotIn('id', array_unique($buyerIds))->count();
-        $teachersWithoutClass = User::where('role_name', Role::$teacher)
-            ->whereNotIn('id', array_unique($teacherIdsHasClass))
-            ->count();
-        $featuredClasses = FeatureWebinar::where('status', 'publish')
-            ->count();
-
-        $now = time();
-        $activeDiscounts = Ticket::where('start_date', '<', $now)
-            ->where('end_date', '>', $now)
-            ->count();
-
-        $getClassesStatistics = $this->getClassesStatistics();
-
-        $getNetProfitChart = $this->getNetProfitChart();
-
-        $getNetProfitStatistics = $this->getNetProfitStatistics();
-
-        $getTopSellingClasses = $this->getTopSellingClasses();
-
-        $getTopSellingAppointments = $this->getTopSellingAppointments();
-
-        $getTopSellingTeachers = $this->getTopSellingTeachersAndOrganizations('teachers');
-
-        $getTopSellingOrganizations = $this->getTopSellingTeachersAndOrganizations('organizations');
-
-        $getMostActiveStudents = $this->getMostActiveStudents();
-
         $data = [
             'pageTitle' => trans('admin/main.marketing_dashboard'),
-            'usersWithoutPurchases' => $usersWithoutPurchases,
-            'teachersWithoutClass' => $teachersWithoutClass,
-            'featuredClasses' => $featuredClasses,
-            'activeDiscounts' => $activeDiscounts,
-            'getClassesStatistics' => $getClassesStatistics,
-            'getNetProfitChart' => $getNetProfitChart,
-            'getNetProfitStatistics' => $getNetProfitStatistics,
-            'getTopSellingClasses' => $getTopSellingClasses,
-            'getTopSellingAppointments' => $getTopSellingAppointments,
-            'getTopSellingTeachers' => $getTopSellingTeachers,
-            'getTopSellingOrganizations' => $getTopSellingOrganizations,
-            'getMostActiveStudents' => $getMostActiveStudents,
+            'organizationMarketingDashboard' => $this->getAdminOrganizationMarketingDashboardData(auth()->user()),
         ];
 
         return view('admin.marketing_dashboard', $data);
+    }
+
+    public function business()
+    {
+        $this->authorize('admin_general_dashboard_show');
+
+        $user = auth()->user();
+        abort_unless($user->role_name === Role::$manager, 403);
+
+        return view('admin.sales_dashboard', [
+            'pageTitle' => trans('admin/main.business_dashboard'),
+            'businessDashboard' => $this->getManagerBusinessDashboardData(),
+        ]);
+    }
+
+    public function userGrowth()
+    {
+        $this->authorize('admin_general_dashboard_show');
+
+        $user = auth()->user();
+        abort_unless($user->role_name === Role::$manager, 403);
+
+        return view('admin.user_growth', [
+            'pageTitle' => trans('admin/main.user_growth_dashboard'),
+            'userGrowthDashboard' => $this->getManagerUserGrowthDashboardData(),
+        ]);
+    }
+
+    public function learningQuality()
+    {
+        $this->authorize('admin_general_dashboard_show');
+
+        $user = auth()->user();
+        abort_unless($user->role_name === Role::$manager, 403);
+
+        return view('admin.learning_quality', [
+            'pageTitle' => trans('admin/main.learning_quality_dashboard'),
+            'learningQualityDashboard' => $this->getManagerLearningQualityDashboardData(),
+        ]);
+    }
+
+    public function teamPerformance()
+    {
+        $this->authorize('admin_general_dashboard_show');
+
+        $user = auth()->user();
+        abort_unless($user->role_name === Role::$manager, 403);
+
+        return view('admin.team_performance', [
+            'pageTitle' => trans('admin/main.team_performance_dashboard'),
+            'teamPerformanceDashboard' => $this->getManagerTeamPerformanceDashboardData(),
+        ]);
+    }
+
+    public function adminPerformance()
+    {
+        $this->authorize('admin_general_dashboard_show');
+
+        $user = auth()->user();
+        abort_unless($user->role_name === Role::$manager, 403);
+
+        return view('admin.admin_performance', [
+            'pageTitle' => trans('admin/main.admin_performance_dashboard'),
+            'adminPerformanceDashboard' => $this->getManagerAdminPerformanceDashboardData(),
+        ]);
+    }
+
+    public function leadPerformance()
+    {
+        $this->authorize('admin_general_dashboard_show');
+
+        $user = auth()->user();
+        abort_unless($user->role_name === Role::$manager, 403);
+
+        return view('admin.lead_performance', [
+            'pageTitle' => trans('admin/main.lead_performance_dashboard'),
+            'leadPerformanceDashboard' => $this->getManagerLeadPerformanceDashboardData(),
+        ]);
     }
 
     public function getSaleStatisticsData(Request $request)

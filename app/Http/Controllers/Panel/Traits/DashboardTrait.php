@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Panel\Traits;
 use App\Enums\MorphTypesEnum;
 use App\Models\Bundle;
 use App\Models\Certificate;
+use App\Models\FormSubmission;
+use App\Models\Meeting;
 use App\Models\Product;
 use App\Models\Quiz;
 use App\Models\QuizzesResult;
@@ -28,6 +30,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 trait DashboardTrait
 {
@@ -823,6 +826,583 @@ trait DashboardTrait
             'total' => $total,
             'totalActive' => $totalActive,
             'students' => $students,
+        ];
+    }
+
+    /***************
+     * | Organization (Admin) Sales Dashboard Data
+     * ***********/
+
+    public function getOrganizationSalesDashboardData($user): array
+    {
+        $orgUserIds = User::where('organ_id', $user->id)->pluck('id')->toArray();
+        $allOrgIds  = array_merge([$user->id], $orgUserIds);
+
+        $nowCarbon = Carbon::now();
+        $yearStart = $nowCarbon->copy()->startOfYear()->timestamp;
+        $now       = $nowCarbon->timestamp;
+
+        // Prev month boundaries
+        $prevMonthStart = $nowCarbon->copy()->startOfMonth()->subMonth()->startOfMonth()->timestamp;
+        $prevMonthEnd   = $nowCarbon->copy()->startOfMonth()->subMonth()->endOfMonth()->timestamp;
+
+        // --- Webinars owned by org ---
+        $orgWebinarIds = Webinar::whereIn('creator_id', $allOrgIds)
+            ->orWhereIn('teacher_id', $allOrgIds)
+            ->pluck('id')->toArray();
+
+        // Admin team (same organization)
+        $teamAdminIds = User::where('organ_id', $user->id)
+            ->where('role_name', Role::$admin)
+            ->pluck('id')
+            ->toArray();
+
+        if (!in_array($user->id, $teamAdminIds)) {
+            $teamAdminIds[] = $user->id;
+        }
+
+        $otherAdminIds = array_values(array_filter($teamAdminIds, static fn($adminId) => (int) $adminId !== (int) $user->id));
+
+        $personalMeetingIds = Meeting::where('creator_id', $user->id)->pluck('id')->toArray();
+
+        // 1. Marketing leads / Form submissions (annual, all sources)
+        $marketingLeads = FormSubmission::whereBetween('created_at', [$yearStart, $now])
+            ->whereNotNull('user_id')
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('organ_id', $user->id);
+            })
+            ->distinct('user_id')
+            ->count('user_id');
+
+        // 2. Leads consulted – unique leads consulted by current admin this year
+        $leadsConsulted = ReserveMeeting::whereIn('meeting_id', $personalMeetingIds)
+            ->whereBetween('created_at', [$yearStart, $now])
+            ->distinct('user_id')
+            ->count('user_id');
+
+        // 3. Leads paid – distinct buyers closed by current admin this year
+        $leadsPaid = Sale::where('seller_id', $user->id)
+            ->whereNull('refund_at')
+            ->whereBetween('created_at', [$yearStart, $now])
+            ->where(function ($query) {
+                $query->whereNotNull('webinar_id')
+                    ->orWhereNotNull('bundle_id')
+                    ->orWhereNotNull('meeting_id');
+            })
+            ->distinct('buyer_id')
+            ->count('buyer_id');
+
+        // 4. Leads rejected (lost deals) by current admin this year
+        $leadsRejected = Sale::where('seller_id', $user->id)
+            ->whereNotNull('refund_at')
+            ->whereBetween('created_at', [$yearStart, $now])
+            ->count();
+
+        // 5. Weekly performance chart – last 7 days (daily buckets)
+        $weeklyLabels  = [];
+        $weeklyPersonal = [];
+        $weeklyTeam    = [];
+        for ($d = 6; $d >= 0; $d--) {
+            $dayStart = $nowCarbon->copy()->subDays($d)->startOfDay()->timestamp;
+            $dayEnd   = $nowCarbon->copy()->subDays($d)->endOfDay()->timestamp;
+            $weeklyLabels[] = Carbon::createFromTimestamp($dayStart)->format('d/m');
+
+            $personalCount = Sale::where('seller_id', $user->id)
+                ->whereNull('refund_at')
+                ->whereBetween('created_at', [$dayStart, $dayEnd])
+                ->where(function ($query) {
+                    $query->whereNotNull('webinar_id')
+                        ->orWhereNotNull('bundle_id')
+                        ->orWhereNotNull('meeting_id');
+                })
+                ->distinct('buyer_id')->count('buyer_id');
+
+            $teamCount = 0;
+            if (!empty($otherAdminIds)) {
+                $teamCount = Sale::whereIn('seller_id', $otherAdminIds)
+                    ->whereNull('refund_at')
+                    ->whereBetween('created_at', [$dayStart, $dayEnd])
+                    ->where(function ($query) {
+                        $query->whereNotNull('webinar_id')
+                            ->orWhereNotNull('bundle_id')
+                            ->orWhereNotNull('meeting_id');
+                    })
+                    ->distinct('buyer_id')
+                    ->count('buyer_id');
+            }
+
+            $weeklyPersonal[] = $personalCount;
+            $weeklyTeam[]     = $teamCount;
+        }
+
+        // 6. Student stats
+        $studentIds = User::where('organ_id', $user->id)
+            ->where('role_name', Role::$user)
+            ->pluck('id')->toArray();
+
+        $thirtyDaysAgo = time() - 30 * 24 * 3600;
+        $activeStudentIds = TimeSpentOnCourse::whereIn('user_id', $studentIds)
+            ->where('entry_time', '>=', $thirtyDaysAgo)
+            ->distinct('user_id')->pluck('user_id')->toArray();
+
+        $activeStudents    = count($activeStudentIds);
+        $nonActiveStudents = count($studentIds) - $activeStudents;
+        if ($nonActiveStudents < 0) $nonActiveStudents = 0;
+
+        // 7. Mentors under KPI (teachers with no grading activity in last 30 days)
+        $teacherIds = User::where('organ_id', $user->id)
+            ->where('role_name', Role::$teacher)
+            ->pluck('id')->toArray();
+
+        $activeTeacherIds = IeltsGradingRating::whereIn('instructor_id', $teacherIds)
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->distinct('instructor_id')->pluck('instructor_id')->toArray();
+        $mentorsUnderKpi = count($teacherIds) - count($activeTeacherIds);
+        if ($mentorsUnderKpi < 0) $mentorsUnderKpi = 0;
+
+        // 8. Form registration list (earliest submissions, 3 items)
+        $formRegistrations = FormSubmission::with(['user' => function ($q) {
+            $q->select('id', 'full_name', 'avatar', 'avatar_settings', 'email', 'created_at');
+        }])
+            ->whereNotNull('user_id')
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('organ_id', $user->id)
+                    ->where('role_name', Role::$user);
+            })
+            ->orderBy('created_at', 'asc')
+            ->limit(10)
+            ->get();
+
+        // 9. Students about to complete courses (sorted by remaining progress asc)
+        $completingStudents = [];
+        if (!empty($orgWebinarIds) && !empty($studentIds)) {
+            $salesWithStudents = Sale::whereIn('webinar_id', $orgWebinarIds)
+                ->whereIn('buyer_id', $studentIds)
+                ->whereNull('refund_at')
+                ->with(['webinar', 'buyer' => function ($q) {
+                    $q->select('id', 'full_name', 'avatar', 'avatar_settings', 'email');
+                }])
+                ->get();
+
+            $progresses = [];
+            foreach ($salesWithStudents as $sale) {
+                if (empty($sale->webinar) || empty($sale->buyer)) continue;
+                // Calculate progress directly using userId to avoid auth-bound checkUserHasBought()
+                $buyerId = $sale->buyer_id;
+                $webinar = $sale->webinar;
+                $filesStat       = $webinar->getFilesLearningProgressStat($buyerId);
+                $sessionsStat    = $webinar->getSessionsLearningProgressStat($buyerId);
+                $textLessonsStat = $webinar->getTextLessonsLearningProgressStat($buyerId);
+                $passed = $filesStat['passed'] + $sessionsStat['passed'] + $textLessonsStat['passed'];
+                $count  = $filesStat['count']  + $sessionsStat['count']  + $textLessonsStat['count'];
+                $progress = ($count > 0) ? min(100, round(($passed * 100) / $count)) : 0;
+                if ($progress < 100) {
+                    $progresses[] = [
+                        'user'      => $sale->buyer,
+                        'webinar'   => $webinar,
+                        'progress'  => $progress,
+                        'remaining' => 100 - $progress,
+                    ];
+                }
+            }
+            usort($progresses, fn($a, $b) => $a['remaining'] - $b['remaining']);
+            $completingStudents = array_slice($progresses, 0, 10);
+        }
+
+        // 10. Sale achievement (annual %)
+        $saleAchievementPct = ($leadsConsulted > 0)
+            ? min(100, round($leadsPaid / $leadsConsulted * 100))
+            : 0;
+
+        // 11. Personal metrics – prev month (current admin only)
+        $prevMonthConsultedLeads = ReserveMeeting::whereIn('meeting_id', $personalMeetingIds)
+            ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+            ->distinct('user_id')
+            ->count('user_id');
+
+        $daysInPrevMonth = Carbon::now()->subMonth()->daysInMonth;
+        $leadsPerDay = $daysInPrevMonth > 0 ? round($prevMonthConsultedLeads / $daysInPrevMonth, 1) : 0;
+
+        $prevMonthPaid = Sale::where('seller_id', $user->id)
+            ->whereNull('refund_at')
+            ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+            ->where(function ($query) {
+                $query->whereNotNull('webinar_id')
+                    ->orWhereNotNull('bundle_id')
+                    ->orWhereNotNull('meeting_id');
+            })
+            ->distinct('buyer_id')->count('buyer_id');
+
+        $personalConversionRate = ($prevMonthConsultedLeads > 0)
+            ? min(100, round($prevMonthPaid / $prevMonthConsultedLeads * 100))
+            : 0;
+
+        // Avg deal time (days from first lead touch to sale, prev month)
+        $prevMonthSales = Sale::where('seller_id', $user->id)
+            ->whereNull('refund_at')
+            ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+            ->where(function ($query) {
+                $query->whereNotNull('webinar_id')
+                    ->orWhereNotNull('bundle_id')
+                    ->orWhereNotNull('meeting_id');
+            })
+            ->get();
+
+        $avgDealDays = 0;
+        if ($prevMonthSales->count() > 0) {
+            $totalDays = 0;
+            $counted   = 0;
+
+            foreach ($prevMonthSales as $s) {
+                $firstFormAt = FormSubmission::where('user_id', $s->buyer_id)->min('created_at');
+                $firstMeetingAt = ReserveMeeting::whereIn('meeting_id', $personalMeetingIds)
+                    ->where('user_id', $s->buyer_id)
+                    ->min('created_at');
+
+                $touchPoints = array_filter([(int) $firstFormAt, (int) $firstMeetingAt]);
+                if (!empty($touchPoints)) {
+                    $firstTouchAt = min($touchPoints);
+                    $totalDays += max(0, ($s->created_at - $firstTouchAt) / 86400);
+                    $counted++;
+                }
+            }
+
+            $avgDealDays = $counted > 0 ? round($totalDays / $counted, 1) : 0;
+        }
+
+        // Contract value (revenue prev month, current admin)
+        $contractValue = Sale::where('seller_id', $user->id)
+            ->whereNull('refund_at')
+            ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+            ->sum('total_amount');
+
+        // 12. Top sellers (admins in org ranked by conversion prev month)
+        $adminIds = array_values(array_unique($teamAdminIds));
+        $adminUsers = User::query()
+            ->whereIn('id', $adminIds)
+            ->get()
+            ->keyBy('id');
+
+        $topSellers = [];
+        foreach ($adminIds as $adminId) {
+            $adminUser = $adminUsers->get($adminId);
+            if (!$adminUser) continue;
+
+            $adminMeetingIds = Meeting::where('creator_id', $adminId)->pluck('id')->toArray();
+            $adminMeetings = ReserveMeeting::whereIn('meeting_id', $adminMeetingIds)
+                ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $adminSales = Sale::where('seller_id', $adminId)
+                ->whereNull('refund_at')
+                ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+                ->where(function ($query) {
+                    $query->whereNotNull('webinar_id')
+                        ->orWhereNotNull('bundle_id')
+                        ->orWhereNotNull('meeting_id');
+                })
+                ->distinct('buyer_id')->count('buyer_id');
+
+            $convRate = ($adminMeetings > 0) ? min(100, round($adminSales / $adminMeetings * 100)) : 0;
+            $topSellers[] = [
+                'user'     => $adminUser,
+                'meetings' => $adminMeetings,
+                'sales'    => $adminSales,
+                'rate'     => $convRate,
+            ];
+        }
+
+        usort($topSellers, static function ($a, $b) {
+            if ($b['rate'] === $a['rate']) {
+                return $b['sales'] <=> $a['sales'];
+            }
+
+            return $b['rate'] <=> $a['rate'];
+        });
+
+        $topSellers = array_slice($topSellers, 0, 5);
+
+        $rejectedLeadsList = Sale::query()
+            ->where('seller_id', $user->id)
+            ->whereNotNull('refund_at')
+            ->whereBetween('created_at', [$yearStart, $now])
+            ->with([
+                'buyer' => function ($query) {
+                    $query->select('id', 'full_name', 'email', 'avatar', 'avatar_settings');
+                },
+                'webinar' => function ($query) {
+                    $query->select('id', 'title');
+                },
+            ])
+            ->orderBy('refund_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return [
+            'marketingLeads'       => $marketingLeads,
+            'leadsConsulted'       => $leadsConsulted,
+            'leadsPaid'            => $leadsPaid,
+            'leadsRejected'        => $leadsRejected,
+            'rejectedLeadsList'    => $rejectedLeadsList,
+            'weeklyLabels'         => $weeklyLabels,
+            'weeklyPersonal'       => $weeklyPersonal,
+            'weeklyTeam'           => $weeklyTeam,
+            'activeStudents'       => $activeStudents,
+            'nonActiveStudents'    => $nonActiveStudents,
+            'mentorsUnderKpi'      => $mentorsUnderKpi,
+            'formRegistrations'    => $formRegistrations,
+            'completingStudents'   => $completingStudents,
+            'saleAchievementPct'   => $saleAchievementPct,
+            'leadsPerDay'          => $leadsPerDay,
+            'personalConversionRate' => $personalConversionRate,
+            'avgDealDays'          => $avgDealDays,
+            'contractValue'        => $contractValue,
+            'topSellers'           => $topSellers,
+        ];
+    }
+
+    public function getAdminPerformanceDashboardData($user): array
+    {
+        $now = Carbon::now();
+
+        $teamAdminIds = User::where('organ_id', $user->id)
+            ->where('role_name', Role::$admin)
+            ->pluck('id')
+            ->toArray();
+
+        if (!in_array($user->id, $teamAdminIds)) {
+            $teamAdminIds[] = $user->id;
+        }
+
+        $otherAdminIds = array_values(array_filter($teamAdminIds, static fn($adminId) => (int)$adminId !== (int)$user->id));
+
+        $personalMeetingIds = Meeting::where('creator_id', $user->id)->pluck('id')->toArray();
+
+        $monthStart = $now->copy()->startOfMonth()->timestamp;
+        $monthEnd = $now->copy()->endOfMonth()->timestamp;
+        $daysElapsedInMonth = max(1, (int)$now->day);
+
+        $consultedThisMonth = ReserveMeeting::whereIn('meeting_id', $personalMeetingIds)
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->distinct('user_id')
+            ->count('user_id');
+
+        $paidSalesQuery = Sale::query()
+            ->where('seller_id', $user->id)
+            ->whereNull('refund_at')
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->where(function ($query) {
+                $query->whereNotNull('webinar_id')
+                    ->orWhereNotNull('bundle_id')
+                    ->orWhereNotNull('meeting_id');
+            });
+
+        $paidThisMonth = deepClone($paidSalesQuery)
+            ->distinct('buyer_id')
+            ->count('buyer_id');
+
+        $rejectedThisMonth = Sale::query()
+            ->where('seller_id', $user->id)
+            ->whereNotNull('refund_at')
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->count();
+
+        $saleAchievementPct = ($consultedThisMonth > 0)
+            ? min(100, round(($paidThisMonth / $consultedThisMonth) * 100))
+            : 0;
+
+        $monthlyRevenue = (float)deepClone($paidSalesQuery)->sum('total_amount');
+        $avgDealValue = ($paidThisMonth > 0)
+            ? round($monthlyRevenue / $paidThisMonth, 2)
+            : 0;
+
+        $callsThisMonth = ReserveMeeting::query()
+            ->whereIn('meeting_id', $personalMeetingIds)
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->count();
+
+        $avgCallsPerDay = round($callsThisMonth / $daysElapsedInMonth, 1);
+
+        $dropRate = ($paidThisMonth + $rejectedThisMonth) > 0
+            ? round(($rejectedThisMonth / ($paidThisMonth + $rejectedThisMonth)) * 100, 1)
+            : 0;
+
+        $monthlyPaidSales = deepClone($paidSalesQuery)->get();
+        $avgClosingTimeDays = 0;
+        if ($monthlyPaidSales->count() > 0) {
+            $totalDays = 0;
+            $counted = 0;
+
+            foreach ($monthlyPaidSales as $sale) {
+                $firstFormAt = FormSubmission::where('user_id', $sale->buyer_id)->min('created_at');
+                $firstMeetingAt = ReserveMeeting::whereIn('meeting_id', $personalMeetingIds)
+                    ->where('user_id', $sale->buyer_id)
+                    ->min('created_at');
+
+                $touchPoints = array_filter([(int)$firstFormAt, (int)$firstMeetingAt]);
+                if (!empty($touchPoints)) {
+                    $firstTouchAt = min($touchPoints);
+                    $totalDays += max(0, ($sale->created_at - $firstTouchAt) / 86400);
+                    $counted++;
+                }
+            }
+
+            $avgClosingTimeDays = $counted > 0 ? round($totalDays / $counted, 1) : 0;
+        }
+
+        $buildSalesCount = function (array $sellerIds, int $startAt, int $endAt): int {
+            if (empty($sellerIds)) {
+                return 0;
+            }
+
+            return Sale::query()
+                ->whereIn('seller_id', $sellerIds)
+                ->whereNull('refund_at')
+                ->whereBetween('created_at', [$startAt, $endAt])
+                ->where(function ($query) {
+                    $query->whereNotNull('webinar_id')
+                        ->orWhereNotNull('bundle_id')
+                        ->orWhereNotNull('meeting_id');
+                })
+                ->distinct('buyer_id')
+                ->count('buyer_id');
+        };
+
+        $periodSeries = [
+            'weekly' => ['labels' => [], 'personal' => [], 'team' => []],
+            'monthly' => ['labels' => [], 'personal' => [], 'team' => []],
+            'yearly' => ['labels' => [], 'personal' => [], 'team' => []],
+        ];
+
+        for ($d = 6; $d >= 0; $d--) {
+            $start = $now->copy()->subDays($d)->startOfDay()->timestamp;
+            $end = $now->copy()->subDays($d)->endOfDay()->timestamp;
+
+            $periodSeries['weekly']['labels'][] = Carbon::createFromTimestamp($start)->format('d/m');
+            $periodSeries['weekly']['personal'][] = $buildSalesCount([$user->id], $start, $end);
+            $periodSeries['weekly']['team'][] = $buildSalesCount($otherAdminIds, $start, $end);
+        }
+
+        for ($m = 5; $m >= 0; $m--) {
+            $monthRef = $now->copy()->subMonths($m);
+            $start = $monthRef->copy()->startOfMonth()->timestamp;
+            $end = $monthRef->copy()->endOfMonth()->timestamp;
+
+            $periodSeries['monthly']['labels'][] = $monthRef->format('M');
+            $periodSeries['monthly']['personal'][] = $buildSalesCount([$user->id], $start, $end);
+            $periodSeries['monthly']['team'][] = $buildSalesCount($otherAdminIds, $start, $end);
+        }
+
+        for ($y = 4; $y >= 0; $y--) {
+            $yearRef = $now->copy()->subYears($y);
+            $start = $yearRef->copy()->startOfYear()->timestamp;
+            $end = $yearRef->copy()->endOfYear()->timestamp;
+
+            $periodSeries['yearly']['labels'][] = (string)$yearRef->year;
+            $periodSeries['yearly']['personal'][] = $buildSalesCount([$user->id], $start, $end);
+            $periodSeries['yearly']['team'][] = $buildSalesCount($otherAdminIds, $start, $end);
+        }
+
+        $myLeads = ReserveMeeting::query()
+            ->whereIn('meeting_id', $personalMeetingIds)
+            ->whereNotNull('user_id')
+            ->with(['user' => function ($query) {
+                $query->select('id', 'full_name', 'avatar', 'avatar_settings', 'email');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($meetings, $leadId) use ($user) {
+                $leadUser = optional($meetings->first())->user;
+                if (empty($leadUser)) {
+                    return null;
+                }
+
+                $paidDeals = Sale::query()
+                    ->where('seller_id', $user->id)
+                    ->where('buyer_id', $leadId)
+                    ->whereNull('refund_at')
+                    ->where(function ($query) {
+                        $query->whereNotNull('webinar_id')
+                            ->orWhereNotNull('bundle_id')
+                            ->orWhereNotNull('meeting_id');
+                    })
+                    ->count();
+
+                return [
+                    'user' => $leadUser,
+                    'last_contact_at' => optional($meetings->first())->created_at,
+                    'calls' => $meetings->count(),
+                    'status' => $paidDeals > 0 ? 'Closed' : 'In Progress',
+                ];
+            })
+            ->filter()
+            ->values()
+            ->take(8)
+            ->all();
+
+        $mySaleLogs = ReserveMeeting::query()
+            ->whereIn('meeting_id', $personalMeetingIds)
+            ->whereNotNull('description')
+            ->where('description', '!=', '')
+            ->with(['user' => function ($query) {
+                $query->select('id', 'full_name', 'avatar', 'avatar_settings');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->limit(8)
+            ->get();
+
+        $monthlyKpiTarget = 0;
+        if (Schema::hasTable('sales_kpis')) {
+            $monthStartDate = $now->copy()->startOfMonth()->toDateString();
+            $monthEndDate = $now->copy()->endOfMonth()->toDateString();
+
+            $monthlyKpiTarget = (float)DB::table('sales_kpis')
+                ->where('user_id', $user->id)
+                ->where('period_type', 'monthly')
+                ->whereBetween('period_date', [$monthStartDate, $monthEndDate])
+                ->sum('target_revenue');
+        }
+
+        $kpiMonthlyProgress = $monthlyKpiTarget > 0
+            ? min(100, round(($monthlyRevenue / $monthlyKpiTarget) * 100))
+            : $saleAchievementPct;
+
+        $assignedLeadIds = Sale::query()
+            ->whereIn('seller_id', $teamAdminIds)
+            ->whereNotNull('buyer_id')
+            ->pluck('buyer_id')
+            ->unique()
+            ->toArray();
+
+        $newLeads = FormSubmission::query()
+            ->with(['user' => function ($query) {
+                $query->select('id', 'full_name', 'avatar', 'avatar_settings', 'email', 'created_at');
+            }])
+            ->whereNotNull('user_id')
+            ->whereNotIn('user_id', $assignedLeadIds)
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('organ_id', $user->id)
+                    ->where('role_name', Role::$user);
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(8)
+            ->get();
+
+        return [
+            'kpiMonthlyProgress' => $kpiMonthlyProgress,
+            'kpiMonthlyTarget' => $monthlyKpiTarget,
+            'kpiMonthlyActual' => $monthlyRevenue,
+            'avgDealValue' => $avgDealValue,
+            'avgCallsPerDay' => $avgCallsPerDay,
+            'avgDropRate' => $dropRate,
+            'avgClosingTimeDays' => $avgClosingTimeDays,
+            'profileSaleAchievement' => $saleAchievementPct,
+            'periodSeries' => $periodSeries,
+            'myLeads' => $myLeads,
+            'mySaleLogs' => $mySaleLogs,
+            'newLeads' => $newLeads,
         ];
     }
 
