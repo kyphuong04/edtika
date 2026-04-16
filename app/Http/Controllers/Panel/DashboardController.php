@@ -146,6 +146,18 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function adminPerformance()
+    {
+        $user = auth()->user();
+
+        abort_unless($user && $user->isAdmin(), 403);
+
+        return view('design_1.panel.dashboard.admin_performance', [
+            'pageTitle' => 'Admin Performance',
+            'adminPerformance' => $this->getAdminPerformanceDashboardData($user),
+        ]);
+    }
+
     // ─── IELTS Data Helpers ─────────────────────────────────────────────────────
 
     private function getStudentIeltsData($user): array
@@ -377,6 +389,9 @@ class DashboardController extends Controller
 
             // Top Students
             $data['topStudents'] = $this->getOrganizationTopStudentsData($user);
+
+            // Organization Sales Dashboard
+            $data['orgSalesDashboard'] = $this->getOrganizationSalesDashboardData($user);
         }
 
 

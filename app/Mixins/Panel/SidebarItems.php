@@ -699,6 +699,15 @@ class SidebarItems
                 'url' => $user->getProfileUrl(),
                 'items' => []
             ];
+
+            if ($user->isAdmin()) {
+                $items['admin_performance'] = [
+                    'icon' => self::getIcon('dashboard'),
+                    'text' => 'Admin Performance',
+                    'url' => '/panel/admin-performance',
+                    'items' => []
+                ];
+            }
         }
 
         if ($user->can('panel_others_profile_setting')) {

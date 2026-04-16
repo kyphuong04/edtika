@@ -268,6 +268,12 @@ return [
 
 // Dashboard
 'dashboard' => 'Dashboard',
+'business_dashboard' => 'Business',
+'user_growth_dashboard' => 'User Growth',
+'learning_quality_dashboard' => 'Learning Quality',
+'team_performance_dashboard' => 'Team Performance',
+'admin_performance_dashboard' => 'Admin Performance',
+'lead_performance_dashboard' => 'Lead Performance',
 'admin_dashboard_show' => 'Show Dashboard',
 'welcome' => 'Welcome',
 'welcome_card_text' => 'Everything is under your control. Use the quick-access buttons to manage actions easily.',
