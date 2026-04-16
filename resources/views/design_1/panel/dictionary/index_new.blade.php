@@ -1463,7 +1463,7 @@
                     @endif
                     
                     <div class="word-list-header">
-                        <h3 class="word-list-name">{{ $wordList['name'] }} ({{ $wordList['band_level'] }})</h3>
+                        <h3 class="word-list-name">{{ $wordList['name'] }} (Band {{ $wordList['band_level'] }})</h3>
                         <span class="word-count-badge">Tổng số từ: {{ $wordList['word_count'] }} từ</span>
                     </div>
                     <p class="word-list-description">{{ $wordList['description'] }}</p>

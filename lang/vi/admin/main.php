@@ -297,6 +297,12 @@ return [
 
 // Dashboard
 'dashboard' => 'Bảng điều khiển',
+'business_dashboard' => 'Doanh thu',
+'user_growth_dashboard' => 'Sự tăng trưởng người dùng',
+'learning_quality_dashboard' => 'Chất lượng giảng dạy',
+'team_performance_dashboard' => 'Hiệu suất nhóm',
+'admin_performance_dashboard' => 'Hiệu suất Admin',
+'lead_performance_dashboard' => 'Hiệu suất Lead',
 'admin_dashboard_show' => 'Hiển thị bảng điều khiển',
 'welcome' => 'Chào mừng',
 'welcome_card_text' => 'Mọi thứ nằm trong tầm kiểm soát của bạn. Sử dụng các nút truy cập nhanh để quản lý các hành động dễ dàng.',

@@ -34,6 +34,12 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
 
         Route::get('/', 'DashboardController@index');
         Route::get('/clear-cache', 'DashboardController@cacheClear');
+        Route::get('/business', 'DashboardController@business');
+        Route::get('/user-growth', 'DashboardController@userGrowth');
+        Route::get('/learning-quality', 'DashboardController@learningQuality');
+        Route::get('/team-performance', 'DashboardController@teamPerformance');
+        Route::get('/admin-performance', 'DashboardController@adminPerformance');
+        Route::get('/lead-performance', 'DashboardController@leadPerformance');
 
         Route::group(['prefix' => 'dashboard'], function () {
             Route::post('/getSaleStatisticsData', 'DashboardController@getSaleStatisticsData');
