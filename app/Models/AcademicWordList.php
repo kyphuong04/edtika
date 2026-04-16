@@ -57,6 +57,20 @@ class AcademicWordList extends Model
 
     public function hasAccess($userId)
     {
+        if ($this->relationLoaded('accessUsers')) {
+            if ($this->accessUsers->isEmpty()) {
+                return true;
+            }
+
+            return $this->accessUsers->contains('id', $userId);
+        }
+
+        // Default-open behavior: if no explicit access entries are configured,
+        // this list is available to all learners.
+        if (!$this->accessUsers()->exists()) {
+            return true;
+        }
+
         return $this->accessUsers()->where('user_id', $userId)->exists();
     }
 }

@@ -14,6 +14,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     Route::get('/', 'DashboardController@index');
     Route::post('/dashboard/save-settings', 'DashboardController@saveSettings');
     Route::get('/dashboard/weak-points', 'DashboardController@weakPoints');
+    Route::get('/admin-performance', 'DashboardController@adminPerformance');
 
     /* Events */
     Route::group(['prefix' => 'events'], function () {
