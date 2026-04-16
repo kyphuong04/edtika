@@ -31,6 +31,50 @@
                 </li>
             @endcan
 
+            @if(!empty($authUser) && $authUser->role_name === \App\Models\Role::$manager)
+                <li class="{{ (request()->is(getAdminPanelUrl('/business', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl('/business') }}" class="nav-link">
+                        <x-iconsax-bul-graph class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.business_dashboard') }}</span>
+                    </a>
+                </li>
+
+                <li class="{{ (request()->is(getAdminPanelUrl('/user-growth', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl('/user-growth') }}" class="nav-link">
+                        <x-iconsax-bul-user class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.user_growth_dashboard') }}</span>
+                    </a>
+                </li>
+
+                <li class="{{ (request()->is(getAdminPanelUrl('/learning-quality', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl('/learning-quality') }}" class="nav-link">
+                        <x-iconsax-bul-chart-square class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.learning_quality_dashboard') }}</span>
+                    </a>
+                </li>
+
+                <li class="{{ (request()->is(getAdminPanelUrl('/team-performance', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl('/team-performance') }}" class="nav-link">
+                        <x-iconsax-bul-people class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.team_performance_dashboard') }}</span>
+                    </a>
+                </li>
+
+                <li class="{{ (request()->is(getAdminPanelUrl('/admin-performance', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl('/admin-performance') }}" class="nav-link">
+                        <x-iconsax-bul-chart-square class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.admin_performance_dashboard') }}</span>
+                    </a>
+                </li>
+
+                <li class="{{ (request()->is(getAdminPanelUrl('/lead-performance', false))) ? 'active' : '' }}">
+                    <a href="{{ getAdminPanelUrl('/lead-performance') }}" class="nav-link">
+                        <x-iconsax-bul-profile-2user class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('admin/main.lead_performance_dashboard') }}</span>
+                    </a>
+                </li>
+            @endif
+
             @can('admin_marketing_dashboard')
                 <li class="{{ (request()->is(getAdminPanelUrl('/marketing', false))) ? 'active' : '' }}">
                     <a href="{{ getAdminPanelUrl('/marketing') }}" class="nav-link">
