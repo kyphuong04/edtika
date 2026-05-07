@@ -24,10 +24,10 @@
 
             {{-- Skill Progress Circles + Weak Point --}}
             <div class="row gx-16 mt-16">
-                <div class="col-7">
+                <div class="col-12 col-lg-5">
                     @include('design_1.panel.dashboard.student.includes.skill_progress')
                 </div>
-                <div class="col-5">
+                <div class="col-12 col-lg-7 mt-16 mt-lg-0">
                     @include('design_1.panel.dashboard.student.includes.weak_point')
                 </div>
             </div>

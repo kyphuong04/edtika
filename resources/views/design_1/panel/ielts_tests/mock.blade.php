@@ -7,109 +7,92 @@
    MOCK TEST PAGE  –  Wireframe-style 2-column layout
    ============================================================ */
 
+.wf-mock-page {
+    --primary: #511D99;
+    --primary-hover: #451884;
+    --wf-accent: #511D99;
+    --wf-accent-hover: #451884;
+}
+.wf-mock-page .text-primary,
+.wf-mock-page .text-primary:hover,
+.wf-mock-page .text-primary:focus {
+    color: var(--wf-accent) !important;
+}
+.wf-mock-page .bg-primary,
+.wf-mock-page .btn-primary,
+.wf-mock-page .btn-primary:hover,
+.wf-mock-page .btn-primary:focus,
+.wf-mock-page .btn-primary:active,
+.wf-mock-page .btn-primary:not(:disabled):not(.disabled):active {
+    background-color: var(--wf-accent) !important;
+    border-color: var(--wf-accent) !important;
+    color: #fff !important;
+}
+.wf-mock-page .border-primary {
+    border-color: var(--wf-accent) !important;
+}
+
 .wf-page-wrap { padding: 24px 0; }
 
-/* ── Welcome Card ────────────────────────────────────────── */
-.wf-welcome-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 20px 24px 16px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-    margin-bottom: 20px;
-}
-.dark-mode .wf-welcome-card { background: #1e293b; }
-
-.wf-welcome-row {
+/* ── Welcome Bar (Dashboard-style Bootstrap) ────────────────────────────────────────── */
+.ielts-welcome-bar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
 }
-.wf-welcome-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e293b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+.ielts-welcome-bar h1 {
+    flex-grow: 1;
+    min-width: 0;
     margin: 0;
 }
-.dark-mode .wf-welcome-title { color: #f1f5f9; }
 
-.wf-welcome-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+.ielts-welcome-bar__progress {
+    margin-top: 8px;
 }
 
-/* Switch-courses dropdown */
-.wf-switch-dropdown { position: relative; display: inline-block; }
-.wf-btn-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border: 1.5px solid #d1d5db;
-    border-radius: 20px;
-    background: #fff;
-    color: #374151;
-    font-size: 13px;
-    font-weight: 600;
+.ielts-welcome-bar__track {
+    height: 6px;
+    background: #f1f5f9;
+}
+
+.dark-mode .ielts-welcome-bar__track {
+    background: #334155;
+}
+
+.ielts-welcome-bar__fill {
+    height: 100%;
+    background: var(--wf-accent);
+    transition: width 0.6s ease;
+}
+
+.ielts-welcome-bar__bell {
+    flex-shrink: 0;
     cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-.dark-mode .wf-btn-switch { background: #1e293b; border-color: #334155; color: #cbd5e1; }
-.wf-btn-switch:hover { border-color: #3b82f6; color: #3b82f6; }
-.wf-switch-menu {
-    display: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    min-width: 220px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    z-index: 200;
-    overflow: hidden;
-}
-.dark-mode .wf-switch-menu { background: #1e293b; border-color: #334155; }
-.wf-switch-dropdown.open .wf-switch-menu { display: block; }
-.wf-switch-menu-item {
-    display: block;
-    padding: 11px 16px;
-    font-size: 13px;
-    color: #374151;
-    text-decoration: none;
-    transition: background 0.15s;
-}
-.dark-mode .wf-switch-menu-item { color: #cbd5e1; }
-.wf-switch-menu-item:hover { background: #f1f5f9; text-decoration: none; }
-.dark-mode .wf-switch-menu-item:hover { background: #0f172a; }
-.wf-switch-empty { padding: 12px 16px; font-size: 13px; color: #94a3b8; }
-
-/* Continue button */
-.wf-btn-continue {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 18px;
-    border-radius: 20px;
-    background: #1e293b;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
     text-decoration: none;
     transition: all 0.2s;
-    white-space: nowrap;
 }
-.wf-btn-continue:hover { background: #0f172a; text-decoration: none; color: #fff; }
 
-.wf-bell-wrap { flex-shrink: 0; }
+.ielts-welcome-bar__bell:hover {
+    background-color: #f3f4f6 !important;
+    text-decoration: none;
+}
 
-/* Overall progress bar */
+.dark-mode .ielts-welcome-bar__bell:hover {
+    background-color: #334155 !important;
+}
+
+@media (max-width: 767px) {
+    .ielts-welcome-bar {
+        gap: 8px;
+    }
+    .ielts-welcome-bar h1 {
+        font-size: 16px;
+    }
+}
+
+/* Overall progress bar (legacy) */
 .wf-overall-progress { margin-top: 14px; }
 .wf-progress-label {
     display: flex; justify-content: space-between;
@@ -121,7 +104,7 @@
 .dark-mode .wf-progress-track { background: #334155; }
 .wf-progress-fill {
     height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, #3b82f6, #6366f1);
+    background: linear-gradient(90deg, var(--wf-accent), var(--wf-accent-hover));
     transition: width 0.4s ease;
 }
 
@@ -138,7 +121,8 @@
 .wf-sections-list { display: flex; flex-direction: column; gap: 12px; }
 
 .wf-section-row {
-    background: #fff;
+    background: rgba(212, 211, 254, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.62);
     border-radius: 16px;
     padding: 18px 22px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -173,7 +157,7 @@
 .dark-mode .wf-row-progress-track { background: #334155; }
 .wf-row-progress-fill {
     height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, #6366f1, #a78bfa);
+    background: linear-gradient(90deg, var(--wf-accent), var(--wf-accent-hover));
 }
 
 .wf-skill-badges { display: flex; gap: 5px; flex-wrap: wrap; flex-shrink: 0; }
@@ -182,7 +166,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 10px; font-weight: 700;
 }
-.wf-skill-badge.L { background: #dbeafe; color: #3b82f6; }
+.wf-skill-badge.L { background: rgba(81, 29, 153, 0.14); color: var(--wf-accent); }
 .wf-skill-badge.R { background: #d1fae5; color: #10b981; }
 .wf-skill-badge.W { background: #fef3c7; color: #f59e0b; }
 .wf-skill-badge.S { background: #fee2e2; color: #ef4444; }
@@ -190,21 +174,21 @@
 .wf-row-start { flex-shrink: 0; }
 .wf-btn-row-start {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 20px; border-radius: 20px; background: #6366f1;
+    padding: 9px 20px; border-radius: 20px; background: var(--wf-accent);
     color: #fff; font-size: 13px; font-weight: 600; border: none;
     cursor: pointer; transition: background 0.2s, transform 0.15s;
     text-decoration: none; white-space: nowrap;
 }
-.wf-btn-row-start:hover { background: #4f46e5; text-decoration: none; color: #fff; transform: scale(1.03); }
+.wf-btn-row-start:hover { background: var(--wf-accent-hover); text-decoration: none; color: #fff; transform: scale(1.03); }
 .wf-btn-row-start.disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; transform: none; }
 .wf-btn-view-result {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 9px 18px; border-radius: 20px; background: transparent;
-    color: #6366f1; font-size: 13px; font-weight: 600;
-    border: 1.5px solid #6366f1; cursor: pointer;
+    color: var(--wf-accent); font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--wf-accent); cursor: pointer;
     transition: all 0.2s; text-decoration: none; white-space: nowrap;
 }
-.wf-btn-view-result:hover { background: #6366f1; color: #fff; text-decoration: none; }
+.wf-btn-view-result:hover { background: var(--wf-accent); color: #fff; text-decoration: none; }
 .wf-row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .wf-best-score {
@@ -249,87 +233,68 @@
         ? route('panel.ielts_tests.take', $lastAttempt->id)
         : route('panel.ielts_tests.mock');
 @endphp
+<div class="wf-mock-page">
 <div class="wf-page-wrap">
     <div class="row">
 
         {{-- LEFT COLUMN --}}
         <div class="col-12 col-lg-8 mb-20">
 
-            {{-- Welcome Card --}}
-            <div class="wf-welcome-card">
-                <div class="wf-welcome-row">
-                    <h1 class="wf-welcome-title">WELCOME, {{ strtoupper($authUser->full_name) }}!</h1>
-                    <div class="wf-welcome-actions">
-                        <div class="wf-switch-dropdown" id="wfSwitchDropdown">
-                            <button class="wf-btn-switch" id="wfSwitchBtn">
-                                Switch courses <i class="fas fa-chevron-down" style="font-size:11px;"></i>
-                            </button>
-                            <div class="wf-switch-menu">
-                                @forelse($enrolledCourses as $course)
-                                    <a href="{{ $course->getLearningPageUrl() }}" class="wf-switch-menu-item">{{ Str::limit($course->title, 40) }}</a>
-                                @empty
-                                    <div class="wf-switch-empty">No enrolled courses</div>
-                                @endforelse
-                            </div>
-                        </div>
-                        <a href="{{ $continueUrl }}" class="wf-btn-continue">continue &rarr;</a>
-                        <div class="wf-bell-wrap language-select position-relative">
-                            <div class="size-32 position-relative d-flex-center bg-gray-100 rounded-8" style="cursor:pointer;">
-                                <x-iconsax-lin-notification class="icons text-gray-500" width="20px" height="20px"/>
-                                @if(!empty($unReadNotifications) and count($unReadNotifications))
-                                    <span class="panel-header__badge-counter badge-counter">{{ count($unReadNotifications) }}</span>
-                                @endif
-                            </div>
-                            <div class="language-dropdown language-dropdown__notifications py-12">
-                                @if(!empty($unReadNotifications) and count($unReadNotifications))
-                                    <div class="px-12">
-                                        <div class="d-flex align-items-center p-12 rounded-12 bg-gray-100">
-                                            <div class="d-flex-center size-48 bg-white rounded-circle">
-                                                <div class="d-flex-center size-40 bg-primary rounded-circle">
-                                                    <x-iconsax-bul-notification-bing class="icons text-white" width="24px" height="24px"/>
-                                                </div>
-                                            </div>
-                                            <div class="ml-8">
-                                                <h5 class="font-14">{{ count($unReadNotifications) }} {{ trans('panel.notifications') }}</h5>
-                                                <a href="/panel/notifications/mark-all-as-read" class="delete-action d-block mt-4 font-12 cursor-pointer text-gray-500" data-msg="{{ trans('update.convert_unread_messages_to_read') }}" data-confirm="{{ trans('update.yes_convert') }}">
-                                                    {{ trans('update.mark_as_read') }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @foreach($unReadNotifications->take(3) as $unReadNotification)
-                                        <a href="/panel/notifications?notification={{ $unReadNotification->id }}" class="language-dropdown__item d-flex align-items-center w-100 px-16 py-8 text-dark bg-transparent">
-                                            <div><x-iconsax-bul-notification class="icons text-gray-500" width="24px" height="24px"/></div>
-                                            <div class="ml-8">
-                                                <h4 class="font-12">{{ $unReadNotification->title }}</h4>
-                                                <span class="d-block text-gray-500 font-12 mt-8">{{ dateTimeFormat($unReadNotification->created_at, 'j M Y | H:i') }}</span>
-                                            </div>
-                                        </a>
-                                    @endforeach
-                                    <div class="px-12">
-                                        <a href="/panel/notifications" class="btn btn-lg btn-primary btn-block mt-12">{{ trans('notification.all_notifications') }}</a>
-                                    </div>
-                                @else
-                                    <div class="d-flex-center flex-column text-center px-16 py-54">
-                                        <div class="d-flex-center size-40 bg-primary rounded-circle">
-                                            <x-iconsax-bul-notification-bing class="icons text-white" width="24px" height="24px"/>
-                                        </div>
-                                        <span class="mt-12 text-gray-500">{{ trans('notification.empty_notifications') }}</span>
-                                    </div>
-                                @endif
-                            </div>
+            {{-- Welcome Bar (Dashboard Style) --}}
+            <div class="ielts-welcome-bar bg-white rounded-24 p-16 mb-20">
+                {{-- Left: greeting --}}
+                <div class="flex-grow-1 min-w-0">
+                    <h1 class="font-18 font-weight-bold text-dark text-ellipsis mb-0">
+                        WELCOME, {{ strtoupper($authUser->full_name) }}! 👋
+                    </h1>
+                    {{-- Overall progress bar --}}
+                    <div class="ielts-welcome-bar__progress mt-8">
+                        <div class="ielts-welcome-bar__track rounded-pill" style="height:6px;">
+                            <div class="ielts-welcome-bar__fill rounded-pill" style="width:{{ $overallProgress }}%;height:6px;transition:width .6s ease;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="wf-overall-progress">
-                    <div class="wf-progress-label">
-                        <span>Overall progress</span>
-                        <span>{{ $completedTests }}/{{ $totalTests }} tests</span>
-                    </div>
-                    <div class="wf-progress-track">
-                        <div class="wf-progress-fill" style="width: {{ $overallProgress }}%"></div>
+
+                {{-- Switch Courses dropdown --}}
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-16 dropdown-toggle" type="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Switch courses
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right shadow rounded-16 border-0 mt-8" style="min-width:220px;">
+                        @forelse($enrolledCourses as $course)
+                            <a class="dropdown-item d-flex align-items-center gap-8 py-8 px-12"
+                               href="{{ $course->getLearningPageUrl() }}">
+                                <div class="size-32 rounded-8 bg-gray-100 flex-shrink-0">
+                                    <img src="{{ $course->getIcon() }}" alt="" class="img-cover rounded-8">
+                                </div>
+                                <span class="font-12 text-dark">{{ truncate($course->title, 28) }}</span>
+                            </a>
+                        @empty
+                            <span class="dropdown-item font-12 text-gray-500">No courses enrolled</span>
+                        @endforelse
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item font-12 text-primary" href="/panel/courses/purchases">All courses</a>
                     </div>
                 </div>
+
+                {{-- Continue → --}}
+                <a href="{{ $continueUrl }}"
+                   class="btn btn-primary btn-sm rounded-pill px-16">
+                    continue &rarr;
+                </a>
+
+                {{-- Notification bell --}}
+                <a href="/panel/notifications" class="ielts-welcome-bar__bell d-flex-center size-40 rounded-circle bg-gray-100 position-relative text-dark">
+                    <x-iconsax-bul-notification class="icons" width="20px" height="20px"/>
+                    @php
+                        $unreadCount = !empty($unReadNotifications) ? count($unReadNotifications) : 0;
+                    @endphp
+                    @if($unreadCount > 0)
+                        <span class="position-absolute top-0 end-0 size-16 rounded-circle bg-danger d-flex-center font-10 text-white"
+                              style="font-size:9px;top:2px;right:2px;min-width:16px;height:16px;">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
+                    @endif
+                </a>
             </div>
 
             {{-- Daily limit badge --}}
@@ -416,6 +381,7 @@
             @include('design_1.panel.ielts_tests.partials.sidebar')
         </div>
     </div>{{-- end row --}}
+</div>
 </div>
 @endsection
 

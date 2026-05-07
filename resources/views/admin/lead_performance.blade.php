@@ -118,6 +118,9 @@
     <style>
         .manager-lead-performance-page {
             padding-bottom: 16px;
+            --mlp-lavender-bg: rgba(212, 211, 254, 0.62);
+            --mlp-lavender-border: rgba(255, 255, 255, 0.56);
+            --mlp-lavender-shadow: 0 14px 28px rgba(58, 65, 111, 0.14);
         }
 
         .mlp-shell {
@@ -127,9 +130,12 @@
         }
 
         .mlp-kpi-card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background: var(--mlp-lavender-bg);
+            border: 1px solid var(--mlp-lavender-border);
             border-radius: 20px;
+            box-shadow: var(--mlp-lavender-shadow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             min-height: 104px;
             padding: 20px 18px;
             display: flex;
@@ -195,9 +201,12 @@
         }
 
         .mlp-table-panel {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background: var(--mlp-lavender-bg);
+            border: 1px solid var(--mlp-lavender-border);
             border-radius: 16px;
+            box-shadow: var(--mlp-lavender-shadow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 12px;
         }
 
@@ -218,9 +227,9 @@
 
         .mlp-table thead th,
         .mlp-table tbody td {
-            background: #ffffff;
-            border-top: 2px solid #7d7d7d;
-            border-bottom: 2px solid #7d7d7d;
+            background: rgba(255, 255, 255, 0.86);
+            border-top: 2px solid #c5cde7;
+            border-bottom: 2px solid #c5cde7;
             border-left: 0;
             border-right: 0;
             padding: 12px 14px;
@@ -239,14 +248,14 @@
 
         .mlp-table thead th:first-child,
         .mlp-table tbody td:first-child {
-            border-left: 2px solid #7d7d7d;
+            border-left: 2px solid #c5cde7;
             border-top-left-radius: 12px;
             border-bottom-left-radius: 12px;
         }
 
         .mlp-table thead th:last-child,
         .mlp-table tbody td:last-child {
-            border-right: 2px solid #7d7d7d;
+            border-right: 2px solid #c5cde7;
             border-top-right-radius: 12px;
             border-bottom-right-radius: 12px;
         }

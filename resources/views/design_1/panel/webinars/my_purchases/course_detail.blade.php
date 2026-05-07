@@ -381,18 +381,18 @@
 
                 {{-- actions --}}
                 <div class="d-flex align-items-center flex-wrap gap-8">
-                    <a href="/panel/courses/purchases" class="cd-btn-outline">
+                    <a href="/panel/courses/purchases" class="btn btn-outline-secondary btn-sm rounded-pill px-16">
                         {{ trans('panel.switch_courses') }}
                     </a>
 
-                    <a href="{{ $panelLearnUrl }}" class="cd-btn-outline">
+                    <a href="{{ $panelLearnUrl }}" class="btn btn-primary btn-sm rounded-pill px-16">
                         {{ trans('update.continue_learning') }} &rarr;
                     </a>
 
                     {{-- notification bell dropdown --}}
                     <div class="language-select position-relative">
-                        <div class="cd-bell-btn">
-                            <x-iconsax-lin-notification class="icons" width="18px" height="18px"/>
+                        <div class="cd-bell-btn d-flex-center size-40 rounded-circle bg-gray-100 position-relative text-dark border-0">
+                            <x-iconsax-bul-notification class="icons" width="20px" height="20px"/>
                             @if(!empty($unReadNotifications) && count($unReadNotifications))
                                 <span class="panel-header__badge-counter badge-counter">{{ count($unReadNotifications) }}</span>
                             @endif

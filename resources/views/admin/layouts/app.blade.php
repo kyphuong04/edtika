@@ -41,9 +41,71 @@
 
         :root {
             --main-font-family: 'Roboto', sans-serif !important;
+            --glass-surface-bg: rgba(212, 211, 254, 0.5);
+            --glass-surface-border: rgba(255, 255, 255, 0.42);
+            --glass-surface-shadow: 0 14px 32px rgba(58, 65, 111, 0.16);
+            --admin-card-radius: 18px;
         }
         body, h1, h2, h3, h4, h5, h6, p, a, span, button, input, textarea, select, .btn, div {
             font-family: 'Roboto', sans-serif !important;
+        }
+
+        .main-sidebar,
+        .main-sidebar #sidebar-wrapper {
+            background: var(--glass-surface-bg) !important;
+            border-right: 1px solid var(--glass-surface-border);
+            box-shadow: var(--glass-surface-shadow);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .main-content {
+            margin-top: 18px !important;
+            padding-top: 0 !important;
+        }
+
+        .main-content .card,
+        .main-content .card .card-header,
+        .main-content .card .card-body,
+        .main-content .card .card-footer,
+        .main-content .card-statistic__wrap,
+        .main-content .map-card,
+        .main-content :is(div, section, article, aside, button, a).bg-white,
+        .main-content :is(div, section, article, aside, button, a)[style*="background:#fff"],
+        .main-content :is(div, section, article, aside, button, a)[style*="background: #fff"],
+        .main-content :is(div, section, article, aside, button, a)[style*="background-color:#fff"],
+        .main-content :is(div, section, article, aside, button, a)[style*="background-color: #fff"] {
+            background: var(--glass-surface-bg) !important;
+            border-color: var(--glass-surface-border) !important;
+            box-shadow: var(--glass-surface-shadow) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border-radius: var(--admin-card-radius) !important;
+        }
+
+        .main-content .card .card-header:first-child {
+            border-top-left-radius: var(--admin-card-radius) !important;
+            border-top-right-radius: var(--admin-card-radius) !important;
+        }
+
+        .main-content .card .card-footer:last-child {
+            border-bottom-left-radius: var(--admin-card-radius) !important;
+            border-bottom-right-radius: var(--admin-card-radius) !important;
+        }
+
+        .main-content .card-statistic-1 .card-icon,
+        .main-content .card-statistic-2 .card-icon,
+        .main-content .card-statistic-2 .card-stats {
+            border-radius: calc(var(--admin-card-radius) - 6px) !important;
+        }
+
+        .main-content .rounded-circle.bg-white,
+        .main-content .badge.bg-white,
+        .main-content .btn.bg-white {
+            border: 0 !important;
+            box-shadow: none !important;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
         }
     </style>
 </head>
@@ -51,8 +113,6 @@
 
 <div id="app">
     <div class="main-wrapper">
-        @include('admin.includes.header.index')
-
         @include('admin.includes.sidebar.index')
 
 
