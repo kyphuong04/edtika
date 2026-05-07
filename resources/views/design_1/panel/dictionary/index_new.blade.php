@@ -9,11 +9,14 @@
     }
     
     .user-stats-card {
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 20px;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -57,15 +60,18 @@
     /* ── Dictionary Profile Card ─────────────────────────────── */
     .dict-profile-card {
         position: relative;
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 14px 18px;
         margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     .dark-mode .dict-profile-card {
-        background: #1e293b;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        background: rgba(212, 211, 254, 0.18);
+        box-shadow: 0 18px 38px rgba(0,0,0,0.25);
     }
     .dict-profile-trigger {
         display: flex;
@@ -124,15 +130,18 @@
         right: 0;
         left: 0;
         width: 100%;
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        background: rgba(248, 246, 255, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 16px;
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
         z-index: 100;
         opacity: 0;
         visibility: hidden;
         transform: translateY(8px);
         transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
         padding-bottom: 6px;
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     .dark-mode .dict-profile-dropdown {
         background: #1e293b;
@@ -155,11 +164,14 @@
     }
     
     .search-section {
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 30px;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.12);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     
     .dark-mode .search-section {
@@ -262,22 +274,25 @@
     }
     
     .word-list-card {
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 20px;
         margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
         cursor: default;
         transition: all 0.3s;
         position: relative;
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     
     .word-list-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 22px 44px rgba(58, 42, 96, 0.16);
     }
     
     .dark-mode .word-list-card {
-        background: #1e293b;
+        background: rgba(212, 211, 254, 0.18);
     }
     
     .word-list-card.locked {
@@ -339,6 +354,9 @@
         color: #64748b;
         font-size: 14px;
         margin: 0;
+        background: rgba(255, 255, 255, 0.24);
+        border-radius: 14px;
+        padding: 12px 14px;
     }
     
     .dark-mode .word-list-description {
@@ -346,15 +364,16 @@
     }
     
     .word-list-expanded {
-        background: #f8fafc;
-        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.22);
+        border-radius: 16px;
         padding: 20px;
         margin-top: 15px;
         display: none;
+        border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
     .dark-mode .word-list-expanded {
-        background: #0f172a;
+        background: rgba(212, 211, 254, 0.16);
     }
 
     .word-list-expanded.show {
@@ -373,7 +392,7 @@
         border: 1px solid #d1d5db;
         border-radius: 50px;
         font-size: 14px;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.5);
         color: #1e293b;
         outline: none;
         transition: border-color 0.2s;
@@ -391,7 +410,7 @@
         border: 1px solid #d1d5db;
         border-radius: 50px;
         font-size: 14px;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.5);
         color: #475569;
         cursor: pointer;
         outline: none;
@@ -413,9 +432,9 @@
 
     /* ── Word item card ── */
     .word-item {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.24);
+        border: 1px solid rgba(255, 255, 255, 0.52);
+        border-radius: 16px;
         padding: 14px 40px 14px 14px; /* right padding leaves room for badge */
         margin-bottom: 10px;
         display: flex;
@@ -423,14 +442,16 @@
         gap: 12px;
         position: relative;
         transition: border-color 0.2s, box-shadow 0.2s;
+        backdrop-filter: blur(14px) saturate(140%);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
     }
     .word-item:hover {
-        border-color: #93c5fd;
-        box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+        border-color: rgba(147, 197, 253, 0.8);
+        box-shadow: 0 14px 26px rgba(58, 42, 96, 0.12);
     }
     .dark-mode .word-item {
-        background: #1e293b;
-        border-color: #334155;
+        background: rgba(212, 211, 254, 0.16);
+        border-color: rgba(255, 255, 255, 0.18);
     }
     .dark-mode .word-item:hover { border-color: #3b82f6; }
 
@@ -548,15 +569,18 @@
     .dark-mode .btn-practice:hover { background: #1e3a5f; }
     
     .stats-widget {
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 25px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     
     .dark-mode .stats-widget {
-        background: #1e293b;
+        background: rgba(212, 211, 254, 0.18);
     }
     
     .widget-title {
@@ -582,11 +606,11 @@
     }
     
     .streak-circle {
-        background: #f8fafc;
+        background: rgba(255, 255, 255, 0.24);
         width: 45px;
         height: 45px;
         border-radius: 50%;
-        border: 2px solid #e2e8f0;
+        border: 2px solid rgba(255, 255, 255, 0.48);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -619,12 +643,13 @@
         color: #94a3b8;
         font-size: 14px;
         line-height: 1.6;
-        background: #f8fafc;
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.24);
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.48);
     }
     
     .dark-mode .ranking-placeholder {
-        background: #0f172a;
+        background: rgba(212, 211, 254, 0.16);
         color: #64748b;
     }
 
@@ -634,13 +659,14 @@
 
     .flashcard-info {
         padding: 20px;
-        background: #f8fafc;
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.24);
+        border-radius: 14px;
         margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.48);
     }
 
     .dark-mode .flashcard-info {
-        background: #0f172a;
+        background: rgba(212, 211, 254, 0.16);
     }
 
     .flashcard-info p {
@@ -658,15 +684,18 @@
     }
     
     .practice-mode-container {
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 40px 30px;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     
     .dark-mode .practice-mode-container {
-        background: #1e293b;
+        background: rgba(212, 211, 254, 0.18);
     }
     
     .score-board {
@@ -737,13 +766,15 @@
     }
     
     .answer-card {
-        background: #f8fafc;
-        border: 2px solid #cbd5e1;
+        background: rgba(255, 255, 255, 0.24);
+        border: 2px solid rgba(255, 255, 255, 0.5);
         border-radius: 18px;
         padding: 18px 14px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s;
+        backdrop-filter: blur(14px) saturate(140%);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
     }
     
     .answer-card:hover {
@@ -868,15 +899,18 @@
 
     /* Dictionary Result Styles */
     .dictionary-result-container {
-        background: #fff;
-        border-radius: 12px;
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
         padding: 20px;
         margin: 20px 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.12);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
 
     .dark-mode .dictionary-result-container {
-        background: #1e293b;
+        background: rgba(212, 211, 254, 0.18);
     }
 
     .result-word {
@@ -997,15 +1031,15 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.24);
+        border: 1px solid rgba(255, 255, 255, 0.48);
+        border-radius: 12px;
         padding: 6px 12px;
     }
 
     .dark-mode .pronunciation-item {
-        background: #0f172a;
-        border-color: #334155;
+        background: rgba(212, 211, 254, 0.16);
+        border-color: rgba(255, 255, 255, 0.18);
     }
 
     .pron-label {
@@ -1246,23 +1280,38 @@
     }
 
     /* ── Sidebar Flashcard Widget ─────────────────────────── */
+    .stats-widget {
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 22px;
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
+    }
+    .dark-mode .stats-widget {
+        background: rgba(212, 211, 254, 0.18);
+    }
     .sidebar-flashcard-widget { padding: 0; }
     .sidebar-card-display {
-        background: #e2e8f0;
-        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        border-radius: 16px;
         min-height: 140px;
         margin-bottom: 14px;
         position: relative;
         overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
-    .dark-mode .sidebar-card-display { background: #0f172a; }
+    .dark-mode .sidebar-card-display { background: rgba(255, 255, 255, 0.08); }
 
     .sidebar-card-image {
         width: 100%;
         height: 140px;
         object-fit: cover;
         display: block;
-        border-radius: 10px;
+        border-radius: 16px;
         transition: opacity 0.3s;
     }
     .sidebar-card-image.loading {
@@ -1275,8 +1324,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #e2e8f0;
-        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 16px;
         color: #94a3b8;
         font-size: 13px;
     }
@@ -1285,13 +1334,14 @@
     .sidebar-card-overlay {
         position: absolute;
         inset: 0;
-        background: rgba(15, 23, 42, 0.78);
-        border-radius: 10px;
+        background: rgba(81, 29, 153, 0.72);
+        border-radius: 16px;
         display: none;
         align-items: center;
         justify-content: center;
         padding: 14px;
-        backdrop-filter: blur(2px);
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
     }
     .sidebar-card-overlay.show { display: flex; }
     .sidebar-card-display-text {
@@ -1340,9 +1390,10 @@
     /* ── Profile Card (same height as search section) ─────── */
     .dict-profile-card {
         position: relative;
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        background: rgba(212, 211, 254, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 18px;
+        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
         margin-bottom: 16px;
         cursor: pointer;
         padding: 24px 28px;
@@ -1351,10 +1402,12 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
     }
     .dark-mode .dict-profile-card {
-        background: #1e293b;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        background: rgba(212, 211, 254, 0.18);
+        box-shadow: 0 18px 38px rgba(0,0,0,0.25);
     }
     .dict-profile-card__trigger {
         display: flex;

@@ -40,6 +40,55 @@
 
         {!! getThemeColorsSettings() !!}
 
+        :root {
+            --glass-surface-bg: rgba(212, 211, 254, 0.5);
+            --glass-surface-border: rgba(255, 255, 255, 0.42);
+            --glass-surface-shadow: 0 14px 32px rgba(58, 65, 111, 0.16);
+        }
+
+        #panelSidebar,
+        #panelSidebar .panel-sidebar__contents,
+        #panelSidebar .panel-sidebar__pinned-bottom {
+            background: var(--glass-surface-bg) !important;
+            border: 1px solid var(--glass-surface-border);
+            box-shadow: var(--glass-surface-shadow);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        #panelSidebar .panel-sidebar__scroll-area,
+        #panelSidebar #sidebarAccordions,
+        #panelSidebar #sidebarBottomAccordions {
+            background: transparent !important;
+        }
+
+        .panel-content :is(div, section, article, aside).bg-white,
+        .panel-content :is(div, section, article, aside)[class*="card"]:not([class*="__"]),
+        .panel-content :is(div, section, article, aside)[class*="box"]:not([class*="__"]),
+        .panel-content :is(div, section, article, aside)[class*="panel-section"]:not([class*="__"]),
+        .panel-content :is(div, section, article, aside)[class*="section-card"]:not([class*="__"]),
+        .panel-content :is(div, section, article, aside)[style*="background:#fff"],
+        .panel-content :is(div, section, article, aside)[style*="background: #fff"],
+        .panel-content :is(div, section, article, aside)[style*="background-color:#fff"],
+        .panel-content :is(div, section, article, aside)[style*="background-color: #fff"],
+        .panel-content .panel-section-card,
+        .panel-content .card {
+            background: var(--glass-surface-bg) !important;
+            border: 1px solid var(--glass-surface-border) !important;
+            box-shadow: var(--glass-surface-shadow) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+        }
+
+        .panel-content .rounded-circle.bg-white,
+        .panel-content .badge.bg-white,
+        .panel-content .btn.bg-white {
+            border: 0 !important;
+            box-shadow: none !important;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
         /* ── Hide top header + title bar globally ───────────────── */
         .panel-header { display: none !important; }
         .panel-title-and-breadcrumb { display: none !important; }

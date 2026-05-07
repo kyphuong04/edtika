@@ -304,6 +304,34 @@ class ClassesController extends Controller
 
         return $ratings;
     }
+
+    public function show($slug)
+    {
+        $course = Webinar::query()
+            ->where('status', Webinar::$active)
+            ->where('private', false)
+            ->where('slug', $slug)
+            ->with(['teacher'])
+            ->first();
+
+        if (empty($course)) {
+            abort(404);
+        }
+
+        $seoSettings = getSeoMetas('classes');
+
+        $data = [
+            'pageTitle' => !empty($course->title) ? $course->title : ($seoSettings['title'] ?? trans('update.courses')),
+            'pageDescription' => $course->seo_description ?? ($seoSettings['description'] ?? ''),
+            'pageRobot' => getPageRobot('classes'),
+            'course' => $course,
+            'studentsCount' => $course->sales()->count(),
+            'lessonsCount' => $course->sessions()->count() + $course->files()->count() + $course->textLessons()->count(),
+            'modulesCount' => $course->chapters()->count(),
+        ];
+
+        return view('design_1.web.courses.lists.class_detail', $data);
+    }
 }
 
 
