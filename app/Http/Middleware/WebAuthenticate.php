@@ -18,7 +18,7 @@ class WebAuthenticate
         if (auth()->check()) {
             return $next($request);
         }
-        return redirect('/login');
+        return redirect('/')->with(['auth_modal_open' => true]);
     }
 }
 

@@ -91,6 +91,9 @@
     <style>
         .manager-team-performance-page {
             padding-bottom: 14px;
+            --tp-lavender-bg: rgba(212, 211, 254, 0.62);
+            --tp-lavender-border: rgba(255, 255, 255, 0.56);
+            --tp-lavender-shadow: 0 14px 28px rgba(58, 65, 111, 0.14);
         }
 
         .manager-tp-top-row {
@@ -98,9 +101,12 @@
         }
 
         .manager-tp-kpi-card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background: var(--tp-lavender-bg);
+            border: 1px solid var(--tp-lavender-border);
             border-radius: 16px;
+            box-shadow: var(--tp-lavender-shadow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 18px 18px;
             min-height: 118px;
             display: flex;
@@ -149,9 +155,12 @@
         }
 
         .manager-tp-panel {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background: var(--tp-lavender-bg);
+            border: 1px solid var(--tp-lavender-border);
             border-radius: 18px;
+            box-shadow: var(--tp-lavender-shadow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 14px 14px 18px;
             width: 100%;
         }
@@ -173,8 +182,8 @@
 
         .manager-tp-table thead th,
         .manager-tp-table tbody td {
-            background: #ffffff;
-            border: 2px solid #7f7f7f;
+            background: rgba(255, 255, 255, 0.86);
+            border: 2px solid #c5cde7;
             border-left-width: 0;
             border-right-width: 0;
             padding: 14px 16px;

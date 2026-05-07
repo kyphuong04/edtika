@@ -3,7 +3,7 @@
     @if(in_array($sidebarSection, $excludeSections)) @continue @endif
     @if(!empty($sidebarMenus) and count($sidebarMenus))
         <div class="mt-16">
-            <span class="sidebar-section-title d-block font-12 font-weight-bold text-gray-400 text-uppercase pl-32 pr-20 mb-8">{{ trans("update.{$sidebarSection}") }}</span>
+            <span class="sidebar-section-title d-block font-12 font-weight-bold text-dark text-uppercase pl-32 pr-20 mb-8">{{ trans("update.{$sidebarSection}") }}</span>
 
             @foreach($sidebarMenus as $sidebarMenuName => $sidebarMenu)
                 @php

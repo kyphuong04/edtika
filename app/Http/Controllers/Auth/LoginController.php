@@ -207,7 +207,7 @@ class LoginController extends Controller
             'status' => 'error'
         ];
 
-        return redirect('/login')->with(['login_failed_active_session' => $toastData]);
+        return redirect('/')->with(['login_failed_active_session' => $toastData]);
     }
 
     public function afterLogged(Request $request, $verify = false)

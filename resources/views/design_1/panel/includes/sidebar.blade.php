@@ -12,13 +12,8 @@
 
         {{-- Logo in sidebar (always visible, outside scroll) --}}
         <div class="panel-sidebar__logo-wrap" style="padding: 16px 20px 4px; overflow: hidden; flex-shrink: 0;">
-            <a href="/" style="display: block;">
-                @if(!empty($generalSettings['logo']))
-                    <img src="{{ $generalSettings['logo'] }}" class="img-fluid light-only" style="max-width:100%; height:auto; max-height:40px; object-fit:contain;" alt="{{ $generalSettings['site_name'] ?? 'site' }}">
-                @endif
-                @if(!empty($generalSettings['dark_mode_logo']))
-                    <img src="{{ $generalSettings['dark_mode_logo'] }}" class="img-fluid dark-only" style="max-width:100%; height:auto; max-height:40px; object-fit:contain;" alt="{{ $generalSettings['site_name'] ?? 'site' }}">
-                @endif
+            <a href="/" style="display: inline-block; text-decoration: none;">
+                <span style="font-size: 52px; line-height: 1; font-weight: 900; color: #4C1D95; letter-spacing: -0.03em;">EDTIKA</span>
             </a>
         </div>
 

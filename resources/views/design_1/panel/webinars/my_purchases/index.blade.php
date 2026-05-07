@@ -19,32 +19,51 @@
             .mcp-layout__main .panel-course-card-1__content { width: 100%; }
         }
 
-        /* ── Shared button / bell ───────────────────────────────── */
-        .cd-btn-outline {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 16px; border-radius: 20px; border: 1.5px solid #bbb;
-            font-size: 13px; font-weight: 500; background: #fff; color: #333;
-            text-decoration: none; white-space: nowrap;
-            transition: border-color .2s, background .2s;
-        }
-        .cd-btn-outline:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
-        .cd-bell-btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 50%;
-            border: 1.5px solid #ddd; background: #fff;
-            cursor: pointer; color: #555; flex-shrink: 0; position: relative;
-        }
-        .cd-bell-btn:hover { border-color: var(--primary); color: var(--primary); }
-
-        /* ── Welcome card ───────────────────────────────────────── */
-        .cd-welcome-card {
-            background: #fff; border-radius: 16px; padding: 14px 20px;
-            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        /* ── Dashboard-style welcome bar ───────────────────────── */
+        .cd-welcome-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 20px;
         }
-        .cd-welcome-card__title { font-size: 16px; font-weight: 700; letter-spacing: .4px; flex: 1; min-width: 120px; }
-        .cd-welcome-card__progress { width: 100%; height: 4px; background: #e9ecef; border-radius: 4px; margin-top: 6px; overflow: hidden; }
-        .cd-welcome-card__progress-bar { height: 100%; background: var(--primary); border-radius: 4px; }
+        .cd-welcome-bar h1 {
+            flex-grow: 1;
+            min-width: 0;
+            margin: 0;
+        }
+        .cd-welcome-bar__progress {
+            margin-top: 8px;
+        }
+        .cd-welcome-bar__track {
+            height: 6px;
+            background: #f1f5f9;
+        }
+        .dark-mode .cd-welcome-bar__track {
+            background: #334155;
+        }
+        .cd-welcome-bar__fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.6s ease;
+        }
+        .cd-welcome-bar__bell {
+            flex-shrink: 0;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .cd-welcome-bar__bell:hover {
+            background-color: #f3f4f6 !important;
+            text-decoration: none;
+        }
+        .dark-mode .cd-welcome-bar__bell:hover {
+            background-color: #334155 !important;
+        }
+
+        .cd-bell-btn {
+            border: none;
+        }
 
         /* ── Aside card shell ───────────────────────────────────── */
         .cd-aside-card { background: #fff; border-radius: 12px; border: 1px solid #eee; padding: 20px 18px; }
@@ -94,6 +113,25 @@
         .cd-chat__send-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity .2s; }
         .cd-chat__send-btn:hover { opacity: .8; }
         .cd-chat__send-btn svg { fill: #fff; }
+        /* Match student dashboard primary color for welcome bar actions */
+        .cd-welcome-bar { --primary: #511D99; }
+        .cd-welcome-bar .btn-primary,
+        .cd-welcome-bar .btn-primary:hover,
+        .cd-welcome-bar .btn-primary:focus,
+        .cd-welcome-bar .btn-primary:active {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+            color: #fff !important;
+        }
+        .cd-welcome-bar .btn-outline-secondary,
+        .cd-welcome-bar .btn-outline-secondary:focus {
+            border-color: #511D99 !important;
+            color: #511D99 !important;
+        }
+        .cd-welcome-bar .btn-outline-secondary:hover {
+            background-color: rgba(81,29,153,0.08) !important;
+        }
+        .cd-welcome-bar__bell { background-color: #F3F4F6; }
     </style>
 @endpush
 
@@ -290,35 +328,38 @@
     {{-- ── RIGHT MAIN CONTENT ──────────────────────────────────────── --}}
     <div class="mcp-layout__main">
 
-    <div class="cd-welcome-card">
-        {{-- avatar --}}
-        <div class="size-40 rounded-circle overflow-hidden flex-shrink-0" style="border:2px solid #eee;">
-            <img src="{{ $authUser->getAvatar(40) }}" class="img-cover rounded-circle" alt="{{ $authUser->full_name }}">
-        </div>
-
+    <div class="cd-welcome-bar bg-white rounded-24 p-16">
         {{-- greeting --}}
-        <div class="cd-welcome-card__title">
-            WELCOME, {{ mb_strtoupper($authUser->name ?? $authUser->full_name) }}!
+        <div class="flex-grow-1 min-w-0">
+            <h1 class="font-18 font-weight-bold text-dark text-ellipsis mb-0">
+                WELCOME, {{ mb_strtoupper($authUser->name ?? $authUser->full_name) }}! 👋
+            </h1>
+            <div class="cd-welcome-bar__progress mt-8">
+                <div class="cd-welcome-bar__track rounded-pill" style="height:6px;">
+                    <div class="cd-welcome-bar__fill rounded-pill" style="width:100%;height:6px;transition:width .6s ease;"></div>
+                </div>
+            </div>
         </div>
 
         {{-- actions --}}
         <div class="d-flex align-items-center flex-wrap gap-8">
-            <a href="/panel/courses/purchases" class="cd-btn-outline">
+            <a href="/panel/courses/purchases" class="btn btn-outline-secondary btn-sm rounded-pill px-16">
                 {{ trans('panel.switch_courses') }}
             </a>
 
-            <a href="{{ $continueLearningUrl }}" class="cd-btn-outline">
+            <a href="{{ $continueLearningUrl }}" class="btn btn-primary btn-sm rounded-pill px-16">
                 {{ trans('update.continue_learning') }} &rarr;
             </a>
 
             {{-- notification bell dropdown --}}
             <div class="language-select position-relative">
-                <div class="cd-bell-btn">
-                    <x-iconsax-lin-notification class="icons" width="18px" height="18px"/>
+                <a href="/panel/notifications" class="cd-welcome-bar__bell d-flex-center size-40 rounded-circle bg-gray-100 position-relative text-dark">
+                    <x-iconsax-bul-notification class="icons" width="20px" height="20px"/>
                     @if(!empty($unReadNotifications) && count($unReadNotifications))
-                        <span class="panel-header__badge-counter badge-counter">{{ count($unReadNotifications) }}</span>
+                        <span class="position-absolute top-0 end-0 size-16 rounded-circle bg-danger d-flex-center font-10 text-white"
+                              style="font-size:9px;top:2px;right:2px;min-width:16px;height:16px;">{{ count($unReadNotifications) > 9 ? '9+' : count($unReadNotifications) }}</span>
                     @endif
-                </div>
+                </a>
 
                 <div class="language-dropdown language-dropdown__notifications py-12" style="right:0;left:auto;">
                     @if(!empty($unReadNotifications) && count($unReadNotifications))

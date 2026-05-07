@@ -36,7 +36,7 @@ class PanelAuthenticate
             return $next($request);
         }
 
-        return redirect('/login');
+        return redirect('/')->with(['auth_modal_open' => true]);
     }
 }
 

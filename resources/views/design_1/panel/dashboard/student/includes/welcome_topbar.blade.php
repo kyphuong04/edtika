@@ -47,7 +47,7 @@
     @if($continueCourse)
         <a href="{{ $continueCourse->getLearningPageUrl() }}"
            class="btn btn-primary btn-sm rounded-pill px-16">
-            continue &rarr;
+            Continue &rarr;
         </a>
     @else
         <a href="/classes" class="btn btn-primary btn-sm rounded-pill px-16">
