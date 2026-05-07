@@ -7,6 +7,41 @@
     <link rel="stylesheet" href="{{ getDesign1StylePath("learning_page_noticeboards") }}">
     <link rel="stylesheet" href="{{ getDesign1StylePath("learning_page") }}">
     <style>
+        .learning-page {
+            --primary: #511D99;
+            --primary-hover: #451884;
+        }
+        .learning-page .text-primary,
+        .learning-page .text-primary:hover,
+        .learning-page .text-primary:focus {
+            color: #511D99 !important;
+        }
+        .learning-page .bg-primary,
+        .learning-page .btn-primary,
+        .learning-page .btn-primary:hover,
+        .learning-page .btn-primary:focus,
+        .learning-page .btn-primary:active,
+        .learning-page .btn-primary:not(:disabled):not(.disabled):active {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+            color: #fff !important;
+        }
+        .learning-page .btn-outline-primary,
+        .learning-page .btn-outline-primary:hover,
+        .learning-page .btn-outline-primary:focus,
+        .learning-page .btn-outline-primary:active {
+            border-color: #511D99 !important;
+            color: #511D99 !important;
+        }
+        .learning-page .btn-outline-primary:hover,
+        .learning-page .btn-outline-primary:focus,
+        .learning-page .btn-outline-primary:active {
+            background-color: rgba(81, 29, 153, 0.1) !important;
+        }
+        .learning-page .border-primary {
+            border-color: #511D99 !important;
+        }
+
         /* Make learning page fill the panel content area */
         .panel-content {
             display: flex;

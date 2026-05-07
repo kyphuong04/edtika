@@ -377,6 +377,14 @@
 			box-shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
 		}
 
+		.manager-dashboard .manager-title-card {
+			background: rgba(212, 211, 254, 0.62);
+			border: 1px solid rgba(255, 255, 255, 0.56);
+			box-shadow: 0 14px 28px rgba(58, 65, 111, 0.14);
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+		}
+
 		.manager-metric-icon {
 			width: 34px;
 			height: 34px;

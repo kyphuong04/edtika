@@ -164,8 +164,8 @@
 					labels: ['Active', 'Dropout'],
 					datasets: [{
 						data: [{{ (int)($statusChart['active'] ?? 0) }}, {{ (int)($statusChart['dropout'] ?? 0) }}],
-						backgroundColor: ['#9ca3af', '#e5e7eb'],
-						borderColor: ['#9ca3af', '#e5e7eb'],
+						backgroundColor: ['#b9a8ff', '#ede9fe'],
+						borderColor: ['#b9a8ff', '#ede9fe'],
 						borderWidth: 1
 					}]
 				},
@@ -184,12 +184,12 @@
 
 	<style>
 		.manager-learning-quality-page {
-			--lq-panel-bg: #ffffff;
-			--lq-stroke: #8d939c;
-			--lq-dark: #a3a3a3;
-			--lq-light: #ececec;
+			--lq-panel-bg: rgba(212, 211, 254, 0.62);
+			--lq-stroke: #d6dcf8;
+			--lq-dark: #edf2ff;
+			--lq-light: #ffffff;
 			--lq-text: #111827;
-			--lq-muted: #6b7280;
+			--lq-muted: #64748b;
 		}
 
 		.manager-lq-row {
@@ -204,9 +204,11 @@
 
 		.manager-lq-metric-card {
 			background: var(--lq-panel-bg);
-			border: 1px solid #edf0f5;
+			border: 1px solid rgba(255, 255, 255, 0.56);
 			border-radius: 16px;
-			box-shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
+			box-shadow: 0 14px 28px rgba(58, 65, 111, 0.14);
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
 			padding: 20px;
 			min-height: 118px;
 		}
@@ -320,7 +322,7 @@
 		}
 
 		.manager-lq-list-item-neutral {
-			background: #d7d7d7;
+			background: #f7f9ff;
 		}
 
 		.manager-lq-list-item-dark {
@@ -342,7 +344,7 @@
 
 		.manager-lq-list-meta {
 			font-size: 11px;
-			color: #4b5563;
+			color: #64748b;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -375,11 +377,11 @@
 		}
 
 		.manager-lq-dot.dot-active {
-			background: #9ca3af;
+			background: #b9a8ff;
 		}
 
 		.manager-lq-dot.dot-dropout {
-			background: #e5e7eb;
+			background: #ede9fe;
 		}
 
 		.manager-lq-empty {

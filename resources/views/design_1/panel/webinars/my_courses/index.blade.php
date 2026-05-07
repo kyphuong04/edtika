@@ -2,6 +2,41 @@
 
 @push("styles_top")
 <style>
+    .curriculum-page {
+        --primary: #511D99;
+        --primary-hover: #451884;
+    }
+    .curriculum-page .text-primary,
+    .curriculum-page .text-primary:hover,
+    .curriculum-page .text-primary:focus {
+        color: #511D99 !important;
+    }
+    .curriculum-page .bg-primary,
+    .curriculum-page .btn-primary,
+    .curriculum-page .btn-primary:hover,
+    .curriculum-page .btn-primary:focus,
+    .curriculum-page .btn-primary:active,
+    .curriculum-page .btn-primary:not(:disabled):not(.disabled):active {
+        background-color: #511D99 !important;
+        border-color: #511D99 !important;
+        color: #fff !important;
+    }
+    .curriculum-page .btn-outline-primary,
+    .curriculum-page .btn-outline-primary:hover,
+    .curriculum-page .btn-outline-primary:focus,
+    .curriculum-page .btn-outline-primary:active {
+        border-color: #511D99 !important;
+        color: #511D99 !important;
+    }
+    .curriculum-page .btn-outline-primary:hover,
+    .curriculum-page .btn-outline-primary:focus,
+    .curriculum-page .btn-outline-primary:active {
+        background-color: rgba(81, 29, 153, 0.1) !important;
+    }
+    .curriculum-page .border-primary {
+        border-color: #511D99 !important;
+    }
+
     /* ─── Tab Navigation ─────────────────────────────────── */
     .materials-tabs {
         display: flex;
@@ -191,6 +226,7 @@
 @endpush
 
 @section('content')
+<div class="curriculum-page">
 
     {{-- Tab Navigation --}}
     <div class="materials-tabs">
@@ -324,6 +360,8 @@
             @endforelse
         </div>
     </div>
+
+</div>
 
 @endsection
 

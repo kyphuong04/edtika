@@ -10,7 +10,8 @@
 
 /* ── Profile Card ────────────────────────────────────── */
 .wf-sidebar-profile {
-    background: #fff;
+    background: rgba(212, 211, 254, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.62);
     border-radius: 16px;
     padding: 0;
     box-shadow: 0 2px 12px rgba(0,0,0,0.07);
@@ -37,7 +38,7 @@
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #ddd7f8;
 }
 .wf-profile-avatar img {
     width: 100%;
@@ -80,7 +81,7 @@
 .wf-profile-dropdown {
     display: none;
     margin-top: 16px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid rgba(220, 214, 250, 0.8);
     padding-top: 12px;
 }
 .dark-mode .wf-profile-dropdown { border-top-color: #334155; }
@@ -108,7 +109,7 @@
 }
 .dark-mode .wf-profile-dropdown a { color: #cbd5e1; }
 .wf-profile-dropdown a:hover {
-    background: #f1f5f9;
+    background: rgba(212, 211, 254, 0.48);
     text-decoration: none;
 }
 .dark-mode .wf-profile-dropdown a:hover { background: #0f172a; }
@@ -123,7 +124,8 @@
 
 /* ── Vocabulary Word Card ─────────────────────────────── */
 .wf-vocab-card {
-    background: #fff;
+    background: rgba(212, 211, 254, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.62);
     border-radius: 16px;
     padding: 20px 20px 18px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.07);
@@ -153,7 +155,7 @@
 .dark-mode .wf-vocab-translation { color: #94a3b8; }
 .wf-vocab-divider {
     border: none;
-    border-top: 1px solid #f0f4f8;
+    border-top: 1px solid rgba(220, 214, 250, 0.8);
     margin: 10px 0;
 }
 .dark-mode .wf-vocab-divider { border-top-color: #334155; }
@@ -171,7 +173,8 @@
 
 /* ── Stats Widgets (Streak / Ranking) ─────────────────── */
 .wf-stats-widget {
-    background: #fff;
+    background: rgba(212, 211, 254, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.62);
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.07);

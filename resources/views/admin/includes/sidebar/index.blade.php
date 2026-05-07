@@ -31,7 +31,7 @@
                 </li>
             @endcan
 
-            @if(!empty($authUser) && $authUser->role_name === \App\Models\Role::$manager)
+            @if(!empty($authUser) && in_array($authUser->role_name, [\App\Models\Role::$manager, \App\Models\Role::$ceo], true))
                 <li class="{{ (request()->is(getAdminPanelUrl('/business', false))) ? 'active' : '' }}">
                     <a href="{{ getAdminPanelUrl('/business') }}" class="nav-link">
                         <x-iconsax-bul-graph class="icons" width="24px" height="24px"/>
@@ -74,15 +74,6 @@
                     </a>
                 </li>
             @endif
-
-            @can('admin_marketing_dashboard')
-                <li class="{{ (request()->is(getAdminPanelUrl('/marketing', false))) ? 'active' : '' }}">
-                    <a href="{{ getAdminPanelUrl('/marketing') }}" class="nav-link">
-                    <x-iconsax-bul-graph class="icons" width="24px" height="24px"/>
-                        <span>{{ trans('admin/main.marketing_dashboard') }}</span>
-                    </a>
-                </li>
-            @endcan
 
             {{-- Education --}}
             @include('admin.includes.sidebar.education')
