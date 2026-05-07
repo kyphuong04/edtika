@@ -217,18 +217,37 @@
 			--ug-stroke: #b9bec7;
 			--ug-text: #111827;
 			--ug-muted: #6b7280;
+			--ug-purple-surface: linear-gradient(135deg, rgba(212, 211, 254, 0.96) 0%, rgba(222, 221, 255, 0.94) 55%, rgba(232, 231, 255, 0.92) 100%);
+			--ug-purple-border: rgba(255, 255, 255, 0.62);
+			--ug-purple-shadow: 0 12px 26px rgba(81, 29, 153, 0.08);
 		}
 
 		.manager-ug-stat-card {
-			background: #ffffff;
-			border: 1px solid #edf0f5;
-			border-radius: 16px;
-			box-shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
+			background: var(--ug-purple-surface);
+			border: 1px solid var(--ug-purple-border);
+			border-radius: 18px;
+			box-shadow: var(--ug-purple-shadow);
 			padding: 16px 18px;
 			display: flex;
 			flex-direction: column;
 			justify-content: flex-start;
 			min-height: 136px;
+			overflow: hidden;
+			position: relative;
+		}
+
+		.manager-ug-stat-card::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 36%),
+					radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.08), transparent 32%);
+			pointer-events: none;
+		}
+
+		.manager-ug-stat-card > * {
+			position: relative;
+			z-index: 1;
 		}
 
 		.manager-ug-stat-head {
@@ -280,7 +299,7 @@
 			font-size: 13px;
 			line-height: 1.35;
 			font-weight: 600;
-			color: #94a3b8;
+			color: rgba(17, 24, 39, 0.42);
 			margin-bottom: 0;
 		}
 
@@ -288,7 +307,7 @@
 			font-size: 38px;
 			line-height: 1.05;
 			font-weight: 700;
-			color: var(--ug-text);
+			color: #111827;
 		}
 
 		.manager-ug-chart-panel {

@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
         $user = auth()->user();
 
-        if ($user->role_name === Role::$manager) {
+        if (in_array($user->role_name, [Role::$manager, Role::$ceo], true)) {
             return view('admin.organization_dashboard', [
                 'pageTitle' => trans('admin/main.general_dashboard_title'),
                 'managerDashboard' => $this->getManagerOrganizationDashboardData(),
@@ -120,7 +120,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
 
         $user = auth()->user();
-        abort_unless($user->role_name === Role::$manager, 403);
+        abort_unless(in_array($user->role_name, [Role::$manager, Role::$ceo], true), 403);
 
         return view('admin.sales_dashboard', [
             'pageTitle' => trans('admin/main.business_dashboard'),
@@ -133,7 +133,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
 
         $user = auth()->user();
-        abort_unless($user->role_name === Role::$manager, 403);
+        abort_unless(in_array($user->role_name, [Role::$manager, Role::$ceo], true), 403);
 
         return view('admin.user_growth', [
             'pageTitle' => trans('admin/main.user_growth_dashboard'),
@@ -146,7 +146,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
 
         $user = auth()->user();
-        abort_unless($user->role_name === Role::$manager, 403);
+        abort_unless(in_array($user->role_name, [Role::$manager, Role::$ceo], true), 403);
 
         return view('admin.learning_quality', [
             'pageTitle' => trans('admin/main.learning_quality_dashboard'),
@@ -159,7 +159,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
 
         $user = auth()->user();
-        abort_unless($user->role_name === Role::$manager, 403);
+        abort_unless(in_array($user->role_name, [Role::$manager, Role::$ceo], true), 403);
 
         return view('admin.team_performance', [
             'pageTitle' => trans('admin/main.team_performance_dashboard'),
@@ -172,7 +172,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
 
         $user = auth()->user();
-        abort_unless($user->role_name === Role::$manager, 403);
+        abort_unless(in_array($user->role_name, [Role::$manager, Role::$ceo], true), 403);
 
         return view('admin.admin_performance', [
             'pageTitle' => trans('admin/main.admin_performance_dashboard'),
@@ -185,7 +185,7 @@ class DashboardController extends Controller
         $this->authorize('admin_general_dashboard_show');
 
         $user = auth()->user();
-        abort_unless($user->role_name === Role::$manager, 403);
+        abort_unless(in_array($user->role_name, [Role::$manager, Role::$ceo], true), 403);
 
         return view('admin.lead_performance', [
             'pageTitle' => trans('admin/main.lead_performance_dashboard'),
