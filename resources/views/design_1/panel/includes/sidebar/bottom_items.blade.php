@@ -10,7 +10,7 @@ if ($authUser->isUser() || $authUser->isStudent()) {
     @if(!empty($sidebarMenus) and count($sidebarMenus))
         <div class="mt-16">
             @if($sidebarSection !== 'support')
-            <span class="sidebar-section-title d-block font-12 font-weight-bold text-gray-400 text-uppercase pl-32 pr-20 mb-8">{{ trans("update.{$sidebarSection}") }}</span>
+            <span class="sidebar-section-title d-block font-12 font-weight-bold text-dark text-uppercase pl-32 pr-20 mb-8">{{ trans("update.{$sidebarSection}") }}</span>
             @endif
 
             @foreach($sidebarMenus as $sidebarMenuName => $sidebarMenu)

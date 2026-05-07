@@ -197,10 +197,10 @@
                     outline: none;
                     transition: border-color .2s;
                 }
-                .lp-dict-search-input:focus { border-color: #3b82f6; }
+                .lp-dict-search-input:focus { border-color: var(--primary); }
                 .lp-dict-search-btn {
                     padding: 11px 28px;
-                    background: #3b82f6;
+                    background: var(--primary);
                     color: #fff;
                     border: none;
                     border-radius: 8px;
@@ -210,7 +210,7 @@
                     transition: background .2s;
                     white-space: nowrap;
                 }
-                .lp-dict-search-btn:hover { background: #2563eb; }
+                .lp-dict-search-btn:hover { background: var(--primary-hover); }
                 .lp-dict-search-btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
                 /* Result card */
@@ -246,7 +246,7 @@
                     font-size: 12px;
                     font-weight: 700;
                     color: #fff;
-                    background: #3b82f6;
+                    background: var(--primary);
                     border-radius: 4px;
                     padding: 1px 6px;
                 }
@@ -258,7 +258,7 @@
                     width: 30px;
                     height: 30px;
                     border-radius: 50%;
-                    background: #3b82f6;
+                    background: var(--primary);
                     border: none;
                     color: #fff;
                     display: flex;
@@ -268,7 +268,7 @@
                     transition: background .2s, transform .15s;
                     padding: 0;
                 }
-                .lp-dict-audio-btn:hover:not(:disabled) { background: #2563eb; transform: scale(1.1); }
+                .lp-dict-audio-btn:hover:not(:disabled) { background: var(--primary-hover); transform: scale(1.1); }
                 .lp-dict-audio-btn:disabled { background: #d1d5db; cursor: not-allowed; opacity: .6; }
                 /* POS sections */
                 .lp-dict-pos-section {

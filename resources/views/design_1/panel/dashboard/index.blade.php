@@ -6,6 +6,48 @@
         /* ── IELTS Dashboard Styles ───────────────────────────────────── */
         .ielts-dashboard { padding-bottom: 32px; }
 
+        /* Student dashboard primary accent: blue -> purple */
+        .student-dashboard,
+        .student-dashboard .ielts-dashboard {
+            --primary: #511D99;
+            --primary-hover: #451884;
+        }
+
+        .student-dashboard .text-primary,
+        .student-dashboard .text-primary:hover,
+        .student-dashboard .text-primary:focus {
+            color: #511D99 !important;
+        }
+
+        .student-dashboard .bg-primary,
+        .student-dashboard .btn-primary,
+        .student-dashboard .btn-primary:hover,
+        .student-dashboard .btn-primary:focus,
+        .student-dashboard .btn-primary:active,
+        .student-dashboard .btn-primary:not(:disabled):not(.disabled):active {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+            color: #fff !important;
+        }
+
+        .student-dashboard .btn-outline-primary,
+        .student-dashboard .btn-outline-primary:hover,
+        .student-dashboard .btn-outline-primary:focus,
+        .student-dashboard .btn-outline-primary:active {
+            border-color: #511D99 !important;
+            color: #511D99 !important;
+        }
+
+        .student-dashboard .btn-outline-primary:hover,
+        .student-dashboard .btn-outline-primary:focus,
+        .student-dashboard .btn-outline-primary:active {
+            background-color: rgba(81, 29, 153, 0.1) !important;
+        }
+
+        .student-dashboard .border-primary {
+            border-color: #511D99 !important;
+        }
+
         /* Welcome bar */
         .ielts-welcome-bar { min-height: 64px; }
         .ielts-welcome-bar__bell { text-decoration: none; }

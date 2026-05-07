@@ -6,12 +6,122 @@
 
 @endpush
 
+@push('styles_top')
+    <style>
+        /* Keep inherited global admin header and spacing from layout */
+
+        /* Fix broken layered cards (faded strips) caused by inherited glass backgrounds */
+        .ceo-dashboard-page [class*="card"] {
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        .ceo-dashboard-page .card-statistic-2,
+        .ceo-dashboard-page .card-statistic-1,
+        .ceo-dashboard-page .card {
+            background: rgba(212, 211, 254, 0.62) !important;
+            border: 1px solid rgba(255, 255, 255, 0.56) !important;
+            box-shadow: 0 14px 28px rgba(58, 65, 111, 0.14) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            overflow: hidden;
+        }
+
+        .ceo-dashboard-page .card-statistic-2 .card-stats,
+        .ceo-dashboard-page .card-statistic-2 .card-stats-title,
+        .ceo-dashboard-page .card-statistic-2 .card-stats-items,
+        .ceo-dashboard-page .card-statistic-2 .card-stats-item,
+        .ceo-dashboard-page .card-statistic-2 .card-stats-item-count,
+        .ceo-dashboard-page .card-statistic-2 .card-stats-item-label,
+        .ceo-dashboard-page .card-statistic-2 .card-wrap,
+        .ceo-dashboard-page .card-statistic-2 .card-header,
+        .ceo-dashboard-page .card-statistic-2 .card-body,
+        .ceo-dashboard-page .card-statistic-1 .card-wrap,
+        .ceo-dashboard-page .card-statistic-1 .card-header,
+        .ceo-dashboard-page .card-statistic-1 .card-body,
+        .ceo-dashboard-page .card-statistic-1 .card-header h4,
+        .ceo-dashboard-page .card-statistic-1 .card-body,
+        .ceo-dashboard-page .card .card-header,
+        .ceo-dashboard-page .card .card-body,
+        .ceo-dashboard-page .card .card-footer {
+            background: transparent !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        .ceo-dashboard-page .card-statistic-2 .card-stats {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.44);
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+        }
+
+        .ceo-dashboard-page .card-statistic-2 .card-stats-item {
+            border-right-color: rgba(255, 255, 255, 0.36) !important;
+        }
+
+        .ceo-dashboard-page .card-statistic-2 .card-icon,
+        .ceo-dashboard-page .card-statistic-1 .card-icon {
+            box-shadow: none !important;
+        }
+
+        .ceo-dashboard-page .hero {
+            background: linear-gradient(135deg, rgba(212, 211, 254, 0.96) 0%, rgba(222, 221, 255, 0.94) 55%, rgba(232, 231, 255, 0.92) 100%) !important;
+            background-image: none !important;
+            border: 1px solid rgba(255, 255, 255, 0.62);
+            box-shadow: 0 12px 26px rgba(81, 29, 153, 0.08);
+            overflow: hidden;
+        }
+
+        .ceo-dashboard-page .hero.manager-dashboard-hero {
+            background: linear-gradient(135deg, rgba(212, 211, 254, 0.96) 0%, rgba(222, 221, 255, 0.94) 55%, rgba(232, 231, 255, 0.92) 100%) !important;
+            background-image: none !important;
+        }
+
+        .ceo-dashboard-page .hero .hero-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .ceo-dashboard-page .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.35), transparent 42%),
+                        radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.2), transparent 35%);
+            pointer-events: none;
+        }
+
+        .ceo-dashboard-page .hero .lead,
+        .ceo-dashboard-page .hero h2,
+        .ceo-dashboard-page .hero .btn,
+        .ceo-dashboard-page .hero .btn .icons {
+            color: #111827 !important;
+        }
+
+        .ceo-dashboard-page .hero .btn-outline-white {
+            border-color: rgba(255, 255, 255, 0.78) !important;
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .ceo-dashboard-page .hero .btn-outline-white:hover {
+            background: rgba(255, 255, 255, 0.92) !important;
+            border-color: rgba(255, 255, 255, 0.92) !important;
+        }
+    </style>
+@endpush
+
 @section('content')
 
-    <section class="section">
+    <section class="section ceo-dashboard-page">
         <div class="row">
             <div class="col-12 mb-3">
-                <div class="hero rounded-12 text-white hero-bg-image bg-secondary" data-background="{{ !empty(getThemePageBackgroundSettings('admin_dashboard')) ? getThemePageBackgroundSettings('admin_dashboard') : '' }}">
+                <div class="hero rounded-12 manager-dashboard-hero" style="background: linear-gradient(135deg, rgba(212, 211, 254, 0.96) 0%, rgba(222, 221, 255, 0.94) 55%, rgba(232, 231, 255, 0.92) 100%) !important; background-image: none !important; border: 1px solid rgba(255, 255, 255, 0.62) !important; box-shadow: 0 12px 26px rgba(81, 29, 153, 0.08) !important;">
                     <div class="hero-inner">
                         <h2>{{trans('admin/main.welcome')}}, {{ $authUser->full_name }}!</h2>
 
