@@ -14,6 +14,7 @@ class IeltsQuestionGroup extends Model
 
     protected $fillable = [
         'section_id',
+        'part_id',
         'creator_id',
         'bank_type',
         'skill',
@@ -69,6 +70,11 @@ class IeltsQuestionGroup extends Model
     public function section()
     {
         return $this->belongsTo(IeltsTestSection::class, 'section_id');
+    }
+
+    public function part()
+    {
+        return $this->belongsTo(IeltsTestPart::class, 'part_id');
     }
 
     public function creator()

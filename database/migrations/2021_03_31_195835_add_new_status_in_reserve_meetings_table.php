@@ -14,13 +14,57 @@ class AddNewStatusInReserveMeetingsTable extends Migration
      */
     public function up()
     {
-        Schema::table('reserve_meetings', function (Blueprint $table) {
-            DB::statement("ALTER TABLE `reserve_meetings` MODIFY COLUMN `status` enum('pending','open','finished','canceled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL AFTER `password`");
+        // Sửa enum status nếu cột status tồn tại
+        if (Schema::hasColumn('reserve_meetings', 'status')) {
+            DB::statement("
+                ALTER TABLE `reserve_meetings`
+                MODIFY COLUMN `status`
+                ENUM('pending','open','finished','canceled')
+                CHARACTER SET utf8mb4
+                COLLATE utf8mb4_unicode_ci
+                NOT NULL
+            ");
+        }
 
-            $table->integer('sale_id')->unsigned()->after('meeting_id')->nullable();
-            $table->integer('date')->unsigned()->after('day');
+        // Thêm sale_id
+        if (!Schema::hasColumn('reserve_meetings', 'sale_id')) {
+            Schema::table('reserve_meetings', function (Blueprint $table) {
+                if (Schema::hasColumn('reserve_meetings', 'meeting_id')) {
+                    $table->integer('sale_id')->unsigned()->nullable()->after('meeting_id');
+                } else {
+                    $table->integer('sale_id')->unsigned()->nullable()->after('id');
+                }
+            });
+        }
 
-            $table->foreign('sale_id')->on('sales')->references('id')->onDelete('cascade');
-        });
+        // Thêm date
+        if (!Schema::hasColumn('reserve_meetings', 'date')) {
+            Schema::table('reserve_meetings', function (Blueprint $table) {
+                if (Schema::hasColumn('reserve_meetings', 'day')) {
+                    $table->integer('date')->unsigned()->after('day');
+                } else {
+                    $table->integer('date')->unsigned()->default(0);
+                }
+            });
+        }
+
+        // Thêm foreign key cho sale_id nếu chưa có
+        $foreignKey = DB::select("
+            SELECT CONSTRAINT_NAME
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'reserve_meetings'
+              AND CONSTRAINT_NAME = 'reserve_meetings_sale_id_foreign'
+              AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+        ");
+
+        if (empty($foreignKey)) {
+            Schema::table('reserve_meetings', function (Blueprint $table) {
+                $table->foreign('sale_id')
+                      ->references('id')
+                      ->on('sales')
+                      ->onDelete('cascade');
+            });
+        }
     }
 }

@@ -616,9 +616,20 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         
         // New workflow: Choose Type → Mock/Practice forms
         // Create test from Question Bank
-        Route::get('/create', 'IeltsTestManageController@create')->name('panel.my_ielts_tests.create');
+        Route::get('/create', 'IeltsTestInlineController@chooseMethod')->name('panel.my_ielts_tests.create');
+
+        // Choose creation method (new or legacy)
+        Route::get('/create-choose-method', 'IeltsTestInlineController@chooseMethod')->name('panel.my_ielts_tests.choose_method');
+
+        // OLD FLOW: Create test from Question Bank (kept for backwards compatibility)
+        Route::get('/create-from-bank', 'IeltsTestInlineController@createFromBank')->name('panel.my_ielts_tests.create_from_bank_form');
         Route::post('/store-from-bank', 'IeltsTestManageController@storeFromBank')->name('panel.my_ielts_tests.store_from_bank');
-        
+
+        // NEW FLOW: Create complete test with inline questions
+        Route::get('/create-inline', 'IeltsTestInlineController@createInlineComplete')->name('panel.my_ielts_tests.create_inline');
+        Route::post('/store-inline-complete', 'IeltsTestInlineController@storeInlineComplete')->name('panel.my_ielts_tests.store_inline_complete');
+        Route::post('/store-with-groups', 'IeltsTestInlineController@storeWithQuestionGroups')->name('panel.my_ielts_tests.store_with_groups');
+
         // Legacy routes removed - use create from Question Bank only
         Route::post('/store', 'IeltsTestManageController@store')->name('panel.my_ielts_tests.store');
         Route::get('/{id}/edit', 'IeltsTestManageController@edit')->name('panel.my_ielts_tests.edit');

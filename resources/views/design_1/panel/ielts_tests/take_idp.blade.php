@@ -892,27 +892,46 @@
         $qStart = $firstQ->question_number ?? 1;
         $qEnd = $lastQ->question_number ?? ($qStart + $allQuestions->count() - 1);
         
-        // Group questions by question_type for proper rendering
-        // If questions have the same type and consecutive order, group them together
-        $groupedQuestions = collect([]);
-        $currentGroup = [];
-        $currentType = null;
-        
+        // Load section question groups for auto-assignment of questions without group_id
+        $sectionGroups = \App\Models\IeltsQuestionGroup::where('section_id', $currentSection->id)
+            ->orderBy('question_start')
+            ->get()
+            ->keyBy('id');
+
+        // Auto-assign question_group_id from number range for questions that don't have it
         foreach($allQuestions as $q) {
-            $qType = $q->question_type ?? 'fill_blank';
-            
-            // Start new group if type changes
-            if($qType !== $currentType) {
+            if(!$q->question_group_id && $sectionGroups->isNotEmpty()) {
+                $matched = $sectionGroups->first(fn($g) =>
+                    $q->question_number >= $g->question_start && $q->question_number <= $g->question_end
+                );
+                if($matched) {
+                    $q->question_group_id = $matched->id;
+                    $q->setRelation('questionGroup', $matched);
+                }
+            }
+        }
+
+        // Group questions by question_group_id (preferred) or question_type as fallback
+        $groupedQuestions = collect([]);
+        $currentGroupKey = null;
+        $currentGroup = [];
+
+        foreach($allQuestions as $q) {
+            $groupKey = $q->question_group_id
+                ? 'grp_' . $q->question_group_id
+                : 'type_' . ($q->question_type ?? 'fill_blank');
+
+            if($groupKey !== $currentGroupKey) {
                 if(!empty($currentGroup)) {
                     $groupedQuestions->push(collect($currentGroup));
                 }
                 $currentGroup = [$q];
-                $currentType = $qType;
+                $currentGroupKey = $groupKey;
             } else {
                 $currentGroup[] = $q;
             }
         }
-        
+
         // Add last group
         if(!empty($currentGroup)) {
             $groupedQuestions->push(collect($currentGroup));
