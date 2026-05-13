@@ -8,49 +8,70 @@ class AddGradingFieldsToIeltsTestAttempts extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
+        // Nếu bảng chưa tồn tại thì bỏ qua migration này
+        if (!Schema::hasTable('ielts_test_attempts')) {
+            return;
+        }
+
         Schema::table('ielts_test_attempts', function (Blueprint $table) {
-            // Writing grading fields
+
+            /*
+            |--------------------------------------------------------------------------
+            | Writing grading fields
+            |--------------------------------------------------------------------------
+            */
             if (!Schema::hasColumn('ielts_test_attempts', 'writing_feedback')) {
-                $table->text('writing_feedback')->nullable()->after('writing_score');
+                $table->text('writing_feedback')->nullable();
             }
+
             if (!Schema::hasColumn('ielts_test_attempts', 'writing_criteria')) {
-                $table->json('writing_criteria')->nullable()->after('writing_feedback');
+                $table->json('writing_criteria')->nullable();
             }
+
             if (!Schema::hasColumn('ielts_test_attempts', 'writing_graded_by')) {
-                $table->unsignedBigInteger('writing_graded_by')->nullable()->after('writing_criteria');
+                $table->unsignedBigInteger('writing_graded_by')->nullable();
             }
+
             if (!Schema::hasColumn('ielts_test_attempts', 'writing_graded_at')) {
-                $table->integer('writing_graded_at')->nullable()->after('writing_graded_by');
+                $table->integer('writing_graded_at')->nullable();
             }
-            
-            // Speaking grading fields
+
+            /*
+            |--------------------------------------------------------------------------
+            | Speaking grading fields
+            |--------------------------------------------------------------------------
+            */
             if (!Schema::hasColumn('ielts_test_attempts', 'speaking_feedback')) {
-                $table->text('speaking_feedback')->nullable()->after('speaking_score');
+                $table->text('speaking_feedback')->nullable();
             }
+
             if (!Schema::hasColumn('ielts_test_attempts', 'speaking_criteria')) {
-                $table->json('speaking_criteria')->nullable()->after('speaking_feedback');
+                $table->json('speaking_criteria')->nullable();
             }
+
             if (!Schema::hasColumn('ielts_test_attempts', 'speaking_graded_by')) {
-                $table->unsignedBigInteger('speaking_graded_by')->nullable()->after('speaking_criteria');
+                $table->unsignedBigInteger('speaking_graded_by')->nullable();
             }
+
             if (!Schema::hasColumn('ielts_test_attempts', 'speaking_graded_at')) {
-                $table->integer('speaking_graded_at')->nullable()->after('speaking_graded_by');
+                $table->integer('speaking_graded_at')->nullable();
             }
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
+        // Nếu bảng không tồn tại thì bỏ qua
+        if (!Schema::hasTable('ielts_test_attempts')) {
+            return;
+        }
+
         Schema::table('ielts_test_attempts', function (Blueprint $table) {
             $columns = [
                 'writing_feedback',
@@ -62,7 +83,7 @@ class AddGradingFieldsToIeltsTestAttempts extends Migration
                 'speaking_graded_by',
                 'speaking_graded_at',
             ];
-            
+
             foreach ($columns as $column) {
                 if (Schema::hasColumn('ielts_test_attempts', $column)) {
                     $table->dropColumn($column);

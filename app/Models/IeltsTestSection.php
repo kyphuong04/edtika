@@ -29,6 +29,14 @@ class IeltsTestSection extends Model
     {
         return $this->belongsTo(IeltsTest::class, 'test_id');
     }
+
+    /**
+     * Parts within this section (e.g., Listening Part 1, 2, 3, 4)
+     */
+    public function parts()
+    {
+        return $this->hasMany(IeltsTestPart::class, 'section_id')->orderBy('sort_order');
+    }
     
     /**
      * Link to Question Group (Part)
@@ -47,7 +55,7 @@ class IeltsTestSection extends Model
      */
     public function questions()
     {
-        return $this->hasMany(IeltsTestQuestion::class, 'section_id')->orderBy('sort_order');
+        return $this->hasMany(IeltsTestQuestion::class, 'section_id')->orderBy('question_number');
     }
     
     /**
