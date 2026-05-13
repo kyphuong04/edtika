@@ -8,12 +8,16 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up(): void
     {
+        // Nếu bảng chưa tồn tại thì bỏ qua migration
+        if (!Schema::hasTable('ielts_question_groups')) {
+            return;
+        }
+
         Schema::table('ielts_question_groups', function (Blueprint $table) {
+            // Chỉ thêm cột nếu chưa tồn tại
             if (!Schema::hasColumn('ielts_question_groups', 'rejection_reason')) {
                 $table->text('rejection_reason')->nullable();
             }
@@ -25,8 +29,16 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Nếu bảng chưa tồn tại thì bỏ qua
+        if (!Schema::hasTable('ielts_question_groups')) {
+            return;
+        }
+
         Schema::table('ielts_question_groups', function (Blueprint $table) {
-            $table->dropColumn('rejection_reason');
+            // Chỉ xóa cột nếu cột tồn tại
+            if (Schema::hasColumn('ielts_question_groups', 'rejection_reason')) {
+                $table->dropColumn('rejection_reason');
+            }
         });
     }
 };

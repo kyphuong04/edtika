@@ -11,15 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add to Mock Question Bank
-        if (!Schema::hasColumn('ielts_mock_question_bank', 'table_structure')) {
+        /*
+        |--------------------------------------------------------------------------
+        | IELTS Mock Question Bank
+        |--------------------------------------------------------------------------
+        */
+        if (
+            Schema::hasTable('ielts_mock_question_bank') &&
+            !Schema::hasColumn('ielts_mock_question_bank', 'table_structure')
+        ) {
             Schema::table('ielts_mock_question_bank', function (Blueprint $table) {
                 $table->json('table_structure')->nullable()->after('question_data');
             });
         }
-        
-        // Add to Practice Question Bank
-        if (!Schema::hasColumn('ielts_practice_question_bank', 'table_structure')) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | IELTS Practice Question Bank
+        |--------------------------------------------------------------------------
+        */
+        if (
+            Schema::hasTable('ielts_practice_question_bank') &&
+            !Schema::hasColumn('ielts_practice_question_bank', 'table_structure')
+        ) {
             Schema::table('ielts_practice_question_bank', function (Blueprint $table) {
                 $table->json('table_structure')->nullable()->after('question_data');
             });
@@ -31,13 +45,19 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasColumn('ielts_mock_question_bank', 'table_structure')) {
+        if (
+            Schema::hasTable('ielts_mock_question_bank') &&
+            Schema::hasColumn('ielts_mock_question_bank', 'table_structure')
+        ) {
             Schema::table('ielts_mock_question_bank', function (Blueprint $table) {
                 $table->dropColumn('table_structure');
             });
         }
-        
-        if (Schema::hasColumn('ielts_practice_question_bank', 'table_structure')) {
+
+        if (
+            Schema::hasTable('ielts_practice_question_bank') &&
+            Schema::hasColumn('ielts_practice_question_bank', 'table_structure')
+        ) {
             Schema::table('ielts_practice_question_bank', function (Blueprint $table) {
                 $table->dropColumn('table_structure');
             });

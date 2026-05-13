@@ -18,14 +18,21 @@ class CreateMeetingsTable extends Migration
 
             $table->increments('id');
             $table->integer('creator_id')->unsigned();
+            $table->integer('teacher_id')->unsigned(); // Thêm dòng này
             $table->integer('amount')->unsigned()->nullable();
             $table->integer('discount')->nullable();
             $table->boolean('disabled')->default(0);
             $table->integer('created_at');
 
-            $table->foreign('creator_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('teacher_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('creator_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
 
+            $table->foreign('teacher_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 

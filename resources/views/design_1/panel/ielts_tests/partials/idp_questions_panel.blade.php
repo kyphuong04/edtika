@@ -1,7 +1,9 @@
 {{-- 
-    IDP Questions Panel - Renders all question types grouped by question_type
+    IDP Questions Panel - Renders all question types grouped by question_group_id or question_type
     Each group has its own instructions and question type layout
 --}}
+
+@php $prevPartId = null; @endphp
 
 @foreach($groupedQuestions as $groupKey => $questions)
     @php
@@ -14,8 +16,8 @@
             $group = $firstQ->questionGroup ?? \App\Models\IeltsQuestionGroup::find($firstQ->question_group_id);
         }
         
-        // Determine question type - priority: question_type field > group's type > default
-        $questionType = $firstQ->question_type ?? $group->question_type ?? 'fill_blank';
+        // Determine question type - group type takes priority when group exists
+        $questionType = ($group ? ($group->question_type ?? null) : null) ?? $firstQ->question_type ?? 'fill_blank';
         
         // Get group instructions if available
         $instructions = $group->instructions ?? $group->instruction ?? '';
@@ -30,16 +32,32 @@
         if(is_string($matchingOptions)) {
             $matchingOptions = json_decode($matchingOptions, true) ?? [];
         }
+
+        $currentPartId = $group->part_id ?? null;
+        $showPartLabel = $currentPartId && $currentPartId !== $prevPartId;
+        if($showPartLabel) $prevPartId = $currentPartId;
     @endphp
 
-    @if(!$loop->first)
+    @if($showPartLabel)
+        @php $part = \App\Models\IeltsTestPart::find($currentPartId); @endphp
+        @if($part)
+        <div style="background:#1a3a5c;color:#fff;padding:8px 16px;font-weight:700;font-size:13px;letter-spacing:.5px;margin-bottom:4px;">
+            {{ strtoupper($part->title ?? 'PART') }}
+        </div>
+        @endif
+    @elseif(!$loop->first)
         <hr class="idp-group-separator">
     @endif
 
-    {{-- Group Headers & Instructions --}}
+    {{-- Group Header & Instructions --}}
     <div class="idp-questions-header">
-        {{ trans('update.ielts_questions') }} {{ $questions->first()->question_number ?? '' }}–{{ $questions->last()->question_number ?? '' }}
+        Questions {{ $questions->first()->question_number ?? '' }}–{{ $questions->last()->question_number ?? '' }}
     </div>
+    @if(!empty($title))
+    <div class="idp-questions-title" style="font-weight:600;font-size:14px;margin:6px 0 4px;color:#1e293b;">
+        {!! $title !!}
+    </div>
+    @endif
     <div class="idp-questions-instruction">
         {!! !empty($instructions) ? $instructions : getQuestionInstruction($questionType) !!}
     </div>

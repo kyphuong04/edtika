@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class AddNewColumnToUsersTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
@@ -21,9 +16,19 @@ class AddNewColumnToUsersTable extends Migration
             $table->integer('district_id')->unsigned()->nullable()->after('city_id');
             $table->point('location')->nullable()->after('district_id');
             $table->boolean('group_meeting')->default(false)->after('location');
-            $table->enum('meeting_type', ['all', 'in_person', 'online'])->default('all')->after('level_of_training');
+        });
 
-            DB::statement("ALTER TABLE `users` ADD COLUMN `level_of_training` bit(3) NULL AFTER `location`");
+        // Tạo level_of_training sau cột location
+        DB::statement("
+            ALTER TABLE `users`
+            ADD COLUMN `level_of_training` BIT(3) NULL AFTER `location`
+        ");
+
+        // Tạo meeting_type sau level_of_training
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('meeting_type', ['all', 'in_person', 'online'])
+                ->default('all')
+                ->after('level_of_training');
         });
     }
 }

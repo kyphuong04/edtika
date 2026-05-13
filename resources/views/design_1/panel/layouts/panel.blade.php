@@ -63,7 +63,7 @@
         }
 
         .panel-content :is(div, section, article, aside).bg-white,
-        .panel-content :is(div, section, article, aside)[class*="card"]:not([class*="__"]),
+        .panel-content :is(div, section, article, aside)[class*="card"]:not([class*="__"]):not(.stars-card),
         .panel-content :is(div, section, article, aside)[class*="box"]:not([class*="__"]),
         .panel-content :is(div, section, article, aside)[class*="panel-section"]:not([class*="__"]),
         .panel-content :is(div, section, article, aside)[class*="section-card"]:not([class*="__"]),
@@ -87,6 +87,11 @@
             box-shadow: none !important;
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
+        }
+
+        .teacher-welcome-bar {
+            position: relative;
+            z-index: 50;
         }
 
         /* ── Hide top header + title bar globally ───────────────── */
