@@ -41,7 +41,7 @@
         <div class="d-flex-center flex-column text-center p-20 rounded-16 bg-gray-100 flex-grow-1">
             <x-iconsax-bul-message-text class="icons text-primary" width="32px" height="32px"/>
             <p class="font-12 text-gray-500 mt-8 mb-0">No mentor messages yet.</p>
-            <a href="/panel/support/create" class="btn btn-primary btn-sm rounded-pill mt-12">
+            <a href="/panel/support/new" class="btn btn-primary btn-sm rounded-pill mt-12">
                 Send a message
             </a>
         </div>

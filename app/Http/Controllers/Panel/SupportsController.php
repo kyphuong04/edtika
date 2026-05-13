@@ -255,10 +255,11 @@ class SupportsController extends Controller
 
         $webinarIds = $user->getPurchasedCoursesIds();
 
-        $webinars = Webinar::select('id', 'creator_id')
+        $webinars = Webinar::select('id', 'creator_id', 'teacher_id')
             ->whereIn('id', $webinarIds)
-            ->where('support', true)
-            ->with(['creator' => function ($query) {
+            ->with(['translations', 'teacher' => function ($query) {
+                $query->select('id', 'full_name');
+            }, 'creator' => function ($query) {
                 $query->select('id', 'full_name');
             }])->get();
 

@@ -238,6 +238,7 @@ class SidebarItems
             if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
                 $ieltsItems = [
                     ['text' => trans('update.my_tests'), 'url' => '/panel/my-ielts-tests'],
+                    ['text' => trans('update.create_new_test'), 'url' => '/panel/my-ielts-tests/create-inline'],
                     ['text' => trans('update.create_from_bank'), 'url' => '/panel/my-ielts-tests/create'],
                 ];
                 

@@ -1301,6 +1301,7 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             // Approval Workflow
             Route::post('/{id}/submit-for-approval', 'IeltsTestController@submitForApproval')->name('admin.ielts_tests.submit_approval');
             Route::get('/pending-approval', 'IeltsTestController@pendingApproval')->name('admin.ielts_tests.pending_approval');
+            Route::get('/{id}/review', 'IeltsTestController@reviewTest')->name('admin.ielts_tests.review');
             Route::post('/{id}/approve', 'IeltsTestController@approve')->name('admin.ielts_tests.approve');
             Route::post('/{id}/reject', 'IeltsTestController@reject')->name('admin.ielts_tests.reject');
             Route::post('/{id}/publish', 'IeltsTestController@publish')->name('admin.ielts_tests.publish');
@@ -1320,6 +1321,7 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/sections/{sectionId}/question-groups', 'IeltsTestController@manageQuestionGroups')->name('admin.ielts_tests.question_groups');
             Route::post('/sections/{sectionId}/question-groups/store', 'IeltsTestController@storeQuestionGroup')->name('admin.ielts_tests.question_groups.store');
             Route::delete('/question-groups/{groupId}', 'IeltsTestController@deleteQuestionGroup')->name('admin.ielts_tests.question_groups.delete');
+            Route::get('/question-groups/{groupId}/questions', 'IeltsTestController@manageGroupQuestions')->name('admin.ielts_tests.question_groups.questions');
             
             // Question Management (Updated to work with groups)
             Route::get('/sections/{sectionId}/questions', 'IeltsTestController@manageQuestions')->name('admin.ielts_tests.questions');

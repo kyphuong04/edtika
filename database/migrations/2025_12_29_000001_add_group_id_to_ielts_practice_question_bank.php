@@ -3,50 +3,81 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class AddGroupIdToIeltsPracticeQuestionBank extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Chỉ chạy migration nếu bảng tồn tại
+        |--------------------------------------------------------------------------
+        */
+        if (!Schema::hasTable('ielts_practice_question_bank')) {
+            return;
+        }
+
         Schema::table('ielts_practice_question_bank', function (Blueprint $table) {
-            // Check if column doesn't exist before adding
+            /*
+            |--------------------------------------------------------------------------
+            | Thêm cột group_id nếu chưa tồn tại
+            |--------------------------------------------------------------------------
+            */
             if (!Schema::hasColumn('ielts_practice_question_bank', 'group_id')) {
-                // Add group_id column after id
-                $table->bigInteger('group_id')->unsigned()->nullable()->after('id');
-                
-                // Add index for performance
+                $table->unsignedBigInteger('group_id')
+                      ->nullable()
+                      ->after('id');
+
                 $table->index('group_id');
-                
-                // Add foreign key constraint
-                $table->foreign('group_id')
-                      ->references('id')
-                      ->on('ielts_question_groups')
-                      ->onDelete('cascade');
             }
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Thêm foreign key nếu bảng đích tồn tại
+        |--------------------------------------------------------------------------
+        */
+        if (Schema::hasTable('ielts_question_groups')) {
+            try {
+                DB::statement("
+                    ALTER TABLE `ielts_practice_question_bank`
+                    ADD CONSTRAINT `ielts_practice_question_bank_group_id_foreign`
+                    FOREIGN KEY (`group_id`)
+                    REFERENCES `ielts_question_groups`(`id`)
+                    ON DELETE CASCADE
+                ");
+            } catch (\Exception $e) {
+                // Bỏ qua nếu foreign key đã tồn tại
+            }
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
+        if (!Schema::hasTable('ielts_practice_question_bank')) {
+            return;
+        }
+
+        try {
+            DB::statement("
+                ALTER TABLE `ielts_practice_question_bank`
+                DROP FOREIGN KEY `ielts_practice_question_bank_group_id_foreign`
+            ");
+        } catch (\Exception $e) {
+            // Ignore
+        }
+
         Schema::table('ielts_practice_question_bank', function (Blueprint $table) {
-            // Drop foreign key first
-            $table->dropForeign(['group_id']);
-            
-            // Drop index
-            $table->dropIndex(['group_id']);
-            
-            // Drop column
-            $table->dropColumn('group_id');
+            if (Schema::hasColumn('ielts_practice_question_bank', 'group_id')) {
+                try {
+                    $table->dropIndex(['group_id']);
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+
+                $table->dropColumn('group_id');
+            }
         });
     }
 }
