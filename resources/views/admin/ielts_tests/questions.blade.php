@@ -141,13 +141,17 @@
             </div>
             <form action="{{ route('admin.ielts_tests.questions.store', $section->id) }}" method="POST">
                 @csrf
+                @if(isset($group))
+                <input type="hidden" name="question_group_id" value="{{ $group->id }}">
+                @endif
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Question Number *</label>
                                 <input type="number" name="question_number" class="form-control" required 
-                                       min="{{ $section->question_start }}" max="{{ $section->question_end }}">
+                                       min="{{ isset($group) ? $group->question_start : $section->question_start }}" 
+                                       max="{{ isset($group) ? $group->question_end : $section->question_end }}">
                             </div>
                         </div>
                         <div class="col-md-4">

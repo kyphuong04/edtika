@@ -1,37 +1,41 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
-        Schema::create('cache', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->mediumText('value');
-            $table->integer('expiration');
-        });
+        if (!Schema::hasTable('cache')) {
+            DB::statement("
+                CREATE TABLE `cache` (
+                    `key` VARCHAR(255) NOT NULL,
+                    `value` MEDIUMTEXT NOT NULL,
+                    `expiration` INT NOT NULL,
+                    PRIMARY KEY (`key`)
+                ) ENGINE=InnoDB
+                DEFAULT CHARSET=utf8mb4
+                COLLATE=utf8mb4_general_ci
+            ");
+        }
 
-        Schema::create('cache_locks', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->string('owner');
-            $table->integer('expiration');
-        });
+        if (!Schema::hasTable('cache_locks')) {
+            DB::statement("
+                CREATE TABLE `cache_locks` (
+                    `key` VARCHAR(255) NOT NULL,
+                    `owner` VARCHAR(255) NOT NULL,
+                    `expiration` INT NOT NULL,
+                    PRIMARY KEY (`key`)
+                ) ENGINE=InnoDB
+                DEFAULT CHARSET=utf8mb4
+                COLLATE=utf8mb4_general_ci
+            ");
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('cache');
         Schema::dropIfExists('cache_locks');

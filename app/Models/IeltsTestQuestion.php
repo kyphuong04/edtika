@@ -29,6 +29,11 @@ class IeltsTestQuestion extends Model
     {
         return $this->belongsTo(IeltsTestSection::class, 'section_id');
     }
+
+    public function part()
+    {
+        return $this->belongsTo(IeltsTestPart::class, 'part_id');
+    }
     
     public function questionGroup()
     {

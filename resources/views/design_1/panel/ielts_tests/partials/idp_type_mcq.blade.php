@@ -5,13 +5,19 @@
     @php
         $qNum = $q->question_number ?? $loop->iteration;
         $saved = $userAnswers[$q->id] ?? '';
-        $options = is_array($q->options) ? $q->options : json_decode($q->options ?? '[]', true);
+        $rawOpts = $q->answer_options ?? $q->options ?? null;
+        $options = is_array($rawOpts) ? $rawOpts : json_decode($rawOpts ?? '[]', true);
         if(empty($options) && !empty($q->option_a)) {
             $options = [];
             if($q->option_a) $options['A'] = $q->option_a;
             if($q->option_b) $options['B'] = $q->option_b;
             if($q->option_c) $options['C'] = $q->option_c;
             if($q->option_d) $options['D'] = $q->option_d;
+        }
+        // Convert numeric-indexed array to letter-keyed (A, B, C...)
+        if(!empty($options) && array_keys($options) === range(0, count($options)-1)) {
+            $letters = range('A', 'Z');
+            $options = array_combine(array_slice($letters, 0, count($options)), array_values($options));
         }
     @endphp
     <div class="idp-question" data-q-num="{{ $qNum }}">
