@@ -48,7 +48,8 @@
                             <option value="" selected disabled>{{ trans('panel.select_course') }}</option>
 
                             @foreach($webinars as $webinar)
-                                <option value="{{ $webinar->id }}">{{ $webinar->title }} - {{ $webinar->creator->full_name }}</option>
+                                @php $instructorName = !empty($webinar->teacher) ? $webinar->teacher->full_name : (!empty($webinar->creator) ? $webinar->creator->full_name : ''); @endphp
+                                <option value="{{ $webinar->id }}">{{ $webinar->title }}{{ $instructorName ? ' - ' . $instructorName : '' }}</option>
                             @endforeach
                         </select>
                         @error('webinar_id')

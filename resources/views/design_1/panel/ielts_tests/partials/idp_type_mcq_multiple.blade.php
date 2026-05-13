@@ -11,7 +11,13 @@
     
     // Get first question for options (shared among group)
     $firstQ = $questions->first();
-    $options = is_array($firstQ->options) ? $firstQ->options : json_decode($firstQ->options ?? '[]', true);
+    $rawOpts = $firstQ->answer_options ?? $firstQ->options ?? null;
+    $options = is_array($rawOpts) ? $rawOpts : json_decode($rawOpts ?? '[]', true);
+    // Convert numeric-indexed array to letter-keyed (A, B, C...)
+    if(!empty($options) && array_keys($options) === range(0, count($options)-1)) {
+        $letters = range('A', 'Z');
+        $options = array_combine(array_slice($letters, 0, count($options)), array_values($options));
+    }
     
     $qNums = $questions->pluck('question_number')->toArray();
     $startQ = min($qNums);
@@ -19,9 +25,6 @@
 @endphp
 
 <div class="idp-question" data-q-num="{{ $startQ }}">
-    <div style="margin-bottom: 8px;">
-        <strong>{{ trans('update.ielts_questions') }} {{ $startQ }}-{{ $endQ }}</strong>
-    </div>
     <div class="idp-options">
         @foreach($options as $key => $text)
             <label class="idp-option">

@@ -432,8 +432,11 @@ class IeltsTestController extends Controller
     public function update(Request $request, $id)
     {
         $test = IeltsTest::findOrFail($id);
-        
-        if (!$test->canBeEdited()) {
+
+        $authUser = auth()->user();
+        $isAdminOverride = $authUser->isAdmin() || $authUser->isManager() || $authUser->isCeo();
+
+        if (!$test->canBeEdited() && !$isAdminOverride) {
             return back()->with(['toast' => [
                 'title' => 'Error',
                 'msg' => 'Cannot edit test in current status',
@@ -726,12 +729,34 @@ class IeltsTestController extends Controller
     }
     
     /**
-     * Manage questions for a section (Legacy - redirects to question groups)
+     * Manage questions for a section (redirects to question groups)
      */
     public function manageQuestions($sectionId)
     {
-        // Redirect to question groups workflow
         return redirect()->route('admin.ielts_tests.question_groups', $sectionId);
+    }
+
+    /**
+     * Manage questions for a specific question group
+     */
+    public function manageGroupQuestions($groupId)
+    {
+        $group = \App\Models\IeltsQuestionGroup::with('section.test')->findOrFail($groupId);
+        $section = $group->section;
+
+        $section->setRelation('questions', IeltsTestQuestion::where('section_id', $section->id)
+            ->whereBetween('question_number', [$group->question_start, $group->question_end])
+            ->orderBy('question_number')
+            ->get());
+
+        $data = [
+            'pageTitle' => 'Questions – ' . $group->title,
+            'section' => $section,
+            'group' => $group,
+            'test' => $section->test,
+        ];
+
+        return view('admin.ielts_tests.questions', $data);
     }
     
     /**
@@ -749,6 +774,7 @@ class IeltsTestController extends Controller
         
         $data = [
             'section_id' => $section->id,
+            'question_group_id' => $request->question_group_id ?: null,
             'question_number' => $request->question_number,
             'question_type' => $request->question_type,
             'question_text' => $request->question_text,
@@ -997,9 +1023,44 @@ class IeltsTestController extends Controller
     }
     
     /**
+     * Review a pending test (admin/manager/CEO only, bypasses canBeEdited)
+     */
+    public function reviewTest(Request $request, $id)
+    {
+        $authUser = auth()->user();
+
+        if (!$authUser->isAdmin() && !$authUser->isManager() && !$authUser->isCeo()) {
+            abort(403);
+        }
+
+        $test = IeltsTest::with([
+            'creator',
+            'sections' => function ($q) {
+                $q->with([
+                    'parts' => function ($p) {
+                        $p->with(['questionGroups'])->orderBy('sort_order');
+                    },
+                    'questions',
+                    'questionGroup',
+                ])->orderBy('sort_order');
+            },
+        ])->findOrFail($id);
+
+        $practiceCategories = IeltsPracticeCategory::active()->get()->groupBy('skill');
+
+        $data = [
+            'pageTitle' => 'Review Test – ' . $test->title,
+            'test' => $test,
+            'practiceCategories' => $practiceCategories,
+        ];
+
+        return view('admin.ielts_tests.review', $data);
+    }
+
+    /**
      * View pending approval tests
      */
-    public function pendingApproval()
+    public function pendingApproval(Request $request)
     {
         $authUser = auth()->user();
         
@@ -1007,16 +1068,67 @@ class IeltsTestController extends Controller
             abort(403);
         }
         
-        // Query Question Groups instead of Tests
-        $groups = \App\Models\IeltsQuestionGroup::with('creator')
+        $groupsQuery = \App\Models\IeltsQuestionGroup::with('creator')
             ->where('status', 'pending')
-            ->withCount('questions')
+            ->withCount('questions');
+
+        $testsQuery = IeltsTest::with([
+            'creator',
+            'sections' => function ($query) {
+                $query->withCount('questions');
+            },
+        ])
+            ->where('status', 'pending_approval');
+
+        if ($request->filled('skill')) {
+            $skill = $request->input('skill');
+            $groupsQuery->where('skill', $skill);
+
+            $testsQuery->where('has_' . $skill, 1);
+        }
+
+        if ($request->filled('type')) {
+            $type = $request->input('type');
+            $groupsQuery->where('bank_type', $type);
+            $testsQuery->where('type', $type);
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+
+            $groupsQuery->where(function ($query) use ($search) {
+                $query->where('title', 'like', '%' . $search . '%')
+                    ->orWhereHas('creator', function ($creatorQuery) use ($search) {
+                        $creatorQuery->where('full_name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+                    });
+            });
+
+            $testsQuery->where(function ($query) use ($search) {
+                $query->where('title', 'like', '%' . $search . '%')
+                    ->orWhereHas('creator', function ($creatorQuery) use ($search) {
+                        $creatorQuery->where('full_name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $groups = $groupsQuery
             ->orderBy('updated_at', 'desc')
-            ->paginate(20);
+            ->paginate(20, ['*'], 'groups_page');
+
+        $tests = $testsQuery
+            ->orderBy('submitted_for_approval_at', 'desc')
+            ->orderBy('updated_at', 'desc')
+            ->paginate(20, ['*'], 'tests_page');
+
+        $pendingCount = $groups->total() + $tests->total();
         
         $data = [
             'pageTitle' => trans('update.ielts_question_groups_pending_approval'),
             'groups' => $groups,
+            'tests' => $tests,
+            'pendingCount' => $pendingCount,
         ];
         
         return view('admin.ielts_tests.pending_approval', $data);
