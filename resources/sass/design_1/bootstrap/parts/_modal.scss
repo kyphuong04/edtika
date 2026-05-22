@@ -265,6 +265,35 @@
     }
 }
 
+.modal-footer,
+.custom-modal-footer .d-flex {
+    gap: 8px;
+
+    > .btn-secondary,
+    > .btn-danger,
+    > .close-swl,
+    > [data-dismiss="modal"] {
+        order: 1;
+        margin-left: 0 !important;
+    }
+
+    > .btn-primary,
+    > button[type="submit"] {
+        order: 2;
+        background-color: var(--edtika-primary) !important;
+        border-color: var(--edtika-primary) !important;
+
+        &:hover,
+        &:focus,
+        &:active,
+        &.active,
+        &:not(:disabled):not(.disabled):active {
+            background-color: #421670 !important;
+            border-color: #421670 !important;
+        }
+    }
+}
+
 .swal2-popup {
     padding: 0 !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;

@@ -38,3 +38,6 @@
 @import "parts/theme";
 @import "parts/header";
 
+// Theme overrides (apply last)
+@import "../design_1/public/theme-overrides";
+

@@ -108,6 +108,7 @@
             -webkit-backdrop-filter: none;
         }
     </style>
+    <link rel="stylesheet" href="/assets/design_1/css/overrides.css">
 </head>
 <body class="sidebar-mini sidebar-hover-expand {{ $isRtl ? 'rtl' : '' }}">
 

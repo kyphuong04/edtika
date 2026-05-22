@@ -247,6 +247,8 @@ class UserController extends Controller
                 'first_name' => 'required|string',
                 'email' => (($registerMethod == 'email') ? 'required' : 'nullable') . '|email|max:255|unique:users,email,' . $user->id,
                 'mobile' => (($registerMethod == 'mobile') ? 'required' : 'nullable') . '|numeric|unique:users,mobile,' . $user->id,
+                'aim_band' => 'nullable|numeric|min:0|max:9',
+                'mock_test_date' => 'nullable|date_format:Y-m-d',
             ];
         }
 
@@ -298,6 +300,8 @@ class UserController extends Controller
                 // Handle gender and birthday (stored as UserMeta)
                 $updateUserMeta['gender']   = $data['gender'] ?? null;
                 $updateUserMeta['birthday'] = !empty($data['birthday']) ? convertTimeToUTCzone($data['birthday'])->getTimestamp() : null;
+                $updateUserMeta['aim_band'] = $data['aim_band'] ?? null;
+                $updateUserMeta['mock_test_date'] = $data['mock_test_date'] ?? null;
 
                 $this->handleNewsletter($data['email'], $user->id, $joinNewsletter);
             } elseif ($step == "extra_information") {
@@ -421,7 +425,7 @@ class UserController extends Controller
                 foreach ($updateUserMeta as $metaName => $metaValue) {
                     UserMeta::query()->where('user_id', $user->id)->where('name', $metaName)->delete();
 
-                    if (!empty($metaValue)) {
+                    if ($metaValue !== null && $metaValue !== '') {
                         UserMeta::query()->create([
                             'user_id' => $user->id,
                             'name' => $metaName,

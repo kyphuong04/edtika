@@ -123,7 +123,7 @@
     <div class="row" style="margin-top: 30px;">
         <div class="col-12">
             @if($tests->isEmpty())
-                <div class="bg-white shadow-sm rounded-16 p-30">
+                <div class="bg-white shadow-sm rounded-16 p-30" style="border-radius: 12px;">
                     @include('design_1.panel.includes.no-result',[
                         'file_name' => 'support.svg',
                         'title' => trans('update.no_tests_yet'),
@@ -132,10 +132,10 @@
                     ])
                 </div>
             @else
-                <div class="card border-0 shadow-sm rounded-16">
-                    <div class="card-body p-0">
+                <div class="card shadow-sm rounded-16" style="border-radius: 12px;">
+                    <div class="card-body p-0 rounded-16" style="border-radius: 12px;">
                         <div class="table-responsive">
-                            <table class="table custom-table mb-0" style="min-width: 900px;">
+                            <table class="table custom-table mb-0 rounded-16" style="border-radius: 12px; min-width: 900px;">
                                 <thead class="bg-light">
                                     <tr>
                                         <th class="pl-25" width="30%">{{ trans('update.test_information') }}</th>
@@ -231,7 +231,7 @@
                                                         
                                                         @if(($test->status === 'draft' || $test->status === 'rejected') && $test->sections->count() > 0)
                                                             <a href="{{ route('panel.my_ielts_tests.submit_approval', $test->id) }}" 
-                                                               <class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 submit-approval-btn"
+                                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 submit-approval-btn"
                                                                data-test-title="{{ $test->title }}">
                                                                 <x-iconsax-lin-send-2 class="icons text-success mr-2" width="18px" height="18px"/>
                                                                 <span class="text-success font-14 font-weight-bold">{{ trans('update.submit_for_approval') }}</span>
@@ -398,6 +398,66 @@ $(document).ready(function() {
         padding: 5px 10px;
         cursor: pointer;
     }
+    /* Make table rows look like inner-rounded cards and ensure badge labels are visible */
+    .custom-table {
+        border-spacing: 0 12px;
+        width: 100%;
+    }
+
+    .custom-table thead th {
+        background: transparent !important;
+        border: none;
+        padding: 12px 10px;
+    }
+
+    .custom-table tbody tr {
+        background: transparent;
+    }
+
+    .custom-table tbody td {
+        background: #ffffff !important;
+        border: none !important;
+        padding: 18px 12px !important;
+        vertical-align: middle !important;
+        overflow: visible !important;
+        -webkit-background-clip: padding-box !important;
+        background-clip: padding-box !important;
+    }
+
+    /* Force rounded corners on the row by rounding first/last cells and adding subtle border/shadow */
+    .custom-table tbody tr td:first-child {
+        border-top-left-radius: 12px !important;
+        border-bottom-left-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(14,30,37,0.04) !important;
+        border-left: 1px solid rgba(16,24,40,0.03) !important;
+    }
+    .custom-table tbody tr td:last-child {
+        border-top-right-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(14,30,37,0.04) !important;
+        border-right: 1px solid rgba(16,24,40,0.03) !important;
+    }
+
+    /* Ensure inner cells don't show square borders that break rounding */
+    .custom-table tbody tr td:not(:first-child):not(:last-child) {
+        border-left: 1px solid rgba(16,24,40,0.03) !important;
+        border-right: 1px solid rgba(16,24,40,0.03) !important;
+        box-shadow: none !important;
+    }
+
+    .custom-table .badge {
+        color: #0b1220 !important;
+        padding: 6px 10px !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
+        min-width: 85px !important;
+        text-align: center !important;
+        border-radius: 10px !important;
+        background-clip: padding-box !important;
+    }
+
+    /* Make sure the responsive wrapper doesn't clip rounded corners */
+    .table-responsive { overflow: visible !important; }
 
     .stats-card {
         transition: transform 0.2s;

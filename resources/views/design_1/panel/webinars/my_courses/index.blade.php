@@ -54,8 +54,8 @@
         font-size: 14px;
         font-weight: 500;
         text-decoration: none;
-        background-color: #f3f4f6;
-        color: #374151;
+        background-color: #ffff;
+        color: #511D99;
         border: 1.5px solid transparent;
         transition: background-color .2s, color .2s;
         white-space: nowrap;
@@ -66,7 +66,7 @@
         text-decoration: none;
     }
     .materials-tabs .tab-btn.active {
-        background-color: #1f2937;
+        background-color: #511D99;
         color: #ffffff;
     }
 
@@ -102,7 +102,7 @@
 
     .curriculum-section__btn {
         padding: 8px 22px;
-        background-color: #374151;
+        background-color: #511D99;
         color: #ffffff !important;
         border-radius: 50px;
         font-size: 13px;
@@ -244,7 +244,7 @@
                     Tổng số lượng bài học: <strong>{{ $myTotalLessons }} bài</strong>
                 </div>
             </div>
-            <button type="button" id="createCurriculumBtn" class="curriculum-section__btn">Create</button>
+            <button type="button" id="createCurriculumBtn" class="curriculum-section__btn">Tạo</button>
         </div>
 
         <div class="curriculum-grid">

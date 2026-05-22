@@ -203,6 +203,19 @@
             overflow-x: hidden;
             padding: 20px 28px;
         }
+
+        .idp-audio-inline {
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+
+        .idp-audio-inline audio {
+            width: 100%;
+            display: block;
+        }
         
         
         /* ========== QUESTION STYLING ========== */
@@ -936,6 +949,20 @@
         if(!empty($currentGroup)) {
             $groupedQuestions->push(collect($currentGroup));
         }
+
+        // Resolve listening audio source: part audio has priority over section audio
+        $currentPartId = $firstQ->part_id ?? null;
+        $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+        $currentPartAudioUrl = null;
+        if (!empty($currentPart->audio_file)) {
+            $audioFile = $currentPart->audio_file;
+            if (str_starts_with($audioFile, '/') || str_starts_with($audioFile, 'http')) {
+                $currentPartAudioUrl = $audioFile;
+            } else {
+                $currentPartAudioUrl = \Storage::disk('public')->url($audioFile);
+            }
+        }
+        $resolvedListeningAudioUrl = $currentPartAudioUrl ?? ($currentSection->audio_url ?? null);
         
         // Helper function to get instruction text based on question type
         if (!function_exists('getQuestionInstruction')) {
@@ -1049,6 +1076,14 @@
         @elseif($skill === 'listening' && empty($currentSection->passage_text))
             {{-- LISTENING FULL WIDTH (no passage) --}}
             <div class="idp-right" style="flex: none; width: 100%;">
+                @if($attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
+                    <div class="idp-audio-inline">
+                        <audio id="audioPlayer" controls>
+                            <source src="{{ $resolvedListeningAudioUrl }}" type="audio/mpeg">
+                            Your browser does not support audio playback.
+                        </audio>
+                    </div>
+                @endif
                 @include('design_1.panel.ielts_tests.partials.idp_questions_panel', [
                     'groupedQuestions' => $groupedQuestions,
                     'userAnswers' => $userAnswers,
@@ -1072,6 +1107,14 @@
             <div class="idp-divider" id="divider"><span class="idp-divider-icon">↔</span></div>
             
             <div class="idp-right" id="rightPanel">
+                @if($skill === 'listening' && $attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
+                    <div class="idp-audio-inline">
+                        <audio id="audioPlayer" controls>
+                            <source src="{{ $resolvedListeningAudioUrl }}" type="audio/mpeg">
+                            Your browser does not support audio playback.
+                        </audio>
+                    </div>
+                @endif
                 @include('design_1.panel.ielts_tests.partials.idp_questions_panel', [
                     'groupedQuestions' => $groupedQuestions,
                     'userAnswers' => $userAnswers,
@@ -1083,14 +1126,70 @@
 
     {{-- FOOTER --}}
     @php
-        // Get all questions from current section with their IDs and numbers
-        $currentQuestions = $allQuestions->map(function($q) use ($userAnswers) {
-            return [
+        // Expand table completion questions so every blank becomes its own navigable item
+        $currentQuestions = collect();
+        foreach ($allQuestions as $q) {
+            $questionNumber = (int) ($q->question_number ?? 0);
+            $questionType = $q->question_type ?? 'fill_blank';
+            $savedAnswerJson = $userAnswers[$q->id] ?? '';
+            $savedAnswerData = is_string($savedAnswerJson) ? json_decode($savedAnswerJson, true) : $savedAnswerJson;
+
+            if ($questionType === 'table_completion') {
+                $tableStructure = $q->table_structure ?? null;
+
+                if (!$tableStructure && !empty($q->question_data)) {
+                    $questionData = is_array($q->question_data)
+                        ? $q->question_data
+                        : json_decode($q->question_data, true);
+
+                    if (is_array($questionData) && isset($questionData['table_structure'])) {
+                        $tableStructure = $questionData['table_structure'];
+                    }
+                }
+
+                if (is_string($tableStructure)) {
+                    $tableStructure = json_decode($tableStructure, true);
+                }
+
+                $blankCount = 1;
+                if (is_array($tableStructure)) {
+                    if (!empty($tableStructure['answers']) && is_array($tableStructure['answers'])) {
+                        $blankCount = count($tableStructure['answers']);
+                    } elseif (!empty($tableStructure['rows']) && is_array($tableStructure['rows'])) {
+                        $blankCount = 0;
+                        foreach ($tableStructure['rows'] as $row) {
+                            foreach ((array) $row as $cellContent) {
+                                $blankCount += substr_count((string) $cellContent, '___');
+                            }
+                        }
+                        $blankCount = max(1, $blankCount);
+                    }
+                }
+
+                $savedAnswers = [];
+                if (is_array($savedAnswerData) && !empty($savedAnswerData['answers']) && is_array($savedAnswerData['answers'])) {
+                    $savedAnswers = $savedAnswerData['answers'];
+                }
+
+                for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
+                    $currentQuestions->push([
+                        'id' => $q->id,
+                        'number' => $questionNumber + $blankIndex,
+                        'answered' => !empty($savedAnswers[$blankIndex]['answer'] ?? null),
+                    ]);
+                }
+
+                continue;
+            }
+
+            $currentQuestions->push([
                 'id' => $q->id,
-                'number' => $q->question_number ?? 0,
+                'number' => $questionNumber,
                 'answered' => !empty($userAnswers[$q->id] ?? null)
-            ];
-        })->sortBy('number')->values();
+            ]);
+        }
+
+        $currentQuestions = $currentQuestions->sortBy('number')->values();
         
         $questionNumbers = $currentQuestions->pluck('number')->toArray();
         $firstQuestionNum = $currentQuestions->first()['number'] ?? 1;
@@ -1126,13 +1225,13 @@
     </footer>
 
     {{-- LISTENING AUDIO OVERLAY --}}
-    @if($skill === 'listening')
+    @if($skill === 'listening' && $attempt->test->isMockTest() && !empty($resolvedListeningAudioUrl))
         <div class="idp-audio-overlay" id="audioOverlay">
             <div class="idp-audio-icon">🎧</div>
             <p class="idp-audio-msg">{!! trans('update.ielts_audio_overlay_message') !!}</p>
             <button class="idp-play-btn" onclick="playAudio()">▶ {{ trans('update.ielts_play') }}</button>
         </div>
-        <audio id="audioPlayer" src="{{ $currentSection->audio_url ?? '' }}"></audio>
+        <audio id="audioPlayer" src="{{ $resolvedListeningAudioUrl }}"></audio>
     @endif
 
     {{-- SUBMIT MODAL --}}
@@ -1160,7 +1259,7 @@
         @endforeach
         
         // Save answer with error handling and logging
-        function saveAnswer(qId, value) {
+        function saveAnswer(qId, value, qNumOverride = null) {
             console.log('💾 Saving answer:', { questionId: qId, value: value });
             
             fetch(saveUrl, {
@@ -1183,7 +1282,7 @@
                 console.log('✅ Answer saved successfully:', d);
                 
                 // Mark question circle as answered if value is not empty
-                const qNum = questionIdToNumber[qId];
+                const qNum = qNumOverride || questionIdToNumber[qId];
                 if(qNum) {
                     const circle = document.querySelector(`.idp-q-circle[data-q-num="${qNum}"]`);
                     if(circle) {
@@ -1225,7 +1324,7 @@
         
         function goToQuestion(num, index) {
             // Scroll to question in the content area
-            const questionEl = document.querySelector(`.idp-question-item[data-q-num="${num}"], tr[data-q-num="${num}"], .idp-q-item[data-q-num="${num}"]`);
+            const questionEl = document.querySelector(`.idp-question-item[data-q-num="${num}"], tr[data-q-num="${num}"], .idp-q-item[data-q-num="${num}"], .tc-cell-input[data-q-num="${num}"], .tc-input-wrapper[data-q-num="${num}"]`);
             if(questionEl) {
                 questionEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }

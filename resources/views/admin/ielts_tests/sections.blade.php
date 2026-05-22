@@ -26,6 +26,10 @@
                         <i class="fas fa-arrow-left mr-2"></i>
                         Back to Test
                     </a>
+                    <a href="{{ route('admin.ielts_tests.attempts', ['test_id' => $test->id]) }}" class="btn btn-info ml-2">
+                        <i class="fas fa-eye mr-2"></i>
+                        View Submissions
+                    </a>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addSectionModal">
                         <i class="fas fa-plus mr-2"></i>
                         Add Section

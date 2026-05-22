@@ -124,11 +124,11 @@
                                 </div>
                             @endif
 
-                            @if($section->skill === 'listening' && $group->audio_file)
+                            @if($section->skill === 'listening' && $section->audio_file)
                                 <div class="mb-3">
                                     <strong><i class="fas fa-volume-up mr-1"></i>Audio File:</strong>
                                     <audio controls class="w-100 mt-2">
-                                        <source src="{{ $group->audio_file }}" type="audio/mpeg">
+                                        <source src="{{ $section->audio_file }}" type="audio/mpeg">
                                         Your browser does not support the audio element.
                                     </audio>
                                 </div>

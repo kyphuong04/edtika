@@ -214,7 +214,7 @@
         <div style="min-width: 0;">
 
             {{-- ===== Profile Display Card â€” Wireframe image 3 ===== --}}
-            <div class="upp-card">
+            <div class="upp-card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <h3 class="font-18 font-weight-bold text-dark mb-24">{{ trans('update.my_profile_and_password') }}</h3>
 
                 <div class="d-flex gap-32 flex-wrap">
@@ -223,7 +223,7 @@
                         <div class="upp-avatar-wrap">
                             <img src="{{ $user->getAvatar() }}" alt="{{ $user->full_name }}" id="uppAvatarImg">
                         </div>
-                        <button type="button" class="upp-edit-btn" data-toggle="modal" data-target="#editProfileModal">
+                        <button type="button" class="upp-edit-btn" data-toggle="modal" data-target="#editProfileModal" style="background-color: #511D99">
                             {{ trans('public.edit') }}
                         </button>
                     </div>
@@ -275,7 +275,7 @@
 
 
             {{-- Courses Grid --}}
-            <div class="bg-white p-32 rounded-24 border-gray-200 mt-32" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div class="bg-white p-20 rounded-24 border-gray-200 mt-24" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 @php
                     $allCourseCards = collect();
                     foreach ($purchasedCourses as $c) {
@@ -298,8 +298,8 @@
                                     ? date('d/m/Y', $c->getExpiredAccessDays($sale->created_at))
                                     : null;
                             @endphp
-                            <div class="col-6">
-                                <div style="border:1.5px solid #d1d5db;border-radius:20px;padding:24px;background:#f3f4f6;height:100%;display:flex;flex-direction:column;">
+                            <div class="col-6 mb-24">
+                                <div style="border:1.5px solid #d1d5db;border-radius:20px;padding:24px;background:#ffff;height:100%;display:flex;flex-direction:column;">
                                     {{-- Title --}}
                                     <p class="font-14 font-weight-bold text-dark text-center mb-16" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">{{ $c->title }}</p>
 
@@ -325,12 +325,12 @@
                                         <div style="flex-shrink:0;">
                                             @if($isPurchased)
                                                 <a href="{{ $c->getLearningPageUrl() }}" target="_blank"
-                                                   style="border:1.5px solid #374151;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;color:#111827;text-decoration:none;white-space:nowrap;display:inline-block;">
+                                                   style="border:1.5px solid #511D99;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;color:#ffff; background-color: #511D99;text-decoration:none;white-space:nowrap;display:inline-block;">
                                                     Continue &rarr;
                                                 </a>
                                             @else
                                                 <a href="/webinars/{{ $c->slug }}" target="_blank"
-                                                   style="border:1.5px solid #374151;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;color:#111827;text-decoration:none;white-space:nowrap;display:inline-block;">
+                                                   style="border:1.5px solid #511D99;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;color:#ffff; background-color: #511D99;text-decoration:none;white-space:nowrap;display:inline-block;">
                                                     Mua ngay &rarr;
                                                 </a>
                                             @endif
@@ -355,7 +355,7 @@
         <div style="min-width: 0;">
 
             {{-- Continue Learning --}}
-            <div class="bg-white p-24 rounded-24 border-gray-200">
+            <div class="bg-white p-24 rounded-24 border-gray-200" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <h4 class="font-16 font-weight-bold text-dark mb-16 text-center">{{ trans('update.my_courses') }}</h4>
                 @if(!empty($continueLearningCourse))
                     @php
@@ -374,7 +374,7 @@
                                 <p class="font-13 text-dark mb-0">Số đề luyện tập: <strong>{{ $clQuizzes }}</strong></p>
                             </div>
                             <a href="{{ $continueLearningCourse->getLearningPageUrl() }}" target="_blank"
-                               style="border:1.5px solid #374151;border-radius:20px;padding:7px 18px;font-size:13px;font-weight:600;color:#111827;text-decoration:none;white-space:nowrap;">
+                               style="border:1.5px solid #511D99;border-radius:20px;padding:7px 18px;font-size:13px;font-weight:600;color:#ffff; background-color: #511D99;text-decoration:none;white-space:nowrap;">
                                 Continue &rarr;
                             </a>
                         </div>
@@ -394,7 +394,7 @@
 
             {{-- Course Notes --}}
             @if(!empty(getFeaturesSettings('course_notes_status')))
-            <div class="bg-white p-24 rounded-24 border-gray-200 mt-32">
+            <div class="bg-white p-24 rounded-24 border-gray-200 mt-24" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <div class="d-flex align-items-center justify-content-center mb-16" style="position:relative;">
                     <h4 class="font-16 font-weight-bold text-dark mb-0">{{ trans('update.course_notes') }}</h4>
                     @if(!empty($recentNotes) && $recentNotes->count() > 3)
@@ -450,7 +450,7 @@
             </script>
 
             {{-- Login History --}}
-            <div class="bg-white p-24 rounded-24 border-gray-200 mt-32">
+            <div class="bg-white p-24 rounded-24 border-gray-200 mt-24" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <h4 class="font-16 font-weight-bold text-dark mb-16 text-center">{{ trans('update.login_history') }}</h4>
                 @if(!empty($userLoginHistories) && $userLoginHistories->isNotEmpty())
                     <div class="d-flex flex-column gap-16" style="max-width: 380px; margin: 0 auto;">
@@ -477,7 +477,8 @@
                                         <a href="/panel/users/login-history/{{ $session->id }}/end-session"
                                            data-msg="{{ trans('update.this_device_will_be_logout_from_your_account') }}"
                                            data-confirm="{{ trans('update.end_session') }}"
-                                           class="delete-action device-delete-btn">
+                                           class="delete-action device-delete-btn"
+                                           style="background-color: #511D99">
                                             {{ trans('public.delete') }}
                                         </a>
                                     @else
@@ -487,7 +488,7 @@
                             </div>
                         @endforeach
                         @if($userLoginHistories->count() > 2)
-                            <a href="/panel/setting/step/login_history" class="font-13 text-primary text-center mt-8 d-block">
+                            <a href="/panel/setting/step/login_history" class="font-13 text-center mt-8 d-block" style="color: #511D99;">
                                 {{ trans('panel.view_all') }} ({{ $userLoginHistories->count() }})
                             </a>
                         @endif
@@ -507,7 +508,6 @@
 @endsection
 
 @push('panel_modals')
-{{-- ===== EDIT PROFILE MODAL â€” Wireframe image 4 ===== --}}
 <div class="modal fade up-modal" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -538,7 +538,7 @@
                                 <input type="file" name="avatar" id="profileImage" class="d-none" accept="image/*">
                                 {{-- hidden language to preserve value --}}
                                 <input type="hidden" name="language" value="{{ $user->language ?? '' }}">
-                                <button type="submit" class="up-modal-update-btn">
+                                <button type="submit" class="up-modal-update-btn" style="background-color: #511D99;">
                                     {{ trans('update.update') }}
                                 </button>
                             </div>
@@ -595,6 +595,37 @@
                                 <div class="up-modal-bio-col">
                                     <p class="up-modal-field-label">{{ trans('panel.bio') }}</p>
                                     <textarea name="bio" rows="4" class="form-control form-control-sm">{{ $user->bio }}</textarea>
+                                </div>
+
+                                <div class="up-modal-bio-col" style="margin-top: 4px;">
+                                    <div class="rounded-16 border p-16" style="border-color:#e5e7eb;background:#fafafa;">
+                                        <div class="d-flex align-items-center justify-content-between mb-12">
+                                            <div>
+                                                <p class="up-modal-field-label mb-2">IELTS setup</p>
+                                                <p class="font-12 text-gray-500 mb-0">Set your mock test date and target band here.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="row gx-16">
+                                            <div class="col-12 col-md-6 mb-12 mb-md-0">
+                                                <p class="up-modal-field-label">D-date</p>
+                                                <input type="date" name="mock_test_date"
+                                                       value="{{ old('mock_test_date', $user->mock_test_date ?? '') }}"
+                                                       min="{{ now()->addDay()->format('Y-m-d') }}"
+                                                       class="form-control form-control-sm @error('mock_test_date') is-invalid @enderror">
+                                                @error('mock_test_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <p class="up-modal-field-label">Aim band</p>
+                                                <input type="number" name="aim_band"
+                                                       value="{{ old('aim_band', $user->aim_band ?? '') }}"
+                                                       min="0" max="9" step="0.5"
+                                                       placeholder="e.g. 7.0"
+                                                       class="form-control form-control-sm @error('aim_band') is-invalid @enderror">
+                                                @error('aim_band')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -665,7 +696,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-block mt-4"
-                            style="background:#4b5563;color:#fff;border-radius:10px;font-weight:600;padding:10px;">
+                            style="background:#511D99;color:#fff;border-radius:10px;font-weight:600;padding:10px;">
                         {{ trans('update.change_password') }}
                     </button>
                 </form>

@@ -355,6 +355,30 @@ class BundleController extends Controller
         return view('design_1.web.bundles.show.index', $data);
     }
 
+    /**
+     * Return courses partial for a bundle (AJAX inline load)
+     */
+    public function coursesInline(Request $request, $slug)
+    {
+        $bundle = Bundle::where('slug', $slug)
+            ->with(['bundleWebinars' => function ($query) {
+                $query->with(['webinar' => function ($query) {
+                    $query->where('status', Webinar::$active);
+                }]);
+            }])
+            ->where('status', 'active')
+            ->first();
+
+        if (empty($bundle)) {
+            abort(404);
+        }
+
+        // Render only the courses tab partial
+        return view('design_1.web.bundles.show.tabs.courses', [
+            'bundle' => $bundle
+        ])->render();
+    }
+
     public function free(Request $request, $slug)
     {
         if (auth()->check()) {

@@ -6,7 +6,7 @@
     <style>
         /* ── Two-column layout ──────────────────────────────────── */
         .mcp-layout { display: flex; flex-direction: row; direction: ltr; gap: 24px; align-items: flex-start; }
-        .mcp-layout__aside { order: 1; width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+        .mcp-layout__aside { order: 1; width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; overflow: visible; }
         .mcp-layout__main { order: 0; flex: 1; min-width: 0; direction: ltr; }
         @media (max-width: 1200px) { .mcp-layout__aside { width: 260px; } }
         @media (max-width: 991px) { .mcp-layout { flex-direction: column; } .mcp-layout__aside { width: 100%; order: 1; } }
@@ -73,11 +73,12 @@
         .cd-user-card__avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; flex-shrink: 0; }
         .cd-user-card__name { font-size: 15px; font-weight: 700; }
         .cd-user-card__band { font-size: 12px; color: #666; margin-top: 3px; }
-        .cd-user-nav { overflow: visible !important; cursor: pointer; flex-wrap: nowrap; padding: 14px 18px; }
+        .cd-user-nav { overflow: visible !important; cursor: pointer; flex-wrap: nowrap; padding: 14px 18px; z-index: 20; }
+        .cd-user-nav:hover { z-index: 40; }
         .cd-user-nav .cd-user-nav__dropdown {
             display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
             min-width: 240px; z-index: 9999; border-radius: 12px; background: #fff;
-            border: 1px solid #eee; box-shadow: 0 8px 28px rgba(0,0,0,.13);
+            box-shadow: 0 8px 28px rgba(0,0,0,.13);
             max-height: 80vh; overflow-y: auto;
         }
         .cd-user-nav:hover .cd-user-nav__dropdown { display: block; }
@@ -90,7 +91,7 @@
         .cd-word-card__example { font-size: 13px; color: #333; margin-top: 10px; line-height: 1.6; }
 
         /* ── Mentor chat ────────────────────────────────────────── */
-        .cd-chat-card { padding: 0 !important; overflow: hidden; }
+        .cd-chat-card { padding: 0 !important; overflow: hidden; position: relative; z-index: 1; }
         .cd-chat__header { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
         .cd-chat__header-title { font-size: 13px; font-weight: 700; color: #333; display:flex; align-items:center; gap:5px; }
         .cd-chat__status { font-size: 11px; }
@@ -192,20 +193,6 @@
             <x-iconsax-lin-arrow-down class="icons text-gray-400" width="16px" height="16px" style="flex-shrink:0;margin-left:auto;"/>
 
             <div class="cd-user-nav__dropdown">
-                <div class="d-flex align-items-center rounded-10 bg-gray p-12" style="margin:8px;">
-                    <div class="position-relative" style="flex-shrink:0;">
-                        <img src="{{ $authUser->getAvatar(38) }}" class="img-cover rounded-circle" style="width:38px;height:38px;" alt="{{ $authUser->full_name }}">
-                        @if($authUser->verified)
-                            <div class="dropdown__user-avatar__badge d-flex-center rounded-circle size-16 p-2 bg-primary">
-                                <x-tick-icon class="icons text-white"/>
-                            </div>
-                        @endif
-                    </div>
-                    <div class="ml-8">
-                        <div class="font-14 font-weight-bold text-dark">{{ $authUser->full_name }}</div>
-                        <span class="text-gray-500 font-12">{{ $authUser->role->caption }}</span>
-                    </div>
-                </div>
                 <ul style="list-style:none;padding:0;margin:8px 0;">
                     <li class="navbar-auth-user__dropdown-item">
                         <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl('/') : '/panel' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent text-dark text-decoration-none">
@@ -317,7 +304,7 @@
             @endif
             <div class="cd-chat__footer">
                 <textarea class="cd-chat__input" id="mcp-chat-input" rows="1" placeholder="Nhập tin nhắn..."></textarea>
-                <button class="cd-chat__send-btn" id="mcp-chat-send" title="Gửi">
+                <button class="cd-chat__send-btn" id="mcp-chat-send" title="Gửi" style="background-color: #511D99">
                     <svg width="14" height="14" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
                 </button>
             </div>

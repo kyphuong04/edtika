@@ -150,6 +150,46 @@ body {
 .rv-match-circle.correct-ref    { background: #22c55e; color: #fff; }
 .rv-match-circle.empty          { border: 1.5px solid #d1d5db; background: #f9fafb; }
 
+/* ── TABLE COMPLETION STYLING ────────────────── */
+.idp-table-completion-styled {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    table-layout: auto;
+    margin: 12px 0;
+}
+.idp-table-completion-styled thead {
+    background: #e8e8e8;
+}
+.idp-table-completion-styled th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    border: 1px solid #c0c0c0;
+    color: #000000;
+    font-size: 13px;
+    word-wrap: break-word;
+    max-width: 200px;
+}
+.idp-table-completion-styled td {
+    padding: 10px 12px;
+    border: 1px solid #c0c0c0;
+    vertical-align: top;
+    line-height: 1.6;
+    font-size: 13px;
+    color: #333;
+    word-wrap: break-word;
+    max-width: 250px;
+}
+.idp-table-completion-styled td .cell-text {
+    display: inline;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
 /* ── SHARED FOOTER ───────────────────────────── */
 .rv-footer {
     height: 80px; background: transparent;
@@ -1491,6 +1531,38 @@ function togglePrompt(idx) {
                             $isCorr      = $hasAns && $answer->is_correct;
                             $studentAns  = $hasAns ? trim($answer->answer_text) : null;
                             $correctAns  = $question->correct_answer ?? null;
+                            $tableHeaders = [];
+                            $tableRows = [];
+                            $tableAnswersMap = [];
+                            $savedMap = [];
+
+                            if ($question->question_type === 'table_completion') {
+                                $tableStructure = $question->table_structure ?? null;
+
+                                if (is_string($tableStructure)) {
+                                    $tableStructure = json_decode($tableStructure, true);
+                                }
+
+                                $tableHeaders = is_array($tableStructure) ? ($tableStructure['headers'] ?? []) : [];
+                                $tableRows = is_array($tableStructure) ? ($tableStructure['rows'] ?? []) : [];
+
+                                $savedAnswerData = $answer ? ($answer->answer_options ?? $answer->answer_text ?? null) : null;
+                                if (is_string($savedAnswerData)) {
+                                    $savedAnswerData = json_decode($savedAnswerData, true);
+                                }
+
+                                if (is_array($savedAnswerData) && !empty($savedAnswerData['answers']) && is_array($savedAnswerData['answers'])) {
+                                    foreach ($savedAnswerData['answers'] as $savedAnswerItem) {
+                                        if (isset($savedAnswerItem['row'], $savedAnswerItem['col'])) {
+                                            $savedMap[$savedAnswerItem['row'] . '-' . $savedAnswerItem['col']] = $savedAnswerItem['answer'] ?? '';
+                                        }
+                                    }
+                                }
+
+                                foreach ($question->table_completion_answers_array as $answerItem) {
+                                    $tableAnswersMap[$answerItem['row'] . '-' . $answerItem['col']] = $answerItem['answers'] ?? [];
+                                }
+                            }
 
                             $options = [];
                             if (!empty($question->answer_options)) {
@@ -1517,7 +1589,77 @@ function togglePrompt(idx) {
                                 <div class="rv-question-text">{!! $question->question_text !!}</div>
                             @endif
 
-                            @if($isMCQ && count($options))
+                            @if($question->question_type === 'table_completion')
+                                @if(!empty($tableHeaders) || !empty($tableRows))
+                                    <div class="table-completion-container">
+                                        <table class="idp-table-completion-styled">
+                                            @if(!empty($tableHeaders))
+                                                <thead>
+                                                    <tr>
+                                                        @foreach($tableHeaders as $header)
+                                                            <th>{!! nl2br(e($header)) !!}</th>
+                                                        @endforeach
+                                                    </tr>
+                                                </thead>
+                                            @endif
+                                            <tbody>
+                                                @foreach($tableRows as $rowIndex => $row)
+                                                    <tr>
+                                                        @foreach($row as $colIndex => $cellContent)
+                                                            @php
+                                                                $cellText = is_string($cellContent) ? $cellContent : (string) $cellContent;
+                                                                $cellKey = $rowIndex . '-' . $colIndex;
+                                                                $savedValue = $savedMap[$cellKey] ?? '';
+                                                                $cellAnswers = $tableAnswersMap[$cellKey] ?? [];
+                                                                $normalizedStudent = strtolower(trim((string) $savedValue));
+                                                                $isMatch = false;
+                                                                foreach ($cellAnswers as $candidateAnswer) {
+                                                                    if ($normalizedStudent !== '' && $normalizedStudent === strtolower(trim((string) $candidateAnswer))) {
+                                                                        $isMatch = true;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                                $correctLabel = !empty($cellAnswers) ? implode('/', $cellAnswers) : '';
+                                                                $parts = preg_split('/(___)/', $cellText, -1, PREG_SPLIT_DELIM_CAPTURE);
+                                                                $hasBlank = is_array($parts) && count($parts) > 1;
+                                                            @endphp
+                                                            <td>
+                                                                @if($hasBlank)
+                                                                    @foreach($parts as $part)
+                                                                        @if($part === '___')
+                                                                            <div class="rv-fill-row">
+                                                                                <span class="rv-fill-label">{{ $isOwner ? 'Your Answer' : "Student's Answer" }}</span>
+                                                                                @if($savedValue !== '')
+                                                                                    <div class="rv-fill-box {{ $isMatch ? 'correct' : 'wrong' }}">
+                                                                                        {{ $savedValue }} {!! $isMatch ? '&#10003;' : '&#10007;' !!}
+                                                                                    </div>
+                                                                                @else
+                                                                                    <div class="rv-fill-box no-answer">(no answer provided)</div>
+                                                                                @endif
+                                                                                @if($correctLabel !== '')
+                                                                                    <div class="rv-fill-correct-ref">{{ $correctLabel }}</div>
+                                                                                @endif
+                                                                            </div>
+                                                                        @elseif(trim($part) !== '')
+                                                                            <span class="cell-text">{!! nl2br(e($part)) !!}</span>
+                                                                        @endif
+                                                                    @endforeach
+                                                                @else
+                                                                    {!! nl2br(e($cellText)) !!}
+                                                                @endif
+                                                            </td>
+                                                        @endforeach
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="alert alert-warning">
+                                        <strong>Table structure not found.</strong> Please contact your instructor.
+                                    </div>
+                                @endif
+                            @elseif($isMCQ && count($options))
                                 <div class="rv-options">
                                     @foreach($options as $optIdx => $opt)
                                         @php
@@ -1637,11 +1779,16 @@ function togglePrompt(idx) {
             @endforeach
         </div>
     </div>
-    {{-- Right half: Navigation buttons --}}
+    {{-- Right half: Navigation buttons + question counter --}}
     <div class="rv-footer-half">
-        <div class="rv-nav-buttons">
-            <button class="rv-nav-btn" id="rvBtnPrev" onclick="prevQuestion()" disabled>&larr; Previous question</button>
-            <button class="rv-nav-btn" id="rvBtnNext" onclick="nextQuestion()">Next question &rarr;</button>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="font-size: 13px; color: #666; font-weight: 500; white-space: nowrap;">
+                Question <span id="rvQCount">1</span> of <span id="rvQTotal">{{ count($allQuestions) }}</span>
+            </div>
+            <div class="rv-nav-buttons">
+                <button class="rv-nav-btn" id="rvBtnPrev" onclick="prevQuestion()" disabled>&larr; Previous question</button>
+                <button class="rv-nav-btn" id="rvBtnNext" onclick="nextQuestion()">Next question &rarr;</button>
+            </div>
         </div>
     </div>
 </footer>
@@ -1672,6 +1819,10 @@ function togglePrompt(idx) {
         document.querySelectorAll('.rv-qn').forEach((dot, idx) => {
             dot.classList.toggle('rv-qn-current', idx === currentQIdx);
         });
+
+        // Update question counter
+        const qCountEl = document.getElementById('rvQCount');
+        if (qCountEl) qCountEl.textContent = (currentQIdx + 1);
 
         document.getElementById('rvBtnPrev').disabled = (currentQIdx === 0);
         const nextBtn = document.getElementById('rvBtnNext');

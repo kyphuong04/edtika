@@ -499,6 +499,13 @@
                 </div>
             </div>
 
+            <div class="form-row full">
+                <div class="form-group">
+                    <label class="input-label">Answer Help</label>
+                    <textarea class="form-control question-explanation" rows="3" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                </div>
+            </div>
+
             {{-- Answer Options (Dynamic based on type) --}}
             <div class="question-type-fields" data-type="multiple_choice,true_false_ng,multiple_select">
                 <label class="input-label d-block mb-10">Answer Options</label>
@@ -545,6 +552,13 @@
                 <small class="text-muted">Enter multiple variations separated by line breaks</small>
             </div>
 
+            <div class="question-type-fields" data-type="note_completion">
+                <label class="input-label d-block">Correct Answers *</label>
+                <div class="note-completion-summary text-muted mb-8">Type the note text with <code>___</code> for each blank.</div>
+                <div class="note-completion-answers"></div>
+                <small class="text-muted d-block mt-6">One input is created for each blank in the question text.</small>
+            </div>
+
             {{-- Essay / Speaking Answer --}}
             <div class="question-type-fields" data-type="essay,speaking_prompt">
                 <label class="input-label">Word Limit (if applicable)</label>
@@ -581,6 +595,21 @@ let testData = {
 // Initialize sections on page load
 document.addEventListener('DOMContentLoaded', function() {
     setupFormValidation();
+    document.addEventListener('input', function(event) {
+        const target = event.target;
+        if (!target || !target.classList || !target.classList.contains('question-text')) {
+            return;
+        }
+
+        const form = target.closest('.add-question-form');
+        if (!form) {
+            return;
+        }
+
+        if ((form.querySelector('.question-type-select')?.value || '') === 'note_completion') {
+            syncNoteCompletionInputs(form);
+        }
+    });
 });
 
 function updateTestTypeRequirements() {
@@ -664,7 +693,91 @@ function changeQuestionType(selectElement) {
                 field.classList.add('active');
             }
         });
+
+        if (type === 'note_completion') {
+            syncNoteCompletionInputs(form);
+        }
     }
+}
+
+function countNoteCompletionBlanks(text) {
+    const matches = String(text || '').match(/_{3,}/g);
+    return matches ? matches.length : 0;
+}
+
+function normalizeCompletionAnswers(rawAnswer) {
+    if (Array.isArray(rawAnswer)) {
+        return rawAnswer.map(value => String(value).trim()).filter(Boolean);
+    }
+
+    if (rawAnswer && typeof rawAnswer === 'object' && Array.isArray(rawAnswer.answers)) {
+        return rawAnswer.answers.map(value => String(value).trim()).filter(Boolean);
+    }
+
+    if (typeof rawAnswer === 'string') {
+        const text = rawAnswer.trim();
+        if (!text) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                return parsed.map(value => String(value).trim()).filter(Boolean);
+            }
+        } catch (error) {
+            // fall back to plain text handling
+        }
+
+        return text.includes('\n')
+            ? text.split(/\r?\n/).map(value => value.trim()).filter(Boolean)
+            : [text];
+    }
+
+    if (rawAnswer === null || rawAnswer === undefined) {
+        return [];
+    }
+
+    const text = String(rawAnswer).trim();
+    return text ? [text] : [];
+}
+
+function renderNoteCompletionInputs(form, values = []) {
+    const textInput = form.querySelector('.question-text');
+    const summary = form.querySelector('.note-completion-summary');
+    const container = form.querySelector('.note-completion-answers');
+
+    if (!summary || !container) {
+        return;
+    }
+
+    const blankCount = countNoteCompletionBlanks(textInput ? textInput.value : '');
+    summary.innerHTML = blankCount > 0
+        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one answer per blank in order.`
+        : 'Type the note text with <code>___</code> for each blank.';
+
+    const normalizedValues = Array.isArray(values) ? values : normalizeCompletionAnswers(values);
+    if (blankCount === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const answerInputs = [];
+    for (let index = 0; index < blankCount; index++) {
+        const value = normalizedValues[index] || '';
+        answerInputs.push(`
+            <div class="form-group mb-8">
+                <label class="input-label">Blank ${index + 1}</label>
+                <input type="text" class="form-control note-completion-answer-input" data-blank-index="${index}" placeholder="Answer for blank ${index + 1}" value="${escapeHtml(value)}">
+            </div>
+        `);
+    }
+
+    container.innerHTML = answerInputs.join('');
+}
+
+function syncNoteCompletionInputs(form, values = []) {
+    renderNoteCompletionInputs(form, values);
 }
 
 function addQuestion(button) {
@@ -676,6 +789,7 @@ function addQuestion(button) {
     const questionNumber = form.querySelector('.question-number').value;
     const questionType = form.querySelector('.question-type-select').value;
     const questionText = form.querySelector('.question-text').value;
+    const answerHelp = form.querySelector('.question-explanation')?.value.trim();
 
     if (!questionNumber || !questionType || !questionText) {
         alert('Please fill in all required fields');
@@ -699,12 +813,29 @@ function addQuestion(button) {
             return;
         }
         correctAnswer = correctRadio.value;
-    } else if (['fill_blank', 'sentence_completion', 'note_completion'].includes(questionType)) {
+    } else if (['fill_blank', 'sentence_completion'].includes(questionType)) {
         correctAnswer = form.querySelector('.correct-answer-text').value;
         if (!correctAnswer) {
             alert('Please enter correct answer(s)');
             return;
         }
+    } else if (questionType === 'note_completion') {
+        const noteAnswers = Array.from(form.querySelectorAll('.note-completion-answer-input'))
+            .map(input => input.value.trim())
+            .filter(Boolean);
+        const blankCount = countNoteCompletionBlanks(questionText);
+
+        if (blankCount === 0) {
+            alert('Please include at least one blank using ___.');
+            return;
+        }
+
+        if (noteAnswers.length !== blankCount) {
+            alert(`Please enter ${blankCount} answer${blankCount > 1 ? 's' : ''} for the ${blankCount} blank${blankCount > 1 ? 's' : ''}.`);
+            return;
+        }
+
+        correctAnswer = noteAnswers;
     }
 
     // Create question object
@@ -713,6 +844,7 @@ function addQuestion(button) {
         number: questionNumber,
         type: questionType,
         text: questionText,
+        explanation: answerHelp || null,
         options: answerOptions,
         correctAnswer: correctAnswer,
         wordLimit: form.querySelector('.word-limit')?.value || null
@@ -728,6 +860,8 @@ function addQuestion(button) {
     form.querySelector('.question-number').value = '';
     form.querySelector('.question-type-select').value = '';
     form.querySelector('.question-text').value = '';
+    const explanationInput = form.querySelector('.question-explanation');
+    if (explanationInput) explanationInput.value = '';
     
     // Clear all answer options
     form.querySelectorAll('.answer-option').forEach(input => input.value = '');
@@ -737,6 +871,9 @@ function addQuestion(button) {
     // Clear correct answer text (for fill blanks, etc)
     const correctAnswerText = form.querySelector('.correct-answer-text');
     if (correctAnswerText) correctAnswerText.value = '';
+
+    const noteCompletionContainer = form.querySelector('.note-completion-answers');
+    if (noteCompletionContainer) noteCompletionContainer.innerHTML = '';
     
     // Clear word limit
     const wordLimit = form.querySelector('.word-limit');
@@ -763,6 +900,8 @@ function displayQuestion(sectionContainer, question) {
             <small class="text-muted d-block mt-4" style="margin-top: 4px;">
                 ${question.text.substring(0, 50)}${question.text.length > 50 ? '...' : ''}
             </small>
+            ${question.explanation ? `<div style="margin-top:6px;font-size:12px;color:#0f766e;font-weight:600;">Answer Help added</div>` : ''}
+            ${question.type === 'note_completion' ? `<div style="margin-top:6px;font-size:12px;color:#4c51bf;font-weight:600;">${Array.isArray(question.correctAnswer) ? question.correctAnswer.length : normalizeCompletionAnswers(question.correctAnswer).length} blanks</div>` : ''}
         </div>
         <div class="question-actions">
             <button type="button" class="btn btn-sm btn-outline-warning" onclick="editQuestion(this)">

@@ -1567,7 +1567,21 @@ body.idp-test-mode {
     </div>
     
     {{-- AUDIO PLAYER FOR LISTENING --}}
-    @if($currentSection->skill === 'listening' && $currentSection->hasAudio())
+    @php
+        $firstQ = $questions->first() ?? null;
+        $currentPartId = $firstQ->part_id ?? null;
+        $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+        $currentPartAudioUrl = null;
+        if (!empty($currentPart->audio_file)) {
+            $audioFile = $currentPart->audio_file;
+            if (str_starts_with($audioFile, '/') || str_starts_with($audioFile, 'http')) {
+                $currentPartAudioUrl = $audioFile;
+            } else {
+                $currentPartAudioUrl = \Storage::disk('public')->url($audioFile);
+            }
+        }
+    @endphp
+    @if($currentSection->skill === 'listening' && ($currentSection->hasAudio() || $currentPartAudioUrl))
     <div class="idp-audio-player">
         <div class="idp-audio-icon">
             <i class="fas fa-headphones"></i>
@@ -1578,9 +1592,9 @@ body.idp-test-mode {
                    controls 
                    @if($test->isMockTest()) controlsList="nodownload noplaybackrate" @endif
                    @ended="handleAudioEnd()">
-                <source src="{{ $currentSection->audio_url }}" type="audio/mpeg">
-                <source src="{{ $currentSection->audio_url }}" type="audio/wav">
-                <source src="{{ $currentSection->audio_url }}" type="audio/ogg">
+                <source src="{{ $currentPartAudioUrl ?? $currentSection->audio_url }}" type="audio/mpeg">
+                <source src="{{ $currentPartAudioUrl ?? $currentSection->audio_url }}" type="audio/wav">
+                <source src="{{ $currentPartAudioUrl ?? $currentSection->audio_url }}" type="audio/ogg">
                 Your browser does not support the audio element.
             </audio>
         </div>

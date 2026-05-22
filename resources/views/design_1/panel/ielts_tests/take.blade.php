@@ -9,11 +9,12 @@
     .timer-box {
         position: sticky;
         top: 80px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: #ffffff;
+        color: #511D99;
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
         z-index: 100;
     }
     .timer-display {
@@ -23,7 +24,7 @@
         font-family: 'Courier New', monospace;
     }
     .timer-warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: #fff5f8;
         animation: pulse 1s infinite;
     }
     @keyframes pulse {
@@ -63,15 +64,18 @@
         background: white;
         border-radius: 12px;
         padding: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
         margin-bottom: 20px;
     }
     .section-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: #ffffff;
+        color: #1f2937;
         padding: 25px;
         border-radius: 12px;
         margin-bottom: 30px;
+        border: 1px solid rgba(81, 29, 153, 0.10);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     .progress-bar-custom {
         height: 8px;
@@ -82,7 +86,7 @@
     }
     .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #10b981, #3b82f6);
+        background: linear-gradient(90deg, #511D99, #7c4dff);
         transition: width 0.3s ease;
     }
     .save-indicator {
@@ -104,18 +108,21 @@
         transform: translateY(0);
     }
     .audio-player {
-        background: #f3f4f6;
+        background: #ffffff;
         padding: 20px;
         border-radius: 12px;
         margin-bottom: 20px;
+        border: 1px solid rgba(81, 29, 153, 0.10);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     
     /* Writing Section Styles */
     .writing-section-header {
-        background: #e8e8e8;
+        background: #ffffff;
         padding: 16px 24px;
         border-radius: 8px 8px 0 0;
         margin: -30px -30px 0 -30px;
+        border-bottom: 1px solid rgba(81, 29, 153, 0.10);
     }
     .writing-section-header h3 {
         font-size: 18px;
@@ -135,8 +142,8 @@
         margin-top: 24px;
     }
     .writing-question-box {
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 8px;
         padding: 24px;
         font-size: 15px;
@@ -162,7 +169,7 @@
     }
     .writing-answer-box {
         background: white;
-        border: 2px solid #d1d5db;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 8px;
         padding: 24px;
         position: sticky;
@@ -182,8 +189,8 @@
     }
     .writing-answer-box textarea:focus {
         outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: #511D99;
+        box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.10);
     }
     .word-counter {
         text-align: right;
@@ -217,24 +224,45 @@
             </div>
 
             {{-- Audio Player (for Listening) --}}
-            @if($currentSection->skill === 'listening' && $currentSection->audio_file)
+            @php
+                $firstQ = $questions->first() ?? null;
+                $currentPartId = $firstQ->part_id ?? null;
+                $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+                $currentPartAudioUrl = null;
+                if (!empty($currentPart->audio_file)) {
+                    $audioFile = $currentPart->audio_file;
+                    if (str_starts_with($audioFile, '/') || str_starts_with($audioFile, 'http')) {
+                        $currentPartAudioUrl = $audioFile;
+                    } else {
+                        $currentPartAudioUrl = \Storage::disk('public')->url($audioFile);
+                    }
+                }
+                $sectionAudioUrl = $currentSection->audio_url ?? null;
+            @endphp
+            @if($currentSection->skill === 'listening' && ($currentPartAudioUrl || $sectionAudioUrl))
             <div class="audio-player">
                 <h4 class="mb-3">
                     <i class="fas fa-headphones mr-2"></i>
                     {{ trans('update.ielts_audio_section') }}
                 </h4>
-                <audio id="listeningAudio" controls class="w-100" 
-                       @if($test->isMockTest()) 
-                       controlsList="nodownload noplaybackrate"
-                       @endif>
-                    <source src="{{ $currentSection->audio_file }}" type="audio/mpeg">
-                    {{ trans('update.ielts_browser_no_audio_support') }}
+                @if($test->isPracticeTest())
+                    <audio id="listeningAudio" controls class="w-100">
+                        <source src="{{ $currentPartAudioUrl ?? $sectionAudioUrl ?? '' }}" type="audio/mpeg">
+                        {{ trans('update.ielts_browser_no_audio_support') }}
+                    </audio>
+                    <p class="text-muted font-12 mt-2 mb-0">Practice mode: you can seek and replay the audio.</p>
+                @else
+                    {{-- Mock tests: do not display a seekable audio bar; audio will be controlled by exam flow/overlay --}}
+                    <audio id="listeningAudio" preload="none" style="display:none;">
+                        <source src="{{ $currentPartAudioUrl ?? $sectionAudioUrl ?? '' }}" type="audio/mpeg">
+                    </audio>
+                @endif
                 </audio>
                 @if($test->isMockTest())
-                <p class="text-warning font-12 mt-2 mb-0">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                    {{ trans('update.ielts_mock_test_audio_warning') }}
-                </p>
+                    <p class="text-warning font-12 mt-2 mb-0">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        {{ trans('update.ielts_mock_test_audio_warning') }}
+                    </p>
                 @endif
             </div>
             @endif

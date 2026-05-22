@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bundle;
 use App\Models\BundleFilterOption;
 use App\Models\Category;
+use App\Models\ContentDeleteRequest;
 use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Tag;
@@ -818,16 +819,30 @@ class BundlesController extends Controller
             })
             ->firstOrFail();
 
-        \App\Models\BundleWebinar::where('bundle_id', $bundle->id)
-            ->where('webinar_id', $webinar->id)
-            ->delete();
+        $existingRequest = ContentDeleteRequest::query()
+            ->where('user_id', $user->id)
+            ->where('targetable_type', \App\Models\Webinar::class)
+            ->where('targetable_id', $webinar->id)
+            ->where('status', 'pending')
+            ->first();
 
-        $webinar->delete();
+        if (empty($existingRequest)) {
+            ContentDeleteRequest::create([
+                'user_id' => $user->id,
+                'targetable_type' => \App\Models\Webinar::class,
+                'targetable_id' => $webinar->id,
+                'description' => 'Delete request submitted from bundle module list.',
+                'created_at' => time(),
+            ]);
+        }
 
-        return response()->json([
-            'code'        => 200,
-            'redirect_to' => '/panel/bundles/' . $bundleId . '/modules',
-        ], 200);
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => 'Delete request submitted for approval.',
+            'status' => 'success'
+        ];
+
+        return back()->with(['toast' => $toastData]);
     }
 
     public function moduleEdit(Request $request, $bundleId, $courseId)

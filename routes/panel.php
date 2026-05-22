@@ -532,7 +532,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{id}/modules', 'BundlesController@modules');
             Route::get('/{bundleId}/module/create', 'BundlesController@moduleCreate');
             Route::get('/{bundleId}/module/{courseId}/edit', 'BundlesController@moduleEdit');
-            Route::get('/{bundleId}/module/{courseId}/delete', 'BundlesController@moduleDestroy');
+            Route::post('/{bundleId}/module/{courseId}/delete', 'BundlesController@moduleDestroy');
             Route::get('/{id}/export-students-list', 'BundlesController@exportStudentsList');
         });
     });
