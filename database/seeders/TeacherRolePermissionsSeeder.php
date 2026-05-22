@@ -158,17 +158,16 @@ class TeacherRolePermissionsSeeder extends Seeder
             
             // Noticeboard
             'panel_noticeboard',
+            'panel_noticeboard_history',
             'panel_noticeboard_create',
             'panel_noticeboard_edit',
             'panel_noticeboard_delete',
             'panel_noticeboard_lists',
             
             // Course Noticeboard
-            'panel_course_noticeboard',
-            'panel_course_noticeboard_create',
-            'panel_course_noticeboard_edit',
-            'panel_course_noticeboard_delete',
-            'panel_course_noticeboard_lists',
+            'panel_noticeboard_course_notices',
+            'panel_noticeboard_course_notices_create',
+            'panel_noticeboard_delete',
             
             // Notifications
             'panel_notifications',

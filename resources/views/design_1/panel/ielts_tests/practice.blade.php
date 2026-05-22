@@ -32,8 +32,6 @@
     border-color: var(--wf-accent) !important;
 }
 
-/* PAGE WRAP */
-.wf-page-wrap { padding: 24px 0; }
 
 /* ── Welcome Bar (Dashboard-style Bootstrap) ─────────────────────────────────────── */
 .ielts-welcome-bar {
@@ -100,11 +98,11 @@
 /* ── Skill Section Header ───────────────────────────── */
 .wf-skill-section { margin-bottom: 28px; }
 .wf-skill-header {
-    background: rgba(212, 211, 254, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: #ffffff;
+    border: 1px solid rgba(81, 29, 153, 0.10);
     border-radius: 16px;
     padding: 14px 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -116,10 +114,10 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 15px; flex-shrink: 0;
 }
-.wf-skill-header-icon.listening { background: rgba(81, 29, 153, 0.14); color: var(--wf-accent); }
-.wf-skill-header-icon.reading   { background: #d1fae5; color: #10b981; }
-.wf-skill-header-icon.writing   { background: #fef3c7; color: #f59e0b; }
-.wf-skill-header-icon.speaking  { background: #fee2e2; color: #ef4444; }
+.wf-skill-header-icon.listening { background: rgba(81, 29, 153, 0.08); color: var(--wf-accent); }
+.wf-skill-header-icon.reading   { background: rgba(16, 185, 129, 0.10); color: #10b981; }
+.wf-skill-header-icon.writing   { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.wf-skill-header-icon.speaking  { background: rgba(239, 68, 68, 0.10); color: #ef4444; }
 .wf-skill-header-info { flex: 1; }
 .wf-skill-header-title {
     font-size: 13px; font-weight: 800;
@@ -140,6 +138,60 @@
 .reading   .wf-skill-header-prog-fill { background: #10b981; }
 .writing   .wf-skill-header-prog-fill { background: #f59e0b; }
 .speaking  .wf-skill-header-prog-fill { background: #ef4444; }
+
+/* ── Part Grouping ─────────────────────────────────── */
+.wf-part-group {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    background: rgba(248, 250, 252, 0.75);
+}
+.dark-mode .wf-part-group { background: rgba(15, 23, 42, 0.75); border-color: rgba(148, 163, 184, 0.12); }
+.wf-part-group__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(81, 29, 153, 0.05);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+.dark-mode .wf-part-group__header { background: rgba(81, 29, 153, 0.12); }
+.wf-part-group__title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #511D99;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.dark-mode .wf-part-group__title { color: #c4b5fd; }
+.wf-part-group__count {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+.wf-part-group__badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #511D99;
+    background: #fff;
+    border: 1px solid rgba(81, 29, 153, 0.16);
+    border-radius: 999px;
+    padding: 5px 10px;
+}
+.dark-mode .wf-part-group__badge {
+    background: #1e293b;
+    color: #c4b5fd;
+    border-color: rgba(196, 181, 253, 0.18);
+}
+.wf-part-group__rows {
+    padding: 12px;
+}
+.wf-part-group__rows .wf-practice-row:last-child {
+    margin-bottom: 0;
+}
 
 /* ── Accordion ──────────────────────────────────────── */
 .wf-skill-header {
@@ -162,20 +214,22 @@
 }
 .wf-skill-rows {
     display: none;
-    background: rgba(212, 211, 254, 0.32);
+    background: #ffffff;
     border-radius: 0 0 18px 18px;
     padding: 14px 14px 6px;
     margin-top: -6px;
+    border: 1px solid rgba(81, 29, 153, 0.10);
+    border-top: 0;
 }
-.dark-mode .wf-skill-rows { background: #0f172a; }
+.dark-mode .wf-skill-rows { background: #1e293b; }
 .wf-skill-section.open .wf-skill-rows {
     display: block;
 }
 
 /* ── Individual Practice Row ─────────────────────────── */
 .wf-practice-row {
-    background: rgba(244, 243, 255, 0.92);
-    border: 1.5px solid rgba(214, 210, 243, 0.95);
+    background: #ffffff;
+    border: 1.5px solid rgba(81, 29, 153, 0.10);
     border-radius: 16px;
     margin-bottom: 10px;
     overflow: hidden;
@@ -204,24 +258,24 @@
 .wf-btn-start {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 18px; border-radius: 20px;
-    border: 1.5px solid #1e293b; background: transparent;
-    color: #1e293b; font-size: 13px; font-weight: 600;
+    border: 1.5px solid #511D99; background: transparent;
+    color: #511D99; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: all 0.2s; white-space: nowrap;
     text-decoration: none;
 }
-.dark-mode .wf-btn-start { border-color: #e2e8f0; color: #e2e8f0; }
-.wf-btn-start:hover { background: #1e293b; color: #fff; text-decoration: none; }
-.dark-mode .wf-btn-start:hover { background: #e2e8f0; color: #1e293b; }
+.dark-mode .wf-btn-start { border-color: #c4b5fd; color: #c4b5fd; }
+.wf-btn-start:hover { background: rgba(81, 29, 153, 0.08); color: #511D99; text-decoration: none; }
+.dark-mode .wf-btn-start:hover { background: rgba(196, 181, 253, 0.16); color: #fff; }
 .wf-btn-retry {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 18px; border-radius: 20px;
-    border: 1.5px solid #1e293b; background: #1e293b;
+    border: 1.5px solid #511D99; background: #511D99;
     color: #fff; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: all 0.2s; white-space: nowrap;
     text-decoration: none;
 }
-.dark-mode .wf-btn-retry { border-color: #e2e8f0; background: #e2e8f0; color: #1e293b; }
-.wf-btn-retry:hover { background: #374151; border-color: #374151; color: #fff; text-decoration: none; }
+.dark-mode .wf-btn-retry { border-color: #c4b5fd; background: #c4b5fd; color: #1e293b; }
+.wf-btn-retry:hover { background: #421670; border-color: #421670; color: #fff; text-decoration: none; }
 .wf-row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .wf-practice-row-prog {
     /* thicker progress bar */
@@ -247,16 +301,16 @@
 .wf-band-tab {
     padding: 8px 18px; border-radius: 20px; font-weight: 600;
     font-size: 13px; border: 2px solid #e5e7eb;
-    background: rgba(244, 243, 255, 0.92); color: #6b7280;
+    background: #ffffff; color: #6b7280;
     transition: all 0.2s; text-decoration: none;
 }
 .wf-band-tab:hover { border-color: var(--wf-accent); color: var(--wf-accent); text-decoration: none; }
-.wf-band-tab.active { background: var(--wf-accent); border-color: var(--wf-accent); color: white; }
+.wf-band-tab.active { background: rgba(81, 29, 153, 0.08); border-color: var(--wf-accent); color: var(--wf-accent); }
 
 /* ── Empty state ─────────────────────────────────────── */
 .wf-empty {
     text-align: center; padding: 60px 20px;
-    background: #f9fafb; border-radius: 20px; border: 2px dashed #e5e7eb;
+    background: #ffffff; border-radius: 20px; border: 2px dashed rgba(81, 29, 153, 0.16);
 }
 .dark-mode .wf-empty { background: #1e293b; border-color: #334155; }
 .wf-empty img { max-width: 140px; opacity: 0.7; margin-bottom: 16px; }
@@ -379,6 +433,57 @@
                 $groupTotal     = $group['tests']->count();
                 $groupCompleted = $group['tests']->filter(fn($t) => ($t->user_attempts ?? 0) > 0)->count();
                 $groupProgress  = $groupTotal > 0 ? round(($groupCompleted / $groupTotal) * 100) : 0;
+                $partGroups     = $group['tests']
+                    ->groupBy(function ($test) use ($group) {
+                        $section = $test->sections->firstWhere('skill', $group['skill']) ?? $test->sections->first();
+                        $partNumber = $section?->section_number;
+
+                        if (is_numeric($partNumber) && (int) $partNumber > 0) {
+                            return 'part-' . (int) $partNumber;
+                        }
+
+                        $sectionTitle = trim((string) ($section?->title ?? ''));
+                        if ($sectionTitle !== '' && preg_match('/part\s*(\d+)/i', $sectionTitle, $matches)) {
+                            return 'part-' . (int) $matches[1];
+                        }
+
+                        return 'part-' . \Illuminate\Support\Str::slug($sectionTitle !== '' ? $sectionTitle : ('group-' . $test->id));
+                    })
+                    ->map(function ($tests, $partKey) use ($group) {
+                        $firstTest = $tests->first();
+                        $section = $firstTest->sections->firstWhere('skill', $group['skill']) ?? $firstTest->sections->first();
+                        $partNumber = $section?->section_number;
+                        $sectionTitle = trim((string) ($section?->title ?? ''));
+
+                        if (is_numeric($partNumber) && (int) $partNumber > 0) {
+                            $partLabel = 'Part ' . (int) $partNumber;
+                            $sortOrder = (int) $partNumber;
+                        } elseif ($sectionTitle !== '') {
+                            $partLabel = $sectionTitle;
+                            $sortOrder = 999;
+                        } else {
+                            $partLabel = 'Part';
+                            $sortOrder = 999;
+                        }
+
+                        $partCompleted = $tests->filter(fn($t) => ($t->user_attempts ?? 0) > 0)->count();
+                        $partTotal = $tests->count();
+                        $partProgress = $partTotal > 0 ? round(($partCompleted / $partTotal) * 100) : 0;
+
+                        return [
+                            'key' => $partKey,
+                            'label' => $partLabel,
+                            'sort_order' => $sortOrder,
+                            'count' => $partTotal,
+                            'completed' => $partCompleted,
+                            'progress' => $partProgress,
+                            'tests' => $tests->values(),
+                        ];
+                    })
+                    ->sortBy(function ($partGroup) {
+                        return sprintf('%04d|%s', $partGroup['sort_order'], $partGroup['label']);
+                    })
+                    ->values();
             @endphp
             <div class="wf-skill-section">
 
@@ -399,37 +504,51 @@
 
                 {{-- Individual practice rows (hidden until section is open) --}}
                 <div class="wf-skill-rows">
-                    @foreach($group['tests'] as $test)
-                    @php $rowProgress = ($test->user_attempts ?? 0) > 0 ? 100 : 0; @endphp
-                    <div class="wf-practice-row {{ $key }}-row">
-                        <div class="wf-practice-row-inner">
-                            <div style="flex:1;">
-                                <div class="wf-practice-row-title">{{ $test->title }}</div>
-                                @if(($test->user_attempts ?? 0) > 0)
-                                <div class="wf-practice-row-attempts">Completed {{ $test->user_attempts }}x</div>
-                                @endif
+                    @foreach($partGroups as $partGroup)
+                    <div class="wf-part-group">
+                        <div class="wf-part-group__header">
+                            <div>
+                                <div class="wf-part-group__title">{{ $partGroup['label'] }}</div>
+                                <div class="wf-part-group__count">{{ $partGroup['count'] }} {{ $partGroup['count'] == 1 ? 'Practice' : 'Practices' }}</div>
                             </div>
-                            <div class="wf-row-actions">
-                                @if(($test->user_attempts ?? 0) > 0)
-                                    <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
-                                        @csrf
-                                        <input type="hidden" name="skill" value="{{ $group['skill'] }}">
-                                        <button type="submit" class="wf-btn-retry">Retry</button>
-                                    </form>
-                                    @if($test->last_attempt)
-                                        <a href="{{ route('panel.ielts_tests.results', $test->last_attempt->id) }}" class="wf-btn-start">View result</a>
-                                    @endif
-                                @else
-                                    <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
-                                        @csrf
-                                        <input type="hidden" name="skill" value="{{ $group['skill'] }}">
-                                        <button type="submit" class="wf-btn-start">Start &rarr;</button>
-                                    </form>
-                                @endif
-                            </div>
+                            <div class="wf-part-group__badge">{{ $partGroup['progress'] }}%</div>
                         </div>
-                        <div class="wf-practice-row-prog">
-                            <div class="wf-practice-row-prog-fill" style="width: {{ $rowProgress }}%"></div>
+
+                        <div class="wf-part-group__rows">
+                            @foreach($partGroup['tests'] as $test)
+                            @php $rowProgress = ($test->user_attempts ?? 0) > 0 ? 100 : 0; @endphp
+                            <div class="wf-practice-row {{ $key }}-row">
+                                <div class="wf-practice-row-inner">
+                                    <div style="flex:1;">
+                                        <div class="wf-practice-row-title">{{ $test->title }}</div>
+                                        @if(($test->user_attempts ?? 0) > 0)
+                                        <div class="wf-practice-row-attempts">Completed {{ $test->user_attempts }}x</div>
+                                        @endif
+                                    </div>
+                                    <div class="wf-row-actions">
+                                        @if(($test->user_attempts ?? 0) > 0)
+                                            <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
+                                                @csrf
+                                                <input type="hidden" name="skill" value="{{ $group['skill'] }}">
+                                                <button type="submit" class="wf-btn-retry">Retry</button>
+                                            </form>
+                                            @if($test->last_attempt)
+                                                <a href="{{ route('panel.ielts_tests.results', $test->last_attempt->id) }}" class="wf-btn-start">View result</a>
+                                            @endif
+                                        @else
+                                            <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
+                                                @csrf
+                                                <input type="hidden" name="skill" value="{{ $group['skill'] }}">
+                                                <button type="submit" class="wf-btn-start">Start &rarr;</button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="wf-practice-row-prog">
+                                    <div class="wf-practice-row-prog-fill" style="width: {{ $rowProgress }}%"></div>
+                                </div>
+                            </div>
+                            @endforeach
                         </div>
                     </div>
                     @endforeach

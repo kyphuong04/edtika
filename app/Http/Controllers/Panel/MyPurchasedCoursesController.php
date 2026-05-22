@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bundle;
 use App\Models\Gift;
 use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Session;
+use App\Models\Support;
 use App\Models\Webinar;
 use App\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -286,6 +288,80 @@ class MyPurchasedCoursesController extends Controller
     public function showCourse(Request $request, $slug)
     {
         $this->authorize("panel_webinars_my_purchases");
+
+        $bundle = Bundle::where('slug', $slug)
+            ->where('status', 'active')
+            ->with(['bundleWebinars.webinar' => function ($query) {
+                $query->where('status', Webinar::$active)
+                    ->with(['sessions', 'files', 'textLessons']);
+            }])
+            ->first();
+
+        if (!empty($bundle)) {
+            $totalLessons = 0;
+            $bundleProgressSum = 0;
+            $bundleWebinarIds = [];
+
+            foreach ($bundle->bundleWebinars as $bw) {
+                $webinar = $bw->webinar;
+                if ($webinar) {
+                    $bundleWebinarIds[] = $webinar->id;
+                    $totalLessons += $webinar->sessions->count()
+                        + $webinar->files->count()
+                        + $webinar->textLessons->count();
+                    $bundleProgressSum += $webinar->getProgress(true, auth()->user());
+                }
+            }
+
+            $bundleModulesCount = count($bundleWebinarIds);
+            $bundleProgress = $bundleModulesCount > 0 ? round($bundleProgressSum / $bundleModulesCount, 2) : 0;
+
+            $mentorSupport = null;
+            $mentorConversations = collect();
+
+            if (!empty($bundleWebinarIds)) {
+                $mentorSupport = Support::where('user_id', auth()->id())
+                    ->whereIn('webinar_id', $bundleWebinarIds)
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                if ($mentorSupport) {
+                    $mentorConversations = $mentorSupport->conversations()
+                        ->with(['sender', 'supporter'])
+                        ->orderBy('id', 'asc')
+                        ->get();
+                }
+            }
+
+            $wordOfDay = null;
+            try {
+                $wordOfDay = \App\Models\AcademicWordListWord::whereHas('academicWordList', function ($q) {
+                    $q->where('is_active', true);
+                })->inRandomOrder()->first();
+            } catch (\Exception $e) {}
+
+            $breadcrumbs = [
+                ['text' => trans('update.platform'), 'url' => '/'],
+                ['text' => trans('panel.dashboard'), 'url' => '/panel'],
+                ['text' => trans('panel.my_courses'), 'url' => '/panel/courses/purchases'],
+                ['text' => $bundle->title, 'url' => null],
+            ];
+
+            return view('design_1.panel.bundles.modules.index', [
+                'pageTitle' => $bundle->title,
+                'breadcrumbs' => $breadcrumbs,
+                'bundle' => $bundle,
+                'totalLessons' => $totalLessons,
+                'bundleProgress' => $bundleProgress,
+                'bundleModulesCount' => $bundleModulesCount,
+                'allowManage' => false,
+                'backUrl' => '/panel/courses/purchases',
+                'authUser' => auth()->user(),
+                'mentorSupport' => $mentorSupport,
+                'mentorConversations' => $mentorConversations,
+                'wordOfDay' => $wordOfDay,
+            ]);
+        }
 
         /** @var \App\Http\Controllers\Web\WebinarController $webinarController */
         $webinarController = app(\App\Http\Controllers\Web\WebinarController::class);

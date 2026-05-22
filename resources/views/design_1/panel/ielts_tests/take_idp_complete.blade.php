@@ -875,6 +875,19 @@
         // Get group instruction
         $currentGroup = $firstQ->questionGroup ?? null;
         $groupInstruction = $currentGroup->instruction ?? '';
+
+        // Determine current part and its audio (prefer part audio if available)
+        $currentPartId = $firstQ->part_id ?? null;
+        $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+        $currentPartAudioUrl = null;
+        if (!empty($currentPart->audio_file)) {
+            $audioFile = $currentPart->audio_file;
+            if (str_starts_with($audioFile, '/') || str_starts_with($audioFile, 'http')) {
+                $currentPartAudioUrl = $audioFile;
+            } else {
+                $currentPartAudioUrl = \Storage::disk('public')->url($audioFile);
+            }
+        }
     @endphp
 
     {{-- HEADER --}}
@@ -1148,7 +1161,16 @@
                 ▶ Play
             </button>
         </div>
-        <audio id="listeningAudio" src="{{ $currentSection->audio_url ?? '' }}"></audio>
+        @if($attempt->test->isPracticeTest())
+            <div class="idp-audio-bar" style="padding:12px 20px;background:#fff;border-top:1px solid #eee;">
+                <audio id="listeningAudio" controls style="width:100%;">
+                    <source src="{{ $currentPartAudioUrl ?? $currentSection->audio_url ?? '' }}" type="audio/mpeg">
+                    Your browser does not support audio playback.
+                </audio>
+            </div>
+        @else
+            <audio id="listeningAudio" src="{{ $currentPartAudioUrl ?? $currentSection->audio_url ?? '' }}"></audio>
+        @endif
     @endif
     
     {{-- SUBMIT CONFIRMATION MODAL --}}

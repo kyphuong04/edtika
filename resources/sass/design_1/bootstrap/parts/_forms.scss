@@ -339,6 +339,7 @@ select.form-control {
         height: $custom-file-label-height;
         padding: $custom-file-label-padding-y $custom-file-label-padding-x;
         color: $custom-file-label-color;
+        font-weight: 600;
         background-color: $custom-file-label-bg;
         border-radius: $custom-file-label-border-radius;
         cursor: pointer;
