@@ -43,9 +43,15 @@
         @endphp
 
         <div class="js-get-next-step {{ $isActiveStep ? 'd-flex' : 'd-none d-lg-flex' }} align-items-center cursor-pointer {{ !($loop->last) ? 'mr-40' : '' }}" data-step="{{ $key }}" @if(!$isActiveStep) data-tippy-content="{{ trans('public.' . $progressStep['name']) }}" @endif>
-            <div class="d-flex-center size-48 rounded-circle {{ $isActiveStep ? 'bg-primary' : 'bg-gray-100' }}">
-                @svg("iconsax-lin-{$progressStep['icon']}", ['height' => 24, 'width' => 24, 'class' => $isActiveStep ? 'text-white' : 'text-gray-400'])
-            </div>
+            @if($isActiveStep)
+                <div class="d-flex-center size-48 rounded-circle" style="background-color: #511D99;">
+                    @svg("iconsax-lin-{$progressStep['icon']}", ['height' => 24, 'width' => 24, 'class' => 'text-white'])
+                </div>
+            @else
+                <div class="d-flex-center size-48 rounded-circle bg-gray-100">
+                    @svg("iconsax-lin-{$progressStep['icon']}", ['height' => 24, 'width' => 24, 'class' => 'text-gray-400'])
+                </div>
+            @endif
 
             @if($isActiveStep)
                 <div class="ml-8">

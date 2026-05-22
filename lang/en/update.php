@@ -4821,6 +4821,7 @@ return [
     'R' => 'R',
     'W' => 'W',
     'S' => 'S',
+    'details' => 'Details',
     'correct' => 'Correct',
     'incorrect' => 'Incorrect',
     'items_asc' => 'Items (Ascending)',

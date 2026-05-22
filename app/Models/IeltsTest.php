@@ -69,6 +69,11 @@ class IeltsTest extends Model
         return $this->belongsTo(\App\User::class, 'approved_by');
     }
 
+    public function feedbacks()
+    {
+        return $this->hasMany(IeltsTestFeedback::class, 'test_id')->orderByDesc('created_at');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Query Scopes

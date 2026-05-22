@@ -807,11 +807,12 @@ class IeltsTestController extends Controller
         
         $authUser = auth()->user();
         
-        // Owner, teachers, admins, and organizations can view
+        // Owner, teachers, admins, organizations, and managers can view
         $canView = $attempt->user_id === $authUser->id 
             || $authUser->isTeacher() 
             || $authUser->isAdmin() 
-            || $authUser->isOrganization();
+            || $authUser->isOrganization()
+            || $authUser->isManager();
         
         if (!$canView) {
             abort(403);

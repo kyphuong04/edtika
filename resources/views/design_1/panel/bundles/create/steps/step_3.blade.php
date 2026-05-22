@@ -2,7 +2,7 @@
     <link rel="stylesheet" href="/assets/default/vendors/daterangepicker/daterangepicker.min.css">
 @endpush
 
-<div class="bg-white rounded-16 p-16 mt-32">
+<div class="bg-white rounded-16 p-16 mt-32 mb-32">
 
     {{-- Pricing Options --}}
     <h3 class="font-14 font-weight-bold mb-24">{{ trans('update.pricing_options') }}</h3>

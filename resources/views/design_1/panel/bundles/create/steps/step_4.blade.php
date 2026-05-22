@@ -2,7 +2,7 @@
     <link rel="stylesheet" href="/assets/default/vendors/sortable/jquery-ui.min.css"/>
 @endpush
 
-<div class="bg-white rounded-16 p-16 mt-32">
+<div class="bg-white rounded-16 p-16 mt-32 mb-32">
 
 
     {{-- Courses --}}

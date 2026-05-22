@@ -111,7 +111,7 @@
                             </div>
                         </div>
 
-                        <button type="button" class="js-submit-noticeboard-form btn btn-lg btn-primary mt-16 mt-lg-0">{{ trans('notification.post_notice') }}</button>
+                        <button type="button" class="js-submit-noticeboard-form btn btn-lg btn-primary mt-16 mt-lg-0" style="background-color: #511D99; border-color: #511D99;">{{ trans('notification.post_notice') }}</button>
                     </div>
 
                 </div>

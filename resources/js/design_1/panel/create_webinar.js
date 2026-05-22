@@ -200,8 +200,8 @@
             $body.find('.js-chapter-webinar-id').val(webinarId);
 
             const footerHtml = `<div class="d-flex align-items-center justify-content-end">
-                <button type="button" class="js-save-chapter btn btn-sm btn-primary">${saveLang}</a>
                 <button type="button" class="close-swl btn btn-sm btn-danger ml-8">${closeLang}</button>
+                <button type="button" class="js-save-chapter btn btn-sm btn-primary">${saveLang}</button>
             </div>`;
             $footer.html(footerHtml);
 
@@ -232,8 +232,8 @@
         html = html.replace(/record/g, random);
 
         const footerHtml = `<div class="d-flex align-items-center justify-content-end">
-                <button type="button" class="js-save-change-chapter btn btn-sm btn-primary">${saveLang}</a>
                 <button type="button" class="close-swl btn btn-sm btn-danger ml-8">${closeLang}</button>
+                <button type="button" class="js-save-change-chapter btn btn-sm btn-primary">${saveLang}</button>
             </div>`;
 
 

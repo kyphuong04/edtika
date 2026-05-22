@@ -55,6 +55,9 @@
                             data-toggle="modal" data-target="#rejectModal">
                         <i class="fas fa-times mr-4"></i>Reject
                     </button>
+                    <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#managerFeedbackModal">
+                        <i class="fas fa-comment-dots mr-4"></i>Send Feedback
+                    </button>
                     @endif
                     <a href="{{ route('admin.ielts_tests.pending_approval') }}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left mr-4"></i>Back
@@ -180,6 +183,31 @@
                 </div>
             </div>
         </div>
+        @if($test->feedbacks && $test->feedbacks->isNotEmpty())
+        <div class="col-md-12">
+            <div class="card mt-20">
+                <div class="card-header"><h4>Feedback History</h4></div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        @foreach($test->feedbacks as $fb)
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ $fb->sender ? $fb->sender->full_name : 'System' }}</strong>
+                                    <div class="text-muted small">{{ date('j M Y, H:i', $fb->created_at) }}</div>
+                                </div>
+                                <div>
+                                    <!-- placeholder for actions -->
+                                </div>
+                            </div>
+                            <div class="mt-2">{{ nl2br(e($fb->message)) }}</div>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
 
         {{-- Sections & Questions --}}
         <div class="card">
@@ -306,6 +334,9 @@
                                             <div class="py-6" style="border-bottom:1px dashed #f3f4f6;">
                                                 <span class="badge badge-light" style="font-size:10px;">Q{{ $q->question_number ?? $loop->iteration }}</span>
                                                 <span class="font-13 ml-6" style="color:#1e293b;">{{ Str::limit($q->question_text, 120) }}</span>
+                                                <a href="#" class="btn btn-xs btn-outline-secondary ml-3 edit-question-btn" data-question='@json($q)'>
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
                                                 @if($q->correct_answer)
                                                     <span class="badge badge-success ml-8" style="font-size:10px;">
                                                         ✓ {{ Str::limit(is_array($q->correct_answer) ? implode(', ', $q->correct_answer) : $q->correct_answer, 40) }}
@@ -327,6 +358,9 @@
                                         <div class="py-6" style="border-bottom:1px dashed #f3f4f6;">
                                             <span class="badge badge-light" style="font-size:10px;">Q{{ $q->question_number ?? $loop->iteration }}</span>
                                             <span class="font-13 ml-6" style="color:#1e293b;">{{ Str::limit($q->question_text, 120) }}</span>
+                                            <a href="#" class="btn btn-xs btn-outline-secondary ml-3 edit-question-btn" data-question='@json($q)'>
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
                                             @if($q->correct_answer)
                                                 <span class="badge badge-success ml-8" style="font-size:10px;">
                                                     ✓ {{ Str::limit(is_array($q->correct_answer) ? implode(', ', $q->correct_answer) : $q->correct_answer, 40) }}
@@ -349,6 +383,9 @@
                                             {{ ucwords(str_replace('_', ' ', $q->question_type)) }}
                                         </span>
                                         <span class="font-13 ml-6" style="color:#1e293b;">{{ Str::limit($q->question_text, 120) }}</span>
+                                        <a href="#" class="btn btn-xs btn-outline-secondary ml-3 edit-question-btn" data-question='@json($q)'>
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
                                         @if($q->correct_answer)
                                             <span class="badge badge-success ml-8" style="font-size:10px;">
                                                 ✓ {{ Str::limit(is_array($q->correct_answer) ? implode(', ', $q->correct_answer) : $q->correct_answer, 40) }}
@@ -393,6 +430,116 @@
 
     </div>
 </section>
+
+{{-- Manager Feedback Modal --}}
+<div class="modal fade" id="managerFeedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Send Feedback to Creator</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form action="{{ route('admin.ielts_tests.manager_feedback', $test->id) }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Feedback</label>
+                        <textarea name="feedback" class="form-control" rows="6" required placeholder="Give constructive feedback for the creator..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Send Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Edit Question Modal (reused for all questions) --}}
+<div class="modal fade" id="editQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Question</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form id="editQuestionForm" method="POST" action="">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-2">
+                            <label>Q#</label>
+                            <input type="number" name="question_number" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Type</label>
+                            <input type="text" name="question_type" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label>Points</label>
+                            <input type="number" step="0.1" name="points" class="form-control">
+                        </div>
+                        <div class="form-group col-md-4 form-check pt-4">
+                            <input type="checkbox" name="auto_gradable" class="form-check-input" id="auto_gradable_chk">
+                            <label class="form-check-label" for="auto_gradable_chk">Auto gradable</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Question Text</label>
+                        <textarea name="question_text" class="form-control" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Instruction</label>
+                        <input type="text" name="instruction" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Answer</label>
+                        <input type="text" name="correct_answer" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Hint</label>
+                        <input type="text" name="hint" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Explanation</label>
+                        <textarea name="explanation" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts_bottom')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.edit-question-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var q = JSON.parse(this.getAttribute('data-question'));
+                var form = document.getElementById('editQuestionForm');
+                // set action URL
+                form.action = '/admin/ielts-tests/questions/' + q.id + '/update';
+                form.querySelector('[name=question_number]').value = q.question_number || '';
+                form.querySelector('[name=question_type]').value = q.question_type || '';
+                form.querySelector('[name=points]').value = q.points || '';
+                form.querySelector('[name=question_text]').value = q.question_text || '';
+                form.querySelector('[name=instruction]').value = q.instruction || '';
+                form.querySelector('[name=correct_answer]').value = (Array.isArray(q.correct_answer) ? q.correct_answer.join(',') : (q.correct_answer || ''));
+                form.querySelector('[name=hint]').value = q.hint || '';
+                form.querySelector('[name=explanation]').value = q.explanation || '';
+                form.querySelector('[name=auto_gradable]').checked = q.auto_gradable == 1;
+                $('#editQuestionModal').modal('show');
+            });
+        });
+    });
+</script>
+@endpush
 
 {{-- Reject Modal --}}
 <div class="modal fade" id="rejectModal" tabindex="-1">

@@ -10,11 +10,11 @@
 
 /* ── Profile Card ────────────────────────────────────── */
 .wf-sidebar-profile {
-    background: rgba(212, 211, 254, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: #ffffff;
+    border: 1px solid rgba(81, 29, 153, 0.10);
     border-radius: 16px;
     padding: 0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     position: relative;
     cursor: pointer;
     user-select: none;
@@ -38,7 +38,7 @@
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    border: 2px solid #ddd7f8;
+    border: 2px solid rgba(81, 29, 153, 0.10);
 }
 .wf-profile-avatar img {
     width: 100%;
@@ -109,14 +109,14 @@
 }
 .dark-mode .wf-profile-dropdown a { color: #cbd5e1; }
 .wf-profile-dropdown a:hover {
-    background: rgba(212, 211, 254, 0.48);
+    background: rgba(81, 29, 153, 0.06);
     text-decoration: none;
 }
 .dark-mode .wf-profile-dropdown a:hover { background: #0f172a; }
 .wf-profile-dropdown a i {
     width: 18px;
     text-align: center;
-    color: #3b82f6;
+    color: #511D99;
 }
 .wf-profile-dropdown a.wf-logout { color: #ef4444; }
 .wf-profile-dropdown a.wf-logout i { color: #ef4444; }
@@ -124,11 +124,11 @@
 
 /* ── Vocabulary Word Card ─────────────────────────────── */
 .wf-vocab-card {
-    background: rgba(212, 211, 254, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: #ffffff;
+    border: 1px solid rgba(81, 29, 153, 0.10);
     border-radius: 16px;
     padding: 20px 20px 18px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     margin-bottom: 16px;
     text-align: center;
 }
@@ -155,7 +155,7 @@
 .dark-mode .wf-vocab-translation { color: #94a3b8; }
 .wf-vocab-divider {
     border: none;
-    border-top: 1px solid rgba(220, 214, 250, 0.8);
+    border-top: 1px solid rgba(81, 29, 153, 0.10);
     margin: 10px 0;
 }
 .dark-mode .wf-vocab-divider { border-top-color: #334155; }
@@ -173,11 +173,11 @@
 
 /* ── Stats Widgets (Streak / Ranking) ─────────────────── */
 .wf-stats-widget {
-    background: rgba(212, 211, 254, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: #ffffff;
+    border: 1px solid rgba(81, 29, 153, 0.10);
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     margin-bottom: 16px;
     text-align: center;
 }
@@ -187,7 +187,7 @@
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: #374151;
+    color: #511D99;
     margin-bottom: 14px;
 }
 .dark-mode .wf-widget-title { color: #cbd5e1; }
@@ -203,18 +203,18 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 2px solid #e2e8f0;
+    border: 2px solid rgba(81, 29, 153, 0.16);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 13px;
     font-weight: 600;
-    color: #94a3b8;
+    color: #6b7280;
     transition: all 0.2s;
 }
 .wf-streak-day.active {
-    background: #3b82f6;
-    border-color: #3b82f6;
+    background: #511D99;
+    border-color: #511D99;
     color: #fff;
 }
 .wf-streak-count {
@@ -227,7 +227,7 @@
 /* Ranking */
 .wf-ranking-placeholder {
     padding: 16px 0 8px;
-    color: #94a3b8;
+    color: #6b7280;
     font-size: 13px;
 }
 

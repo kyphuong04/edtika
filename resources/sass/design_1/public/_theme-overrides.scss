@@ -1,0 +1,54 @@
+:root {
+    --edtika-primary: #511D99;
+}
+
+/* Make sidebars and navigation panels white with a subtle shadow */
+aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-sidebar, .left-sidebar {
+    background: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+/* Make cards, panels and widgets white and slightly elevated */
+.card, .panel, .card-with-mask, .card-statistic, .panel-header, .panel-body, .widget, .box, .box-body {
+    background: #ffffff !important;
+    color: #222 !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+/* Primary content inside cards should use the purple tone for contrast */
+.card h1, .card h2, .card h3, .card .title, .panel-header .title, .widget .title,
+.card .card-title, .panel .panel-title, .box .box-title {
+    color: var(--edtika-primary) !important;
+}
+
+/* Links, important texts and icons inside cards and sidebars */
+.card a, .card .text-primary, .panel a, .panel .text-primary,
+.sidebar a, .main-sidebar a, .custom-container-sidebar a, .landing-builder-sidebar a,
+.sidebar .menu a, .main-sidebar .menu a {
+    color: var(--edtika-primary) !important;
+}
+
+.sidebar .menu i, .sidebar .menu svg, .main-sidebar .menu i, .main-sidebar .menu svg {
+    color: var(--edtika-primary) !important;
+    fill: var(--edtika-primary) !important;
+}
+
+/* Badges and small highlights inside white cards use the primary color */
+.card .badge, .panel .badge, .widget .badge, .badge-primary {
+    background: var(--edtika-primary) !important;
+    color: #ffffff !important;
+}
+
+/* Fine tune for elements that previously used glass/backdrop effects */
+.backdrop-filter-blur-4, .glass, .glass-card, .with-mask, .mask-8-white {
+    backdrop-filter: none !important;
+    background: #ffffff !important;
+    opacity: 1 !important;
+}
+
+/* Preserve hover affordance but keep purple accent */
+.sidebar a:hover, .card a:hover, .panel a:hover {
+    color: #421670 !important;
+}
