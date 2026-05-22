@@ -23,7 +23,7 @@ class IeltsGradingController extends Controller
     {
         $authUser = auth()->user();
 
-        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization()) {
+        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization() && !$authUser->isManager()) {
             abort(403);
         }
 
@@ -96,7 +96,7 @@ class IeltsGradingController extends Controller
     {
         $authUser = auth()->user();
 
-        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization()) {
+        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization() && !$authUser->isManager()) {
             abort(403);
         }
 
@@ -133,7 +133,7 @@ class IeltsGradingController extends Controller
     {
         $authUser = auth()->user();
         
-        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization()) {
+        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization() && !$authUser->isManager()) {
             abort(403);
         }
         
@@ -234,7 +234,7 @@ class IeltsGradingController extends Controller
     {
         $authUser = auth()->user();
         
-        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization()) {
+        if (!$authUser->isTeacher() && !$authUser->isAdmin() && !$authUser->isOrganization() && !$authUser->isManager()) {
             abort(403);
         }
         

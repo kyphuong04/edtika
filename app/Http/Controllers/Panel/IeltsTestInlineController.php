@@ -250,6 +250,7 @@ class IeltsTestInlineController extends Controller
             'question_type' => $questionType,
             'question_text' => $questionData['text'] ?? $questionData['question_text'] ?? '',
             'instruction' => $questionData['instruction'] ?? null,
+            'explanation' => $questionData['explanation'] ?? null,
             'answer_options' => $answerOptions,
             'correct_answer' => $correctAnswer,
             'question_data' => $questionData['question_data'] ?? null,
@@ -301,6 +302,8 @@ class IeltsTestInlineController extends Controller
             'target_band_min' => 'nullable|numeric|min:0|max:9',
             'target_band_max' => 'nullable|numeric|min:0|max:9',
             'question_groups_data' => 'required|json',
+            'section_media' => 'nullable|array',
+            'section_media.*.audio' => 'nullable|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg|max:51200',
             'group_media' => 'nullable|array',
             'group_media.*.audio' => 'nullable|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg|max:51200',
             'group_media.*.image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
@@ -392,6 +395,16 @@ class IeltsTestInlineController extends Controller
 
         try {
             DB::transaction(function () use ($validated, $groupsData, $slug, $user, $testType, $request) {
+                $sectionAudioPaths = [];
+                foreach ($groupsData['sections'] as $skill => $sectionData) {
+                    if ($skill === 'listening') {
+                        if ($request->hasFile('section_media.listening.audio')) {
+                            $sectionAudioPaths['listening'] = $request->file('section_media.listening.audio')
+                                ->store('ielts/test_sections/audio', 'public');
+                        }
+                    }
+                }
+
                 // Create test
                 $test = IeltsTest::create([
                     'title' => $validated['title'],
@@ -437,6 +450,7 @@ class IeltsTestInlineController extends Controller
                         'title' => $skillConfig[$skill]['title'] ?? ucfirst($skill),
                         'description' => $sectionData['description'] ?? null,
                         'duration' => $sectionData['duration'] ?? ($skillConfig[$skill]['duration'] ?? 30),
+                        'audio_file' => $sectionAudioPaths[$skill] ?? null,
                         'sort_order' => $sectionOrder,
                         'status' => 'active',
                         'created_at' => time(),
@@ -595,6 +609,16 @@ class IeltsTestInlineController extends Controller
             $correctAnswer = json_encode($correctAnswer);
         }
 
+        if (is_string($correctAnswer)) {
+            $trimmed = trim($correctAnswer);
+            if (str_contains($trimmed, "\n")) {
+                $answers = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $trimmed))));
+                if (count($answers) > 1) {
+                    $correctAnswer = json_encode($answers);
+                }
+            }
+        }
+
         $autoGradable = !in_array($questionType, ['essay', 'speaking_prompt'], true);
 
         IeltsTestQuestion::create([
@@ -607,6 +631,9 @@ class IeltsTestInlineController extends Controller
             'instruction' => $questionData['instruction'] ?? null,
             'answer_options' => $answerOptions,
             'correct_answer' => $correctAnswer,
+            'question_data' => $questionData['question_data'] ?? null,
+            'table_structure' => $questionData['table_structure'] ?? null,
+            'flow_data' => $questionData['flow_data'] ?? null,
             'auto_gradable' => $autoGradable,
             'points' => $questionData['points'] ?? 1,
             'word_limit' => $questionData['wordLimit'] ?? $questionData['word_limit'] ?? null,
@@ -688,6 +715,16 @@ class IeltsTestInlineController extends Controller
             $correctAnswer = json_encode($correctAnswer);
         }
 
+        if (is_string($correctAnswer)) {
+            $trimmed = trim($correctAnswer);
+            if (str_contains($trimmed, "\n")) {
+                $answers = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $trimmed))));
+                if (count($answers) > 1) {
+                    $correctAnswer = json_encode($answers);
+                }
+            }
+        }
+
         $autoGradable = !in_array($questionType, ['essay', 'speaking_prompt'], true);
 
         IeltsTestQuestion::create([
@@ -701,6 +738,9 @@ class IeltsTestInlineController extends Controller
             'instruction' => $questionData['instruction'] ?? null,
             'answer_options' => $answerOptions,
             'correct_answer' => $correctAnswer,
+            'question_data' => $questionData['question_data'] ?? null,
+            'table_structure' => $questionData['table_structure'] ?? null,
+            'flow_data' => $questionData['flow_data'] ?? null,
             'auto_gradable' => $autoGradable,
             'points' => $questionData['points'] ?? 1,
             'word_limit' => $questionData['wordLimit'] ?? $questionData['word_limit'] ?? null,

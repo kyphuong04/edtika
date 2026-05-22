@@ -73,14 +73,5 @@
         </div>
     @endif
 @elseif(count($saleItem->reviews->where('creator_id', $authUser->id)) < 1)
-    <a href="{{ $saleItem->getUrl() }}?tab=reviews" target="_blank" class="d-flex align-items-center">
-        <div class="d-flex-center">
-            <x-iconsax-bol-star-1 class="icons text-warning " width="24px" height="24px"/>
-        </div>
-
-        <div class="ml-8">
-            <h5 class="font-12 font-weight-bold text-dark">{{ (!empty($sale->bundle)) ? trans('update.rate_this_bundle') : trans('update.rate_this_course') }}</h5>
-            <p class="font-12 text-gray-500">{{ (!empty($sale->bundle)) ? trans('update.submit_a_review_for_the_course') : trans('update.submit_a_review_for_the_course') }}</p>
-        </div>
-    </a>
+    
 @endif

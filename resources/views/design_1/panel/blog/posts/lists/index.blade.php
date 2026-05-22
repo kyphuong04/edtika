@@ -76,7 +76,7 @@
             <p class="font-14 text-gray-500 mt-4">{{ trans('update.view_blog_posts_and_related_statistics') }}</p>
         </div>
         @can('panel_blog_new_article')
-            <a href="/panel/blog/new" class="btn btn-primary d-flex align-items-center blog-post-modal-trigger" data-modal-title="{{ trans('update.create_a_post') }}">
+            <a href="/panel/blog/new" class="btn btn-primary d-flex align-items-center blog-post-modal-trigger" data-modal-title="{{ trans('update.create_a_post') }}" style="background-color: #511D99; border-color: #511D99;">
                 <x-iconsax-lin-add class="icons mr-8" width="16"/>
                 {{ trans('update.new_post') }}
             </a>

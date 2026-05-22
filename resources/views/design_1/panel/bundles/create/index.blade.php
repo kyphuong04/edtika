@@ -1,4 +1,4 @@
-@extends('design_1.web.layouts.app', ['appFooter' => false])
+@extends('design_1.panel.layouts.panel', ['hidePanelTitleBar' => true])
 
 @push('styles_top')
     <link rel="stylesheet" href="{{ getDesign1StylePath("create-course") }}">
@@ -13,17 +13,16 @@
         <input type="hidden" name="get_step" value="0" id="getStep"/>
 
 
-        <div class="container mt-80 pb-100">
+        <div class="container mt-8 pb-100">
             {{-- Progress --}}
             @include('design_1.panel.bundles.create.includes.progress')
 
             {{-- Steps Inputs --}}
             @include("design_1.panel.bundles.create.steps.step_{$currentStep}")
+
+            {{-- Bottom Actions --}}
+            @include('design_1.panel.bundles.create.includes.bottom_actions')
         </div>
-
-
-        {{-- Bottom Actions --}}
-        @include('design_1.panel.bundles.create.includes.bottom_actions')
 
     </form>
 @endsection

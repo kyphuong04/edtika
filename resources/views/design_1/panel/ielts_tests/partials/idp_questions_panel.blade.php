@@ -36,6 +36,44 @@
         $currentPartId = $group->part_id ?? null;
         $showPartLabel = $currentPartId && $currentPartId !== $prevPartId;
         if($showPartLabel) $prevPartId = $currentPartId;
+
+        $questionRangeStart = (int) ($firstQ->question_number ?? 1);
+        $questionRangeEnd = (int) ($questions->last()->question_number ?? $questionRangeStart);
+
+        if ($questionType === 'table_completion') {
+            $tableStructure = $firstQ->table_structure ?? null;
+
+            if (!$tableStructure && !empty($firstQ->question_data)) {
+                $firstQuestionData = is_array($firstQ->question_data)
+                    ? $firstQ->question_data
+                    : json_decode($firstQ->question_data, true);
+
+                if (is_array($firstQuestionData) && isset($firstQuestionData['table_structure'])) {
+                    $tableStructure = $firstQuestionData['table_structure'];
+                }
+            }
+
+            if (is_string($tableStructure)) {
+                $tableStructure = json_decode($tableStructure, true);
+            }
+
+            $blankCount = 1;
+            if (is_array($tableStructure)) {
+                if (!empty($tableStructure['answers']) && is_array($tableStructure['answers'])) {
+                    $blankCount = count($tableStructure['answers']);
+                } elseif (!empty($tableStructure['rows']) && is_array($tableStructure['rows'])) {
+                    $blankCount = 0;
+                    foreach ($tableStructure['rows'] as $row) {
+                        foreach ((array) $row as $cellContent) {
+                            $blankCount += substr_count((string) $cellContent, '___');
+                        }
+                    }
+                    $blankCount = max(1, $blankCount);
+                }
+            }
+
+            $questionRangeEnd = $questionRangeStart + max(1, $blankCount) - 1;
+        }
     @endphp
 
     @if($showPartLabel)
@@ -51,7 +89,7 @@
 
     {{-- Group Header & Instructions --}}
     <div class="idp-questions-header">
-        Questions {{ $questions->first()->question_number ?? '' }}–{{ $questions->last()->question_number ?? '' }}
+        Questions {{ $questionRangeStart }}–{{ $questionRangeEnd }}
     </div>
     @if(!empty($title))
     <div class="idp-questions-title" style="font-weight:600;font-size:14px;margin:6px 0 4px;color:#1e293b;">

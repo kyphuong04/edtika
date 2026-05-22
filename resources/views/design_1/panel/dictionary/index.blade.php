@@ -13,7 +13,8 @@
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -34,11 +35,11 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: rgba(81, 29, 153, 0.10);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #511D99;
         font-weight: bold;
         font-size: 20px;
     }
@@ -69,7 +70,8 @@
         border-radius: 12px;
         padding: 30px 30px 30px 0;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dark-mode .search-section {
@@ -105,7 +107,7 @@
     
     .search-input:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: #511D99;
     }
     
     .dark-mode .search-input {
@@ -116,7 +118,7 @@
     
     .search-btn {
         padding: 12px 30px;
-        background: #3b82f6;
+        background: #511D99;
         color: white;
         border: none;
         border-radius: 8px;
@@ -126,7 +128,7 @@
     }
     
     .search-btn:hover {
-        background: #2563eb;
+        background: #421670;
     }
     
     .word-lists-section {
@@ -162,10 +164,15 @@
         cursor: pointer;
         transition: all 0.3s;
     }
+
+    .toggle-btn:hover {
+        color: #511D99;
+    }
     
     .toggle-btn.active {
-        background: #3b82f6;
-        color: white;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
+        border: 1px solid rgba(81, 29, 153, 0.16);
     }
     
     .dark-mode .toggle-btn {
@@ -178,14 +185,15 @@
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
         cursor: pointer;
         transition: all 0.3s;
         position: relative;
     }
     
     .word-list-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
         transform: translateY(-2px);
     }
     
@@ -230,8 +238,8 @@
     
     .word-count-badge {
         padding: 4px 12px;
-        background: #e0f2fe;
-        color: #0369a1;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
         border-radius: 12px;
         font-size: 13px;
         font-weight: 600;
@@ -253,11 +261,12 @@
     }
     
     .word-list-expanded {
-        background: #f8fafc;
+        background: #ffffff;
         border-radius: 12px;
         padding: 20px;
         margin-top: 15px;
         display: none;
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dark-mode .word-list-expanded {
@@ -299,12 +308,17 @@
         cursor: pointer;
         transition: all 0.3s;
     }
+
+    .filter-btn:hover {
+        color: #511D99;
+        border-color: rgba(81, 29, 153, 0.16);
+    }
     
     .filter-btn:hover,
     .filter-btn.active {
-        background: #3b82f6;
-        color: white;
-        border-color: #3b82f6;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
+        border-color: rgba(81, 29, 153, 0.16);
     }
     
     .dark-mode .filter-btn {
@@ -319,7 +333,8 @@
         border-radius: 12px;
         padding: 30px;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dictionary-result-container.hidden {
@@ -345,7 +360,7 @@
     .result-word {
         font-size: 32px;
         font-weight: 700;
-        color: #1f2937;
+        color: #511D99;
         margin: 0;
     }
     
@@ -373,7 +388,7 @@
     .pos-title {
         font-size: 18px;
         font-weight: 600;
-        color: #374151;
+        color: #511D99;
         font-style: italic;
     }
     
@@ -382,7 +397,7 @@
     }
     
     .btn-save-pos {
-        background: #6b7280;
+        background: #511D99;
         color: white;
         border: none;
         padding: 8px 24px;
@@ -394,7 +409,7 @@
     }
     
     .btn-save-pos:hover {
-        background: #4b5563;
+        background: #421670;
         transform: translateY(-1px);
     }
     
@@ -436,9 +451,9 @@
         width: 100%;
         padding: 12px;
         background: white;
-        border: 2px solid #d1d5db;
+        border: 1px solid rgba(81, 29, 153, 0.16);
         border-radius: 10px;
-        color: #374151;
+        color: #511D99;
         font-size: 16px;
         font-weight: 500;
         cursor: pointer;
@@ -451,8 +466,8 @@
     }
     
     .btn-back:hover {
-        background: #f9fafb;
-        border-color: #9ca3af;
+        background: rgba(81, 29, 153, 0.06);
+        border-color: rgba(81, 29, 153, 0.22);
     }
     
     .dark-mode .btn-back {
@@ -560,7 +575,7 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: #511D99;
         border: none;
         color: white;
         display: flex;
@@ -571,7 +586,7 @@
     }
     
     .pronunciation-audio-btn:hover:not(:disabled) {
-        background: #2563eb;
+        background: #421670;
         transform: scale(1.1);
     }
     
@@ -597,7 +612,7 @@
     .part-of-speech {
         font-size: 18px;
         font-weight: 600;
-        color: #3b82f6;
+        color: #511D99;
         margin-bottom: 15px;
         font-style: italic;
     }
@@ -734,7 +749,7 @@
         justify-content: center;
         margin-top: 20px;
         padding-top: 20px;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dark-mode .action-bar {
@@ -767,12 +782,12 @@
     }
     
     .btn-practice {
-        background: #3b82f6;
+        background: #511D99;
         color: white;
     }
     
     .btn-practice:hover {
-        background: #2563eb;
+        background: #421670;
     }
     
     .dark-mode .btn-select-all,
@@ -791,7 +806,8 @@
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dark-mode .stats-widget {
@@ -821,18 +837,18 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        border: 2px solid #e2e8f0;
+        border: 2px solid rgba(81, 29, 153, 0.16);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 14px;
         font-weight: 600;
-        color: #94a3b8;
+        color: #6b7280;
     }
     
     .streak-circle.active {
-        background: #3b82f6;
-        border-color: #3b82f6;
+        background: #511D99;
+        border-color: #511D99;
         color: white;
     }
     
@@ -844,12 +860,13 @@
     }
     
     .practice-mode-container {
-        background: #ebebeb;
+        background: #ffffff;
         border-radius: 20px;
         padding: 32px 28px;
         max-width: 520px;
         margin: 0 auto;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dark-mode .practice-mode-container {
@@ -864,7 +881,7 @@
     }
     
     .score-item {
-        background: #d6d6d6;
+        background: rgba(81, 29, 153, 0.08);
         border-radius: 999px;
         padding: 8px 22px;
         display: inline-flex;
@@ -874,7 +891,7 @@
     .score-label {
         font-size: 14px;
         font-weight: 700;
-        color: #333;
+        color: #511D99;
         letter-spacing: 0.4px;
         display: flex;
         align-items: center;
@@ -885,7 +902,7 @@
     .score-value {
         font-size: 14px !important;
         font-weight: 700 !important;
-        color: #333 !important;
+        color: #511D99 !important;
     }
     
     .score-value.correct {
@@ -939,18 +956,18 @@
     }
     
     .answer-card.selected {
-        border-color: #3b82f6;
-        background: #dbeafe;
+        border-color: #511D99;
+        background: rgba(81, 29, 153, 0.08);
     }
     
     .answer-card.correct {
         border-color: #10b981;
-        background: #d1fae5;
+        background: #f0fdf4;
     }
     
     .answer-card.incorrect {
         border-color: #ef4444;
-        background: #fee2e2;
+        background: #fff1f2;
     }
     
     .dark-mode .answer-card {
@@ -1090,11 +1107,11 @@
         <!-- Left Column: Word Lists -->
         <div class="col-lg-8">
             <!-- Search Section -->
-            <div class="search-section">
+            <div class="search-section" style="background:#fff !important; border:1px solid rgba(81,29,153,0.10) !important; box-shadow:0 6px 18px rgba(0,0,0,0.04) !important;">
                 <h3 class="search-title">Search English</h3>
                 <div class="search-wrapper">
                     <input type="text" class="search-input" id="searchInput" placeholder="Search the word...">
-                    <button class="search-btn" id="searchBtn">Search</button>
+                    <button class="search-btn" id="searchBtn" style="background:#511D99 !important; border-color:#511D99 !important;">Search</button>
                 </div>
             </div>
 
@@ -1135,7 +1152,7 @@
             <div class="word-lists-section" id="academicWordListsSection">
                 <div class="section-header">
                     <h2 class="section-title">Essential IELTS Academic Word List</h2>
-                    <button class="toggle-btn active" id="toggleMyWordListBtn">My Word List</button>
+                    <button class="toggle-btn active" id="toggleMyWordListBtn" style="background:rgba(81,29,153,0.08) !important; color:#511D99 !important; border:1px solid rgba(81,29,153,0.16) !important;">My Word List</button>
                 </div>
                 
                 @foreach($academicWordLists as $wordList)
@@ -1148,7 +1165,7 @@
                     
                     <div class="word-list-header">
                         <h3 class="word-list-name">{{ $wordList['name'] }} ({{ $wordList['band_level'] }})</h3>
-                        <span class="word-count-badge">Tổng số từ: {{ $wordList['word_count'] }} từ</span>
+                        <span class="word-count-badge" style="background:rgba(81,29,153,0.08) !important; color:#511D99 !important;">Tổng số từ: {{ $wordList['word_count'] }} từ</span>
                     </div>
                     <p class="word-list-description">{{ $wordList['description'] }}</p>
                     
@@ -1178,13 +1195,13 @@
             <div class="word-lists-section hidden" id="myWordListSection">
                 <div class="section-header">
                     <h2 class="section-title">My Word List</h2>
-                    <button class="toggle-btn" id="toggleAcademicListBtn">Academic Word List</button>
+                    <button class="toggle-btn" id="toggleAcademicListBtn" style="background:#fff !important; color:#511D99 !important; border:1px solid rgba(81,29,153,0.16) !important;">Academic Word List</button>
                 </div>
                 
                 <div class="word-list-card" data-list-id="{{ $myWordList->id }}" data-list-type="my">
                     <div class="word-list-header">
                         <h3 class="word-list-name">{{ $myWordList->name }}</h3>
-                        <span class="word-count-badge">Tổng số từ: {{ $myWordList->word_count }} từ</span>
+                        <span class="word-count-badge" style="background:rgba(81,29,153,0.08) !important; color:#511D99 !important;">Tổng số từ: {{ $myWordList->word_count }} từ</span>
                     </div>
                     <p class="word-list-description">{{ $myWordList->description }}</p>
                     
@@ -1237,7 +1254,7 @@
         <!-- Right Column: Stats -->
         <div class="col-lg-4">
             <!-- Flashcards Widget -->
-            <div class="stats-widget">
+            <div class="stats-widget" style="background:#fff !important; border:1px solid rgba(81,29,153,0.10) !important; box-shadow:0 6px 18px rgba(0,0,0,0.04) !important;">
                 <h3 class="widget-title">FLASHCARDS</h3>
                 <div class="ranking-placeholder">
                     <p>Flashcards based on your band level will appear here</p>
@@ -1245,7 +1262,7 @@
             </div>
 
             <!-- Streak Widget -->
-            <div class="stats-widget">
+            <div class="stats-widget" style="background:#fff !important; border:1px solid rgba(81,29,153,0.10) !important; box-shadow:0 6px 18px rgba(0,0,0,0.04) !important;">
                 <h3 class="widget-title">STREAK</h3>
                 <div class="streak-circles">
                     @for($i = 1; $i <= 7; $i++)
@@ -1255,7 +1272,7 @@
             </div>
 
             <!-- Ranking Widget -->
-            <div class="stats-widget">
+            <div class="stats-widget" style="background:#fff !important; border:1px solid rgba(81,29,153,0.10) !important; box-shadow:0 6px 18px rgba(0,0,0,0.04) !important;">
                 <h3 class="widget-title">RANKING</h3>
                 <div class="ranking-placeholder">
                     <p>Your ranking will appear here</p>

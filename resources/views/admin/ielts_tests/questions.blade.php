@@ -165,6 +165,7 @@
                                     <option value="matching">Matching</option>
                                     <option value="short_answer">Short Answer</option>
                                     <option value="essay">Essay</option>
+                                       <option value="table_completion">Table Completion</option>
                                 </select>
                             </div>
                         </div>
@@ -315,6 +316,7 @@ function editQuestion(btn) {
                                     <option value="matching">Matching</option>
                                     <option value="matching_features">Matching Features</option>
                                     <option value="short_answer">Short Answer</option>
+                                       <option value="table_completion">Table Completion</option>
                                     <option value="essay">Essay</option>
                                 </select>
                             </div>
