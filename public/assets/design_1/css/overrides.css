@@ -1,0 +1,219 @@
+:root {
+  --edtika-primary: #511D99;
+}
+
+/* Global background gradient for all pages */
+html, body {
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(81, 29, 153, 0.14), transparent 34%),
+    radial-gradient(circle at 82% 22%, rgba(126, 178, 255, 0.16), transparent 32%),
+    radial-gradient(circle at 50% 80%, rgba(190, 170, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #f7f5ff 0%, #eef4ff 44%, #f8fbff 100%) !important;
+  background-attachment: fixed;
+}
+
+#app, .main-wrapper, #panel_app, .panel-content, .main-content, .admin-auth-pages {
+  background: transparent !important;
+}
+
+/* Override theme glass variables to white */
+:root {
+  --glass-surface-bg: #ffffff !important;
+  --glass-surface-border: rgba(0,0,0,0.04) !important;
+  --glass-surface-shadow: 0 6px 18px rgba(0,0,0,0.04) !important;
+}
+
+aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-sidebar, .left-sidebar {
+  background: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+.card, .panel, .card-with-mask, .card-statistic, .panel-header, .panel-body, .widget, .box, .box-body {
+  background: #ffffff !important;
+  color: #222 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+.card h1, .card h2, .card h3, .card .title, .panel-header .title, .widget .title,
+.card .card-title, .panel .panel-title, .box .box-title {
+  color: var(--edtika-primary) !important;
+}
+
+.card a, .card .text-primary, .panel a, .panel .text-primary,
+.sidebar a, .main-sidebar a, .custom-container-sidebar a, .landing-builder-sidebar a,
+.sidebar .menu a, .main-sidebar .menu a {
+  color: var(--edtika-primary) !important;
+}
+
+.sidebar .menu i, .sidebar .menu svg, .main-sidebar .menu i, .main-sidebar .menu svg {
+  color: var(--edtika-primary) !important;
+  fill: var(--edtika-primary) !important;
+}
+
+.card .badge, .panel .badge, .widget .badge, .badge-primary {
+  background: var(--edtika-primary) !important;
+  color: #ffffff !important;
+}
+
+.backdrop-filter-blur-4, .glass, .glass-card, .with-mask, .mask-8-white {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.sidebar a:hover, .card a:hover, .panel a:hover {
+  color: #421670 !important;
+}
+
+/* Stronger overrides for panel layout (panelSidebar) and panel content */
+#panelSidebar,
+#panelSidebar .panel-sidebar__contents,
+#panelSidebar .panel-sidebar__pinned-bottom,
+.panel-sidebar,
+.panel-sidebar__menu,
+.panel-sidebar__menu-item {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Flatten panel sidebar items into a single clean list */
+#panelSidebar .panel-sidebar__menu,
+#panelSidebar .panel-sidebar__menu-item,
+#panelSidebar .panel-sidebar__panel-user-menu,
+#panelSidebar .panel-sidebar__panel-user-menu-item {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+#panelSidebar .panel-sidebar__menu:first-child,
+#panelSidebar .panel-sidebar__menu-item:first-child,
+#panelSidebar .panel-sidebar__panel-user-menu:first-child,
+#panelSidebar .panel-sidebar__panel-user-menu-item:first-child {
+  border-top: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+#panelSidebar .panel-sidebar__menu:hover,
+#panelSidebar .panel-sidebar__menu-item:hover,
+#panelSidebar .panel-sidebar__panel-user-menu:hover,
+#panelSidebar .panel-sidebar__panel-user-menu-item:hover,
+#panelSidebar .accordion .panel-sidebar__menu.accordion__title:hover,
+#panelSidebar a.panel-sidebar__menu:hover,
+#panelSidebar a.panel-sidebar__menu-item:hover,
+#panelSidebar div.panel-sidebar__menu:hover {
+  background: #f8f6ff !important;
+}
+
+/* Cards/panels inside panel-content often use glass vars; override them */
+.panel-content .card,
+.panel-content :is(div, section, article, aside)[class*="card"],
+.panel-content .panel-section-card,
+.panel-content .box,
+.panel-content :is(div, section, article, aside)[style*="background:#fff"],
+.panel-content :is(div, section, article, aside)[style*="background: #fff"] {
+  background: #ffffff !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  color: #222 !important;
+}
+
+/* Also target inner elements and pseudo elements to remove masks/gradients */
+.panel-content .card *,
+.panel-content .card::before,
+.panel-content .card::after,
+.panel-content .panel-section-card *,
+.panel-content .panel-section-card::before,
+.panel-content .panel-section-card::after {
+  background: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Admin main-content specific overrides */
+.main-content .card,
+.main-content :is(div, section, article, aside)[class*="card"],
+.main-content .map-card {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.04) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Admin left sidebar: flatten items and remove the segmented box look */
+.main-sidebar,
+.main-sidebar #sidebar-wrapper,
+.main-sidebar .sidebar-brand,
+.main-sidebar .sidebar-brand-sm,
+.main-sidebar .sidebar-menu,
+.main-sidebar .sidebar-menu li,
+.main-sidebar .sidebar-menu li a.nav-link {
+  background: #ffffff !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.main-sidebar .sidebar-menu {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.main-sidebar .sidebar-menu li {
+  margin: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+  border-radius: 0 !important;
+}
+
+.main-sidebar .sidebar-menu li:first-child {
+  border-top: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+.main-sidebar .sidebar-menu li a.nav-link {
+  border-radius: 0 !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+.main-sidebar .sidebar-menu li:hover,
+.main-sidebar .sidebar-menu li a.nav-link:hover,
+.main-sidebar .sidebar-menu li.active > a.nav-link {
+  background: #f8f6ff !important;
+}
+
+/* target frequently used utility classes that add the glass look */
+.glass, .glass-card, .card-with-mask, .mask-8-white, .with-mask, .backdrop-filter-blur-4 {
+  background: #ffffff !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.04) !important;
+}
+
+/* Ensure headings/links inside cards use primary purple */
+.panel-content .card h1, .panel-content .card h2, .panel-content .card h3, .panel-content .card .title,
+.main-content .card h1, .main-content .card h2, .main-content .card h3, .main-content .card .title {
+  color: var(--edtika-primary) !important;
+}
+
+/* Ensure badges / small UI elements remain visible on white */
+.panel-content .badge,
+.main-content .badge,
+.panel-content .rounded-circle,
+.main-content .rounded-circle {
+  box-shadow: none !important;
+}

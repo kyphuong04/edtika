@@ -238,8 +238,8 @@
     border-radius: 8px;
     padding: 12px;
     margin-top: 12px;
-    max-height: 200px;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
 }
 
 .question-badge {
@@ -250,6 +250,7 @@
     border-radius: 3px;
     font-size: 11px;
     margin-top: 4px;
+    font-weight: 600;
 }
 
 .btn-add-group {
@@ -525,6 +526,19 @@
                 </button>
             </div>
 
+            <div class="section-media-block hidden mb-15">
+                <div class="form-group mb-0">
+                    <label class="input-label font-weight-bold">Listening Audio for the whole section</label>
+                    <div class="file-upload-area" onclick="this.querySelector('input[type=file]').click()">
+                        <i class="fas fa-headphones fa-2x text-muted mb-10"></i>
+                        <p class="mb-0 small">Click to upload one audio file for all Listening parts</p>
+                        <input type="file" class="section-audio-file" name="section_media[listening][audio]" accept="audio/*">
+                    </div>
+                    <div class="file-preview section-audio-preview" style="display:none;"></div>
+                    <small class="text-muted d-block mt-2">This audio is shared by every part in the Listening section.</small>
+                </div>
+            </div>
+
             <div class="parts-list"></div>
 
             {{-- Add Part Form --}}
@@ -554,7 +568,7 @@
 
                 <div class="row">
                     <div class="col-md-4">
-                        <label class="input-label">Audio File (MP3, WAV)</label>
+                        <label class="input-label">Audio File (MP3)</label>
                         <div class="file-upload-area" onclick="this.querySelector('input[type=file]').click()">
                             <i class="fas fa-volume-up fa-2x text-muted mb-10"></i>
                             <p class="mb-0 small">Click to upload audio</p>
@@ -628,6 +642,57 @@ let testData = {
 document.addEventListener('DOMContentLoaded', function() {
     setupFormValidation();
     setupFilePreviews();
+    document.addEventListener('input', function(event) {
+        const target = event.target;
+        if (!target || !target.classList) {
+            return;
+        }
+
+        if (target.classList.contains('question-text-input')) {
+            const form = target.closest('.question-inline-form');
+            if (form && form.querySelector('.note-completion-answers')) {
+                renderNoteCompletionAnswerInputs(form);
+            }
+        }
+
+        if (target.classList.contains('tc-cell-text') || target.classList.contains('tc-cell-answer') || target.classList.contains('tc-col-title') || target.classList.contains('tc-row-title')) {
+            const form = target.closest('.question-inline-form');
+            if (!form) {
+                return;
+            }
+
+            if (target.classList.contains('tc-cell-text')) {
+                const td = target.closest('td');
+                const answerWrap = td ? td.querySelector('.tc-answer-wrap') : null;
+                const answerList = td ? td.querySelector('.tc-answer-list') : null;
+                if (answerWrap) {
+                    const hasBlank = target.value.includes('___');
+                    answerWrap.style.display = hasBlank ? 'block' : 'none';
+                    if (!hasBlank) {
+                        if (answerList) {
+                            answerList.innerHTML = makeTableCellAnswerListHTML();
+                        }
+                    }
+                }
+            }
+
+            updateTableCompletionState(form);
+        }
+    });
+
+    document.addEventListener('change', function(event) {
+        const target = event.target;
+        if (!target || !target.classList || !target.classList.contains('question-type-select')) {
+            return;
+        }
+
+        const form = target.closest('.question-inline-form');
+        if (!form || !form.querySelector('.note-completion-answers')) {
+            return;
+        }
+
+        renderNoteCompletionAnswerInputs(form);
+    });
 });
 
 function setupFilePreviews() {
@@ -638,12 +703,14 @@ function setupFilePreviews() {
         }
 
         let preview = null;
-        if (input.classList.contains('group-audio-file')) {
+        if (input.classList.contains('section-audio-file')) {
+            preview = input.closest('.section-media-block')?.querySelector('.section-audio-preview');
+        } else if (input.classList.contains('group-audio-file')) {
             preview = input.closest('.col-md-4')?.querySelector('.group-audio-preview');
         } else if (input.classList.contains('group-image-file')) {
-            preview = input.closest('.col-md-4')?.querySelector('.group-image-preview');
+            preview = input.closest('.col-md-6')?.querySelector('.group-image-preview');
         } else if (input.classList.contains('group-video-file')) {
-            preview = input.closest('.col-md-4')?.querySelector('.group-video-preview');
+            preview = input.closest('.col-md-6')?.querySelector('.group-video-preview');
         }
 
         if (!preview) {
@@ -702,6 +769,11 @@ function initializeSections() {
         section.querySelector('.skill-icon').classList.add(skill);
         section.querySelector('.section-header h4').textContent = config.title + ' Section';
 
+        const sectionMediaBlock = section.querySelector('.section-media-block');
+        if (sectionMediaBlock) {
+            sectionMediaBlock.classList.toggle('hidden', skill !== 'listening');
+        }
+
         container.appendChild(section);
     });
 }
@@ -725,7 +797,8 @@ function addPart(button) {
     const instructions = form.querySelector('.part-instructions-input').value.trim();
     const passage = form.querySelector('.part-passage').value.trim();
 
-    const audioFile = form.querySelector('.group-audio-file').files[0];
+    const audioInput = form.querySelector('.group-audio-file');
+    const audioFile = audioInput && audioInput.files.length ? audioInput.files[0] : null;
     const imageFile = form.querySelector('.group-image-file').files[0];
     const videoFile = form.querySelector('.group-video-file').files[0];
 
@@ -780,11 +853,18 @@ function addQuestionGroup(button) {
     }
 
     const form = partItem.querySelector('.group-inline-form');
-    const title = form.querySelector('.group-title-input').value.trim();
-    const questionType = form.querySelector('.group-type-select').value;
-    const maxWords = form.querySelector('.group-max-words').value;
-    const targetBand = form.querySelector('.group-target-band').value;
-    const passage = form.querySelector('.group-passage').value;
+    const titleEl = form ? form.querySelector('.group-title-input') : null;
+    const title = titleEl ? titleEl.value.trim() : '';
+    const qTypeEl = form ? form.querySelector('.group-type-select') : null;
+    const questionType = qTypeEl ? (qTypeEl.value || 'short_answer') : 'short_answer';
+    const maxWordsEl = form ? form.querySelector('.group-max-words') : null;
+    const maxWords = maxWordsEl ? maxWordsEl.value : '';
+    const targetBandEl = form ? form.querySelector('.group-target-band') : null;
+    const targetBand = targetBandEl ? targetBandEl.value : '';
+    const passageEl = form ? form.querySelector('.group-passage') : null;
+    const passage = passageEl ? passageEl.value : '';
+    const groupTaskImageUrlEl = form.querySelector('.group-task-image-url');
+    const groupTaskImageUrl = groupTaskImageUrlEl ? (groupTaskImageUrlEl.value || '').trim() : null;
 
     if (!title || !questionType) {
         alert('Please fill in Group Title and Question Type');
@@ -802,6 +882,7 @@ function addQuestionGroup(button) {
         max_words: maxWords || null,
         target_band: targetBand || null,
         passage: passage || null,
+        task_image: groupTaskImageUrl || null,
         questions: [],
         file_input_names: fileInputNames,
         files: {}
@@ -816,6 +897,7 @@ function addQuestionGroup(button) {
     form.querySelector('.group-max-words').value = '';
     form.querySelector('.group-target-band').value = '';
     form.querySelector('.group-passage').value = '';
+    const gImg = form.querySelector('.group-task-image-url'); if (gImg) gImg.value = '';
     form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => input.value = '');
     form.querySelectorAll('.file-preview').forEach(preview => preview.style.display = 'none');
 
@@ -863,6 +945,19 @@ function preserveSelectedFiles(form, uploadId) {
     return mapping;
 }
 
+// Preserve section-level audio inputs before form submit so the server receives them
+function preserveSectionAudioFiles() {
+    const hiddenContainer = document.getElementById('uploadedFilesContainer');
+    const sectionInputs = document.querySelectorAll('.section-audio-file');
+    sectionInputs.forEach(input => {
+        if (input.files && input.files[0] && !input.classList.contains('preserved-upload-input')) {
+            input.name = 'section_media[listening][audio]';
+            input.classList.add('preserved-upload-input');
+            hiddenContainer.appendChild(input);
+        }
+    });
+}
+
 function displayPart(section, part, audioFile, imageFile, videoFile) {
     const partsList = section.querySelector('.parts-list');
 
@@ -890,67 +985,6 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
         ${part.instructions ? `<div class="text-muted mb-8"><small>${escapeHtml(part.instructions)}</small></div>` : ''}
         ${part.passage ? `<div class="mb-8"><small class="text-muted">${escapeHtml(part.passage)}</small></div>` : ''}
         <div class="groups-list"></div>
-        <div class="group-inline-form hidden mt-12 p-12" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;">
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="input-label">Question Group Title / Prompt</label>
-                    <textarea class="form-control group-title-input" rows="2" placeholder="Enter group title or prompt"></textarea>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="input-label">Question Type</label>
-                    <select class="form-control group-type-select">
-                        <optgroup label="Multiple Choice">
-                            <option value="multiple_choice_single">Single Answer</option>
-                            <option value="multiple_choice_multiple">Multiple Answers</option>
-                        </optgroup>
-                        <optgroup label="True/False/Not Given">
-                            <option value="true_false_not_given">True / False / Not Given</option>
-                            <option value="yes_no_not_given">Yes / No / Not Given</option>
-                        </optgroup>
-                        <optgroup label="Matching">
-                            <option value="matching_headings">Matching Headings</option>
-                            <option value="matching_information">Matching Information</option>
-                            <option value="matching_features">Matching Features</option>
-                            <option value="matching_sentence_endings">Matching Sentence Endings</option>
-                        </optgroup>
-                        <optgroup label="Completion">
-                            <option value="sentence_completion">Sentence Completion</option>
-                            <option value="summary_completion">Summary Completion</option>
-                            <option value="note_completion">Note Completion</option>
-                            <option value="table_completion">Table Completion</option>
-                            <option value="diagram_labeling">Diagram Labeling</option>
-                        </optgroup>
-                        <optgroup label="Other">
-                            <option value="short_answer">Short Answer</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="input-label">Max Words</label>
-                    <input type="number" class="form-control group-max-words" min="1" placeholder="e.g. 3">
-                </div>
-                <div class="form-group">
-                    <label class="input-label">Target Band</label>
-                    <input type="number" class="form-control group-target-band" min="4" max="9" step="0.5" placeholder="e.g. 6.5">
-                </div>
-            </div>
-            <div class="form-row full">
-                <div class="form-group">
-                    <label class="input-label">Passage / Instructions</label>
-                    <textarea class="form-control group-passage" rows="3" placeholder="Enter reading passage, instructions, or transcript..."></textarea>
-                </div>
-            </div>
-            <div class="mt-8">
-                <button type="button" class="btn btn-sm btn-primary" onclick="addQuestionGroup(this)">
-                    <i class="fas fa-plus mr-5"></i>Create Group & Add Questions
-                </button>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAddGroupForm(this)">
-                    <i class="fas fa-times mr-5"></i>Cancel
-                </button>
-            </div>
-        </div>
         <div class="part-actions">
             <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleAddGroupForm(this)">
                 <i class="fas fa-plus"></i> Group
@@ -963,6 +997,121 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
 
     partsList.appendChild(partDiv);
 
+    // Insert group inline form variant based on section skill (writing/speaking use simplified essay form)
+    try {
+        const sectionEl = section; // passed into displayPart as 'section'
+        const skill = sectionEl ? sectionEl.getAttribute('data-skill') : '';
+        let groupInlineFormHTML = '';
+        if (skill === 'writing' || skill === 'speaking') {
+            groupInlineFormHTML = `
+            <div class="group-inline-form hidden mt-12 p-12" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label">Question Group Title / Prompt</label>
+                        <textarea class="form-control group-title-input" rows="2" placeholder="Enter group title or prompt"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label">Question Type</label>
+                        <div class="text-muted">Essay (Writing / Speaking)</div>
+                        <input type="hidden" class="group-type-select" value="essay">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label">Optional Task Image URL</label>
+                        <input type="text" class="form-control group-task-image-url" placeholder="e.g. https://... or leave blank">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label">Group Instructions / Passage</label>
+                        <textarea class="form-control group-passage" rows="3" placeholder="Optional instructions or passage for this task..."></textarea>
+                    </div>
+                </div>
+                <div class="mt-12">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addQuestionGroup(this)">
+                        <i class="fas fa-plus mr-5"></i>Create Group
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddGroupForm(this)">
+                        <i class="fas fa-times mr-5"></i>Cancel
+                    </button>
+                </div>
+            </div>`;
+        } else {
+            groupInlineFormHTML = `
+            <div class="group-inline-form hidden mt-12 p-12" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label">Question Group Title / Prompt</label>
+                        <textarea class="form-control group-title-input" rows="2" placeholder="Enter group title or prompt"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="input-label">Question Type</label>
+                        <select class="form-control group-type-select">
+                            <optgroup label="Multiple Choice">
+                                <option value="multiple_choice_single">Single Answer</option>
+                                <option value="multiple_choice_multiple">Multiple Answers</option>
+                            </optgroup>
+                            <optgroup label="True/False/Not Given">
+                                <option value="true_false_not_given">True / False / Not Given</option>
+                                <option value="yes_no_not_given">Yes / No / Not Given</option>
+                            </optgroup>
+                            <optgroup label="Matching">
+                                <option value="matching_headings">Matching Headings</option>
+                                <option value="matching_information">Matching Information</option>
+                                <option value="matching_features">Matching Features</option>
+                                <option value="matching_sentence_endings">Matching Sentence Endings</option>
+                            </optgroup>
+                            <optgroup label="Completion">
+                                <option value="sentence_completion">Sentence Completion</option>
+                                <option value="summary_completion">Summary Completion</option>
+                                <option value="note_completion">Note Completion</option>
+                                <option value="table_completion">Table Completion</option>
+                                <option value="diagram_labeling">Diagram Labeling</option>
+                            </optgroup>
+                            <optgroup label="Other">
+                                <option value="short_answer">Short Answer</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Max Words</label>
+                        <input type="number" class="form-control group-max-words" min="1" placeholder="e.g. 3">
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Target Band</label>
+                        <input type="number" class="form-control group-target-band" min="4" max="9" step="0.5" placeholder="e.g. 6.5">
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="input-label">Passage / Instructions</label>
+                        <textarea class="form-control group-passage" rows="3" placeholder="Enter reading passage, instructions, or transcript..."></textarea>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addQuestionGroup(this)">
+                        <i class="fas fa-plus mr-5"></i>Create Group & Add Questions
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAddGroupForm(this)">
+                        <i class="fas fa-times mr-5"></i>Cancel
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        const groupsListEl = partDiv.querySelector('.groups-list');
+        if (groupsListEl) {
+            groupsListEl.insertAdjacentHTML('afterend', groupInlineFormHTML);
+        }
+    } catch (e) {
+        console.error('Error inserting group inline form', e);
+    }
+
     updatePartStats(partDiv, part);
 }
 
@@ -972,6 +1121,7 @@ function displayQuestionGroup(partItem, part, group) {
     const groupDiv = document.createElement('div');
     groupDiv.className = 'group-item';
     groupDiv.setAttribute('data-group-id', group.id);
+    groupDiv.setAttribute('data-group-task-image', group.task_image || '');
 
     groupDiv.innerHTML = `
         <div class="group-title">${escapeHtml(group.title)}</div>
@@ -995,8 +1145,8 @@ function displayQuestionGroup(partItem, part, group) {
             </div>
         </div>
         <div class="group-actions">
-            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleQuestionForm(this)">
-                <i class="fas fa-plus"></i> Q
+            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleQuestionForm(this)" title="Add new question">
+                <i class="fas fa-plus mr-2"></i> Question
             </button>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeGroup(this)">
                 <i class="fas fa-trash"></i>
@@ -1014,8 +1164,269 @@ function toggleQuestionForm(button) {
     const groupItem = button.closest('.group-item');
     const form = groupItem.querySelector('.question-inline-form');
     if (form) {
+        const wasHidden = form.classList.contains('hidden');
         form.classList.toggle('hidden');
+
+        // Reset form when opening
+        if (wasHidden) {
+            resetQuestionForm(form);
+            if (form.querySelector('.note-completion-answers')) {
+                renderNoteCompletionAnswerInputs(form);
+                bindNoteCompletionLivePreview(form);
+            }
+            // If group has a default task image (writing/speaking), prefill question image input
+            try {
+                const groupTaskImage = groupItem.getAttribute('data-group-task-image') || '';
+                const qImgInput = form.querySelector('.question-task-image-url');
+                if (qImgInput && groupTaskImage) {
+                    qImgInput.value = groupTaskImage;
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
     }
+}
+
+function resetQuestionForm(form) {
+    const textInput = form.querySelector('.question-text-input');
+    if (textInput) textInput.value = '';
+
+    const explanationInput = form.querySelector('.question-explanation-input');
+    if (explanationInput) explanationInput.value = '';
+
+    const answerInput = form.querySelector('.question-answer-input');
+    if (answerInput) answerInput.value = '';
+
+    const qTaskImg = form.querySelector('.question-task-image-url');
+    if (qTaskImg) qTaskImg.value = '';
+
+    const answerSelect = form.querySelector('.question-answer-select');
+    if (answerSelect) answerSelect.selectedIndex = 0;
+
+    const pointsInput = form.querySelector('.question-points-input');
+    if (pointsInput) pointsInput.value = '0.225';
+
+    const noteAnswerWrap = form.querySelector('.note-completion-answers');
+    if (noteAnswerWrap) noteAnswerWrap.innerHTML = '';
+
+    const noteSummary = form.querySelector('.note-completion-summary');
+    if (noteSummary) noteSummary.innerHTML = 'Type the note text with <code>___</code> for each blank.';
+
+    const tcWrap = form.querySelector('.tc-builder-wrap');
+    if (tcWrap) tcWrap.classList.add('hidden');
+
+    form.querySelectorAll('.tc-col-title, .tc-row-title, .tc-cell-text, .tc-cell-answer').forEach(i => i.value = '');
+    form.querySelectorAll('.mc-option-row input[type="text"]').forEach(i => i.value = '');
+    form.querySelectorAll('.mc-option-row input[type="radio"], .mc-option-row input[type="checkbox"]').forEach(i => i.checked = false);
+
+    // Reset to default 2 options for multiple choice
+    const optionsList = form.querySelector('.mc-options-list');
+    if (optionsList) {
+        optionsList.innerHTML = makeMCOptionRow('radio', 0, optionsList.getAttribute('data-group-name')) +
+                                makeMCOptionRow('radio', 1, optionsList.getAttribute('data-group-name'));
+    }
+
+    // Remove edit mode data
+    form.removeAttribute('data-edit-mode');
+    form.removeAttribute('data-edit-index');
+}
+
+function editQuestion(button, questionIndex) {
+    const groupItem = button.closest('.group-item');
+    const section = button.closest('.section-container');
+    const skill = section.getAttribute('data-skill');
+    const groupId = groupItem.getAttribute('data-group-id');
+    const partItem = button.closest('.part-item');
+    const partId = partItem.getAttribute('data-part-id');
+    const part = testData.sections[skill].parts.find(p => String(p.id) === String(partId));
+
+    if (!part) return;
+
+    const group = part.groups.find(g => String(g.id) === String(groupId));
+    if (!group || !group.questions[questionIndex]) return;
+
+    const question = group.questions[questionIndex];
+    console.log('DEBUG: editQuestion called with question:', question);
+    if (question.table_structure) {
+        console.log('DEBUG: table_structure type:', typeof question.table_structure);
+        console.log('DEBUG: table_structure content:', question.table_structure);
+        console.log('DEBUG: table_structure.rows type:', typeof question.table_structure.rows);
+        console.log('DEBUG: table_structure.rows:', question.table_structure.rows);
+    }
+
+    const form = groupItem.querySelector('.question-inline-form');
+    const qType = group.question_type;
+
+    // Load question data into form
+    const textInput = form.querySelector('.question-text-input');
+    if (textInput) textInput.value = question.text || '';
+
+    const explanationInput = form.querySelector('.question-explanation-input');
+    if (explanationInput) explanationInput.value = question.explanation || '';
+
+    // Populate task image URL if present
+    const qTaskImageInput = form.querySelector('.question-task-image-url');
+    if (qTaskImageInput) {
+        qTaskImageInput.value = (question.question_data && question.question_data.task_image) ? question.question_data.task_image : (group.task_image || '');
+    }
+
+    const pointsInput = form.querySelector('.question-points-input');
+    if (pointsInput) pointsInput.value = question.points || 0.225;
+
+    // Load type-specific data
+    if (qType === 'multiple_choice_single' || qType === 'multiple_choice_multiple') {
+        const optionsList = form.querySelector('.mc-options-list');
+        const inputType = qType === 'multiple_choice_single' ? 'radio' : 'checkbox';
+        const groupName = optionsList.getAttribute('data-group-name') || ('mc_grp_' + Date.now());
+
+        optionsList.innerHTML = (question.options || []).map((option, i) => {
+            const isCorrect = qType === 'multiple_choice_multiple'
+                ? (question.correctAnswers || []).includes(option)
+                : question.correctAnswer === option;
+            return `<div class="mc-option-row">
+                <span style="font-size:13px;font-weight:600;color:#6b7280;min-width:20px;">${String.fromCharCode(65 + i)}.</span>
+                <input type="text" placeholder="Enter option text" value="${escapeHtml(option)}">
+                <label class="correct-marker">
+                    <input type="${inputType}" name="${groupName}" ${isCorrect ? 'checked' : ''}>
+                    Correct
+                </label>
+                <button type="button" class="btn-remove-option" onclick="removeMCOption(this)" title="Remove option"><i class="fas fa-times"></i></button>
+            </div>`;
+        }).join('');
+    } else if (qType === 'true_false_not_given' || qType === 'yes_no_not_given') {
+        const answerSelect = form.querySelector('.question-answer-select');
+        if (answerSelect) answerSelect.value = question.correctAnswer || '';
+    } else if (qType === 'note_completion') {
+        renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswer));
+        bindNoteCompletionLivePreview(form);
+    } else if (qType === 'table_completion' && question.table_structure) {
+        const tcWrap = form.querySelector('.tc-builder-wrap');
+        const structureInput = form.querySelector('.tc-table-structure-json');
+        const answersInput = form.querySelector('.tc-table-answers-json');
+
+        if (structureInput) structureInput.value = JSON.stringify(question.table_structure);
+        if (answersInput) {
+            answersInput.value = JSON.stringify({ answers: question.table_structure.answers || [] });
+            form.__tableAnswers = question.table_structure.answers || [];
+        }
+
+        if (tcWrap && question.table_structure.rows) {
+            const headers = question.table_structure.headers || [];
+            const rows = question.table_structure.rows || [];
+
+            console.log('DEBUG: Restoring table, rows structure:', rows, 'headers:', headers);
+
+            const head = form.querySelector('.tc-builder-head');
+            const body = form.querySelector('.tc-builder-body');
+
+            if (head && body) {
+                let headHtml = '<tr><th style="min-width:160px;">Row / Column</th>';
+                headers.forEach((h, i) => {
+                    headHtml += `<th><input type="text" class="tc-col-title" data-col="${i}" placeholder="Column ${i + 1}" value="${escapeHtml(h)}"></th>`;
+                });
+                headHtml += '</tr>';
+                head.innerHTML = headHtml;
+
+                const existingAnswers = {};
+                (question.table_structure.answers || []).forEach((item) => {
+                    const key = `${item.row}-${item.col}`;
+                    existingAnswers[key] = Array.isArray(item.answers) ? item.answers : normalizeTableCellAnswers(item.answers);
+                });
+
+                let bodyHtml = '';
+                rows.forEach((row, r) => {
+                    // Handle both old format (array) and new format (object with cells property)
+                    const rowCells = row.cells || row;
+                    const rowLabel = (row.row_label !== undefined) ? row.row_label : (typeof row === 'object' && !Array.isArray(row) ? '' : '');
+                    
+                    bodyHtml += `<tr><th><input type="text" class="tc-row-title" data-row="${r}" placeholder="Row ${r + 1}" value="${escapeHtml(rowLabel)}"></th>`;
+                    for (let c = 0; c < headers.length; c++) {
+                        const key = `${r}-${c}`;
+                        bodyHtml += makeTableCellEditor(r, c, existingAnswers[key] || []);
+                    }
+                    bodyHtml += '</tr>';
+                });
+                body.innerHTML = bodyHtml;
+
+                // Fill cell values using data attributes
+                console.log('DEBUG: Starting to fill cell values, total cells:', form.querySelectorAll('.tc-cell-text').length);
+                form.querySelectorAll('.tc-cell-text').forEach((textarea, idx) => {
+                    const td = textarea.closest('td');
+                    const rowIdx = parseInt(td.getAttribute('data-row'), 10);
+                    const colIdx = parseInt(td.getAttribute('data-col'), 10);
+                    
+                    // Handle both old format (array) and new format (object with cells property)
+                    const rowData = rows[rowIdx];
+                    const cellValue = rowData ? (rowData.cells ? rowData.cells[colIdx] : rowData[colIdx]) : undefined;
+                    
+                    console.log(`DEBUG: Cell ${idx} (row=${rowIdx}, col=${colIdx}): value="${cellValue}", rowData=${JSON.stringify(rowData)}`);
+                    if (cellValue) {
+                        textarea.value = cellValue;
+                        console.log(`DEBUG: Filled textarea with "${cellValue}"`);
+                    }
+                    
+                    // Show answer wrap if cell has ___
+                    if (cellValue && cellValue.includes('___')) {
+                        const answerWrap = td.querySelector('.tc-answer-wrap');
+                        const answerList = td.querySelector('.tc-answer-list');
+                        
+                        if (answerWrap) {
+                            answerWrap.style.display = 'block';
+                            answerWrap.classList.remove('hidden');
+                        }
+                        
+                        // Populate answer inputs
+                        const key = `${rowIdx}-${colIdx}`;
+                        const cellAnswers = existingAnswers[key] || [];
+                        console.log(`DEBUG: Cell has ___, populating answers for key=${key}:`, cellAnswers);
+                        
+                        if (answerList && cellAnswers.length > 0) {
+                            answerList.innerHTML = cellAnswers.map((answer, i) => 
+                                makeTableCellAnswerRowHTML(answer, i > 0)
+                            ).join('');
+                            console.log(`DEBUG: Populated ${cellAnswers.length} answers`);
+                        }
+                    }
+                });
+            }
+            tcWrap.classList.remove('hidden');
+        }
+    } else {
+        const answerInput = form.querySelector('.question-answer-input');
+        if (answerInput) answerInput.value = question.correctAnswer || '';
+    }
+
+    // Mark as edit mode
+    form.setAttribute('data-edit-mode', 'true');
+    form.setAttribute('data-edit-index', questionIndex);
+
+    // Show form
+    form.classList.remove('hidden');
+}
+
+function deleteQuestion(button, questionIndex) {
+    if (!confirm('Delete this question?')) return;
+
+    const groupItem = button.closest('.group-item');
+    const section = button.closest('.section-container');
+    const skill = section.getAttribute('data-skill');
+    const groupId = groupItem.getAttribute('data-group-id');
+    const partItem = button.closest('.part-item');
+    const partId = partItem.getAttribute('data-part-id');
+    const part = testData.sections[skill].parts.find(p => String(p.id) === String(partId));
+
+    if (!part) return;
+
+    const group = part.groups.find(g => String(g.id) === String(groupId));
+    if (!group) return;
+
+    group.questions.splice(questionIndex, 1);
+
+    renderQuestionsList(groupItem, group);
+    updatePartStats(partItem, part);
+    updateSectionStats(section);
+    updateCompletenessStatus();
 }
 
 function saveQuestionToGroup(button) {
@@ -1043,14 +1454,17 @@ function saveQuestionToGroup(button) {
     const qType = group.question_type || 'short_answer';
     const textInput = form.querySelector('.question-text-input');
     const text = textInput ? textInput.value.trim() : '';
-    const points = parseInt(form.querySelector('.question-points-input').value, 10) || 1;
+    const explanationInput = form.querySelector('.question-explanation-input');
+    const explanation = explanationInput ? explanationInput.value.trim() : '';
+    const pointsValue = parseFloat(form.querySelector('.question-points-input').value);
+    const points = Number.isFinite(pointsValue) ? pointsValue : 0;
 
     if (!text) {
         alert('Question text is required.');
         return;
     }
 
-    let questionData = { id: Date.now(), type: qType, text, points };
+    let questionData = { id: Date.now(), type: qType, text, explanation: explanation || null, points };
 
     if (qType === 'multiple_choice_single') {
         const optionRows = form.querySelectorAll('.mc-option-row');
@@ -1094,22 +1508,95 @@ function saveQuestionToGroup(button) {
         const answerSelect = form.querySelector('.question-answer-select');
         questionData.correctAnswer = answerSelect ? answerSelect.value : null;
 
+    } else if (qType === 'note_completion') {
+        const noteAnswers = collectNoteCompletionAnswers(form);
+        const blankCount = countNoteCompletionBlanks(text);
+
+        if (blankCount === 0) {
+            alert('Please include at least one blank using ___.');
+            return;
+        }
+
+        if (noteAnswers.length !== blankCount) {
+            alert(`Please enter ${blankCount} answer${blankCount > 1 ? 's' : ''} for the ${blankCount} blank${blankCount > 1 ? 's' : ''}.`);
+            return;
+        }
+
+        questionData.correctAnswers = noteAnswers;
+        questionData.correctAnswer = JSON.stringify(noteAnswers);
+        questionData.slotCount = noteAnswers.length;
+
+    } else if (qType === 'table_completion') {
+        updateTableCompletionState(form);
+        const structureInput = form.querySelector('.tc-table-structure-json');
+        const answersInput = form.querySelector('.tc-table-answers-json');
+        const tableStructure = structureInput && structureInput.value ? JSON.parse(structureInput.value) : { headers: [], rows: [] };
+        const tableAnswers = answersInput && answersInput.value ? JSON.parse(answersInput.value) : { answers: [] };
+
+        if (!text) {
+            alert('Table title / instruction is required.');
+            return;
+        }
+
+        if (!tableStructure.rows || !tableStructure.rows.length) {
+            alert('Please create the table first.');
+            return;
+        }
+
+        if (!tableAnswers.answers || !tableAnswers.answers.length) {
+            alert('Please add at least one blank cell with answer using ___.');
+            return;
+        }
+
+        questionData.table_structure = {
+            headers: tableStructure.headers || [],
+            rows: tableStructure.rows || [],
+            answers: tableAnswers.answers || []
+        };
+        questionData.correctAnswer = JSON.stringify(tableAnswers.answers);
+        questionData.slotCount = tableAnswers.answers.length;
+
     } else {
         const answerInput = form.querySelector('.question-answer-input');
         questionData.correctAnswer = answerInput ? answerInput.value.trim() || null : null;
     }
 
-    group.questions.push(questionData);
+    // Check if in edit mode
+    const isEditMode = form.getAttribute('data-edit-mode') === 'true';
+    const editIndex = parseInt(form.getAttribute('data-edit-index'), 10);
 
-    if (textInput) textInput.value = '';
-    const answerInput = form.querySelector('.question-answer-input');
-    if (answerInput) answerInput.value = '';
-    const answerSelect = form.querySelector('.question-answer-select');
-    if (answerSelect) answerSelect.selectedIndex = 0;
-    const pointsInput = form.querySelector('.question-points-input');
-    if (pointsInput) pointsInput.value = '1';
-    form.querySelectorAll('.mc-option-row input[type="text"]').forEach(i => i.value = '');
-    form.querySelectorAll('.mc-option-row input[type="radio"], .mc-option-row input[type="checkbox"]').forEach(i => i.checked = false);
+    if (isEditMode && Number.isFinite(editIndex)) {
+        // Attach task image from question-level input or fallback to group's task_image when editing
+        try {
+            const qImgInput = form.querySelector('.question-task-image-url');
+            const qImg = qImgInput ? (qImgInput.value || '').trim() : (group.task_image || null);
+            if (qImg) {
+                questionData.question_data = questionData.question_data || {};
+                questionData.question_data.task_image = qImg;
+            }
+        } catch (e) {}
+
+        // Update existing question
+        group.questions[editIndex] = { ...group.questions[editIndex], ...questionData };
+    } else {
+        // Add new question
+        // Attach task image from question-level input or fallback to group's task_image
+        try {
+            const qImgInput = form.querySelector('.question-task-image-url');
+            const qImg = qImgInput ? (qImgInput.value || '').trim() : (group.task_image || null);
+            if (qImg) {
+                questionData.question_data = questionData.question_data || {};
+                questionData.question_data.task_image = qImg;
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        group.questions.push(questionData);
+    }
+
+    // Reset form
+    resetQuestionForm(form);
     form.classList.add('hidden');
 
     renderQuestionsList(groupItem, group);
@@ -1144,7 +1631,7 @@ function renderQuestionsList(groupItem, group) {
 
     list.style.display = 'block';
     let slotIndex = 1;
-    list.innerHTML = group.questions.map((question) => {
+    list.innerHTML = group.questions.map((question, qIndex) => {
         const slotCount = question.slotCount || 1;
         const slotLabel = slotCount > 1
             ? `Q${slotIndex}–Q${slotIndex + slotCount - 1}`
@@ -1154,7 +1641,18 @@ function renderQuestionsList(groupItem, group) {
         let detailHTML = '';
         const qType = question.type || group.question_type || 'short_answer';
 
-        if (qType === 'multiple_choice_single' || qType === 'multiple_choice_multiple') {
+            if (qType === 'table_completion' && question.table_structure) {
+                const blankCount = (question.table_structure.answers || []).length;
+                const colCount = (question.table_structure.headers || []).length;
+                detailHTML = `<div style="font-size:12px;margin-top:4px;">
+                    <span class="question-answer-badge">Table: ${colCount} cols, ${blankCount} blanks</span>
+                </div>`;
+            } else if (qType === 'note_completion') {
+                const blankCount = (Array.isArray(question.correctAnswers) ? question.correctAnswers.length : normalizeNoteCompletionAnswers(question.correctAnswer).length) || (question.slotCount || 1);
+                detailHTML = `<div style="font-size:12px;margin-top:4px;">
+                    <span class="question-answer-badge">Note: ${blankCount} blanks</span>
+                </div>`;
+            } else if (qType === 'multiple_choice_single' || qType === 'multiple_choice_multiple') {
             const opts = (question.options || []).map((o, i) => {
                 const isCorrect = qType === 'multiple_choice_multiple'
                     ? (question.correctAnswers || []).includes(o)
@@ -1166,16 +1664,30 @@ function renderQuestionsList(groupItem, group) {
             detailHTML = `<span class="question-answer-badge">✓ ${escapeHtml(question.correctAnswer)}</span>`;
         }
 
-        return `<div class="mb-8">
-            <span class="question-badge">${slotLabel}</span>
-            ${escapeHtml(question.text)}
-            ${detailHTML}
+        return `<div class="mb-12" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;position:relative;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                <div style="flex:1;">
+                    <span class="question-badge">${slotLabel}</span>
+                    <div style="margin-top:8px;font-weight:500;color:#1f2937;">${escapeHtml(question.text)}</div>
+                    ${question.explanation ? `<div style="margin-top:6px;font-size:12px;color:#0f766e;font-weight:600;">Answer Help: ${escapeHtml(question.explanation)}</div>` : ''}
+                    ${detailHTML}
+                </div>
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editQuestion(this, ${qIndex})" title="Edit question">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteQuestion(this, ${qIndex})" title="Delete question">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
         </div>`;
     }).join('');
 }
 
 function getQuestionTypeLabel(type) {
     const labels = {
+        essay: 'Essay (Writing / Speaking)',
         multiple_choice_single: 'Multiple Choice – Single Answer',
         multiple_choice_multiple: 'Multiple Choice – Multiple Answers',
         true_false_not_given: 'True / False / Not Given',
@@ -1206,6 +1718,343 @@ function makeMCOptionRow(inputType, optionIndex, groupName) {
     </div>`;
 }
 
+function normalizeTableCellAnswers(rawAnswer) {
+    if (Array.isArray(rawAnswer)) {
+        return rawAnswer.map(value => String(value).trim()).filter(Boolean);
+    }
+
+    if (rawAnswer && typeof rawAnswer === 'object') {
+        if (Array.isArray(rawAnswer.answers)) {
+            return rawAnswer.answers.map(value => String(value).trim()).filter(Boolean);
+        }
+
+        if (rawAnswer.answer !== undefined) {
+            return normalizeTableCellAnswers(rawAnswer.answer);
+        }
+    }
+
+    if (typeof rawAnswer === 'string') {
+        const text = rawAnswer.trim();
+        if (!text) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                return parsed.map(value => String(value).trim()).filter(Boolean);
+            }
+        } catch (error) {
+            // fall back to plain text handling
+        }
+
+        return text.includes('|')
+            ? text.split('|').map(value => value.trim()).filter(Boolean)
+            : [text];
+    }
+
+    if (rawAnswer === null || rawAnswer === undefined) {
+        return [];
+    }
+
+    const text = String(rawAnswer).trim();
+    return text ? [text] : [];
+}
+
+function countNoteCompletionBlanks(text) {
+    const matches = String(text || '').match(/_{2,}/g);
+    return matches ? matches.length : 0;
+}
+
+function getInlineQuestionType(form) {
+    if (!form) {
+        return '';
+    }
+
+    return form.querySelector('.question-type-select')?.value
+        || form.closest('.group-item')?.querySelector('.question-type-select')?.value
+        || '';
+}
+
+function normalizeNoteCompletionAnswers(rawAnswer) {
+    if (Array.isArray(rawAnswer)) {
+        return rawAnswer.map(value => String(value).trim()).filter(Boolean);
+    }
+
+    if (rawAnswer && typeof rawAnswer === 'object') {
+        if (Array.isArray(rawAnswer.answers)) {
+            return rawAnswer.answers.map(value => String(value).trim()).filter(Boolean);
+        }
+
+        if (rawAnswer.answer !== undefined) {
+            return normalizeNoteCompletionAnswers(rawAnswer.answer);
+        }
+    }
+
+    if (typeof rawAnswer === 'string') {
+        const text = rawAnswer.trim();
+        if (!text) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                return parsed.map(value => String(value).trim()).filter(Boolean);
+            }
+        } catch (error) {
+            // fall back to plain text handling
+        }
+
+        return text.includes('\n')
+            ? text.split(/\r?\n/).map(value => value.trim()).filter(Boolean)
+            : [text];
+    }
+
+    if (rawAnswer === null || rawAnswer === undefined) {
+        return [];
+    }
+
+    const text = String(rawAnswer).trim();
+    return text ? [text] : [];
+}
+
+function makeNoteCompletionAnswerRowHTML(value = '', index = 0) {
+    return `<div class="note-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
+        <span style="width:72px;flex:0 0 auto;font-size:13px;font-weight:600;color:#6b7280;">Blank ${index + 1}</span>
+        <input type="text" class="form-control form-control-sm note-completion-answer-input" data-blank-index="${index}" placeholder="Answer for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
+    </div>`;
+}
+
+function renderNoteCompletionAnswerInputs(form, values = []) {
+    const textInput = form.querySelector('.question-text-input');
+    const summary = form.querySelector('.note-completion-summary');
+    const container = form.querySelector('.note-completion-answers');
+
+    if (!summary || !container) {
+        return;
+    }
+
+    const blankCount = countNoteCompletionBlanks(textInput ? textInput.value : '');
+    summary.innerHTML = blankCount > 0
+        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one answer per blank in order.`
+        : 'Type the note text with <code>___</code> for each blank.';
+
+    if (blankCount === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const normalizedValues = Array.isArray(values) ? values : normalizeNoteCompletionAnswers(values);
+    container.innerHTML = Array.from({ length: blankCount }, (_, index) => makeNoteCompletionAnswerRowHTML(normalizedValues[index] || '', index)).join('');
+}
+
+function collectNoteCompletionAnswers(form) {
+    if (!form) {
+        return [];
+    }
+
+    return Array.from(form.querySelectorAll('.note-completion-answer-input'))
+        .map(input => input.value.trim())
+        .filter(Boolean);
+}
+
+function bindNoteCompletionLivePreview(form) {
+    if (!form || form.dataset.noteCompletionPreviewBound === '1' || !form.querySelector('.note-completion-answers')) {
+        return;
+    }
+
+    const textInput = form.querySelector('.question-text-input');
+    if (!textInput) {
+        return;
+    }
+
+    form.dataset.noteCompletionPreviewBound = '1';
+    textInput.addEventListener('input', function() {
+        renderNoteCompletionAnswerInputs(form);
+    });
+    textInput.addEventListener('change', function() {
+        renderNoteCompletionAnswerInputs(form);
+    });
+}
+
+function makeTableCellAnswerRowHTML(value = '', removable = false) {
+    return `<div class="tc-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
+        <input type="text" class="form-control form-control-sm tc-cell-answer" placeholder="Đáp án" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
+        <button type="button" class="btn btn-sm tc-remove-answer-btn" onclick="removeTableCellAnswer(this)" title="Xóa đáp án" aria-label="Xóa đáp án" style="flex:0 0 auto; border:1px solid #ef4444; color:#ef4444; background:#fff; width:26px; height:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; line-height:1; font-size:18px; font-weight:700;">
+            ×
+        </button>
+    </div>`;
+}
+
+function makeTableCellAnswerListHTML(existingAnswers = []) {
+    const answers = existingAnswers.length ? existingAnswers : [''];
+    return answers.map((answer, index) => makeTableCellAnswerRowHTML(answer, index > 0)).join('');
+}
+
+function makeTableCellEditor(rowIndex, colIndex, existingAnswers = []) {
+    return `<td data-row="${rowIndex}" data-col="${colIndex}">
+        <textarea class="tc-cell-text" rows="3" placeholder="Nhập nội dung ô. Dùng ___ cho blank"></textarea>
+        <div class="tc-answer-wrap hidden" style="display:none; margin-top:6px;">
+            <div class="tc-answer-list">
+                ${makeTableCellAnswerListHTML(existingAnswers)}
+            </div>
+            <button type="button" class="btn btn-sm btn-link p-0 tc-add-answer-btn" onclick="addTableCellAnswer(this)">
+                <i class="fas fa-plus"></i> Thêm đáp án
+            </button>
+        </div>
+    </td>`;
+}
+
+function addTableCellAnswer(button) {
+    const wrap = button.closest('.tc-answer-wrap');
+    const list = wrap ? wrap.querySelector('.tc-answer-list') : null;
+    if (!list) {
+        return;
+    }
+
+    list.insertAdjacentHTML('beforeend', makeTableCellAnswerRowHTML('', true));
+
+    const lastInput = list.querySelector('.tc-answer-item:last-child .tc-cell-answer');
+    if (lastInput) {
+        lastInput.focus();
+    }
+
+    const form = button.closest('.question-inline-form');
+    if (form) {
+        updateTableCompletionState(form);
+    }
+}
+
+function removeTableCellAnswer(button) {
+    const row = button.closest('.tc-answer-item');
+    const list = row ? row.closest('.tc-answer-list') : null;
+    if (!row || !list) {
+        return;
+    }
+
+    if (list.querySelectorAll('.tc-answer-item').length > 1) {
+        row.remove();
+    } else {
+        const input = row.querySelector('.tc-cell-answer');
+        if (input) {
+            input.value = '';
+        }
+    }
+
+    const form = button.closest('.question-inline-form');
+    if (form) {
+        updateTableCompletionState(form);
+    }
+}
+
+function buildTableCompletionBuilder(button) {
+    const form = button.closest('.question-inline-form');
+    if (!form) return;
+
+    const rowsInput = form.querySelector('.tc-num-rows');
+    const colsInput = form.querySelector('.tc-num-cols');
+    const rows = Math.max(1, parseInt(rowsInput?.value, 10) || 3);
+    const cols = Math.max(1, parseInt(colsInput?.value, 10) || 3);
+    const wrap = form.querySelector('.tc-builder-wrap');
+    const head = form.querySelector('.tc-builder-head');
+    const body = form.querySelector('.tc-builder-body');
+
+    if (!wrap || !head || !body) return;
+
+    const existingAnswers = {};
+    if (Array.isArray(form.__tableAnswers)) {
+        form.__tableAnswers.forEach((item) => {
+            const key = `${item.row}-${item.col}`;
+            existingAnswers[key] = Array.isArray(item.answers) ? item.answers : normalizeTableCellAnswers(item.answer);
+        });
+    }
+
+    let headHtml = '<tr><th style="min-width:160px;">Row / Column</th>';
+    for (let c = 0; c < cols; c++) {
+        headHtml += `<th><input type="text" class="tc-col-title" data-col="${c}" placeholder="Cột ${c + 1}"></th>`;
+    }
+    headHtml += '</tr>';
+    head.innerHTML = headHtml;
+
+    let bodyHtml = '';
+    for (let r = 0; r < rows; r++) {
+        bodyHtml += `<tr><th><input type="text" class="tc-row-title" data-row="${r}" placeholder="Hàng ${r + 1}"></th>`;
+        for (let c = 0; c < cols; c++) {
+            const key = `${r}-${c}`;
+            bodyHtml += makeTableCellEditor(r, c, existingAnswers[key] || []);
+        }
+        bodyHtml += '</tr>';
+    }
+    body.innerHTML = bodyHtml;
+    wrap.classList.remove('hidden');
+    updateTableCompletionState(form);
+}
+
+function updateTableCompletionState(form) {
+    const rows = [];
+    const answers = [];
+    const headers = [];
+
+    form.querySelectorAll('.tc-col-title').forEach((input, idx) => {
+        headers[idx] = input.value.trim();
+    });
+
+    form.querySelectorAll('.tc-builder-body tr').forEach((tr, rowIndex) => {
+        const rowLabel = tr.querySelector('.tc-row-title')?.value.trim() || '';
+        const cells = [];
+        tr.querySelectorAll('td').forEach(td => {
+            const textarea = td.querySelector('.tc-cell-text');
+            const answerWrap = td.querySelector('.tc-answer-wrap');
+            const answerList = td.querySelector('.tc-answer-list');
+            const answerInputs = td.querySelectorAll('.tc-cell-answer');
+            const value = (textarea?.value || '').trim();
+            cells.push(value);
+
+            if (value.includes('___')) {
+                if (answerWrap) {
+                    answerWrap.style.display = 'block';
+                }
+
+                if (answerList && !answerList.querySelector('.tc-answer-item')) {
+                    answerList.innerHTML = makeTableCellAnswerListHTML();
+                }
+
+                const cellAnswers = Array.from(answerInputs)
+                    .map(input => (input.value || '').trim())
+                    .filter(Boolean);
+
+                if (cellAnswers.length) {
+                    answers.push({ row: rowIndex, col: parseInt(td.dataset.col, 10), answers: cellAnswers });
+                }
+            } else {
+                if (answerWrap) {
+                    answerWrap.style.display = 'none';
+                }
+
+                if (answerList) {
+                    answerList.innerHTML = makeTableCellAnswerListHTML();
+                }
+            }
+        });
+        // Store row as object with cells and row_label to preserve data in JSON serialization
+        rows.push({
+            cells: cells,
+            row_label: rowLabel
+        });
+    });
+
+    const structureInput = form.querySelector('.tc-table-structure-json');
+    const answersInput = form.querySelector('.tc-table-answers-json');
+    if (structureInput) {
+        structureInput.value = JSON.stringify({ headers, rows });
+    }
+    if (answersInput) {
+        answersInput.value = JSON.stringify({ answers });
+        form.__tableAnswers = answers;
+    }
+}
+
 function getQuestionFormHTML(questionType) {
     const isMCSingle = questionType === 'multiple_choice_single';
     const isMCMultiple = questionType === 'multiple_choice_multiple';
@@ -1214,7 +2063,37 @@ function getQuestionFormHTML(questionType) {
     const isMatching = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(questionType);
     const isCompletion = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling'].includes(questionType);
 
-    let html = `<div class="mb-8"><span class="question-type-badge">${getQuestionTypeLabel(questionType)}</span></div>`;
+    let html = '';
+
+    if (questionType === 'essay') {
+        html += `<div class="form-row">
+            <div class="form-group">
+                <label class="input-label">Prompt / Task *</label>
+                <textarea class="form-control question-text-input" rows="3" placeholder="Enter the essay prompt or task"></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="input-label">Optional Task Image URL</label>
+                <input type="text" class="form-control question-task-image-url" placeholder="e.g. https://... or leave blank">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="input-label">Model Answer</label>
+                <textarea class="form-control question-explanation-input" rows="3" placeholder="Provide a model answer or guidance for review..."></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group" style="max-width:120px;">
+                <label class="input-label">Points</label>
+                <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
+            </div>
+        </div>`;
+        return html;
+    }
+
+    html = `<div class="mb-8"><span class="question-type-badge">${getQuestionTypeLabel(questionType)}</span></div>`;
 
     if (isMCSingle || isMCMultiple) {
         const inputType = isMCSingle ? 'radio' : 'checkbox';
@@ -1224,6 +2103,12 @@ function getQuestionFormHTML(questionType) {
             <div class="form-group">
                 <label class="input-label">Question Text *</label>
                 <textarea class="form-control question-text-input" rows="2" placeholder="Enter the question"></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="input-label">Answer Help</label>
+                <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
             </div>
         </div>
         <div class="mc-options-container">
@@ -1239,7 +2124,7 @@ function getQuestionFormHTML(questionType) {
         <div class="form-row">
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
-                <input type="number" class="form-control question-points-input" min="1" step="1" value="1">
+                <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
             </div>
         </div>`;
 
@@ -1256,12 +2141,18 @@ function getQuestionFormHTML(questionType) {
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label class="input-label">Answer Help</label>
+                <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label class="input-label">Correct Answer</label>
                 <select class="form-control question-answer-select">${optionsHTML}</select>
             </div>
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
-                <input type="number" class="form-control question-points-input" min="1" step="1" value="1">
+                <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
             </div>
         </div>`;
 
@@ -1274,35 +2165,115 @@ function getQuestionFormHTML(questionType) {
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label class="input-label">Answer Help</label>
+                <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label class="input-label">Correct Match (Answer)</label>
                 <input type="text" class="form-control question-answer-input" placeholder="e.g. Paragraph A, Section 2, Feature X">
             </div>
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
-                <input type="number" class="form-control question-points-input" min="1" step="1" value="1">
+                <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
             </div>
         </div>`;
 
     } else if (isCompletion) {
-        const placeholder = questionType === 'table_completion'
-            ? 'Enter the cell label or row/column description (use ___ for blank)'
-            : 'Enter the sentence/text (use ___ to indicate the blank)';
-        html += `<div class="form-row">
-            <div class="form-group">
-                <label class="input-label">Question / Sentence * <small class="text-muted">(use ___ for blank)</small></label>
-                <textarea class="form-control question-text-input" rows="2" placeholder="${placeholder}"></textarea>
+        if (questionType === 'table_completion') {
+            html += `<div class="form-row">
+                <div class="form-group flex-fill">
+                    <label class="input-label">Table Title / Instruction *</label>
+                    <textarea class="form-control question-text-input" rows="2" placeholder="Nhập tiêu đề hoặc hướng dẫn cho bảng"></textarea>
+                </div>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label class="input-label">Correct Answer(s)</label>
-                <input type="text" class="form-control question-answer-input" placeholder="Enter the word(s) that fill the blank">
+            <div class="form-row">
+                <div class="form-group flex-fill">
+                    <label class="input-label">Answer Help</label>
+                    <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                </div>
             </div>
-            <div class="form-group" style="max-width:120px;">
-                <label class="input-label">Points</label>
-                <input type="number" class="form-control question-points-input" min="1" step="1" value="1">
+            <div class="form-row align-items-end">
+                <div class="form-group" style="max-width:110px;">
+                    <label class="input-label">Rows</label>
+                    <input type="number" class="form-control tc-num-rows" min="1" max="12" value="3">
+                </div>
+                <div class="form-group" style="max-width:110px;">
+                    <label class="input-label">Cols</label>
+                    <input type="number" class="form-control tc-num-cols" min="1" max="8" value="3">
+                </div>
+                <div class="form-group" style="max-width:120px;">
+                    <label class="input-label">Points</label>
+                    <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="buildTableCompletionBuilder(this)">
+                        <i class="fas fa-table"></i> Create Table
+                    </button>
+                </div>
             </div>
-        </div>`;
+            <div class="alert alert-info py-2 px-3 mb-12">
+                Nhập nội dung trong từng ô. Ô nào có <code>___</code> sẽ là chỗ trống cho học viên điền đáp án.
+            </div>
+            <div class="tc-builder-wrap hidden">
+                <div class="table-responsive" style="overflow-x:auto;">
+                    <table class="table table-bordered tc-inline-table">
+                        <thead class="tc-builder-head"></thead>
+                        <tbody class="tc-builder-body"></tbody>
+                    </table>
+                </div>
+                <input type="hidden" class="tc-table-structure-json">
+                <input type="hidden" class="tc-table-answers-json">
+            </div>`;
+        } else if (questionType === 'note_completion') {
+            html += `<div class="form-row">
+                <div class="form-group flex-fill">
+                    <label class="input-label">Question / Note Text *</label>
+                    <textarea class="form-control question-text-input" rows="2" placeholder="Enter the note text and use ___ for each blank"></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group flex-fill">
+                    <label class="input-label">Answer Help</label>
+                    <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                </div>
+            </div>
+            <div class="alert alert-info py-2 px-3 mb-12 note-completion-summary">
+                Type the note text with <code>___</code> for each blank.
+            </div>
+            <div class="note-completion-answers"></div>
+            <div class="form-row mt-8">
+                <div class="form-group" style="max-width:120px;">
+                    <label class="input-label">Points</label>
+                    <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
+                </div>
+            </div>`;
+        } else {
+            const placeholder = 'Enter the sentence/text (use ___ to indicate the blank)';
+            html += `<div class="form-row">
+                <div class="form-group">
+                    <label class="input-label">Question / Sentence * <small class="text-muted">(use ___ for blank)</small></label>
+                    <textarea class="form-control question-text-input" rows="2" placeholder="${placeholder}"></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="input-label">Answer Help</label>
+                    <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="input-label">Correct Answer(s)</label>
+                    <input type="text" class="form-control question-answer-input" placeholder="Enter the word(s) that fill the blank">
+                </div>
+                <div class="form-group" style="max-width:120px;">
+                    <label class="input-label">Points</label>
+                    <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
+                </div>
+            </div>`;
+        }
 
     } else {
         html += `<div class="form-row">
@@ -1318,7 +2289,7 @@ function getQuestionFormHTML(questionType) {
             </div>
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
-                <input type="number" class="form-control question-points-input" min="1" step="1" value="1">
+                <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
             </div>
         </div>`;
     }
@@ -1519,10 +2490,22 @@ function setupFormValidation() {
             }
         }
 
+        // Ensure section-level audio inputs are preserved into the form before native submit
+        preserveSectionAudioFiles();
         document.getElementById('questionGroupsData').value = JSON.stringify(testData);
         document.getElementById('testForm').submit();
     });
 }
+
+    // Ensure section audio inputs are preserved whenever the form is submitted
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('testForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                preserveSectionAudioFiles();
+            });
+        }
+    });
 </script>
 @endpush
 

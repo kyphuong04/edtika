@@ -9,52 +9,28 @@
         $isProgressing = true;
     }
 
-    // Use panel-embedded detail page for webinars; fall back to original URL for bundles
+    // Use panel detail pages for both webinars and bundles
     $panelDetailUrl   = !empty($sale->webinar)
         ? url('/panel/courses/purchases/' . $saleItem->slug)
-        : $saleItem->getUrl();
-    $panelDetailTarget = !empty($sale->webinar) ? '' : 'target="_blank"';
+        : url('/panel/courses/purchases/' . $saleItem->slug);
+    $panelDetailTarget = '';
     $panelLearningUrl  = !empty($sale->webinar)
         ? url('/panel/courses/purchases/learning/' . $saleItem->slug)
-        : $saleItem->getUrl();
+        : url('/panel/courses/purchases/' . $saleItem->slug);
 @endphp
 
 @if(!empty($saleItem))
-    <div class="panel-course-card-1 position-relative">
-        <div class="card-mask"></div>
-
+    <div class="panel-course-card-1 position-relative rounded-24">
         <div class="position-relative d-flex flex-column flex-lg-row  gap-12 z-index-2 bg-white p-12 rounded-24">
             {{-- Image --}}
             <div class="panel-course-card-1__image position-relative rounded-16 bg-gray-100">
                 <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }}>
                     <img src="{{ $saleItem->getImage() }}" alt="" class="img-cover rounded-16">
                 </a>
-                {{-- Badges On Image --}}
-                @include("design_1.panel.webinars.my_purchases.item_card.badges")
-
-                @if($saleItem->type == 'webinar')
-                    <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                        <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="d-flex-center w-100 h-100">
-                            <x-iconsax-bol-video class="icons text-white" width="24px" height="24px"/>
-                        </a>
-                    </div>
-                @elseif($saleItem->type == "text_lesson")
-                    <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                        <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="d-flex-center w-100 h-100">
-                            <x-iconsax-bol-note-2 class="icons text-white" width="24px" height="24px"/>
-                        </a>
-                    </div>
-                @elseif($saleItem->type == "course")
-                    <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                        <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }} class="d-flex-center w-100 h-100">
-                            <x-iconsax-bol-video-play class="icons text-white" width="24px" height="24px"/>
-                        </a>
-                    </div>
-                @endif
             </div>
 
             {{-- Content --}}
-            <div class="panel-course-card-1__content flex-1 d-flex flex-column">
+            <div class="panel-course-card-1__content flex-1 d-flex flex-column rounded-16">
                 <div class="bg-gray-100 p-16 rounded-16 mb-12">
                     <div class="d-flex align-items-start justify-content-between gap-12">
                         <div class="">
@@ -63,12 +39,6 @@
                                     {{ truncate($saleItem->title, 46) }}
                                 </a>
                             </h3>
-
-                            @include("design_1.web.components.rate", [
-                                'rate' => round($saleItem->getRate(),1),
-                                'rateCount' => $saleItem->reviews()->where('status', 'active')->count(),
-                                'rateClassName' => 'mt-8',
-                            ])
                         </div>
 
                         {{-- actions dropdown removed per user preference --}}
@@ -81,30 +51,30 @@
 
                 {{-- Progress & Price --}}
                 <div class="row align-items-center justify-content-between mt-auto">
-                    <div class="col-10">
+                    <div class="col-7">
                         @include("design_1.panel.webinars.my_purchases.item_card.progress_and_chart")
                     </div>
 
                     {{-- Continue Learning Button --}}
                     @if(!empty($sale->webinar))
-                        <div class="col-2 d-flex align-items-center justify-content-end">
+                        <div class="col-5 d-flex align-items-center justify-content-end">
                             {{-- link now points to the course detail page instead of learning page --}}
                             <a href="{{ $panelDetailUrl }}" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
-                                <span class="font-12 text-primary mr-4">{{ trans('update.continue_learning') }}</span>
-                                <x-iconsax-lin-arrow-right class="icons text-primary mt-2" width="16px" height="16px"/>
+                                <span class="font-12 mr-4" style="color: #511D99">{{ trans('update.continue_learning') }}</span>
+                                <x-iconsax-lin-arrow-right class="icons mt-2" width="16px" height="16px" style="color: #511D99"/>
                             </a>
                         </div>
                     @elseif(!empty($sale->bundle))
-                        <div class="col-2 d-flex align-items-center justify-content-end">
-                            <a href="{{ $saleItem->getUrl() }}" target="_blank" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
-                                <span class="font-12 text-primary mr-4">{{ trans('update.details') }}</span>
-                                <x-iconsax-lin-arrow-right class="icons text-primary mt-2" width="16px" height="16px"/>
+                        <div class="col-5 d-flex align-items-center justify-content-end">
+                            <a href="{{ $panelDetailUrl }}" class="continue-learning-link d-flex align-items-center cursor-pointer text-decoration-none">
+                                <span class="font-12 mr-4" style="color: #511D99">{{ trans('update.view_details') }}</span>
+                                <x-iconsax-lin-arrow-right class="icons mt-2" width="16px" height="16px" style="color: #511D99"/>
                             </a>
                         </div>
                     @endif
                 </div>
-
             </div>
         </div>
     </div>
 @endif
+

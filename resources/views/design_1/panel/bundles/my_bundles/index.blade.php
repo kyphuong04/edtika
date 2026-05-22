@@ -19,8 +19,8 @@
         font-size: 14px;
         font-weight: 500;
         text-decoration: none;
-        background-color: #f3f4f6;
-        color: #374151;
+        background-color: #ffff;
+        color: #511D99;
         border: 1.5px solid transparent;
         transition: background-color .2s, color .2s;
         white-space: nowrap;
@@ -31,8 +31,48 @@
         text-decoration: none;
     }
     .materials-tabs .tab-btn.active {
-        background-color: #1f2937;
+        background-color: #511D99;
         color: #ffffff;
+    }
+
+    .materials-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    .materials-page-header__title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+    .materials-page-header__hint {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: #6b7280;
+    }
+    .materials-page-header__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: #511D99;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform .2s ease, ease, opacity .2s ease;
+    }
+    .materials-page-header__button:hover {
+        color: #ffffff;
+        text-decoration: none;
+        transform: translateY(-1px);
+        opacity: .96;
     }
 
     /* ─── Bundle Card ────────────────────────────────────── */
@@ -96,6 +136,20 @@
 @endpush
 
 @section('content')
+
+    <div class="materials-page-header">
+        <div>
+            <h3 class="materials-page-header__title">{{ trans('update.my_bundles') }}</h3>
+            <p class="materials-page-header__hint">Tạo bundle mới và gửi xét duyệt để manager/CEO duyệt trước khi hiển thị chính thức.</p>
+        </div>
+
+        @can('panel_bundles_create')
+            <a href="/panel/bundles/new" class="materials-page-header__button">
+                <x-iconsax-lin-add class="icons" width="18px" height="18px"/>
+                {{ trans('update.create_a_bundle') }}
+            </a>
+        @endcan
+    </div>
 
     {{-- Tab Navigation --}}
     <div class="materials-tabs">

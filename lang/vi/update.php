@@ -4759,6 +4759,7 @@ return [
     'R' => 'R',
     'W' => 'W',
     'S' => 'S',
+    'details' => 'Chi tiết',
     'view_details' => 'Xem chi tiết',
     'ielts_all' => 'Tất cả',
     'view' => 'Xem',

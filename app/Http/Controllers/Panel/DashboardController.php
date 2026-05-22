@@ -167,6 +167,53 @@ class DashboardController extends Controller
             ->orderBy('completed_at', 'desc')
             ->first();
 
+        $recentFeedbackAttempts = IeltsTestAttempt::query()
+            ->where('user_id', $user->id)
+            ->where(function ($query) {
+                $query->whereNotNull('writing_feedback')
+                    ->orWhereNotNull('speaking_feedback');
+            })
+            ->with([
+                'test:id,title',
+                'writingGrader:id,full_name,avatar,avatar_settings',
+                'speakingGrader:id,full_name,avatar,avatar_settings',
+            ])
+            ->orderByRaw('GREATEST(COALESCE(writing_graded_at, 0), COALESCE(speaking_graded_at, 0), COALESCE(completed_at, 0)) desc')
+            ->limit(4)
+            ->get();
+
+        $recentFeedbacks = collect();
+        foreach ($recentFeedbackAttempts as $attempt) {
+            if (!empty($attempt->writing_feedback)) {
+                $recentFeedbacks->push([
+                    'attempt_id' => $attempt->id,
+                    'skill' => 'Writing',
+                    'test_title' => $attempt->test->title ?? 'IELTS Test',
+                    'feedback' => $attempt->writing_feedback,
+                    'band' => $attempt->writing_band,
+                    'grader' => $attempt->writingGrader,
+                    'graded_at' => $attempt->writing_graded_at ?? $attempt->completed_at,
+                ]);
+            }
+
+            if (!empty($attempt->speaking_feedback)) {
+                $recentFeedbacks->push([
+                    'attempt_id' => $attempt->id,
+                    'skill' => 'Speaking',
+                    'test_title' => $attempt->test->title ?? 'IELTS Test',
+                    'feedback' => $attempt->speaking_feedback,
+                    'band' => $attempt->speaking_band,
+                    'grader' => $attempt->speakingGrader,
+                    'graded_at' => $attempt->speaking_graded_at ?? $attempt->completed_at,
+                ]);
+            }
+        }
+
+        $recentFeedbacks = $recentFeedbacks
+            ->sortByDesc('graded_at')
+            ->values()
+            ->take(3);
+
         $skills = ['listening', 'reading', 'writing', 'speaking'];
         $skillBands = [];
         foreach ($skills as $skill) {
@@ -231,6 +278,7 @@ class DashboardController extends Controller
             'userRank'      => $userRank,
             'streak'        => $streak,
             'overallBand'   => $userOverall,
+            'recentFeedbacks' => $recentFeedbacks,
         ];
     }
 

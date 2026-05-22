@@ -32,8 +32,6 @@
     border-color: var(--wf-accent) !important;
 }
 
-.wf-page-wrap { padding: 24px 0; }
-
 /* ── Welcome Bar (Dashboard-style Bootstrap) ────────────────────────────────────────── */
 .ielts-welcome-bar {
     display: flex;
@@ -117,84 +115,349 @@
 .wf-limit-badge.success { background: #d1fae5; color: #059669; }
 .wf-limit-badge.warning { background: #fee2e2; color: #dc2626; }
 
-/* ── Section Rows ─────────────────────────────────────── */
-.wf-sections-list { display: flex; flex-direction: column; gap: 12px; }
+/* ── Mock Test Cards ─────────────────────────────────── */
+.wf-test-list { display: flex; flex-direction: column; gap: 22px; }
 
-.wf-section-row {
-    background: rgba(212, 211, 254, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.62);
-    border-radius: 16px;
-    padding: 18px 22px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+.wf-test-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.dark-mode .wf-test-card {
+    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    border-color: rgba(148, 163, 184, 0.14);
+}
+
+.wf-test-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.wf-test-card__title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #294e78;
+    line-height: 1.15;
+    margin-bottom: 6px;
+}
+
+.dark-mode .wf-test-card__title { color: #dbeafe; }
+
+.wf-test-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.wf-test-card__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.08);
+    color: #294e78;
+    font-weight: 600;
+}
+
+.dark-mode .wf-test-card__pill {
+    background: rgba(96, 165, 250, 0.12);
+    color: #dbeafe;
+}
+
+.wf-test-card__progress {
+    min-width: 120px;
+    text-align: right;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.wf-skill-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.wf-skill-card {
+    min-height: 278px;
+    border-radius: 28px;
+    border: 1.5px solid rgba(148, 163, 184, 0.28);
+    background: #fff;
+    padding: 22px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.dark-mode .wf-skill-card {
+    background: #0b1220;
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+.wf-skill-card.is-disabled { opacity: 0.6; }
+
+.wf-skill-card__top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.wf-skill-card__icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    transition: box-shadow 0.2s, transform 0.2s;
-}
-.dark-mode .wf-section-row { background: #1e293b; }
-.wf-section-row:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-1px); }
-
-.wf-section-icon {
-    width: 44px; height: 44px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
-}
-.wf-section-icon.mock  { background: #ede9fe; color: #7c3aed; }
-.wf-section-icon.info  { background: #f0f9ff; color: #0ea5e9; }
-
-.wf-section-meta { flex: 0 0 auto; min-width: 160px; }
-.wf-section-name {
-    font-size: 14px; font-weight: 700; color: #1e293b;
-    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px;
-}
-.dark-mode .wf-section-name { color: #f1f5f9; }
-.wf-section-count { font-size: 12px; color: #94a3b8; }
-
-.wf-row-progress { flex: 1; min-width: 80px; }
-.wf-row-progress-track {
-    height: 5px; background: #f1f5f9; border-radius: 3px; overflow: hidden;
-}
-.dark-mode .wf-row-progress-track { background: #334155; }
-.wf-row-progress-fill {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, var(--wf-accent), var(--wf-accent-hover));
+    justify-content: center;
+    font-size: 24px;
+    border: 2px solid var(--skill-color);
+    color: var(--skill-color);
+    background: var(--skill-soft);
 }
 
-.wf-skill-badges { display: flex; gap: 5px; flex-wrap: wrap; flex-shrink: 0; }
-.wf-skill-badge {
-    width: 26px; height: 26px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700;
+.wf-skill-card__title {
+    font-size: 23px;
+    font-weight: 800;
+    color: #294e78;
+    line-height: 1.15;
 }
-.wf-skill-badge.L { background: rgba(81, 29, 153, 0.14); color: var(--wf-accent); }
-.wf-skill-badge.R { background: #d1fae5; color: #10b981; }
-.wf-skill-badge.W { background: #fef3c7; color: #f59e0b; }
-.wf-skill-badge.S { background: #fee2e2; color: #ef4444; }
 
-.wf-row-start { flex-shrink: 0; }
-.wf-btn-row-start {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 20px; border-radius: 20px; background: var(--wf-accent);
-    color: #fff; font-size: 13px; font-weight: 600; border: none;
-    cursor: pointer; transition: background 0.2s, transform 0.15s;
-    text-decoration: none; white-space: nowrap;
-}
-.wf-btn-row-start:hover { background: var(--wf-accent-hover); text-decoration: none; color: #fff; transform: scale(1.03); }
-.wf-btn-row-start.disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; transform: none; }
-.wf-btn-view-result {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 18px; border-radius: 20px; background: transparent;
-    color: var(--wf-accent); font-size: 13px; font-weight: 600;
-    border: 1.5px solid var(--wf-accent); cursor: pointer;
-    transition: all 0.2s; text-decoration: none; white-space: nowrap;
-}
-.wf-btn-view-result:hover { background: var(--wf-accent); color: #fff; text-decoration: none; }
-.wf-row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.dark-mode .wf-skill-card__title { color: #dbeafe; }
 
-.wf-best-score {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 10px; border-radius: 20px;
-    background: #d1fae5; color: #059669; font-size: 11px; font-weight: 600; flex-shrink: 0;
+.wf-skill-card__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 220px;
+    padding: 14px 18px;
+    border-radius: 999px;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(180deg, var(--skill-color) 0%, rgba(0,0,0,0.08) 100%);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.wf-skill-card__button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(0,0,0,0.16);
+}
+
+.wf-skill-card__button:disabled,
+.wf-full-test__button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.wf-skill-card__hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.wf-skill-card__footer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.wf-skill-card__key {
+    width: 68px;
+    height: 68px;
+    margin-top: 12px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--skill-color);
+    font-size: 24px;
+    background: #fff;
+}
+
+.dark-mode .wf-skill-card__key {
+    background: #0b1220;
+    border-color: #475569;
+}
+
+.wf-full-test {
+    margin-top: 22px;
+    background: linear-gradient(90deg, #edf2f7 0%, #e5ebf2 100%);
+    border-radius: 28px;
+    padding: 18px 22px 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.wf-full-test__ribbon {
+    position: absolute;
+    left: -2px;
+    top: 10px;
+    background: #e11d48;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    padding: 6px 16px;
+    transform: rotate(-45deg) translate(-18px, -12px);
+    transform-origin: left top;
+}
+
+.wf-full-test__info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    flex: 1;
+    padding-left: 26px;
+}
+
+.wf-full-test__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #294e78;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.wf-full-test__title {
+    font-size: 27px;
+    font-weight: 800;
+    color: #294e78;
+    line-height: 1.1;
+}
+
+.wf-full-test__subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.wf-full-test__progress {
+    width: 100%;
+    max-width: 360px;
+    flex: 0 0 360px;
+}
+
+.wf-full-test__progress-track {
+    height: 44px;
+    border-radius: 999px;
+    border: 2px solid #2f4f75;
+    background: rgba(255, 255, 255, 0.32);
+    overflow: hidden;
+    position: relative;
+}
+
+.wf-full-test__progress-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: linear-gradient(90deg, rgba(81, 29, 153, 0.15), rgba(81, 29, 153, 0.24));
+}
+
+.wf-full-test__progress-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 400;
+    color: #294e78;
+}
+
+.wf-full-test__start {
+    margin-left: auto;
+}
+
+.wf-full-test__button {
+    min-width: 300px;
+    height: 78px;
+    padding: 0 28px;
+    border: none;
+    border-radius: 999px;
+    background: #2f4f75;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 14px 24px rgba(47, 79, 117, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wf-full-test__button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 28px rgba(47, 79, 117, 0.28);
+}
+
+.wf-full-test__button i,
+.wf-skill-card__button i {
+    font-size: 19px;
+}
+
+.wf-full-test__button.disabled {
+    background: #cbd5e1;
+    color: #64748b;
+    box-shadow: none;
+}
+
+@media (max-width: 1199px) {
+    .wf-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .wf-full-test { flex-wrap: wrap; }
+    .wf-full-test__progress { flex: 1 1 280px; max-width: none; }
+    .wf-full-test__start { margin-left: 0; width: 100%; }
+    .wf-full-test__button { width: 100%; min-width: 0; }
+}
+
+@media (max-width: 767px) {
+    .wf-test-card { padding: 18px; border-radius: 22px; }
+    .wf-test-card__header { flex-direction: column; }
+    .wf-test-card__title { font-size: 22px; }
+    .wf-skill-grid { grid-template-columns: 1fr; }
+    .wf-skill-card { min-height: 240px; }
+    .wf-full-test {
+        padding: 18px;
+        gap: 14px;
+        border-radius: 22px;
+    }
+    .wf-full-test__ribbon { top: 6px; }
+    .wf-full-test__info { padding-left: 18px; }
+    .wf-full-test__title { font-size: 20px; }
+    .wf-full-test__progress-track { height: 38px; }
+    .wf-full-test__progress-label { font-size: 18px; }
+    .wf-full-test__button { height: 62px; font-size: 18px; }
 }
 
 /* Empty state */
@@ -310,7 +573,7 @@
                 </div>
             @endif
 
-            {{-- Mock Test Rows --}}
+            {{-- Mock Test Cards --}}
             @if($mockTests->isEmpty())
                 <div class="wf-empty">
                     <img src="/assets/default/img/no-results/support.png" alt="">
@@ -318,57 +581,127 @@
                     <p>{{ trans('update.no_mock_tests_hint') }}</p>
                 </div>
             @else
-                <div class="wf-sections-list">
+                <div class="wf-test-list">
                     @foreach($mockTests as $test)
-                    @php $rowProgress = $test->user_attempts > 0 ? 100 : 0; @endphp
-                    <div class="wf-section-row">
-                        <div class="wf-section-icon mock"><i class="fas fa-clipboard-list"></i></div>
-                        <div class="wf-section-meta">
-                            <div class="wf-section-name">{{ $test->title }}</div>
-                            <div class="wf-section-count">
-                                {{ $test->total_duration ?? 165 }} min
-                                @if($test->user_attempts > 0) &bull; {{ $test->user_attempts }} attempt{{ $test->user_attempts != 1 ? 's' : '' }} @endif
-                            </div>
-                        </div>
-                        <div class="wf-skill-badges">
-                            @if($test->has_listening)<span class="wf-skill-badge L">L</span>@endif
-                            @if($test->has_reading)  <span class="wf-skill-badge R">R</span>@endif
-                            @if($test->has_writing)  <span class="wf-skill-badge W">W</span>@endif
-                            @if($test->has_speaking) <span class="wf-skill-badge S">S</span>@endif
-                        </div>
-                        <div class="wf-row-progress">
-                            <div class="wf-row-progress-track">
-                                <div class="wf-row-progress-fill" style="width: {{ $rowProgress }}%"></div>
-                            </div>
-                        </div>
-                        @if($test->best_attempt && $test->best_attempt->overall_band)
-                            <div class="wf-best-score"><i class="fas fa-star"></i> Band {{ $test->best_attempt->overall_band }}</div>
-                        @endif
-                        <div class="wf-row-start">
-                            @if($test->can_take === true)
-                                <div class="wf-row-actions">
-                                    <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
-                                        @csrf
-                                        <button type="submit" class="wf-btn-row-start">
-                                            <i class="fas fa-play"></i>
-                                            {{ $test->user_attempts > 0 ? 'Retry' : trans('update.start_test') }}
-                                        </button>
-                                    </form>
-                                    @if($test->user_attempts > 0 && $test->last_attempt)
-                                        <a href="{{ route('panel.ielts_tests.results', $test->last_attempt->id) }}" class="wf-btn-view-result">View result</a>
+                    @php
+                        $fullProgress = $test->user_attempts > 0 ? 100 : 0;
+                        $skillCards = [
+                            ['key' => 'listening', 'label' => 'Listening', 'icon' => 'fa-headphones-simple', 'color' => '#2ea8c7', 'soft' => 'rgba(46, 168, 199, 0.12)', 'hint' => 'Listening skill'],
+                            ['key' => 'reading', 'label' => 'Reading', 'icon' => 'fa-book-open', 'color' => '#2f7a3f', 'soft' => 'rgba(47, 122, 63, 0.12)', 'hint' => 'Reading skill'],
+                            ['key' => 'writing', 'label' => 'Writing', 'icon' => 'fa-pen-nib', 'color' => '#f29a3b', 'soft' => 'rgba(242, 154, 59, 0.12)', 'hint' => 'Writing skill'],
+                            ['key' => 'speaking', 'label' => 'Speaking', 'icon' => 'fa-microphone-lines', 'color' => '#bb5b72', 'soft' => 'rgba(187, 91, 114, 0.12)', 'hint' => 'Speaking skill'],
+                        ];
+                        $canTakeTest = $test->can_take === true;
+                    @endphp
+                    <div class="wf-test-card">
+                        <div class="wf-test-card__header">
+                            <div>
+                                <div class="wf-test-card__title">{{ $test->title }}</div>
+                                <div class="wf-test-card__meta">
+                                    <span class="wf-test-card__pill"><i class="fas fa-layer-group"></i> 4 skills</span>
+                                    <span>{{ $test->total_duration ?? 165 }} min</span>
+                                    @if($test->user_attempts > 0)
+                                        <span>{{ $test->user_attempts }} attempt{{ $test->user_attempts != 1 ? 's' : '' }}</span>
+                                    @endif
+                                    @if($test->best_attempt && $test->best_attempt->overall_band)
+                                        <span class="wf-best-score"><i class="fas fa-star"></i> Band {{ $test->best_attempt->overall_band }}</span>
                                     @endif
                                 </div>
-                            @elseif($test->can_take === 'daily_limit')
-                                <span class="wf-btn-row-start disabled"><i class="fas fa-clock"></i> Daily limit</span>
-                            @elseif($test->can_take === 'max_attempts')
-                                <span class="wf-btn-row-start disabled"><i class="fas fa-lock"></i> Max attempts</span>
-                            @elseif($test->can_take === 'not_enrolled')
-                                <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="wf-btn-row-start" style="background:#f59e0b;">
-                                    <i class="fas fa-shopping-cart"></i> Enroll
-                                </a>
-                            @else
-                                <span class="wf-btn-row-start disabled"><i class="fas fa-lock"></i> Locked</span>
-                            @endif
+                            </div>
+                            <div class="wf-test-card__progress">{{ $fullProgress }}%</div>
+                        </div>
+
+                        <div class="wf-skill-grid">
+                            @foreach($skillCards as $skill)
+                                @php
+                                    $hasSkill = $test->{'has_' . $skill['key']} ?? false;
+                                    $skillCanTake = $canTakeTest && $hasSkill;
+                                @endphp
+                                <div class="wf-skill-card {{ $skillCanTake ? '' : 'is-disabled' }}" style="--skill-color: {{ $skill['color'] }}; --skill-soft: {{ $skill['soft'] }};">
+                                    <div class="wf-skill-card__top">
+                                        <div class="wf-skill-card__icon">
+                                            <i class="fas {{ $skill['icon'] }}"></i>
+                                        </div>
+                                        <div class="wf-skill-card__title">{{ $skill['label'] }}</div>
+                                    </div>
+
+                                    <div class="wf-skill-card__footer">
+                                        @if($skillCanTake)
+                                            <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;width:100%;display:flex;justify-content:center;">
+                                                @csrf
+                                                <input type="hidden" name="skill" value="{{ $skill['key'] }}">
+                                                <button type="submit" class="wf-skill-card__button">
+                                                    <i class="fas fa-bolt"></i>
+                                                    Làm bài
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" class="wf-skill-card__button" disabled>
+                                                <i class="fas fa-lock"></i>
+                                                @if(!$hasSkill)
+                                                    Not available
+                                                @else
+                                                    Locked
+                                                @endif
+                                            </button>
+                                        @endif
+                                        <div class="wf-skill-card__hint">{{ $skill['hint'] }}</div>
+                                        <div class="wf-skill-card__key">
+                                            <i class="fas fa-key"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="wf-full-test">
+                            <div class="wf-full-test__ribbon">NEW</div>
+                            <div class="wf-full-test__info">
+                                <div class="wf-full-test__icon">
+                                    <i class="fas fa-th-large"></i>
+                                </div>
+                                <div>
+                                    <div class="wf-full-test__title">Full Test</div>
+                                    <div class="wf-full-test__subtitle">Take all 4 skills together</div>
+                                </div>
+                            </div>
+                            <div class="wf-full-test__progress">
+                                <div class="wf-full-test__progress-track">
+                                    <div class="wf-full-test__progress-fill" style="width: {{ $fullProgress }}%"></div>
+                                    <div class="wf-full-test__progress-label">{{ $fullProgress }}%</div>
+                                </div>
+                            </div>
+                            <div class="wf-full-test__start">
+                                @if($canTakeTest)
+                                    <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
+                                        @csrf
+                                        <button type="submit" class="wf-full-test__button">
+                                            <i class="fas fa-bolt"></i>
+                                            Start
+                                        </button>
+                                    </form>
+                                @elseif($test->can_take === 'daily_limit')
+                                    <button type="button" class="wf-full-test__button disabled" disabled>
+                                        <i class="fas fa-clock"></i>
+                                        Daily limit
+                                    </button>
+                                @elseif($test->can_take === 'max_attempts')
+                                    <button type="button" class="wf-full-test__button disabled" disabled>
+                                        <i class="fas fa-lock"></i>
+                                        Max attempts
+                                    </button>
+                                @elseif($test->can_take === 'not_enrolled')
+                                    <a href="{{ route('panel.ielts_tests.show', $test->id) }}" class="wf-full-test__button" style="background:#f59e0b;text-decoration:none;">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        Enroll
+                                    </a>
+                                @else
+                                    <button type="button" class="wf-full-test__button disabled" disabled>
+                                        <i class="fas fa-lock"></i>
+                                        Locked
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                     @endforeach

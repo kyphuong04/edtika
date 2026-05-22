@@ -41,6 +41,6 @@
     </div>
 
     <div class="d-flex justify-content-center mt-28">
-        <button type="submit" class="btn btn-primary rounded-50 px-32 js-blog-post-submit">{{ $buttonLabel }}</button>
+        <button type="submit" class="btn btn-primary rounded-50 px-32 js-blog-post-submit" style="background-color: #511D99; border-color: #511D99;">{{ $buttonLabel }}</button>
     </div>
 </form>

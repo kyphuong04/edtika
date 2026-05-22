@@ -671,9 +671,18 @@
             if ($n !== null) $answerMap[$n] = $ans->is_correct ? 'correct' : 'incorrect';
         }
         // Use actual total questions from test (not just answered ones)
-        $actualTotal = \App\Models\IeltsTestQuestion::whereHas('section', fn($q) =>
+        $questionsForSkill = \App\Models\IeltsTestQuestion::whereHas('section', fn($q) =>
             $q->where('test_id', $attempt->test_id)->where('skill', $skl)
-        )->count();
+        )->get();
+        // For questions like table_completion, count individual cell answers as separate items
+        $actualTotal = 0;
+        foreach ($questionsForSkill as $qItem) {
+            if (($qItem->question_type ?? '') === 'table_completion') {
+                $actualTotal += count($qItem->table_completion_answers_array ?? []);
+            } else {
+                $actualTotal += 1;
+            }
+        }
         $rawScore      = (int)($skl === 'reading' ? ($attempt->reading_score??0) : ($attempt->listening_score??0));
         $answeredCount = $answers->count();
         $total         = max(1, $actualTotal ?: $answeredCount);

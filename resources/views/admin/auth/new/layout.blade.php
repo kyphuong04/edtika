@@ -43,6 +43,8 @@
         }
     </style>
 
+    <link rel="stylesheet" href="/assets/design_1/css/overrides.css">
+
 </head>
 
 <body class="bg-gray {{ $isRtl ? 'rtl' : '' }} {{ "{$userThemeColorMode}-mode" }}">
