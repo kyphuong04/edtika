@@ -9,14 +9,12 @@
     }
     
     .user-stats-card {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 20px;
         margin-bottom: 30px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -37,7 +35,7 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: #511D99;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -60,18 +58,16 @@
     /* ── Dictionary Profile Card ─────────────────────────────── */
     .dict-profile-card {
         position: relative;
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 14px 18px;
         margin-bottom: 16px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     .dark-mode .dict-profile-card {
-        background: rgba(212, 211, 254, 0.18);
-        box-shadow: 0 18px 38px rgba(0,0,0,0.25);
+        background: #1e293b;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
     .dict-profile-trigger {
         display: flex;
@@ -130,18 +126,18 @@
         right: 0;
         left: 0;
         width: 100%;
-        background: rgba(248, 246, 255, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 16px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
         z-index: 100;
         opacity: 0;
         visibility: hidden;
         transform: translateY(8px);
         transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
         padding-bottom: 6px;
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     .dark-mode .dict-profile-dropdown {
         background: #1e293b;
@@ -164,14 +160,12 @@
     }
     
     .search-section {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 30px;
         margin-bottom: 30px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.12);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     
     .dark-mode .search-section {
@@ -205,7 +199,7 @@
     
     .search-input:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: #511D99;
     }
     
     .dark-mode .search-input {
@@ -216,7 +210,7 @@
     
     .search-btn {
         padding: 12px 30px;
-        background: #3b82f6;
+        background: #511D99;
         color: white;
         border: none;
         border-radius: 8px;
@@ -226,7 +220,7 @@
     }
     
     .search-btn:hover {
-        background: #2563eb;
+        background: #421670;
     }
     
     .word-lists-section {
@@ -264,8 +258,9 @@
     }
     
     .toggle-btn.active {
-        background: #3b82f6;
-        color: white;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
+        border: 1px solid rgba(81, 29, 153, 0.16);
     }
     
     .dark-mode .toggle-btn {
@@ -274,25 +269,25 @@
     }
     
     .word-list-card {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 20px;
         margin-bottom: 15px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
         cursor: default;
         transition: all 0.3s;
         position: relative;
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     
     .word-list-card:hover {
-        box-shadow: 0 22px 44px rgba(58, 42, 96, 0.16);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
     }
     
     .dark-mode .word-list-card {
-        background: rgba(212, 211, 254, 0.18);
+        background: #1e293b;
     }
     
     .word-list-card.locked {
@@ -322,7 +317,7 @@
     }
     
     .word-list-header:hover .word-list-name {
-        color: #3b82f6;
+        color: #511D99;
     }
     
     .word-list-name {
@@ -338,23 +333,23 @@
     
     .word-count-badge {
         padding: 4px 12px;
-        background: #e0f2fe;
-        color: #0369a1;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
         border-radius: 12px;
         font-size: 13px;
         font-weight: 600;
     }
     
     .dark-mode .word-count-badge {
-        background: #0c4a6e;
-        color: #7dd3fc;
+        background: #1e293b;
+        color: #c4b5fd;
     }
     
     .word-list-description {
         color: #64748b;
         font-size: 14px;
         margin: 0;
-        background: rgba(255, 255, 255, 0.24);
+        background: #ffffff;
         border-radius: 14px;
         padding: 12px 14px;
     }
@@ -364,16 +359,16 @@
     }
     
     .word-list-expanded {
-        background: rgba(255, 255, 255, 0.22);
+        background: #ffffff;
         border-radius: 16px;
         padding: 20px;
         margin-top: 15px;
         display: none;
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
 
     .dark-mode .word-list-expanded {
-        background: rgba(212, 211, 254, 0.16);
+        background: #1e293b;
     }
 
     .word-list-expanded.show {
@@ -397,7 +392,7 @@
         outline: none;
         transition: border-color 0.2s;
     }
-    .filter-input:focus { border-color: #3b82f6; }
+    .filter-input:focus { border-color: #511D99; }
 
     .dark-mode .filter-input {
         background: #1e293b;
@@ -423,7 +418,7 @@
         background-position: right 12px center;
         padding-right: 32px;
     }
-    .filter-select:focus { border-color: #3b82f6; }
+    .filter-select:focus { border-color: #511D99; }
     .dark-mode .filter-select {
         background-color: #1e293b;
         border-color: #334155;
@@ -432,8 +427,8 @@
 
     /* ── Word item card ── */
     .word-item {
-        background: rgba(255, 255, 255, 0.24);
-        border: 1px solid rgba(255, 255, 255, 0.52);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 16px;
         padding: 14px 40px 14px 14px; /* right padding leaves room for badge */
         margin-bottom: 10px;
@@ -442,18 +437,18 @@
         gap: 12px;
         position: relative;
         transition: border-color 0.2s, box-shadow 0.2s;
-        backdrop-filter: blur(14px) saturate(140%);
-        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     .word-item:hover {
-        border-color: rgba(147, 197, 253, 0.8);
-        box-shadow: 0 14px 26px rgba(58, 42, 96, 0.12);
+        border-color: rgba(81, 29, 153, 0.18);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
     }
     .dark-mode .word-item {
-        background: rgba(212, 211, 254, 0.16);
+        background: #1e293b;
         border-color: rgba(255, 255, 255, 0.18);
     }
-    .dark-mode .word-item:hover { border-color: #3b82f6; }
+    .dark-mode .word-item:hover { border-color: #c4b5fd; }
 
     .word-checkbox {
         width: 18px;
@@ -461,7 +456,7 @@
         margin-top: 3px;   /* align with first text line */
         flex-shrink: 0;
         cursor: pointer;
-        accent-color: #3b82f6;
+        accent-color: #511D99;
     }
 
     .word-content { flex: 1; min-width: 0; }
@@ -532,12 +527,12 @@
         background: transparent;
     }
     .btn-select-all, .btn-deselect-all {
-        border: 1.5px solid #94a3b8;
-        color: #475569;
+        border: 1.5px solid rgba(81, 29, 153, 0.16);
+        color: #511D99;
     }
     .btn-select-all:hover, .btn-deselect-all:hover {
-        border-color: #64748b;
-        background: #f1f5f9;
+        border-color: rgba(81, 29, 153, 0.22);
+        background: rgba(81, 29, 153, 0.06);
     }
     .btn-delete {
         border: 1.5px solid #dc2626;
@@ -545,10 +540,10 @@
     }
     .btn-delete:hover { background: #fee2e2; }
     .btn-practice {
-        border: 1.5px solid #3b82f6;
-        color: #3b82f6;
+        border: 1.5px solid #511D99;
+        color: #511D99;
     }
-    .btn-practice:hover { background: #dbeafe; }
+    .btn-practice:hover { background: rgba(81, 29, 153, 0.08); }
 
     .dark-mode .btn-select-all,
     .dark-mode .btn-deselect-all {
@@ -563,24 +558,22 @@
     }
     .dark-mode .btn-delete:hover { background: #7f1d1d; }
     .dark-mode .btn-practice {
-        border-color: #60a5fa;
-        color: #60a5fa;
+        border-color: #c4b5fd;
+        color: #c4b5fd;
     }
-    .dark-mode .btn-practice:hover { background: #1e3a5f; }
+    .dark-mode .btn-practice:hover { background: #1e1b4b; }
     
     .stats-widget {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 25px;
         margin-bottom: 20px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     
     .dark-mode .stats-widget {
-        background: rgba(212, 211, 254, 0.18);
+        background: #1e293b;
     }
     
     .widget-title {
@@ -606,50 +599,50 @@
     }
     
     .streak-circle {
-        background: rgba(255, 255, 255, 0.24);
+        background: #ffffff;
         width: 45px;
         height: 45px;
         border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.48);
+        border: 2px solid rgba(81, 29, 153, 0.16);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 16px;
         font-weight: 700;
-        color: #94a3b8;
+        color: #6b7280;
         transition: all 0.3s;
     }
     
     .streak-circle.active {
-        background: #3b82f6;
-        border-color: #3b82f6;
+        background: #511D99;
+        border-color: #511D99;
         color: white;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(81, 29, 153, 0.20);
     }
     
     .dark-mode .streak-circle {
-        background: #0f172a;
+        background: #1e293b;
         border-color: #334155;
     }
     
     .dark-mode .streak-circle.active {
-        background: #3b82f6;
-        border-color: #3b82f6;
+        background: #511D99;
+        border-color: #511D99;
     }
     
     .ranking-placeholder {
         text-align: center;
         padding: 40px 20px;
-        color: #94a3b8;
+        color: #6b7280;
         font-size: 14px;
         line-height: 1.6;
-        background: rgba(255, 255, 255, 0.24);
+        background: #ffffff;
         border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.48);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
     
     .dark-mode .ranking-placeholder {
-        background: rgba(212, 211, 254, 0.16);
+        background: #1e293b;
         color: #64748b;
     }
 
@@ -659,14 +652,14 @@
 
     .flashcard-info {
         padding: 20px;
-        background: rgba(255, 255, 255, 0.24);
+        background: #ffffff;
         border-radius: 14px;
         margin-bottom: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.48);
+        border: 1px solid rgba(81, 29, 153, 0.10);
     }
 
     .dark-mode .flashcard-info {
-        background: rgba(212, 211, 254, 0.16);
+        background: #1e293b;
     }
 
     .flashcard-info p {
@@ -684,18 +677,16 @@
     }
     
     .practice-mode-container {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 40px 30px;
         margin-bottom: 30px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     
     .dark-mode .practice-mode-container {
-        background: rgba(212, 211, 254, 0.18);
+        background: #1e293b;
     }
     
     .score-board {
@@ -708,7 +699,7 @@
     
     .score-item {
         text-align: center;
-        border: 2px solid #cbd5e1;
+        border: 2px solid rgba(81, 29, 153, 0.16);
         border-radius: 30px;
         padding: 12px 40px;
         min-width: 160px;
@@ -721,7 +712,7 @@
     .score-label {
         font-size: 14px;
         font-weight: 700;
-        color: #475569;
+        color: #511D99;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -766,39 +757,39 @@
     }
     
     .answer-card {
-        background: rgba(255, 255, 255, 0.24);
-        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: #ffffff;
+        border: 2px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 18px 14px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s;
-        backdrop-filter: blur(14px) saturate(140%);
-        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     
     .answer-card:hover {
-        border-color: #3b82f6;
+        border-color: #511D99;
         transform: scale(1.02);
     }
     
     .answer-card.selected {
-        border-color: #3b82f6;
-        background: #dbeafe;
+        border-color: #511D99;
+        background: rgba(81, 29, 153, 0.08);
     }
     
     .answer-card.correct {
         border-color: #10b981;
-        background: #d1fae5;
+        background: #f0fdf4;
     }
     
     .answer-card.incorrect {
         border-color: #ef4444;
-        background: #fee2e2;
+        background: #fff1f2;
     }
     
     .dark-mode .answer-card {
-        background: #0f172a;
+        background: #1e293b;
         border-color: #334155;
     }
     
@@ -899,18 +890,16 @@
 
     /* Dictionary Result Styles */
     .dictionary-result-container {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 20px;
         margin: 20px 0;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.12);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
 
     .dark-mode .dictionary-result-container {
-        background: rgba(212, 211, 254, 0.18);
+        background: #1e293b;
     }
 
     .result-word {
@@ -926,19 +915,19 @@
 
     .result-pronunciation {
         font-size: 18px;
-        color: #3b82f6;
+        color: #511D99;
         font-style: italic;
         margin-bottom: 20px;
     }
 
     .dark-mode .result-pronunciation {
-        color: #60a5fa;
+        color: #c4b5fd;
     }
 
     .result-pos {
         display: inline-block;
-        background: #e0f2fe;
-        color: #0284c7;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
         padding: 4px 12px;
         border-radius: 4px;
         font-size: 14px;
@@ -947,8 +936,8 @@
     }
 
     .dark-mode .result-pos {
-        background: #0c4a6e;
-        color: #7dd3fc;
+        background: #1e1b4b;
+        color: #c4b5fd;
     }
 
     .result-definition {
@@ -996,12 +985,12 @@
     }
 
     .result-btn-primary {
-        background: #3b82f6;
+        background: #511D99;
         color: white;
     }
 
     .result-btn-primary:hover {
-        background: #2563eb;
+        background: #421670;
     }
 
     .result-btn-secondary {
@@ -1031,14 +1020,14 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        background: rgba(255, 255, 255, 0.24);
-        border: 1px solid rgba(255, 255, 255, 0.48);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 12px;
         padding: 6px 12px;
     }
 
     .dark-mode .pronunciation-item {
-        background: rgba(212, 211, 254, 0.16);
+        background: #1e293b;
         border-color: rgba(255, 255, 255, 0.18);
     }
 
@@ -1047,7 +1036,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        background: #3b82f6;
+        background: #511D99;
         color: #fff;
         padding: 2px 6px;
         border-radius: 4px;
@@ -1055,19 +1044,19 @@
 
     .pron-ipa {
         font-size: 16px;
-        color: #3b82f6;
+        color: #511D99;
         font-style: italic;
     }
 
     .dark-mode .pron-ipa {
-        color: #60a5fa;
+        color: #c4b5fd;
     }
 
     .pron-audio-btn {
         background: none;
         border: none;
         cursor: pointer;
-        color: #3b82f6;
+        color: #511D99;
         font-size: 20px;
         display: flex;
         align-items: center;
@@ -1077,11 +1066,11 @@
     }
 
     .pron-audio-btn:hover {
-        background: #dbeafe;
+        background: rgba(81, 29, 153, 0.08);
     }
 
     .dark-mode .pron-audio-btn {
-        color: #60a5fa;
+        color: #c4b5fd;
     }
 
     .dark-mode .pron-audio-btn:hover {
@@ -1168,7 +1157,7 @@
 
     .def-num {
         font-weight: 700;
-        color: #3b82f6;
+        color: #511D99;
         margin-right: 4px;
     }
 
@@ -1281,30 +1270,28 @@
 
     /* ── Sidebar Flashcard Widget ─────────────────────────── */
     .stats-widget {
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
         padding: 20px;
         margin-bottom: 22px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
     .dark-mode .stats-widget {
-        background: rgba(212, 211, 254, 0.18);
+        background: #1e293b;
     }
     .sidebar-flashcard-widget { padding: 0; }
     .sidebar-card-display {
-        background: rgba(255, 255, 255, 0.22);
-        border: 1px solid rgba(255, 255, 255, 0.55);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 16px;
         min-height: 140px;
         margin-bottom: 14px;
         position: relative;
         overflow: hidden;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
     }
-    .dark-mode .sidebar-card-display { background: rgba(255, 255, 255, 0.08); }
+    .dark-mode .sidebar-card-display { background: #1e293b; }
 
     .sidebar-card-image {
         width: 100%;
@@ -1324,7 +1311,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255, 255, 255, 0.18);
+        background: #ffffff;
         border-radius: 16px;
         color: #94a3b8;
         font-size: 13px;
@@ -1340,8 +1327,8 @@
         align-items: center;
         justify-content: center;
         padding: 14px;
-        backdrop-filter: blur(10px) saturate(140%);
-        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     .sidebar-card-overlay.show { display: flex; }
     .sidebar-card-display-text {
@@ -1381,7 +1368,7 @@
         line-height: 1;
         transition: color 0.2s;
     }
-    .sidebar-nav-btn:hover { color: #3b82f6; }
+    .sidebar-nav-btn:hover { color: #511D99; }
     .sidebar-nav-btn:disabled { color: #cbd5e1; cursor: not-allowed; }
     .dark-mode .sidebar-nav-btn { color: #94a3b8; }
     .sidebar-card-counter { font-size: 13px; color: #64748b; }
@@ -1390,10 +1377,10 @@
     /* ── Profile Card (same height as search section) ─────── */
     .dict-profile-card {
         position: relative;
-        background: rgba(212, 211, 254, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
         border-radius: 18px;
-        box-shadow: 0 18px 38px rgba(58, 42, 96, 0.14);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
         margin-bottom: 16px;
         cursor: pointer;
         padding: 24px 28px;
@@ -1402,12 +1389,12 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        backdrop-filter: blur(16px) saturate(140%);
-        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     .dark-mode .dict-profile-card {
-        background: rgba(212, 211, 254, 0.18);
-        box-shadow: 0 18px 38px rgba(0,0,0,0.25);
+        background: #1e293b;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
     .dict-profile-card__trigger {
         display: flex;
@@ -1422,7 +1409,7 @@
         min-width: 72px;
         height: 72px;
         border-radius: 50%;
-        border: 3px solid #e2e8f0;
+        border: 3px solid rgba(81, 29, 153, 0.10);
         overflow: hidden;
         background: #e5e7eb;
         flex-shrink: 0;

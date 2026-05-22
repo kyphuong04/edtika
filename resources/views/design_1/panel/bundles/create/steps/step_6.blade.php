@@ -2,7 +2,7 @@
 
 @endpush
 
-<div class="bg-white rounded-16 p-16 mt-32">
+<div class="bg-white rounded-16 p-16 mt-32 mb-32">
     <h3 class="font-14 font-weight-bold">{{ trans('public.message_to_reviewer') }}</h3>
 
 

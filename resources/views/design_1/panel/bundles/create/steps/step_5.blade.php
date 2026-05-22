@@ -2,7 +2,7 @@
     <link rel="stylesheet" href="/assets/default/vendors/sortable/jquery-ui.min.css"/>
 @endpush
 
-<div class="bg-white rounded-16 p-16 mt-32">
+<div class="bg-white rounded-16 p-16 mt-32 mb-32">
 
 
     <div class="d-flex align-items-center justify-content-between mt-32 p-12 rounded-16 border-gray-300 border-dashed">

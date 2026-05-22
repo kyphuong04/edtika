@@ -101,21 +101,15 @@
 }
 @media screen and (min-width: 1200px) {
   .container {
-    width: 91% !important;
+    width: 95% !important;
     min-width: 1009px !important;
     max-width: 1368px !important;
   }
 }
-@media screen and (min-width: 768px) and (max-width: 991px) {
+@media screen and (max-width: 991px) {
   .container {
-    padding-right: 24px;
-    padding-left: 24px;
-  }
-}
-@media screen and (max-width: 767px) {
-  .container {
-    padding-right: 24px;
-    padding-left: 24px;
+    padding-right: 16px;
+    padding-left: 16px;
   }
 }
 
@@ -132,16 +126,10 @@
     max-width: 1800px !important;
   }
 }
-@media screen and (min-width: 768px) and (max-width: 991px) {
+@media screen and (max-width: 991px) {
   .container-lg {
-    padding-right: 24px;
-    padding-left: 24px;
-  }
-}
-@media screen and (max-width: 767px) {
-  .container-lg {
-    padding-right: 24px;
-    padding-left: 24px;
+    padding-right: 16px;
+    padding-left: 16px;
   }
 }
 
@@ -18476,8 +18464,9 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
   z-index: 1;
   height: 36px;
   padding: 8px 8px;
-  color: var(--gray-500);
-  background-color: var(--gray-300);
+  color: #222 !important;
+  font-weight: 600 !important;
+  background-color: var(--gray-300) !important;
   border-radius: 8px;
   cursor: pointer;
   transform: translateY(-50%);
@@ -18547,8 +18536,8 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 }
 .custom-switch .custom-control-input:checked ~ .custom-control-label:before {
   color: var(--primary-btn-color);
-  background-color: var(--primary);
-  border-color: var(--primary);
+  background-color: #511D99;
+  border-color: #511D99;
   box-shadow: none;
 }
 .custom-switch .custom-control-input:disabled:checked ~ .custom-control-label::before {
@@ -19247,6 +19236,49 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 }
 .modal-footer > * {
   margin: 0.25rem;
+}
+.modal-footer > .btn-secondary,
+.modal-footer > .btn-danger,
+.modal-footer > .close-swl,
+.modal-footer > [data-dismiss=modal],
+.custom-modal-footer .d-flex > .btn-secondary,
+.custom-modal-footer .d-flex > .btn-danger,
+.custom-modal-footer .d-flex > .close-swl,
+.custom-modal-footer .d-flex > [data-dismiss=modal] {
+  order: 1;
+  margin-left: 0 !important;
+  margin-right: 0.25rem !important;
+}
+.modal-footer > .btn-primary,
+.modal-footer > button[type=submit],
+.custom-modal-footer .d-flex > .btn-primary,
+.custom-modal-footer .d-flex > button[type=submit] {
+  order: 2;
+  background-color: #511D99 !important;
+  border-color: #511D99 !important;
+}
+.modal-footer > .btn-primary:hover,
+.modal-footer > .btn-primary:focus,
+.modal-footer > .btn-primary:active,
+.modal-footer > .btn-primary.active,
+.modal-footer > .btn-primary:not(:disabled):not(.disabled):active,
+.modal-footer > button[type=submit]:hover,
+.modal-footer > button[type=submit]:focus,
+.modal-footer > button[type=submit]:active,
+.modal-footer > button[type=submit].active,
+.modal-footer > button[type=submit]:not(:disabled):not(.disabled):active,
+.custom-modal-footer .d-flex > .btn-primary:hover,
+.custom-modal-footer .d-flex > .btn-primary:focus,
+.custom-modal-footer .d-flex > .btn-primary:active,
+.custom-modal-footer .d-flex > .btn-primary.active,
+.custom-modal-footer .d-flex > .btn-primary:not(:disabled):not(.disabled):active,
+.custom-modal-footer .d-flex > button[type=submit]:hover,
+.custom-modal-footer .d-flex > button[type=submit]:focus,
+.custom-modal-footer .d-flex > button[type=submit]:active,
+.custom-modal-footer .d-flex > button[type=submit].active,
+.custom-modal-footer .d-flex > button[type=submit]:not(:disabled):not(.disabled):active {
+  background-color: #421670 !important;
+  border-color: #421670 !important;
 }
 
 .modal-scrollbar-measure {
@@ -24358,4 +24390,60 @@ fieldset {
 .play-iframe-page .interactive-file-iframe {
   width: 100%;
   height: 100%;
+}
+
+:root {
+  --edtika-primary: #511D99;
+}
+
+/* Make sidebars and navigation panels white with a subtle shadow */
+aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-sidebar, .left-sidebar {
+  background: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Make cards, panels and widgets white and slightly elevated */
+.card, .panel, .card-with-mask, .card-statistic, .panel-header, .panel-body, .widget, .box, .box-body {
+  background: #ffffff !important;
+  color: #222 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Primary content inside cards should use the purple tone for contrast */
+.card h1, .card h2, .card h3, .card .title, .panel-header .title, .widget .title,
+.card .card-title, .panel .panel-title, .box .box-title {
+  color: var(--edtika-primary) !important;
+}
+
+/* Links, important texts and icons inside cards and sidebars */
+.card a, .card .text-primary, .panel a, .panel .text-primary,
+.sidebar a, .main-sidebar a, .custom-container-sidebar a, .landing-builder-sidebar a,
+.sidebar .menu a, .main-sidebar .menu a {
+  color: var(--edtika-primary) !important;
+}
+
+.sidebar .menu i, .sidebar .menu svg, .main-sidebar .menu i, .main-sidebar .menu svg {
+  color: var(--edtika-primary) !important;
+  fill: var(--edtika-primary) !important;
+}
+
+/* Badges and small highlights inside white cards use the primary color */
+.card .badge, .panel .badge, .widget .badge, .badge-primary {
+  background: var(--edtika-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Fine tune for elements that previously used glass/backdrop effects */
+.backdrop-filter-blur-4, .glass, .glass-card, .with-mask, .mask-8-white {
+  -webkit-backdrop-filter: none !important;
+          backdrop-filter: none !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Preserve hover affordance but keep purple accent */
+.sidebar a:hover, .card a:hover, .panel a:hover {
+  color: #421670 !important;
 }

@@ -1,15 +1,28 @@
 {{-- Table Completion Question Type for Students --}}
 @php
-    // Parse question data to get table structure
-    $questionData = is_string($question->question_data) ? json_decode($question->question_data, true) : $question->question_data;
-    $tableStructure = $questionData['table_structure'] ?? null;
-    
-    if ($tableStructure) {
-        $tableHeaders = $tableStructure['headers'] ?? [];
-        $tableRows = $tableStructure['rows'] ?? [];
-    } else {
-        $tableHeaders = [];
-        $tableRows = [];
+    $questionData = is_array($question->question_data ?? null)
+        ? $question->question_data
+        : (is_string($question->question_data ?? null) ? json_decode($question->question_data, true) : []);
+
+    $tableStructure = $question->table_structure
+        ?? ($questionData['table_structure'] ?? null);
+
+    if (is_string($tableStructure)) {
+        $tableStructure = json_decode($tableStructure, true);
+    }
+
+    $tableHeaders = $tableStructure['headers'] ?? [];
+    $tableRows = $tableStructure['rows'] ?? [];
+
+    $savedAnswerJson = $userAnswers[$question->id] ?? '';
+    $savedAnswerData = is_string($savedAnswerJson) ? json_decode($savedAnswerJson, true) : $savedAnswerJson;
+    $savedMap = [];
+    if (is_array($savedAnswerData) && !empty($savedAnswerData['answers']) && is_array($savedAnswerData['answers'])) {
+        foreach ($savedAnswerData['answers'] as $answerItem) {
+            if (isset($answerItem['row'], $answerItem['col'])) {
+                $savedMap[$answerItem['row'] . '-' . $answerItem['col']] = $answerItem['answer'] ?? '';
+            }
+        }
     }
 @endphp
 
@@ -17,54 +30,51 @@
     @if(!empty($question->title))
         <div class="idp-note-title">{{ $question->title }}</div>
     @endif
-    
-    @if(!empty($tableHeaders) && !empty($tableRows))
+
+    @if(!empty($tableHeaders) || !empty($tableRows))
         <div class="table-completion-container">
             <table class="idp-table-completion-styled">
-                <thead>
-                    <tr>
-                        @foreach($tableHeaders as $header)
-                            <th>{{ $header }}</th>
-                        @endforeach
-                    </tr>
-                </thead>
+                @if(!empty($tableHeaders))
+                    <thead>
+                        <tr>
+                            @foreach($tableHeaders as $header)
+                                <th>{!! nl2br(e($header)) !!}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                @endif
                 <tbody>
                     @foreach($tableRows as $rowIndex => $row)
                         <tr>
                             @foreach($row as $colIndex => $cellContent)
                                 @php
-                                    // Check if this cell has a question marker [11], [12], etc.
-                                    $questionMatch = null;
-                                    if (preg_match('/\[(\d+)\]/', $cellContent, $matches)) {
-                                        $questionNumber = $matches[1];
-                                        $cellText = trim(preg_replace('/\[(\d+)\]/', '', $cellContent));
-                                        $questionMatch = $questionNumber;
-                                        
-                                        // Find the saved answer for this question
-                                        $cellId = 'tc_' . $question->id . '_q' . $questionNumber;
-                                        $userAnswer = $userAnswers[$cellId] ?? '';
-                                    }
+                                    $cellText = is_string($cellContent) ? $cellContent : (string) $cellContent;
+                                    $cellKey = $rowIndex . '-' . $colIndex;
+                                    $savedValue = $savedMap[$cellKey] ?? '';
+                                    $parts = preg_split('/(___)/', $cellText, -1, PREG_SPLIT_DELIM_CAPTURE);
+                                    $hasBlank = is_array($parts) && count($parts) > 1;
                                 @endphp
-                                
                                 <td>
-                                    @if($questionMatch)
-                                        {{-- Cell with question input --}}
-                                        @if($cellText)
-                                            <span class="cell-text">{{ $cellText }}</span>
-                                        @endif
-                                        <div class="tc-input-wrapper">
-                                            <span class="tc-question-number">{{ $questionMatch }}</span>
-                                            <input type="text" 
-                                                   class="idp-table-input"
-                                                   id="answer_{{ $cellId }}"
-                                                   name="question_{{ $cellId }}"
-                                                   value="{{ $userAnswer }}"
-                                                   placeholder="{{ $questionMatch }}"
-                                                   onblur="saveAnswer('{{ $cellId }}', this.value)">
-                                        </div>
+                                    @if($hasBlank)
+                                        @foreach($parts as $part)
+                                            @if($part === '___')
+                                                <span class="tc-input-wrapper">
+                                                    <input type="text"
+                                                           class="idp-table-input tc-cell-input"
+                                                           value="{{ $savedValue }}"
+                                                           autocomplete="off"
+                                                           spellcheck="false"
+                                                           data-question-id="{{ $question->id }}"
+                                                           data-row="{{ $rowIndex }}"
+                                                           data-col="{{ $colIndex }}"
+                                                           oninput="saveTableAnswer(this)">
+                                                </span>
+                                            @elseif(trim($part) !== '')
+                                                <span class="cell-text">{!! nl2br(e($part)) !!}</span>
+                                            @endif
+                                        @endforeach
                                     @else
-                                        {{-- Regular cell content --}}
-                                        {{ $cellContent }}
+                                        {!! nl2br(e($cellText)) !!}
                                     @endif
                                 </td>
                             @endforeach
@@ -109,55 +119,58 @@
     padding: 12px 16px;
     border: 1px solid #c0c0c0;
     vertical-align: top;
-    line-height: 1.6;
-    white-space: nowrap;
+    line-height: 1.7;
+    white-space: normal;
 }
 
-.idp-table-completion-styled td .cell-text {
+.cell-text {
     display: inline;
-    margin-bottom: 8px;
-    white-space: nowrap;
 }
 
 .tc-input-wrapper {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    background: transparent;
-    padding: 6px 10px;
-    border-radius: 4px;
-    border: none;
-    white-space: nowrap;
-}
-
-.tc-question-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 28px;
-    height: 28px;
-    background: #000000;
-    color: #ffffff;
-    font-weight: bold;
-    font-size: 13px;
-    border-radius: 50%;
-    padding: 4px;
+    vertical-align: middle;
+    margin: 0 6px;
 }
 
 .idp-table-input {
-    border: 2px dashed #00b4d8;
-    padding: 6px 12px;
-    border-radius: 3px;
+    border: 2px dashed #111827;
+    padding: 6px 10px;
+    border-radius: 4px;
     font-size: 14px;
-    min-width: 120px;
+    min-width: 180px;
     background: #ffffff;
     transition: all 0.2s;
-    white-space: nowrap;
 }
 
 .idp-table-input:focus {
     outline: none;
-    border-color: #333333;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12);
 }
 </style>
+
+<script>
+if (typeof window.saveTableAnswer !== 'function') {
+    window.saveTableAnswer = function (el) {
+        const questionId = el.dataset.questionId;
+        if (!questionId || typeof saveAnswer !== 'function') {
+            return;
+        }
+
+        const inputs = document.querySelectorAll(`.tc-cell-input[data-question-id="${questionId}"]`);
+        const answers = [];
+
+        inputs.forEach((input) => {
+            answers.push({
+                row: parseInt(input.dataset.row, 10),
+                col: parseInt(input.dataset.col, 10),
+                answer: input.value || ''
+            });
+        });
+
+        saveAnswer(questionId, JSON.stringify({ answers }));
+    };
+}
+</script>

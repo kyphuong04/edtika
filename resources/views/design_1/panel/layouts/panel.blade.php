@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/default/vendors/simplebar/simplebar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/design_1/css/app.min.css">
     <link rel="stylesheet" href="/assets/design_1/css/panel.min.css">
 
@@ -74,8 +75,6 @@
         .panel-content .panel-section-card,
         .panel-content .card {
             background: var(--glass-surface-bg) !important;
-            border: 1px solid var(--glass-surface-border) !important;
-            box-shadow: var(--glass-surface-shadow) !important;
             backdrop-filter: blur(14px) !important;
             -webkit-backdrop-filter: blur(14px) !important;
         }
@@ -307,19 +306,24 @@
         }
         
         .panel-bottom-bar {
-            width: calc(100% - 258px) !important;
-            transition: width 0.3s ease !important;
-            left: 258px !important;
+            position: fixed;
+            bottom: 0;
+            z-index: 1200;
+            transition: all 0.3s ease !important;
+            /* Default: account for small-screen sidebar (left 258) and panel-content padding (28) */
+            left: calc(258px + 28px) !important;
+            right: 28px !important;
         }
-        
+
+        /* Collapsed sidebar state */
         body:has(.panel-sidebar.panel-sidebar--collapsed) .panel-bottom-bar {
-            width: calc(100% - 90px) !important;
-            left: 90px !important;
+            left: calc(90px + 28px) !important;
+            right: 28px !important;
         }
-        
+
         body:has(.panel-sidebar.panel-sidebar--collapsed:hover) .panel-bottom-bar {
-            width: calc(100% - 258px) !important;
-            left: 258px !important;
+            left: calc(258px + 28px) !important;
+            right: 28px !important;
         }
 
         /* ── Desktop: equal left gap for sidebar (matches right padding 40px) ── */
@@ -347,16 +351,17 @@
                 margin-left: 298px !important;
             }
             .panel-bottom-bar {
-                width: calc(100% - 298px) !important;
-                left: 298px !important;
+                /* Desktop: sidebar + left gap (40px) + panel-content inner padding (70px) -> left = 298 + 70 */
+                left: calc(298px + 70px) !important;
+                right: 70px !important;
             }
             body:has(.panel-sidebar.panel-sidebar--collapsed) .panel-bottom-bar {
-                width: calc(100% - 130px) !important;
-                left: 130px !important;
+                left: calc(130px + 70px) !important;
+                right: 70px !important;
             }
             body:has(.panel-sidebar.panel-sidebar--collapsed:hover) .panel-bottom-bar {
-                width: calc(100% - 298px) !important;
-                left: 298px !important;
+                left: calc(298px + 70px) !important;
+                right: 70px !important;
             }
         }
         
@@ -371,10 +376,6 @@
                 width: 100vw !important;
                 margin-left: 0 !important;
             }
-            .panel-bottom-bar {
-                width: 100% !important;
-                left: 0 !important;
-            }
         }
 
         /* ── Equal outer padding — both sides of all panel pages ── */
@@ -384,7 +385,7 @@
         }
         @media (min-width: 992px) {
             .panel-content {
-                padding: 16px 70px 0;
+                padding: 15px 70px 0;
             }
         }
         /* Remove internal padding from scrollable — outer .panel-content handles spacing */
@@ -393,6 +394,8 @@
             padding-right: 0 !important;
         }
     </style>
+
+    <link rel="stylesheet" href="/assets/design_1/css/overrides.css">
 
 </head>
 <body class="{{ $isRtl ? 'rtl' : '' }} {{ "{$userThemeColorMode}-mode" }}">
@@ -526,38 +529,6 @@
 <script src="/assets/design_1/js/parts/general.min.js"></script>
 <script src="/assets/design_1/js/panel/public.min.js"></script>
 
-<script>
-    // Handle sidebar hover to adjust content width
-    (function() {
-        const sidebar = document.getElementById('panelSidebar');
-        const content = document.querySelector('.panel-content');
-        
-        if (sidebar && content) {
-            sidebar.addEventListener('mouseenter', function() {
-                if (this.classList.contains('panel-sidebar--collapsed')) {
-                    content.style.width = 'calc(100vw - 258px)';
-                    content.style.marginLeft = '258px';
-                }
-            });
-            
-            sidebar.addEventListener('mouseleave', function() {
-                if (this.classList.contains('panel-sidebar--collapsed')) {
-                    content.style.width = 'calc(100vw - 70px)';
-                    content.style.marginLeft = '70px';
-                }
-            });
-            
-            // Initialize content width based on sidebar state
-            if (sidebar.classList.contains('panel-sidebar--collapsed')) {
-                content.style.width = 'calc(100vw - 70px)';
-                content.style.marginLeft = '70px';
-            } else {
-                content.style.width = 'calc(100vw - 258px)';
-                content.style.marginLeft = '258px';
-            }
-        }
-    })();
-</script>
 <script>
     // Force sidebar to always remain expanded - disable collapse/expand behaviour
     (function() {

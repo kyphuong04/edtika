@@ -170,7 +170,8 @@
                 </div>
                 <button type="button"
                         class="module-sections-header__btn js-add-chapter"
-                        data-webinar-id="{{ $webinar->id }}">
+                        data-webinar-id="{{ $webinar->id }}"
+                        style="border: 1.5px solid #511D99; color: #511D99;">
                     New Section
                 </button>
             </div>
@@ -227,7 +228,7 @@
             <button type="button" id="saveAsDraft" class="btn btn-outline-secondary px-24 py-12 rounded-50">
                 Save As Draft
             </button>
-            <button type="button" id="bundleSubmitForReview" class="btn btn-primary px-24 py-12 rounded-50">
+            <button type="button" id="bundleSubmitForReview" class="btn px-24 py-12 rounded-50" style="background-color: #511D99; color: #fff;">
                 Submit For Review
             </button>
         </div>

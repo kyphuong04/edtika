@@ -124,7 +124,7 @@ class IeltsTestController extends Controller
         
         return redirect()->route('admin.ielts_tests.sections', $test->id)
             ->with(['toast' => $toastData]);
-    }
+        }
     
     /**
      * Create Mock Test record
@@ -788,6 +788,7 @@ class IeltsTestController extends Controller
             'auto_gradable' => in_array($request->question_type, ['essay']) ? 0 : 1,
             'hint' => $request->hint,
             'explanation' => $request->explanation,
+            'question_data' => $request->task_image_url ? json_encode(['task_image' => $request->task_image_url]) : null,
             'sort_order' => $request->sort_order ?? $request->question_number,
             'created_at' => time(),
         ];
@@ -824,6 +825,7 @@ class IeltsTestController extends Controller
             'auto_gradable'   => in_array($request->question_type, ['essay']) ? 0 : ($request->has('auto_gradable') ? 1 : 0),
             'hint'            => $request->hint,
             'explanation'     => $request->explanation,
+            'question_data'   => $request->task_image_url ? json_encode(['task_image' => $request->task_image_url]) : $question->question_data,
         ]);
 
         return back()->with(['toast' => [
@@ -1044,6 +1046,7 @@ class IeltsTestController extends Controller
                     'questionGroup',
                 ])->orderBy('sort_order');
             },
+            'feedbacks.sender'
         ])->findOrFail($id);
 
         $practiceCategories = IeltsPracticeCategory::active()->get()->groupBy('skill');
@@ -1334,6 +1337,50 @@ class IeltsTestController extends Controller
         ];
         
         return view('admin.ielts_tests.view_attempt', $data);
+    }
+
+    /**
+     * Manager sends feedback to test creator without rejecting.
+     */
+    public function managerFeedback(Request $request, $id)
+    {
+        $authUser = auth()->user();
+
+        if (!$authUser->isManager() && !$authUser->isCeo() && !$authUser->isAdmin()) {
+            abort(403);
+        }
+
+        $test = IeltsTest::findOrFail($id);
+
+        $validated = $this->validate($request, [
+            'feedback' => 'required|string|max:20000',
+        ]);
+
+        // Persist feedback record
+        \App\Models\IeltsTestFeedback::create([
+            'test_id' => $test->id,
+            'sender_id' => $authUser->id,
+            'message' => $validated['feedback'],
+            'created_at' => time(),
+        ]);
+
+        // Also notify the creator (existing behavior)
+        if ($test->created_by) {
+            Notification::create([
+                'user_id' => $test->created_by,
+                'sender' => $authUser->id,
+                'title' => 'Manager Feedback on your test',
+                'message' => $validated['feedback'],
+                'type' => 'single',
+                'created_at' => time(),
+            ]);
+        }
+
+        return back()->with(['toast' => [
+            'title' => 'Feedback Sent',
+            'msg' => 'Your feedback was saved and sent to the test creator.',
+            'status' => 'success'
+        ]]);
     }
     
     /**

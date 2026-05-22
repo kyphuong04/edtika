@@ -1335,6 +1335,8 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/attempts/{attemptId}', 'IeltsTestController@viewAttempt')->name('admin.ielts_tests.view_attempt');
             Route::post('/answers/{answerId}/grade', 'IeltsTestController@gradeAnswer')->name('admin.ielts_tests.grade_answer');
             Route::get('/attempts/excel', 'IeltsTestController@exportAttemptsExcel')->name('admin.ielts_tests.export_attempts');
+            // Manager feedback
+            Route::post('/{id}/manager-feedback', 'IeltsTestController@managerFeedback')->name('admin.ielts_tests.manager_feedback');
             
             // Practice Categories
             Route::group(['prefix' => 'practice-categories'], function () {

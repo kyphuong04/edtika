@@ -58,7 +58,7 @@
 
 
             <div class="mt-28 d-flex align-items-center justify-content-end">
-                <button type="button" class="js-save-post-content btn btn-primary">{{ trans('public.save') }}</button>
+                <button type="button" class="js-save-post-content btn btn-primary" style="background-color: #511D99; border-color: #511D99;">{{ trans('public.save') }}</button>
 
                 @if(!empty($relatedPost))
                     <a href="/panel/blog/{{ $post->id }}/related-posts/{{ $relatedPost->id }}/delete" class="delete-action btn btn-outline-danger ml-8 cancel-accordion">{{ trans('delete') }}</a>

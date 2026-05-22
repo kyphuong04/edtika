@@ -555,7 +555,31 @@
             <p class="idp-audio-msg">You will be listening to an audio clip during this test. You will not be permitted to pause or rewind the audio while answering the questions.<br><br>To continue, click Play.</p>
             <button class="idp-play-btn" onclick="playAudio()">▶ Play</button>
         </div>
-        <audio id="audioPlayer" src="{{ $currentSection->audio_url ?? '' }}"></audio>
+        @php
+            $firstQ = $questions->first();
+            $currentPartId = $firstQ->part_id ?? null;
+            $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+            $currentPartAudioUrl = null;
+            if (!empty($currentPart->audio_file)) {
+                $audioFile = $currentPart->audio_file;
+                if (str_starts_with($audioFile, '/') || str_starts_with($audioFile, 'http')) {
+                    $currentPartAudioUrl = $audioFile;
+                } else {
+                    $currentPartAudioUrl = \Storage::disk('public')->url($audioFile);
+                }
+            }
+        @endphp
+
+        @if($attempt->test->isPracticeTest())
+            <div class="idp-audio-bar" style="padding:12px 20px;background:#fff;border-top:1px solid #eee;">
+                <audio id="audioPlayer" controls style="width:100%;">
+                    <source src="{{ $currentPartAudioUrl ?? $currentSection->audio_url ?? '' }}" type="audio/mpeg">
+                    Your browser does not support audio playback.
+                </audio>
+            </div>
+        @else
+            <audio id="audioPlayer" src="{{ $currentPartAudioUrl ?? $currentSection->audio_url ?? '' }}"></audio>
+        @endif
     @endif
 
     {{-- SUBMIT MODAL --}}
@@ -626,6 +650,31 @@
                 const words = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
                 wc.textContent = words;
             }
+        }
+
+        // Table completion: collect answers into JSON and save via saveAnswer endpoint
+        function tableInputChanged(el) {
+            const qId = el.dataset.qid;
+            if (!qId) return;
+
+            // Collect all inputs for this question to build full table answers
+            const inputs = document.querySelectorAll(`.idp-table-input[data-qid="${qId}"]`);
+            const answers = [];
+            inputs.forEach(i => {
+                const r = i.dataset.row;
+                const c = i.dataset.col;
+                answers.push({ row: parseInt(r), col: parseInt(c), answer: i.value.trim() });
+            });
+
+            // Save aggregated answers as answer_options (server stores as JSON)
+            fetch(saveUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify({ question_id: qId, answer_text: null, answer_options: { answers } })
+            }).then(r => r.json()).then(d => {
+                const btn = document.querySelector(`.idp-q-btn[data-num="${qId}"]`);
+                if (btn) btn.classList.add('answered');
+            });
         }
         
         // Resizable divider
