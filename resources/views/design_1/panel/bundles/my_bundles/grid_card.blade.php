@@ -13,6 +13,34 @@
     $totalStudents = count($bundle->sales);
     $totalSales    = handlePrice($bundle->sales->sum('amount'));
     $totalHours    = convertMinutesToHourAndMinute($bundle->getBundleDuration());
+
+    $statusMap = [
+        'pending' => [
+            'label' => trans('admin/main.pending_review'),
+            'class' => 'materials-bundle-card__status--pending',
+        ],
+        'is_draft' => [
+            'label' => trans('public.draft'),
+            'class' => 'materials-bundle-card__status--draft',
+        ],
+        'active' => [
+            'label' => trans('admin/main.published'),
+            'class' => 'materials-bundle-card__status--active',
+        ],
+        'inactive' => [
+            'label' => trans('public.rejected'),
+            'class' => 'materials-bundle-card__status--inactive',
+        ],
+        'finished' => [
+            'label' => trans('public.finished'),
+            'class' => 'materials-bundle-card__status--finished',
+        ],
+    ];
+
+    $statusInfo = $statusMap[$bundle->status] ?? [
+        'label' => ucfirst(str_replace('_', ' ', (string) $bundle->status)),
+        'class' => 'materials-bundle-card__status--default',
+    ];
 @endphp
 
 <div class="materials-bundle-card" style="cursor:pointer;"
@@ -67,6 +95,7 @@
 
     {{-- Title (links to modules detail page) --}}
     <a href="/panel/bundles/{{ $bundle->id }}/modules" class="d-block">
+        <div class="materials-bundle-card__status {{ $statusInfo['class'] }}">{{ $statusInfo['label'] }}</div>
         <h3 class="materials-bundle-card__title">{{ $bundle->title }}</h3>
     </a>
 
@@ -128,12 +157,12 @@
         <div class="materials-bundle-card__stat materials-bundle-card__price">
             @if($bundle->price > 0)
                 @if($bundle->bestTicket() < $bundle->price)
-                    <span class="text-primary">
-                        {{ handlePrice($bundle->bestTicket(), true, true, false, null, true) }}
+                    <span style="color: #511D99">
+                        {{ handleBundlePriceByCurrency($bundle->bestTicket(), $bundle->getPriceCurrency()) }}
                     </span>
                 @else
-                    <span class="text-primary">
-                        {{ handlePrice($bundle->price, true, true, false, null, true) }}
+                    <span style="color: #511D99">
+                        {{ handleBundlePriceByCurrency($bundle->price, $bundle->getPriceCurrency()) }}
                     </span>
                 @endif
             @else

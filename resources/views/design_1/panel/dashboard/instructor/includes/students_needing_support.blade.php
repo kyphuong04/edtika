@@ -35,7 +35,7 @@
                         @endif
                     </div>
                     <a href="/panel/support"
-                       class="d-flex-center size-32 rounded-8 bg-white flex-shrink-0 text-gray-500">
+                       class="d-flex-center size-32 rounded-8 bg-white border border-gray-300 flex-shrink-0 text-gray-600">
                         <x-iconsax-lin-message class="icons" width="16px" height="16px"/>
                     </a>
                 </div>

@@ -9,7 +9,7 @@
     <div class="idp-question" data-q-num="{{ $qNum }}">
         <div style="margin-bottom: 6px;">
             <span class="idp-q-num">{{ $qNum }}</span>
-            <span class="idp-q-text">{{ $q->question_text ?? $q->content ?? '' }}</span>
+            <span class="idp-q-text">{!! $q->question_text ?? $q->content ?? '' !!}</span>
         </div>
         <div class="idp-options">
             <label class="idp-option">

@@ -6,21 +6,61 @@ use Illuminate\Support\Carbon;
 
 class ZoomOAuth
 {
+    private ?string $lastError = null;
 
-    private function handleConfigs()
+    private function getCredentials($user = null): array
     {
         $settings = getFeaturesSettings();
+        $zoomApi = $user ? $user->zoomApi : null;
 
-        \Config::set("zoom.client_id", !empty($settings['zoom_client_id']) ? $settings['zoom_client_id'] : '');
-        \Config::set("zoom.client_secret", !empty($settings['zoom_client_secret']) ? $settings['zoom_client_secret'] : '');
-        \Config::set("zoom.account_id", !empty($settings['zoom_account_id']) ? $settings['zoom_account_id'] : '');
+        return [
+            'client_id' => !empty($zoomApi?->api_key) ? $zoomApi->api_key : (!empty($settings['zoom_client_id']) ? $settings['zoom_client_id'] : ''),
+            'client_secret' => !empty($zoomApi?->api_secret) ? $zoomApi->api_secret : (!empty($settings['zoom_client_secret']) ? $settings['zoom_client_secret'] : ''),
+            'account_id' => !empty($zoomApi?->account_id) ? $zoomApi->account_id : (!empty($settings['zoom_account_id']) ? $settings['zoom_account_id'] : ''),
+        ];
+    }
+
+    private function handleConfigs($user = null)
+    {
+        $credentials = $this->getCredentials($user);
+
+        \Config::set("zoom.client_id", $credentials['client_id']);
+        \Config::set("zoom.client_secret", $credentials['client_secret']);
+        \Config::set("zoom.account_id", $credentials['account_id']);
         \Config::set("zoom.base_url", "https://api.zoom.us/v2/");
     }
 
-
-    public function makeMeeting($session): bool
+    public function hasCredentials($user = null): bool
     {
-        $this->handleConfigs();
+        $credentials = $this->getCredentials($user);
+
+        return !empty($credentials['client_id'])
+            && !empty($credentials['client_secret'])
+            && !empty($credentials['account_id']);
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
+
+    private function normalizeZoomError(?string $message): string
+    {
+        if (empty($message)) {
+            return trans('update.zoom_error_msg');
+        }
+
+        if (stripos($message, 'does not contain scopes') !== false || stripos($message, '4711') !== false) {
+            return 'Zoom app is missing the scopes required to create meetings. Add meeting:write:meeting or meeting:write:meeting:admin in Zoom Marketplace, then reactivate the app.';
+        }
+
+        return $message;
+    }
+
+    public function makeMeeting($session, $user = null): bool
+    {
+        $this->lastError = null;
+        $this->handleConfigs($user);
 
         $meeting = \Zoom::createMeeting([
             "agenda" => $session->title,
@@ -49,13 +89,30 @@ class ZoomOAuth
         if (!empty($meeting) and isset($meeting['status']) and $meeting['status']) {
             unset($session->title, $session->locale);
 
-            $session->update([
-                'link' => $meeting['data']['join_url'],
-                'api_secret' => $meeting['data']['password'],
-            ]);
+            $meetingData = $meeting['data'] ?? [];
+            $isLiveCourse = method_exists($session, 'getTable') && $session->getTable() === 'live_courses';
+
+            $resolvedLink = $meetingData['join_url'] ?? null;
+
+            if ($isLiveCourse) {
+                $resolvedLink = $meetingData['start_url'] ?? $resolvedLink;
+            }
+
+            $updateData = [
+                'link' => $resolvedLink,
+                'api_secret' => $meetingData['password'] ?? null,
+            ];
+
+            if (\Schema::hasColumn($session->getTable(), 'zoom_start_link')) {
+                $updateData['zoom_start_link'] = $meetingData['start_url'] ?? null;
+            }
+
+            $session->update($updateData);
 
             return true;
         }
+
+        $this->lastError = $this->normalizeZoomError($meeting['message'] ?? null);
 
         return false;
     }

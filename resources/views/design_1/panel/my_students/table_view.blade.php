@@ -54,6 +54,11 @@
                         <small class="text-gray">({{ $student['total_quiz_results'] }} {{ trans('public.quizzes') }})</small>
                     </td>
                     <td class="align-middle text-right">
+                        <a href="/panel/students-tracking/{{ $student['id'] }}/activity"
+                           class="btn btn-sm btn-outline-primary mr-6">
+                            <i class="fa fa-history"></i>
+                            <span class="d-none d-md-inline ml-5">Activity</span>
+                        </a>
                         <a href="/panel/students-tracking/{{ $student['id'] }}/details" 
                            class="btn btn-sm btn-primary">
                             <i class="fa fa-eye"></i>

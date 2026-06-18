@@ -17,12 +17,12 @@
             margin-bottom: 10px;
         }
         .metric-card:hover {
-            border-color: var(--primary, #5482ff);
-            box-shadow: 0 4px 16px rgba(84,130,255,.18);
+            border-color: #511D99;
+            box-shadow: 0 4px 16px rgba(81,29,153,.18);
         }
         .metric-card.active {
-            border-color: var(--primary, #5482ff);
-            box-shadow: 0 4px 16px rgba(84,130,255,.25);
+            border-color: #511D99;
+            box-shadow: 0 4px 16px rgba(81,29,153,.25);
         }
         .metric-card .mc-label {
             font-size: 12px;

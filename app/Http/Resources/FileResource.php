@@ -24,6 +24,8 @@ class FileResource extends JsonResource
             'content_type' => 'file',
             'title' => $this->title,
             'description' => $this->description,
+            'interactive_quiz' => $this->interactive_quiz,
+            'lecture_notes' => $this->lecture_notes,
             'can_view_error' => $this->canViewError(),
             'auth_has_read' => $this->read,
             'auth_has_access' => $this->auth_has_access,

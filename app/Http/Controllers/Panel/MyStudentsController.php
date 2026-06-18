@@ -10,6 +10,7 @@ use App\Models\Gift;
 use App\Models\InstallmentOrder;
 use App\Models\Role;
 use App\Models\Sale;
+use App\Models\Support;
 use App\User;
 use App\Models\Webinar;
 use Illuminate\Http\Request;
@@ -139,6 +140,78 @@ class MyStudentsController extends Controller
 
         return redirect('/panel/my-students/list')
             ->with('add_student_success', 'Học viên đã được thêm thành công.');
+    }
+
+    /**
+     * Open (or create) a course support conversation between teacher and student.
+     */
+    public function openStudentConversation(Request $request, int $studentId)
+    {
+        $user = auth()->user();
+
+        if (!$user || !$user->isTeacher()) {
+            abort(403);
+        }
+
+        $teacherWebinarIds = Webinar::where(function ($q) use ($user) {
+            $q->where('creator_id', $user->id)
+              ->orWhere('teacher_id', $user->id);
+        })->where('status', 'active')->pluck('id');
+
+        if ($teacherWebinarIds->isEmpty()) {
+            return redirect('/panel/my-students/list')
+                ->with('add_student_error', 'Không tìm thấy khóa học hợp lệ để mở hội thoại.');
+        }
+
+        $studentSales = Sale::where('buyer_id', $studentId)
+            ->whereIn('webinar_id', $teacherWebinarIds)
+            ->whereNull('refund_at')
+            ->orderByDesc('created_at');
+
+        if (!$studentSales->exists()) {
+            abort(404, 'Student is not enrolled in your courses.');
+        }
+
+        $requestedWebinarId = (int) $request->get('webinar_id');
+        $webinarId = null;
+        if ($requestedWebinarId > 0) {
+            $webinarId = (int) Sale::where('buyer_id', $studentId)
+                ->whereIn('webinar_id', $teacherWebinarIds)
+                ->whereNull('refund_at')
+                ->where('webinar_id', $requestedWebinarId)
+                ->value('webinar_id');
+        }
+
+        if (empty($webinarId)) {
+            $webinarId = (int) $studentSales->value('webinar_id');
+        }
+
+        if (empty($webinarId)) {
+            return redirect('/panel/my-students/list')
+                ->with('add_student_error', 'Không thể xác định khóa học để mở hội thoại.');
+        }
+
+        $support = Support::whereNull('department_id')
+            ->where('user_id', $studentId)
+            ->where('webinar_id', $webinarId)
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (empty($support)) {
+            $webinar = Webinar::find($webinarId);
+            $webinarTitle = !empty($webinar) ? ($webinar->title ?: 'Course') : 'Course';
+
+            $support = Support::create([
+                'user_id' => $studentId,
+                'webinar_id' => $webinarId,
+                'title' => 'Teacher support: ' . $webinarTitle,
+                'status' => 'open',
+                'created_at' => time(),
+                'updated_at' => time(),
+            ]);
+        }
+
+        return redirect('/panel/support/' . $support->id . '/conversations');
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 15px;
     color: #111;
-    background: #e8e8e8;
+    background: linear-gradient(180deg, #ecebf3 0%, #edf0f6 62%, #eaf4f1 100%);
     line-height: 1.5;
     overflow: hidden;
     height: 100vh;
@@ -23,7 +23,7 @@ body {
 .rv-header {
     height: 60px;
     background: #fff;
-    border-bottom: 1px solid #ddd;
+    border-bottom: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -47,12 +47,12 @@ body {
 }
 .rv-back-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    background: #fff; color: #333;
-    border: 1.5px solid #bbb; border-radius: 20px;
+    background: #511D99; color: #fff;
+    border: 1px solid #511D99; border-radius: 20px;
     padding: 6px 16px; font-size: 13px; text-decoration: none; cursor: pointer;
     transition: all .2s; white-space: nowrap;
 }
-.rv-back-btn:hover { background: #f5f5f5; border-color: #999; color: #111; }
+.rv-back-btn:hover { background: #3f1777; border-color: #3f1777; color: #fff; }
 
 /* ── SHARED BODY ─────────────────────────────── */
 .rv-body {
@@ -60,13 +60,13 @@ body {
     position: fixed;
     top: 60px; left: 0; right: 0; bottom: 104px;
     gap: 12px; padding: 16px;
-    background: #e8e8e8;
+    background: transparent;
 }
 
 /* ── SHARED PANEL ────────────────────────────── */
 .rv-panel {
     background: #fff;
-    border: 1px solid #d0d0d0;
+    border: none;
     border-radius: 10px;
     overflow: hidden;
     display: flex;
@@ -78,8 +78,8 @@ body {
     font-size: 20px; font-weight: 800;
     color: #111;
     padding: 16px 24px 14px;
-    background: #f0f0f0;
-    border-bottom: 1px solid #ddd;
+    background: #fff;
+    border-bottom: none;
     letter-spacing: 0.5px;
     flex-shrink: 0;
 }
@@ -101,7 +101,7 @@ body {
 .rv-passage-text  { font-size: 15px; line-height: 1.8; color: #111; text-align: justify; }
 .rv-passage-text p { margin-bottom: 12px; }
 .rv-no-passage { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
-.rv-audio-box { background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 16px; }
+.rv-audio-box { background: #fff; border: none; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 16px; }
 .rv-audio-box audio { width: 100%; margin-top: 12px; }
 
 /* ── QUESTIONS (R/L) ─────────────────────────── */
@@ -157,7 +157,7 @@ body {
     border-collapse: collapse;
     font-size: 14px;
     background: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
     table-layout: auto;
     margin: 12px 0;
 }
@@ -217,8 +217,8 @@ body {
 .rv-qn.rv-qn-wrong    { border: 2.5px solid #ef4444; color: #dc2626; background: #fff5f5; font-weight: 700; }
 .rv-qn.rv-qn-unanswered { border: 1.5px dashed #ccc; color: #aaa; background: #fafafa; }
 .rv-nav-buttons { display: flex; align-items: center; gap: 28px; }
-.rv-nav-btn { height: 44px; padding: 0 22px; background: #fff; color: #333; border: 1.5px solid #bbb; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap; transition: all .2s; }
-.rv-nav-btn:hover    { background: #f5f5f5; border-color: #999; }
+.rv-nav-btn { height: 44px; padding: 0 22px; background: #511D99; color: #fff; border: 1px solid #511D99; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap; transition: all .2s; }
+.rv-nav-btn:hover    { background: #3f1777; border-color: #3f1777; }
 .rv-nav-btn:disabled { background: #f5f5f5; color: #bbb; border-color: #e5e7eb; cursor: not-allowed; }
 
 /* ══ WRITING REVIEW ══════════════════════════════════ */
@@ -241,7 +241,7 @@ body {
     display: flex;
     position: fixed;
     top: 60px; left: 0; right: 0; bottom: 0;
-    background: #e8e8e8;
+    background: transparent;
     gap: 12px; padding: 16px;
     overflow: hidden;
 }
@@ -254,14 +254,14 @@ body {
 /* Writing card */
 .wv-card {
     background: #fff; border-radius: 10px;
-    border: 1px solid #d0d0d0;
+    border: none;
     overflow: hidden; flex-shrink: 0;
 }
 .wv-card-head {
-    background: #d8d8d8; padding: 14px 20px;
+    background: #fff; padding: 14px 20px;
     font-size: 16px; font-weight: 900;
     color: #111; letter-spacing: 0.3px;
-    border-bottom: 1px solid #ccc;
+    border-bottom: none;
 }
 .wv-card-body { padding: 18px 20px; }
 
@@ -277,7 +277,7 @@ body {
 .wv-see-more:hover { text-decoration: underline; }
 
 /* Image box */
-.wv-img-box { background: #f3f4f6; border: 1px solid #ddd; border-radius: 8px; margin: 12px 0; overflow: hidden; text-align: center; }
+.wv-img-box { background: #fff; border: none; border-radius: 8px; margin: 12px 0; overflow: hidden; text-align: center; }
 .wv-img-box img { max-width: 100%; display: block; }
 
 /* Essay display */
@@ -300,7 +300,7 @@ body {
 .wv-no-essay { color: #aaa; font-style: italic; font-size: 14px; text-align: center; padding: 30px 0; }
 
 /* Writing right panel */
-.wv-right { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 10px; border: 1px solid #d0d0d0; overflow: hidden; }
+.wv-right { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 10px; border: none; overflow: hidden; }
 .wv-right-body { flex: 1; overflow-y: auto; padding: 24px 28px; }
 .wv-right-body::-webkit-scrollbar { width: 5px; }
 .wv-right-body::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
@@ -362,11 +362,11 @@ body {
 .sp-rv-header {
     position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
     display: flex; align-items: stretch; gap: 10px;
-    padding: 10px 16px; background: #e8e8e8;
+    padding: 10px 16px; background: transparent;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
 }
 .sp-rv-hblock {
-    background: #fff; border: 1px solid #d0d0d0; border-radius: 12px;
+    background: #fff; border: none; border-radius: 12px;
     display: flex; flex-direction: column; justify-content: center; gap: 10px;
     padding: 14px 22px;
 }
@@ -420,14 +420,14 @@ body {
 }
 .sp-rv-hbtn {
     display: inline-flex; align-items: center; gap: 6px;
-    border: 1.5px solid #bbb; border-radius: 999px;
+    border: 1px solid #511D99; border-radius: 999px;
     padding: 7px 20px; font-size: 14px; font-weight: 500;
-    background: #fff; color: #333; text-decoration: none;
+    background: #511D99; color: #fff; text-decoration: none;
     cursor: pointer; align-self: flex-start;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
     transition: all .2s; white-space: nowrap;
 }
-.sp-rv-hbtn:hover { background: #f5f5f5; border-color: #999; color: #111; text-decoration: none; }
+.sp-rv-hbtn:hover { background: #3f1777; border-color: #3f1777; color: #fff; text-decoration: none; }
 .sp-rv-grader-label {
     font-size: 16px; font-weight: 700; color: #111; white-space: nowrap;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
@@ -453,7 +453,7 @@ body {
 /* Speaking body */
 .sp-rv-body {
     position: fixed; left: 0; right: 0; bottom: 104px;
-    background: #e8e8e8; overflow: hidden;
+    background: transparent; overflow: hidden;
 }
 .sp-rv-qpanel {
     display: flex; width: 100%; height: 100%;
@@ -462,19 +462,19 @@ body {
 /* Single unified card wrapping both left+right panels */
 .sp-rv-card {
     flex: 1; display: flex; flex-direction: column;
-    background: #fff; border: 1px solid #d0d0d0; border-radius: 10px;
+    background: #fff; border: none; border-radius: 10px;
     overflow: hidden;
 }
 .sp-rv-card-head {
     font-size: 20px; font-weight: 900; padding: 14px 24px;
-    background: #e8e8e8; border-bottom: 1px solid #d0d0d0;
+    background: #fff; border-bottom: none;
     flex-shrink: 0; letter-spacing: 0.5px; color: #111;
 }
 .sp-rv-card-body {
     flex: 1; display: flex; overflow: hidden;
 }
 .sp-rv-left {
-    flex: 0 0 55%; border-right: 1px solid #d0d0d0;
+    flex: 0 0 55%; border-right: none;
     display: flex; flex-direction: column; overflow: hidden;
 }
 .sp-rv-right {
@@ -511,7 +511,7 @@ body {
 .sp-rv-video-placeholder span { font-size: 12px; color: #777; }
 /* Your answer audio box */
 .sp-rv-student-wrap {
-    background: #fff; border: 1.5px solid #ccc; border-radius: 12px;
+    background: #fff; border: none; border-radius: 12px;
     overflow: hidden; margin: 0 auto 6px;
     max-width: 440px; width: 100%;
 }
@@ -597,11 +597,11 @@ body {
     display: flex; align-items: center; gap: 28px;
 }
 .rv-nav-btn {
-    height: 44px; padding: 0 28px; background: #fff; color: #333;
-    border: 1.5px solid #bbb; border-radius: 8px; font-size: 14px;
+    height: 44px; padding: 0 28px; background: #511D99; color: #fff;
+    border: 1px solid #511D99; border-radius: 8px; font-size: 14px;
     cursor: pointer; white-space: nowrap; transition: all .2s;
 }
-.rv-nav-btn:hover { background: #f5f5f5; }
+.rv-nav-btn:hover { background: #3f1777; border-color: #3f1777; }
 .rv-nav-btn:disabled { background: #f5f5f5; color: #aaa; border-color: #ddd; cursor: not-allowed; }
 </style>
 </head>

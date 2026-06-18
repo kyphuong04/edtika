@@ -442,7 +442,26 @@
                 ];
             @endphp
 
-            @include('design_1.panel.dashboard.instructor.includes.teacher_welcome_bar')
+            @if($allowManage)
+                @include('design_1.panel.dashboard.instructor.includes.teacher_welcome_bar')
+            @else
+                <div class="bg-white rounded-24 p-16 d-flex flex-wrap align-items-center gap-12">
+                    <div class="flex-grow-1 min-w-0">
+                        <h1 class="font-18 font-weight-bold text-dark text-ellipsis mb-0">
+                            CHƯƠNG TRÌNH HỌC, {{ strtoupper($authUser->name ?? $authUser->full_name) }}!
+                        </h1>
+                        <div class="mt-8">
+                            <div class="rounded-pill bg-gray-100" style="height:6px;overflow:hidden;">
+                                <div class="rounded-pill bg-primary" style="width:{{ min(100, max(0, (float) $bundleProgress)) }}%;height:6px;transition:width .6s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{{ $backUrl }}" class="btn btn-primary btn-sm rounded-pill px-16">
+                        Quay lại
+                    </a>
+                </div>
+            @endif
 
             <a href="{{ $backUrl }}" class="bd-back-link">&#8592; Quay lại</a>
 
@@ -475,10 +494,9 @@
                                                 @csrf
                                                 <button type="submit" class="bd-module-row__action" style="background:#fff;border:1px solid #d02a2a;color:#d02a2a;">Yêu cầu xóa</button>
                                             </form>
-                                            {{-- <button type="button" class="bd-module-toggle-btn" data-webinar-id="{{ $webinar->id }}" aria-expanded="false" title="Mở rộng">▾</button>
                                         @else
-                                            <a href="/panel/courses/purchases/learning/{{ $webinar->slug }}" class="bd-module-row__action">{{ trans('update.continue_learning') }}</a>
-                                            <button type="button" class="bd-module-toggle-btn" data-webinar-id="{{ $webinar->id }}" aria-expanded="false" title="Mở rộng">▾</button> --}}
+                                            <a href="/panel/courses/purchases/learning/{{ $webinar->slug }}" class="bd-module-row__action" style="background:#fff;border:1px solid #511D99;color:#511D99;">{{ trans('update.continue_learning') }}</a>
+                                            <button type="button" class="bd-module-toggle-btn" data-webinar-id="{{ $webinar->id }}" aria-expanded="false" title="Mở rộng">▾</button>
                                         @endif
                                     </div>
                                 </div>
@@ -701,6 +719,20 @@
             const btn = e.target.closest('.bd-module-toggle-btn');
             if (!btn) return;
             toggleModulePanel(btn);
+        });
+
+        document.addEventListener('click', function (e) {
+            const row = e.target.closest('.bd-module-row--toggle');
+            if (!row) return;
+
+            if (e.target.closest('a, button, form')) {
+                return;
+            }
+
+            const btn = row.querySelector('.bd-module-toggle-btn');
+            if (btn) {
+                toggleModulePanel(btn);
+            }
         });
 
         document.addEventListener('DOMContentLoaded', function () {

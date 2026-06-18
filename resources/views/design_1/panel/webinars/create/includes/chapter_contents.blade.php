@@ -25,19 +25,23 @@
 
                         <div class="actions-dropdown position-relative d-flex justify-content-end align-items-center mr-12">
                             <button type="button" class="d-flex-center btn-transparent">
-                                <x-iconsax-lin-add class="icons text-primary" width="20px" height="20px"/>
+                                <x-iconsax-lin-add class="icons" width="20px" height="20px" style="color: #511D99;"/>
                             </button>
 
                             <div class="actions-dropdown__dropdown-menu dropdown-menu-width-220">
                                 <ul class="my-8">
 
-                                    @if($webinar->isWebinar())
-                                        <li class="actions-dropdown__dropdown-menu-item">
-                                            <button type="button" class="js-add-course-content-btn" data-webinar-id="{{ $webinar->id }}" data-type="session" data-chapter="{{ $chapter->id }}">
-                                                {{ trans('public.add_session') }}
-                                            </button>
-                                        </li>
-                                    @endif
+                                    <li class="actions-dropdown__dropdown-menu-item">
+                                        <button type="button" class="js-add-course-content-btn" data-webinar-id="{{ $webinar->id }}" data-type="file" data-chapter="{{ $chapter->id }}">
+                                            {{ trans('public.add_file') }}
+                                        </button>
+                                    </li>
+
+                                    <li class="actions-dropdown__dropdown-menu-item">
+                                        <button type="button" class="js-add-course-content-btn" data-webinar-id="{{ $webinar->id }}" data-type="session" data-chapter="{{ $chapter->id }}">
+                                            {{ trans('public.add_session') }}
+                                        </button>
+                                    </li>
 
                                     <li class="actions-dropdown__dropdown-menu-item">
                                         <button type="button" class="js-add-course-content-btn" data-webinar-id="{{ $webinar->id }}" data-type="file" data-chapter="{{ $chapter->id }}">

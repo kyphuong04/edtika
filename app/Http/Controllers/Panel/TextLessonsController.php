@@ -30,6 +30,8 @@ class TextLessonsController extends Controller
             'accessibility' => 'required|' . Rule::in(File::$accessibility),
             'summary' => 'required',
             'content' => 'required',
+            'interactive_quiz' => 'nullable|array',
+            'lecture_notes' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -81,6 +83,8 @@ class TextLessonsController extends Controller
                     'title' => $data['title'],
                     'summary' => $data['summary'],
                     'content' => $data['content'],
+                    'interactive_quiz' => $this->normalizeInteractiveQuiz($data['interactive_quiz'] ?? null),
+                    'lecture_notes' => $this->normalizeLectureNotes($data['lecture_notes'] ?? null),
                 ]);
 
                 if (!empty($data['attachments'])) {
@@ -118,6 +122,8 @@ class TextLessonsController extends Controller
             'accessibility' => 'required|' . Rule::in(File::$accessibility),
             'summary' => 'required',
             'content' => 'required',
+            'interactive_quiz' => 'nullable|array',
+            'lecture_notes' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -181,6 +187,8 @@ class TextLessonsController extends Controller
                     'title' => $data['title'],
                     'summary' => $data['summary'],
                     'content' => $data['content'],
+                    'interactive_quiz' => $this->normalizeInteractiveQuiz($data['interactive_quiz'] ?? null),
+                    'lecture_notes' => $this->normalizeLectureNotes($data['lecture_notes'] ?? null),
                 ]);
 
                 $textLesson->attachments()->delete();
@@ -247,6 +255,225 @@ class TextLessonsController extends Controller
                 }
             }
         }
+    }
+
+    private function normalizeInteractiveQuiz($interactiveQuiz)
+    {
+        if (empty($interactiveQuiz) || !is_array($interactiveQuiz)) {
+            return null;
+        }
+
+        $allowedTypes = [
+            'multiple_choice_single',
+            'multiple_choice_multiple',
+            'true_false_not_given',
+            'yes_no_not_given',
+            'matching_headings',
+            'matching_information',
+            'matching_features',
+            'matching_sentence_endings',
+            'sentence_completion',
+            'summary_completion',
+            'note_completion',
+            'table_completion',
+        ];
+
+        $title = trim((string) ($interactiveQuiz['title'] ?? ''));
+        $questions = collect($interactiveQuiz['questions'] ?? [])
+            ->map(function ($question) use ($allowedTypes) {
+                if (!is_array($question)) {
+                    return null;
+                }
+
+                $questionType = trim((string) ($question['type'] ?? 'multiple_choice_single'));
+                if (!in_array($questionType, $allowedTypes, true)) {
+                    $questionType = 'multiple_choice_single';
+                }
+
+                $questionTitle = trim((string) ($question['title'] ?? ''));
+
+                $questionOptions = $question['options'] ?? ($question['answers'] ?? []);
+                $options = collect(is_array($questionOptions) ? $questionOptions : [])
+                    ->map(function ($answer) {
+                        if (!is_array($answer)) {
+                            return null;
+                        }
+
+                        $answerTitle = trim((string) ($answer['title'] ?? ''));
+
+                        if ($answerTitle === '') {
+                            return null;
+                        }
+
+                        return ['title' => $answerTitle];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $pairs = collect($question['pairs'] ?? [])
+                    ->map(function ($pair) {
+                        if (!is_array($pair)) {
+                            return null;
+                        }
+
+                        $prompt = trim((string) ($pair['prompt'] ?? ''));
+                        $answer = trim((string) ($pair['answer'] ?? ''));
+
+                        if ($prompt === '' && $answer === '') {
+                            return null;
+                        }
+
+                        return [
+                            'prompt' => $prompt,
+                            'answer' => $answer,
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $correctAnswer = null;
+                if (isset($question['correct_answer'])) {
+                    if (is_scalar($question['correct_answer'])) {
+                        $value = trim((string) $question['correct_answer']);
+                        $correctAnswer = ($value !== '') ? $value : null;
+                    }
+                }
+
+                $correctAnswers = collect($question['correct_answers'] ?? [])
+                    ->map(function ($value) {
+                        if (!is_scalar($value)) {
+                            return null;
+                        }
+
+                        $value = trim((string) $value);
+                        return ($value === '') ? null : $value;
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $alternativeAnswers = $question['alternative_answers'] ?? [];
+                if (is_string($alternativeAnswers)) {
+                    $alternativeAnswers = preg_split('/\r\n|\r|\n/', $alternativeAnswers);
+                }
+
+                $alternativeAnswers = collect(is_array($alternativeAnswers) ? $alternativeAnswers : [])
+                    ->map(function ($value) {
+                        if (!is_scalar($value)) {
+                            return null;
+                        }
+
+                        $value = trim((string) $value);
+                        return ($value === '') ? null : $value;
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $explanation = trim((string) ($question['explanation'] ?? ''));
+
+                $maxWords = (isset($question['max_words']) && $question['max_words'] !== '') ? (int) $question['max_words'] : null;
+                $targetBand = (isset($question['target_band']) && $question['target_band'] !== '') ? (float) $question['target_band'] : null;
+
+                $hasContent = ($questionTitle !== '')
+                    || !empty($options)
+                    || !empty($pairs)
+                    || ($correctAnswer !== null)
+                    || !empty($correctAnswers)
+                    || !empty($alternativeAnswers)
+                    || ($explanation !== '')
+                    || ($maxWords !== null)
+                    || ($targetBand !== null);
+
+                if (!$hasContent) {
+                    return null;
+                }
+
+                $normalized = [
+                    'type' => $questionType,
+                    'title' => $questionTitle,
+                ];
+
+                if (!empty($options)) {
+                    $normalized['options'] = $options;
+                    $normalized['answers'] = $options;
+                }
+
+                if (!empty($pairs)) {
+                    $normalized['pairs'] = $pairs;
+                }
+
+                if ($correctAnswer !== null) {
+                    $normalized['correct_answer'] = $correctAnswer;
+                }
+
+                if (!empty($correctAnswers)) {
+                    $normalized['correct_answers'] = $correctAnswers;
+                }
+
+                if (!empty($alternativeAnswers)) {
+                    $normalized['alternative_answers'] = $alternativeAnswers;
+                }
+
+                if ($explanation !== '') {
+                    $normalized['explanation'] = $explanation;
+                }
+
+                if ($maxWords !== null && $maxWords > 0) {
+                    $normalized['max_words'] = $maxWords;
+                }
+
+                if ($targetBand !== null && $targetBand >= 0) {
+                    $normalized['target_band'] = $targetBand;
+                }
+
+                return $normalized;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($title === '' && empty($questions)) {
+            return null;
+        }
+
+        return [
+            'title' => $title,
+            'questions' => $questions,
+        ];
+    }
+
+    private function normalizeLectureNotes($lectureNotes)
+    {
+        if (empty($lectureNotes) || !is_array($lectureNotes)) {
+            return null;
+        }
+
+        $notes = collect($lectureNotes)
+            ->map(function ($note) {
+                if (!is_array($note)) {
+                    return null;
+                }
+
+                $title = trim((string) ($note['title'] ?? ''));
+                $content = trim((string) ($note['content'] ?? ''));
+
+                if ($title === '' && $content === '') {
+                    return null;
+                }
+
+                return [
+                    'title' => $title,
+                    'content' => $content,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return empty($notes) ? null : $notes;
     }
 }
 

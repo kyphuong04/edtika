@@ -4,6 +4,33 @@
     }
 @endphp
 
+<style>
+    /* Keep the session API radio buttons aligned with the theme, but let
+       the default control rendering handle the inner dot so it doesn't get
+       filled as a solid purple disc. */
+    .session-form .custom-radio .custom-control-input:checked + .custom-control-label::before,
+    .session-form .custom-radio .custom-control-input:checked + .custom-control__label::before {
+        background-color: #511D99 !important;
+        border-color: #511D99 !important;
+        box-shadow: none !important;
+    }
+
+    /* Toggle (custom-switch) checked styles */
+    .session-form .custom-switch .custom-control-input:checked + .custom-control-label::before,
+    .session-form .custom-switch .custom-control-input:checked + .custom-control__label::before {
+        background-color: #511D99 !important;
+        border-color: #511D99 !important;
+        box-shadow: none !important;
+    }
+
+    /* Fallback for checkbox patterns */
+    .session-form input[type="checkbox"].custom-control-input:checked + .custom-control-label::before,
+    .session-form input[type="checkbox"].custom-control-input:checked + .custom-control__label::before {
+        background-color: #511D99 !important;
+        border-color: #511D99 !important;
+    }
+</style>
+
 <li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion bg-white border-gray-200 p-12 rounded-16 mt-16">
     <div class="accordion__title d-flex align-items-center justify-content-between " role="tab" id="session_{{ !empty($session) ? $session->id :'record' }}">
         <div class="d-flex align-items-center cursor-pointer" href="#collapseSession{{ !empty($session) ? $session->id :'record' }}" aria-controls="collapseSession{{ !empty($session) ? $session->id :'record' }}" data-parent="#chapterContentAccordion{{ !empty($chapter) ? $chapter->id :'' }}" role="button" data-toggle="collapse" aria-expanded="true">
@@ -50,10 +77,12 @@
 
                 <div class="js-session-api d-flex align-items-center mt-12">
                     @foreach(getFeaturesSettings("available_session_apis") as $sessionApi)
-                        <div class="custom-control custom-radio mr-12">
-                            <input type="radio" name="ajax[{{ !empty($session) ? $session->id : 'new' }}][session_api]" id="{{ $sessionApi }}_api_{{ !empty($session) ? $session->id : '' }}" value="{{ $sessionApi }}" @if((!empty($session) and $session->session_api == $sessionApi) or (empty($session) and $sessionApi == 'local')) checked @endif class="js-api-input custom-control-input" {{ (!empty($session) and $session->session_api != 'local') ? 'disabled' :'' }}>
-                            <label class="custom-control__label cursor-pointer pl-0" for="{{ $sessionApi }}_api_{{ !empty($session) ? $session->id : '' }}">{{ trans('update.session_api_'.$sessionApi) }}</label>
-                        </div>
+                        @if(in_array($sessionApi, ['local', 'zoom']))
+                            <div class="custom-control custom-radio mr-12">
+                                <input type="radio" name="ajax[{{ !empty($session) ? $session->id : 'new' }}][session_api]" id="{{ $sessionApi }}_api_{{ !empty($session) ? $session->id : '' }}" value="{{ $sessionApi }}" @if((!empty($session) and $session->session_api == $sessionApi) or (empty($session) and $sessionApi == 'local')) checked @endif class="js-api-input custom-control-input" {{ (!empty($session) and $session->session_api != 'local') ? 'disabled' :'' }}>
+                                <label class="custom-control__label cursor-pointer pl-0" for="{{ $sessionApi }}_api_{{ !empty($session) ? $session->id : '' }}">{{ trans('update.session_api_'.$sessionApi) }}</label>
+                            </div>
+                        @endif
                     @endforeach
                 </div>
 

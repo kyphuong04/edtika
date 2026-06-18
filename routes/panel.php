@@ -629,6 +629,9 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/create-inline', 'IeltsTestInlineController@createInlineComplete')->name('panel.my_ielts_tests.create_inline');
         Route::post('/store-inline-complete', 'IeltsTestInlineController@storeInlineComplete')->name('panel.my_ielts_tests.store_inline_complete');
         Route::post('/store-with-groups', 'IeltsTestInlineController@storeWithQuestionGroups')->name('panel.my_ielts_tests.store_with_groups');
+        Route::get('/{id}/preview-student', 'IeltsTestInlineController@previewAsStudent')->name('panel.my_ielts_tests.preview_student');
+        Route::get('/{id}/edit-inline', 'IeltsTestInlineController@editInlineComplete')->name('panel.my_ielts_tests.edit_inline');
+        Route::post('/{id}/update-inline-complete', 'IeltsTestInlineController@updateInlineComplete')->name('panel.my_ielts_tests.update_inline_complete');
 
         // Legacy routes removed - use create from Question Bank only
         Route::post('/store', 'IeltsTestManageController@store')->name('panel.my_ielts_tests.store');

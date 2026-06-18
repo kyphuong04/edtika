@@ -97,7 +97,17 @@
                     </li>
 
                     <li class="actions-dropdown__dropdown-menu-item">
-                        <a href="/panel/support/new" target="_blank" class="text-primary dark:text-primary-light">
+                        <a href="/panel/students-tracking/{{ $user->id }}/activity" class="text-gray-700 dark:text-gray-100">
+                            <svg class="icons mr-2" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                            Activity
+                        </a>
+                    </li>
+
+                    <li class="actions-dropdown__dropdown-menu-item">
+                        <a href="/panel/my-students/{{ $user->id }}/message" class="text-primary dark:text-primary-light">
                             <x-iconsax-lin-message class="icons mr-2" width="18"/>
                             Support Ticket
                         </a>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Represents a single test attempt by a student.
@@ -201,8 +202,14 @@ class IeltsTestAttempt extends Model
         $completedField = $skill . '_completed';
         $finishedField = $skill . '_finished_at';
 
-        $this->{$completedField} = true;
-        $this->{$finishedField} = time();
+        if (Schema::hasColumn($this->getTable(), $completedField)) {
+            $this->{$completedField} = true;
+        }
+
+        if (Schema::hasColumn($this->getTable(), $finishedField)) {
+            $this->{$finishedField} = time();
+        }
+
         $this->updated_at = time();
         $this->save();
     }

@@ -5,16 +5,25 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Bundle;
+use App\Models\Group;
+use App\Models\GroupUser;
 use App\Models\InstallmentOrder;
 use App\Models\InstallmentOrderPayment;
+use App\Models\LiveCourse;
+use App\Models\Notification;
 use App\Models\Quiz;
 use App\Models\ReserveMeeting;
+use App\Models\Sale;
 use App\Models\Session;
 use App\Models\Subscribe;
 use App\Models\Webinar;
 use App\Models\WebinarAssignment;
+use App\Models\WebinarPartnerTeacher;
+use App\User;
+use App\Sessions\ZoomOAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 use Spatie\CalendarLinks\Link;
 
 class EventsController extends Controller
@@ -37,12 +46,39 @@ class EventsController extends Controller
 
         $eventsWithTimestamp = $this->getAllEventsReturnWithTimestamp();
 
+        // Load recipients for the live-course creation modal (only for instructors/admins)
+        $groups = collect();
+        $bundles = collect();
+        $students = collect();
+        if ($user->isTeacher() || $user->isAdmin() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
+            $groups = Group::where('creator_id', $user->id)->orderBy('name')->get();
+            $bundles = Bundle::query()
+                ->where(function ($query) use ($user) {
+                    $query->where('creator_id', $user->id)
+                        ->orWhere('teacher_id', $user->id);
+                })
+                ->where('status', Bundle::$active)
+                ->orderBy('id', 'desc')
+                ->get();
+
+            $studentIds = $this->getInstructorCourseStudentIds($user);
+            if (!empty($studentIds)) {
+                $students = User::query()
+                    ->whereIn('id', $studentIds)
+                    ->orderBy('full_name')
+                    ->get(['id', 'full_name', 'email']);
+            }
+        }
+
         $data = [
             'pageTitle' => trans('update.events_calendar'),
             'dayEvents' => $dayEvents,
             'dayTimestamp' => $dayTimestamp,
             'upcomingEvents' => $upcomingEvents,
             'eventsWithTimestamp' => $eventsWithTimestamp,
+            'groups' => $groups,
+            'bundles' => $bundles,
+            'students' => $students,
         ];
 
         return view('design_1.panel.events.index', $data);
@@ -193,6 +229,10 @@ class EventsController extends Controller
         $events['live_class_start'] = $this->getLiveClassStartEvent($startAt, $endAt);
         $total += count($events['live_class_start']);
 
+        // Live Courses (created from calendar)
+        $events['live_courses'] = $this->getLiveCourseEvent($startAt, $endAt);
+        $total += count($events['live_courses']);
+
         $events['total'] = $total;
         return $events;
     }
@@ -321,6 +361,7 @@ class EventsController extends Controller
     {
         $hasExpiration = [];
 
+        // Sessions from courses the user purchased
         if (!empty($this->userBoughtWebinarsIds) and count($this->userBoughtWebinarsIds)) {
             $sessions = Session::whereIn('webinar_id', $this->userBoughtWebinarsIds)
                 ->where('status', 'active')
@@ -351,6 +392,53 @@ class EventsController extends Controller
                         'event_at' => $sessionDate,
                         'time' => dateTimeFormat($sessionDate, 'H:i'),
                     ];
+                }
+            }
+        }
+
+        // Sessions from courses the user teaches (instructor role)
+        if ($this->user->isTeacher() || $this->user->isOrganization() || $this->user->isAdmin() || $this->user->isManager() || $this->user->isCeo()) {
+            $teacherWebinarIds = Webinar::where('creator_id', $this->user->id)
+                ->where('status', 'active')
+                ->pluck('id')
+                ->toArray();
+
+            if (!empty($teacherWebinarIds)) {
+                $teachingSessions = Session::whereIn('webinar_id', $teacherWebinarIds)
+                    ->where('status', 'active')
+                    ->where('date', '>=', time())
+                    ->get();
+
+                foreach ($teachingSessions as $session) {
+                    $sessionDate = $session->date;
+
+                    if (isset($hasExpiration[$sessionDate])) {
+                        continue; // already added from purchased check
+                    }
+
+                    $include = false;
+
+                    if (!empty($startAt) and !empty($endAt)) {
+                        if ($sessionDate >= $startAt and $sessionDate <= $endAt) {
+                            $include = true;
+                        }
+                    } elseif ($sessionDate > time()) {
+                        $include = true;
+                    }
+
+                    if ($include) {
+                        $title = $session->title;
+                        if (!empty($session->webinar)) {
+                            $title .= " - " . $session->webinar->title;
+                        }
+
+                        $hasExpiration[$sessionDate] = [
+                            'subtitle' => $title,
+                            'add_to_calendar_url' => $this->addToCalendarLink($title, $sessionDate),
+                            'event_at' => $sessionDate,
+                            'time' => dateTimeFormat($sessionDate, 'H:i'),
+                        ];
+                    }
                 }
             }
         }
@@ -609,6 +697,229 @@ class EventsController extends Controller
         }
 
         return $hasExpiration;
+    }
+
+    private function getLiveCourseEvent($startAt = null, $endAt = null)
+    {
+        $result = [];
+
+        $query = LiveCourse::query()
+            ->where('status', LiveCourse::$Active)
+            ->where(function ($query) {
+                // Creators can always see their own live courses.
+                $query->where('creator_id', $this->user->id);
+
+                // Students in selected group can see targeted live courses.
+                $userGroupIds = GroupUser::query()->where('user_id', $this->user->id)->pluck('group_id')->toArray();
+                if (!empty($userGroupIds)) {
+                    $query->orWhereIn('group_id', $userGroupIds);
+                }
+
+                // Students who purchased targeted bundles can see those live courses.
+                $userBundleIds = $this->user->getPurchasedBundlesIds();
+                if (!empty($userBundleIds)) {
+                    $query->orWhereIn('bundle_id', $userBundleIds);
+                }
+
+                // Students specifically targeted by instructor can see those live courses.
+                $query->orWhereHas('students', function ($studentQuery) {
+                    $studentQuery->where('users.id', $this->user->id);
+                });
+            });
+
+        if (!empty($startAt) && !empty($endAt)) {
+            $query->whereBetween('date', [$startAt, $endAt]);
+        } else {
+            $query->where('date', '>', time());
+        }
+
+        foreach ($query->get() as $liveCourse) {
+            $result[$liveCourse->date] = [
+                'subtitle' => $liveCourse->title,
+                'add_to_calendar_url' => $this->addToCalendarLink($liveCourse->title, $liveCourse->date),
+                'join_url' => $liveCourse->getJoinLink(),
+                'event_at' => $liveCourse->date,
+                'time' => dateTimeFormat($liveCourse->date, 'H:i'),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function storeLiveCourse(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->isTeacher() && !$user->isAdmin() && !$user->isOrganization() && !$user->isManager() && !$user->isCeo()) {
+            abort(403);
+        }
+
+        $data = $request->all();
+        $isLocal = ($data['session_api'] ?? 'local') === 'local';
+
+        $validator = Validator::make($data, [
+            'title'       => 'required|max:255',
+            'session_api' => 'required|in:local,zoom',
+            'link'        => $isLocal ? 'required|url|max:500' : 'nullable',
+            'start_date'  => 'required|date',
+            'duration'    => 'required|integer|min:1',
+            'student_ids'   => 'nullable|array',
+            'student_ids.*' => 'integer|exists:users,id',
+            'bundle_id'   => 'nullable|integer|exists:bundles,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Validate Zoom credentials if needed
+        if (!$isLocal && !(new ZoomOAuth())->hasCredentials($user)) {
+            return response()->json([
+                'status'         => 'zoom_token_invalid',
+                'zoom_error_msg' => trans('webinars.your_zoom_settings_are_not_complete'),
+            ], 422);
+        }
+
+        $bundleId = !empty($data['bundle_id']) ? (int) $data['bundle_id'] : null;
+        $selectedStudentIds = collect($data['student_ids'] ?? [])->filter()->map(function ($id) {
+            return (int) $id;
+        })->unique()->values()->toArray();
+
+        if (!empty($selectedStudentIds)) {
+            $allowedStudentIds = $this->getInstructorCourseStudentIds($user);
+            $unauthorizedStudentIds = array_diff($selectedStudentIds, $allowedStudentIds);
+
+            if (!empty($unauthorizedStudentIds)) {
+                return response()->json([
+                    'errors' => [
+                        'student_ids' => [trans('public.access_denied')]
+                    ]
+                ], 422);
+            }
+        }
+
+        if (!empty($bundleId)) {
+            $bundle = Bundle::query()->find($bundleId);
+
+            if (empty($bundle) || !$bundle->canAccess($user)) {
+                return response()->json([
+                    'errors' => [
+                        'bundle_id' => [trans('public.access_denied')]
+                    ]
+                ], 422);
+            }
+        }
+
+        $dateTimestamp = convertTimeToUTCzone($data['start_date'], getTimezone())->getTimestamp();
+
+        $liveCourse = LiveCourse::create([
+            'creator_id'         => $user->id,
+            'title'              => $data['title'],
+            'description'        => $data['description'] ?? null,
+            'language'           => $data['language'] ?? null,
+            'session_api'        => $data['session_api'],
+            'link'               => $isLocal ? ($data['link'] ?? null) : null,
+            'api_secret'         => $data['api_secret'] ?? null,
+            'date'               => $dateTimestamp,
+            'duration'           => (int) $data['duration'],
+            'extra_time_to_join' => !empty($data['extra_time_to_join']) ? (int) $data['extra_time_to_join'] : null,
+            'group_id'           => null,
+            'bundle_id'          => $bundleId,
+            'status'             => !empty($data['status']) ? LiveCourse::$Active : LiveCourse::$Inactive,
+            'created_at'         => time(),
+        ]);
+
+        if (!empty($selectedStudentIds)) {
+            $liveCourse->students()->sync($selectedStudentIds);
+        }
+
+        if (!$isLocal) {
+            $zoomOAuth = new ZoomOAuth();
+            $meetingCreated = $zoomOAuth->makeMeeting($liveCourse, $user);
+
+            if (!$meetingCreated) {
+                $zoomErrorMessage = $zoomOAuth->getLastError() ?: trans('update.zoom_error_msg');
+                $liveCourse->delete();
+
+                return response()->json([
+                    'status' => 'zoom_token_invalid',
+                    'zoom_error_msg' => $zoomErrorMessage,
+                ], 422);
+            }
+        }
+
+        // Send in-app notifications to selected recipients
+        $recipientIds = [];
+
+        if (!empty($selectedStudentIds)) {
+            $recipientIds = array_merge($recipientIds, $selectedStudentIds);
+        }
+
+        if (!empty($liveCourse->bundle_id)) {
+            $recipientIds = array_merge(
+                $recipientIds,
+                Sale::query()
+                    ->where('bundle_id', $liveCourse->bundle_id)
+                    ->whereNull('refund_at')
+                    ->pluck('buyer_id')
+                    ->toArray()
+            );
+        }
+
+        $recipientIds = array_values(array_unique($recipientIds));
+
+        foreach ($recipientIds as $studentId) {
+            Notification::create([
+                'user_id'    => $studentId,
+                'group_id'   => null,
+                'title'      => trans('update.new_live_course_notification_title', ['title' => $liveCourse->title]),
+                'message'    => trans('update.new_live_course_notification_body', [
+                    'title'    => $liveCourse->title,
+                    'date'     => dateTimeFormat($dateTimestamp, 'j M Y H:i'),
+                    'teacher'  => $user->full_name,
+                ]),
+                'sender'     => 'system',
+                'type'       => 'single',
+                'created_at' => time(),
+            ]);
+        }
+
+        return response()->json([
+            'code'     => 200,
+            'msg'      => trans('update.live_course_created_successfully'),
+            'edit_url' => '/panel/events',
+        ]);
+    }
+
+    private function getInstructorCourseStudentIds($user)
+    {
+        $directWebinarIds = Webinar::query()
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->pluck('id')
+            ->toArray();
+
+        $partnerWebinarIds = WebinarPartnerTeacher::query()
+            ->where('teacher_id', $user->id)
+            ->pluck('webinar_id')
+            ->toArray();
+
+        $webinarIds = array_values(array_unique(array_merge($directWebinarIds, $partnerWebinarIds)));
+
+        if (empty($webinarIds)) {
+            return [];
+        }
+
+        $studentIds = Sale::query()
+            ->whereIn('webinar_id', $webinarIds)
+            ->where('type', Sale::$webinar)
+            ->whereNull('refund_at')
+            ->pluck('buyer_id')
+            ->toArray();
+
+        return array_values(array_unique($studentIds));
     }
 
     private function addToCalendarLink($title, $timestamp)

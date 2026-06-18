@@ -5,6 +5,9 @@
     $skillBands  = $ieltsData['skillBands']  ?? [];
     $weakPoints  = $ieltsData['weakPoints']  ?? [];
     $skillBands  = $ieltsData['skillBands']  ?? [];
+    $weakPointItems = $ieltsData['weakPointItems'] ?? [];
+    $weakPointTotalItems = (int) ($ieltsData['weakPointTotalItems'] ?? count($weakPointItems));
+    $weakPointCountsBySkill = $ieltsData['weakPointCountsBySkill'] ?? [];
 
     $skillMeta = [
         'listening'  => ['label' => 'Listening',  'icon' => 'headphones', 'color' => '#6366F1', 'url' => '/panel/courses/purchases?skill=listening'],
@@ -33,6 +36,86 @@
         <x-iconsax-lin-arrow-left class="icons" width="18px" height="18px"/>
     </a>
     <h2 class="font-18 font-weight-bold text-dark mb-0">Weak Points</h2>
+</div>
+
+<div class="bg-white rounded-24 p-20 mb-20">
+    <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:10px;">
+        <div>
+            <h4 class="font-15 font-weight-bold text-dark mb-2">Mistake tracker from learning and test practice</h4>
+            <p class="font-12 text-gray-500 mb-0">
+                Shows mistakes from lessons/quizzes and IELTS tests, then suggests similar lessons and practice for each weak topic.
+            </p>
+        </div>
+
+        <span class="badge badge-danger-light font-12 px-12 py-6">Total mistakes: {{ $weakPointTotalItems }}</span>
+    </div>
+
+    <div class="d-flex flex-wrap mt-12" style="gap:8px;">
+        @foreach(['listening', 'reading', 'writing', 'speaking', 'vocabulary', 'grammar', 'general'] as $skillKey)
+            @php $count = (int) ($weakPointCountsBySkill[$skillKey] ?? 0); @endphp
+            @if($count > 0)
+                <span class="badge badge-warning-light font-11 px-10 py-6">{{ ucfirst($skillKey) }}: {{ $count }}</span>
+            @endif
+        @endforeach
+    </div>
+
+    <div class="mt-16">
+        @if(!empty($weakPointItems))
+            <div class="d-flex flex-column" style="gap:10px;max-height:520px;overflow:auto;">
+                @foreach($weakPointItems as $item)
+                    <div class="rounded-16 border border-gray-200 p-14">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:8px;">
+                            <div class="d-flex align-items-center" style="gap:8px;">
+                                <span class="badge badge-danger-light font-10">{{ $item['skill_label'] ?? 'General' }}</span>
+                                <span class="badge badge-warning-light font-10">{{ $item['source_label'] ?? 'Learning' }}</span>
+                            </div>
+
+                            @if(!empty($item['test_title']))
+                                <span class="font-10 text-gray-500">{{ $item['test_title'] }}</span>
+                            @endif
+                        </div>
+
+                        <p class="font-13 font-weight-bold text-dark mt-8 mb-4">{{ $item['topic'] ?? 'Weak point' }}</p>
+
+                        @if(!empty($item['question']))
+                            <p class="font-11 text-gray-500 mb-6">Question: {{ $item['question'] }}</p>
+                        @endif
+
+                        <div class="row">
+                            <div class="col-12 col-lg-6">
+                                <div class="rounded-12 bg-gray-100 p-10 h-100">
+                                    <p class="font-10 text-gray-500 mb-4">Your answer</p>
+                                    <p class="font-11 text-dark mb-0">{{ $item['your_answer'] ?: 'No answer saved' }}</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 mt-8 mt-lg-0">
+                                <div class="rounded-12 bg-success-40 p-10 h-100">
+                                    <p class="font-10 text-gray-500 mb-4">Suggested/correct answer</p>
+                                    <p class="font-11 text-success mb-0">{{ $item['correct_answer'] ?: 'Check guidance from lesson or test review' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if(!empty($item['recommendations']) && is_array($item['recommendations']))
+                            <div class="mt-10 d-flex flex-wrap" style="gap:8px;">
+                                @foreach($item['recommendations'] as $rec)
+                                    @if(!empty($rec['url']))
+                                        <a href="{{ $rec['url'] }}" class="btn btn-sm btn-outline-primary rounded-pill font-10 px-12 py-4">
+                                            {{ $rec['label'] ?? 'Practice' }}
+                                        </a>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="rounded-16 bg-gray-100 p-20 text-center">
+                <p class="font-13 text-gray-500 mb-0">No detailed mistakes yet. Complete lessons, quizzes, and IELTS tests to build your personalized weak point feed.</p>
+            </div>
+        @endif
+    </div>
 </div>
 
 <div class="row gx-20">

@@ -239,6 +239,11 @@
             @endforelse
         </div>
 
+        {{-- Events Calendar --}}
+        <div class="mt-12">
+            @include('design_1.panel.dashboard.instructor.includes.events_calendar')
+        </div>
+
     </div>
     {{-- end right col --}}
 

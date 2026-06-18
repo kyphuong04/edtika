@@ -46,7 +46,7 @@ class UserController extends Controller
 
         $user = auth()->user();
 
-        if ($user->isTeacher()) {
+        if ($user->isTeacher() && $step === 'basic_information') {
             return view('design_1.panel.settings.teacher_profile', [
                 'pageTitle'   => 'My Profile',
                 'user'        => $user,

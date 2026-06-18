@@ -1,3 +1,5 @@
+@php($bundlePriceCurrency = $bundle->getPriceCurrency())
+
 {{-- Price Plans --}}
 @if(!empty($bundle->tickets) and count($bundle->tickets))
     <div class="mt-16 px-16">
@@ -7,7 +9,7 @@
             <div class="course-right-side__price-plan custom-input-button position-relative mt-12">
                 <input class="form-check-input" type="radio"
                        {{ (!$ticket->isValid()) ? 'disabled' : '' }}
-                       data-discount-price="{{ handlePrice($ticket->getPriceWithDiscount($bundle->price, !empty($activeSpecialOffer) ? $activeSpecialOffer : null)) }}"
+                        data-discount-price="{{ handleBundlePriceByCurrency($ticket->getPriceWithDiscount($bundle->price, !empty($activeSpecialOffer) ? $activeSpecialOffer : null), $bundlePriceCurrency) }}"
                        value="{{ ($ticket->isValid()) ? $ticket->id : '' }}"
                        name="ticket_id"
                        id="courseOff{{ $ticket->id }}">
@@ -24,23 +26,20 @@
 {{-- Price --}}
 @if($bundle->price > 0)
     @php
-        $realPrice = handleCoursePagePrice($bundle->price);
+        $realPrice = handleBundlePriceByCurrency($bundle->price, $bundlePriceCurrency);
     @endphp
 
     <div id="priceBox" class="d-flex align-items-end justify-content-center  mt-20 px-16">
         @if(!empty($activeSpecialOffer))
             <div class="d-flex align-items-center text-center mr-16">
                 @php
-                    $priceWithDiscount = handleCoursePagePrice($bundle->getPrice());
+                    $priceWithDiscount = handleBundlePriceByCurrency($bundle->getPrice(), $bundlePriceCurrency);
                 @endphp
 
                 <div id="priceWithDiscount" class="d-block font-24 font-weight-bold">
                     {{ $priceWithDiscount['price'] }}
                 </div>
 
-                @if(!empty($priceWithDiscount['tax']))
-                    <span class="d-block font-12 text-gray-500 ml-4">+ {{ $priceWithDiscount['tax'] }} {{ trans('cart.tax') }}</span>
-                @endif
             </div>
         @endif
 
@@ -52,9 +51,6 @@
                 {{ $realPrice['price'] }}
             </div>
 
-            @if(!empty($realPrice['tax']) and empty($activeSpecialOffer))
-                <span class="d-block font-12 text-gray-500 ml-4">+ {{ $realPrice['tax'] }} {{ trans('cart.tax') }}</span>
-            @endif
         </div>
     </div>
 @else

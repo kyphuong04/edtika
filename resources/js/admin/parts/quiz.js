@@ -75,6 +75,66 @@
         return text;
     }
 
+    function openTextQuestionModal(quizId, questionType) {
+        const modalSuffixMap = {
+            rewrite_sentence: 'Rewrite',
+            sentence_completion: 'SentenceCompletion',
+            short_answer: 'ShortAnswer',
+            fill_blank: 'FillBlank',
+        };
+
+        const modalSelector = '.textQuestionModal' + quizId + (modalSuffixMap[questionType] ?? 'FillBlank');
+
+        var textQuestionModal = $(modalSelector);
+        var clone = textQuestionModal.clone();
+
+        const random_id = randomString();
+
+        let copyHtml = clone.prop('innerHTML');
+        copyHtml = copyHtml.replaceAll('record', random_id);
+        clone.html(copyHtml);
+        clone.find('input[name="ajax[type]"]').val(questionType);
+
+        Swal.fire({
+            html: clone.html(),
+            showCancelButton: false,
+            showConfirmButton: false,
+            customClass: {
+                content: 'p-0 text-left',
+            },
+            width: '48rem',
+        });
+    }
+
+    function openInlineQuestionModal(quizId, selector, questionType = null) {
+        var modal = $(selector + quizId);
+        var clone = modal.clone();
+
+        let copyHtml = clone.prop('innerHTML');
+        copyHtml = copyHtml.replaceAll('record', randomString());
+        clone.html(copyHtml);
+
+        if (questionType) {
+            clone.find('input[name="ajax[type]"]').val(questionType);
+
+            if (questionType === 'yes_no_not_given') {
+                clone.find('.js-ajax-question-data-options').val('YES\nNO\nNOT GIVEN');
+            } else if (questionType === 'true_false_not_given') {
+                clone.find('.js-ajax-question-data-options').val('TRUE\nFALSE\nNOT GIVEN');
+            }
+        }
+
+        Swal.fire({
+            html: clone.html(),
+            showCancelButton: false,
+            showConfirmButton: false,
+            customClass: {
+                content: 'p-0 text-left',
+            },
+            width: '48rem',
+        });
+    }
+
 
     $('body').on('click', '#add_descriptive_question', function (e) {
         e.preventDefault();
@@ -99,6 +159,56 @@
             },
             width: '48rem',
         });
+    });
+
+    $('body').on('click', '#add_fill_blank_question', function (e) {
+        e.preventDefault();
+        openTextQuestionModal($(this).attr('data-quiz-id'), 'fill_blank');
+    });
+
+    $('body').on('click', '#add_rewrite_sentence_question', function (e) {
+        e.preventDefault();
+        openTextQuestionModal($(this).attr('data-quiz-id'), 'rewrite_sentence');
+    });
+
+    $('body').on('click', '#add_sentence_completion_question', function (e) {
+        e.preventDefault();
+        openTextQuestionModal($(this).attr('data-quiz-id'), 'sentence_completion');
+    });
+
+    $('body').on('click', '#add_short_answer_question', function (e) {
+        e.preventDefault();
+        openTextQuestionModal($(this).attr('data-quiz-id'), 'short_answer');
+    });
+
+    $('body').on('click', '#add_true_false_question', function (e) {
+        e.preventDefault();
+        openInlineQuestionModal($(this).attr('data-quiz-id'), '.booleanQuestionModal', 'true_false_not_given');
+    });
+
+    $('body').on('click', '#add_yes_no_question', function (e) {
+        e.preventDefault();
+        openInlineQuestionModal($(this).attr('data-quiz-id'), '.booleanQuestionModal', 'yes_no_not_given');
+    });
+
+    $('body').on('click', '#add_matching_headings_question', function (e) {
+        e.preventDefault();
+        openInlineQuestionModal($(this).attr('data-quiz-id'), '.matchingQuestionModal', 'matching_headings');
+    });
+
+    $('body').on('click', '#add_matching_information_question', function (e) {
+        e.preventDefault();
+        openInlineQuestionModal($(this).attr('data-quiz-id'), '.matchingQuestionModal', 'matching_information');
+    });
+
+    $('body').on('click', '#add_matching_features_question', function (e) {
+        e.preventDefault();
+        openInlineQuestionModal($(this).attr('data-quiz-id'), '.matchingQuestionModal', 'matching_features');
+    });
+
+    $('body').on('click', '#add_matching_sentence_endings_question', function (e) {
+        e.preventDefault();
+        openInlineQuestionModal($(this).attr('data-quiz-id'), '.matchingQuestionModal', 'matching_sentence_endings');
     });
 
     /*$('body').on('change', '.js-switch', function () {
@@ -147,7 +257,13 @@
             if (errors && errors.errors) {
                 Object.keys(errors.errors).forEach((key) => {
                     const error = errors.errors[key];
-                    let element = form.find('.js-ajax-' + key);
+                    const normalizedKey = key.replace(/[^a-zA-Z0-9]+/g, '-');
+                    let element = form.find('.js-ajax-' + normalizedKey);
+
+                    if (!element.length) {
+                        element = form.find('[name="ajax[' + key.replace(/\./g, '][') + ']"]');
+                    }
+
                     element.addClass('is-invalid');
                     element.parent().find('.invalid-feedback').text(error[0]);
                 });
@@ -189,7 +305,13 @@
             if (errors && errors.errors) {
                 Object.keys(errors.errors).forEach((key) => {
                     const error = errors.errors[key];
-                    let element = form.find('.js-ajax-' + key);
+                    const normalizedKey = key.replace(/[^a-zA-Z0-9]+/g, '-');
+                    let element = form.find('.js-ajax-' + normalizedKey);
+
+                    if (!element.length) {
+                        element = form.find('[name="ajax[' + key.replace(/\./g, '][') + ']"]');
+                    }
+
                     element.addClass('is-invalid');
                     element.parent().find('.invalid-feedback').text(error[0]);
                 });
@@ -266,6 +388,21 @@
             } else {
 
                 $form.find('.js-ajax-title').val(question.title);
+
+                if (question.question_data) {
+                    Object.keys(question.question_data).forEach(function (key) {
+                        const value = question.question_data[key];
+                        const element = $form.find('[name="ajax[question_data][' + key + ']"]');
+
+                        if (element.length) {
+                            if (element.attr('type') === 'checkbox') {
+                                element.prop('checked', !!value && value !== '0');
+                            } else {
+                                element.val(value);
+                            }
+                        }
+                    });
+                }
 
                 if (question.quizzes_questions_answers && question.quizzes_questions_answers.length) {
                     var answers = question.quizzes_questions_answers;

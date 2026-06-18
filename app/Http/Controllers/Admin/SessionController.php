@@ -28,7 +28,7 @@ class SessionController extends Controller
             'date' => 'required|date',
             'duration' => 'required|numeric',
             'link' => ($data['session_api'] == 'local') ? 'required|url' : 'nullable',
-            'api_secret' => (in_array($data['session_api'], ['zoom', 'agora', 'jitsi'])) ? 'nullable' : 'required',
+            'api_secret' => ($data['session_api'] == 'big_blue_button') ? 'required' : 'nullable',
             'moderator_secret' => ($data['session_api'] == 'big_blue_button') ? 'required' : 'nullable',
         ]);
 
@@ -53,7 +53,7 @@ class SessionController extends Controller
             if (!empty($webinar)) {
                 $teacher = $webinar->creator;
 
-                if (!empty($data['session_api']) and $data['session_api'] == 'zoom' and empty(getFeaturesSettings('zoom_client_id'))) {
+                if (!empty($data['session_api']) and $data['session_api'] == 'zoom' and !(new ZoomOAuth())->hasCredentials($teacher)) {
                     $error = [
                         'zoom-not-complete-alert' => []
                     ];
@@ -278,25 +278,34 @@ class SessionController extends Controller
 
     private function handleZoomApi($session, $user)
     {
+        $zoomErrorMessage = trans('update.zoom_error_msg');
+
         try {
-            if (!empty(getFeaturesSettings('zoom_client_id')) and !empty(getFeaturesSettings('zoom_client_secret'))) {
-                $meeting = (new ZoomOAuth())->makeMeeting($session);
+            $zoomOAuth = new ZoomOAuth();
+
+            if ($zoomOAuth->hasCredentials($user)) {
+                $meeting = $zoomOAuth->makeMeeting($session, $user);
 
                 if ($meeting) {
                     return "ok";
-                } else {
-                    $session->delete();
                 }
+
+                $session->delete();
+                $zoomErrorMessage = $zoomOAuth->getLastError() ?: $zoomErrorMessage;
             }
         } catch (\Exception $exception) {
             $session->delete();
-            //dd($exception);
+            $zoomErrorMessage = $exception->getMessage() ?: $zoomErrorMessage;
         }
 
         return response()->json([
             'code' => 422,
             'status' => 'zoom_token_invalid',
-            'zoom_error_msg' => trans('update.zoom_error_msg')
+            'zoom_error_msg' => $zoomErrorMessage,
+            'toast_alert' => [
+                'title' => trans('update.zoom'),
+                'msg' => $zoomErrorMessage,
+            ],
         ], 422);
     }
 

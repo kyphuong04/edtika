@@ -23,6 +23,18 @@
             justify-content: space-between;
         }
     }
+
+    .btn-1 {
+        background-color: #fff;
+        border-color: #511D99;
+        color: #511D99;
+    }
+
+    .btn-1:hover {
+        background-color: #511D99;
+        border-color: #511D99;
+        color: #fff;
+    }
 </style>
 
 <div class="mt-32 bg-white rounded-16 p-16 soft-shadow-2 bundle-bottom-actions">
@@ -43,7 +55,7 @@
 
         <div class="d-flex align-items-center gap-8">
             {{-- Save as Draft --}}
-            <button type="button" id="saveAsDraft" class=" btn btn-transparent text-gray-500">{{ trans('public.save_as_draft') }}</button>
+            <button type="button" id="saveAsDraft" class="btn-1 btn-lg">{{ trans('public.save_as_draft') }}</button>
 
             @if(!empty($bundle) and $bundle->creator_id == $authUser->id)
                 @include('design_1.panel.includes.content_delete_btn', [
@@ -55,13 +67,7 @@
             @endif
 
             {{-- Send for Review --}}
-            <button type="button" id="sendForReview" class="btn btn-lg btn-primary ml-16" style="background-color: #511D99; border-color: #511D99;">{{ trans('public.send_for_review') }}</button>
-
-            <small class="d-block text-gray-500 ml-16" style="max-width: 220px; line-height: 1.4;">
-                Bundle sẽ được chuyển sang trạng thái chờ duyệt sau khi gửi.
-            </small>
-
-
+            <button type="button" id="sendForReview" class="btn btn-lg btn-primary ml-16" style="background-color: #511D99; border-color: #511D99; color: #fff;">{{ trans('public.send_for_review') }}</button>
         </div>
     </div>
 

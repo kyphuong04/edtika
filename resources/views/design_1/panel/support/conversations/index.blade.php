@@ -57,7 +57,7 @@
     /* Received: light, with border */
     .chat-bubble--received {
         background-color: #ffffff;
-        border: 1px solid #e5e7eb;
+        border: 1px solid #c3c5c7;
         border-bottom-left-radius: 4px;
         color: #1f2937;
     }
@@ -71,7 +71,7 @@
 
     /* Sent: darker gray */
     .chat-bubble--sent {
-        background-color: #6b7280;
+        background-color: #511D99;
         border-bottom-right-radius: 4px;
         color: #ffffff;
     }

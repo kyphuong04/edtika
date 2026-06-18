@@ -1,37 +1,66 @@
-{{-- Matching Headings - IDP Style --}}
-{{-- List of headings (roman numerals), then questions with dropdown/input to select heading --}}
+{{-- Matching Headings (Matrix) - IDP Style --}}
 
 @php
     $headings = is_array($matchingOptions) ? $matchingOptions : json_decode($matchingOptions ?? '[]', true);
+
+    if (empty($headings) && isset($questions) && $questions->count()) {
+        $firstQuestionOptions = $questions->first()->answer_options ?? $questions->first()->options ?? [];
+        if (is_string($firstQuestionOptions)) {
+            $firstQuestionOptions = json_decode($firstQuestionOptions, true) ?? [];
+        }
+
+        if (is_array($firstQuestionOptions)) {
+            $hasAssociativeKeys = array_keys($firstQuestionOptions) !== range(0, count($firstQuestionOptions) - 1);
+
+            if ($hasAssociativeKeys) {
+                $headings = $firstQuestionOptions;
+            } elseif (!empty($firstQuestionOptions)) {
+                $headings = [];
+                foreach ($firstQuestionOptions as $idx => $value) {
+                    $letter = chr(65 + $idx);
+                    $headings[$letter] = $value;
+                }
+            }
+        }
+    }
+
+    $headingKeys = array_keys($headings);
+    if (empty($headingKeys)) {
+        $headingKeys = ['A', 'B', 'C', 'D', 'E'];
+    }
 @endphp
 
-{{-- Headings list --}}
-@if(!empty($headings))
-    <div style="margin-bottom: 16px; font-size: 14px;">
-        <strong>List of Headings</strong>
-        <div style="margin-top: 8px; padding-left: 10px;">
-            @foreach($headings as $key => $text)
-                <div style="margin-bottom: 4px;">{{ $key }} &nbsp; {{ $text }}</div>
+<table class="idp-match-table">
+    <thead>
+        <tr>
+            <th style="width: auto;"></th>
+            @foreach($headingKeys as $key)
+                <th>{{ $key }}</th>
             @endforeach
-        </div>
-    </div>
-@endif
-
-{{-- Questions --}}
-@foreach($questions as $q)
-    @php
-        $qNum = $q->question_number ?? $loop->iteration;
-        $saved = $userAnswers[$q->id] ?? '';
-        $text = $q->question_text ?? $q->content ?? '';
-    @endphp
-    <div class="idp-question" data-q-num="{{ $qNum }}" style="display: flex; align-items: center; gap: 10px;">
-        <span class="idp-q-num">{{ $qNum }}</span>
-        <select class="idp-input" style="min-width: 60px; height: 28px;" onchange="saveAnswer({{ $q->id }}, this.value)">
-            <option value="">--</option>
-            @foreach($headings as $key => $hText)
-                <option value="{{ $key }}" {{ $saved === $key ? 'selected' : '' }}>{{ $key }}</option>
-            @endforeach
-        </select>
-        <span class="idp-q-text">{{ $text }}</span>
-    </div>
-@endforeach
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($questions as $q)
+            @php
+                $qNum = $q->question_number ?? $loop->iteration;
+                $saved = $userAnswers[$q->id] ?? '';
+                $text = $q->question_text ?? $q->content ?? '';
+            @endphp
+            <tr data-q-num="{{ $qNum }}">
+                <td>
+                    <span class="idp-q-num">{{ $qNum }}</span>
+                    <span class="idp-q-text">{!! $text !!}</span>
+                </td>
+                @foreach($headingKeys as $key)
+                    <td>
+                        <input type="radio"
+                               name="q_{{ $q->id }}"
+                               value="{{ $key }}"
+                               {{ $saved === $key ? 'checked' : '' }}
+                               onchange="saveAnswer({{ $q->id }}, '{{ $key }}')">
+                    </td>
+                @endforeach
+            </tr>
+        @endforeach
+    </tbody>
+</table>

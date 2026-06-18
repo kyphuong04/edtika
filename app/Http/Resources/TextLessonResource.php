@@ -33,6 +33,8 @@ class TextLessonResource extends JsonResource
             //    'updated_at' => $this->updated_at,
             'summary' => $this->summary,
             'content' => $this->content,
+            'interactive_quiz' => $this->interactive_quiz,
+            'lecture_notes' => $this->lecture_notes,
             'locale' => $this->locale,
             // 'read'=>$this->read ,
             'attachments' => $this->attachments()->get()->map(function ($attachment) {

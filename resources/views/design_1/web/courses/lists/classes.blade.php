@@ -17,7 +17,7 @@
         ['label' => 'Kiểm tra đầu vào', 'url' => '/panel/ielts-tests/practice', 'requiresAuth' => true, 'active' => $isPlacementActive],
         ['label' => 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
-        ['label' => 'Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
+        ['label' => 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
     ];
 
     $heroBreadcrumbs = [
@@ -1152,6 +1152,10 @@
             color: #1f1f27;
         }
 
+        .edtika-auth-input-wrap .edtika-auth-input {
+            padding-right: 46px;
+        }
+
         .edtika-auth-input:focus {
             outline: none;
             border-color: rgba(81, 29, 153, 0.45);
@@ -1160,11 +1164,39 @@
 
         .edtika-auth-input-icon {
             position: absolute;
-            right: 12px;
+            right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: #9797a3;
-            font-size: 16px;
+            color: #511D99;
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            border: 0;
+            background: rgba(81,29,153,0.08);
+            padding: 6px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            transition: background .12s ease, transform .08s ease, color .12s ease;
+            z-index: 2;
+        }
+
+        .edtika-auth-input-icon:hover {
+            background: rgba(81,29,153,0.12);
+            transform: translateY(-50%) scale(1.03);
+            color: #3b0f9c;
+        }
+
+        .edtika-auth-input-icon:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(81,29,153,0.12);
+        }
+
+        .edtika-auth-input-icon i {
             pointer-events: none;
         }
 
@@ -1174,6 +1206,10 @@
             text-align: right;
             margin-top: 2px;
             margin-bottom: 18px;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
             color: #2f2f38;
             text-decoration: none;
             font-size: 14px;
@@ -1959,11 +1995,14 @@
                                     <label class="edtika-auth-label" for="edtikaLoginPassword">Mật khẩu *</label>
                                     <div class="edtika-auth-input-wrap">
                                         <input id="edtikaLoginPassword" class="edtika-auth-input" type="password" name="password" autocomplete="current-password">
-                                        <span class="edtika-auth-input-icon">◌</span>
+                                        <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaLoginPassword" aria-label="Hiển thị mật khẩu">
+                                            <x-iconsax-lin-eye-slash class="icons-eye-slash text-gray-400 d-none" width="24px" height="24px"/>
+                                            <x-iconsax-lin-eye class="icons-eye text-gray-400 " width="24px" height="24px"/>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <a class="edtika-auth-forgot" href="/forget-password">Bạn quên mật khẩu?</a>
+                                <button type="button" class="edtika-auth-forgot" data-auth-tab-switch="forgot">Bạn quên mật khẩu?</button>
                                 <button type="submit" class="edtika-auth-submit">Đăng nhập</button>
                             </form>
 
@@ -2013,7 +2052,10 @@
                                     <label class="edtika-auth-label" for="edtikaRegisterPassword">Mật khẩu *</label>
                                     <div class="edtika-auth-input-wrap">
                                         <input id="edtikaRegisterPassword" class="edtika-auth-input" type="password" name="password" autocomplete="new-password">
-                                        <span class="edtika-auth-input-icon">◌</span>
+                                        <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPassword" aria-label="Hiển thị mật khẩu">
+                                            <x-iconsax-lin-eye-slash class="icons-eye-slash text-gray-400 d-none" width="24px" height="24px"/>
+                                            <x-iconsax-lin-eye class="icons-eye text-gray-400 " width="24px" height="24px"/>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -2021,7 +2063,10 @@
                                     <label class="edtika-auth-label" for="edtikaRegisterPasswordConfirmation">Nhập lại mật khẩu *</label>
                                     <div class="edtika-auth-input-wrap">
                                         <input id="edtikaRegisterPasswordConfirmation" class="edtika-auth-input" type="password" name="password_confirmation" autocomplete="new-password">
-                                        <span class="edtika-auth-input-icon">◌</span>
+                                        <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPasswordConfirmation" aria-label="Hiển thị nhập lại mật khẩu">
+                                            <x-iconsax-lin-eye-slash class="icons-eye-slash text-gray-400 d-none" width="24px" height="24px"/>
+                                            <x-iconsax-lin-eye class="icons-eye text-gray-400 " width="24px" height="24px"/>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -2036,6 +2081,44 @@
 
                             <div class="edtika-auth-switch-note">
                                 Bạn đã có tài khoản? <button type="button" data-auth-tab-switch="login">Đăng nhập</button>
+                            </div>
+                        </div>
+
+                        <div class="edtika-auth-pane" data-auth-pane="forgot">
+                            <h3 class="edtika-auth-pane__title">Khôi phục mật khẩu</h3>
+
+                            <form method="POST" action="/forget-password">
+                                @csrf
+                                <input type="hidden" name="type" id="edtikaForgotType" value="email">
+
+                                <div class="edtika-auth-methods" role="tablist" aria-label="Phương thức lấy lại mật khẩu">
+                                    <button type="button" class="edtika-auth-method is-active" data-forgot-method="email">Email</button>
+                                    <button type="button" class="edtika-auth-method" data-forgot-method="phone">Điện thoại</button>
+                                </div>
+
+                                <div class="edtika-auth-field" data-forgot-field="email">
+                                    <label class="edtika-auth-label" for="edtikaForgotEmail">Email *</label>
+                                    <input id="edtikaForgotEmail" class="edtika-auth-input" type="email" name="email" autocomplete="email">
+                                </div>
+
+                                <div class="edtika-auth-field" data-forgot-field="phone" style="display: none;">
+                                    <label class="edtika-auth-label" for="edtikaForgotPhone">Điện thoại *</label>
+                                    <input id="edtikaForgotPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
+                                </div>
+
+                                @if(!empty(getGeneralSecuritySettings('captcha_for_forgot_pass')))
+                                    <div class="edtika-auth-field">
+                                        @include('design_1.web.includes.captcha_input')
+                                    </div>
+                                @endif
+
+                                <button type="submit" class="edtika-auth-submit">Đặt lại mật khẩu</button>
+                            </form>
+
+                            <div class="edtika-auth-switch-note">
+                                <button type="button" data-auth-tab-switch="login">Đăng nhập</button>
+                                <span> / </span>
+                                <button type="button" data-auth-tab-switch="register">Đăng ký</button>
                             </div>
                         </div>
                     </div>
@@ -2079,7 +2162,7 @@
                         <ul class="edtika-footer__list">
                             <li><a href="/classes">Khóa học</a></li>
                             <li><a href="#">FAQ</a></li>
-                            <li><a href="/blog">Tin tức</a></li>
+                            <li><a href="/blog">Kiến thức & Tin tức</a></li>
                         </ul>
                     </div>
 
@@ -2171,6 +2254,10 @@
                 const loginMethodBtns = document.querySelectorAll('[data-login-method]');
                 const loginFieldBlocks = document.querySelectorAll('[data-login-field]');
                 const loginTypeInput = document.getElementById('edtikaLoginType');
+                const forgotMethodBtns = document.querySelectorAll('[data-forgot-method]');
+                const forgotFieldBlocks = document.querySelectorAll('[data-forgot-field]');
+                const forgotTypeInput = document.getElementById('edtikaForgotType');
+                const passwordToggleBtns = document.querySelectorAll('[data-password-toggle]');
 
                 function renderHighlightsByTarget(targetKey) {
                     if (!$factsSection.length) {
@@ -2402,10 +2489,61 @@
                     });
                 });
 
+                function setForgotMethod(method) {
+                    forgotMethodBtns.forEach(function (methodBtn) {
+                        methodBtn.classList.toggle('is-active', methodBtn.getAttribute('data-forgot-method') === method);
+                    });
+
+                    forgotFieldBlocks.forEach(function (fieldBlock) {
+                        const isTarget = fieldBlock.getAttribute('data-forgot-field') === method;
+                        fieldBlock.style.display = isTarget ? 'block' : 'none';
+                    });
+
+                    if (forgotTypeInput) {
+                        forgotTypeInput.value = method === 'phone' ? 'mobile' : 'email';
+                    }
+                }
+
+                forgotMethodBtns.forEach(function (methodBtn) {
+                    methodBtn.addEventListener('click', function () {
+                        setForgotMethod(methodBtn.getAttribute('data-forgot-method'));
+                    });
+                });
+
+                passwordToggleBtns.forEach(function (toggleBtn) {
+                    toggleBtn.addEventListener('click', function () {
+                        const targetId = toggleBtn.getAttribute('data-password-target');
+                        const targetInput = targetId ? document.getElementById(targetId) : null;
+
+                        if (!targetInput) {
+                            return;
+                        }
+
+                        const isHidden = targetInput.getAttribute('type') === 'password';
+                        targetInput.setAttribute('type', isHidden ? 'text' : 'password');
+
+                        const nowHidden = targetInput.getAttribute('type') === 'password';
+
+                        const icon = toggleBtn.querySelector('i');
+                        if (icon) {
+                            icon.classList.toggle('fa-eye', !nowHidden);
+                            icon.classList.toggle('fa-eye-slash', nowHidden);
+                        } else {
+                            const eye = toggleBtn.querySelector('.icons-eye');
+                            const eyeSlash = toggleBtn.querySelector('.icons-eye-slash');
+                            if (eye && eyeSlash) {
+                                eye.classList.toggle('d-none', nowHidden);
+                                eyeSlash.classList.toggle('d-none', !nowHidden);
+                            }
+                        }
+                    });
+                });
+
                 syncTargetState();
                 renderHighlightsByTarget($targetField.val());
                 renderSuggestedCoursesByTarget($targetField.val());
                 setLoginMethod('email');
+                setForgotMethod('email');
             });
         })(jQuery);
     </script>

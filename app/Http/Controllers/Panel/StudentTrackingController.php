@@ -20,6 +20,7 @@ use App\Models\Ticket;
 use App\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -535,6 +536,368 @@ class StudentTrackingController extends Controller
         ];
 
         return view('design_1.panel.students_tracking.assignments', $data);
+    }
+
+    /**
+     * Show a unified activity timeline for a student in instructor-owned courses.
+     */
+    public function activity(Request $request, $studentId)
+    {
+        $user = auth()->user();
+
+        if (!$user->isTeacher() && !$user->isOrganization()) {
+            abort(403);
+        }
+
+        $student = User::findOrFail($studentId);
+
+        $instructorWebinars = Webinar::where(function ($query) use ($user) {
+            $query->where('creator_id', $user->id)
+                ->orWhere('teacher_id', $user->id);
+        })->pluck('id');
+
+        $enrollmentExists = Sale::where('buyer_id', $studentId)
+            ->whereIn('webinar_id', $instructorWebinars)
+            ->whereNull('refund_at')
+            ->exists();
+
+        if (!$enrollmentExists) {
+            abort(404, 'Student is not enrolled in any of your courses.');
+        }
+
+        $webinarTitles = Webinar::whereIn('id', $instructorWebinars)
+            ->get()
+            ->pluck('title', 'id')
+            ->toArray();
+
+        $activities = collect();
+
+        // Enrollments
+        $enrollments = Sale::where('buyer_id', $studentId)
+            ->whereIn('webinar_id', $instructorWebinars)
+            ->whereNull('refund_at')
+            ->select('id', 'webinar_id', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($enrollments as $sale) {
+            $activities->push([
+                'time' => (int) $sale->created_at,
+                'type' => 'enrollment',
+                'webinar_id' => (int) $sale->webinar_id,
+                'title' => 'Đăng ký khóa học',
+                'description' => $webinarTitles[$sale->webinar_id] ?? 'Khóa học',
+                'url' => null,
+            ]);
+        }
+
+        // Quiz results
+        $quizResults = DB::table('quizzes_results as qr')
+            ->join('quizzes as q', 'q.id', '=', 'qr.quiz_id')
+            ->where('qr.user_id', $studentId)
+            ->whereIn('q.webinar_id', $instructorWebinars)
+            ->select('qr.id', 'qr.user_grade', 'qr.status', 'qr.created_at', 'qr.quiz_id', 'q.total_mark', 'q.webinar_id')
+            ->orderBy('qr.created_at', 'desc')
+            ->get();
+
+        // Load quiz titles via the Quiz model (handles translations) to avoid selecting translatable columns directly in raw queries
+        $quizIds = $quizResults->pluck('quiz_id')->unique()->filter()->values()->all();
+        $quizTitles = [];
+        if (!empty($quizIds)) {
+            $quizTitles = \App\Models\Quiz::whereIn('id', $quizIds)
+                ->get()
+                ->pluck('title', 'id')
+                ->toArray();
+        }
+
+        foreach ($quizResults as $row) {
+            $gradeText = is_null($row->user_grade) ? 'N/A' : ((string) $row->user_grade . '/' . (int) ($row->total_mark ?: 100));
+
+            $activities->push([
+                'time' => (int) $row->created_at,
+                'type' => 'quiz',
+                'webinar_id' => (int) $row->webinar_id,
+                'title' => 'Làm quiz: ' . ($quizTitles[$row->quiz_id] ?? 'Quiz'),
+                'description' => ($webinarTitles[$row->webinar_id] ?? 'Khóa học') . ' • Điểm: ' . $gradeText,
+                'url' => '/panel/quizzes/results/' . $row->id . '/details',
+            ]);
+        }
+
+        // Assignment submissions
+        $assignmentRows = DB::table('webinar_assignment_history as wah')
+            ->join('webinar_assignments as wa', 'wa.id', '=', 'wah.assignment_id')
+            ->where('wah.student_id', $studentId)
+            ->whereIn('wa.webinar_id', $instructorWebinars)
+            ->select('wah.id', 'wah.assignment_id', 'wah.grade', 'wah.status', 'wah.created_at', 'wa.webinar_id')
+            ->orderBy('wah.created_at', 'desc')
+            ->get();
+
+        // Load assignment titles via the WebinarAssignment model (handles translations)
+        $assignmentIds = $assignmentRows->pluck('assignment_id')->unique()->filter()->values()->all();
+        $assignmentTitles = [];
+        if (!empty($assignmentIds)) {
+            $assignmentTitles = \App\Models\WebinarAssignment::whereIn('id', $assignmentIds)
+                ->get()
+                ->pluck('title', 'id')
+                ->toArray();
+        }
+
+        foreach ($assignmentRows as $row) {
+            $gradeText = is_null($row->grade) ? 'Chưa chấm' : (string) $row->grade;
+
+            $activities->push([
+                'time' => (int) $row->created_at,
+                'type' => 'assignment',
+                'webinar_id' => (int) $row->webinar_id,
+                'title' => 'Nộp assignment: ' . ($assignmentTitles[$row->assignment_id] ?? 'Assignment'),
+                'description' => ($webinarTitles[$row->webinar_id] ?? 'Khóa học') . ' • Điểm: ' . $gradeText,
+                'url' => '/panel/assignments/' . $row->assignment_id . '/students',
+            ]);
+        }
+
+        // IELTS test attempts
+        $testAttempts = DB::table('ielts_test_attempts as ita')
+            ->join('ielts_tests as it', 'it.id', '=', 'ita.test_id')
+            ->leftJoin('webinars as w', 'w.id', '=', 'it.webinar_id')
+            ->where('ita.user_id', $studentId)
+            ->where(function ($q) use ($instructorWebinars) {
+                $q->whereIn('it.webinar_id', $instructorWebinars)
+                    ->orWhereIn('w.id', $instructorWebinars);
+            })
+            ->select('ita.id', 'ita.test_id', 'ita.overall_band', 'ita.completed_at', 'ita.started_at', 'ita.updated_at', 'it.webinar_id')
+            ->orderBy('ita.completed_at', 'desc')
+            ->get();
+
+        $testIds = $testAttempts->pluck('test_id')->unique()->filter()->values()->all();
+        $testTitles = [];
+        if (!empty($testIds)) {
+            $testTitles = \App\Models\IeltsTest::whereIn('id', $testIds)
+                ->get()
+                ->pluck('title', 'id')
+                ->toArray();
+        }
+
+        foreach ($testAttempts as $row) {
+            $eventTime = !empty($row->completed_at)
+                ? (int) $row->completed_at
+                : (!empty($row->started_at) ? (int) $row->started_at : (int) $row->updated_at);
+            if ($eventTime <= 0) {
+                continue;
+            }
+
+            $bandText = is_null($row->overall_band) ? 'N/A' : (string) $row->overall_band;
+
+            $activities->push([
+                'time' => $eventTime,
+                'type' => 'test',
+                'webinar_id' => (int) $row->webinar_id,
+                'title' => 'Hoàn thành bài test: ' . ($testTitles[$row->test_id] ?? 'IELTS Test'),
+                'description' => ($webinarTitles[$row->webinar_id] ?? 'Khóa học') . ' • Overall band: ' . $bandText,
+                'url' => null,
+            ]);
+        }
+
+        // Lesson/content learning events (course_learning)
+        $learningRows = DB::table('course_learning as cl')
+            ->leftJoin('text_lessons as tl', 'tl.id', '=', 'cl.text_lesson_id')
+            ->leftJoin('files as f', 'f.id', '=', 'cl.file_id')
+            ->leftJoin('sessions as s', 's.id', '=', 'cl.session_id')
+            ->where('cl.user_id', $studentId)
+            ->where(function ($q) use ($instructorWebinars) {
+                $q->whereIn('tl.webinar_id', $instructorWebinars)
+                    ->orWhereIn('f.webinar_id', $instructorWebinars)
+                    ->orWhereIn('s.webinar_id', $instructorWebinars);
+            })
+            ->select(
+                'cl.created_at',
+                'cl.text_lesson_id', 'tl.webinar_id as tl_webinar_id',
+                'cl.file_id', 'f.webinar_id as f_webinar_id',
+                'cl.session_id', 's.webinar_id as s_webinar_id'
+            )
+            ->orderBy('cl.created_at', 'desc')
+            ->get();
+
+        $lessonIds = $learningRows->pluck('text_lesson_id')->unique()->filter()->values()->all();
+        $fileIds = $learningRows->pluck('file_id')->unique()->filter()->values()->all();
+        $sessionIds = $learningRows->pluck('session_id')->unique()->filter()->values()->all();
+
+        $lessonTitles = [];
+        if (!empty($lessonIds)) {
+            $lessonTitles = \App\Models\TextLesson::whereIn('id', $lessonIds)
+                ->get()
+                ->pluck('title', 'id')
+                ->toArray();
+        }
+
+        $fileTitles = [];
+        if (!empty($fileIds)) {
+            $fileTitles = \App\Models\File::whereIn('id', $fileIds)
+                ->get()
+                ->pluck('title', 'id')
+                ->toArray();
+        }
+
+        $sessionTitles = [];
+        if (!empty($sessionIds)) {
+            $sessionTitles = \App\Models\Session::whereIn('id', $sessionIds)
+                ->get()
+                ->pluck('title', 'id')
+                ->toArray();
+        }
+
+        foreach ($learningRows as $row) {
+            $eventTime = (int) $row->created_at;
+            if ($eventTime <= 0) {
+                continue;
+            }
+
+            $itemTitle = ($row->text_lesson_id ? ($lessonTitles[$row->text_lesson_id] ?? null) : null)
+                ?: ($row->file_id ? ($fileTitles[$row->file_id] ?? null) : null)
+                ?: ($row->session_id ? ($sessionTitles[$row->session_id] ?? null) : null)
+                ?: 'Nội dung khóa học';
+            $webinarId = $row->tl_webinar_id ?: ($row->f_webinar_id ?: $row->s_webinar_id);
+
+            $activities->push([
+                'time' => $eventTime,
+                'type' => 'learning',
+                'webinar_id' => (int) $webinarId,
+                'title' => 'Học nội dung: ' . $itemTitle,
+                'description' => $webinarTitles[$webinarId] ?? 'Khóa học',
+                'url' => null,
+            ]);
+        }
+
+        // Student support messages in teacher-owned courses
+        $supportMessages = DB::table('support_conversations as sc')
+            ->join('supports as sp', 'sp.id', '=', 'sc.support_id')
+            ->where('sp.user_id', $studentId)
+            ->whereIn('sp.webinar_id', $instructorWebinars)
+            ->where('sc.sender_id', $studentId)
+            ->whereNull('sp.department_id')
+            ->select('sp.id as support_id', 'sp.webinar_id', 'sc.created_at')
+            ->orderBy('sc.created_at', 'desc')
+            ->get();
+
+        foreach ($supportMessages as $row) {
+            $activities->push([
+                'time' => (int) $row->created_at,
+                'type' => 'message',
+                'webinar_id' => (int) $row->webinar_id,
+                'title' => 'Gửi tin nhắn hỗ trợ',
+                'description' => $webinarTitles[$row->webinar_id] ?? 'Khóa học',
+                'url' => '/panel/support/' . $row->support_id . '/conversations',
+            ]);
+        }
+
+        $enrolledWebinarIds = $enrollments->pluck('webinar_id')->unique()->filter()->values();
+        $enrolledWebinars = Webinar::whereIn('id', $enrolledWebinarIds)->get()->keyBy('id');
+
+        $courseStats = [];
+        foreach ($enrolledWebinarIds as $wid) {
+            $wid = (int) $wid;
+            $courseActivities = $activities->filter(function ($a) use ($wid) {
+                return (int) ($a['webinar_id'] ?? 0) === $wid;
+            });
+
+            $courseStats[] = [
+                'webinar_id' => $wid,
+                'webinar_title' => $enrolledWebinars[$wid]->title ?? ($webinarTitles[$wid] ?? 'Khóa học'),
+                'progress' => (float) $this->calculateCourseProgress($studentId, $wid),
+                'enrolled_at' => (int) ($enrollments->firstWhere('webinar_id', $wid)->created_at ?? 0),
+                'lessons_done' => $courseActivities->where('type', 'learning')->count(),
+                'quizzes_done' => $courseActivities->where('type', 'quiz')->count(),
+                'assignments_done' => $courseActivities->where('type', 'assignment')->count(),
+                'tests_done' => $courseActivities->where('type', 'test')->count(),
+                'messages_sent' => $courseActivities->where('type', 'message')->count(),
+                'last_activity_at' => (int) ($courseActivities->max('time') ?? 0),
+                'tracking_url' => '/panel/students-tracking/' . $studentId . '/details?webinar=' . $wid,
+            ];
+        }
+
+        usort($courseStats, function ($a, $b) {
+            return $b['last_activity_at'] <=> $a['last_activity_at'];
+        });
+
+        $overview = [
+            'student_id' => (int) $student->id,
+            'student_name' => $student->full_name,
+            'student_email' => $student->email,
+            'courses_count' => $enrolledWebinarIds->count(),
+            'avg_progress' => !empty($courseStats) ? round(collect($courseStats)->avg('progress'), 1) : 0,
+            'total_learning_events' => $activities->where('type', 'learning')->count(),
+            'total_quiz_attempts' => $activities->where('type', 'quiz')->count(),
+            'total_assignment_submissions' => $activities->where('type', 'assignment')->count(),
+            'total_test_attempts' => $activities->where('type', 'test')->count(),
+            'total_support_messages' => $activities->where('type', 'message')->count(),
+            'last_activity_at' => (int) ($activities->max('time') ?? 0),
+        ];
+
+        $recentQuizAttempts = $quizResults->take(10)->map(function ($row) use ($quizTitles, $webinarTitles) {
+            return [
+                'time' => (int) $row->created_at,
+                'quiz_title' => $quizTitles[$row->quiz_id] ?? 'Quiz',
+                'webinar_title' => $webinarTitles[$row->webinar_id] ?? 'Khóa học',
+                'score' => is_null($row->user_grade) ? 'N/A' : ((string) $row->user_grade . '/' . (int) ($row->total_mark ?: 100)),
+                'status' => $row->status ?? '-',
+                'url' => '/panel/quizzes/results/' . $row->id . '/details',
+            ];
+        })->values();
+
+        $recentAssignments = $assignmentRows->take(10)->map(function ($row) use ($assignmentTitles, $webinarTitles) {
+            return [
+                'time' => (int) $row->created_at,
+                'assignment_title' => $assignmentTitles[$row->assignment_id] ?? 'Assignment',
+                'webinar_title' => $webinarTitles[$row->webinar_id] ?? 'Khóa học',
+                'grade' => is_null($row->grade) ? 'Chưa chấm' : (string) $row->grade,
+                'status' => $row->status ?? '-',
+                'url' => '/panel/assignments/' . $row->assignment_id . '/students',
+            ];
+        })->values();
+
+        $recentTests = $testAttempts->take(10)->map(function ($row) use ($testTitles, $webinarTitles) {
+            $eventTime = !empty($row->completed_at)
+                ? (int) $row->completed_at
+                : (!empty($row->started_at) ? (int) $row->started_at : (int) $row->updated_at);
+
+            return [
+                'time' => $eventTime,
+                'test_title' => $testTitles[$row->test_id] ?? 'IELTS Test',
+                'webinar_title' => $webinarTitles[$row->webinar_id] ?? 'Khóa học',
+                'overall_band' => is_null($row->overall_band) ? 'N/A' : (string) $row->overall_band,
+            ];
+        })->values();
+
+        $activities = $activities
+            ->filter(fn($a) => !empty($a['time']))
+            ->sortByDesc('time')
+            ->values();
+
+        $page = max(1, (int) $request->get('page', 1));
+        $perPage = 20;
+        $total = $activities->count();
+        $items = $activities->slice(($page - 1) * $perPage, $perPage)->values();
+
+        $pagination = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        return view('design_1.panel.students_tracking.activity', [
+            'pageTitle' => 'Activity - ' . $student->full_name,
+            'student' => $student,
+            'overview' => $overview,
+            'courseStats' => $courseStats,
+            'recentQuizAttempts' => $recentQuizAttempts,
+            'recentAssignments' => $recentAssignments,
+            'recentTests' => $recentTests,
+            'activities' => $pagination,
+        ]);
     }
 
     /**

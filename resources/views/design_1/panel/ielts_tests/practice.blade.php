@@ -118,6 +118,8 @@
 .wf-skill-header-icon.reading   { background: rgba(16, 185, 129, 0.10); color: #10b981; }
 .wf-skill-header-icon.writing   { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
 .wf-skill-header-icon.speaking  { background: rgba(239, 68, 68, 0.10); color: #ef4444; }
+.wf-skill-header-icon.grammar   { background: rgba(234, 88, 12, 0.12); color: #ea580c; }
+.wf-skill-header-icon.vocabulary{ background: rgba(20, 184, 166, 0.12); color: #0f766e; }
 .wf-skill-header-info { flex: 1; }
 .wf-skill-header-title {
     font-size: 13px; font-weight: 800;
@@ -138,6 +140,8 @@
 .reading   .wf-skill-header-prog-fill { background: #10b981; }
 .writing   .wf-skill-header-prog-fill { background: #f59e0b; }
 .speaking  .wf-skill-header-prog-fill { background: #ef4444; }
+.grammar   .wf-skill-header-prog-fill { background: #ea580c; }
+.vocabulary .wf-skill-header-prog-fill { background: #0f766e; }
 
 /* ── Part Grouping ─────────────────────────────────── */
 .wf-part-group {
@@ -224,6 +228,36 @@
 .dark-mode .wf-skill-rows { background: #1e293b; }
 .wf-skill-section.open .wf-skill-rows {
     display: block;
+    max-height: 460px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.wf-skill-section.open .wf-skill-rows::-webkit-scrollbar {
+    width: 8px;
+}
+
+.wf-skill-section.open .wf-skill-rows::-webkit-scrollbar-track {
+    background: #eef2f7;
+    border-radius: 999px;
+}
+
+.wf-skill-section.open .wf-skill-rows::-webkit-scrollbar-thumb {
+    background: rgba(81, 29, 153, 0.35);
+    border-radius: 999px;
+}
+
+.wf-skill-section.open .wf-skill-rows::-webkit-scrollbar-thumb:hover {
+    background: rgba(81, 29, 153, 0.55);
+}
+
+.dark-mode .wf-skill-section.open .wf-skill-rows::-webkit-scrollbar-track {
+    background: #334155;
+}
+
+.dark-mode .wf-skill-section.open .wf-skill-rows::-webkit-scrollbar-thumb {
+    background: rgba(196, 181, 253, 0.45);
 }
 
 /* ── Individual Practice Row ─────────────────────────── */
@@ -293,6 +327,8 @@
 .reading-row   .wf-practice-row-prog-fill { background: #10b981; }
 .writing-row   .wf-practice-row-prog-fill { background: #f59e0b; }
 .speaking-row  .wf-practice-row-prog-fill { background: #ef4444; }
+.grammar-row   .wf-practice-row-prog-fill { background: #ea580c; }
+.vocabulary-row .wf-practice-row-prog-fill { background: #0f766e; }
 
 /* ── Band Filter Tabs ────────────────────────────────── */
 .wf-band-tabs {
@@ -322,6 +358,7 @@
     .wf-practice-row-inner  { flex-wrap: wrap; }
     .wf-btn-start, .wf-btn-retry { font-size: 12px; padding: 7px 14px; }
     .wf-row-actions         { flex-wrap: wrap; }
+    .wf-skill-section.open .wf-skill-rows { max-height: 360px; }
 }
 
 /* compact rows to match wireframe */
@@ -339,10 +376,18 @@
     $completedTests  = $practiceTests->filter(fn($t) => ($t->user_attempts ?? 0) > 0)->count();
     $overallProgress = $totalTests > 0 ? round(($completedTests / $totalTests) * 100) : 0;
     $continueUrl     = route('panel.ielts_tests.practice');
-    $listeningTests  = $practiceTests->filter(fn($t) => $t->has_listening);
-    $readingTests    = $practiceTests->filter(fn($t) => $t->has_reading);
-    $writingTests    = $practiceTests->filter(fn($t) => $t->has_writing);
-    $speakingTests   = $practiceTests->filter(fn($t) => $t->has_speaking);
+    $hasSkill = function ($test, string $skill) {
+        return $test->sections->contains(function ($section) use ($skill) {
+            return mb_strtolower((string) ($section->skill ?? '')) === $skill;
+        });
+    };
+
+    $listeningTests  = $practiceTests->filter(fn($t) => $t->has_listening || $hasSkill($t, 'listening'));
+    $readingTests    = $practiceTests->filter(fn($t) => $t->has_reading || $hasSkill($t, 'reading'));
+    $writingTests    = $practiceTests->filter(fn($t) => $t->has_writing || $hasSkill($t, 'writing'));
+    $speakingTests   = $practiceTests->filter(fn($t) => $t->has_speaking || $hasSkill($t, 'speaking'));
+    $grammarTests    = $practiceTests->filter(fn($t) => $hasSkill($t, 'grammar'));
+    $vocabularyTests = $practiceTests->filter(fn($t) => $hasSkill($t, 'vocabulary'));
 @endphp
 
 <div class="wf-practice-page">
@@ -367,28 +412,7 @@
                     </div>
                 </div>
 
-                {{-- Switch Courses dropdown --}}
-                <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-16 dropdown-toggle" type="button"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Switch courses
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-right shadow rounded-16 border-0 mt-8" style="min-width:220px;">
-                        @forelse($enrolledCourses as $course)
-                            <a class="dropdown-item d-flex align-items-center gap-8 py-8 px-12"
-                               href="{{ $course->getLearningPageUrl() }}">
-                                <div class="size-32 rounded-8 bg-gray-100 flex-shrink-0">
-                                    <img src="{{ $course->getIcon() }}" alt="" class="img-cover rounded-8">
-                                </div>
-                                <span class="font-12 text-dark">{{ truncate($course->title, 28) }}</span>
-                            </a>
-                        @empty
-                            <span class="dropdown-item font-12 text-gray-500">No courses enrolled</span>
-                        @endforelse
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item font-12 text-primary" href="/panel/courses/purchases">All courses</a>
-                    </div>
-                </div>
+                {{-- Switch Courses moved to sidebar --}}
 
                 {{-- Continue → --}}
                 <a href="{{ $continueUrl }}"
@@ -424,11 +448,12 @@
                     'reading'   => ['label' => 'READING',   'icon' => 'fa-book-open',  'skill' => 'reading',   'tests' => $readingTests],
                     'writing'   => ['label' => 'WRITING',   'icon' => 'fa-pen-fancy',  'skill' => 'writing',   'tests' => $writingTests],
                     'speaking'  => ['label' => 'SPEAKING',  'icon' => 'fa-microphone', 'skill' => 'speaking',  'tests' => $speakingTests],
+                    'grammar'   => ['label' => 'GRAMMAR',   'icon' => 'fa-language',   'skill' => 'grammar',   'tests' => $grammarTests],
+                    'vocabulary'=> ['label' => 'VOCABULARY','icon' => 'fa-book',       'skill' => 'vocabulary','tests' => $vocabularyTests],
                 ];
             @endphp
 
             @foreach($skillGroups as $key => $group)
-            @if($group['tests']->isNotEmpty())
             @php
                 $groupTotal     = $group['tests']->count();
                 $groupCompleted = $group['tests']->filter(fn($t) => ($t->user_attempts ?? 0) > 0)->count();
@@ -504,6 +529,12 @@
 
                 {{-- Individual practice rows (hidden until section is open) --}}
                 <div class="wf-skill-rows">
+                    @if($partGroups->isEmpty())
+                    <div class="p-16 text-center text-gray-500 font-12">
+                        Chưa có đề trong mục {{ $group['label'] }}.
+                    </div>
+                    @endif
+
                     @foreach($partGroups as $partGroup)
                     <div class="wf-part-group">
                         <div class="wf-part-group__header">
@@ -555,7 +586,6 @@
                 </div>
 
             </div>
-            @endif
             @endforeach
 
             @endif
@@ -579,7 +609,15 @@
     document.querySelectorAll('.wf-skill-header').forEach(function (header) {
         header.addEventListener('click', function () {
             var section = header.closest('.wf-skill-section');
-            section.classList.toggle('open');
+            var isOpening = !section.classList.contains('open');
+
+            document.querySelectorAll('.wf-skill-section.open').forEach(function (openedSection) {
+                openedSection.classList.remove('open');
+            });
+
+            if (isOpening) {
+                section.classList.add('open');
+            }
         });
     });
 

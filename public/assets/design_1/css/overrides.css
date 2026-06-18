@@ -37,7 +37,7 @@ aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-side
   background: #ffffff !important;
   color: #222 !important;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
-  border: 1px solid rgba(0,0,0,0.04) !important;
+  border-radius: 16px !important;
 }
 
 .card h1, .card h2, .card h3, .card .title, .panel-header .title, .widget .title,
@@ -94,16 +94,8 @@ aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-side
   margin: 0 !important;
   border-radius: 0 !important;
   border: 0 !important;
-  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
   box-shadow: none !important;
   background: transparent !important;
-}
-
-#panelSidebar .panel-sidebar__menu:first-child,
-#panelSidebar .panel-sidebar__menu-item:first-child,
-#panelSidebar .panel-sidebar__panel-user-menu:first-child,
-#panelSidebar .panel-sidebar__panel-user-menu-item:first-child {
-  border-top: 1px solid rgba(0,0,0,0.04) !important;
 }
 
 #panelSidebar .panel-sidebar__menu:hover,
@@ -115,6 +107,49 @@ aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-side
 #panelSidebar a.panel-sidebar__menu-item:hover,
 #panelSidebar div.panel-sidebar__menu:hover {
   background: #f8f6ff !important;
+}
+
+#panelSidebar .panel-sidebar__menu.sidenav-item-active,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active,
+#panelSidebar .accordion .panel-sidebar__menu.accordion__title.sidenav-item-active {
+  background: #511D99 !important;
+  color: #ffffff !important;
+  border-radius: 20px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  margin: 4px 10px !important;
+}
+
+#panelSidebar .panel-sidebar__menu.sidenav-item-active:hover,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active:hover,
+#panelSidebar .accordion .panel-sidebar__menu.accordion__title.sidenav-item-active:hover {
+  background: #511D99 !important;
+}
+
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .sidebar-text,
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .sidebar-icon,
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .collapse-arrow-icon,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .sidebar-text,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .sidebar-icon,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .collapse-arrow-icon {
+  color: #ffffff !important;
+}
+
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .sidebar-icon svg,
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .collapse-arrow-icon svg,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .sidebar-icon svg,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .collapse-arrow-icon svg,
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .sidebar-icon .icons,
+#panelSidebar .panel-sidebar__menu.sidenav-item-active .collapse-arrow-icon .icons,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .sidebar-icon .icons,
+#panelSidebar .panel-sidebar__menu-item.sidenav-item-active .collapse-arrow-icon .icons {
+  color: #ffffff !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+#panelSidebar .sidebar-section-title {
+  display: none !important;
 }
 
 /* Cards/panels inside panel-content often use glass vars; override them */
@@ -137,10 +172,11 @@ aside, .sidebar, .main-sidebar, .custom-container-sidebar, .landing-builder-side
 .panel-content .panel-section-card *,
 .panel-content .panel-section-card::before,
 .panel-content .panel-section-card::after {
-  background: transparent !important;
+  background: #ffffff !important;
   background-image: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+  border-radius: 16px !important;
 }
 
 /* Admin main-content specific overrides */

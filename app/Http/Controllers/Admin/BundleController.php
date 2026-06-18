@@ -256,6 +256,7 @@ class BundleController extends Controller
             'description' => 'required',
             'teacher_id' => 'required|exists:users,id',
             'category_id' => 'required',
+            'price_currency' => 'required|in:USD,VND',
         ]);
 
         $data = $request->all();
@@ -265,6 +266,12 @@ class BundleController extends Controller
         }
 
         $data = $this->handleVideoDemoData($request, $data['teacher_id'], $data, "bundle_demo_" . time());
+
+        $priceCurrency = strtoupper($data['price_currency'] ?? 'USD');
+        $priceCurrency = in_array($priceCurrency, Bundle::PRICE_CURRENCIES) ? $priceCurrency : 'USD';
+
+        $data['price_currency'] = $priceCurrency;
+        $data['price'] = !empty($data['price']) ? $data['price'] : null;
 
         $bundle = Bundle::create([
             'slug' => $data['slug'],
@@ -278,6 +285,7 @@ class BundleController extends Controller
             'certificate' => !empty($data['certificate']) ? true : false,
             'points' => $data['points'] ?? null,
             'price' => $data['price'],
+            'price_currency' => $data['price_currency'],
             'access_days' => $data['access_days'] ?? null,
             'category_id' => $data['category_id'],
             'message_for_reviewer' => $data['message_for_reviewer'] ?? null,
@@ -389,6 +397,7 @@ class BundleController extends Controller
             'description' => 'required',
             'teacher_id' => 'required|exists:users,id',
             'category_id' => 'required',
+            'price_currency' => 'required|in:USD,VND',
         ];
 
         $this->validate($request, $rules);
@@ -416,6 +425,12 @@ class BundleController extends Controller
         $data['updated_at'] = time();
         $data['subscribe'] = !empty($data['subscribe']) ? true : false;
         $data['certificate'] = !empty($data['certificate']) ? true : false;
+
+        $priceCurrency = strtoupper($data['price_currency'] ?? $bundle->price_currency ?? 'USD');
+        $priceCurrency = in_array($priceCurrency, Bundle::PRICE_CURRENCIES) ? $priceCurrency : 'USD';
+
+        $data['price_currency'] = $priceCurrency;
+        $data['price'] = !empty($data['price']) ? $data['price'] : null;
 
         if ($data['category_id'] != $bundle->category_id) {
             BundleFilterOption::where('bundle_id', $bundle->id)->delete();
@@ -472,6 +487,7 @@ class BundleController extends Controller
             'certificate' => $data['certificate'],
             'points' => $data['points'] ?? null,
             'price' => $data['price'],
+            'price_currency' => $data['price_currency'],
             'access_days' => $data['access_days'] ?? null,
             'category_id' => $data['category_id'],
             'message_for_reviewer' => $data['message_for_reviewer'] ?? null,

@@ -13,6 +13,8 @@ use App\Models\Meeting;
 use App\Models\ReserveMeeting;
 use App\Models\Sale;
 use App\Models\Subscribe;
+use App\Models\QuizzesQuestion;
+use App\Models\QuizzesResult;
 use App\Models\Support;
 use App\Models\UserMeta;
 use App\Models\UserWordProgress;
@@ -21,6 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -231,8 +234,36 @@ class DashboardController extends Controller
             $skillProgress[$skill] = round($band / 9 * 100);
         }
 
+        $skillDetails = [];
+        foreach (array_keys($skillBands) as $skill) {
+            $courseTitle = null;
+
+            if (in_array($skill, ['listening', 'reading', 'writing', 'speaking'], true)) {
+                $latestSkillAttempt = IeltsTestAttempt::query()
+                    ->where('user_id', $user->id)
+                    ->whereNotNull($skill . '_band')
+                    ->with(['test:id,title'])
+                    ->orderBy('completed_at', 'desc')
+                    ->first();
+
+                $courseTitle = $latestSkillAttempt->test->title ?? null;
+            } elseif ($skill === 'vocabulary') {
+                $courseTitle = 'Dictionary Practice';
+            } elseif ($skill === 'grammar') {
+                $courseTitle = 'Grammar Course';
+            }
+
+            $skillDetails[$skill] = [
+                'band' => (float) ($skillBands[$skill] ?? 0),
+                'progress' => (int) ($skillProgress[$skill] ?? 0),
+                'course' => $courseTitle,
+            ];
+        }
+
         // Weakest first
         $weakPointsSorted = collect($skillBands)->sortBy(fn($v) => $v)->keys()->toArray();
+
+        $weakPointInsights = $this->buildWeakPointInsights($user);
 
         $activityData = $this->buildSkillActivityChart($user);
 
@@ -271,7 +302,13 @@ class DashboardController extends Controller
             'latestAttempt' => $latestAttempt,
             'skillBands'    => $skillBands,
             'skillProgress' => $skillProgress,
+            'skillDetails'  => $skillDetails,
             'weakPoints'    => $weakPointsSorted,
+            'weakPointItems' => $weakPointInsights['items'],
+            'weakPointPreviewItems' => $weakPointInsights['previewItems'],
+            'weakPointGroupedItems' => $weakPointInsights['groupedItems'],
+            'weakPointCountsBySkill' => $weakPointInsights['countsBySkill'],
+            'weakPointTotalItems' => $weakPointInsights['totalItems'],
             'radarData'     => $radarData,
             'activityData'  => $activityData,
             'topStudents'   => $topStudents,
@@ -280,6 +317,351 @@ class DashboardController extends Controller
             'overallBand'   => $userOverall,
             'recentFeedbacks' => $recentFeedbacks,
         ];
+    }
+
+    private function buildWeakPointInsights($user): array
+    {
+        $skillLabels = [
+            'listening' => 'Listening',
+            'reading' => 'Reading',
+            'writing' => 'Writing',
+            'speaking' => 'Speaking',
+            'vocabulary' => 'Vocabulary',
+            'grammar' => 'Grammar',
+        ];
+
+        $lessonUrls = [
+            'listening' => '/panel/courses/purchases?skill=listening',
+            'reading' => '/panel/courses/purchases?skill=reading',
+            'writing' => '/panel/courses/purchases?skill=writing',
+            'speaking' => '/panel/courses/purchases?skill=speaking',
+            'vocabulary' => '/panel/dictionary',
+            'grammar' => '/panel/courses/purchases?skill=grammar',
+        ];
+
+        $practiceUrls = [
+            'listening' => '/panel/ielts-tests/practice?skill=listening',
+            'reading' => '/panel/ielts-tests/practice?skill=reading',
+            'writing' => '/panel/ielts-tests/practice?skill=writing',
+            'speaking' => '/panel/ielts-tests/practice?skill=speaking',
+            'vocabulary' => '/panel/dictionary/flashcards',
+            'grammar' => '/panel/quizzes/opens',
+        ];
+
+        $items = collect();
+
+        $ieltsWrongAnswers = \App\Models\IeltsTestAnswer::query()
+            ->where('is_correct', false)
+            ->whereHas('attempt', function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->whereNotNull('completed_at');
+            })
+            ->with([
+                'attempt:id,test_id,user_id,completed_at',
+                'attempt.test:id,title',
+                'question:id,section_id,question_group_id,question_text,correct_answer',
+                'question.section:id,skill',
+                'question.questionGroup:id,title,skill',
+            ])
+            ->orderBy('answered_at', 'desc')
+            ->limit(80)
+            ->get();
+
+        foreach ($ieltsWrongAnswers as $answer) {
+            $question = $answer->question;
+            $attempt = $answer->attempt;
+
+            if (!$question || !$attempt) {
+                continue;
+            }
+
+            $skill = $question->section->skill
+                ?? $question->questionGroup->skill
+                ?? null;
+
+            $skillLabel = $skillLabels[$skill] ?? 'General';
+
+            $questionText = Str::limit(trim(strip_tags((string) ($question->question_text ?? ''))), 140);
+            $topic = trim((string) ($question->questionGroup->title ?? ''));
+            if ($topic === '') {
+                $topic = $questionText !== '' ? $questionText : 'IELTS Question';
+            }
+
+            $recommendations = [];
+
+            if (!empty($lessonUrls[$skill])) {
+                $recommendations[] = [
+                    'label' => 'Review ' . $skillLabel . ' lessons',
+                    'url' => $lessonUrls[$skill],
+                    'kind' => 'lesson',
+                ];
+            }
+
+            if (!empty($practiceUrls[$skill])) {
+                $recommendations[] = [
+                    'label' => 'Practice more ' . $skillLabel,
+                    'url' => $practiceUrls[$skill],
+                    'kind' => 'practice',
+                ];
+            }
+
+            $recommendations[] = [
+                'label' => 'Review this test attempt',
+                'url' => '/panel/ielts-tests/attempt/' . $attempt->id . '/review',
+                'kind' => 'review',
+            ];
+
+            $items->push([
+                'source' => 'ielts',
+                'source_label' => 'IELTS Test/Practice',
+                'skill' => $skill,
+                'skill_label' => $skillLabel,
+                'topic' => $topic,
+                'question' => $questionText,
+                'your_answer' => $this->formatWeakPointAnswer($answer->answer_text),
+                'correct_answer' => $this->formatWeakPointAnswer($question->correct_answer),
+                'test_title' => $attempt->test->title ?? 'IELTS Test',
+                'occurred_at' => (int) ($answer->answered_at ?? $attempt->completed_at ?? 0),
+                'recommendations' => $recommendations,
+            ]);
+        }
+
+        $quizResults = QuizzesResult::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('results')
+            ->with(['quiz:id'])
+            ->orderBy('id', 'desc')
+            ->limit(20)
+            ->get();
+
+        $quizQuestionIds = [];
+        foreach ($quizResults as $quizResult) {
+            $decoded = json_decode($quizResult->results, true);
+
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            foreach ($decoded as $questionId => $resultRow) {
+                if (is_numeric($questionId)) {
+                    $quizQuestionIds[] = (int) $questionId;
+                }
+            }
+        }
+
+        $quizQuestionIds = array_values(array_unique($quizQuestionIds));
+
+        $quizQuestions = QuizzesQuestion::query()
+            ->whereIn('id', $quizQuestionIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($quizResults as $quizResult) {
+            $decoded = json_decode($quizResult->results, true);
+
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            foreach ($decoded as $questionId => $resultRow) {
+                if (!is_numeric($questionId) || !is_array($resultRow)) {
+                    continue;
+                }
+
+                if (($resultRow['status'] ?? null) !== false) {
+                    continue;
+                }
+
+                if (!empty($resultRow['manual_review'])) {
+                    continue;
+                }
+
+                $questionId = (int) $questionId;
+                $question = $quizQuestions->get($questionId);
+
+                $skill = $this->mapQuizQuestionTypeToSkill($question->type ?? null);
+                $skillLabel = $skillLabels[$skill] ?? 'General';
+
+                $topic = $question ? (string) ($question->type_label ?? 'Quiz Question') : 'Quiz Question';
+                $prompt = $question ? ($question->prompt_text ?: $question->title) : '';
+
+                $recommendations = [
+                    [
+                        'label' => 'Review this quiz',
+                        'url' => '/panel/quizzes/' . $quizResult->quiz_id . '/overview',
+                        'kind' => 'lesson',
+                    ],
+                    [
+                        'label' => 'Retake this quiz',
+                        'url' => '/panel/quizzes/' . $quizResult->quiz_id . '/start',
+                        'kind' => 'practice',
+                    ],
+                ];
+
+                if (!empty($lessonUrls[$skill])) {
+                    $recommendations[] = [
+                        'label' => 'Study more ' . $skillLabel,
+                        'url' => $lessonUrls[$skill],
+                        'kind' => 'lesson',
+                    ];
+                }
+
+                $items->push([
+                    'source' => 'quiz',
+                    'source_label' => 'Lesson Quiz/Homework',
+                    'skill' => $skill,
+                    'skill_label' => $skillLabel,
+                    'topic' => $topic,
+                    'question' => Str::limit(trim(strip_tags((string) $prompt)), 140),
+                    'your_answer' => $this->formatWeakPointAnswer($resultRow['answer'] ?? null),
+                    'correct_answer' => $this->resolveQuizCorrectAnswer($question),
+                    'test_title' => $quizResult->quiz->title ?? 'Quiz',
+                    'occurred_at' => (int) ($quizResult->created_at ?? 0),
+                    'recommendations' => $recommendations,
+                ]);
+            }
+        }
+
+        $allItems = $items
+            ->sortByDesc(fn($item) => (int) ($item['occurred_at'] ?? 0))
+            ->values();
+
+        $countsBySkill = [
+            'listening' => 0,
+            'reading' => 0,
+            'writing' => 0,
+            'speaking' => 0,
+            'vocabulary' => 0,
+            'grammar' => 0,
+            'general' => 0,
+        ];
+
+        foreach ($allItems as $item) {
+            $skill = $item['skill'] ?? 'general';
+
+            if (!array_key_exists($skill, $countsBySkill)) {
+                $skill = 'general';
+            }
+
+            $countsBySkill[$skill]++;
+        }
+
+        return [
+            'items' => $allItems->take(60)->values()->all(),
+            'previewItems' => $allItems->take(4)->values()->all(),
+            'groupedItems' => $allItems->groupBy(function ($item) {
+                $skill = $item['skill'] ?? 'general';
+                return $skill ?: 'general';
+            })->toArray(),
+            'countsBySkill' => $countsBySkill,
+            'totalItems' => $allItems->count(),
+        ];
+    }
+
+    private function formatWeakPointAnswer($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_array($value)) {
+            $value = implode(', ', array_map(function ($item) {
+                return is_scalar($item) ? (string) $item : json_encode($item);
+            }, $value));
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+
+            if ($trimmed === '') {
+                return '';
+            }
+
+            $decoded = json_decode($trimmed, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $flat = collect($decoded)
+                    ->flatten(2)
+                    ->map(function ($item) {
+                        return is_scalar($item) ? trim((string) $item) : '';
+                    })
+                    ->filter()
+                    ->implode(', ');
+
+                if ($flat !== '') {
+                    return Str::limit($flat, 140);
+                }
+            }
+
+            return Str::limit(strip_tags($trimmed), 140);
+        }
+
+        return Str::limit(strip_tags((string) $value), 140);
+    }
+
+    private function resolveQuizCorrectAnswer($question): string
+    {
+        if (!$question) {
+            return '';
+        }
+
+        if ($question->isChoiceQuestion()) {
+            $correctAnswers = $question->quizzesQuestionsAnswers()
+                ->where('correct', true)
+                ->get()
+                ->pluck('title')
+                ->filter()
+                ->toArray();
+
+            return $this->formatWeakPointAnswer($correctAnswers);
+        }
+
+        if ($question->isTextQuestion() || $question->isMatchingQuestion()) {
+            $correct = data_get($question->question_data, 'correct_answer');
+
+            if (empty($correct)) {
+                $correct = data_get($question->question_data, 'correct_answers');
+            }
+
+            if (empty($correct)) {
+                $correct = $question->correct;
+            }
+
+            return $this->formatWeakPointAnswer($correct);
+        }
+
+        return $this->formatWeakPointAnswer($question->correct);
+    }
+
+    private function mapQuizQuestionTypeToSkill(?string $type): ?string
+    {
+        if (!$type) {
+            return null;
+        }
+
+        $writingTypes = ['descriptive', 'rewrite_sentence'];
+        $readingTypes = [
+            'multiple',
+            'true_false_not_given',
+            'yes_no_not_given',
+            'matching_headings',
+            'matching_information',
+            'matching_features',
+            'matching_sentence_endings',
+            'sentence_completion',
+            'short_answer',
+            'fill_blank',
+        ];
+
+        if (in_array($type, $writingTypes, true)) {
+            return 'writing';
+        }
+
+        if (in_array($type, $readingTypes, true)) {
+            return 'reading';
+        }
+
+        return null;
     }
 
     private function buildSkillActivityChart($user): array

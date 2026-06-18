@@ -92,6 +92,21 @@
 
                 $form.find('.js-ajax-title').val(question.title);
 
+                if (question.question_data) {
+                    Object.keys(question.question_data).forEach(function (key) {
+                        const value = question.question_data[key];
+                        const element = $form.find('[name="ajax[question_data][' + key + ']"]');
+
+                        if (element.length) {
+                            if (element.attr('type') === 'checkbox') {
+                                element.prop('checked', !!value && value !== '0');
+                            } else {
+                                element.val(value);
+                            }
+                        }
+                    });
+                }
+
                 if (question.quizzes_questions_answers && question.quizzes_questions_answers.length) {
                     var answers = question.quizzes_questions_answers;
 

@@ -17,7 +17,7 @@
         ['label' => 'Kiểm tra đầu vào', 'url' => '/panel/ielts-tests/practice', 'requiresAuth' => true, 'active' => $isPlacementActive],
         ['label' => 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
-        ['label' => 'Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
+        ['label' => 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
     ];
 
     $heroBreadcrumbs = [
@@ -1720,7 +1720,7 @@
                         <ul class="edtika-footer__list">
                             <li><a href="/classes">Khóa học</a></li>
                             <li><a href="#">FAQ</a></li>
-                            <li><a href="/blog">Tin tức</a></li>
+                            <li><a href="/blog">Kiến thức & Tin tức</a></li>
                         </ul>
                     </div>
 

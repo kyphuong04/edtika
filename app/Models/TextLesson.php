@@ -21,7 +21,7 @@ class TextLesson extends Model implements TranslatableContract
     static $Inactive = 'inactive';
     static $Status = ['active', 'inactive'];
 
-    public $translatedAttributes = ['title', 'summary', 'content'];
+    public $translatedAttributes = ['title', 'summary', 'content', 'interactive_quiz', 'lecture_notes'];
 
     public function getTitleAttribute()
     {
@@ -36,6 +36,16 @@ class TextLesson extends Model implements TranslatableContract
     public function getContentAttribute()
     {
         return getTranslateAttributeValue($this, 'content');
+    }
+
+    public function getInteractiveQuizAttribute()
+    {
+        return getTranslateAttributeValue($this, 'interactive_quiz');
+    }
+
+    public function getLectureNotesAttribute()
+    {
+        return getTranslateAttributeValue($this, 'lecture_notes');
     }
 
 

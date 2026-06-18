@@ -44,14 +44,14 @@
     <span class="ml-4">{{ trans('public.about') }}</span>
 </a>
 
-{{--@if(!$user->isUser())
+@if(!$user->isUser())
     <a href="{{ $baseUrl }}/zoom" class="navbar-item navbar-item-h-52 d-inline-flex-center cursor-pointer {{ ($currentStep == "zoom") ? 'active' : '' }}">
         <div class="size-20">
             <x-iconsax-lin-video-octagon class="icons" width="20px" height="20px"/>
         </div>
         <span class="ml-4">{{ trans('update.zoom') }}</span>
     </a>
-@endif--}}
+@endif
 
 <a href="{{ $baseUrl }}/login_history" class="navbar-item navbar-item-h-52 d-inline-flex-center cursor-pointer {{ ($currentStep == "login_history") ? 'active' : '' }}">
     <div class="size-20">

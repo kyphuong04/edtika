@@ -186,7 +186,7 @@
 
         {{-- Back Button --}}
         <div class="text-center mt-40">
-            <a href="{{ route('panel.my_ielts_tests') }}" class="btn btn-sm btn-gray">
+            <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn btn-sm btn-gray">
                 <i class="fas fa-arrow-left mr-5"></i>
                 Back to My Tests
             </a>

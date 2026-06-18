@@ -82,4 +82,7 @@
 @elseif($name == 'dictionary')
     <x-iconsax-lin-book class="icons" width="20px" height="20px"/>
 
+@elseif($name == 'course_notes')
+    <x-iconsax-lin-note-1 class="icons" width="20px" height="20px"/>
+
 @endif

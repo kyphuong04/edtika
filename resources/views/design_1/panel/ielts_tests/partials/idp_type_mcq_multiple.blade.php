@@ -31,7 +31,7 @@
                 <input type="checkbox" name="q_multi[]" value="{{ $key }}"
                        data-questions="{{ implode(',', $questions->pluck('id')->toArray()) }}"
                        onchange="saveMultiAnswer(this)">
-                <span><strong>{{ $key }}</strong> {{ $text }}</span>
+                <span><strong>{{ $key }}</strong> {!! $text !!}</span>
             </label>
         @endforeach
     </div>

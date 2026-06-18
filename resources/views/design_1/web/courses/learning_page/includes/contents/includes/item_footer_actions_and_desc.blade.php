@@ -107,9 +107,374 @@
 
     <div class="tab-content mt-12">
         <div class="tab-pane fade show active" id="lp-quiz-{{ $item->id }}" role="tabpanel" aria-labelledby="lp-quiz-tab-{{ $item->id }}">
-            <div class="learning-page__empty-tab">
-                Chưa có nội dung Interactive Quizz cho bài học này.
-            </div>
+            @php
+                $interactiveQuiz = !empty($item->interactive_quiz) && is_array($item->interactive_quiz) ? $item->interactive_quiz : [];
+                $quizQuestions = !empty($interactiveQuiz['questions']) && is_array($interactiveQuiz['questions']) ? $interactiveQuiz['questions'] : [];
+                $lectureNotes = !empty($item->lecture_notes) && is_array($item->lecture_notes) ? $item->lecture_notes : [];
+            @endphp
+
+            @if(!empty($interactiveQuiz) || !empty($quizQuestions))
+                <div class="bg-white rounded-16 p-16 border border-gray-200">
+                    @if(!empty($interactiveQuiz['title']))
+                        <h4 class="font-18 text-dark mb-16">{{ $interactiveQuiz['title'] }}</h4>
+                    @endif
+
+                    <div class="lp-interactive-quiz" data-quiz-id="{{ $item->id }}">
+                        <div class="d-flex align-items-center justify-content-between mb-12">
+                            <div class="text-gray-500 font-13">Question <span class="lp-iq-current">1</span> / <span class="lp-iq-total">{{ count($quizQuestions) }}</span></div>
+                        </div>
+
+                        @foreach($quizQuestions as $questionIndex => $question)
+                            @php
+                                $questionType = $question['type'] ?? 'multiple_choice_single';
+                                $questionAnswers = [];
+
+                                if (!empty($question['options']) && is_array($question['options'])) {
+                                    $questionAnswers = $question['options'];
+                                } elseif (!empty($question['answers']) && is_array($question['answers'])) {
+                                    $questionAnswers = $question['answers'];
+                                }
+
+                                if (empty($questionAnswers) && $questionType === 'true_false_not_given') {
+                                    $questionAnswers = [
+                                        ['title' => 'True', 'value' => 'true'],
+                                        ['title' => 'False', 'value' => 'false'],
+                                        ['title' => 'Not Given', 'value' => 'not_given'],
+                                    ];
+                                }
+
+                                if (empty($questionAnswers) && $questionType === 'yes_no_not_given') {
+                                    $questionAnswers = [
+                                        ['title' => 'Yes', 'value' => 'yes'],
+                                        ['title' => 'No', 'value' => 'no'],
+                                        ['title' => 'Not Given', 'value' => 'not_given'],
+                                    ];
+                                }
+
+                                $questionPairs = !empty($question['pairs']) && is_array($question['pairs']) ? $question['pairs'] : [];
+                                $questionCorrect = $question['correct_answer'] ?? null;
+                                $questionCorrectAnswers = !empty($question['correct_answers']) && is_array($question['correct_answers']) ? $question['correct_answers'] : [];
+                                $questionAlternatives = !empty($question['alternative_answers']) && is_array($question['alternative_answers']) ? $question['alternative_answers'] : [];
+
+                                $typeLabels = [
+                                    'multiple_choice_single' => 'Single Answer',
+                                    'multiple_choice_multiple' => 'Multiple Answers',
+                                    'true_false_not_given' => 'True / False / Not Given',
+                                    'yes_no_not_given' => 'Yes / No / Not Given',
+                                    'matching_headings' => 'Matching Headings',
+                                    'matching_information' => 'Matching Information',
+                                    'matching_features' => 'Matching Features',
+                                    'matching_sentence_endings' => 'Matching Sentence Endings',
+                                    'sentence_completion' => 'Sentence Completion',
+                                    'summary_completion' => 'Summary Completion',
+                                    'note_completion' => 'Note Completion',
+                                    'table_completion' => 'Table Completion',
+                                ];
+                            @endphp
+
+                            <div class="lp-iq-question border rounded-12 p-16 mb-12 {{ $questionIndex === 0 ? '' : 'd-none' }}"
+                                 data-question-index="{{ $questionIndex }}"
+                                 data-question-type="{{ $questionType }}"
+                                 data-correct-answer="{{ is_scalar($questionCorrect) ? e((string) $questionCorrect) : '' }}"
+                                 data-correct-answers="{{ e(json_encode(array_values($questionCorrectAnswers))) }}"
+                                 data-alternatives="{{ e(json_encode(array_values($questionAlternatives))) }}">
+                                <div class="d-flex align-items-center justify-content-between mb-12">
+                                    <h5 class="font-15 text-dark mb-0">{{ $question['title'] ?? trans('quiz.question') . ' ' . ($questionIndex + 1) }}</h5>
+                                    <span class="badge badge-primary">{{ $typeLabels[$questionType] ?? 'Question' }}</span>
+                                </div>
+
+                                @if(in_array($questionType, ['multiple_choice_single', 'multiple_choice_multiple', 'true_false_not_given', 'yes_no_not_given']) && !empty($questionAnswers))
+                                    <div class="d-grid gap-8">
+                                        @foreach($questionAnswers as $answerIndex => $answer)
+                                            @php
+                                                $answerTitle = is_array($answer) ? ($answer['title'] ?? '') : $answer;
+                                                $answerValue = is_array($answer) && array_key_exists('value', $answer)
+                                                    ? (string) $answer['value']
+                                                    : (string) $answerIndex;
+                                            @endphp
+                                            <label class="lp-iq-option d-flex align-items-center justify-content-between bg-gray-100 rounded-8 px-12 py-8 mb-0">
+                                                <span class="d-flex align-items-center">
+                                                    @if($questionType === 'multiple_choice_multiple')
+                                                        <input type="checkbox" class="mr-8 lp-iq-option-input" value="{{ $answerValue }}">
+                                                    @else
+                                                        <input type="radio" class="mr-8 lp-iq-option-input" name="lp_iq_{{ $item->id }}_{{ $questionIndex }}" value="{{ $answerValue }}">
+                                                    @endif
+                                                    <span class="text-gray-700">{{ $answerTitle }}</span>
+                                                </span>
+                                                <span class="lp-iq-option-state font-12"></span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                @if(in_array($questionType, ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion']))
+                                    <div class="form-group mb-0">
+                                        <label class="form-group-label mb-6">Your answer</label>
+                                        <input type="text" class="form-control lp-iq-text-answer" placeholder="Type your answer">
+                                    </div>
+                                @endif
+
+                                @if(in_array($questionType, ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings']) && !empty($questionPairs))
+                                    <div class="d-grid gap-8">
+                                        @foreach($questionPairs as $pair)
+                                            <div class="bg-gray-100 rounded-8 px-12 py-8 d-flex align-items-center justify-content-between">
+                                                <span class="text-gray-700 mr-8">{{ $pair['prompt'] ?? '' }}</span>
+                                                <input type="text" class="form-control form-control-sm lp-iq-pair-answer" data-expected="{{ e((string) ($pair['answer'] ?? '')) }}" placeholder="Your match" style="max-width: 260px;">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <div class="lp-iq-feedback mt-10 d-none"></div>
+
+                                @if(!empty($question['explanation']))
+                                    <div class="lp-iq-explanation mt-8 text-gray-500 d-none">
+                                        <strong>Answer help:</strong> {{ $question['explanation'] }}
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+
+                        <div class="d-flex align-items-center justify-content-between mt-8">
+                            <button type="button" class="btn btn-sm btn-outline-secondary lp-iq-prev">Previous</button>
+                            <div class="d-flex align-items-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary mr-8 lp-iq-next">Next</button>
+                                <button type="button" class="btn btn-sm btn-primary lp-iq-submit">Submit</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary ml-8 d-none lp-iq-retry">Retry</button>
+                            </div>
+                        </div>
+
+                        <div class="lp-iq-result-summary mt-12 d-none"></div>
+                    </div>
+
+                    @once
+                        <style>
+                            .lp-iq-option { border: 1px solid transparent; transition: all .2s ease; }
+                            .lp-iq-option.lp-iq-correct { border-color: #0ea05a; background: #ecfdf3 !important; }
+                            .lp-iq-option.lp-iq-wrong { border-color: #dc3545; background: #fff1f2 !important; }
+                            .lp-iq-feedback.lp-iq-feedback-ok { color: #0ea05a; font-weight: 600; }
+                            .lp-iq-feedback.lp-iq-feedback-bad { color: #dc3545; font-weight: 600; }
+                        </style>
+
+                        <script>
+                            (function ($) {
+                                'use strict';
+
+                                function normalizeValue(value) {
+                                    return (value || '').toString().trim().toLowerCase();
+                                }
+
+                                function getExpectedAnswers($question) {
+                                    const expectedManyRaw = $question.attr('data-correct-answers') || '[]';
+                                    let expectedMany = [];
+
+                                    try {
+                                        expectedMany = JSON.parse(expectedManyRaw);
+                                    } catch (e) {
+                                        expectedMany = [];
+                                    }
+
+                                    expectedMany = (Array.isArray(expectedMany) ? expectedMany : []).map(normalizeValue).filter(Boolean);
+
+                                    const expectedSingle = normalizeValue($question.attr('data-correct-answer'));
+                                    if (expectedMany.length === 0 && expectedSingle) {
+                                        expectedMany = [expectedSingle];
+                                    }
+
+                                    return expectedMany;
+                                }
+
+                                function evaluateQuestion($question) {
+                                    const type = $question.attr('data-question-type');
+                                    const expected = getExpectedAnswers($question);
+
+                                    if (['sentence_completion', 'summary_completion', 'note_completion', 'table_completion'].indexOf(type) !== -1) {
+                                        const userAnswer = normalizeValue($question.find('.lp-iq-text-answer').val());
+                                        let alternatives = [];
+
+                                        try {
+                                            alternatives = JSON.parse($question.attr('data-alternatives') || '[]');
+                                        } catch (e) {
+                                            alternatives = [];
+                                        }
+
+                                        const accepted = expected.concat((Array.isArray(alternatives) ? alternatives : []).map(normalizeValue)).filter(Boolean);
+                                        const isCorrect = userAnswer !== '' && accepted.indexOf(userAnswer) !== -1;
+
+                                        return { isCorrect, expected, user: [userAnswer] };
+                                    }
+
+                                    if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].indexOf(type) !== -1) {
+                                        const $pairInputs = $question.find('.lp-iq-pair-answer');
+                                        let isCorrect = $pairInputs.length > 0;
+
+                                        $pairInputs.each(function () {
+                                            const expectedPair = normalizeValue($(this).attr('data-expected'));
+                                            const userPair = normalizeValue($(this).val());
+
+                                            if (!expectedPair || userPair !== expectedPair) {
+                                                isCorrect = false;
+                                            }
+                                        });
+
+                                        return { isCorrect, expected: [], user: [] };
+                                    }
+
+                                    const userAnswers = $question.find('.lp-iq-option-input:checked').map(function () {
+                                        return normalizeValue($(this).val());
+                                    }).get();
+
+                                    let isCorrect = false;
+
+                                    if (type === 'multiple_choice_multiple') {
+                                        const expectedSorted = expected.slice().sort();
+                                        const userSorted = userAnswers.slice().sort();
+                                        isCorrect = expectedSorted.length > 0 && expectedSorted.length === userSorted.length && expectedSorted.every(function (v, i) {
+                                            return userSorted[i] === v;
+                                        });
+                                    } else {
+                                        isCorrect = expected.length > 0 && userAnswers.length === 1 && userAnswers[0] === expected[0];
+                                    }
+
+                                    return { isCorrect, expected, user: userAnswers };
+                                }
+
+                                function renderQuestionResult($question, evaluation) {
+                                    const $feedback = $question.find('.lp-iq-feedback');
+                                    const $explanation = $question.find('.lp-iq-explanation');
+                                    const type = $question.attr('data-question-type');
+
+                                    $feedback.removeClass('d-none lp-iq-feedback-ok lp-iq-feedback-bad')
+                                        .addClass(evaluation.isCorrect ? 'lp-iq-feedback-ok' : 'lp-iq-feedback-bad')
+                                        .text(evaluation.isCorrect ? 'Correct answer' : 'Incorrect answer');
+
+                                    $explanation.removeClass('d-none');
+
+                                    if (['multiple_choice_single', 'multiple_choice_multiple', 'true_false_not_given', 'yes_no_not_given'].indexOf(type) !== -1) {
+                                        $question.find('.lp-iq-option').each(function () {
+                                            const $option = $(this);
+                                            const $input = $option.find('.lp-iq-option-input');
+                                            const value = normalizeValue($input.val());
+                                            const isExpected = evaluation.expected.indexOf(value) !== -1;
+                                            const isSelected = $input.is(':checked');
+                                            const $state = $option.find('.lp-iq-option-state');
+
+                                            $option.removeClass('lp-iq-correct lp-iq-wrong');
+                                            $state.text('');
+
+                                            if (isExpected) {
+                                                $option.addClass('lp-iq-correct');
+                                                $state.text(isSelected ? 'Correct' : 'Correct answer');
+                                            } else if (isSelected) {
+                                                $option.addClass('lp-iq-wrong');
+                                                $state.text('Your answer');
+                                            }
+                                        });
+                                    }
+
+                                    if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].indexOf(type) !== -1) {
+                                        $question.find('.lp-iq-pair-answer').each(function () {
+                                            const expected = normalizeValue($(this).attr('data-expected'));
+                                            const user = normalizeValue($(this).val());
+                                            const correct = expected !== '' && expected === user;
+
+                                            $(this).toggleClass('is-valid', correct).toggleClass('is-invalid', !correct);
+                                        });
+                                    }
+
+                                    $question.find('input, textarea').prop('disabled', true);
+                                }
+
+                                function updateQuestionVisibility($quiz, index) {
+                                    const $questions = $quiz.find('.lp-iq-question');
+                                    const total = $questions.length;
+                                    const safeIndex = Math.max(0, Math.min(index, total - 1));
+
+                                    $questions.addClass('d-none').eq(safeIndex).removeClass('d-none');
+                                    $quiz.data('current-index', safeIndex);
+                                    $quiz.find('.lp-iq-current').text(safeIndex + 1);
+                                    $quiz.find('.lp-iq-prev').prop('disabled', safeIndex === 0);
+                                    $quiz.find('.lp-iq-next').prop('disabled', safeIndex >= total - 1);
+                                }
+
+                                function submitQuiz($quiz) {
+                                    const $questions = $quiz.find('.lp-iq-question');
+                                    let totalCorrect = 0;
+
+                                    $questions.each(function () {
+                                        const $question = $(this);
+                                        const evaluation = evaluateQuestion($question);
+
+                                        if (evaluation.isCorrect) {
+                                            totalCorrect += 1;
+                                        }
+
+                                        renderQuestionResult($question, evaluation);
+                                    });
+
+                                    const summary = 'Score: ' + totalCorrect + ' / ' + $questions.length;
+                                    $quiz.find('.lp-iq-result-summary').removeClass('d-none').text(summary);
+                                    $quiz.find('.lp-iq-submit').prop('disabled', true);
+                                    $quiz.find('.lp-iq-retry').removeClass('d-none');
+                                }
+
+                                function resetQuiz($quiz) {
+                                    const $questions = $quiz.find('.lp-iq-question');
+
+                                    $questions.each(function () {
+                                        const $question = $(this);
+
+                                        $question.find('input[type="radio"], input[type="checkbox"]').prop('checked', false).prop('disabled', false);
+                                        $question.find('.lp-iq-text-answer, .lp-iq-pair-answer').val('').prop('disabled', false).removeClass('is-valid is-invalid');
+                                        $question.find('.lp-iq-option').removeClass('lp-iq-correct lp-iq-wrong');
+                                        $question.find('.lp-iq-option-state').text('');
+                                        $question.find('.lp-iq-feedback').addClass('d-none').removeClass('lp-iq-feedback-ok lp-iq-feedback-bad').text('');
+                                        $question.find('.lp-iq-explanation').addClass('d-none');
+                                    });
+
+                                    $quiz.find('.lp-iq-submit').prop('disabled', false);
+                                    $quiz.find('.lp-iq-result-summary').addClass('d-none').text('');
+                                    $quiz.find('.lp-iq-retry').addClass('d-none');
+                                    updateQuestionVisibility($quiz, 0);
+                                }
+
+                                $(function () {
+                                    $('.lp-interactive-quiz').each(function () {
+                                        const $quiz = $(this);
+                                        updateQuestionVisibility($quiz, 0);
+                                    });
+                                });
+
+                                $('body').on('click', '.lp-iq-prev', function () {
+                                    const $quiz = $(this).closest('.lp-interactive-quiz');
+                                    const current = Number($quiz.data('current-index') || 0);
+                                    updateQuestionVisibility($quiz, current - 1);
+                                });
+
+                                $('body').on('click', '.lp-iq-next', function () {
+                                    const $quiz = $(this).closest('.lp-interactive-quiz');
+                                    const current = Number($quiz.data('current-index') || 0);
+                                    updateQuestionVisibility($quiz, current + 1);
+                                });
+
+                                $('body').on('click', '.lp-iq-submit', function () {
+                                    const $quiz = $(this).closest('.lp-interactive-quiz');
+                                    submitQuiz($quiz);
+                                });
+
+                                $('body').on('click', '.lp-iq-retry', function () {
+                                    const $quiz = $(this).closest('.lp-interactive-quiz');
+                                    resetQuiz($quiz);
+                                });
+                            })(jQuery);
+                        </script>
+                    @endonce
+                </div>
+            @else
+                <div class="learning-page__empty-tab">
+                    Chưa có nội dung Interactive Quizz cho bài học này.
+                </div>
+            @endif
         </div>
 
         <div class="tab-pane fade" id="lp-desc-{{ $item->id }}" role="tabpanel" aria-labelledby="lp-desc-tab-{{ $item->id }}">
@@ -159,9 +524,25 @@
         </div>
 
         <div class="tab-pane fade" id="lp-notes-{{ $item->id }}" role="tabpanel" aria-labelledby="lp-notes-tab-{{ $item->id }}">
-            <div class="learning-page__empty-tab">
-                Chưa có Lecture Notes cho bài học này.
-            </div>
+            @if(!empty($lectureNotes))
+                <div class="bg-white rounded-16 p-16 border border-gray-200">
+                    @foreach($lectureNotes as $noteIndex => $note)
+                        <div class="border rounded-12 p-16 mb-12">
+                            @if(!empty($note['title']))
+                                <h5 class="font-15 text-dark mb-8">{{ $note['title'] }}</h5>
+                            @endif
+
+                            @if(!empty($note['content']))
+                                <div class="text-gray-500">{!! nl2br(e($note['content'])) !!}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="learning-page__empty-tab">
+                    Chưa có Lecture Notes cho bài học này.
+                </div>
+            @endif
         </div>
 
         <div class="tab-pane fade" id="lp-dict-{{ $item->id }}" role="tabpanel" aria-labelledby="lp-dict-tab-{{ $item->id }}">

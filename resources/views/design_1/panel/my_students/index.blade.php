@@ -23,8 +23,8 @@
     transition: box-shadow .2s, border-color .2s;
 }
 .sc-card:hover {
-    box-shadow: 0 4px 18px rgba(84,130,255,.12);
-    border-color: rgba(84,130,255,.25);
+    box-shadow: 0 4px 18px rgba(81,29,153,.12);
+    border-color: #511D99;
 }
 
 /* header row */
@@ -70,7 +70,7 @@
 }
 .sc-meta-item .label { color: #adb5bd; font-weight: 500; }
 .sc-meta-item .value { color: #495057; font-weight: 600; }
-.sc-meta-item .value.band { color: #5482ff; }
+.sc-meta-item .value.band { color: #511D99; }
 
 /* course row */
 .sc-card__course-row {
@@ -88,7 +88,7 @@
 }
 .sc-card__course {
     font-weight: 600;
-    color: #5482ff;
+    color: #511D99;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -104,7 +104,7 @@
 }
 .sc-card__progress .progress-bar {
     border-radius: 20px;
-    background: linear-gradient(90deg, #5482ff, #7fa3ff);
+    background: linear-gradient(90deg, #511D99, #8431ff);
 }
 
 /* footer */
@@ -130,13 +130,13 @@
     align-items: center;
     justify-content: center;
     border: 1px solid #e9ecef;
-    background: #f8f9fa;
-    color: #6c757d;
+    background: #ffffff;
+    color: #511D99;
     transition: background .15s, color .15s, border-color .15s;
     cursor: pointer;
     text-decoration: none !important;
 }
-.sc-btn:hover { background: #5482ff; border-color: #5482ff; color: #fff; }
+.sc-btn:hover { background: #511D99; border-color: #511D99; color: #fff; }
 
 /* search bar */
 .sc-search-wrap {
@@ -164,9 +164,9 @@
 }
 .sc-search-wrap input:focus {
     outline: none;
-    border-color: #5482ff;
+    border-color: #511D99;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(84,130,255,.12);
+    box-shadow: 0 0 0 3px rgba(81,29,153,.12);
 }
 
 /* filter dropdown */
@@ -191,7 +191,7 @@
     justify-content: space-between;
     user-select: none;
 }
-.sc-filter-btn:hover { border-color: #5482ff; background: #fff; }
+.sc-filter-btn:hover { border-color: #511D99; background: #fff; }
 .sc-filter-dropdown {
     position: absolute;
     top: calc(100% + 6px);
@@ -216,7 +216,7 @@
     transition: background .12s;
 }
 .sc-filter-dropdown a:last-child { border-bottom: none; }
-.sc-filter-dropdown a:hover, .sc-filter-dropdown a.active { background: #f0f3ff; color: #5482ff; font-weight: 600; }
+.sc-filter-dropdown a:hover, .sc-filter-dropdown a.active { background: #f0f3ff; color: #511D99; font-weight: 600; }
 .sc-filter-group-label {
     padding: 8px 16px 4px;
     font-size: 11px;
@@ -225,6 +225,34 @@
     text-transform: uppercase;
     letter-spacing: .05em;
     pointer-events: none;
+}
+
+.btn {
+    border-radius: 12px;
+    background: #fff;
+    color: #511D99;
+    border: 1.5px solid #511D99;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.btn:hover {
+    background: #511D99;
+    color: #fff;
+    border-color: #511D99;
+}
+
+
+.btn-1 {
+    border-radius: 12px;
+    background: #511D99;
+    color: #fff;
+    border: 1.5px solid #511D99;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.btn-1:hover {
+    background: #fff;
+    color: #511D99;
+    border-color: #511D99;
 }
 </style>
 @endpush
@@ -235,16 +263,16 @@
 <div class="d-flex align-items-start justify-content-between mb-4">
     <div>
         <h2 class="font-20 font-weight-bold mb-4">{{ trans('update.my_students') }}</h2>
-        <p class="font-13 text-gray-500 mb-0">See your student's learning, practice activities, and progress summary.</p>
+        <p class="font-13 text-gray-500 mb-0">Xem tóm tắt quá trình học tập, hoạt động luyện tập và tiến độ của học sinh.</p>
     </div>
     <div class="d-flex align-items-center gap-8">
-        <a href="/panel/my-students" class="btn btn-sm btn-outline-secondary rounded-12 d-none d-md-inline-flex align-items-center">
+        <a href="/panel/my-students" class="btn btn-sm rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
             <x-iconsax-lin-arrow-left class="icons mr-1" width="16"/>
-            Dashboard
+            Quay lại
         </a>
-        <a href="/panel/my-students/add-student" class="btn btn-primary btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
+        <a href="/panel/my-students/add-student" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
             <x-iconsax-lin-add class="icons" width="16"/>
-            Add student
+            Thêm học viên
         </a>
     </div>
 </div>
@@ -355,8 +383,9 @@
         // Progress %
         $progress = (float) ($student->learning ?? 0);
 
-        // Message link: opens supports list pre-filtered
-        $msgUrl  = '/panel/supports?student_id=' . $student->id;
+        // Message link: opens an existing conversation or creates one if needed
+        $msgUrl  = '/panel/my-students/' . $student->id . '/message?webinar_id=' . (int) ($student->webinar_id ?? 0);
+        $activityUrl = '/panel/students-tracking/' . $student->id . '/activity';
         $viewUrl = '/panel/students-tracking/' . $student->id . '/details';
     @endphp
     <div class="sc-card">
@@ -376,22 +405,22 @@
         <div class="sc-card__meta">
             <div class="sc-meta-item">
                 <span class="label">Estimated Band:</span>
-                <span class="value band">{{ $student->estimated_band ?? '—' }}</span>
+                <span class="value band" style="color: #511D99;">{{ $student->estimated_band ?? '—' }}</span>
             </div>
             <div class="sc-meta-item">
                 <span class="label">Aim band:</span>
-                <span class="value band">{{ $student->aim_band ?? '—' }}</span>
+                <span class="value band" style="color: #511D99;">{{ $student->aim_band ?? '—' }}</span>
             </div>
             <div class="sc-meta-item">
                 <span class="label">Ngày thi:</span>
-                <span class="value">{{ $examDateFormatted ?? '—' }}</span>
+                <span class="value" style="color: #511D99;">{{ $examDateFormatted ?? '—' }}</span>
             </div>
         </div>
 
         {{-- Course (label + name inline) --}}
         <div class="sc-card__course-row">
             <span class="sc-card__course-label">Khóa học:</span>
-            <span class="sc-card__course" title="{{ $student->course_title ?? '' }}">{{ $student->course_title ?? 'Chưa đăng ký khóa nào' }}</span>
+            <span class="sc-card__course" style="color: #511D99;" title="{{ $student->course_title ?? '' }}">{{ $student->course_title ?? 'Chưa đăng ký khóa nào' }}</span>
         </div>
 
         {{-- Progress bar --}}
@@ -402,7 +431,8 @@
                      style="width: {{ min(100, max(0, $progress)) }}%"
                      aria-valuenow="{{ $progress }}"
                      aria-valuemin="0"
-                     aria-valuemax="100"></div>
+                     aria-valuemax="100"
+                     style="color: #511D99;"></div>
             </div>
         </div>
 
@@ -423,6 +453,13 @@
                 {{-- Message --}}
                 <a href="{{ $msgUrl }}" class="sc-btn" title="Nhắn tin hỗ trợ">
                     <x-iconsax-lin-message-text class="icons" width="22"/>
+                </a>
+                {{-- Activity timeline --}}
+                <a href="{{ $activityUrl }}" class="sc-btn" title="Xem toàn bộ hoạt động">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                    </svg>
                 </a>
                 {{-- View details --}}
                 <a href="{{ $viewUrl }}" class="sc-btn" title="Xem chi tiết">

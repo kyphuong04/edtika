@@ -17,6 +17,13 @@
     @endif
     
     <div class="idp-map-questions">
+        @if(!empty($matchOptions))
+            <div class="idp-options" style="margin-bottom: 10px; margin-left: 0;">
+                @foreach($matchOptions as $label => $desc)
+                    <div style="font-size:14px; margin-bottom:4px;"><strong>{{ $label }}.</strong> {!! $desc !!}</div>
+                @endforeach
+            </div>
+        @endif
         <table class="idp-match-table">
             <thead>
                 <tr>
@@ -35,7 +42,7 @@
                     <tr data-q-num="{{ $qNum }}">
                         <td>
                             <span class="idp-q-num">{{ $qNum }}</span>
-                            <span class="idp-q-text">{{ $q->question_text ?? $q->content ?? '' }}</span>
+                            <span class="idp-q-text">{!! $q->question_text ?? $q->content ?? '' !!}</span>
                         </td>
                         @foreach($optionKeys as $opt)
                             <td>

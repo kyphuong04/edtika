@@ -23,7 +23,7 @@
     <div class="idp-question" data-q-num="{{ $qNum }}">
         <div style="margin-bottom: 8px;">
             <span class="idp-q-num">{{ $qNum }}</span>
-            <span class="idp-q-text">{{ $q->question_text ?? $q->content ?? '' }}</span>
+            <span class="idp-q-text">{!! $q->question_text ?? $q->content ?? '' !!}</span>
         </div>
         <div class="idp-options">
             @foreach($options as $key => $text)
@@ -31,7 +31,7 @@
                     <input type="radio" name="q_{{ $q->id }}" value="{{ $key }}"
                            {{ $saved === $key ? 'checked' : '' }}
                            onchange="saveAnswer({{ $q->id }}, '{{ $key }}')">
-                    <span><strong>{{ $key }}</strong> {{ $text }}</span>
+                    <span><strong>{{ $key }}</strong> {!! $text !!}</span>
                 </label>
             @endforeach
         </div>

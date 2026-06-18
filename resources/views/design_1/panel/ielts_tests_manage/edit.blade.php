@@ -8,7 +8,7 @@
             <a href="{{ route('panel.my_ielts_tests.sections', $test->id) }}" class="btn btn-primary mr-10">
                 <i class="fas fa-list mr-5"></i>Manage Sections
             </a>
-            <a href="{{ route('panel.my_ielts_tests') }}" class="btn btn-secondary">
+            <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left mr-5"></i>Back
             </a>
         </div>
@@ -142,7 +142,7 @@
 
         {{-- Actions --}}
         <div class="d-flex align-items-center justify-content-between mt-30">
-            <a href="{{ route('panel.my_ielts_tests') }}" class="btn btn-secondary">
+            <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left mr-5"></i>Back to My Tests
             </a>
             

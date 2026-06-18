@@ -59,9 +59,13 @@
             </div>
             
             {{-- Actions --}}
-            <div class="mt-20">
+            <div class="mt-20 d-flex align-items-center gap-8">
+                <a href="/panel/students-tracking/{{ $student['id'] }}/activity"
+                   class="btn btn-sm btn-outline-primary flex-1">
+                    <i class="fa fa-history"></i> Activity
+                </a>
                 <a href="/panel/students-tracking/{{ $student['id'] }}/details" 
-                   class="btn btn-sm btn-primary w-100">
+                   class="btn btn-sm btn-primary flex-1">
                     <i class="fa fa-eye"></i> {{ trans('public.view_details') }}
                 </a>
             </div>

@@ -35,6 +35,8 @@ class Bundle extends Model implements TranslatableContract
         'active', 'pending', 'is_draft', 'inactive'
     ];
 
+    const PRICE_CURRENCIES = ['USD', 'VND'];
+
     static $videoDemoSource = ['upload', 'youtube', 'vimeo', 'external_link'];
 
     public $translatedAttributes = ['title', 'description', 'seo_description', 'summary'];
@@ -177,6 +179,17 @@ class Bundle extends Model implements TranslatableContract
     public function getUrl()
     {
         return url('/bundles/' . $this->slug);
+    }
+
+    public function getPriceCurrency(): string
+    {
+        $currency = strtoupper((string)$this->price_currency);
+
+        if (in_array($currency, self::PRICE_CURRENCIES)) {
+            return $currency;
+        }
+
+        return getDefaultCurrency();
     }
 
     public function getImageCover()

@@ -11,18 +11,40 @@
     <title>IELTS {{ ucfirst($currentSection->skill ?? 'Test') }}</title>
     
     <style>
+        :root {
+            --idp-primary: #511D99;
+            --idp-primary-deep: #3f1777;
+            --idp-primary-soft: rgba(81, 29, 153, 0.10);
+            --idp-primary-soft-strong: rgba(81, 29, 153, 0.18);
+            --idp-surface: #ffffff;
+            --idp-surface-soft: #ffffff;
+            --idp-border: rgba(81, 29, 153, 0.14);
+            --idp-border-strong: rgba(81, 29, 153, 0.28);
+            --idp-text: #1f163a;
+            --idp-muted: #675a84;
+            --idp-shadow: 0 18px 48px rgba(71, 40, 131, 0.12);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            min-height: 100%;
+        }
         
         body {
             font-family: Arial, sans-serif;
             font-size: 16px;
-            color: #000;
-            background: #e5e5e5;
+            color: var(--idp-text);
+            background: linear-gradient(180deg, #ecebf3 0%, #edf0f6 62%, #eaf4f1 100%);
             line-height: 1.5;
             overflow: hidden;
             height: 100vh;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+        }
+
+        body::before {
+            content: none;
         }
         
         /* ========== HEADER ========== */
@@ -37,21 +59,22 @@
             position: fixed;
             top: 12px; left: 12px; right: 12px;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+            box-shadow: none;
+            border: none;
         }
         .idp-header-user { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
         .idp-avatar {
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            background: #d9d9d9;
-            border: 2px solid #bbb;
+            background: linear-gradient(135deg, rgba(81, 29, 153, 0.18), rgba(255, 255, 255, 0.96));
+            border: 2px solid rgba(81, 29, 153, 0.18);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 15px;
             font-weight: bold;
-            color: #555;
+            color: var(--idp-primary-deep);
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -59,7 +82,7 @@
         .idp-username {
             font-size: 14px;
             font-weight: 700;
-            color: #111;
+            color: var(--idp-text);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
@@ -69,7 +92,7 @@
         .idp-timer {
             font-size: 17px;
             font-weight: 700;
-            color: #111;
+            color: var(--idp-primary-deep);
             letter-spacing: 2px;
             position: absolute;
             left: 50%;
@@ -80,12 +103,12 @@
         /* Finish Button */
         .idp-finish-btn {
             padding: 8px 20px;
-            background: #fff;
-            border: 1.5px solid #333;
+            background: var(--idp-primary);
+            border: 1px solid var(--idp-primary);
             border-radius: 50px;
             font-size: 13px;
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: #fff;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -95,8 +118,8 @@
         }
         
         .idp-finish-btn:hover {
-            background: #f5f5f5;
-            border-color: #000;
+            background: var(--idp-primary-deep);
+            border-color: var(--idp-primary-deep);
         }
         
         .idp-finish-btn::after {
@@ -114,17 +137,19 @@
             position: fixed;
             top: 84px; left: 12px; right: 12px;
             height: 50px;
-            background: #d8d8d8;
+            background: #fff;
             border-radius: 12px;
             display: flex;
             align-items: center;
             padding: 0 24px;
             z-index: 998;
+            box-shadow: none;
+            border: none;
         }
         .idp-section-label {
             font-size: 18px;
             font-weight: 900;
-            color: #111;
+            color: var(--idp-primary-deep);
             letter-spacing: 1.5px;
             text-transform: uppercase;
         }
@@ -136,6 +161,9 @@
             top: 142px; left: 12px; right: 12px; bottom: 104px;
             border-radius: 12px;
             overflow: hidden;
+            box-shadow: none;
+            border: none;
+            background: #fff;
         }
         
         /* Left Panel */
@@ -144,7 +172,7 @@
             background: #fff;
             overflow-y: auto;
             padding: 20px 28px;
-            border-right: 1px solid #ccc;
+            border-right: none;
         }
         .idp-passage-title { 
             font-family: Arial, sans-serif;
@@ -157,7 +185,7 @@
             font-family: Arial, sans-serif;
             font-size: 14px; 
             font-style: italic; 
-            color: #666; 
+            color: var(--idp-muted); 
             margin-bottom: 12px; 
         }
         .idp-passage-text { 
@@ -185,20 +213,20 @@
         /* Divider */
         .idp-divider {
             width: 18px;
-            background: #e5e5e5;
+            background: #f5f6fb;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: col-resize;
-            border-left: 1px solid #ccc;
-            border-right: 1px solid #ccc;
+            border-left: none;
+            border-right: none;
         }
-        .idp-divider-icon { color: #888; font-size: 12px; }
+        .idp-divider-icon { color: var(--idp-primary-deep); font-size: 12px; }
         
         /* Right Panel */
         .idp-right {
             flex: 1;
-            background: rgb(249, 249, 249);
+            background: #fff;
             overflow-y: auto;
             overflow-x: hidden;
             padding: 20px 28px;
@@ -206,10 +234,11 @@
 
         .idp-audio-inline {
             background: #fff;
-            border: 1px solid #d9d9d9;
+            border: none;
             border-radius: 8px;
             padding: 10px 12px;
             margin-bottom: 12px;
+            box-shadow: none;
         }
 
         .idp-audio-inline audio {
@@ -223,13 +252,13 @@
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 10px;
-            color: #000;
+            color: var(--idp-text);
         }
         .idp-questions-instruction {
             font-size: 15px;
             margin-bottom: 20px;
             line-height: 1.6;
-            color: #000;
+            color: var(--idp-text);
         }
         .idp-questions-instruction strong {
             font-weight: bold;
@@ -256,7 +285,7 @@
         
         /* Question Text - Black color like IDP */
         .idp-q-text {
-            color: #000;
+            color: var(--idp-text);
             font-size: 16px;
             line-height: 1.5;
         }
@@ -279,7 +308,7 @@
         }
         .idp-option label {
             font-size: 16px;
-            color: #000;
+            color: var(--idp-text);
             cursor: pointer;
             line-height: 1.5;
         }
@@ -289,7 +318,7 @@
             display: inline-block;
             min-width: 80px;
             height: 24px;
-            border: 1px dashed #0066CC;
+            border: 1px dashed var(--idp-primary);
             padding: 2px 8px;
             font-size: 14px;
             text-align: center;
@@ -297,7 +326,7 @@
         }
         .idp-input:focus {
             outline: none;
-            border: 2px solid #0066CC;
+            border: 2px solid var(--idp-primary);
             border-style: solid;
         }
         
@@ -322,12 +351,12 @@
         }
         .idp-word {
             padding: 4px 10px;
-            border: 1px solid #999;
+            border: 1px solid rgba(81, 29, 153, 0.22);
             background: #fff;
             font-size: 13px;
             cursor: grab;
         }
-        .idp-word:hover { background: #f0f0f0; }
+        .idp-word:hover { background: rgba(81, 29, 153, 0.06); }
         .idp-word.used { opacity: 0.4; text-decoration: line-through; }
         
         /* Matching Table */
@@ -338,15 +367,15 @@
             margin-top: 12px;
         }
         .idp-match-table th {
-            background: #fff;
+            background: rgba(81, 29, 153, 0.06);
             padding: 8px 10px;
             text-align: center;
-            border: 1px solid #ccc;
+            border: 1px solid var(--idp-border);
             font-weight: bold;
         }
         .idp-match-table td {
             padding: 8px 10px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--idp-border);
             background: #fff;
         }
         .idp-match-table td:first-child { text-align: left; }
@@ -367,15 +396,15 @@
         /* Flow Chart */
         .idp-flowchart { padding: 10px 0; }
         .idp-flow-box {
-            background: #f5f5f5;
-            border: 1px solid #ccc;
+            background: #fff;
+            border: 1px solid var(--idp-border);
             padding: 10px 14px;
             margin-bottom: 4px;
             font-size: 14px;
             line-height: 1.6;
         }
-        .idp-flow-box.highlight { background: #fff; border-color: #0066CC; }
-        .idp-flow-arrow { text-align: center; font-size: 16px; color: #666; margin: 2px 0; }
+        .idp-flow-box.highlight { background: rgba(81, 29, 153, 0.06); border-color: var(--idp-primary); }
+        .idp-flow-arrow { text-align: center; font-size: 16px; color: var(--idp-muted); margin: 2px 0; }
         
         /* Table Completion */
         .idp-table {
@@ -386,17 +415,17 @@
             table-layout: auto;
         }
         .idp-table th {
-            background: #e8e8e8;
+            background: rgba(81, 29, 153, 0.08);
             padding: 8px 10px;
             text-align: left;
-            border: 1px solid #ccc;
+            border: 1px solid var(--idp-border);
             font-weight: bold;
             word-wrap: break-word;
             max-width: 200px;
         }
         .idp-table td {
             padding: 8px 10px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--idp-border);
             background: #fff;
             word-wrap: break-word;
             max-width: 250px;
@@ -405,13 +434,13 @@
         /* Map/Diagram - Two column layout */
         .idp-map-layout { display: flex; gap: 20px; }
         .idp-map-image { flex: 1; }
-        .idp-map-image img { max-width: 100%; border: 1px solid #ccc; }
+        .idp-map-image img { max-width: 100%; border: 1px solid var(--idp-border); }
         .idp-map-questions { flex: 1; }
         
         /* Group Separator */
         .idp-group-separator {
             border: none;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid var(--idp-border);
             margin: 20px 0;
         }
         
@@ -422,33 +451,33 @@
             padding: 20px 28px;
             overflow-y: auto;
             background: #fff;
-            border-right: 1px solid #ccc;
+            border-right: none;
         }
         .idp-writing-right {
             flex: 1;
             padding: 20px;
-            background: #f5f5f0;
+            background: #fff;
             display: flex;
             flex-direction: column;
         }
         .idp-textarea {
             flex: 1;
             width: 100%;
-            border: 1px solid #ccc;
+            border: 1px solid var(--idp-border);
             padding: 12px;
             font-size: 15px;
             font-family: Arial, sans-serif;
             line-height: 1.6;
             resize: none;
         }
-        .idp-textarea:focus { outline: 2px solid #0066CC; }
-        .idp-word-count { text-align: right; padding: 6px 0; font-size: 13px; color: #666; }
+        .idp-textarea:focus { outline: 2px solid var(--idp-primary); }
+        .idp-word-count { text-align: right; padding: 6px 0; font-size: 13px; color: var(--idp-muted); }
         
         /* ========== LISTENING OVERLAY ========== */
         .idp-audio-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.97);
+            background: rgba(245, 246, 251, 0.97);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -456,11 +485,11 @@
             z-index: 2000;
         }
         .idp-audio-overlay.hidden { display: none; }
-        .idp-audio-icon { font-size: 60px; color: #555; margin-bottom: 20px; }
+        .idp-audio-icon { font-size: 60px; color: var(--idp-primary-deep); margin-bottom: 20px; }
         .idp-audio-msg { font-size: 15px; text-align: center; max-width: 450px; margin-bottom: 20px; line-height: 1.5; }
         .idp-play-btn {
             padding: 12px 32px;
-            background: #000;
+            background: var(--idp-primary);
             color: #fff;
             border: none;
             border-radius: 4px;
@@ -470,7 +499,7 @@
             align-items: center;
             gap: 8px;
         }
-        .idp-play-btn:hover { background: #333; }
+        .idp-play-btn:hover { background: var(--idp-primary-deep); }
         
         /* ========== FOOTER ========== */
         .idp-footer {
@@ -505,6 +534,8 @@
             flex: 0 1 auto;
             min-width: 0;
             max-width: 100%;
+            border: none;
+            box-shadow: none;
         }
         
         /* Circular Question Button */
@@ -513,8 +544,8 @@
             height: 44px;
             border-radius: 50%;
             background: #fff;
-            border: 1.5px solid #555;
-            color: #111;
+            border: 1.5px solid var(--idp-border-strong);
+            color: var(--idp-text);
             font-size: 15px;
             font-weight: 600;
             display: flex;
@@ -526,25 +557,25 @@
         }
         
         .idp-q-circle:hover {
-            border-color: #666;
-            background: #f5f5f5;
+            border-color: var(--idp-primary);
+            background: rgba(81, 29, 153, 0.06);
         }
         
         .idp-q-circle.active {
-            background: #333;
+            background: var(--idp-primary);
             color: #fff;
-            border-color: #333;
+            border-color: var(--idp-primary);
         }
         
         .idp-q-circle.answered {
-            background: #d4edda;
-            border-color: #28a745;
+            background: rgba(81, 29, 153, 0.12);
+            border-color: var(--idp-primary-soft-strong);
         }
         
         .idp-q-circle.answered.active {
-            background: #28a745;
+            background: var(--idp-primary-deep);
             color: #fff;
-            border-color: #28a745;
+            border-color: var(--idp-primary-deep);
         }
         
         /* Navigation Buttons — centered in right half */
@@ -557,12 +588,12 @@
         
         .idp-nav-text-btn {
             padding: 13px 22px;
-            background: #fff;
-            border: 1.5px solid #bbb;
+            background: var(--idp-primary);
+            border: 1px solid var(--idp-primary);
             border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
-            color: #333;
+            font-weight: 600;
+            color: #fff;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -572,8 +603,8 @@
         }
         
         .idp-nav-text-btn:hover {
-            background: #f5f5f5;
-            border-color: #888;
+            background: var(--idp-primary-deep);
+            border-color: var(--idp-primary-deep);
         }
         
         .idp-nav-text-btn:disabled {
@@ -594,7 +625,7 @@
             height: 5px;
         }
         .idp-question-numbers::-webkit-scrollbar-thumb {
-            background: #bbb;
+            background: rgba(81, 29, 153, 0.35);
             border-radius: 3px;
         }
         .idp-question-numbers::-webkit-scrollbar-track {
@@ -615,20 +646,22 @@
             border-collapse: collapse;
             font-size: 14px;
             background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: none;
             table-layout: auto;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         .idp-table-completion-styled thead {
-            background: #e8e8e8;
+            background: rgba(81, 29, 153, 0.08);
         }
 
         .idp-table-completion-styled th {
             padding: 10px 12px;
             text-align: left;
             font-weight: 600;
-            border: 1px solid #c0c0c0;
-            color: #000000;
+            border: 1px solid var(--idp-border);
+            color: var(--idp-text);
             font-size: 13px;
             word-wrap: break-word;
             max-width: 200px;
@@ -636,11 +669,11 @@
 
         .idp-table-completion-styled td {
             padding: 10px 12px;
-            border: 1px solid #c0c0c0;
+            border: 1px solid var(--idp-border);
             vertical-align: top;
             line-height: 1.6;
             font-size: 13px;
-            color: #333;
+            color: var(--idp-text);
             word-wrap: break-word;
             max-width: 250px;
         }
@@ -669,7 +702,7 @@
             justify-content: center;
             min-width: 28px;
             height: 28px;
-            background: #000000;
+            background: var(--idp-primary);
             color: #ffffff;
             font-weight: bold;
             font-size: 13px;
@@ -679,7 +712,7 @@
         }
 
         .idp-table-input {
-            border: 2px dashed #000000;
+            border: 2px dashed var(--idp-primary);
             padding: 6px 10px;
             border-radius: 3px;
             font-size: 13px;
@@ -693,12 +726,12 @@
 
         .idp-table-input:focus {
             outline: none;
-            border-color: #333333;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+            border-color: var(--idp-primary-deep);
+            box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.10);
         }
 
         .idp-table-input:hover {
-            border-color: #333333;
+            border-color: var(--idp-primary-deep);
         }
 
         /* Fallback style for simple question list */
@@ -722,18 +755,18 @@
         
         /* Scrollbar */
         .idp-left::-webkit-scrollbar, .idp-right::-webkit-scrollbar { width: 8px; }
-        .idp-left::-webkit-scrollbar-thumb, .idp-right::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .idp-left::-webkit-scrollbar-thumb, .idp-right::-webkit-scrollbar-thumb { background: rgba(81, 29, 153, 0.28); border-radius: 4px; }
         
         /* Modal */
         .idp-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000; }
         .idp-modal.hidden { display: none; }
-        .idp-modal-box { background: #fff; padding: 28px 36px; border-radius: 8px; text-align: center; max-width: 400px; }
+        .idp-modal-box { background: #fff; padding: 28px 36px; border-radius: 14px; text-align: center; max-width: 400px; border: none; box-shadow: none; }
         .idp-modal-title { font-size: 17px; font-weight: bold; margin-bottom: 12px; }
         .idp-modal-text { font-size: 14px; margin-bottom: 20px; }
         .idp-modal-btns { display: flex; gap: 10px; justify-content: center; }
         .idp-modal-btn { padding: 8px 24px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
-        .idp-modal-btn.cancel { background: #ddd; }
-        .idp-modal-btn.confirm { background: #CC6600; color: #fff; }
+        .idp-modal-btn.cancel { background: rgba(81, 29, 153, 0.10); color: var(--idp-primary-deep); }
+        .idp-modal-btn.confirm { background: var(--idp-primary); color: #fff; }
         
         /* ========== RESPONSIVE STYLES ========== */
         @media (max-width: 1200px) {

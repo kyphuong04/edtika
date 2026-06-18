@@ -833,26 +833,38 @@
                 if (errors && errors.errors) {
                     Object.keys(errors.errors).forEach((key) => {
                         const error = errors.errors[key];
-                        const ky = key.replaceAll('.', '-');
+                        const ky = key.replace(/[^a-zA-Z0-9]+/g, '-');
 
                         let element = $form.find('.js-ajax-' + ky);
 
-                        element.addClass('is-invalid');
-                        element.closest('.form-group').find('.invalid-feedback').text(error[0]);
+                        if (!element.length) {
+                            element = $form.find('[name="ajax[' + key.replace(/\./g, '][') + ']"]');
+                        }
+
+                        if (!element.length) {
+                            element = $form.find('[name$="[' + key + ']"]');
+                        }
+
+                        if (element.length) {
+                            element.addClass('is-invalid');
+                            element.closest('.form-group').find('.invalid-feedback').text(error[0] ?? '');
+                        }
                     });
 
                     if (scrollToError) {
                         const $swlModalBody = $('.custom-swl-modal-body');
-                        const $elScroll = $form.find('.is-invalid');
+                        const $elScroll = $form.find('.is-invalid:visible').first();
 
-                        if ($swlModalBody.length) {
-                            $swlModalBody.animate({
-                                scrollTop: $elScroll.offset().top
-                            }, 1000);
-                        } else {
-                            $('html, body').animate({
-                                scrollTop: $elScroll.offset().top
-                            }, 1000);
+                        if ($elScroll.length && $elScroll.offset()) {
+                            if ($swlModalBody.length) {
+                                $swlModalBody.animate({
+                                    scrollTop: $elScroll.offset().top
+                                }, 1000);
+                            } else {
+                                $('html, body').animate({
+                                    scrollTop: $elScroll.offset().top
+                                }, 1000);
+                            }
                         }
                     }
                 }

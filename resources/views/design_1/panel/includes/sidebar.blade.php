@@ -17,6 +17,9 @@
             </a>
         </div>
 
+        {{-- Switch courses button below logo for selected roles --}}
+        @include('design_1.panel.includes.switch_courses')
+
         {{-- Scrollable main menu area --}}
         <div class="panel-sidebar__scroll-area">
             <div id="sidebarAccordions">

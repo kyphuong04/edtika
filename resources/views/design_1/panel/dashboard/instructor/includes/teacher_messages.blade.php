@@ -11,17 +11,17 @@
     @if(!empty($supportMessages['totalTickets']) && $supportMessages['totalTickets'] > 0)
         {{-- Stats row --}}
         <div class="d-grid grid-columns-2 gap-12 mb-16">
-            <div class="d-flex align-items-start justify-content-between bg-gray-100 rounded-16 p-12">
+            <div class="d-flex align-items-start justify-content-between bg-gray-200 rounded-16 p-12">
                 <div>
                     <span class="d-block font-16 font-weight-bold text-dark">{{ $supportMessages['openTickets'] }}</span>
-                    <span class="d-block font-11 text-gray-500 mt-4">{{ trans('update.open_tickets') }}</span>
+                    <span class="d-block font-11 text-gray-600 mt-4">{{ trans('update.open_tickets') }}</span>
                 </div>
                 <x-iconsax-bul-message-notif class="icons text-warning" width="20px" height="20px"/>
             </div>
-            <div class="d-flex align-items-start justify-content-between bg-gray-100 rounded-16 p-12">
+            <div class="d-flex align-items-start justify-content-between bg-gray-200 rounded-16 p-12">
                 <div>
                     <span class="d-block font-16 font-weight-bold text-dark">{{ $supportMessages['totalTickets'] }}</span>
-                    <span class="d-block font-11 text-gray-500 mt-4">{{ trans('update.total_tickets') }}</span>
+                    <span class="d-block font-11 text-gray-600 mt-4">{{ trans('update.total_tickets') }}</span>
                 </div>
                 <x-iconsax-bul-messages class="icons text-primary" width="20px" height="20px"/>
             </div>

@@ -65,6 +65,18 @@
         .blog-post-modal-form .note-editing-area {
             min-height: 220px;
         }
+
+        .btn {
+            background-color: #511D99;
+            border-color: #511D99;
+            color: #fff;
+        }
+
+        .btn:hover {
+            background-color:#fff;
+            border-color: #511D99;
+            color: #511D99;
+        }
     </style>
 @endpush
 
@@ -76,7 +88,7 @@
             <p class="font-14 text-gray-500 mt-4">{{ trans('update.view_blog_posts_and_related_statistics') }}</p>
         </div>
         @can('panel_blog_new_article')
-            <a href="/panel/blog/new" class="btn btn-primary d-flex align-items-center blog-post-modal-trigger" data-modal-title="{{ trans('update.create_a_post') }}" style="background-color: #511D99; border-color: #511D99;">
+            <a href="/panel/blog/new" class="btn d-flex align-items-center blog-post-modal-trigger" data-modal-title="{{ trans('update.create_a_post') }}">
                 <x-iconsax-lin-add class="icons mr-8" width="16"/>
                 {{ trans('update.new_post') }}
             </a>
@@ -134,7 +146,7 @@
                         placeholder: $editor.attr('placeholder'),
                         toolbar: [
                             ['font', ['bold', 'italic', 'underline', 'strikethrough']],
-                            ['para', ['ul', 'ol', 'paragraph']],
+                            ['para', ['ul', 'ol', 'paragraph'], ['link', 'unlink'], ['picture', 'video']],
                         ]
                     });
                 }

@@ -2147,6 +2147,85 @@ function handlePrice($price, $showCurrency = true, $format = true, $coursePagePr
     return $price;
 }
 
+function handlePriceByCurrency($price, $currency, $showCurrency = true, $format = true, $coursePagePrice = false, $showTaxInPrice = false, $taxType = 'general')
+{
+    if (empty($price)) {
+        return 0;
+    }
+
+    $userCurrencyItem = getUserCurrencyItem(null, $currency);
+    $priceDisplay = getFinancialSettings('price_display') ?? 'only_price';
+
+    $decimal = $userCurrencyItem->currency_decimal ?? 1;
+    $decimalSeparator = $userCurrencyItem->currency_separator == "dot" ? '.' : ',';
+    $thousandsSeparator = $userCurrencyItem->currency_separator == "dot" ? "," : ".";
+
+    $price = convertPriceToUserCurrency($price, $userCurrencyItem);
+
+    if ($priceDisplay != 'only_price') {
+        $tax = getFinancialSettings('tax') ?? 0;
+
+        if ($taxType == 'store') {
+            $storeTax = getStoreSettings('store_tax');
+
+            if (isset($storeTax) and is_numeric($storeTax)) {
+                $tax = $storeTax;
+            }
+        }
+
+        $tax = convertPriceToUserCurrency($tax, $userCurrencyItem);
+
+        if ($tax > 0) {
+            $taxPrice = $price * $tax / 100;
+
+            if ($priceDisplay == 'total_price') {
+
+                if ($showTaxInPrice) {
+                    $price = $price + $taxPrice;
+                }
+
+                if ($format) {
+                    $price = handlePriceFormat($price, $decimal, $decimalSeparator, $thousandsSeparator);
+                }
+            } elseif ($priceDisplay == 'price_and_tax') {
+                if ($coursePagePrice) {
+                    return [
+                        'price' => $price,
+                        'tax' => $taxPrice
+                    ];
+                }
+
+                if ($format) {
+                    $price = handlePriceFormat($price, $decimal, $decimalSeparator, $thousandsSeparator);
+                    $taxPrice = handlePriceFormat($taxPrice, $decimal, $decimalSeparator, $thousandsSeparator);
+                }
+
+                if ($showCurrency) {
+                    $price = addCurrencyToPrice($price, $userCurrencyItem);
+                    $taxPrice = addCurrencyToPrice($taxPrice, $userCurrencyItem);
+                }
+
+                $price = $price . ($showTaxInPrice ? ('+' . $taxPrice . ' ' . trans('cart.tax')) : '');
+            }
+        }
+    } elseif ($format) {
+        $price = handlePriceFormat($price, $decimal, $decimalSeparator, $thousandsSeparator);
+    }
+
+    if ($coursePagePrice) {
+        return [
+            'price' => $price,
+            'tax' => 0
+        ];
+    }
+
+    if ($showCurrency and $priceDisplay != 'price_and_tax') {
+        $price = addCurrencyToPrice($price, $userCurrencyItem);
+    }
+
+    return $price;
+}
+
 function convertPriceToUserCurrency($price, $userCurrencyItem = null)
 {
     if (empty($userCurrencyItem)) {
@@ -2213,6 +2292,19 @@ function addCurrencyToPrice($price, $userCurrencyItem = null)
     return $price;
 }
 
+function addCurrencyCodeToPrice($price, $currency = null)
+{
+    if (empty($price)) {
+        return $price;
+    }
+
+    if (empty($currency)) {
+        $currency = currency();
+    }
+
+    return $price . ' ' . strtoupper($currency);
+}
+
 /**
  * This text is for the course details page only and should not be used elsewhere. Use the "handlePrice" method for other places.
  * */
@@ -2232,6 +2324,42 @@ function handleCoursePagePrice($price)
         'price' => $price,
         'tax' => $tax,
     ];
+}
+
+function handleCoursePagePriceByCurrency($price, $currency)
+{
+    $result = [
+        'tax' => 0,
+    ];
+
+    $currencyItem = getUserCurrencyItem(null, $currency);
+
+    if (!empty($price) and $price > 0) {
+        $result = handlePriceByCurrency($price, $currency, true, true, true, true);
+
+        $price = addCurrencyToPrice($result['price'], $currencyItem);
+    } else {
+        $price = trans('public.free');
+    }
+
+    $tax = !empty($result['tax']) ? addCurrencyToPrice($result['tax'], $currencyItem) : 0;
+
+    return [
+        'price' => $price,
+        'tax' => $tax,
+    ];
+}
+
+function handleBundlePriceByCurrency($price, $currency)
+{
+    if (!empty($price) and $price > 0) {
+        $price = number_format($price, 0, ',', '.');
+        $price = addCurrencyCodeToPrice($price, $currency);
+    } else {
+        $price = trans('public.free');
+    }
+
+    return $price;
 }
 
 

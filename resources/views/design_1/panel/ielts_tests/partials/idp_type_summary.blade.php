@@ -31,7 +31,7 @@
                                        oninput="autoSave(' . $q->id . ', this.value)"
                                        ondrop="dropWord(event, ' . $q->id . ')" ondragover="event.preventDefault()">';
                     },
-                    e($text),
+                    $text,
                     1
                 ) !!}
             </span>

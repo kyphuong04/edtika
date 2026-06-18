@@ -4,19 +4,19 @@
 
         <div class="d-flex align-items-center mt-16">
             <div class="conversation-search-box flex-1 form-group d-flex align-items-center mb-0 rounded-12 bg-gray-100 py-4 px-8">
-                <input type="text" name="search" class="form-control flex-1 bg-transparent border-0" value="{{ request()->get('search') }}" placeholder="{{ trans('public.search') }}">
+                <input type="text" name="search" class="form-control flex-1 bg-transparent border border-gray-300" value="{{ request()->get('search') }}" placeholder="{{ trans('public.search') }}">
 
-                <button type="button" class="btn-transparent ml-8 p-4">
-                    <x-iconsax-lin-search-normal class="icons text-gray-400" width="16px" height="16px"/>
+                <button type="button" class="btn-transparent ml-8 p-4 d-flex-center size-48 rounded-12 bg-gray-200">
+                    <x-iconsax-lin-search-normal class="icons text-gray-800" width="16px" height="16px"/>
                 </button>
             </div>
 
             <div class="actions-dropdown position-relative d-flex ml-12">
-                <button type="button" class="btn-transparent d-flex-center size-48 rounded-12 bg-gray-100">
-                    <x-iconsax-lin-setting-4 class="icons text-gray-400" width="16px" height="16px"/>
+                <button type="button" class="btn-transparent d-flex-center size-48 rounded-12 bg-gray-200">
+                    <x-iconsax-lin-setting-4 class="icons text-gray-800" width="16px" height="16px"/>
                 </button>
 
-                <div class="actions-dropdown__dropdown-menu dropdown-menu-width-220 dropdown-menu-top-32 dropdown-menu-left">
+                <div class="actions-dropdown__dropdown-menu dropdown-menu-width-220 dropdown-menu-top-32">
                     <ul class="my-8">
 
                         <li class="actions-dropdown__dropdown-menu-item">
