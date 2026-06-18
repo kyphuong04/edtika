@@ -100,6 +100,42 @@
         margin-bottom: 4px;
         padding-right: 0;
     }
+    .materials-bundle-card__status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+    .materials-bundle-card__status--pending {
+        background: rgba(245, 158, 11, .14);
+        color: #b45309;
+    }
+    .materials-bundle-card__status--draft {
+        background: rgba(107, 114, 128, .12);
+        color: #4b5563;
+    }
+    .materials-bundle-card__status--active {
+        background: rgba(16, 185, 129, .14);
+        color: #047857;
+    }
+    .materials-bundle-card__status--inactive {
+        background: rgba(239, 68, 68, .12);
+        color: #b91c1c;
+    }
+    .materials-bundle-card__status--finished {
+        background: rgba(81, 29, 153, .12);
+        color: #511D99;
+    }
+    .materials-bundle-card__status--default {
+        background: rgba(99, 102, 241, .12);
+        color: #4338ca;
+    }
     .materials-bundle-card__subtitle {
         font-size: 13px;
         color: #6b7280;
@@ -140,7 +176,7 @@
     <div class="materials-page-header">
         <div>
             <h3 class="materials-page-header__title">{{ trans('update.my_bundles') }}</h3>
-            <p class="materials-page-header__hint">Tạo bundle mới và gửi xét duyệt để manager/CEO duyệt trước khi hiển thị chính thức.</p>
+            <p class="materials-page-header__hint">Tạo bundle mới và gửi xét duyệt để Manager/CEO duyệt trước khi hiển thị chính thức.</p>
         </div>
 
         @can('panel_bundles_create')

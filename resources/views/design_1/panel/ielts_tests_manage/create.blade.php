@@ -32,7 +32,7 @@
 <section class="mt-30">
     <div class="d-flex align-items-center justify-content-between mb-20">
         <h1 class="section-title">{{ trans('update.ielts_create_test_title') }}</h1>
-        <a href="{{ route('panel.my_ielts_tests') }}" class="btn btn-secondary">
+        <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left mr-5"></i>{{ trans('update.ielts_back_to_my_tests') }}
         </a>
     </div>
@@ -270,7 +270,7 @@
 
         {{-- Actions --}}
         <div class="d-flex align-items-center justify-content-end">
-            <a href="{{ route('panel.my_ielts_tests') }}" class="btn btn-secondary mr-10">{{ trans('admin/main.cancel') }}</a>
+            <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn btn-secondary mr-10">{{ trans('admin/main.cancel') }}</a>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-plus mr-5"></i>{{ trans('update.ielts_create_test_btn') }}
             </button>

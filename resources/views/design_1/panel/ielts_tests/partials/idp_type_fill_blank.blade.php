@@ -10,7 +10,7 @@
     <div class="idp-question" data-q-num="{{ $qNum }}">
         @if(!empty($text))
             <span class="idp-q-num">{{ $qNum }}</span>
-            <span class="idp-q-text">{{ $text }}</span>
+            <span class="idp-q-text">{!! $text !!}</span>
             <input type="text" class="idp-input" style="margin-left: 8px;"
                    value="{{ $saved }}"
                    oninput="autoSave({{ $q->id }}, this.value)">

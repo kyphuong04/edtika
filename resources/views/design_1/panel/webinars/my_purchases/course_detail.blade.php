@@ -29,7 +29,7 @@
             white-space: nowrap;
             transition: border-color .2s, background .2s;
         }
-        .cd-btn-outline:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+        .cd-btn-outline:hover { border-color: #511D99; color: #511D99; text-decoration: none; }
         .cd-bell-btn {
             display: flex;
             align-items: center;
@@ -111,7 +111,7 @@
             cursor: pointer;
             transition: border-color .2s;
         }
-        .cd-section-card.is-open { border-color: var(--primary); }
+        .cd-section-card.is-open { border-color: #511D99; }
         .cd-section-card__header {
             display: flex;
             align-items: center;
@@ -151,7 +151,7 @@
             transition: border-color .2s, color .2s;
             flex-shrink: 0;
         }
-        .cd-section-card__btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+        .cd-section-card__btn:hover { border-color: #511D99; color: #511D99; text-decoration: none; }
         .cd-section-card__toggle {
             width: 28px; height: 28px; border-radius: 50%;
             border: 1.5px solid #ddd; background: #f9f9f9;
@@ -194,8 +194,8 @@
             color: #bbb;
         }
         .cd-item-row__circle.is-passed {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: #511D99; 
+            border-color: #511D99; 
             color: #fff;
         }
         .cd-item-row__info { flex: 1; min-width: 0; padding-top: 3px; }
@@ -210,7 +210,7 @@
             align-items: center; justify-content: center;
             color: #fff; font-size: 7px; flex-shrink: 0;
         }
-        .cd-item-row__type-dot.is-passed { background: var(--primary); }
+        .cd-item-row__type-dot.is-passed { background: #511D99; }
         .cd-item-row__points { font-size: 11px; color: #888; margin-top: 2px; }
 
         /* ── Right aside cards ───────────────────────────────────── */
@@ -262,7 +262,7 @@
             font-size: 12px; line-height: 1.5; word-break: break-word;
         }
         .cd-bubble--other { background: #f0f0f0; color: #333; border-bottom-left-radius: 3px; }
-        .cd-bubble--me { background: var(--primary); color: #fff; border-bottom-right-radius: 3px; }
+        .cd-bubble--me { background: #511D99; color: #fff; border-bottom-right-radius: 3px; }
         .cd-bubble__time { font-size: 10px; opacity: .55; display: block; margin-top: 3px; }
         .cd-chat__new-subject { padding: 8px 14px 0; }
         .cd-chat__new-subject label { font-size: 11px; color: #999; display: block; margin-bottom: 3px; }
@@ -271,7 +271,7 @@
             padding: 6px 10px; font-size: 12px; outline: none;
             transition: border-color .2s;
         }
-        .cd-chat__new-subject input:focus { border-color: var(--primary); }
+        .cd-chat__new-subject input:focus { border-color: #511D99; }
         .cd-chat__footer {
             padding: 8px 12px 10px; border-top: 1px solid #f0f0f0;
             display: flex; align-items: flex-end; gap: 8px;
@@ -282,10 +282,10 @@
             max-height: 78px; overflow-y: auto; line-height: 1.45;
             transition: border-color .2s;
         }
-        .cd-chat__input:focus { border-color: var(--primary); }
+        .cd-chat__input:focus { border-color: #511D99; }
         .cd-chat__send-btn {
             width: 32px; height: 32px; border-radius: 50%; border: none;
-            background: var(--primary); display: flex; align-items: center;
+            background: #511D99; display: flex; align-items: center;
             justify-content: center; cursor: pointer; flex-shrink: 0;
             transition: opacity .2s;
         }
@@ -361,7 +361,6 @@
 
 <div class="cd-page">
 
-    {{-- ══ TWO-COLUMN OUTER LAYOUT ████████████████████████████ --}}
     <div class="cd-layout">
 
         {{-- ── LEFT / MAIN COLUMN ─────────────────────────────── --}}
@@ -381,10 +380,6 @@
 
                 {{-- actions --}}
                 <div class="d-flex align-items-center flex-wrap gap-8">
-                    <a href="/panel/courses/purchases" class="btn btn-outline-secondary btn-sm rounded-pill px-16">
-                        {{ trans('panel.switch_courses') }}
-                    </a>
-
                     <a href="{{ $panelLearnUrl }}" class="btn btn-primary btn-sm rounded-pill px-16">
                         {{ trans('update.continue_learning') }} &rarr;
                     </a>

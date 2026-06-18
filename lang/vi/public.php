@@ -139,7 +139,7 @@ return [
     'files' => 'Tệp',
     'file' => 'Tệp',
     'source' => 'Nguồn',
-    'add_files' => 'Thêm tệp',
+    'add_files' => 'Thêm bài học',
     'add_new_files' => 'Thêm tệp mới',
     'files_no_result' => 'Không có tệp nào!',
     'files_no_result_hint' => 'Bạn có thể tải lên các video khóa học, bài tập, dự án và tài liệu đính kèm dưới dạng tệp.',
@@ -383,7 +383,7 @@ return [
     'parts' => 'Phần',
     'content_defined' => 'Nội dung đã xác định',
     'no_chapter' => 'Không có phần nào',
-    'add_file' => 'Thêm tệp',
+    'add_file' => 'Thêm bài học',
     'topic_post' => 'Bài viết chủ đề',
 
     'forbidden_request_toast_lang' => 'Yêu cầu bị cấm',
@@ -408,4 +408,6 @@ return [
     'quizzes' => 'Bài kiểm tra',
     'action' => 'Hành động',
     'average_progress' => 'Tiến độ trung bình',
+    'loading' => 'Đang tải...',
+    'join' => 'Tham gia',
 ];

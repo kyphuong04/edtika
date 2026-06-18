@@ -3,17 +3,38 @@
 
 @php
     $matchOptions = is_array($matchingOptions) ? $matchingOptions : json_decode($matchingOptions ?? '[]', true);
+
+    if (empty($matchOptions) && isset($questions) && $questions->count()) {
+        $firstQuestionOptions = $questions->first()->answer_options ?? $questions->first()->options ?? [];
+        if (is_string($firstQuestionOptions)) {
+            $firstQuestionOptions = json_decode($firstQuestionOptions, true) ?? [];
+        }
+
+        if (is_array($firstQuestionOptions)) {
+            $hasAssociativeKeys = array_keys($firstQuestionOptions) !== range(0, count($firstQuestionOptions) - 1);
+
+            if ($hasAssociativeKeys) {
+                $matchOptions = $firstQuestionOptions;
+            } elseif (!empty($firstQuestionOptions)) {
+                $matchOptions = [];
+                foreach ($firstQuestionOptions as $idx => $value) {
+                    $letter = chr(65 + $idx);
+                    $matchOptions[$letter] = $value;
+                }
+            }
+        }
+    }
+
     $optionKeys = array_keys($matchOptions);
     if(empty($optionKeys)) {
         $optionKeys = ['A', 'B', 'C', 'D', 'E'];
     }
 @endphp
 
-{{-- Legend/Options explanation --}}
 @if(!empty($matchOptions))
-    <div style="margin-bottom: 12px; font-size: 13px;">
-        @foreach($matchOptions as $key => $text)
-            <div><strong>{{ $key }}</strong> &nbsp; {{ $text }}</div>
+    <div class="idp-options" style="margin-bottom: 10px; margin-left: 0;">
+        @foreach($matchOptions as $label => $desc)
+            <div style="font-size:14px; margin-bottom:4px;"><strong>{{ $label }}.</strong> {!! $desc !!}</div>
         @endforeach
     </div>
 @endif
@@ -36,7 +57,7 @@
             <tr data-q-num="{{ $qNum }}">
                 <td>
                     <span class="idp-q-num">{{ $qNum }}</span>
-                    <span class="idp-q-text">{{ $q->question_text ?? $q->content ?? '' }}</span>
+                    <span class="idp-q-text">{!! $q->question_text ?? $q->content ?? '' !!}</span>
                 </td>
                 @foreach($optionKeys as $opt)
                     <td>

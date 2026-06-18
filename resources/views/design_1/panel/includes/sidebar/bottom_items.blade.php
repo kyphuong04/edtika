@@ -34,8 +34,8 @@ if ($authUser->isUser() || $authUser->isStudent()) {
                     <div class="accordion">
                         <div class="panel-sidebar__menu accordion__title d-flex align-items-center justify-content-between pl-32 pr-20 {{ ($isActiveMainManu) ? 'sidenav-item-active' : '' }}">
                             <div class="d-flex align-items-center flex-1 cursor-pointer" href="#collapseBottom{{ $sidebarMenuName }}" data-parent="#sidebarBottomAccordions" role="button" data-toggle="collapse">
-                                <span class="sidebar-icon {{ $isActiveMainManu ? 'text-primary' : 'text-gray-500' }}">{!! $sidebarMenu['icon'] !!}</span>
-                                <span class="sidebar-text ml-8 font-14 {{ $isActiveMainManu ? 'text-primary' : 'text-dark' }}">{{ $sidebarMenu['text'] }}</span>
+                                <span class="sidebar-icon {{ $isActiveMainManu ? 'text-white' : 'text-gray-500' }}">{!! $sidebarMenu['icon'] !!}</span>
+                                <span class="sidebar-text ml-8 font-14 {{ $isActiveMainManu ? 'text-white' : 'text-dark' }}">{{ $sidebarMenu['text'] }}</span>
                             </div>
 
                             <span class="collapse-arrow-icon d-flex cursor-pointer" href="#collapseBottom{{ $sidebarMenuName }}" data-parent="#sidebarBottomAccordions" role="button" data-toggle="collapse">
@@ -51,8 +51,8 @@ if ($authUser->isUser() || $authUser->isStudent()) {
                                     $isActiveItemManu = (request()->is($itemUrl));
                                 @endphp
 
-                                <a href="{{ $sidebarMenuItem['url'] }}" class="d-flex align-items-center panel-sidebar__menu-item text-gray-500 font-14 pl-32 pr-20 {{ ($isActiveItemManu) ? 'text-primary' : '' }}">
-                                    <span class="sidebar-text">{{ $sidebarMenuItem['text'] }}</span>
+                                <a href="{{ $sidebarMenuItem['url'] }}" class="d-flex align-items-center panel-sidebar__menu-item text-gray-500 font-14 pl-32 pr-20 {{ ($isActiveItemManu) ? 'sidenav-item-active text-white' : '' }}">
+                                    <span class="sidebar-text {{ $isActiveItemManu ? 'text-white' : '' }}">{{ $sidebarMenuItem['text'] }}</span>
                                 </a>
                             @endforeach
 
@@ -61,8 +61,8 @@ if ($authUser->isUser() || $authUser->isStudent()) {
                 @else
                     <a href="{{ $sidebarMenu['url'] }}" class="panel-sidebar__menu d-flex align-items-center justify-content-between pl-32 pr-20 {{ ($isActiveMainManu) ? 'sidenav-item-active' : '' }}">
                         <div class="d-flex align-items-center flex-1 cursor-pointer">
-                            <span class="sidebar-icon {{ $isActiveMainManu ? 'text-primary' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-gray-500') }}">{!! $sidebarMenu['icon'] !!}</span>
-                            <span class="sidebar-text ml-8 font-14 {{ $isActiveMainManu ? 'text-primary' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-dark') }}">{{ $sidebarMenu['text'] }}</span>
+                            <span class="sidebar-icon {{ $isActiveMainManu ? 'text-white' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-gray-500') }}">{!! $sidebarMenu['icon'] !!}</span>
+                            <span class="sidebar-text ml-8 font-14 {{ $isActiveMainManu ? 'text-white' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-dark') }}">{{ $sidebarMenu['text'] }}</span>
                         </div>
                     </a>
                 @endif

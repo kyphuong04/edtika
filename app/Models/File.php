@@ -37,7 +37,7 @@ class File extends Model implements TranslatableContract
 
     static $ignoreVolumeFileSources = ['youtube', 'vimeo', 'iframe'];
 
-    public $translatedAttributes = ['title', 'description'];
+    public $translatedAttributes = ['title', 'description', 'interactive_quiz', 'lecture_notes'];
 
     public function getTitleAttribute()
     {
@@ -47,6 +47,16 @@ class File extends Model implements TranslatableContract
     public function getDescriptionAttribute()
     {
         return getTranslateAttributeValue($this, 'description');
+    }
+
+    public function getInteractiveQuizAttribute()
+    {
+        return getTranslateAttributeValue($this, 'interactive_quiz');
+    }
+
+    public function getLectureNotesAttribute()
+    {
+        return getTranslateAttributeValue($this, 'lecture_notes');
     }
 
 

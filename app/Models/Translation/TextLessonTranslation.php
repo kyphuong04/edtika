@@ -10,6 +10,11 @@ class TextLessonTranslation extends Model
     public $timestamps = false;
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
+
+    protected $casts = [
+        'interactive_quiz' => 'array',
+        'lecture_notes' => 'array',
+    ];
 }
 
 

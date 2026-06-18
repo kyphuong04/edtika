@@ -17,7 +17,7 @@
         ['label' => $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào', 'url' => '/panel/ielts-tests/practice', 'requiresAuth' => true, 'active' => $isPlacementActive],
         ['label' => $isEnglish ? 'Mock Tests' : 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => $isEnglish ? 'Dictionary & Flashcards' : 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
-        ['label' => $isEnglish ? 'News' : 'Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
+        ['label' => $isEnglish ? 'Knowledge & News' : 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
     ];
 
     if (!empty($selectedCategory) and !empty($selectedCategory->cover_image)) {
@@ -26,7 +26,7 @@
         $pageHeroImage = getThemePageBackgroundSettings('blog_lists');
     }
 
-    $blogPageTitle = $isEnglish ? 'News & Articles' : 'Tin tức & Bài viết';
+    $blogPageTitle = $isEnglish ? 'Knowledge & News' : 'Kiến thức & Tin tức';
     if (!empty($selectedAuthor)) {
         $blogPageTitle = $selectedAuthor->full_name;
     } elseif (!empty($selectedCategory)) {

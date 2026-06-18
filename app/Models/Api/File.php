@@ -22,6 +22,8 @@ class File extends WebFile
             'downloadable' => $this->downloadable,
             'accessibility' => $this->accessibility,
             'description' => $this->description,
+            'interactive_quiz' => $this->interactive_quiz,
+            'lecture_notes' => $this->lecture_notes,
             'storage' => $this->storage,
             'download_link' => $this->webinar->getUrl() . '/file/' . $this->id . '/download',
             'web_link' => $this->getFileWebViewUrl(),

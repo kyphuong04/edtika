@@ -120,7 +120,7 @@ class QuizResultsController extends Controller
                                     ->where('quiz_id', $quiz->id)
                                     ->first();
 
-                                if ($question->type == 'descriptive') {
+                                if ($question->requiresManualReview()) {
                                     if (!empty($result['status']) and $result['status']) {
                                         $user_grade = $user_grade - (isset($result['grade']) ? (int)$result['grade'] : 0);
                                         $user_grade = $user_grade + (isset($review['grade']) ? (int)$review['grade'] : (int)$question->grade);
@@ -144,7 +144,7 @@ class QuizResultsController extends Controller
                                 ->where('quiz_id', $quiz->id)
                                 ->first();
 
-                            if ($question and $question->type == 'descriptive') {
+                            if ($question and $question->requiresManualReview()) {
                                 $user_grade += (isset($review['grade']) ? (int)$review['grade'] : 0);
                             }
                         }

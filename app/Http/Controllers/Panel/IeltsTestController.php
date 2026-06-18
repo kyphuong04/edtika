@@ -277,28 +277,27 @@ class IeltsTestController extends Controller
             ->where('user_id', $authUser->id)
             ->count() + 1;
         
-        // Calculate total questions
-        $totalQuestions = 0;
-        if ($test->has_listening) $totalQuestions += 40;
-        if ($test->has_reading) $totalQuestions += 40;
-        if ($test->has_writing) $totalQuestions += 2;
-        if ($test->has_speaking) $totalQuestions += 10; // Approximate
+        // Calculate total questions from actual sections to support custom skills.
+        $totalQuestions = (int) $test->sections->sum(function ($section) {
+            if (!empty($section->question_start) && !empty($section->question_end) && $section->question_end >= $section->question_start) {
+                return (int) $section->question_end - (int) $section->question_start + 1;
+            }
+
+            return 0;
+        });
         
         // Determine starting skill - use requested skill if provided and valid
         $startingSkill = null;
-        if ($requestedSkill && in_array($requestedSkill, ['listening', 'reading', 'writing', 'speaking'])) {
-            // Verify the test has this skill
-            $hasSkillFlag = 'has_' . $requestedSkill;
-            if ($test->$hasSkillFlag) {
+        if ($requestedSkill && in_array($requestedSkill, ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'])) {
+            // Verify the test has at least one section for this skill.
+            if ($test->sections->contains('skill', $requestedSkill)) {
                 $startingSkill = $requestedSkill;
             }
         }
         
-        // Fallback to default order if no skill specified
+        // Fallback to first available section if no skill specified.
         if (!$startingSkill) {
-            $startingSkill = $test->has_listening ? 'listening' : 
-                            ($test->has_reading ? 'reading' : 
-                            ($test->has_writing ? 'writing' : 'speaking'));
+            $startingSkill = optional($test->sections->sortBy('sort_order')->first())->skill;
         }
         
         // Create new attempt

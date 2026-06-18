@@ -182,6 +182,16 @@
                 <h2 class="section-title after-line">{{ trans('public.questions') }}</h2>
                 <button id="add_multiple_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">{{ trans('quiz.add_multiple_choice') }}</button>
                 <button id="add_descriptive_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">{{ trans('quiz.add_descriptive') }}</button>
+                <button id="add_fill_blank_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">{{ trans('quiz.add_fill_blank') }}</button>
+                <button id="add_rewrite_sentence_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">{{ trans('quiz.add_rewrite_sentence') }}</button>
+                <button id="add_true_false_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">True / False / Not Given</button>
+                <button id="add_yes_no_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Yes / No / Not Given</button>
+                <button id="add_matching_headings_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Matching Headings</button>
+                <button id="add_matching_information_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Matching Information</button>
+                <button id="add_matching_features_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Matching Features</button>
+                <button id="add_matching_sentence_endings_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Matching Sentence Endings</button>
+                <button id="add_sentence_completion_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Sentence Completion</button>
+                <button id="add_short_answer_question" data-quiz-id="{{ $quiz->id }}" type="button" class="btn btn-primary btn-sm ml-2 mt-3">Short Answer</button>
             </div>
             @if($quizQuestions)
                 <ul class="draggable-questions-lists draggable-questions-lists-{{ $quiz->id }}" data-drag-class="draggable-questions-lists-{{ $quiz->id }}" data-order-table="quizzes_questions" data-quiz="{{ $quiz->id }}">
@@ -190,7 +200,7 @@
                             <div class="flex-grow-1">
                                 <h4 class="question-title">{{ $question->title }}</h4>
                                 <div class="font-12 mt-3 question-infos">
-                                    <span>{{ $question->type === App\Models\QuizzesQuestion::$multiple ? trans('quiz.multiple_choice') : trans('quiz.descriptive') }} | {{ trans('quiz.grade') }}: {{ $question->grade }}</span>
+                                    <span>{{ $question->type_label }} | {{ trans('quiz.grade') }}: {{ $question->grade }}</span>
                                 </div>
                             </div>
 
@@ -241,4 +251,14 @@
 @if(!empty($quiz))
     @include('admin.quizzes.modals.multiple_question')
     @include('admin.quizzes.modals.descriptive_question')
+    @include('admin.quizzes.modals.text_question', ['questionType' => \App\Models\QuizzesQuestion::$fillBlank])
+    @include('admin.quizzes.modals.text_question', ['questionType' => \App\Models\QuizzesQuestion::$rewriteSentence])
+    @include('admin.quizzes.modals.text_question', ['questionType' => \App\Models\QuizzesQuestion::$sentenceCompletion])
+    @include('admin.quizzes.modals.text_question', ['questionType' => \App\Models\QuizzesQuestion::$shortAnswer])
+    @include('admin.quizzes.modals.boolean_question', ['questionType' => \App\Models\QuizzesQuestion::$trueFalseNotGiven])
+    @include('admin.quizzes.modals.boolean_question', ['questionType' => \App\Models\QuizzesQuestion::$yesNoNotGiven])
+    @include('admin.quizzes.modals.matching_question', ['questionType' => \App\Models\QuizzesQuestion::$matchingHeadings])
+    @include('admin.quizzes.modals.matching_question', ['questionType' => \App\Models\QuizzesQuestion::$matchingInformation])
+    @include('admin.quizzes.modals.matching_question', ['questionType' => \App\Models\QuizzesQuestion::$matchingFeatures])
+    @include('admin.quizzes.modals.matching_question', ['questionType' => \App\Models\QuizzesQuestion::$matchingSentenceEndings])
 @endif

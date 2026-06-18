@@ -28,6 +28,11 @@
 
         {{-- Messages (support tickets) --}}
         @include('design_1.panel.dashboard.instructor.includes.teacher_messages')
+
+        {{-- Events Calendar --}}
+        <div class="mt-16">
+            @include('design_1.panel.dashboard.instructor.includes.events_calendar')
+        </div>
     </div>
 </div>
 

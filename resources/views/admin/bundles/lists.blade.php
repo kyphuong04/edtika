@@ -269,7 +269,7 @@
                                             <td>
                                                 @if(!empty($bundle->price) and $bundle->price > 0)
                                                     <span class="mt-0 mb-1">
-                                                        {{ handlePrice($bundle->price, true, true) }}
+                                                        {{ handleBundlePriceByCurrency($bundle->price, $bundle->getPriceCurrency()) }}
                                                     </span>
 
                                                     @if($bundle->getDiscountPercent() > 0)

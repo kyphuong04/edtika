@@ -1,6 +1,7 @@
 @extends('design_1.panel.layouts.panel')
 
 @push('styles_top')
+<link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
 <style>
 .inline-test-creator {
     background: #fff;
@@ -438,7 +439,7 @@
                 </div>
             </div>
             <div class="section-actions">
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.closest('.section-container').querySelector('.add-question-form').classList.toggle('hidden')">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAddQuestionForm(this, true)">
                     <i class="fas fa-plus mr-5"></i>Add Question
                 </button>
                 <button type="button" class="remove-section-btn" onclick="removeSection(this)">
@@ -502,7 +503,7 @@
             <div class="form-row full">
                 <div class="form-group">
                     <label class="input-label">Answer Help</label>
-                    <textarea class="form-control question-explanation" rows="3" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                    <textarea class="form-control question-explanation js-answer-help-editor" rows="3" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
                 </div>
             </div>
 
@@ -569,7 +570,7 @@
                 <button type="button" class="btn btn-success btn-sm" onclick="addQuestion(this)">
                     <i class="fas fa-plus mr-5"></i>Add Question
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.add-question-form').classList.add('hidden')">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddQuestionForm(this, false)">
                     <i class="fas fa-times mr-5"></i>Cancel
                 </button>
             </div>
@@ -578,6 +579,7 @@
 </template>
 
 @push('scripts_bottom')
+<script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
 <script>
 const SECTIONS_CONFIG = {
     listening: { skill: 'listening', title: 'Listening', icon: '🔊', mock: 40, practice: 0 },
@@ -592,9 +594,78 @@ let testData = {
     sections: {}
 };
 
+const ANSWER_HELP_EDITOR_TOOLBAR = [
+    ['style', ['style']],
+    ['font', ['bold', 'italic', 'underline', 'clear']],
+    ['color', ['foreColor', 'backColor']],
+    ['para', ['ul', 'ol', 'paragraph']],
+    ['view', ['codeview']]
+];
+
+function getAnswerHelpValue(element) {
+    if (!element) {
+        return '';
+    }
+
+    const $element = $(element);
+    if (jQuery().summernote && $element.next('.note-editor').length) {
+        return ($element.summernote('code') || '').trim();
+    }
+
+    return ($element.val() || '').trim();
+}
+
+function setAnswerHelpValue(element, value) {
+    if (!element) {
+        return;
+    }
+
+    const $element = $(element);
+    if (jQuery().summernote && $element.next('.note-editor').length) {
+        $element.summernote('code', value || '');
+        return;
+    }
+
+    $element.val(value || '');
+}
+
+function initAnswerHelpEditors(context) {
+    if (!jQuery().summernote) {
+        return;
+    }
+
+    const $context = context ? $(context) : $(document);
+    const $editors = $context.find('.js-answer-help-editor').filter(function () {
+        return !$(this).next('.note-editor').length;
+    });
+
+    if (!$editors.length) {
+        return;
+    }
+
+    makeSummernote($editors, 180, undefined, {
+        toolbar: ANSWER_HELP_EDITOR_TOOLBAR
+    });
+}
+
+function toggleAddQuestionForm(button, shouldOpen) {
+    const form = button.closest('.add-question-form');
+    if (!form) {
+        return;
+    }
+
+    const willOpen = typeof shouldOpen === 'boolean' ? shouldOpen : form.classList.contains('hidden');
+    form.classList.toggle('hidden', !willOpen);
+
+    if (willOpen) {
+        initAnswerHelpEditors(form);
+    }
+}
+
 // Initialize sections on page load
 document.addEventListener('DOMContentLoaded', function() {
     setupFormValidation();
+    initAnswerHelpEditors(document);
     document.addEventListener('input', function(event) {
         const target = event.target;
         if (!target || !target.classList || !target.classList.contains('question-text')) {
@@ -669,6 +740,7 @@ function initializeSections() {
         section.querySelector('input[name="sections[duration]"]').name = `sections[${skill}][duration]`;
 
         container.appendChild(section);
+        initAnswerHelpEditors(container);
 
         testData.sections[skill] = {
             questions: []
@@ -789,7 +861,7 @@ function addQuestion(button) {
     const questionNumber = form.querySelector('.question-number').value;
     const questionType = form.querySelector('.question-type-select').value;
     const questionText = form.querySelector('.question-text').value;
-    const answerHelp = form.querySelector('.question-explanation')?.value.trim();
+    const answerHelp = getAnswerHelpValue(form.querySelector('.question-explanation'));
 
     if (!questionNumber || !questionType || !questionText) {
         alert('Please fill in all required fields');
@@ -861,7 +933,7 @@ function addQuestion(button) {
     form.querySelector('.question-type-select').value = '';
     form.querySelector('.question-text').value = '';
     const explanationInput = form.querySelector('.question-explanation');
-    if (explanationInput) explanationInput.value = '';
+    if (explanationInput) setAnswerHelpValue(explanationInput, '');
     
     // Clear all answer options
     form.querySelectorAll('.answer-option').forEach(input => input.value = '');

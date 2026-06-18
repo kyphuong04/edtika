@@ -75,6 +75,14 @@
                 </li>
             @endif
 
+            {{-- Calendar --}}
+            <li class="{{ (request()->is('panel/events*')) ? 'active' : '' }}">
+                <a href="/panel/events" class="nav-link">
+                    <x-iconsax-bul-calendar-2 class="icons" width="24px" height="24px"/>
+                    <span>{{ trans('update.events_calendar') }}</span>
+                </a>
+            </li>
+
             {{-- Education --}}
             @include('admin.includes.sidebar.education')
 

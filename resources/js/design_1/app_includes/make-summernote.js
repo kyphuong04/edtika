@@ -1,8 +1,19 @@
 (function ($) {
     "use strict";
 
-    window.makeSummernote = function ($content, cardHeight = null, onChange = undefined) {
+    window.makeSummernote = function ($content, cardHeight = null, onChange = undefined, options = {}) {
         const height = cardHeight ? cardHeight : ($content.attr('data-height') ? $content.attr('data-height') : 300);
+        const toolbar = options.toolbar || [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['fontname', ['fontname']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video']],
+            ['view', ['fullscreen', 'codeview', 'help']],
+            ['paperSize', ['paperSize']],
+        ];
 
         $content.summernote({
             dialogsInBody: true,
@@ -13,17 +24,8 @@
             callbacks: {
                 onChange: onChange
             },
-            toolbar: [
-                ['style', ['style']],
-                ['font', ['bold', 'underline', 'clear']],
-                ['fontname', ['fontname']],
-                ['color', ['color']],
-                ['para', ['ul', 'ol', 'paragraph']],
-                ['table', ['table']],
-                ['insert', ['link', 'picture', 'video']],
-                ['view', ['fullscreen', 'codeview', 'help']],
-                ['paperSize', ['paperSize']], // The Button
-            ]
+            toolbar: toolbar,
+            ...options
         });
     }
 

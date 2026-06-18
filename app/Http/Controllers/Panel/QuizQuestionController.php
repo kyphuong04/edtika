@@ -19,19 +19,17 @@ class QuizQuestionController extends Controller
     {
         $user = auth()->user();
         $quizId = $request->get('quiz');
+        $type = $request->get('type', QuizzesQuestion::$descriptive);
 
         $quiz = Quiz::where('id', $quizId)->first();
 
-        if (!empty($quiz) and $quiz->canAccessToEdit($user)) {
+        if (!empty($quiz) and $quiz->canAccessToEdit($user) and in_array($type, QuizzesQuestion::allowedTypes())) {
             $data = [
-                'quiz' => $quiz
+                'quiz' => $quiz,
+                'questionType' => $type,
             ];
 
-            if ($request->get('type') == 'multiple') {
-                $html = (string)view()->make('design_1.panel.quizzes.create.modals.multiple_question', $data);
-            } else {
-                $html = (string)view()->make('design_1.panel.quizzes.create.modals.descriptive_question', $data);
-            }
+            $html = (string) view()->make($this->getQuestionModalViewPath($type), $data);
 
             return response()->json([
                 'html' => $html
@@ -50,7 +48,8 @@ class QuizQuestionController extends Controller
             'quiz_id' => 'required|exists:quizzes,id',
             'title' => 'required',
             'grade' => 'required|integer',
-            'type' => 'required',
+            'type' => 'required|in:' . implode(',', QuizzesQuestion::allowedTypes()),
+            'question_data' => 'nullable|array',
             'negative_grade' => 'nullable|integer|min:0',
         ];
 
@@ -96,6 +95,17 @@ class QuizQuestionController extends Controller
             }
         }
 
+        $data['question_data'] = $this->prepareQuestionData($data);
+
+        if (in_array($data['type'], [QuizzesQuestion::$fillBlank, QuizzesQuestion::$rewriteSentence, QuizzesQuestion::$sentenceCompletion, QuizzesQuestion::$shortAnswer, QuizzesQuestion::$trueFalseNotGiven, QuizzesQuestion::$yesNoNotGiven, QuizzesQuestion::$matchingHeadings, QuizzesQuestion::$matchingInformation, QuizzesQuestion::$matchingFeatures, QuizzesQuestion::$matchingSentenceEndings]) && empty(data_get($data, 'question_data.prompt'))) {
+            return response()->json([
+                'code' => 422,
+                'errors' => [
+                    'question_data.prompt' => [trans('quiz.question_prompt')],
+                ],
+            ], 422);
+        }
+
         $quiz = Quiz::where('id', $data['quiz_id'])->first();
 
         if (!empty($quiz) and $quiz->canAccessToEdit($user)) {
@@ -107,6 +117,7 @@ class QuizQuestionController extends Controller
                 'grade' => $data['grade'],
                 'negative_grade' => $data['negative_grade'] ?? null,
                 'type' => $data['type'],
+                'question_data' => $data['question_data'],
                 'order' => $order,
                 'created_at' => time()
             ]);
@@ -186,10 +197,19 @@ class QuizQuestionController extends Controller
                     'defaultLocale' => getDefaultLocale(),
                 ];
 
-                if ($question->type == 'multiple') {
-                    $html = (string)view()->make('design_1.panel.quizzes.create.modals.multiple_question', $data);
+                if ($question->type == QuizzesQuestion::$multiple) {
+                    $html = (string) view()->make('design_1.panel.quizzes.create.modals.multiple_question', $data);
+                } elseif (in_array($question->type, [QuizzesQuestion::$fillBlank, QuizzesQuestion::$rewriteSentence, QuizzesQuestion::$sentenceCompletion, QuizzesQuestion::$shortAnswer])) {
+                    $data['questionType'] = $question->type;
+                    $html = (string) view()->make('design_1.panel.quizzes.create.modals.text_question', $data);
+                } elseif (in_array($question->type, [QuizzesQuestion::$trueFalseNotGiven, QuizzesQuestion::$yesNoNotGiven])) {
+                    $data['questionType'] = $question->type;
+                    $html = (string) view()->make('design_1.panel.quizzes.create.modals.boolean_question', $data);
+                } elseif ($question->isMatchingQuestion()) {
+                    $data['questionType'] = $question->type;
+                    $html = (string) view()->make('design_1.panel.quizzes.create.modals.matching_question', $data);
                 } else {
-                    $html = (string)view()->make('design_1.panel.quizzes.create.modals.descriptive_question', $data);
+                    $html = (string) view()->make('design_1.panel.quizzes.create.modals.descriptive_question', $data);
                 }
 
                 return response()->json([
@@ -255,7 +275,8 @@ class QuizQuestionController extends Controller
             'quiz_id' => 'required|exists:quizzes,id',
             'title' => 'required',
             'grade' => 'required',
-            'type' => 'required',
+            'type' => 'required|in:' . implode(',', QuizzesQuestion::allowedTypes()),
+            'question_data' => 'nullable|array',
             'negative_grade' => 'nullable|integer|min:0',
         ];
 
@@ -298,6 +319,17 @@ class QuizQuestionController extends Controller
             }
         }
 
+        $data['question_data'] = $this->prepareQuestionData($data);
+
+        if (in_array($data['type'], [QuizzesQuestion::$fillBlank, QuizzesQuestion::$rewriteSentence]) && empty(data_get($data, 'question_data.prompt'))) {
+            return response()->json([
+                'code' => 422,
+                'errors' => [
+                    'question_data.prompt' => [trans('quiz.question_prompt')],
+                ],
+            ], 422);
+        }
+
 
         $user = auth()->user();
 
@@ -316,6 +348,7 @@ class QuizQuestionController extends Controller
                     'grade' => $data['grade'],
                     'negative_grade' => $data['negative_grade'] ?? null,
                     'type' => $data['type'],
+                    'question_data' => $data['question_data'],
                     'updated_at' => time()
                 ]);
 
@@ -463,6 +496,76 @@ class QuizQuestionController extends Controller
         $answer->update([
             'image' => $imagePath
         ]);
+    }
+
+    private function getQuestionModalViewPath($type)
+    {
+        if ($type === QuizzesQuestion::$multiple) {
+            return 'design_1.panel.quizzes.create.modals.multiple_question';
+        }
+
+        if (in_array($type, [QuizzesQuestion::$fillBlank, QuizzesQuestion::$rewriteSentence, QuizzesQuestion::$sentenceCompletion, QuizzesQuestion::$shortAnswer])) {
+            return 'design_1.panel.quizzes.create.modals.text_question';
+        }
+
+        if (in_array($type, [QuizzesQuestion::$trueFalseNotGiven, QuizzesQuestion::$yesNoNotGiven])) {
+            return 'design_1.panel.quizzes.create.modals.boolean_question';
+        }
+
+        if (in_array($type, [QuizzesQuestion::$matchingHeadings, QuizzesQuestion::$matchingInformation, QuizzesQuestion::$matchingFeatures, QuizzesQuestion::$matchingSentenceEndings])) {
+            return 'design_1.panel.quizzes.create.modals.matching_question';
+        }
+
+        return 'design_1.panel.quizzes.create.modals.descriptive_question';
+    }
+
+    private function prepareQuestionData(array $data)
+    {
+        $questionData = $data['question_data'] ?? [];
+
+        if (!is_array($questionData)) {
+            $questionData = [];
+        }
+
+        if (in_array($data['type'], [QuizzesQuestion::$fillBlank, QuizzesQuestion::$rewriteSentence, QuizzesQuestion::$sentenceCompletion, QuizzesQuestion::$shortAnswer])) {
+            if (empty($questionData['grading_mode'])) {
+                $questionData['grading_mode'] = 'auto';
+            }
+
+            if (empty($questionData['blank_count'])) {
+                $questionData['blank_count'] = 1;
+            }
+
+            if (isset($questionData['accepted_answers']) && is_string($questionData['accepted_answers'])) {
+                $questionData['accepted_answers'] = trim($questionData['accepted_answers']);
+            }
+
+            if (isset($questionData['prompt']) && is_string($questionData['prompt'])) {
+                $questionData['prompt'] = trim($questionData['prompt']);
+            }
+        }
+
+        if (in_array($data['type'], [QuizzesQuestion::$trueFalseNotGiven, QuizzesQuestion::$yesNoNotGiven])) {
+            if (empty($questionData['options'])) {
+                $questionData['options'] = $data['type'] === QuizzesQuestion::$yesNoNotGiven
+                    ? ['YES', 'NO', 'NOT GIVEN']
+                    : ['TRUE', 'FALSE', 'NOT GIVEN'];
+            }
+
+            if (isset($questionData['correct_answer']) && is_string($questionData['correct_answer'])) {
+                $questionData['correct_answer'] = trim($questionData['correct_answer']);
+            }
+        }
+
+        if (in_array($data['type'], [QuizzesQuestion::$matchingHeadings, QuizzesQuestion::$matchingInformation, QuizzesQuestion::$matchingFeatures, QuizzesQuestion::$matchingSentenceEndings])) {
+            foreach (['items', 'options', 'correct_answers'] as $field) {
+                if (isset($questionData[$field]) && is_string($questionData[$field])) {
+                    $questionData[$field] = preg_split('/\r\n|\r|\n/', trim($questionData[$field])) ?: [];
+                }
+            }
+        }
+
+        return $questionData;
     }
 
 }

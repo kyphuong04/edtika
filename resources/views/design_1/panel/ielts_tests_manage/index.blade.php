@@ -1,5 +1,20 @@
 @extends('design_1.panel.layouts.panel')
 
+<style>
+.btn-1 {
+    border-radius: 12px;
+    background: #511D99;
+    color: #fff;
+    border: 1.5px solid #511D99;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.btn-1:hover {
+    background: #fff;
+    color: #511D99;
+    border-color: #511D99;
+}
+</style>
+
 @section('content')
 <section class="mt-30">
     {{-- IELTS Standard Warning --}}
@@ -19,8 +34,8 @@
             <h1 class="section-title font-24 text-dark-blue">{{ trans('update.ielts_tests_manage_title') }}</h1>
             <p class="text-black font-14">{{ trans('update.ielts_tests_manage_hint') }}</p>
         </div>
-        <a href="{{ route('panel.my_ielts_tests.create') }}" class="btn btn-primary shadow-primary d-flex align-items-center">
-            <i class="fas fa-plus-circle mr-5"></i>
+        <a href="{{ route('panel.my_ielts_tests.create') }}" class="btn-1 btn-lg rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
+            <i class="fas fa-plus-circle mr-8"></i>
             <span>{{ trans('update.create_new_test') }}</span>
         </a>
     </div>
@@ -77,9 +92,9 @@
  </div>
 
     {{-- Filters Card --}}
-    <div class="row" style="margin-top: 30px;">
+    <div class="row" style="margin-top: 30px; align-items: center;">
         <div class="col-12">
-            <div class="bg-white rounded-16 shadow-sm p-20" style="border-radius: 12px;">
+            <div class="bg-white rounded-16 p-20" style="border-radius: 12px;">
                 <form method="GET" class="m-0">
                     <div class="row align-items-end">
                         <div class="col-md-3">
@@ -108,8 +123,7 @@
                                    placeholder="{{ trans('update.search_by_title') }}" value="{{ request('search') }}">
                         </div>
                         <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100" 
-                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                            <button type="submit" class="btn-1 btn-lg rounded-12 d-inline-flex align-items-center justify-content-center" style="height:38px;gap:6px;white-space:nowrap;width:100%;">
                                 <i class="fas fa-filter mr-8"></i>{{ trans('update.filter') }}
                             </button>
                         </div>
@@ -132,10 +146,10 @@
                     ])
                 </div>
             @else
-                <div class="card shadow-sm rounded-16" style="border-radius: 12px;">
-                    <div class="card-body p-0 rounded-16" style="border-radius: 12px;">
+                <div class="card">
+                    <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table custom-table mb-0 rounded-16" style="border-radius: 12px; min-width: 900px;">
+                            <table class="table custom-table mb-0">
                                 <thead class="bg-light">
                                     <tr>
                                         <th class="pl-25" width="30%">{{ trans('update.test_information') }}</th>
@@ -184,7 +198,7 @@
 
                                             <td class="text-center">
                                                 <div class="text-dark-blue font-weight-500">{{ $test->total_duration }} {{ trans('update.ielts_min') }}</div>
-                                                <small class="text-gray">{{ trans('update.ielts_sections_count', ['count' => $test->sections->count()]) }}</small>
+                                                <small class="text-gray-500">{{ trans('update.ielts_sections_count', ['count' => $test->sections->count()]) }}</small>
                                             </td>
 
                                             <td class="text-center">
@@ -219,36 +233,19 @@
                                                     </button>
 
                                                     <div class="dropdown-menu dropdown-menu-right">
-                                                        <a href="{{ route('panel.my_ielts_tests.sections', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
-                                                            <x-iconsax-lin-hierarchy-square class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">{{ trans('update.manage_sections') }}</span>
-                                                        </a>
-
-                                                        <a href="{{ route('panel.my_ielts_tests.edit', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                        <a href="{{ route('panel.my_ielts_tests.edit_inline', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                             <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">{{ trans('update.edit') }}</span>
+                                                            <span class="text-gray-500 font-14">Xem/Chỉnh sửa</span>
                                                         </a>
-                                                        
-                                                        @if(($test->status === 'draft' || $test->status === 'rejected') && $test->sections->count() > 0)
-                                                            <a href="{{ route('panel.my_ielts_tests.submit_approval', $test->id) }}" 
-                                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 submit-approval-btn"
-                                                               data-test-title="{{ $test->title }}">
-                                                                <x-iconsax-lin-send-2 class="icons text-success mr-2" width="18px" height="18px"/>
-                                                                <span class="text-success font-14 font-weight-bold">{{ trans('update.submit_for_approval') }}</span>
-                                                            </a>
-                                                        @endif
-
-                                                        <!-- <a href="{{ route('panel.my_ielts_tests.duplicate', $test->id) }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
-                                                            <x-iconsax-lin-copy class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                            <span class="text-gray-500 font-14">{{ trans('update.ielts_duplicate') }}</span>
-                                                        </a> -->
 
                                                         @if($test->canBeEdited())
-                                                            <a href="{{ route('panel.my_ielts_tests.delete', $test->id) }}" 
+                                                            <a href="#"
                                                                class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4 delete-test-btn"
+                                                               data-request-url="{{ url('/panel/content-delete-request') }}"
+                                                               data-test-id="{{ $test->id }}"
                                                                data-test-title="{{ $test->title }}">
                                                                 <x-iconsax-lin-trash class="icons text-danger mr-2" width="18px" height="18px"/>
-                                                                <span class="text-danger font-14">{{ trans('update.delete') }}</span>
+                                                                <span class="text-danger font-14">Xóa</span>
                                                             </a>
                                                         @endif
                                                     </div>
@@ -321,36 +318,39 @@ $(document).ready(function() {
         }
     });
     
-    // Submit for Approval
-    $('.submit-approval-btn').on('click', function(e) {
-        e.preventDefault();
-        const url = $(this).attr('href');
-        const testTitle = $(this).data('test-title');
-        
-        showConfirmModal({
-            type: 'success',
-            title: '{{ trans('update.submit_approval_confirmation_title') }}',
-            message: '{{ trans('update.submit_approval_confirmation_msg') }}'.replace(':title', testTitle),
-            confirmText: '{{ trans('update.yes_submit') }}',
-            onConfirm: function() {
-                window.location.href = url;
-            }
-        });
-    });
-    
-    // Delete Test
+    // Delete request
     $('.delete-test-btn').on('click', function(e) {
         e.preventDefault();
-        const url = $(this).attr('href');
+        const requestUrl = $(this).data('request-url');
+        const testId = $(this).data('test-id');
         const testTitle = $(this).data('test-title');
         
         showConfirmModal({
             type: 'danger',
-            title: '{{ trans('update.delete_test_confirmation_title') }}',
-            message: '{{ trans('update.delete_test_confirmation_msg') }}'.replace(':title', testTitle),
-            confirmText: '{{ trans('update.yes_delete') }}',
+            title: 'Gửi yêu cầu xóa',
+            message: 'Yêu cầu xóa "' + testTitle + '" sẽ cần manager/CEO duyệt trước khi hệ thống thực sự xóa đề này.',
+            confirmText: 'Gửi yêu cầu',
             onConfirm: function() {
-                window.location.href = url;
+                $.ajax({
+                    url: requestUrl,
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        item_id: testId,
+                        item_type: 'ielts_test',
+                        description: 'Request delete IELTS test: ' + testTitle
+                    },
+                    success: function() {
+                        alert('Yêu cầu xóa đã được gửi để manager/CEO duyệt.');
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        const message = xhr.responseJSON && xhr.responseJSON.errors
+                            ? Object.values(xhr.responseJSON.errors).flat().join('\n')
+                            : 'Không thể gửi yêu cầu xóa.';
+                        alert(message);
+                    }
+                });
             }
         });
     });
@@ -474,8 +474,16 @@ $(document).ready(function() {
     
     .table-actions .dropdown-menu {
         position: absolute !important;
+        top: calc(100% + 6px) !important;
+        right: 0 !important;
+        left: auto !important;
         z-index: 1050 !important;
-        will-change: transform;
+        transform: none !important;
+        min-width: 220px;
+        max-width: calc(100vw - 24px);
+        white-space: normal;
+        overflow-wrap: anywhere;
+        will-change: auto;
     }
     
     .table-responsive {

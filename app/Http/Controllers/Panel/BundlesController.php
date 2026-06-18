@@ -384,6 +384,12 @@ class BundlesController extends Controller
             ];
         }
 
+        if ($currentStep == 3) {
+            $rules = [
+                'price_currency' => 'required|in:USD,VND',
+            ];
+        }
+
         $bundleRulesRequired = false;
         if (($currentStep == 6 and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft)) {
             $bundleRulesRequired = empty($data['rules']);
@@ -441,7 +447,12 @@ class BundlesController extends Controller
 
         if ($currentStep == 3) {
             $data['subscribe'] = !empty($data['subscribe']) ? true : false;
-            $data['price'] = !empty($data['price']) ? convertPriceToDefaultCurrency($data['price']) : null;
+
+            $priceCurrency = strtoupper($data['price_currency'] ?? 'USD');
+            $priceCurrency = in_array($priceCurrency, Bundle::PRICE_CURRENCIES) ? $priceCurrency : 'USD';
+
+            $data['price_currency'] = $priceCurrency;
+            $data['price'] = !empty($data['price']) ? $data['price'] : null;
         }
 
         unset($data['_token'],

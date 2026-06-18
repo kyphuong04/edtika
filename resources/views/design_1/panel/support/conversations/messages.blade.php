@@ -1,4 +1,4 @@
-﻿<div class="bg-white rounded-24 chat-panel d-flex flex-column">
+<div class="bg-white rounded-24 chat-panel d-flex flex-column">
 
 
     @if(!empty($selectSupport))
@@ -74,7 +74,7 @@
                     placeholder="{{ trans('update.type_your_message') }}"
                     class="chat-input flex-1 font-14 @error('message') is-invalid @enderror"
                     autocomplete="off">
-                <button type="submit" class="chat-send-btn d-flex-center flex-shrink-0">
+                <button type="submit" class="chat-send-btn d-flex-center flex-shrink-0" style="background-color: #511D99;">
                     <x-iconsax-lin-send-2 class="icons" width="20px" height="20px"/>
                 </button>
             </div>

@@ -34,7 +34,7 @@
             @endif
 
             <div class="text-right mt-12">
-                <a href="/forget-password" target="_blank" class="font-14 text-dark">{{ trans('auth.forget_your_password') }}</a>
+                <button type="button" class="font-14 text-dark btn btn-link p-0" data-auth-tab-switch="forgot">{{ trans('auth.forget_your_password') }}</button>
             </div>
 
             <button type="button" class="js-submit-form-btn btn btn-primary btn-lg btn-block mt-12">{{ trans('auth.login') }}</button>

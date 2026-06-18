@@ -28,6 +28,9 @@ class WebinarChapterItem extends Model
                 'downloadable' => $this->item->downloadable,
                 'access_after_day' => $this->item->access_after_day,
                 'check_previous_parts' => $this->item->check_previous_parts,
+                'description' => $this->item->description,
+                'interactive_quiz' => $this->item->interactive_quiz,
+                'lecture_notes' => $this->item->lecture_notes,
                 //  'auth_has_read'=>$this->item->auth_has_read
 
             ];
@@ -47,6 +50,9 @@ class WebinarChapterItem extends Model
                 'id' => $this->item->id,
                 'title' => $this->item->title,
                 'summary' => $this->item->summary,
+                'content' => $this->item->content,
+                'interactive_quiz' => $this->item->interactive_quiz,
+                'lecture_notes' => $this->item->lecture_notes,
                 'access_after_day' => $this->item->access_after_day,
                 'check_previous_parts' => $this->item->check_previous_parts,
                 'status' => $this->item->status,

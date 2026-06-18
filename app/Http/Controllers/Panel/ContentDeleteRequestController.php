@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\Bundle;
 use App\Models\ContentDeleteRequest;
+use App\Models\IeltsTest;
 use App\Models\Product;
 use App\Models\Webinar;
 use Illuminate\Http\Request;
@@ -13,20 +14,19 @@ use Illuminate\Support\Facades\Validator;
 
 class ContentDeleteRequestController extends Controller
 {
-
     public function store(Request $request)
     {
         $data = $request->all();
         $validator = Validator::make($data, [
             'item_id' => 'required',
-            'item_type' => 'required|in:course,bundle,product,post',
+            'item_type' => 'required|in:course,bundle,product,post,ielts_test',
             'description' => 'required|string|min:3',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'code' => 422,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -42,10 +42,10 @@ class ContentDeleteRequestController extends Controller
             $sales = null;
             $customersCount = null;
 
-            if ($itemType == "course" or $itemType == "bundle") {
+            if ($itemType == 'course' or $itemType == 'bundle') {
                 $sales = $itemRow->sales()->whereNull('refund_at')->sum('total_amount');
                 $customersCount = $itemRow->sales()->whereNull('refund_at')->count();
-            } elseif ($itemType == "product") {
+            } elseif ($itemType == 'product') {
                 $sales = $itemRow->sales()->sum('total_amount');
                 $customersCount = $itemRow->salesCount();
             }
@@ -64,7 +64,6 @@ class ContentDeleteRequestController extends Controller
                 'created_at' => time(),
             ]);
 
-
             return response()->json([
                 'code' => 200,
                 'title' => trans('public.request_success'),
@@ -80,21 +79,25 @@ class ContentDeleteRequestController extends Controller
         $itemRow = null;
         $user = auth()->user();
 
-        if ($itemType == "course") {
+        if ($itemType == 'course') {
             $itemRow = Webinar::where('id', $itemId)
                 ->where('creator_id', $user->id)
                 ->first();
-        } elseif ($itemType == "bundle") {
+        } elseif ($itemType == 'bundle') {
             $itemRow = Bundle::where('id', $itemId)
                 ->where('creator_id', $user->id)
                 ->first();
-        } elseif ($itemType == "product") {
+        } elseif ($itemType == 'product') {
             $itemRow = Product::where('id', $itemId)
                 ->where('creator_id', $user->id)
                 ->first();
-        } elseif ($itemType == "post") {
+        } elseif ($itemType == 'post') {
             $itemRow = Blog::where('id', $itemId)
                 ->where('author_id', $user->id)
+                ->first();
+        } elseif ($itemType == 'ielts_test') {
+            $itemRow = IeltsTest::where('id', $itemId)
+                ->where('created_by', $user->id)
                 ->first();
         }
 
@@ -105,19 +108,20 @@ class ContentDeleteRequestController extends Controller
     {
         $type = null;
 
-        if ($itemType == "course") {
-            $type = "App\Models\Webinar";
-        } elseif ($itemType == "bundle") {
-            $type = "App\Models\Bundle";
-        } elseif ($itemType == "product") {
-            $type = "App\Models\Product";
-        } elseif ($itemType == "post") {
-            $type = "App\Models\Blog";
+        if ($itemType == 'course') {
+            $type = 'App\\Models\\Webinar';
+        } elseif ($itemType == 'bundle') {
+            $type = 'App\\Models\\Bundle';
+        } elseif ($itemType == 'product') {
+            $type = 'App\\Models\\Product';
+        } elseif ($itemType == 'post') {
+            $type = 'App\\Models\\Blog';
+        } elseif ($itemType == 'ielts_test') {
+            $type = 'App\\Models\\IeltsTest';
         }
 
         return $type;
     }
-
 }
 
 

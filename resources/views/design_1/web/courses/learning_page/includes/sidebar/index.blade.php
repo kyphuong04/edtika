@@ -8,7 +8,7 @@
     </div>
 
     <div class="learning-page__sidebar-content" data-simplebar @if((!empty($isRtl))) data-simplebar-direction="rtl" @endif>
-        <div class="px-16 py-16">
+        <div class="px-16">
 
             @php
                 $overallPercent    = $course->getProgress(true);
@@ -44,7 +44,7 @@
                         @continue
                     @endif
                     {{-- Card 1: Section title + count + progress --}}
-                    <div class="learning-section-info-card mb-10">
+                    <div class="learning-section-info-card mb-16">
                         <h4 class="learning-section-title">{{ mb_strtoupper($chapter->title) }}</h4>
                         <p class="learning-section-count">{{ $chapter->getTopicsCount(true) }} {{ trans('public.lessons') }}</p>
                         <div class="learning-section-progress-track mt-10">

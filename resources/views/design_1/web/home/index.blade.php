@@ -31,7 +31,7 @@
                 'placementTest' => 'Kiểm tra đầu vào',
                 'mockTest' => 'Luyện đề',
                 'dictionary' => 'Từ điển & Flashcard',
-                'news' => 'Tin tức',
+                'knowledge&news' => 'Kiến thức & Tin tức',
             ],
             'hero' => [
                 'line1' => 'Chinh Phục IELTS',
@@ -2095,6 +2095,10 @@
             color: #1f1f27;
         }
 
+        .edtika-auth-input-wrap .edtika-auth-input {
+            padding-right: 46px;
+        }
+
         .edtika-auth-input:focus {
             outline: none;
             border-color: rgba(81, 29, 153, 0.45);
@@ -2103,11 +2107,39 @@
 
         .edtika-auth-input-icon {
             position: absolute;
-            right: 12px;
+            right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: #9797a3;
-            font-size: 16px;
+            color: #511D99;
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            border: 0;
+            background: rgba(81,29,153,0.08);
+            padding: 6px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            transition: background .12s ease, transform .08s ease, color .12s ease;
+            z-index: 2;
+        }
+
+        .edtika-auth-input-icon:hover {
+            background: rgba(81,29,153,0.12);
+            transform: translateY(-50%) scale(1.03);
+            color: #3b0f9c;
+        }
+
+        .edtika-auth-input-icon:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(81,29,153,0.12);
+        }
+
+        .edtika-auth-input-icon i {
             pointer-events: none;
         }
 
@@ -2117,6 +2149,10 @@
             text-align: right;
             margin-top: 2px;
             margin-bottom: 18px;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
             color: #2f2f38;
             text-decoration: none;
             font-size: 14px;
@@ -3676,7 +3712,7 @@
                     @else
                         <a href="/panel/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['dictionary'] }}</a>
                     @endif
-                    <a href="/blog" class="edtika-homepage__nav-link {{ $isNewsActive ? 'is-active' : '' }}">{{ $t['nav']['news'] }}</a>
+                    <a href="/blog" class="edtika-homepage__nav-link {{ $isNewsActive ? 'is-active' : '' }}">{{ $t['nav']['knowledge&news'] }}</a>
                 </nav>
 
                 <div class="edtika-homepage__actions">
@@ -4119,11 +4155,14 @@
                                         <label class="edtika-auth-label" for="edtikaLoginPassword">{{ $t['auth']['password'] }} *</label>
                                         <div class="edtika-auth-input-wrap">
                                             <input id="edtikaLoginPassword" class="edtika-auth-input" type="password" name="password" autocomplete="current-password">
-                                            <span class="edtika-auth-input-icon">◌</span>
+                                            <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaLoginPassword" aria-label="{{ app()->getLocale() === 'en' ? 'Show password' : 'Hiển thị mật khẩu' }}">
+                                                <x-iconsax-lin-eye-slash class="icons-eye-slash d-none" width="24px" height="24px"/>
+                                                <x-iconsax-lin-eye class="icons-eye" width="24px" height="24px"/>
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <a class="edtika-auth-forgot" href="/forget-password">{{ $t['auth']['forgotPassword'] }}</a>
+                                    <button type="button" class="edtika-auth-forgot" data-auth-tab-switch="forgot">{{ $t['auth']['forgotPassword'] }}</button>
                                     <button type="submit" class="edtika-auth-submit">{{ $t['auth']['loginTab'] }}</button>
                                 </form>
 
@@ -4173,7 +4212,10 @@
                                         <label class="edtika-auth-label" for="edtikaRegisterPassword">{{ $t['auth']['password'] }} *</label>
                                         <div class="edtika-auth-input-wrap">
                                             <input id="edtikaRegisterPassword" class="edtika-auth-input" type="password" name="password" autocomplete="new-password">
-                                            <span class="edtika-auth-input-icon">◌</span>
+                                            <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPassword" aria-label="{{ app()->getLocale() === 'en' ? 'Show password' : 'Hiển thị mật khẩu' }}">
+                                                <x-iconsax-lin-eye-slash class="icons-eye-slash d-none" width="24px" height="24px"/>
+                                                <x-iconsax-lin-eye class="icons-eye" width="24px" height="24px"/>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -4181,7 +4223,10 @@
                                         <label class="edtika-auth-label" for="edtikaRegisterPasswordConfirmation">{{ $t['auth']['confirmPassword'] }} *</label>
                                         <div class="edtika-auth-input-wrap">
                                             <input id="edtikaRegisterPasswordConfirmation" class="edtika-auth-input" type="password" name="password_confirmation" autocomplete="new-password">
-                                            <span class="edtika-auth-input-icon">◌</span>
+                                            <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPasswordConfirmation" aria-label="{{ app()->getLocale() === 'en' ? 'Show password confirmation' : 'Hiển thị nhập lại mật khẩu' }}">
+                                                <x-iconsax-lin-eye-slash class="icons-eye-slash d-none" width="24px" height="24px"/>
+                                                <x-iconsax-lin-eye class="icons-eye" width="24px" height="24px"/>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -4198,6 +4243,44 @@
 
                                 <div class="edtika-auth-switch-note">
                                     {{ $t['auth']['hasAccount'] }} <button type="button" data-auth-tab-switch="login">{{ $t['auth']['loginTab'] }}</button>
+                                </div>
+                            </div>
+
+                            <div class="edtika-auth-pane" data-auth-pane="forgot">
+                                <h3 class="edtika-auth-pane__title">{{ trans('update.recover_your_password') }}</h3>
+
+                                <form method="POST" action="/forget-password">
+                                    @csrf
+                                    <input type="hidden" name="type" id="edtikaForgotType" value="email">
+
+                                    <div class="edtika-auth-methods" role="tablist" aria-label="{{ app()->getLocale() === 'en' ? 'Forgot password methods' : 'Phương thức lấy lại mật khẩu' }}">
+                                        <button type="button" class="edtika-auth-method is-active" data-forgot-method="email">{{ $t['auth']['emailMethod'] }}</button>
+                                        <button type="button" class="edtika-auth-method" data-forgot-method="phone">{{ $t['auth']['phoneMethod'] }}</button>
+                                    </div>
+
+                                    <div class="edtika-auth-field" data-forgot-field="email">
+                                        <label class="edtika-auth-label" for="edtikaForgotEmail">{{ $t['auth']['emailMethod'] }} *</label>
+                                        <input id="edtikaForgotEmail" class="edtika-auth-input" type="email" name="email" autocomplete="email">
+                                    </div>
+
+                                    <div class="edtika-auth-field" data-forgot-field="phone" style="display: none;">
+                                        <label class="edtika-auth-label" for="edtikaForgotPhone">{{ $t['auth']['phoneMethod'] }} *</label>
+                                        <input id="edtikaForgotPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
+                                    </div>
+
+                                    @if(!empty(getGeneralSecuritySettings('captcha_for_forgot_pass')))
+                                        <div class="edtika-auth-field">
+                                            @include('design_1.web.includes.captcha_input')
+                                        </div>
+                                    @endif
+
+                                    <button type="submit" class="edtika-auth-submit">{{ trans('auth.reset_password') }}</button>
+                                </form>
+
+                                <div class="edtika-auth-switch-note">
+                                    <button type="button" data-auth-tab-switch="login">{{ $t['auth']['loginTab'] }}</button>
+                                    <span> / </span>
+                                    <button type="button" data-auth-tab-switch="register">{{ $t['auth']['registerTab'] }}</button>
                                 </div>
                             </div>
                         </div>
@@ -4282,6 +4365,10 @@
             var loginMethodBtns = document.querySelectorAll('[data-login-method]');
             var loginFieldBlocks = document.querySelectorAll('[data-login-field]');
             var loginTypeInput = document.getElementById('edtikaLoginType');
+            var forgotMethodBtns = document.querySelectorAll('[data-forgot-method]');
+            var forgotFieldBlocks = document.querySelectorAll('[data-forgot-field]');
+            var forgotTypeInput = document.getElementById('edtikaForgotType');
+            var passwordToggleBtns = document.querySelectorAll('[data-password-toggle]');
             var authSliderSlides = document.querySelectorAll('[data-auth-slide]');
             var authSliderDots = document.querySelectorAll('[data-auth-slider-dot]');
             var authSliderIntervalId = null;
@@ -4421,7 +4508,58 @@
                 });
             });
 
+            var setForgotMethod = function (method) {
+                forgotMethodBtns.forEach(function (methodBtn) {
+                    methodBtn.classList.toggle('is-active', methodBtn.getAttribute('data-forgot-method') === method);
+                });
+
+                forgotFieldBlocks.forEach(function (fieldBlock) {
+                    var isTarget = fieldBlock.getAttribute('data-forgot-field') === method;
+                    fieldBlock.style.display = isTarget ? 'block' : 'none';
+                });
+
+                if (forgotTypeInput) {
+                    forgotTypeInput.value = method === 'phone' ? 'mobile' : 'email';
+                }
+            };
+
+            forgotMethodBtns.forEach(function (methodBtn) {
+                methodBtn.addEventListener('click', function () {
+                    setForgotMethod(methodBtn.getAttribute('data-forgot-method'));
+                });
+            });
+
+            passwordToggleBtns.forEach(function (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    var targetId = toggleBtn.getAttribute('data-password-target');
+                    var targetInput = targetId ? document.getElementById(targetId) : null;
+
+                    if (!targetInput) {
+                        return;
+                    }
+
+                    var isHidden = targetInput.getAttribute('type') === 'password';
+                    targetInput.setAttribute('type', isHidden ? 'text' : 'password');
+
+                    var nowHidden = targetInput.getAttribute('type') === 'password';
+
+                    var icon = toggleBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('fa-eye', !nowHidden);
+                        icon.classList.toggle('fa-eye-slash', nowHidden);
+                    } else {
+                        var eye = toggleBtn.querySelector('.icons-eye');
+                        var eyeSlash = toggleBtn.querySelector('.icons-eye-slash');
+                        if (eye && eyeSlash) {
+                            eye.classList.toggle('d-none', nowHidden);
+                            eyeSlash.classList.toggle('d-none', !nowHidden);
+                        }
+                    }
+                });
+            });
+
             setLoginMethod('email');
+            setForgotMethod('email');
 
             if (authLoginFailedSession || authModalShouldOpen) {
                 openAuthModal();

@@ -32,12 +32,12 @@
                                        '<input type="text" class="idp-input" value="' . e($saved) . '" 
                                                oninput="autoSave(' . $q->id . ', this.value)">';
                             },
-                            e($text),
+                            $text,
                             1
                         ) !!}
                     </span>
                 @else
-                    <span class="idp-q-text">{{ $text }}</span>
+                    <span class="idp-q-text">{!! $text !!}</span>
                     <span class="idp-q-num">{{ $qNum }}</span>
                     <input type="text" class="idp-input" value="{{ $saved }}" 
                            oninput="autoSave({{ $q->id }}, this.value)">

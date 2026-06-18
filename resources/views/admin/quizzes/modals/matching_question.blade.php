@@ -1,0 +1,93 @@
+@php
+    $questionType = $questionType ?? (!empty($question_edit) ? $question_edit->type : \App\Models\QuizzesQuestion::$matchingHeadings);
+    $questionData = !empty($question_edit) && !empty($question_edit->question_data) ? $question_edit->question_data : [];
+    $promptValue = data_get($questionData, 'prompt', '');
+    $itemsValue = data_get($questionData, 'items', []);
+    $optionsValue = data_get($questionData, 'options', []);
+    $correctAnswersValue = data_get($questionData, 'correct_answers', []);
+
+    if (is_array($itemsValue)) {
+        $itemsValue = implode("\n", $itemsValue);
+    }
+
+    if (is_array($optionsValue)) {
+        $optionsValue = implode("\n", $optionsValue);
+    }
+
+    if (is_array($correctAnswersValue)) {
+        $correctAnswersValue = implode("\n", $correctAnswersValue);
+    }
+@endphp
+
+<div class="@if(!empty($quiz)) matchingQuestionModal{{ $quiz->id }} @endif {{ empty($question_edit) && !request()->ajax() ? 'd-none' : ''}}">
+    <div class="custom-modal-body p-16">
+        <div class="quiz-questions-form" data-action="{{ getAdminPanelUrl() }}/quizzes-questions/{{ empty($question_edit) ? 'store' : $question_edit->id.'/update' }}">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="ajax[quiz_id]" value="{{ !empty($quiz) ? $quiz->id :'' }}">
+            <input type="hidden" name="ajax[type]" value="{{ $questionType }}">
+
+            <div class="row mt-24">
+                <div class="col-12 col-md-8">
+                    <div class="form-group">
+                        <label class="form-group-label">{{ trans('quiz.question_title') }}</label>
+                        <input type="text" name="ajax[title]" class="js-ajax-title form-control" value="{{ !empty($question_edit) ? $question_edit->title : '' }}"/>
+                        <span class="invalid-feedback"></span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="form-group">
+                        <label class="form-group-label">{{ trans('quiz.grade') }}</label>
+                        <input type="text" name="ajax[grade]" class="js-ajax-grade form-control" value="{{ !empty($question_edit) ? $question_edit->grade : '' }}"/>
+                        <span class="invalid-feedback"></span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="form-group">
+                        <label class="form-group-label">{{ trans('update.negative_grade') }}</label>
+                        <input type="text" name="ajax[negative_grade]" class="js-ajax-negative_grade form-control" value="{{ !empty($question_edit) ? $question_edit->negative_grade : '' }}"/>
+                        <span class="invalid-feedback"></span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-12">
+                    <div class="form-group">
+                        <label class="form-group-label">{{ trans('quiz.question_prompt') }}</label>
+                        <textarea name="ajax[question_data][prompt]" rows="4" class="js-ajax-question-data-prompt form-control">{{ $promptValue }}</textarea>
+                        <span class="invalid-feedback"></span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="form-group">
+                        <label class="form-group-label">Items</label>
+                        <textarea name="ajax[question_data][items]" rows="8" class="js-ajax-question-data-items form-control">{{ $itemsValue }}</textarea>
+                        <p class="font-12 text-gray-500 mt-4">One item per line.</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="form-group">
+                        <label class="form-group-label">Options</label>
+                        <textarea name="ajax[question_data][options]" rows="8" class="js-ajax-question-data-options form-control">{{ $optionsValue }}</textarea>
+                        <p class="font-12 text-gray-500 mt-4">One option per line.</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="form-group">
+                        <label class="form-group-label">Correct answers</label>
+                        <textarea name="ajax[question_data][correct_answers]" rows="8" class="js-ajax-question-data-correct-answers form-control">{{ $correctAnswersValue }}</textarea>
+                        <p class="font-12 text-gray-500 mt-4">One correct option per line in the same order as items.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="save-question btn btn-sm btn-primary">{{ trans('public.save') }}</button>
+                <button type="button" class="close-swl btn btn-sm btn-danger ml-2">{{ trans('public.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>

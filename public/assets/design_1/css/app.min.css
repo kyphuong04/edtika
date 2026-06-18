@@ -5,13 +5,13 @@
   --gray-400: #CDD5E2;
   --gray-500: #97A7BF;
   --gray: #F5F8F9;
-  --primary: #0170FF;
-  --primary-saturated: #67A9FF;
-  --secondary: #0E2145;
+  --primary: #511D99;
+  --primary-saturated: #b783ff;
+  --secondary: #43D477;
   --accent: #FF7043;
   --danger: #F63C3C;
   --success: #43D477;
-  --info: #7EB2FF;
+  --info: #b783ff;
   --warning: #FFA200;
   --orange: #F2994A;
   --yellow: #FFDC5D;
@@ -26,9 +26,9 @@
   --telegram: #08C;
   --facebook: #1877F2;
   --linkedin: #1F62C9;
-  --primary-hover: #005acd;
-  --primary-border: #0170ff;
-  --primary-hover-border: #005acd;
+  --primary-hover: #511D99;
+  --primary-border: #511D99;
+  --primary-hover-border: #511D99;
   --primary-btn-color: white;
   --primary-btn-hover-color: white;
   --primary-btn-shadow: none;
@@ -54,9 +54,9 @@
   --success-btn-hover-color: white;
   --success-btn-shadow: none;
   --success-btn-hover-shadow: none;
-  --info-hover: #4b94ff;
-  --info-border: #7eb2ff;
-  --info-hover-border: #4b94ff;
+  --info-hover: #511D99;
+  --info-border: #511D99;
+  --info-hover-border: #511D99;
   --info-btn-color: white;
   --info-btn-hover-color: white;
   --info-btn-shadow: none;
@@ -18162,7 +18162,7 @@ h6, .h6 {
 .form-control:focus, .select2-container .select2-selection:focus, .custom-file:focus {
   color: var(--dark);
   background-color: var(--white);
-  border-color: var(--info);
+  border-color: #511d99;
   outline: 0;
   box-shadow: 1.5rem;
 }
@@ -18370,15 +18370,15 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 }
 .custom-control input[type=checkbox]:checked ~ .custom-control__label:before, .custom-control input[type=checkbox]:not(:disabled):active ~ .custom-control__label:before {
   color: var(--primary-btn-color);
-  background-color: var(--primary);
-  border-color: var(--primary);
+  background-color: #511d99;
+  border-color: #511d99;
   box-shadow: none;
 }
 .custom-control input[type=checkbox]:checked ~ .custom-control__label::after, .custom-control input[type=checkbox]:not(:disabled):active ~ .custom-control__label::after {
   background-image: url('data:image/svg+xml,%3csvg width="11" height="8" viewBox="0 0 11 8" fill="none" xmlns="http://www.w3.org/2000/svg"%3e%3cpath d="M1 3.98476L3.85575 7L10 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/%3e %3c/svg%3e');
 }
 .custom-control input[type=radio]:checked ~ .custom-control__label::after, .custom-control input[type=radio]:not(:disabled):active ~ .custom-control__label::after {
-  background-color: var(--primary);
+  background-color: #511d99;
 }
 .rtl .custom-control {
   padding-right: 34px;
@@ -18464,9 +18464,9 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
   z-index: 1;
   height: 36px;
   padding: 8px 8px;
-  color: #222 !important;
-  font-weight: 600 !important;
-  background-color: var(--gray-300) !important;
+  color: var(--dark);
+  font-weight: 600;
+  background-color: var(--gray-300);
   border-radius: 8px;
   cursor: pointer;
   transform: translateY(-50%);
@@ -18536,8 +18536,8 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 }
 .custom-switch .custom-control-input:checked ~ .custom-control-label:before {
   color: var(--primary-btn-color);
-  background-color: #511D99;
-  border-color: #511D99;
+  background-color: #511d99;
+  border-color: #511d99;
   box-shadow: none;
 }
 .custom-switch .custom-control-input:disabled:checked ~ .custom-control-label::before {
@@ -18632,8 +18632,8 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 .select2-container .select2-selection .select2-selection__choice {
   display: inline-flex;
   align-items: center;
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
+  background-color: #511d99 !important;
+  border-color: #511d99 !important;
   color: var(--white) !important;
   margin-top: 2px !important;
   margin-left: 0 !important;
@@ -18645,7 +18645,7 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 }
 .select2-container .select2-selection .select2-selection__choice .select2-selection__choice__remove {
   color: var(--white) !important;
-  border-color: var(--primary) !important;
+  border-color: #511d99 !important;
   top: auto !important;
 }
 .select2-container .select2-selection .select2-selection__choice .select2-selection__choice__remove:hover {
@@ -19237,49 +19237,6 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 .modal-footer > * {
   margin: 0.25rem;
 }
-.modal-footer > .btn-secondary,
-.modal-footer > .btn-danger,
-.modal-footer > .close-swl,
-.modal-footer > [data-dismiss=modal],
-.custom-modal-footer .d-flex > .btn-secondary,
-.custom-modal-footer .d-flex > .btn-danger,
-.custom-modal-footer .d-flex > .close-swl,
-.custom-modal-footer .d-flex > [data-dismiss=modal] {
-  order: 1;
-  margin-left: 0 !important;
-  margin-right: 0.25rem !important;
-}
-.modal-footer > .btn-primary,
-.modal-footer > button[type=submit],
-.custom-modal-footer .d-flex > .btn-primary,
-.custom-modal-footer .d-flex > button[type=submit] {
-  order: 2;
-  background-color: #511D99 !important;
-  border-color: #511D99 !important;
-}
-.modal-footer > .btn-primary:hover,
-.modal-footer > .btn-primary:focus,
-.modal-footer > .btn-primary:active,
-.modal-footer > .btn-primary.active,
-.modal-footer > .btn-primary:not(:disabled):not(.disabled):active,
-.modal-footer > button[type=submit]:hover,
-.modal-footer > button[type=submit]:focus,
-.modal-footer > button[type=submit]:active,
-.modal-footer > button[type=submit].active,
-.modal-footer > button[type=submit]:not(:disabled):not(.disabled):active,
-.custom-modal-footer .d-flex > .btn-primary:hover,
-.custom-modal-footer .d-flex > .btn-primary:focus,
-.custom-modal-footer .d-flex > .btn-primary:active,
-.custom-modal-footer .d-flex > .btn-primary.active,
-.custom-modal-footer .d-flex > .btn-primary:not(:disabled):not(.disabled):active,
-.custom-modal-footer .d-flex > button[type=submit]:hover,
-.custom-modal-footer .d-flex > button[type=submit]:focus,
-.custom-modal-footer .d-flex > button[type=submit]:active,
-.custom-modal-footer .d-flex > button[type=submit].active,
-.custom-modal-footer .d-flex > button[type=submit]:not(:disabled):not(.disabled):active {
-  background-color: #421670 !important;
-  border-color: #421670 !important;
-}
 
 .modal-scrollbar-measure {
   position: absolute;
@@ -19336,6 +19293,51 @@ select.form-control:focus::-ms-value, .select2-container select.select2-selectio
 }
 .custom-modal__footer {
   border-radius: 0 0 20px 20px;
+}
+
+.modal-footer,
+.custom-modal-footer .d-flex {
+  gap: 8px;
+}
+.modal-footer > .btn-secondary,
+.modal-footer > .btn-danger,
+.modal-footer > .close-swl,
+.modal-footer > [data-dismiss=modal],
+.custom-modal-footer .d-flex > .btn-secondary,
+.custom-modal-footer .d-flex > .btn-danger,
+.custom-modal-footer .d-flex > .close-swl,
+.custom-modal-footer .d-flex > [data-dismiss=modal] {
+  order: 1;
+  margin-left: 0 !important;
+}
+.modal-footer > .btn-primary,
+.modal-footer > button[type=submit],
+.custom-modal-footer .d-flex > .btn-primary,
+.custom-modal-footer .d-flex > button[type=submit] {
+  order: 2;
+  background-color: var(--edtika-primary) !important;
+  border-color: var(--edtika-primary) !important;
+  /* Ensure button text is visible on primary background */
+  color: #ffffff !important;
+}
+.modal-footer > .btn-primary:hover, .modal-footer > .btn-primary:focus, .modal-footer > .btn-primary:active, .modal-footer > .btn-primary.active, .modal-footer > .btn-primary:not(:disabled):not(.disabled):active,
+.modal-footer > button[type=submit]:hover,
+.modal-footer > button[type=submit]:focus,
+.modal-footer > button[type=submit]:active,
+.modal-footer > button[type=submit].active,
+.modal-footer > button[type=submit]:not(:disabled):not(.disabled):active,
+.custom-modal-footer .d-flex > .btn-primary:hover,
+.custom-modal-footer .d-flex > .btn-primary:focus,
+.custom-modal-footer .d-flex > .btn-primary:active,
+.custom-modal-footer .d-flex > .btn-primary.active,
+.custom-modal-footer .d-flex > .btn-primary:not(:disabled):not(.disabled):active,
+.custom-modal-footer .d-flex > button[type=submit]:hover,
+.custom-modal-footer .d-flex > button[type=submit]:focus,
+.custom-modal-footer .d-flex > button[type=submit]:active,
+.custom-modal-footer .d-flex > button[type=submit].active,
+.custom-modal-footer .d-flex > button[type=submit]:not(:disabled):not(.disabled):active {
+  background-color: #421670 !important;
+  border-color: #421670 !important;
 }
 
 .swal2-popup {
@@ -21863,7 +21865,7 @@ div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long] {
   background-color: #ddd;
 }
 .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
-  background-color: #5897fb;
+  background-color: #511D99;
   color: white;
 }
 .select2-container--default .select2-results__group {
@@ -21882,7 +21884,7 @@ div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long] {
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#FFFFFFFF", endColorstr="#FFEEEEEE", GradientType=0);
 }
 .select2-container--classic .select2-selection--single:focus {
-  border: 1px solid #5897fb;
+  border: 1px solid #511d99;
 }
 .select2-container--classic .select2-selection--single .select2-selection__rendered {
   color: #444;
@@ -21938,7 +21940,7 @@ div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long] {
   right: auto;
 }
 .select2-container--classic.select2-container--open .select2-selection--single {
-  border: 1px solid #5897fb;
+  border: 1px solid #511d99;
 }
 .select2-container--classic.select2-container--open .select2-selection--single .select2-selection__arrow {
   background: transparent;
@@ -22023,7 +22025,7 @@ div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long] {
   border-bottom-right-radius: 4px;
 }
 .select2-container--classic.select2-container--open .select2-selection--multiple {
-  border: 1px solid #5897fb;
+  border: 1px solid #511d99;
 }
 .select2-container--classic.select2-container--open.select2-container--above .select2-selection--multiple {
   border-top: none;
@@ -22064,7 +22066,7 @@ div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long] {
   color: grey;
 }
 .select2-container--classic .select2-results__option--highlighted.select2-results__option--selectable {
-  background-color: #3875d7;
+  background-color: #511d99;
   color: white;
 }
 .select2-container--classic .select2-results__group {
@@ -22073,7 +22075,7 @@ div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long] {
   padding: 6px;
 }
 .select2-container--classic.select2-container--open .select2-dropdown {
-  border-color: #5897fb;
+  border-color: #511d99;
 }
 
 /**
@@ -23247,7 +23249,7 @@ fieldset {
   transform: scale(1);
 }
 .navbar-item.active {
-  color: var(--primary);
+  color: #511d99;
 }
 .navbar-item.active:before {
   transform-origin: left center;
@@ -23255,7 +23257,7 @@ fieldset {
 }
 .navbar-item.active .bg-gray-200 {
   background: rgba(126, 178, 255, 0.3) !important;
-  color: var(--info) !important;
+  color: #511d99 !important;
 }
 
 .delivery-address-card .delivery-address-card-edit-action {
@@ -23979,7 +23981,7 @@ fieldset {
 }
 .create-media-card:hover {
   background: var(--gray-200);
-  border: 1px dashed var(--info);
+  border: 1px dashed #511d99;
 }
 .create-media-card input[type=file] {
   opacity: 0;
@@ -24088,7 +24090,7 @@ fieldset {
 }
 .create-media-just-image-card:hover {
   background: var(--gray-100);
-  border: 1px dashed var(--info);
+  border: 1px dashed #511d99;
 }
 .create-media-just-image-card img {
   max-height: 142px;

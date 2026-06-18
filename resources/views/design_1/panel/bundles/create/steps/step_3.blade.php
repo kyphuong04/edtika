@@ -3,14 +3,37 @@
 @endpush
 
 <div class="bg-white rounded-16 p-16 mt-32 mb-32">
+    @php
+        $availableBundleCurrencies = ['USD', 'VND'];
+        $selectedBundleCurrency = old('price_currency', !empty($bundle) ? $bundle->getPriceCurrency() : 'USD');
+
+        if (!in_array($selectedBundleCurrency, $availableBundleCurrencies)) {
+            $selectedBundleCurrency = 'USD';
+        }
+
+        $bundlePriceValue = old('price');
+        if (is_null($bundlePriceValue) and !empty($bundle) and !empty($bundle->price)) {
+            $bundlePriceValue = $bundle->price;
+        }
+    @endphp
 
     {{-- Pricing Options --}}
     <h3 class="font-14 font-weight-bold mb-24">{{ trans('update.pricing_options') }}</h3>
 
     <div class="form-group">
+        <label class="form-group-label">{{ trans('update.currency') }}</label>
+        <select name="price_currency" class="form-control @error('price_currency') is-invalid @enderror">
+            @foreach($availableBundleCurrencies as $bundleCurrency)
+                <option value="{{ $bundleCurrency }}" {{ $selectedBundleCurrency == $bundleCurrency ? 'selected' : '' }}>{{ $bundleCurrency }}</option>
+            @endforeach
+        </select>
+        <div class="invalid-feedback d-block">@error('price_currency') {{ $message }} @enderror</div>
+    </div>
+
+    <div class="form-group">
         <label class="form-group-label">{{ trans('public.price') }}</label>
-        <span class="has-translation bg-gray-100 text-gray-500">{{ $currency }}</span>
-        <input type="text" name="price" class="form-control @error('price')  is-invalid @enderror" value="{{ (!empty($bundle) and !empty($bundle->price)) ? convertPriceToUserCurrency($bundle->price) : old('price') }}" placeholder="{{ trans('public.0_for_free') }}" oninput="validatePrice(this)"/>
+        <span id="bundlePriceCurrencySign" class="has-translation bg-gray-100 text-gray-500">{{ currencySign($selectedBundleCurrency) }}</span>
+        <input type="text" name="price" class="form-control @error('price')  is-invalid @enderror" value="{{ $bundlePriceValue }}" placeholder="{{ trans('public.0_for_free') }}" oninput="validatePrice(this)"/>
         <div class="invalid-feedback d-block">@error('price') {{ $message }} @enderror</div>
     </div>
 
@@ -100,4 +123,22 @@
 @push('scripts_bottom')
     <script src="/assets/default/vendors/moment.min.js"></script>
     <script src="/assets/default/vendors/daterangepicker/daterangepicker.min.js"></script>
+    <script>
+        (function () {
+            const currencySigns = {
+                USD: '{{ currencySign('USD') }}',
+                VND: '{{ currencySign('VND') }}'
+            };
+
+            const currencySelect = document.querySelector('select[name="price_currency"]');
+            const currencySignEl = document.getElementById('bundlePriceCurrencySign');
+
+            if (currencySelect && currencySignEl) {
+                currencySelect.addEventListener('change', function () {
+                    const selectedCurrency = this.value || 'USD';
+                    currencySignEl.innerText = currencySigns[selectedCurrency] || currencySigns.USD;
+                });
+            }
+        })();
+    </script>
 @endpush

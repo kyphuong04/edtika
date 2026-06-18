@@ -330,10 +330,6 @@
 
         {{-- actions --}}
         <div class="d-flex align-items-center flex-wrap gap-8">
-            <a href="/panel/courses/purchases" class="btn btn-outline-secondary btn-sm rounded-pill px-16">
-                {{ trans('panel.switch_courses') }}
-            </a>
-
             <a href="{{ $continueLearningUrl }}" class="btn btn-primary btn-sm rounded-pill px-16">
                 {{ trans('update.continue_learning') }} &rarr;
             </a>

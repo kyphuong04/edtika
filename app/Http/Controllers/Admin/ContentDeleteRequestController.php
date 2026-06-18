@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContentDeleteRequest;
+use App\Models\IeltsTest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -68,6 +69,10 @@ class ContentDeleteRequestController extends Controller
                 $query->orWhereHas('post', function ($query) use ($search) {
                     $query->whereTranslationLike('title', "%$search%");
                 });
+
+                $query->orWhereHas('ieltsTest', function ($query) use ($search) {
+                    $query->where('title', 'like', "%$search%");
+                });
             });
         }
 
@@ -84,6 +89,9 @@ class ContentDeleteRequestController extends Controller
                     break;
                 case 'post':
                     $query->where('targetable_type', 'App\Models\Blog');
+                    break;
+                case 'ielts_test':
+                    $query->where('targetable_type', 'App\Models\IeltsTest');
                     break;
             }
         }
@@ -118,6 +126,9 @@ class ContentDeleteRequestController extends Controller
             } elseif ($contentType == "product") {
                 $sales = $contentItem->sales()->sum('total_amount');
                 $customersCount = $contentItem->salesCount();
+            } elseif ($contentType == 'ielts_test') {
+                $sales = null;
+                $customersCount = null;
             }
 
             $deleteRequest->update([
@@ -126,6 +137,11 @@ class ContentDeleteRequestController extends Controller
                 'customers_count' => $customersCount,
                 'sales' => $sales,
             ]);
+
+            if ($contentType == 'ielts_test') {
+                $contentItem->attempts()->delete();
+                $contentItem->feedbacks()->delete();
+            }
 
             /* Remove Content */
             $contentItem->delete();

@@ -98,8 +98,8 @@
     transition: all .18s;
 }
 .tp-period-btn.active {
-    background: #111827;
-    border-color: #111827;
+    background: #511D99;
+    border-color: #511D99;
     color: #fff;
 }
 
@@ -170,8 +170,8 @@
     flex: 1;
 }
 .tp-metric-card.selected {
-    border-color: #111827;
-    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border-color: #511D99;
+    box-shadow: 0 2px 8px rgba(81,29,153,.18);
 }
 .tp-metric-label {
     font-size: .78rem;
@@ -348,7 +348,7 @@
 
                 <div class="d-flex align-items-center gap-16 mt-10 mb-4">
                     <div class="d-flex align-items-center gap-6">
-                        <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background:#111827;"></span>
+                        <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background:#511D99;"></span>
                         <span class="font-12 text-gray-500">Tôi</span>
                     </div>
                     <div class="d-flex align-items-center gap-6">
@@ -497,7 +497,7 @@
                 toolbar: { show: false },
                 fontFamily: 'inherit',
             },
-            colors: ['#111827', '#d1d5db'],
+            colors: ['#511D99', '#d1d5db'],
             plotOptions: {
                 bar: {
                     horizontal: false,

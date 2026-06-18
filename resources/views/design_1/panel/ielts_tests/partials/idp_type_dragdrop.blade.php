@@ -23,7 +23,7 @@
         <div class="idp-question" data-q-num="{{ $qNum }}" style="margin-bottom: 10px;">
             @if(!empty($text))
                 <span class="idp-q-num">{{ $qNum }}</span>
-                <span class="idp-q-text">{{ $text }}</span>
+                <span class="idp-q-text">{!! $text !!}</span>
                 <div class="idp-drop-zone" 
                      data-qid="{{ $q->id }}"
                      ondrop="handleDrop(event)" 

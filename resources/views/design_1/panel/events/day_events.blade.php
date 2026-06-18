@@ -4,6 +4,7 @@
             'courses_expirations' => 'video-play',
             'quiz_expirations' => 'clipboard-tick',
             'live_sessions' => 'video',
+            'live_courses' => 'video',
             'assignment_expirations' => 'note',
             'bundle_expirations' => 'box',
             'subscription_expirations' => 'crown',
@@ -27,16 +28,20 @@
                 @foreach($dayEventItems as $event)
                     @if(!empty($event) and is_array($event))
                         @php
-                            $icon = $icons[$eventName];
+                            $icon = $icons[$eventName] ?? 'calendar-2';
+                            $eventLabel = trans("update.{$eventName}");
+                            if ($eventLabel === "update.{$eventName}") {
+                                $eventLabel = ucwords(str_replace('_', ' ', $eventName));
+                            }
                         @endphp
 
                         <div class="d-flex align-items-center justify-content-between bg-gray-100 p-12 rounded-16 mt-16">
                             <div class="d-flex align-items-center">
                                 <div class="d-flex-center size-48 rounded-8 bg-gray-200">
-                                    @svg("iconsax-bul-{$icon}", ['height' => '24px', 'width' => '24px', 'class' => 'icons text-primary'])
+                                    @svg("iconsax-bul-{$icon}", ['height' => '24px', 'width' => '24px', 'class' => 'icons', 'style' => 'color: #511D99'])
                                 </div>
                                 <div class="ml-8">
-                                    <div class="">{{ trans("update.{$eventName}") }}</div>
+                                    <div class="">{{ $eventLabel }}</div>
                                     <p class="font-12 text-gray-500 mt-4">{{ $event['subtitle'] }}</p>
                                 </div>
                             </div>
@@ -44,6 +49,12 @@
                             <div class="d-flex align-items-center gap-16">
                                 @if(!empty($event['time']))
                                     <div class="d-inline-flex p-8 rounded-8 bg-gray-200 font-12 text-gray-500">{{ $event['time'] }}</div>
+                                @endif
+
+                                @if(!empty($event['join_url']))
+                                    <a href="{{ $event['join_url'] }}" target="_blank" class="d-flex-center size-40 bg-white rounded-circle bg-hover-gray-200" title="{{ trans('public.join') }}">
+                                        <x-iconsax-bul-video class="icons" width="20px" height="20px" style="color: #511D99"/>
+                                    </a>
                                 @endif
 
                                 <a href="{{ $event['add_to_calendar_url'] }}" target="_blank" class="d-flex-center size-40 bg-white rounded-circle bg-hover-gray-200">

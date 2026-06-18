@@ -202,27 +202,19 @@
                         </div>
 
                         <div class="tab-pane fade" id="file-quiz-{{ !empty($file) ? $file->id : 'record' }}" role="tabpanel" aria-labelledby="file-quiz-tab-{{ !empty($file) ? $file->id : 'record' }}">
-                            <div class="interactive-quiz-builder" data-name-prefix="ajax[{{ !empty($file) ? $file->id : 'new' }}][interactive_quiz]">
-                                <div class="form-group">
-                                    <label class="form-group-label">Quiz title</label>
-                                    <input type="text" name="ajax[{{ !empty($file) ? $file->id : 'new' }}][interactive_quiz][title]" class="form-control" placeholder="Enter quiz title">
-                                </div>
-
-                                <div class="quiz-questions-wrapper">
-                                    <div class="d-flex align-items-center justify-content-between mb-8">
-                                        <label class="form-group-label mb-0">Questions</label>
-                                        <button type="button" class="btn btn-sm btn-outline-primary js-add-quiz-question">
-                                            <x-iconsax-lin-add class="icons" width="14px" height="14px"/>
-                                            Add question
-                                        </button>
-                                    </div>
-
-                                    <div class="quiz-questions-list"></div>
-                                </div>
-                            </div>
+                            @php
+                                $fileQuiz = !empty($file) ? ($file->interactive_quiz ?? []) : [];
+                            @endphp
+                            @include('design_1.panel.webinars.create.includes.accordions.partials.interactive_quiz_builder', [
+                                'namePrefix' => "ajax[" . (!empty($file) ? $file->id : 'new') . "][interactive_quiz]",
+                                'quizData' => $fileQuiz,
+                            ])
                         </div>
 
                         <div class="tab-pane fade" id="file-notes-{{ !empty($file) ? $file->id : 'record' }}" role="tabpanel" aria-labelledby="file-notes-tab-{{ !empty($file) ? $file->id : 'record' }}">
+                            @php
+                                $fileNotes = !empty($file) ? ($file->lecture_notes ?? []) : [];
+                            @endphp
                             <div class="lecture-notes-builder" data-name-prefix="ajax[{{ !empty($file) ? $file->id : 'new' }}][lecture_notes]">
                                 <div class="d-flex align-items-center justify-content-between mb-8">
                                     <label class="form-group-label mb-0">Lecture Notes</label>
@@ -232,7 +224,18 @@
                                     </button>
                                 </div>
 
-                                <div class="lecture-notes-list"></div>
+                                <div class="lecture-notes-list">
+                                    @foreach($fileNotes as $noteIndex => $note)
+                                        <div class="lecture-note-item border rounded-8 p-12 mb-12" data-note-index="{{ $noteIndex }}">
+                                            <div class="d-flex align-items-center justify-content-between mb-8">
+                                                <label class="form-group-label mb-0">Note</label>
+                                                <button type="button" class="btn btn-xs btn-outline-danger js-remove-lecture-note">Remove</button>
+                                            </div>
+                                            <input type="text" class="form-control mb-8" name="ajax[{{ !empty($file) ? $file->id : 'new' }}][lecture_notes][{{ $noteIndex }}][title]" placeholder="Note title" value="{{ $note['title'] ?? '' }}">
+                                            <textarea class="form-control" name="ajax[{{ !empty($file) ? $file->id : 'new' }}][lecture_notes][{{ $noteIndex }}][content]" rows="4" placeholder="Note content">{{ $note['content'] ?? '' }}</textarea>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
 
@@ -248,19 +251,6 @@
 
                         <div class="">
                             <label class="cursor-pointer" for="online_viewerSwitch{{ !empty($file) ? $file->id : '_record' }}">{{ trans('update.online_viewer') }}</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="js-downloadable-input">
-                    <div class="form-group d-flex align-items-center">
-                        <div class="custom-switch mr-8">
-                            <input id="downloadableSwitch{{ !empty($file) ? $file->id : '_record' }}" type="checkbox" name="ajax[{{ !empty($file) ? $file->id : 'new' }}][downloadable]" class="custom-control-input" {{ (empty($file) or $file->downloadable) ? 'checked' : ''  }}>
-                            <label class="custom-control-label cursor-pointer" for="downloadableSwitch{{ !empty($file) ? $file->id : '_record' }}"></label>
-                        </div>
-
-                        <div class="">
-                            <label class="cursor-pointer" for="downloadableSwitch{{ !empty($file) ? $file->id : '_record' }}">{{ trans('home.downloadable') }}</label>
                         </div>
                     </div>
                 </div>

@@ -32,14 +32,12 @@ class SidebarItems
             'items' => []
         ];
 
-        if (!$user->isUser() && !$user->isStudent() && !$user->isTeacher()) {
-            $items['events'] = [
-                'icon' => self::getIcon('events'),
-                'text' => trans('update.events_calendar'),
-                'url' => '/panel/events',
-                'items' => []
-            ];
-        }
+        $items['events'] = [
+            'icon' => self::getIcon('events'),
+            'text' => trans('update.events_calendar'),
+            'url' => '/panel/events',
+            'items' => []
+        ];
 
 
         return $items;
@@ -133,6 +131,13 @@ class SidebarItems
                     'icon' => self::getIcon('webinars'),
                     'text' => trans('panel.webinars'),
                     'url' => '/panel/courses/purchases',
+                    'items' => []
+                ];
+
+                $items['course_notes'] = [
+                    'icon' => self::getIcon('course_notes'),
+                    'text' => trans('update.course_notes'),
+                    'url' => '/panel/courses/personal-notes',
                     'items' => []
                 ];
             } else {
@@ -256,16 +261,16 @@ class SidebarItems
             } 
             // Student/User → Two separate flat items (no dropdown)
             else {
-                $items['mock_tests'] = [
-                    'icon' => self::getIcon('ielts_tests'),
-                    'text' => trans('update.mock_tests'),
-                    'url' => '/panel/ielts-tests/mock',
-                    'items' => []
-                ];
                 $items['practice_tests'] = [
                     'icon' => self::getIcon('ielts_tests'),
                     'text' => trans('update.practice_tests'),
                     'url' => '/panel/ielts-tests/practice',
+                    'items' => []
+                ];
+                $items['mock_tests'] = [
+                    'icon' => self::getIcon('ielts_tests'),
+                    'text' => trans('update.mock_tests'),
+                    'url' => '/panel/ielts-tests/mock',
                     'items' => []
                 ];
             }

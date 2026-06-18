@@ -1,11 +1,16 @@
 @extends('design_1.panel.layouts.panel')
 
 @push('styles_top')
+<link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
 <style>
 .test-creator-enhanced {
     background: #fff;
     border-radius: 12px;
     padding: 24px;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .test-info-card {
@@ -54,10 +59,12 @@
 .skill-icon.reading { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 .skill-icon.writing { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 .skill-icon.speaking { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.skill-icon.grammar { background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); }
+.skill-icon.vocabulary { background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%); }
 
 .group-item {
     background: #f9fafb;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #511D99;
     padding: 16px;
     margin-bottom: 12px;
     border-radius: 6px;
@@ -77,6 +84,62 @@
     font-weight: 700;
     font-size: 16px;
     color: #14532d;
+}
+
+.title-expand-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding-right: 220px;
+    margin-bottom: 8px;
+}
+
+.collapsible-title {
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+}
+
+.collapsible-title.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+}
+
+.title-toggle-btn {
+    flex-shrink: 0;
+}
+
+.collapsible-richtext {
+    position: relative;
+    transition: max-height 0.2s ease;
+}
+
+.collapsible-richtext.collapsed {
+    max-height: 220px;
+    overflow: hidden;
+}
+
+.collapsible-richtext.collapsed::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    background: linear-gradient(to bottom, rgba(248, 255, 251, 0), rgba(248, 255, 251, 1));
+    pointer-events: none;
+}
+
+.group-item .collapsible-richtext.collapsed::after {
+    background: linear-gradient(to bottom, rgba(249, 250, 251, 0), rgba(249, 250, 251, 1));
+}
+
+.content-toggle-wrap {
     margin-bottom: 8px;
 }
 
@@ -118,7 +181,47 @@
     font-weight: 600;
     font-size: 16px;
     color: #1f2937;
-    margin-bottom: 8px;
+}
+
+.question-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.question-card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.question-title-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.question-title-text {
+    font-weight: 700;
+    color: #111827;
+}
+
+.question-preview-text {
+    margin-top: 6px;
+    font-weight: 500;
+    color: #1f2937;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.question-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .group-item .group-meta {
@@ -147,7 +250,7 @@
     align-items: center;
     gap: 4px;
     background: #e0e7ff;
-    color: #4c51bf;
+    color: #511D99;
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
@@ -172,7 +275,7 @@
 
 .add-part-form {
     background: #eff6ff;
-    border: 2px dashed #3b82f6;
+    border: 2px dashed #511D99;
     border-radius: 8px;
     padding: 20px;
     margin-top: 16px;
@@ -215,8 +318,8 @@
 }
 
 .file-upload-area:hover {
-    border-color: #3b82f6;
-    background: #f0f9ff;
+    border-color: #511D99;
+    background: #ffff;
 }
 
 .file-upload-area input[type="file"] {
@@ -224,13 +327,25 @@
 }
 
 .file-preview {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background: #e0e7ff;
-    color: #4c51bf;
+    color: #511D99;
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
     margin-top: 8px;
+}
+
+.file-preview .remove-file-btn {
+    border: none;
+    background: transparent;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    font-size: 14px;
 }
 
 .questions-list {
@@ -275,7 +390,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: #2563eb;
+    background: #511D99;
     color: white;
     border: none;
     border-radius: 6px;
@@ -284,15 +399,15 @@
 }
 
 .btn-add-part:hover {
-    background: #1d4ed8;
+    background: #511D99;
 }
 
 .completeness-check {
     background: #fef3c7;
     border-left: 4px solid #f59e0b;
     padding: 12px 16px;
-    border-radius: 4px;
-    margin-bottom: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
 }
 
 .completeness-check.success {
@@ -314,7 +429,14 @@
     .form-row {
         flex-direction: column;
     }
+    .title-expand-wrap {
+        padding-right: 0;
+    }
     .group-item .group-actions {
+        position: static;
+        margin-top: 12px;
+    }
+    .part-item .part-actions {
         position: static;
         margin-top: 12px;
     }
@@ -355,16 +477,16 @@
     line-height: 1;
 }
 .mc-options-container {
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
+    background: #ffffff;
+    border: 1px solid #d3b8f8;
     border-radius: 6px;
     padding: 12px;
     margin-bottom: 8px;
 }
 .question-type-badge {
     display: inline-block;
-    background: #e0e7ff;
-    color: #3730a3;
+    background: #ffffff;
+    color: #511D99;
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 11px;
@@ -380,6 +502,33 @@
     font-size: 11px;
     margin-left: 4px;
 }
+
+.btn {
+    border-radius: 12px;
+    background: #fff;
+    color: #511D99;
+    border: 1.5px solid #511D99;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.btn:hover {
+    background: #511D99;
+    color: #fff;
+    border-color: #511D99;
+}
+
+.btn-1 {
+    border-radius: 12px;
+    background: #511D99;
+    color: #fff;
+    border: 1.5px solid #511D99;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.btn-1:hover {
+    background: #fff;
+    color: #511D99;
+    border-color: #511D99;
+}
 </style>
 @endpush
 
@@ -388,24 +537,24 @@
     <div class="d-flex align-items-center justify-content-between mb-20">
         <h1 class="section-title">
             <i class="fas fa-plus-circle mr-10"></i>
-            Create IELTS Test with Parts and Question Groups
+            {{ $pageTitle ?? 'Create IELTS Test with Parts and Question Groups' }}
         </h1>
-        <a href="{{ route('panel.my_ielts_tests.create') }}" class="btn btn-sm btn-gray">
+        <a href="{{ $cancelUrl ?? route('panel.my_ielts_tests.create') }}" class="btn btn-sm rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
             <i class="fas fa-arrow-left mr-5"></i>Back
         </a>
     </div>
 
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle mr-5"></i>
+    <div class="alert alert-info mb-24">
+        <i class="fas fa-info-circle mr-10"></i>
         <strong>Hierarchical Structure:</strong> Test → Sections → Parts → Question Groups → Questions
     </div>
 
-    <form id="testForm" action="{{ route('panel.my_ielts_tests.store_with_groups') }}" method="POST" enctype="multipart/form-data">
+    <form id="testForm" action="{{ $formAction ?? route('panel.my_ielts_tests.store_with_groups') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         {{-- Test Information --}}
         <div class="test-info-card">
-            <h3 class="font-16 font-weight-bold mb-15">
+            <h3 class="font-16 font-weight-bold mb-20">
                 <i class="fas fa-info-circle mr-8"></i>Test Information
             </h3>
 
@@ -415,8 +564,8 @@
                         <label class="input-label">Test Type *</label>
                         <select id="testTypeSelect" name="type" class="form-control @error('type') is-invalid @enderror" required onchange="updateTestRequirements()">
                             <option value="">-- Select Type --</option>
-                            <option value="mock" {{ old('type') === 'mock' ? 'selected' : '' }}>Mock Test (All 4 Skills)</option>
-                            <option value="practice" {{ old('type') === 'practice' ? 'selected' : '' }}>Practice Test (1 Skill)</option>
+                            <option value="mock" {{ old('type', $test->type ?? '') === 'mock' ? 'selected' : '' }}>Mock Test (All 4 Skills)</option>
+                            <option value="practice" {{ old('type', $test->type ?? '') === 'practice' ? 'selected' : '' }}>Practice Test (1 Skill)</option>
                         </select>
                         @error('type')
                             <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
@@ -427,7 +576,7 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="input-label">Test Title *</label>
-                        <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title') }}" required placeholder="e.g. Full Mock Test - March 2026">
+                        <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $test->title ?? '') }}" required placeholder="e.g. Full Mock Test - March 2026">
                         @error('title')
                             <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
                         @enderror
@@ -439,8 +588,9 @@
                         <label class="input-label">Format *</label>
                         <select name="format" class="form-control @error('format') is-invalid @enderror" required>
                             <option value="">-- Select --</option>
-                            <option value="academic" {{ old('format') === 'academic' ? 'selected' : '' }}>Academic</option>
-                            <option value="general" {{ old('format') === 'general' ? 'selected' : '' }}>General Training</option>
+                            <option value="academic" {{ old('format', $test->format ?? '') === 'academic' ? 'selected' : '' }}>Academic</option>
+                            <option value="general" {{ old('format', $test->format ?? '') === 'general' ? 'selected' : '' }}>General Training</option>
+                            <option value="both" {{ old('format', $test->format ?? '') === 'both' ? 'selected' : '' }}>Both</option>
                         </select>
                         @error('format')
                             <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
@@ -451,7 +601,7 @@
 
             <div class="form-group">
                 <label class="input-label">Description</label>
-                <textarea name="description" class="form-control" rows="2" placeholder="Brief description...">{{ old('description') }}</textarea>
+                <textarea name="description" class="form-control js-richtext-editor" data-height="150" rows="2" placeholder="Brief description...">{{ old('description', $test->description ?? '') }}</textarea>
             </div>
 
             <div class="row">
@@ -459,23 +609,23 @@
                     <div class="form-group">
                         <label class="input-label">Difficulty Level</label>
                         <select name="difficulty_level" class="form-control">
-                            <option value="intermediate" selected>Intermediate</option>
-                            <option value="beginner">Beginner</option>
-                            <option value="advanced">Advanced</option>
-                            <option value="mixed">Mixed</option>
+                            <option value="intermediate" {{ old('difficulty_level', $test->difficulty_level ?? 'intermediate') === 'intermediate' ? 'selected' : '' }}>Intermediate</option>
+                            <option value="beginner" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'beginner' ? 'selected' : '' }}>Beginner</option>
+                            <option value="advanced" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'advanced' ? 'selected' : '' }}>Advanced</option>
+                            <option value="mixed" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'mixed' ? 'selected' : '' }}>Mixed</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="input-label">Target Band Min</label>
-                        <input type="number" name="target_band_min" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_min', 5.0) }}">
+                        <input type="number" name="target_band_min" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_min', $test->target_band_min ?? 5.0) }}">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="input-label">Target Band Max</label>
-                        <input type="number" name="target_band_max" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_max', 8.0) }}">
+                        <input type="number" name="target_band_max" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_max', $test->target_band_max ?? 8.0) }}">
                     </div>
                 </div>
             </div>
@@ -489,6 +639,8 @@
                 <li><span class="status-reading">○</span> Reading <span class="req-reading">(3 parts, 40 questions)</span></li>
                 <li><span class="status-writing">○</span> Writing <span class="req-writing">(2 parts, 2 tasks)</span></li>
                 <li><span class="status-speaking">○</span> Speaking <span class="req-speaking">(3 parts, 3 prompts)</span></li>
+                <li><span class="status-grammar">○</span> Grammar <span class="req-grammar">(at least 1 part)</span></li>
+                <li><span class="status-vocabulary">○</span> Vocabulary <span class="req-vocabulary">(at least 1 part)</span></li>
             </ul>
         </div>
 
@@ -499,16 +651,23 @@
 
         {{-- Hidden field for question groups data --}}
         <input type="hidden" id="questionGroupsData" name="question_groups_data" value="">
+        <input type="hidden" id="submitActionInput" name="submit_action" value="submit">
         <div id="uploadedFilesContainer" style="display:none;"></div>
 
         {{-- Action Buttons --}}
-        <div class="mt-30 d-flex gap-10">
-            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                <i class="fas fa-check-circle mr-5"></i>Submit Test for Approval
-            </button>
-            <a href="{{ route('panel.my_ielts_tests.index') }}" class="btn btn-secondary btn-lg">
+        <div class="mt-30 d-flex justify-content-end align-items-center gap-8">
+            <a href="{{ $cancelUrl ?? route('panel.my_ielts_tests.index') }}" class="btn btn-lg rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
                 <i class="fas fa-times mr-5"></i>Cancel
             </a>
+            <button type="submit" name="submit_action" value="draft" formnovalidate class="btn btn-outline-secondary btn-lg rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" id="saveDraftBtn">
+                <i class="fas fa-save mr-5"></i>Lưu nháp
+            </button>
+            <button type="submit" name="submit_action" value="preview" class="btn btn-outline-primary btn-lg rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" id="previewBtn">
+                <i class="fas fa-eye mr-5"></i>Xem trước như học viên
+            </button>
+            <button type="submit" name="submit_action" value="submit" class="btn-1 btn-lg rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" id="submitBtn">
+                {{ $submitButtonText ?? 'Submit Test for Approval' }}
+            </button>
         </div>
     </form>
 
@@ -521,7 +680,7 @@
                     <h4 class="mb-0 mt-8"></h4>
                     <small class="text-muted">Parts: <span class="part-count">0</span> | Groups: <span class="group-count">0</span> | Questions: <span class="question-count">0</span></small>
                 </div>
-                <button type="button" class="btn btn-primary btn-sm" onclick="toggleAddPartForm(this)">
+                <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleAddPartForm(this)">
                     <i class="fas fa-plus mr-5"></i>Add Part
                 </button>
             </div>
@@ -543,7 +702,7 @@
 
             {{-- Add Part Form --}}
             <div class="add-part-form hidden">
-                <h5 class="mb-15"><i class="fas fa-plus-circle mr-8"></i>Add New Part</h5>
+                <h5 class="mb-20"><i class="fas fa-plus-circle mr-8"></i>Add New Part</h5>
 
                 <div class="form-row full">
                     <div class="form-group">
@@ -555,7 +714,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="input-label">Part Instructions</label>
-                        <textarea class="form-control part-instructions-input" rows="2" placeholder="Optional instructions for this part..."></textarea>
+                        <textarea class="form-control part-instructions-input js-richtext-editor" data-height="150" rows="2" placeholder="Optional instructions for this part..."></textarea>
                     </div>
                 </div>
 
@@ -599,17 +758,17 @@
                 </div>
 
                 <div class="form-row full">
-                    <div class="form-group">
+                    <div class="form-group mt-12">
                         <label class="input-label">Part Description</label>
-                        <textarea class="form-control part-passage" rows="3" placeholder="Enter reading passage, transcript, or notes for this part..."></textarea>
+                        <textarea class="form-control part-passage js-richtext-editor" data-height="180" rows="3" placeholder="Enter reading passage, transcript, or notes for this part..."></textarea>
                     </div>
                 </div>
 
                 <div class="mt-12">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="addPart(this)">
+                    <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="addPart(this)">
                         <i class="fas fa-plus mr-5"></i>Create Part
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddPartForm(this)">
+                    <button type="button" class="btn btn-sm rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleAddPartForm(this)">
                         <i class="fas fa-times mr-5"></i>Cancel
                     </button>
                 </div>
@@ -619,29 +778,178 @@
 </section>
 
 @push('scripts_bottom')
+<script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
 <script>
 const SECTIONS_CONFIG = {
     listening: { skill: 'listening', title: 'Listening', icon: '🔊', mockParts: 4, mockQuestions: 40 },
     reading: { skill: 'reading', title: 'Reading', icon: '📖', mockParts: 3, mockQuestions: 40 },
     writing: { skill: 'writing', title: 'Writing', icon: '✍️', mockParts: 2, mockQuestions: 2 },
-    speaking: { skill: 'speaking', title: 'Speaking', icon: '🎤', mockParts: 3, mockQuestions: 3 }
+    speaking: { skill: 'speaking', title: 'Speaking', icon: '🎤', mockParts: 3, mockQuestions: 3 },
+    grammar: { skill: 'grammar', title: 'Grammar', icon: '🧩', mockParts: 0, mockQuestions: 0 },
+    vocabulary: { skill: 'vocabulary', title: 'Vocabulary', icon: '📚', mockParts: 0, mockQuestions: 0 }
 };
 
-let currentTestType = null;
+let currentTestType = @json($currentTestType ?? null);
 let uploadSequence = 0;
 
-let testData = {
-    sections: {
-        listening: { parts: [] },
-        reading: { parts: [] },
-        writing: { parts: [] },
-        speaking: { parts: [] }
+@php
+    $inlineTestData = $testData ?? [
+        'sections' => [
+            'listening' => ['parts' => []],
+            'reading' => ['parts' => []],
+            'writing' => ['parts' => []],
+            'speaking' => ['parts' => []],
+            'grammar' => ['parts' => []],
+            'vocabulary' => ['parts' => []],
+        ],
+    ];
+@endphp
+
+let testData = @json($inlineTestData);
+
+const ANSWER_HELP_EDITOR_TOOLBAR = [
+    ['style', ['style']],
+    ['font', ['bold', 'italic', 'underline', 'clear']],
+    ['color', ['foreColor', 'backColor']],
+    ['para', ['ul', 'ol', 'paragraph']],
+    ['view', ['codeview']]
+];
+
+const CONTENT_EDITOR_TOOLBAR = [
+    ['style', ['style']],
+    ['font', ['bold', 'italic', 'underline', 'clear']],
+    ['color', ['foreColor', 'backColor']],
+    ['para', ['ul', 'ol', 'paragraph']],
+    ['insert', ['picture', 'link']],
+    ['view', ['codeview']]
+];
+
+function getEditorHtmlValue(element) {
+    if (!element) {
+        return '';
     }
-};
+
+    const $element = $(element);
+    if (jQuery().summernote && $element.next('.note-editor').length) {
+        return ($element.summernote('code') || '').trim();
+    }
+
+    return ($element.val() || '').trim();
+}
+
+function setEditorHtmlValue(element, value) {
+    if (!element) {
+        return;
+    }
+
+    const $element = $(element);
+    if (jQuery().summernote && $element.next('.note-editor').length) {
+        $element.summernote('code', value || '');
+        return;
+    }
+
+    $element.val(value || '');
+}
+
+function editorHtmlToPlainText(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return (tmp.textContent || tmp.innerText || '').replace(/\u00a0/g, ' ').trim();
+}
+
+function getEditorPlainTextValue(element) {
+    return editorHtmlToPlainText(getEditorHtmlValue(element));
+}
+
+function getAnswerHelpValue(element) {
+    return getEditorHtmlValue(element);
+}
+
+function setAnswerHelpValue(element, value) {
+    setEditorHtmlValue(element, value);
+}
+
+function getContentEditorValue(element) {
+    return getEditorHtmlValue(element);
+}
+
+function getContentEditorPlainValue(element) {
+    return getEditorPlainTextValue(element);
+}
+
+function setContentEditorValue(element, value) {
+    setEditorHtmlValue(element, value);
+}
+
+function initAnswerHelpEditors(context) {
+    if (!jQuery().summernote) {
+        return;
+    }
+
+    const $context = context ? $(context) : $(document);
+    const $editors = $context.find('.js-answer-help-editor').filter(function () {
+        return !$(this).next('.note-editor').length;
+    });
+
+    if (!$editors.length) {
+        return;
+    }
+
+    makeSummernote($editors, 180, undefined, {
+        toolbar: ANSWER_HELP_EDITOR_TOOLBAR
+    });
+}
+
+function initContentEditors(context) {
+    if (!jQuery().summernote) {
+        return;
+    }
+
+    const $context = context ? $(context) : $(document);
+    const $editors = $context.find('.js-richtext-editor').filter(function () {
+        return !$(this).next('.note-editor').length;
+    });
+
+    if (!$editors.length) {
+        return;
+    }
+
+    $editors.each(function () {
+        const editor = $(this);
+        const height = parseInt(editor.attr('data-height') || '160', 10);
+
+        makeSummernote(editor, Number.isFinite(height) ? height : 160, undefined, {
+            toolbar: CONTENT_EDITOR_TOOLBAR,
+            callbacks: {
+                onChange: function () {
+                    if (this.classList.contains('question-text-input')) {
+                        const form = this.closest('.question-inline-form');
+                        if (form && form.querySelector('.note-completion-answers')) {
+                            renderNoteCompletionAnswerInputs(form);
+                        }
+                    }
+
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     setupFormValidation();
     setupFilePreviews();
+    initAnswerHelpEditors(document);
+    initContentEditors(document);
+    if (currentTestType) {
+        const typeSelect = document.getElementById('testTypeSelect');
+        if (typeSelect) {
+            typeSelect.value = currentTestType;
+        }
+        updateTestRequirements();
+        renderExistingTestData();
+        updateCompletenessStatus();
+    }
     document.addEventListener('input', function(event) {
         const target = event.target;
         if (!target || !target.classList) {
@@ -696,6 +1004,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setupFilePreviews() {
+    function renderFilePreview(input, preview) {
+        if (!preview) {
+            return;
+        }
+
+        if (input.files && input.files[0]) {
+            preview.innerHTML = `${escapeHtml(input.files[0].name)}
+                <button type="button" class="remove-file-btn" title="Remove file" onclick="removeSelectedFile(this)">
+                    <i class="fas fa-times"></i>
+                </button>`;
+            preview.style.display = 'inline-flex';
+        } else {
+            preview.innerHTML = '';
+            preview.style.display = 'none';
+        }
+    }
+
     document.addEventListener('change', function(event) {
         const input = event.target;
         if (!input || input.type !== 'file') {
@@ -708,23 +1033,43 @@ function setupFilePreviews() {
         } else if (input.classList.contains('group-audio-file')) {
             preview = input.closest('.col-md-4')?.querySelector('.group-audio-preview');
         } else if (input.classList.contains('group-image-file')) {
-            preview = input.closest('.col-md-6')?.querySelector('.group-image-preview');
+            preview = input.closest('.col-md-4')?.querySelector('.group-image-preview');
         } else if (input.classList.contains('group-video-file')) {
-            preview = input.closest('.col-md-6')?.querySelector('.group-video-preview');
+            preview = input.closest('.col-md-4')?.querySelector('.group-video-preview');
         }
 
-        if (!preview) {
-            return;
-        }
-
-        if (input.files && input.files[0]) {
-            preview.textContent = input.files[0].name;
-            preview.style.display = 'inline-block';
-        } else {
-            preview.textContent = '';
-            preview.style.display = 'none';
-        }
+        renderFilePreview(input, preview);
     });
+}
+
+function removeSelectedFile(button) {
+    const preview = button.closest('.file-preview');
+    if (!preview) {
+        return;
+    }
+
+    const block = preview.closest('.col-md-4, .section-media-block');
+    if (!block) {
+        return;
+    }
+
+    let input = null;
+    if (preview.classList.contains('section-audio-preview')) {
+        input = block.querySelector('.section-audio-file:not(.preserved-upload-input)') || block.querySelector('.section-audio-file');
+    } else if (preview.classList.contains('group-audio-preview')) {
+        input = block.querySelector('.group-audio-file:not(.preserved-upload-input)') || block.querySelector('.group-audio-file');
+    } else if (preview.classList.contains('group-image-preview')) {
+        input = block.querySelector('.group-image-file:not(.preserved-upload-input)') || block.querySelector('.group-image-file');
+    } else if (preview.classList.contains('group-video-preview')) {
+        input = block.querySelector('.group-video-file:not(.preserved-upload-input)') || block.querySelector('.group-video-file');
+    }
+
+    if (input) {
+        input.value = '';
+    }
+
+    preview.innerHTML = '';
+    preview.style.display = 'none';
 }
 
 function updateTestRequirements() {
@@ -740,7 +1085,11 @@ function updateTestRequirements() {
         const reqElement = document.querySelector(`.req-${skill}`);
         if (reqElement) {
             if (isMock) {
-                reqElement.textContent = `(${SECTIONS_CONFIG[skill].mockParts} parts, ${SECTIONS_CONFIG[skill].mockQuestions} questions)`;
+                if (SECTIONS_CONFIG[skill].mockParts > 0) {
+                    reqElement.textContent = `(${SECTIONS_CONFIG[skill].mockParts} parts, ${SECTIONS_CONFIG[skill].mockQuestions} questions)`;
+                } else {
+                    reqElement.textContent = '(optional)';
+                }
             } else {
                 reqElement.textContent = '(at least 1 part)';
             }
@@ -775,6 +1124,37 @@ function initializeSections() {
         }
 
         container.appendChild(section);
+        initAnswerHelpEditors(container);
+        initContentEditors(container);
+    });
+}
+
+function renderExistingTestData() {
+    const container = document.getElementById('sectionsContainer');
+    if (!container || !testData || !testData.sections) {
+        return;
+    }
+
+    Object.entries(testData.sections).forEach(([skill, sectionData]) => {
+        const sectionEl = container.querySelector(`.section-container[data-skill="${skill}"]`);
+        if (!sectionEl || !sectionData || !Array.isArray(sectionData.parts)) {
+            return;
+        }
+
+        sectionData.parts.forEach((part) => {
+            const audioFile = part?.files?.audio || part.audio_file || null;
+            const imageFile = part?.files?.image || part.image_file || null;
+            const videoFile = part?.files?.video || part.video_file || null;
+            const partItem = displayPart(sectionEl, part, audioFile, imageFile, videoFile);
+
+            (part.groups || []).forEach((group) => {
+                displayQuestionGroup(partItem, part, group);
+            });
+
+            updatePartStats(partItem, part);
+        });
+
+        updateSectionStats(sectionEl);
     });
 }
 
@@ -794,8 +1174,8 @@ function addPart(button) {
     const form = section.querySelector('.add-part-form');
 
     const title = form.querySelector('.part-title-input').value.trim();
-    const instructions = form.querySelector('.part-instructions-input').value.trim();
-    const passage = form.querySelector('.part-passage').value.trim();
+    const instructions = getContentEditorValue(form.querySelector('.part-instructions-input'));
+    const passage = getContentEditorValue(form.querySelector('.part-passage'));
 
     const audioInput = form.querySelector('.group-audio-file');
     const audioFile = audioInput && audioInput.files.length ? audioInput.files[0] : null;
@@ -830,8 +1210,8 @@ function addPart(button) {
     displayPart(section, part, audioFile, imageFile, videoFile);
 
     form.querySelector('.part-title-input').value = '';
-    form.querySelector('.part-instructions-input').value = '';
-    form.querySelector('.part-passage').value = '';
+    setContentEditorValue(form.querySelector('.part-instructions-input'), '');
+    setContentEditorValue(form.querySelector('.part-passage'), '');
     form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => input.value = '');
     form.querySelectorAll('.file-preview').forEach(preview => preview.style.display = 'none');
 
@@ -862,7 +1242,7 @@ function addQuestionGroup(button) {
     const targetBandEl = form ? form.querySelector('.group-target-band') : null;
     const targetBand = targetBandEl ? targetBandEl.value : '';
     const passageEl = form ? form.querySelector('.group-passage') : null;
-    const passage = passageEl ? passageEl.value : '';
+    const passage = passageEl ? getContentEditorValue(passageEl) : '';
     const groupTaskImageUrlEl = form.querySelector('.group-task-image-url');
     const groupTaskImageUrl = groupTaskImageUrlEl ? (groupTaskImageUrlEl.value || '').trim() : null;
 
@@ -896,7 +1276,7 @@ function addQuestionGroup(button) {
     form.querySelector('.group-type-select').value = 'multiple_choice_single';
     form.querySelector('.group-max-words').value = '';
     form.querySelector('.group-target-band').value = '';
-    form.querySelector('.group-passage').value = '';
+    setContentEditorValue(form.querySelector('.group-passage'), '');
     const gImg = form.querySelector('.group-task-image-url'); if (gImg) gImg.value = '';
     form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => input.value = '');
     form.querySelectorAll('.file-preview').forEach(preview => preview.style.display = 'none');
@@ -974,19 +1354,39 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
         mediaHTML += '</div>';
     }
 
+    const hasPartRichContent = Boolean(part.instructions || part.passage);
+    const partRichContentHTML = hasPartRichContent
+        ? `<div class="part-rich-content collapsible-richtext collapsed mb-8">
+                ${part.instructions ? `<div class="text-muted mb-8"><small>${part.instructions}</small></div>` : ''}
+                ${part.passage ? `<div><small class="text-muted">${part.passage}</small></div>` : ''}
+           </div>
+           <div class="content-toggle-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleRichContent(this)" title="Expand content">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+           </div>`
+        : '';
+
     partDiv.innerHTML = `
-        <div class="part-title">${escapeHtml(part.title)}</div>
+        <div class="title-expand-wrap">
+            <div class="part-title collapsible-title">${escapeHtml(part.title)}</div>
+        </div>
         <div class="part-meta">
             <span><i class="fas fa-align-left"></i> Part</span>
             <span class="group-total"><i class="fas fa-layer-group"></i> 0 groups</span>
             <span class="question-total"><i class="fas fa-list-ol"></i> 0 questions</span>
         </div>
         ${mediaHTML}
-        ${part.instructions ? `<div class="text-muted mb-8"><small>${escapeHtml(part.instructions)}</small></div>` : ''}
-        ${part.passage ? `<div class="mb-8"><small class="text-muted">${escapeHtml(part.passage)}</small></div>` : ''}
+        ${partRichContentHTML}
         <div class="groups-list"></div>
         <div class="part-actions">
-            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleAddGroupForm(this)">
+            <button type="button" class="btn btn-sm btn-outline-secondary title-toggle-btn" onclick="toggleCollapsibleTitle(this)" title="Expand title">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editPartTitle(this)" title="Edit part title">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleAddGroupForm(this)">
                 <i class="fas fa-plus"></i> Group
             </button>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePart(this)">
@@ -1027,14 +1427,14 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
                 <div class="form-row">
                     <div class="form-group">
                         <label class="input-label">Group Instructions / Passage</label>
-                        <textarea class="form-control group-passage" rows="3" placeholder="Optional instructions or passage for this task..."></textarea>
+                        <textarea class="form-control group-passage js-richtext-editor" data-height="160" rows="3" placeholder="Optional instructions or passage for this task..."></textarea>
                     </div>
                 </div>
                 <div class="mt-12">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="addQuestionGroup(this)">
+                    <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="addQuestionGroup(this)">
                         <i class="fas fa-plus mr-5"></i>Create Group
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddGroupForm(this)">
+                    <button type="button" class="btn btn-sm rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleAddGroupForm(this)">
                         <i class="fas fa-times mr-5"></i>Cancel
                     </button>
                 </div>
@@ -1090,14 +1490,14 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
                 <div class="form-row full">
                     <div class="form-group">
                         <label class="input-label">Passage / Instructions</label>
-                        <textarea class="form-control group-passage" rows="3" placeholder="Enter reading passage, instructions, or transcript..."></textarea>
+                        <textarea class="form-control group-passage js-richtext-editor" data-height="160" rows="3" placeholder="Enter reading passage, instructions, or transcript..."></textarea>
                     </div>
                 </div>
                 <div class="mt-8">
-                    <button type="button" class="btn btn-sm btn-primary" onclick="addQuestionGroup(this)">
+                    <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="addQuestionGroup(this)">
                         <i class="fas fa-plus mr-5"></i>Create Group & Add Questions
                     </button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAddGroupForm(this)">
+                    <button type="button" class="btn btn-sm rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleAddGroupForm(this)">
                         <i class="fas fa-times mr-5"></i>Cancel
                     </button>
                 </div>
@@ -1108,11 +1508,14 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
         if (groupsListEl) {
             groupsListEl.insertAdjacentHTML('afterend', groupInlineFormHTML);
         }
+        initContentEditors(partDiv);
     } catch (e) {
         console.error('Error inserting group inline form', e);
     }
 
     updatePartStats(partDiv, part);
+
+    return partDiv;
 }
 
 function displayQuestionGroup(partItem, part, group) {
@@ -1123,29 +1526,47 @@ function displayQuestionGroup(partItem, part, group) {
     groupDiv.setAttribute('data-group-id', group.id);
     groupDiv.setAttribute('data-group-task-image', group.task_image || '');
 
+    const hasGroupRichContent = Boolean(group.passage);
+    const groupRichContentHTML = hasGroupRichContent
+        ? `<div class="group-rich-content collapsible-richtext collapsed mb-8 text-muted"><small>${group.passage}</small></div>
+           <div class="content-toggle-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleRichContent(this)" title="Expand content">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+           </div>`
+        : '';
+
     groupDiv.innerHTML = `
-        <div class="group-title">${escapeHtml(group.title)}</div>
+        <div class="title-expand-wrap">
+            <div class="group-title collapsible-title">${escapeHtml(group.title)}</div>
+        </div>
         <div class="group-meta">
             <span><i class="fas fa-tags"></i> ${escapeHtml(getQuestionTypeLabel(group.question_type))}</span>
             <span class="question-total"><i class="fas fa-list-ol"></i> 0 questions</span>
             ${group.max_words ? `<span><i class="fas fa-font"></i> ${escapeHtml(String(group.max_words))} words max</span>` : ''}
             ${group.target_band ? `<span><i class="fas fa-bullseye"></i> Band ${escapeHtml(String(group.target_band))}</span>` : ''}
         </div>
-        ${group.passage ? `<div class="mb-8 text-muted"><small>${escapeHtml(group.passage)}</small></div>` : ''}
+        ${groupRichContentHTML}
         <div class="questions-list" style="display:none;"></div>
         <div class="question-inline-form hidden mt-12 p-12" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;">
             ${getQuestionFormHTML(group.question_type)}
             <div class="mt-8">
-                <button type="button" class="btn btn-sm btn-primary" onclick="saveQuestionToGroup(this)">
+                <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="saveQuestionToGroup(this)">
                     <i class="fas fa-check mr-5"></i>Save Question
                 </button>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleQuestionForm(this)">
+                <button type="button" class="btn btn-sm rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleQuestionForm(this)">
                     <i class="fas fa-times mr-5"></i>Cancel
                 </button>
             </div>
         </div>
         <div class="group-actions">
-            <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleQuestionForm(this)" title="Add new question">
+            <button type="button" class="btn btn-sm btn-outline-secondary title-toggle-btn" onclick="toggleCollapsibleTitle(this)" title="Expand title">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editGroupTitle(this)" title="Edit question group title">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleQuestionForm(this)" title="Add new question">
                 <i class="fas fa-plus mr-2"></i> Question
             </button>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeGroup(this)">
@@ -1156,8 +1577,12 @@ function displayQuestionGroup(partItem, part, group) {
 
     groupsList.appendChild(groupDiv);
 
+    initAnswerHelpEditors(groupDiv);
+    initContentEditors(groupDiv);
     renderQuestionsList(groupDiv, group);
     updatePartStats(partItem, part);
+
+    return groupDiv;
 }
 
 function toggleQuestionForm(button) {
@@ -1170,6 +1595,9 @@ function toggleQuestionForm(button) {
         // Reset form when opening
         if (wasHidden) {
             resetQuestionForm(form);
+            initAnswerHelpEditors(form);
+            initContentEditors(form);
+            initializeMatchingBuilder(form);
             if (form.querySelector('.note-completion-answers')) {
                 renderNoteCompletionAnswerInputs(form);
                 bindNoteCompletionLivePreview(form);
@@ -1188,12 +1616,153 @@ function toggleQuestionForm(button) {
     }
 }
 
+function toggleCollapsibleTitle(button) {
+    const container = button.closest('.part-item, .group-item, .mb-12, .question-card-header');
+    if (!container) {
+        return;
+    }
+
+    const titleEl = container.querySelector('.title-expand-wrap .collapsible-title, .question-title-wrap .collapsible-title');
+    if (!titleEl) {
+        return;
+    }
+
+    const expanded = titleEl.classList.toggle('expanded');
+    const icon = button.querySelector('i');
+    if (icon) {
+        icon.className = expanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+    }
+    button.setAttribute('title', expanded ? 'Collapse title' : 'Expand title');
+}
+
+function toggleRichContent(button) {
+    const item = button.closest('.part-item, .group-item');
+    if (!item) {
+        return;
+    }
+
+    const content = item.querySelector('.part-rich-content, .group-rich-content');
+    if (!content) {
+        return;
+    }
+
+    const isCollapsed = content.classList.toggle('collapsed');
+    const icon = button.querySelector('i');
+    if (icon) {
+        icon.className = isCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    }
+    button.setAttribute('title', isCollapsed ? 'Expand content' : 'Collapse content');
+}
+
+function toggleQuestionCollapse(button, questionIndex) {
+    const groupItem = button.closest('.group-item');
+    const section = button.closest('.section-container');
+    const partItem = button.closest('.part-item');
+    if (!groupItem || !section || !partItem) {
+        return;
+    }
+
+    const skill = section.getAttribute('data-skill');
+    const groupId = groupItem.getAttribute('data-group-id');
+    const partId = partItem.getAttribute('data-part-id');
+    const part = (testData.sections[skill]?.parts || []).find(p => String(p.id) === String(partId));
+    const group = part ? (part.groups || []).find(g => String(g.id) === String(groupId)) : null;
+
+    if (!group || !group.questions || !group.questions[questionIndex]) {
+        return;
+    }
+
+    const currentCollapsed = group.questions[questionIndex].collapsed !== false;
+    group.questions[questionIndex].collapsed = !currentCollapsed;
+
+    const updatedQuestion = group.questions[questionIndex];
+    if (updatedQuestion) {
+        updatedQuestion.titleExpanded = updatedQuestion.collapsed === false;
+    }
+
+    renderQuestionsList(groupItem, group);
+}
+
+function editPartTitle(button) {
+    const partItem = button.closest('.part-item');
+    const section = button.closest('.section-container');
+    if (!partItem || !section) {
+        return;
+    }
+
+    const skill = section.getAttribute('data-skill');
+    const partId = partItem.getAttribute('data-part-id');
+    const part = (testData.sections[skill]?.parts || []).find(item => String(item.id) === String(partId));
+
+    if (!part) {
+        alert('Part not found. Please try again.');
+        return;
+    }
+
+    const nextTitle = prompt('Edit Part Title', part.title || '');
+    if (nextTitle === null) {
+        return;
+    }
+
+    const trimmedTitle = nextTitle.trim();
+    if (!trimmedTitle) {
+        alert('Part title cannot be empty.');
+        return;
+    }
+
+    part.title = trimmedTitle;
+    const titleEl = partItem.querySelector('.part-title');
+    if (titleEl) {
+        titleEl.textContent = trimmedTitle;
+    }
+}
+
+function editGroupTitle(button) {
+    const groupItem = button.closest('.group-item');
+    const partItem = button.closest('.part-item');
+    const section = button.closest('.section-container');
+    if (!groupItem || !partItem || !section) {
+        return;
+    }
+
+    const skill = section.getAttribute('data-skill');
+    const partId = partItem.getAttribute('data-part-id');
+    const groupId = groupItem.getAttribute('data-group-id');
+    const part = (testData.sections[skill]?.parts || []).find(item => String(item.id) === String(partId));
+    const group = part ? (part.groups || []).find(item => String(item.id) === String(groupId)) : null;
+
+    if (!group) {
+        alert('Question group not found. Please try again.');
+        return;
+    }
+
+    const nextTitle = prompt('Edit Question Group Title', group.title || '');
+    if (nextTitle === null) {
+        return;
+    }
+
+    const trimmedTitle = nextTitle.trim();
+    if (!trimmedTitle) {
+        alert('Question group title cannot be empty.');
+        return;
+    }
+
+    group.title = trimmedTitle;
+    const titleEl = groupItem.querySelector('.group-title');
+    if (titleEl) {
+        titleEl.textContent = trimmedTitle;
+    }
+}
+
 function resetQuestionForm(form) {
     const textInput = form.querySelector('.question-text-input');
-    if (textInput) textInput.value = '';
+    if (textInput) setContentEditorValue(textInput, '');
+
+    const titleInput = form.querySelector('.question-title-input');
+    if (titleInput) titleInput.value = '';
 
     const explanationInput = form.querySelector('.question-explanation-input');
-    if (explanationInput) explanationInput.value = '';
+    if (explanationInput) setAnswerHelpValue(explanationInput, '');
 
     const answerInput = form.querySelector('.question-answer-input');
     if (answerInput) answerInput.value = '';
@@ -1215,6 +1784,15 @@ function resetQuestionForm(form) {
 
     const tcWrap = form.querySelector('.tc-builder-wrap');
     if (tcWrap) tcWrap.classList.add('hidden');
+
+    const matchingWrap = form.querySelector('.matching-matrix-wrap');
+    if (matchingWrap) matchingWrap.innerHTML = '';
+
+    const matchingStatementsCount = form.querySelector('.matching-statements-count');
+    if (matchingStatementsCount) matchingStatementsCount.value = '4';
+
+    const matchingColumnsCount = form.querySelector('.matching-columns-count');
+    if (matchingColumnsCount) matchingColumnsCount.value = '5';
 
     form.querySelectorAll('.tc-col-title, .tc-row-title, .tc-cell-text, .tc-cell-answer').forEach(i => i.value = '');
     form.querySelectorAll('.mc-option-row input[type="text"]').forEach(i => i.value = '');
@@ -1257,13 +1835,16 @@ function editQuestion(button, questionIndex) {
 
     const form = groupItem.querySelector('.question-inline-form');
     const qType = group.question_type;
+    const titleInput = form.querySelector('.question-title-input');
+    const questionTitle = question.title || (question.question_data && question.question_data.title) || '';
 
     // Load question data into form
     const textInput = form.querySelector('.question-text-input');
-    if (textInput) textInput.value = question.text || '';
+    if (textInput) setContentEditorValue(textInput, question.text || '');
+    if (titleInput) titleInput.value = questionTitle;
 
     const explanationInput = form.querySelector('.question-explanation-input');
-    if (explanationInput) explanationInput.value = question.explanation || '';
+    if (explanationInput) setAnswerHelpValue(explanationInput, question.explanation || '');
 
     // Populate task image URL if present
     const qTaskImageInput = form.querySelector('.question-task-image-url');
@@ -1297,6 +1878,22 @@ function editQuestion(button, questionIndex) {
     } else if (qType === 'true_false_not_given' || qType === 'yes_no_not_given') {
         const answerSelect = form.querySelector('.question-answer-select');
         if (answerSelect) answerSelect.value = question.correctAnswer || '';
+    } else if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+        const optionMap = normalizeMatchingOptionsMap(question.options);
+        const optionCount = Math.max(2, Object.keys(optionMap).length || 5);
+
+        const statementsInput = form.querySelector('.matching-statements-count');
+        const columnsInput = form.querySelector('.matching-columns-count');
+        if (statementsInput) statementsInput.value = '1';
+        if (columnsInput) columnsInput.value = String(optionCount);
+
+        buildMatchingMatrixInForm(form, 1, optionCount, {
+            options: optionMap,
+            rows: [{
+                text: question.text || '',
+                correctAnswer: question.correctAnswer || ''
+            }]
+        });
     } else if (qType === 'note_completion') {
         renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswer));
         bindNoteCompletionLivePreview(form);
@@ -1452,19 +2049,29 @@ function saveQuestionToGroup(button) {
 
     const form = groupItem.querySelector('.question-inline-form');
     const qType = group.question_type || 'short_answer';
+    const titleInput = form.querySelector('.question-title-input');
+    const title = titleInput ? titleInput.value.trim() : '';
     const textInput = form.querySelector('.question-text-input');
-    const text = textInput ? textInput.value.trim() : '';
+    const text = textInput ? getContentEditorValue(textInput) : '';
+    const textPlain = textInput ? getContentEditorPlainValue(textInput) : '';
     const explanationInput = form.querySelector('.question-explanation-input');
-    const explanation = explanationInput ? explanationInput.value.trim() : '';
+    const explanation = getAnswerHelpValue(explanationInput);
     const pointsValue = parseFloat(form.querySelector('.question-points-input').value);
     const points = Number.isFinite(pointsValue) ? pointsValue : 0;
+    const isMatchingType = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType);
 
-    if (!text) {
+    if (!textPlain && !isMatchingType) {
         alert('Question text is required.');
         return;
     }
 
-    let questionData = { id: Date.now(), type: qType, text, explanation: explanation || null, points };
+    let questionData = { id: Date.now(), type: qType, text, explanation: explanation || null, points, title: title || null };
+    questionData.question_data = {
+        ...(questionData.question_data || {}),
+    };
+    if (title) {
+        questionData.question_data.title = title;
+    }
 
     if (qType === 'multiple_choice_single') {
         const optionRows = form.querySelectorAll('.mc-option-row');
@@ -1508,6 +2115,95 @@ function saveQuestionToGroup(button) {
         const answerSelect = form.querySelector('.question-answer-select');
         questionData.correctAnswer = answerSelect ? answerSelect.value : null;
 
+    } else if (isMatchingType) {
+        const statementRows = Array.from(form.querySelectorAll('.matching-statement-row'));
+        const columnCountInput = form.querySelector('.matching-columns-count');
+        const columnCount = Math.max(2, Math.min(26, parseInt(columnCountInput ? columnCountInput.value : '0', 10) || 0));
+
+        if (!statementRows.length || !columnCount) {
+            alert('Please build the matching matrix first.');
+            return;
+        }
+
+        const optionsMap = {};
+        for (let idx = 0; idx < columnCount; idx++) {
+            const key = matchingKeyFromIndex(idx);
+            optionsMap[key] = key;
+        }
+
+        if (Object.keys(optionsMap).length < 2) {
+            alert('Please create at least 2 answer columns.');
+            return;
+        }
+
+        const matchingQuestions = [];
+
+        for (const row of statementRows) {
+            const statementInput = row.querySelector('.matching-statement-text');
+            const correctSelect = row.querySelector('.matching-correct-select');
+
+            const statementText = statementInput ? statementInput.value.trim() : '';
+            if (!statementText) {
+                continue;
+            }
+
+            const selectedAnswer = correctSelect ? String(correctSelect.value || '').trim().toUpperCase() : '';
+            if (!selectedAnswer || !Object.prototype.hasOwnProperty.call(optionsMap, selectedAnswer)) {
+                alert('Please choose a valid correct answer for every non-empty statement.');
+                return;
+            }
+
+            matchingQuestions.push({
+                id: Date.now() + matchingQuestions.length,
+                type: qType,
+                text: statementText,
+                explanation: explanation || null,
+                points,
+                options: { ...optionsMap },
+                correctAnswer: selectedAnswer
+            });
+        }
+
+        if (!matchingQuestions.length) {
+            alert('Please enter at least one statement.');
+            return;
+        }
+
+        const isEditModeMatching = form.getAttribute('data-edit-mode') === 'true';
+        const editIndexMatching = parseInt(form.getAttribute('data-edit-index'), 10);
+
+        if (isEditModeMatching && Number.isFinite(editIndexMatching)) {
+            const firstMatchingQuestion = { ...matchingQuestions[0] };
+            delete firstMatchingQuestion.id;
+            questionData = {
+                ...questionData,
+                ...firstMatchingQuestion
+            };
+        } else {
+            matchingQuestions.forEach((item) => {
+                item.title = title || null;
+                item.question_data = {
+                    ...(item.question_data || {}),
+                };
+                if (title) {
+                    item.question_data.title = title;
+                }
+            });
+            matchingQuestions.forEach((item) => {
+                group.questions.push(item);
+            });
+
+            resetQuestionForm(form);
+            initializeMatchingBuilder(form);
+            form.classList.add('hidden');
+
+            renderQuestionsList(groupItem, group);
+            updatePartStats(partItem, part);
+            updateSectionStats(section);
+            updateCompletenessStatus();
+            return;
+        }
+
     } else if (qType === 'note_completion') {
         const noteAnswers = collectNoteCompletionAnswers(form);
         const blankCount = countNoteCompletionBlanks(text);
@@ -1533,7 +2229,7 @@ function saveQuestionToGroup(button) {
         const tableStructure = structureInput && structureInput.value ? JSON.parse(structureInput.value) : { headers: [], rows: [] };
         const tableAnswers = answersInput && answersInput.value ? JSON.parse(answersInput.value) : { answers: [] };
 
-        if (!text) {
+        if (!textPlain) {
             alert('Table title / instruction is required.');
             return;
         }
@@ -1570,8 +2266,8 @@ function saveQuestionToGroup(button) {
         try {
             const qImgInput = form.querySelector('.question-task-image-url');
             const qImg = qImgInput ? (qImgInput.value || '').trim() : (group.task_image || null);
+            questionData.question_data = questionData.question_data || {};
             if (qImg) {
-                questionData.question_data = questionData.question_data || {};
                 questionData.question_data.task_image = qImg;
             }
         } catch (e) {}
@@ -1584,8 +2280,8 @@ function saveQuestionToGroup(button) {
         try {
             const qImgInput = form.querySelector('.question-task-image-url');
             const qImg = qImgInput ? (qImgInput.value || '').trim() : (group.task_image || null);
+            questionData.question_data = questionData.question_data || {};
             if (qImg) {
-                questionData.question_data = questionData.question_data || {};
                 questionData.question_data.task_image = qImg;
             }
         } catch (e) {
@@ -1597,6 +2293,7 @@ function saveQuestionToGroup(button) {
 
     // Reset form
     resetQuestionForm(form);
+    initializeMatchingBuilder(form);
     form.classList.add('hidden');
 
     renderQuestionsList(groupItem, group);
@@ -1633,6 +2330,9 @@ function renderQuestionsList(groupItem, group) {
     let slotIndex = 1;
     list.innerHTML = group.questions.map((question, qIndex) => {
         const slotCount = question.slotCount || 1;
+        const isCollapsed = question.collapsed !== false;
+        const isTitleExpanded = question.titleExpanded === true || !isCollapsed;
+        const titleValue = question.title || (question.question_data && question.question_data.title) || '';
         const slotLabel = slotCount > 1
             ? `Q${slotIndex}–Q${slotIndex + slotCount - 1}`
             : `Q${slotIndex}`;
@@ -1665,14 +2365,16 @@ function renderQuestionsList(groupItem, group) {
         }
 
         return `<div class="mb-12" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;position:relative;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-                <div style="flex:1;">
+            <div class="question-card-header">
+                <div class="question-card-main">
                     <span class="question-badge">${slotLabel}</span>
-                    <div style="margin-top:8px;font-weight:500;color:#1f2937;">${escapeHtml(question.text)}</div>
-                    ${question.explanation ? `<div style="margin-top:6px;font-size:12px;color:#0f766e;font-weight:600;">Answer Help: ${escapeHtml(question.explanation)}</div>` : ''}
-                    ${detailHTML}
+                    ${titleValue ? `<div class="question-title-wrap"><div class="question-title-text collapsible-title ${isTitleExpanded ? 'expanded' : ''}">${escapeHtml(titleValue)}</div></div>` : ''}
+                    <div class="question-preview-text">${escapeHtml(editorHtmlToPlainText(question.text || ''))}</div>
                 </div>
-                <div style="display:flex;gap:6px;flex-shrink:0;">
+                <div class="question-actions">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleQuestionCollapse(this, ${qIndex})" title="${isCollapsed ? 'Expand question' : 'Collapse question'}">
+                        <i class="fas ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="editQuestion(this, ${qIndex})" title="Edit question">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -1680,6 +2382,11 @@ function renderQuestionsList(groupItem, group) {
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
+            </div>
+            <div class="question-card-body ${isCollapsed ? 'hidden' : ''}" style="margin-top:8px;">
+                <div style="font-size:13px;color:#1f2937;line-height:1.45;">${question.text || ''}</div>
+                ${question.explanation ? `<div style="margin-top:6px;font-size:12px;color:#0f766e;font-weight:600;">Answer Help:</div><div style="font-size:12px;color:#0f766e;">${question.explanation}</div>` : ''}
+                ${detailHTML}
             </div>
         </div>`;
     }).join('');
@@ -1762,7 +2469,8 @@ function normalizeTableCellAnswers(rawAnswer) {
 }
 
 function countNoteCompletionBlanks(text) {
-    const matches = String(text || '').match(/_{2,}/g);
+    const plainText = editorHtmlToPlainText(String(text || ''));
+    const matches = plainText.match(/_{2,}/g);
     return matches ? matches.length : 0;
 }
 
@@ -1835,7 +2543,7 @@ function renderNoteCompletionAnswerInputs(form, values = []) {
         return;
     }
 
-    const blankCount = countNoteCompletionBlanks(textInput ? textInput.value : '');
+    const blankCount = countNoteCompletionBlanks(textInput ? getContentEditorValue(textInput) : '');
     summary.innerHTML = blankCount > 0
         ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one answer per blank in order.`
         : 'Type the note text with <code>___</code> for each blank.';
@@ -2064,12 +2772,18 @@ function getQuestionFormHTML(questionType) {
     const isCompletion = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling'].includes(questionType);
 
     let html = '';
+    const titleField = `<div class="form-row">
+        <div class="form-group">
+            <label class="input-label">Question Title</label>
+            <input type="text" class="form-control question-title-input" placeholder="Optional short title for this question">
+        </div>
+    </div>`;
 
     if (questionType === 'essay') {
-        html += `<div class="form-row">
+        html += `${titleField}<div class="form-row">
             <div class="form-group">
                 <label class="input-label">Prompt / Task *</label>
-                <textarea class="form-control question-text-input" rows="3" placeholder="Enter the essay prompt or task"></textarea>
+                <textarea class="form-control question-text-input js-richtext-editor" data-height="160" rows="3" placeholder="Enter the essay prompt or task"></textarea>
             </div>
         </div>
         <div class="form-row">
@@ -2081,7 +2795,7 @@ function getQuestionFormHTML(questionType) {
         <div class="form-row">
             <div class="form-group">
                 <label class="input-label">Model Answer</label>
-                <textarea class="form-control question-explanation-input" rows="3" placeholder="Provide a model answer or guidance for review..."></textarea>
+                <textarea class="form-control question-explanation-input js-answer-help-editor" rows="3" data-height="180" placeholder="Provide a model answer or guidance for review..."></textarea>
             </div>
         </div>
         <div class="form-row">
@@ -2099,16 +2813,16 @@ function getQuestionFormHTML(questionType) {
         const inputType = isMCSingle ? 'radio' : 'checkbox';
         const groupName = 'mc_correct_' + Date.now();
         const hint = isMCSingle ? 'Select the one correct answer.' : 'Check all correct answers.';
-        html += `<div class="form-row">
+        html += `${titleField}<div class="form-row">
             <div class="form-group">
                 <label class="input-label">Question Text *</label>
-                <textarea class="form-control question-text-input" rows="2" placeholder="Enter the question"></textarea>
+                <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Enter the question"></textarea>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label class="input-label">Answer Help</label>
-                <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
             </div>
         </div>
         <div class="mc-options-container">
@@ -2133,16 +2847,16 @@ function getQuestionFormHTML(questionType) {
             ? ['True', 'False', 'Not Given']
             : ['Yes', 'No', 'Not Given'];
         const optionsHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
-        html += `<div class="form-row">
+        html += `${titleField}<div class="form-row">
             <div class="form-group">
                 <label class="input-label">Statement *</label>
-                <textarea class="form-control question-text-input" rows="2" placeholder="Enter the statement to evaluate"></textarea>
+                <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Enter the statement to evaluate"></textarea>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label class="input-label">Answer Help</label>
-                <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
             </div>
         </div>
         <div class="form-row">
@@ -2157,41 +2871,54 @@ function getQuestionFormHTML(questionType) {
         </div>`;
 
     } else if (isMatching) {
-        html += `<div class="form-row">
-            <div class="form-group">
-                <label class="input-label">Statement / Item *</label>
-                <textarea class="form-control question-text-input" rows="2" placeholder="Enter the statement or item to match"></textarea>
-            </div>
-        </div>
-        <div class="form-row">
+        html += `${titleField}<div class="form-row">
             <div class="form-group">
                 <label class="input-label">Answer Help</label>
-                <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
             </div>
         </div>
         <div class="form-row">
-            <div class="form-group">
-                <label class="input-label">Correct Match (Answer)</label>
-                <input type="text" class="form-control question-answer-input" placeholder="e.g. Paragraph A, Section 2, Feature X">
+            <div class="form-group" style="max-width:160px;">
+                <label class="input-label">Statements</label>
+                <input type="number" class="form-control matching-statements-count" min="1" max="40" value="4">
+            </div>
+            <div class="form-group" style="max-width:160px;">
+                <label class="input-label">Answer Columns</label>
+                <input type="number" class="form-control matching-columns-count" min="2" max="26" value="5">
             </div>
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
                 <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
             </div>
+            <div class="form-group d-flex align-items-end">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateMatchingMatrix(this)">
+                    <i class="fas fa-table mr-4"></i> Build Matrix
+                </button>
+            </div>
+        </div>
+        <div class="alert alert-info py-2 px-3 mb-12">
+            Create statements and answer columns like the test interface. Each statement will be saved as one question row.
+        </div>
+        <div class="matching-matrix-wrap"></div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="input-label">Question Text / Prompt (optional)</label>
+                <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Optional shared prompt for this matching set"></textarea>
+            </div>
         </div>`;
 
     } else if (isCompletion) {
         if (questionType === 'table_completion') {
-            html += `<div class="form-row">
+            html += `${titleField}<div class="form-row">
                 <div class="form-group flex-fill">
                     <label class="input-label">Table Title / Instruction *</label>
-                    <textarea class="form-control question-text-input" rows="2" placeholder="Nhập tiêu đề hoặc hướng dẫn cho bảng"></textarea>
+                    <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Nhập tiêu đề hoặc hướng dẫn cho bảng"></textarea>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group flex-fill">
                     <label class="input-label">Answer Help</label>
-                    <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                    <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
                 </div>
             </div>
             <div class="form-row align-items-end">
@@ -2208,7 +2935,7 @@ function getQuestionFormHTML(questionType) {
                     <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
                 </div>
                 <div class="form-group">
-                    <button type="button" class="btn btn-sm btn-primary" onclick="buildTableCompletionBuilder(this)">
+                    <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="buildTableCompletionBuilder(this)">
                         <i class="fas fa-table"></i> Create Table
                     </button>
                 </div>
@@ -2227,16 +2954,16 @@ function getQuestionFormHTML(questionType) {
                 <input type="hidden" class="tc-table-answers-json">
             </div>`;
         } else if (questionType === 'note_completion') {
-            html += `<div class="form-row">
+            html += `${titleField}<div class="form-row">
                 <div class="form-group flex-fill">
                     <label class="input-label">Question / Note Text *</label>
-                    <textarea class="form-control question-text-input" rows="2" placeholder="Enter the note text and use ___ for each blank"></textarea>
+                    <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Enter the note text and use ___ for each blank"></textarea>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group flex-fill">
                     <label class="input-label">Answer Help</label>
-                    <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                    <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
                 </div>
             </div>
             <div class="alert alert-info py-2 px-3 mb-12 note-completion-summary">
@@ -2251,16 +2978,16 @@ function getQuestionFormHTML(questionType) {
             </div>`;
         } else {
             const placeholder = 'Enter the sentence/text (use ___ to indicate the blank)';
-            html += `<div class="form-row">
+            html += `${titleField}<div class="form-row">
                 <div class="form-group">
                     <label class="input-label">Question / Sentence * <small class="text-muted">(use ___ for blank)</small></label>
-                    <textarea class="form-control question-text-input" rows="2" placeholder="${placeholder}"></textarea>
+                    <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="${placeholder}"></textarea>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="input-label">Answer Help</label>
-                    <textarea class="form-control question-explanation-input" rows="2" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
+                    <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
                 </div>
             </div>
             <div class="form-row">
@@ -2276,10 +3003,10 @@ function getQuestionFormHTML(questionType) {
         }
 
     } else {
-        html += `<div class="form-row">
+        html += `${titleField}<div class="form-row">
             <div class="form-group">
                 <label class="input-label">Question *</label>
-                <textarea class="form-control question-text-input" rows="2" placeholder="Enter the question"></textarea>
+                <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Enter the question"></textarea>
             </div>
         </div>
         <div class="form-row">
@@ -2319,6 +3046,136 @@ function removeMCOption(button) {
         const label = row.querySelector('span');
         if (label) label.textContent = String.fromCharCode(65 + i) + '.';
     });
+}
+
+function matchingKeyFromIndex(index) {
+    let value = Number(index) + 1;
+    let key = '';
+
+    while (value > 0) {
+        const remainder = (value - 1) % 26;
+        key = String.fromCharCode(65 + remainder) + key;
+        value = Math.floor((value - 1) / 26);
+    }
+
+    return key;
+}
+
+function normalizeMatchingOptionsMap(rawOptions) {
+    if (!rawOptions) {
+        return {};
+    }
+
+    if (Array.isArray(rawOptions)) {
+        const map = {};
+        rawOptions.forEach((value, index) => {
+            map[matchingKeyFromIndex(index)] = String(value || '').trim();
+        });
+        return map;
+    }
+
+    if (typeof rawOptions === 'object') {
+        const map = {};
+        Object.keys(rawOptions).forEach((key) => {
+            const normalizedKey = String(key || '').trim().toUpperCase();
+            if (!normalizedKey) {
+                return;
+            }
+
+            map[normalizedKey] = String(rawOptions[key] || '').trim();
+        });
+        return map;
+    }
+
+    return {};
+}
+
+function buildMatchingMatrixInForm(form, statementCount, columnCount, seed = null) {
+    if (!form) {
+        return;
+    }
+
+    const wrap = form.querySelector('.matching-matrix-wrap');
+    if (!wrap) {
+        return;
+    }
+
+    const safeStatements = Math.max(1, Math.min(40, parseInt(statementCount, 10) || 4));
+    const safeColumns = Math.max(2, Math.min(26, parseInt(columnCount, 10) || 5));
+
+    const rowSeed = Array.isArray(seed && seed.rows ? seed.rows : null) ? seed.rows : [];
+
+    const statementRows = [];
+    for (let i = 0; i < safeStatements; i++) {
+        const row = rowSeed[i] || {};
+        const statementText = String(row.text || '').trim();
+        const selectedAnswer = String(row.correctAnswer || '').trim().toUpperCase();
+
+        const selectOptions = [];
+        for (let j = 0; j < safeColumns; j++) {
+            const key = matchingKeyFromIndex(j);
+            selectOptions.push(`<option value="${key}" ${selectedAnswer === key ? 'selected' : ''}>${key}</option>`);
+        }
+
+        statementRows.push(`<tr class="matching-statement-row" data-row-index="${i}">
+            <td style="width:60px;vertical-align:middle;"><strong>${i + 1}</strong></td>
+            <td>
+                <input type="text" class="form-control form-control-sm matching-statement-text" placeholder="Statement ${i + 1}" value="${escapeHtml(statementText)}">
+            </td>
+            <td style="width:130px;">
+                <select class="form-control form-control-sm matching-correct-select">${selectOptions.join('')}</select>
+            </td>
+        </tr>`);
+    }
+
+    wrap.innerHTML = `<div class="matching-builder-card" style="border:1px solid #dbeafe;border-radius:8px;padding:12px;background:#fff;">
+        <div class="table-responsive" style="overflow-x:auto;">
+            <table class="table table-bordered mb-0" style="min-width:620px;">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>Statement</th>
+                        <th style="width:130px;">Correct</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${statementRows.join('')}
+                </tbody>
+            </table>
+        </div>
+    </div>`;
+}
+
+function initializeMatchingBuilder(form) {
+    const matrixWrap = form ? form.querySelector('.matching-matrix-wrap') : null;
+    if (!matrixWrap) {
+        return;
+    }
+
+    const statementsInput = form.querySelector('.matching-statements-count');
+    const columnsInput = form.querySelector('.matching-columns-count');
+
+    buildMatchingMatrixInForm(
+        form,
+        statementsInput ? statementsInput.value : 4,
+        columnsInput ? columnsInput.value : 5
+    );
+}
+
+function generateMatchingMatrix(button) {
+    const form = button ? button.closest('.question-inline-form') : null;
+    if (!form) {
+        return;
+    }
+
+    const statementsInput = form.querySelector('.matching-statements-count');
+    const columnsInput = form.querySelector('.matching-columns-count');
+
+    buildMatchingMatrixInForm(
+        form,
+        statementsInput ? statementsInput.value : 4,
+        columnsInput ? columnsInput.value : 5
+    );
 }
 
 function escapeHtml(text) {
@@ -2406,17 +3263,23 @@ function updateCompletenessStatus() {
     Object.entries(SECTIONS_CONFIG).forEach(([skill, config]) => {
         const parts = testData.sections[skill].parts;
         const partCount = parts.length;
-        const isComplete = isMock ? partCount >= config.mockParts : partCount > 0;
+        const isRequiredForMock = isMock && config.mockParts > 0;
+        const isComplete = isRequiredForMock ? partCount >= config.mockParts : partCount > 0;
         const hasAny = partCount > 0;
         const statusSpan = checklist.querySelector(`.status-${skill}`);
 
         if (statusSpan) {
-            statusSpan.textContent = isComplete ? '✓' : (hasAny ? '◐' : '○');
-            statusSpan.style.color = isComplete ? '#10b981' : (hasAny ? '#f59e0b' : '#d1d5db');
+            if (isMock && !isRequiredForMock) {
+                statusSpan.textContent = hasAny ? '✓' : '○';
+                statusSpan.style.color = hasAny ? '#10b981' : '#d1d5db';
+            } else {
+                statusSpan.textContent = isComplete ? '✓' : (hasAny ? '◐' : '○');
+                statusSpan.style.color = isComplete ? '#10b981' : (hasAny ? '#f59e0b' : '#d1d5db');
+            }
         }
 
         if (hasAny) hasAtLeastOneSection = true;
-        if (isMock && !isComplete) allMockComplete = false;
+        if (isRequiredForMock && !isComplete) allMockComplete = false;
     });
 
     const status = document.getElementById('completenessStatus');
@@ -2433,6 +3296,35 @@ function setupFormValidation() {
     document.getElementById('testForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
+        const submitter = e.submitter || document.activeElement;
+        const submitAction = submitter && submitter.getAttribute && submitter.getAttribute('name') === 'submit_action'
+            ? submitter.value
+            : 'submit';
+
+        const submitActionInput = document.getElementById('submitActionInput');
+        if (submitActionInput) {
+            submitActionInput.value = submitAction;
+        }
+
+        if (submitAction === 'draft' || submitAction === 'preview') {
+            if (submitAction === 'preview') {
+                let totalParts = 0;
+                Object.values(testData.sections).forEach(section => {
+                    totalParts += section.parts.length;
+                });
+
+                if (totalParts === 0) {
+                    alert('Please add at least 1 part before previewing the test.');
+                    return;
+                }
+            }
+
+            preserveSectionAudioFiles();
+            document.getElementById('questionGroupsData').value = JSON.stringify(testData);
+            document.getElementById('testForm').submit();
+            return;
+        }
+
         const testType = document.getElementById('testTypeSelect').value;
         if (!testType) {
             alert('Please select a test type');
@@ -2445,11 +3337,11 @@ function setupFormValidation() {
         if (isMock) {
             Object.entries(SECTIONS_CONFIG).forEach(([skill, config]) => {
                 const parts = testData.sections[skill].parts;
-                if (parts.length < config.mockParts) {
+                if (config.mockParts > 0 && parts.length < config.mockParts) {
                     issues.push(`${config.title}: need ${config.mockParts} parts`);
                 }
 
-                if (parts.length === 0) {
+                if (config.mockParts > 0 && parts.length === 0) {
                     issues.push(`${config.title}: missing parts`);
                 }
 

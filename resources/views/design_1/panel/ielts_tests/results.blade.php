@@ -16,7 +16,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            background: #e5e5e5;
+            background: linear-gradient(180deg, #ecebf3 0%, #edf0f6 62%, #eaf4f1 100%);
             height: 100vh;
             overflow: hidden;
             color: #111;
@@ -35,7 +35,7 @@
             justify-content: space-between;
             padding: 0 16px;
             z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+            box-shadow: none;
         }
         .res-header-user {
             display: flex;
@@ -83,12 +83,12 @@
         }
         .res-back-btn {
             padding: 8px 20px;
-            background: #fff;
-            border: 1.5px solid #333;
+            background: #511D99;
+            border: 1px solid #511D99;
             border-radius: 50px;
             font-size: 13px;
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: #fff;
             cursor: pointer;
             text-decoration: none;
             display: flex;
@@ -97,7 +97,7 @@
             flex-shrink: 0;
             transition: background 0.2s;
         }
-        .res-back-btn:hover { background: #f5f5f5; color: #111; text-decoration: none; }
+        .res-back-btn:hover { background: #3f1777; border-color: #3f1777; color: #fff; text-decoration: none; }
         .res-back-btn::before { content: '\2190'; font-size: 14px; }
 
         /* ===== MAIN LAYOUT ===== */
@@ -115,7 +115,7 @@
             background: #fff;
             border-radius: 12px;
             padding: 20px 22px 16px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            box-shadow: none;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -205,15 +205,16 @@
         .res-detail-btn {
             display: inline-block;
             padding: 10px 36px;
-            border: 1.5px solid #555;
+            border: 1px solid #511D99;
+            background: #511D99;
             border-radius: 50px;
             font-size: 14px;
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: #fff;
             text-decoration: none;
             transition: background 0.2s;
         }
-        .res-detail-btn:hover { background: #f5f5f5; color: #111; text-decoration: none; }
+        .res-detail-btn:hover { background: #3f1777; color: #fff; text-decoration: none; }
 
         /* ===== RIGHT CARD ===== */
         .res-right {
@@ -222,7 +223,7 @@
             background: #fff;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            box-shadow: none;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -411,7 +412,7 @@
             background: #fff;
             border-radius: 12px;
             padding: 20px 22px 16px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            box-shadow: none;
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -525,8 +526,8 @@
         /* Writing / Speaking for multi-skill card */
         .res-multi-wr-list { display: flex; flex-direction: column; gap: 18px; flex: 1; justify-content: center; align-items: center; }
         .res-multi-wr-item {
-            border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 18px 32px;
-            background: #fafafa; width: 78%;
+            border: none; border-radius: 10px; padding: 18px 32px;
+            background: #fff; width: 78%;
         }
         .res-multi-wr-title { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 6px; }
         .res-multi-wr-status { font-size: 13px; color: #555; }
@@ -550,11 +551,12 @@
         .res-skill-footer { margin-top: 10px; text-align: center; flex-shrink: 0; }
         .res-skill-detail-btn {
             display: inline-block; padding: 8px 28px;
-            border: 1.5px solid #555; border-radius: 50px;
-            font-size: 13px; font-weight: 600; color: #333; text-decoration: none;
+            border: 1px solid #511D99; border-radius: 50px;
+            font-size: 13px; font-weight: 700; color: #fff; text-decoration: none;
+            background: #511D99;
             transition: background .2s;
         }
-        .res-skill-detail-btn:hover { background: #f5f5f5; color: #111; text-decoration: none; }
+        .res-skill-detail-btn:hover { background: #3f1777; color: #fff; text-decoration: none; }
 
         @media (max-width: 900px) {
             .res-multi-grid { grid-template-columns: 1fr !important; }

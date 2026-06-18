@@ -168,27 +168,19 @@
                     </div>
 
                     <div class="tab-pane fade" id="text-quiz-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tabpanel" aria-labelledby="text-quiz-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}">
-                        <div class="interactive-quiz-builder" data-name-prefix="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][interactive_quiz]">
-                            <div class="form-group">
-                                <label class="form-group-label">Quiz title</label>
-                                <input type="text" name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][interactive_quiz][title]" class="form-control" placeholder="Enter quiz title">
-                            </div>
-
-                            <div class="quiz-questions-wrapper">
-                                <div class="d-flex align-items-center justify-content-between mb-8">
-                                    <label class="form-group-label mb-0">Questions</label>
-                                    <button type="button" class="btn btn-sm btn-outline-primary js-add-quiz-question">
-                                        <x-iconsax-lin-add class="icons" width="14px" height="14px"/>
-                                        Add question
-                                    </button>
-                                </div>
-
-                                <div class="quiz-questions-list"></div>
-                            </div>
-                        </div>
+                        @php
+                            $textLessonQuiz = !empty($textLesson) ? ($textLesson->interactive_quiz ?? []) : [];
+                        @endphp
+                        @include('design_1.panel.webinars.create.includes.accordions.partials.interactive_quiz_builder', [
+                            'namePrefix' => "ajax[" . (!empty($textLesson) ? $textLesson->id : 'new') . "][interactive_quiz]",
+                            'quizData' => $textLessonQuiz,
+                        ])
                     </div>
 
                     <div class="tab-pane fade" id="text-notes-{{ !empty($textLesson) ? $textLesson->id : 'record' }}" role="tabpanel" aria-labelledby="text-notes-tab-{{ !empty($textLesson) ? $textLesson->id : 'record' }}">
+                        @php
+                            $textLessonNotes = !empty($textLesson) ? ($textLesson->lecture_notes ?? []) : [];
+                        @endphp
                         <div class="lecture-notes-builder" data-name-prefix="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][lecture_notes]">
                             <div class="d-flex align-items-center justify-content-between mb-8">
                                 <label class="form-group-label mb-0">Lecture Notes</label>
@@ -198,7 +190,18 @@
                                 </button>
                             </div>
 
-                            <div class="lecture-notes-list"></div>
+                            <div class="lecture-notes-list">
+                                @foreach($textLessonNotes as $noteIndex => $note)
+                                    <div class="lecture-note-item border rounded-8 p-12 mb-12" data-note-index="{{ $noteIndex }}">
+                                        <div class="d-flex align-items-center justify-content-between mb-8">
+                                            <label class="form-group-label mb-0">Note</label>
+                                            <button type="button" class="btn btn-xs btn-outline-danger js-remove-lecture-note">Remove</button>
+                                        </div>
+                                        <input type="text" class="form-control mb-8" name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][lecture_notes][{{ $noteIndex }}][title]" placeholder="Note title" value="{{ $note['title'] ?? '' }}">
+                                        <textarea class="form-control" name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][lecture_notes][{{ $noteIndex }}][content]" rows="4" placeholder="Note content">{{ $note['content'] ?? '' }}</textarea>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
 

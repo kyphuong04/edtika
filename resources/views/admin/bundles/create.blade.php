@@ -192,8 +192,31 @@
                                             </div>
 
                                             <div class="form-group mt-15">
-                                                <label class="input-label">{{ trans('public.price') }} ({{ $currency }})</label>
-                                                <input type="text" name="price" value="{{ !empty($bundle) ? $bundle->price : old('price') }}" class="form-control @error('price')  is-invalid @enderror" placeholder="{{ trans('public.0_for_free') }}"/>
+                                                @php
+                                                    $selectedBundleCurrency = old('price_currency', !empty($bundle) ? $bundle->getPriceCurrency() : 'USD');
+                                                    if (!in_array($selectedBundleCurrency, ['USD', 'VND'])) {
+                                                        $selectedBundleCurrency = 'USD';
+                                                    }
+
+                                                    $bundlePriceValue = old('price');
+                                                    if (is_null($bundlePriceValue) and !empty($bundle) and !empty($bundle->price)) {
+                                                        $bundlePriceValue = $bundle->price;
+                                                    }
+                                                @endphp
+
+                                                <label class="input-label">{{ trans('public.price') }}</label>
+                                                <select name="price_currency" class="form-control @error('price_currency') is-invalid @enderror">
+                                                    <option value="USD" {{ $selectedBundleCurrency == 'USD' ? 'selected' : '' }}>USD</option>
+                                                    <option value="VND" {{ $selectedBundleCurrency == 'VND' ? 'selected' : '' }}>VND</option>
+                                                </select>
+                                                @error('price_currency')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+
+                                                <div class="mt-10 d-flex align-items-center">
+                                                    <span class="has-translation bg-gray-100 text-gray-500">{{ currencySign($selectedBundleCurrency) }}</span>
+                                                    <input type="text" name="price" value="{{ $bundlePriceValue }}" class="form-control @error('price')  is-invalid @enderror" placeholder="{{ trans('public.0_for_free') }}"/>
+                                                </div>
                                                 @error('price')
                                                 <div class="invalid-feedback">
                                                     {{ $message }}

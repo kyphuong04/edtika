@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\IeltsTest;
 
 class ContentDeleteRequest extends Model
 {
@@ -46,6 +47,11 @@ class ContentDeleteRequest extends Model
         return $this->belongsTo(Blog::class, 'targetable_id')->where('targetable_type', 'App\Models\Blog');
     }
 
+        public function ieltsTest()
+        {
+            return $this->belongsTo(IeltsTest::class, 'targetable_id')->where('targetable_type', 'App\Models\IeltsTest');
+        }
+
 
     /* ==========
      | Helpers
@@ -67,6 +73,9 @@ class ContentDeleteRequest extends Model
             case "App\Models\Blog":
                 $item = Blog::where('id', $this->targetable_id)->first();
                 break;
+                case "App\Models\IeltsTest":
+                    $item = IeltsTest::where('id', $this->targetable_id)->first();
+                    break;
         }
 
         return $item;
@@ -92,6 +101,10 @@ class ContentDeleteRequest extends Model
             case "App\Models\Blog":
                 $type = "post";
                 break;
+
+                case "App\Models\IeltsTest":
+                    $type = "ielts_test";
+                    break;
         }
 
         return $type;

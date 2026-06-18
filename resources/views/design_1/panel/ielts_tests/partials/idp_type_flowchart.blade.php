@@ -22,11 +22,11 @@
                                    '<input type="text" class="idp-input" value="' . e($saved) . '" 
                                            oninput="autoSave(' . $q->id . ', this.value)">';
                         },
-                        e($step['text'] ?? ''),
+                        ($step['text'] ?? ''),
                         1
                     ) !!}
                 @else
-                    {{ $step['text'] ?? '' }}
+                    {!! $step['text'] ?? '' !!}
                 @endif
             </div>
             @if(!$loop->last)
@@ -50,14 +50,14 @@
                                    '<input type="text" class="idp-input" value="' . e($saved) . '" 
                                            oninput="autoSave(' . $q->id . ', this.value)">';
                         },
-                        e($text),
+                        $text,
                         1
                     ) !!}
                 @else
                     <span class="idp-q-num">{{ $qNum }}</span>
                     <input type="text" class="idp-input" value="{{ $saved }}" 
                            oninput="autoSave({{ $q->id }}, this.value)">
-                    {{ $text }}
+                    {!! $text !!}
                 @endif
             </div>
             @if(!$loop->last)

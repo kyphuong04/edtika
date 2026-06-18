@@ -99,7 +99,7 @@
         #panelSidebar  { top: 0 !important; height: 100vh !important; }
         #panelSidebar .panel-sidebar__contents { max-height: 100vh !important; display: flex !important; flex-direction: column !important; height: 100% !important; }
         #panelSidebar .panel-sidebar__scroll-area { flex: 1 !important; display: flex !important; flex-direction: column !important; overflow-y: auto !important; overflow-x: hidden !important; min-height: 0 !important; }
-        #panelSidebar #sidebarAccordions { width: 100% !important; min-height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: space-evenly !important; padding: 8px 0 !important; }
+        #panelSidebar #sidebarAccordions { width: 100% !important; min-height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: flex-start !important; gap: 10px !important; padding: 8px 0 !important; }
         #panelSidebar #sidebarAccordions > .mt-16 { margin-top: 0 !important; }
         .panel-content__scrollable { height: 100vh !important; }
 
@@ -135,6 +135,35 @@
         .panel-sidebar__menu:hover,
         .panel-sidebar__menu-item:hover {
             background-color: #F3F4F6 !important;
+        }
+
+        .panel-sidebar__menu.sidenav-item-active,
+        .panel-sidebar__menu-item.sidenav-item-active,
+        .accordion .panel-sidebar__menu.accordion__title.sidenav-item-active {
+            background-color: #511D99 !important;
+            border-radius: 12px !important;
+        }
+
+        .panel-sidebar__menu.sidenav-item-active:hover,
+        .panel-sidebar__menu-item.sidenav-item-active:hover,
+        .accordion .panel-sidebar__menu.accordion__title.sidenav-item-active:hover {
+            background-color: #511D99 !important;
+        }
+
+        .panel-sidebar__menu.sidenav-item-active .sidebar-text,
+        .panel-sidebar__menu.sidenav-item-active .sidebar-icon,
+        .panel-sidebar__menu.sidenav-item-active .collapse-arrow-icon,
+        .panel-sidebar__menu-item.sidenav-item-active .sidebar-text,
+        .panel-sidebar__menu-item.sidenav-item-active .sidebar-icon {
+            color: #FFFFFF !important;
+        }
+
+        .panel-sidebar__menu.sidenav-item-active .sidebar-icon *,
+        .panel-sidebar__menu-item.sidenav-item-active .sidebar-icon *,
+        .panel-sidebar__menu.sidenav-item-active .collapse-arrow-icon *,
+        .panel-sidebar__menu-item.sidenav-item-active .collapse-arrow-icon * {
+            fill: none !important;
+            stroke: #FFFFFF !important;
         }
         
         .accordion .panel-sidebar__menu.accordion__title:hover {

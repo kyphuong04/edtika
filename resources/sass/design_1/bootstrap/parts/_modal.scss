@@ -282,6 +282,8 @@
         order: 2;
         background-color: var(--edtika-primary) !important;
         border-color: var(--edtika-primary) !important;
+            /* Ensure button text is visible on primary background */
+            color: #ffffff !important;
 
         &:hover,
         &:focus,

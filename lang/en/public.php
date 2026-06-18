@@ -158,7 +158,7 @@ return [
 'files' => 'Files',
 'file' => 'File',
 'source' => 'Source',
-'add_files' => 'Add File',
+'add_files' => 'Add Lesson',
 'add_new_files' => 'Add New File',
 'files_no_result' => 'No files available!',
 'files_no_result_hint' => 'You can upload course videos, exercises, projects, and attachments as files.',
@@ -403,12 +403,12 @@ return [
 'parts' => 'Parts',
 'content_defined' => 'Content Defined',
 'no_chapter' => 'No Sections Available',
-'add_file' => 'Add File',
+'add_file' => 'Add Lesson',
 'topic_post' => 'Topic Post',
 
 'forbidden_request_toast_lang' => 'Forbidden Request',
 'forbidden_request_toast_msg_lang' => 'You do not have access to this content.',
 'redirect_to_app' => 'Redirecting to the app',
-
-
+'loading' => 'Loading...',
+'join' => 'Join',
 ];

@@ -752,26 +752,23 @@ class QuizController extends Controller
                                     ->first();
 
                                 if ($question and !empty($result['answer'])) {
-                                    $answer = QuizzesQuestionsAnswer::where('id', $result['answer'])
-                                        ->where('question_id', $question->id)
-                                        ->where('creator_id', $quiz->creator_id)
-                                        ->first();
-
                                     $results[$questionId]['status'] = false;
                                     $results[$questionId]['grade'] = $question->grade;
                                     $results[$questionId]['negative_grade'] = $question->negative_grade ?? null;
 
-                                    if ($answer && $answer->correct) {
+                                    $questionResult = $question->gradeSubmittedAnswer($result['answer']);
+                                    $results[$questionId]['manual_review'] = $questionResult['manual_review'];
+
+                                    if ($questionResult['is_correct']) {
                                         $results[$questionId]['status'] = true;
-                                        $totalMark += (int) $question->grade;
+                                        $totalMark += (int) $questionResult['score'];
                                     } else {
-                                        // Apply negative marking only for multiple-choice if defined
-                                        if ($question->type === 'multiple' && !empty($question->negative_grade)) {
+                                        if (!$questionResult['manual_review'] && !empty($question->negative_grade)) {
                                             $totalMark -= (int) $question->negative_grade;
                                         }
                                     }
 
-                                    if ($question->type == 'descriptive') {
+                                    if ($questionResult['manual_review']) {
                                         $status = 'waiting';
                                     }
                                 }
