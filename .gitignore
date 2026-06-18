@@ -10,6 +10,8 @@ docker-compose.override.yml
 .phpunit.result.cache
 .DS_Store
 Thumbs.db
+.env
+.env.*
 
 # IDE and Editor files
 .vscode/
