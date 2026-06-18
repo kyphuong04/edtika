@@ -2387,6 +2387,7 @@ function checkShowCookieSecurityDialog()
 function getLeafletApiPath()
 {
     return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    //return 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 }
 
 function getDefaultMapsLocation(): array
