@@ -136,7 +136,7 @@
                                             <td>
                                                 <a class="text-dark" href="{{ $post->getUrl() }}" target="_blank">{{ $post->title }}</a>
                                             </td>
-                                            <td>{{ $post->category->title }}</td>
+                                            <td>{{ !empty($post->category) ? $post->category->title : 'Deleted' }}</td>
                                             @if(!empty($post->author->full_name))
                                             <td>{{ $post->author->full_name }}</td>
                                             @else

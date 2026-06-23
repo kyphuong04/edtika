@@ -1,7 +1,7 @@
 <div class="blog-show-body__header position-relative px-24">
     <div class="blog-show-body__header-mask"></div>
 
-    <div class="position-relative bg-white p-24 rounded-32 z-index-2">
+    <div class="position-relative bg-white p-24 rounded-32 z-index-2" style="border: 1px solid var(--edtika-glass-border); backdrop-filter: blur(14px) saturate(130%); -webkit-backdrop-filter: blur(14px) saturate(130%); box-shadow: 0 16px 32px rgba(52, 42, 84, 0.14);">
         <div class="d-flex align-items-center text-white">
             <a href="/" class="text-gray-500">{{ getPlatformName() }}</a>
             <x-iconsax-lin-arrow-right-1 class="icons text-gray-500 mx-2" width="16px" height="16px"/>
@@ -69,17 +69,21 @@
                     </div>
                     <div class="ml-8">
                         <span class="d-block font-12 text-gray-400">{{ trans('public.category') }}</span>
-                        <a href="{{ $post->category->getUrl() }}" class="d-block font-weight-bold text-gray-500 mt-2">{{ $post->category->title }}</a>
+                        @if(!empty($post->category))
+                            <a href="{{ $post->category->getUrl() }}" class="d-block font-weight-bold text-gray-500 mt-2">{{ $post->category->title }}</a>
+                        @else
+                            <span class="d-block font-weight-bold text-gray-500 mt-2">{{ trans('public.no_category') }}</span>
+                        @endif
                     </div>
                 </div>
 
             </div>
 
-            <div class="js-share-post d-flex-center size-40 bg-gray-100 rounded-circle cursor-pointer mt-16 mt-lg-0"
+            {{-- <div class="js-share-post d-flex-center size-40 bg-gray-100 rounded-circle cursor-pointer mt-16 mt-lg-0"
                  data-path="/blog/{{ $post->slug }}/share-modal" data-tippy-content="{{ trans('update.share_this_post_with_others') }}"
             >
-                <x-iconsax-lin-share class="icons text-primary" width="20px" height="20px"/>
-            </div>
+                <x-iconsax-lin-share class="icons" width="20px" height="20px" style="color: #511D99"/>
+            </div> --}}
 
         </div>
     </div>

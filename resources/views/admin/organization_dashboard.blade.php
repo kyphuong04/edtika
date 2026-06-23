@@ -4,6 +4,85 @@
 	<link rel="stylesheet" href="/assets/default/vendors/chartjs/chart.min.css">
 @endpush
 
+@push('styles_top')
+	<style>
+		.main-wrapper > .admin-header {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			overflow: hidden !important;
+			padding: 0 !important;
+			margin: 0 !important;
+			background: transparent !important;
+			border: 0 !important;
+			box-shadow: none !important;
+		}
+
+		.main-wrapper {
+			padding-top: 0 !important;
+		}
+
+		.main-content {
+			margin-top: 0 !important;
+			padding-top: 0 !important;
+		}
+
+		.manager-dashboard.section {
+			margin-top: 0 !important;
+			padding-top: 0 !important;
+		}
+
+		.manager-dashboard > .row:first-child {
+			margin-top: 0 !important;
+		}
+
+		.manager-title-card {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 16px;
+			margin-top: 0 !important;
+		}
+
+		.manager-title-card__text {
+			min-width: 0;
+		}
+
+		.manager-title-card__actions {
+			flex-shrink: 0;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.manager-title-card__actions .language-select > .size-32,
+		.manager-title-card__actions .language-select > .d-flex-center {
+			background: #f3f4f6 !important;
+			border: 1px solid #e5e7eb;
+		}
+
+		.manager-title-card__actions .icons {
+			color: #111827 !important;
+		}
+
+		.manager-title-card__actions .admin-header__badge-counter {
+			top: -2px;
+			right: -2px;
+		}
+
+		@media (max-width: 767.98px) {
+			.manager-title-card {
+				flex-direction: column;
+				align-items: stretch;
+			}
+
+			.manager-title-card__actions {
+				justify-content: flex-end;
+			}
+		}
+	</style>
+@endpush
+
 @section('content')
 	@php
 		$dashboard = $managerDashboard ?? [];
@@ -20,8 +99,14 @@
 		<div class="row mb-16">
 			<div class="col-12">
 				<div class="manager-title-card rounded-16 p-20">
-					<h2 class="font-22 font-weight-bold text-dark mb-4">Manager Dashboard</h2>
-					<p class="text-gray-500 font-13 mb-0">Tổng quan Lead, doanh thu và hiệu suất team trong năm hiện tại.</p>
+					<div class="manager-title-card__text">
+						<h2 class="font-22 font-weight-bold text-dark mb-4">Manager Dashboard</h2>
+						<p class="text-gray-500 font-13 mb-0">Tổng quan Lead, doanh thu và hiệu suất team trong năm hiện tại.</p>
+					</div>
+
+					<div class="manager-title-card__actions">
+						@include('admin.includes.header.notification')
+					</div>
 				</div>
 			</div>
 		</div>

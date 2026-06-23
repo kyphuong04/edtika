@@ -410,4 +410,5 @@ return [
     'average_progress' => 'Tiến độ trung bình',
     'loading' => 'Đang tải...',
     'join' => 'Tham gia',
+    'no_result' => 'Không tìm thấy kết quả.',
 ];

@@ -10,9 +10,17 @@ use App\Models\WordList;
 use App\Models\UserWordProgress;
 use App\Models\AcademicWordList;
 use App\Models\AcademicWordListWord;
+use App\Models\Bundle;
+use App\Models\BundleVocabularySet;
+use App\Models\BundleVocabularyWord;
+use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
+use Maatwebsite\Excel\Facades\Excel;
+use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class DictionaryController extends Controller
 {
@@ -22,6 +30,7 @@ class DictionaryController extends Controller
     public function index()
     {
         $user = Auth::user();
+        /** @var User $user */
 
         // Get Academic Word Lists (Band-based) that user has access to
         $academicWordLists = AcademicWordList::with(['words', 'accessUsers'])
@@ -30,7 +39,9 @@ class DictionaryController extends Controller
             ->map(function($list) use ($user) {
                 $hasAccess = $list->hasAccess($user->id);
                 return [
-                    'id' => $list->id,
+                    'id' => 'academic_' . $list->id,
+                    'source_id' => $list->id,
+                    'source_type' => 'academic',
                     'name' => $list->name,
                     'description' => $list->description,
                     'band_level' => $list->band_level,
@@ -40,19 +51,27 @@ class DictionaryController extends Controller
                 ];
             });
 
-        // Get user's personal "My Word List"
-        $myWordList = WordList::with('flashcards')->firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'category' => 'user',
-                'name' => 'My Word List'
-            ],
-            [
-                'description' => 'My personal vocabulary collection',
-                'is_public' => false,
-                'word_count' => 0
-            ]
-        );
+        $bundleAcademicWordLists = $this->getApprovedBundleVocabularySetsForUser($user)
+            ->map(function (BundleVocabularySet $set) {
+                $bundleTitle = !empty($set->bundle) ? ($set->bundle->title ?: $set->bundle->slug) : ('Bundle #' . $set->bundle_id);
+
+                return [
+                    'id' => 'bundle_' . $set->id,
+                    'source_id' => $set->id,
+                    'source_type' => 'bundle',
+                    'name' => $set->name,
+                    'description' => $bundleTitle . ' - ' . ($set->description ?: 'Bundle vocabulary set'),
+                    'band_level' => 'Bundle',
+                    'word_count' => (int) $set->words_count,
+                    'has_access' => true,
+                    'is_locked' => false,
+                ];
+            });
+
+        $academicWordLists = $academicWordLists->concat($bundleAcademicWordLists)->values();
+
+        // My Word List only contains user-saved words from dictionary search
+        $myWordList = $this->getOrCreatePersonalWordList($user);
 
         // Get user stats
         $userStats = [
@@ -61,6 +80,15 @@ class DictionaryController extends Controller
             'band_estimate' => $user->band_estimate ?? 5.0,
         ];
 
+        $canManageBundleVocabulary = $user->canManageBundleVocabulary();
+        $bundleVocabularyPendingCount = 0;
+
+        if ($user->canApproveBundleVocabulary()) {
+            $bundleVocabularyPendingCount = BundleVocabularySet::query()
+                ->where('status', BundleVocabularySet::STATUS_PENDING)
+                ->count();
+        }
+
         $data = [
             'pageTitle' => trans('panel.dictionary_and_flashcard'),
             'hasApiKey' => true, // Free Dictionary API – no key required
@@ -68,6 +96,8 @@ class DictionaryController extends Controller
             'myWordList' => $myWordList,
             'userStats' => $userStats,
             'authUser' => $user,
+            'canManageBundleVocabulary' => $canManageBundleVocabulary,
+            'bundleVocabularyPendingCount' => $bundleVocabularyPendingCount,
         ];
 
         return view('design_1.panel.dictionary.index_new', $data);
@@ -566,14 +596,78 @@ class DictionaryController extends Controller
     public function flashcardsPreview()
     {
         $user = Auth::user();
-        $flashcards = Flashcard::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->limit(4)
-            ->get();
+
+        $preferredWordList = $this->resolvePreferredWordListForStudent($user);
+
+        if (($preferredWordList['source'] ?? 'my') === 'bundle') {
+            $setIds = $preferredWordList['bundleSetIds'] ?? [];
+
+            $bundleWords = BundleVocabularyWord::query()
+                ->whereIn('vocabulary_set_id', $setIds)
+                ->orderBy('vocabulary_set_id')
+                ->orderBy('sort_order')
+                ->get();
+
+            if ($bundleWords->isNotEmpty()) {
+                $flashcards = $bundleWords->map(function ($word) use ($user) {
+                    $flashcard = Flashcard::query()->updateOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'word' => $word->word,
+                            'part_of_speech' => $word->part_of_speech,
+                        ],
+                        [
+                            'pronunciation' => $word->pronunciation,
+                            'definition' => $word->definition ?: ($word->translation_vi ?: $word->word),
+                            'example' => $word->example,
+                            'translation' => $word->translation_vi,
+                        ]
+                    );
+
+                    return [
+                        'id' => $flashcard->id,
+                        'word' => $flashcard->word,
+                        'part_of_speech' => $flashcard->part_of_speech,
+                        'pronunciation' => $flashcard->pronunciation,
+                        'definition' => $flashcard->definition,
+                        'translation' => $flashcard->translation,
+                        'example' => $flashcard->example,
+                        'image_url' => $word->image_url,
+                        'source' => 'bundle',
+                    ];
+                })->values();
+
+                return response()->json([
+                    'success' => true,
+                    'source' => 'bundle',
+                    'data' => $flashcards,
+                ]);
+            }
+        }
+
+        $myWordList = $this->getOrCreatePersonalWordList($user);
+        $flashcards = $myWordList
+            ->flashcards()
+            ->orderBy('flashcard_word_list.order')
+            ->get()
+            ->map(function ($flashcard) {
+                return [
+                    'id' => $flashcard->id,
+                    'word' => $flashcard->word,
+                    'part_of_speech' => $flashcard->part_of_speech,
+                    'pronunciation' => $flashcard->pronunciation,
+                    'definition' => $flashcard->definition,
+                    'translation' => $flashcard->translation,
+                    'example' => $flashcard->example,
+                    'image_url' => null,
+                    'source' => 'my',
+                ];
+            })->values();
 
         return response()->json([
             'success' => true,
-            'data' => $flashcards
+            'source' => 'my',
+            'data' => $flashcards,
         ]);
     }
 
@@ -1159,6 +1253,7 @@ class DictionaryController extends Controller
                 'is_learned' => $progress ? $progress->is_learned : false,
                 'practice_count' => $progress ? $progress->practice_count : 0,
                 'correct_count' => $progress ? $progress->correct_count : 0,
+                'word_source' => 'academic',
             ];
         });
 
@@ -1171,6 +1266,40 @@ class DictionaryController extends Controller
                 'band_level' => $wordList->band_level,
                 'word_count' => $wordList->word_count,
                 'words' => $words,
+            ]
+        ]);
+    }
+
+    /**
+     * Get bundle vocabulary set details (rendered under Academic Word List section).
+     */
+    public function getBundleWordList($id)
+    {
+        $user = Auth::user();
+
+        $set = $this->getApprovedBundleVocabularySetForUser($user, (int) $id);
+
+        if (!$set) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have access to this bundle vocabulary set',
+            ], 403);
+        }
+
+        $mappedWords = $this->buildBundleVocabularyFlashcardsForSet($user, $set->id);
+
+        $bundleTitle = $set->bundle ? ($set->bundle->title ?: $set->bundle->slug) : ('Bundle #' . $set->bundle_id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $set->id,
+                'name' => $set->name,
+                'description' => $bundleTitle . ' - ' . ($set->description ?: ''),
+                'band_level' => 'Bundle',
+                'word_count' => $mappedWords->count(),
+                'words' => $mappedWords,
+                'source_type' => 'bundle',
             ]
         ]);
     }
@@ -1296,20 +1425,17 @@ class DictionaryController extends Controller
         ]);
 
         $user = Auth::user();
-        
-        // Get My Word List
-        $myWordList = WordList::where('user_id', $user->id)
-            ->where('category', 'user')
-            ->where('name', 'My Word List')
-            ->with('flashcards')
-            ->first();
 
-        if (!$myWordList) {
+        $myWordList = $this->getOrCreatePersonalWordList($user);
+
+        if (!$myWordList || $myWordList->flashcards()->count() < 1) {
             return response()->json([
                 'success' => false,
                 'message' => 'My Word List not found'
             ], 404);
         }
+
+        $myWordList->load('flashcards');
 
         // Get flashcards to practice
         if ($request->flashcard_ids && count($request->flashcard_ids) > 0) {
@@ -1359,6 +1485,87 @@ class DictionaryController extends Controller
             'data' => [
                 'word_list_id' => $myWordList->id,
                 'word_list_name' => $myWordList->name,
+                'source' => 'my',
+                'total_questions' => count($questions),
+                'questions' => $questions,
+            ]
+        ]);
+    }
+
+    /**
+     * Start practice session for bundle vocabulary list shown under Academic section.
+     */
+    public function startBundleWordListPractice(Request $request)
+    {
+        $request->validate([
+            'vocabulary_set_id' => 'required|integer',
+            'flashcard_ids' => 'nullable|array',
+            'flashcard_ids.*' => 'exists:user_flashcards,id',
+        ]);
+
+        $user = Auth::user();
+        $set = $this->getApprovedBundleVocabularySetForUser($user, (int) $request->vocabulary_set_id);
+
+        if (!$set) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have access to this bundle vocabulary set',
+            ], 403);
+        }
+
+        $allFlashcards = $this->buildBundleVocabularyFlashcardsForSet($user, $set->id);
+
+        if ($allFlashcards->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No words found in this bundle vocabulary set',
+            ], 404);
+        }
+
+        if ($request->flashcard_ids && count($request->flashcard_ids) > 0) {
+            $practiceFlashcards = $allFlashcards->whereIn('id', $request->flashcard_ids);
+        } else {
+            $practiceFlashcards = $allFlashcards;
+        }
+
+        if ($practiceFlashcards->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No words to practice'
+            ], 400);
+        }
+
+        $questions = [];
+        foreach ($practiceFlashcards as $flashcard) {
+            $wrongFlashcards = $allFlashcards
+                ->where('id', '!=', $flashcard['id'])
+                ->shuffle()
+                ->take(min(3, max(0, $allFlashcards->count() - 1)));
+
+            $answersData = [
+                ['word' => $flashcard['word'], 'pronunciation' => $flashcard['pronunciation'] ?? ''],
+            ];
+            foreach ($wrongFlashcards as $wf) {
+                $answersData[] = ['word' => $wf['word'], 'pronunciation' => $wf['pronunciation'] ?? ''];
+            }
+            shuffle($answersData);
+
+            $questions[] = [
+                'flashcard_id' => $flashcard['id'],
+                'question' => $flashcard['definition'],
+                'correct_answer' => $flashcard['word'],
+                'answers' => $answersData,
+            ];
+        }
+
+        shuffle($questions);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'word_list_id' => $set->id,
+                'word_list_name' => $set->name,
+                'source' => 'bundle',
                 'total_questions' => count($questions),
                 'questions' => $questions,
             ]
@@ -1446,12 +1653,8 @@ class DictionaryController extends Controller
     public function getMyWordList()
     {
         $user = Auth::user();
-        
-        $myWordList = WordList::where('user_id', $user->id)
-            ->where('category', 'user')
-            ->where('name', 'My Word List')
-            ->with('flashcards')
-            ->first();
+
+        $myWordList = $this->getOrCreatePersonalWordList($user);
 
         if (!$myWordList) {
             return response()->json([
@@ -1459,6 +1662,8 @@ class DictionaryController extends Controller
                 'message' => 'My Word List not found'
             ], 404);
         }
+
+        $myWordList->load('flashcards');
 
         // Get user progress for each flashcard
         $flashcards = $myWordList->flashcards->map(function($flashcard) use ($user) {
@@ -1486,8 +1691,750 @@ class DictionaryController extends Controller
                 'name' => $myWordList->name,
                 'description' => $myWordList->description,
                 'word_count' => $myWordList->word_count,
+                'source' => 'my',
+                'bundle_vocabulary_set_ids' => [],
                 'flashcards' => $flashcards,
             ]
         ]);
+    }
+
+    private function getOrCreatePersonalWordList($user): WordList
+    {
+        return WordList::with('flashcards')->firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'category' => 'user',
+                'name' => 'My Word List'
+            ],
+            [
+                'description' => 'My personal vocabulary collection',
+                'is_public' => false,
+                'word_count' => 0
+            ]
+        );
+    }
+
+    private function getApprovedBundleVocabularySetForUser($user, int $setId): ?BundleVocabularySet
+    {
+        $allowedSetIds = $this->getApprovedBundleVocabularySetsForUser($user)->pluck('id')->toArray();
+
+        if (!in_array($setId, $allowedSetIds, true)) {
+            return null;
+        }
+
+        return BundleVocabularySet::query()
+            ->with(['bundle:id,slug'])
+            ->approved()
+            ->find($setId);
+    }
+
+    private function buildBundleVocabularyFlashcardsForSet($user, int $setId)
+    {
+        $words = BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $setId)
+            ->orderBy('sort_order')
+            ->get();
+
+        return $words->map(function ($word) use ($user) {
+            $flashcard = Flashcard::query()->updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'word' => $word->word,
+                    'part_of_speech' => $word->part_of_speech,
+                ],
+                [
+                    'pronunciation' => $word->pronunciation,
+                    'definition' => $word->definition ?: ($word->translation_vi ?: $word->word),
+                    'example' => $word->example,
+                    'translation' => $word->translation_vi,
+                ]
+            );
+
+            $progress = UserWordProgress::where('user_id', $user->id)
+                ->where('flashcard_id', $flashcard->id)
+                ->first();
+
+            return [
+                'id' => $flashcard->id,
+                'word' => $flashcard->word,
+                'pronunciation' => $flashcard->pronunciation,
+                'definition' => $flashcard->definition,
+                'example' => $flashcard->example,
+                'translation' => $flashcard->translation,
+                'is_learned' => $progress ? $progress->is_learned : false,
+                'practice_count' => $progress ? $progress->practice_count : 0,
+                'correct_count' => $progress ? $progress->correct_count : 0,
+                'word_source' => 'bundle',
+            ];
+        });
+    }
+
+    /**
+     * Bundle Vocabulary Management page for teacher/admin/manager/ceo.
+     */
+    public function bundleVocabularyManage(Request $request)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $status = $request->get('status');
+
+        $setsQuery = BundleVocabularySet::query()
+            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name', 'approver:id,full_name'])
+            ->withCount('words');
+
+        if ($user->canApproveBundleVocabulary()) {
+            if (in_array($status, BundleVocabularySet::$statuses)) {
+                $setsQuery->where('status', $status);
+            }
+        } else {
+            $setsQuery->where('created_by', $user->id);
+        }
+
+        $sets = $setsQuery->orderByDesc('id')->paginate(20);
+
+        $data = [
+            'pageTitle' => trans('panel.bundle_vocabulary_library'),
+            'sets' => $sets,
+            'status' => $status,
+            'availableBundles' => $this->getAvailableBundlesForVocabulary($user),
+            'canApprove' => $user->canApproveBundleVocabulary(),
+        ];
+
+        return view('design_1.panel.dictionary.bundle_vocabulary_manage', $data);
+    }
+
+    public function storeBundleVocabularySet(Request $request)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'bundle_id' => 'required|integer|exists:bundles,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'source_file' => 'required|file|mimes:csv,txt,xlsx,xls|max:20480',
+        ]);
+
+        $bundle = Bundle::query()->findOrFail((int)$request->bundle_id);
+        $this->assertUserCanUploadToBundle($user, $bundle->id);
+
+        $parsedWords = $this->parseUploadedVocabularyFile($request->file('source_file'));
+
+        if (empty($parsedWords)) {
+            return back()->withErrors([
+                'source_file' => trans('panel.bundle_vocabulary_no_valid_words'),
+            ])->withInput();
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $set = BundleVocabularySet::query()->create([
+                'bundle_id' => $bundle->id,
+                'created_by' => $user->id,
+                'name' => $request->name,
+                'description' => $request->description,
+                'status' => BundleVocabularySet::STATUS_DRAFT,
+                'words_count' => 0,
+            ]);
+
+            if ($request->hasFile('source_file')) {
+                $diskPath = $request->file('source_file')->store('bundle-vocabulary', 'public');
+                $set->source_file_path = $diskPath;
+                $set->save();
+            }
+
+            $this->replaceVocabularySetWords($set, $parsedWords);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            Log::error('Bundle vocabulary upload failed', [
+                'user_id' => $user->id,
+                'bundle_id' => $bundle->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'source_file' => trans('panel.bundle_vocabulary_upload_failed'),
+            ])->withInput();
+        }
+
+        return redirect('/panel/dictionary/bundle-vocabulary/manage')
+            ->with('success', trans('panel.bundle_vocabulary_draft_created'));
+    }
+
+    public function showBundleVocabularySet($id)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $set = BundleVocabularySet::query()
+            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name', 'approver:id,full_name'])
+            ->findOrFail($id);
+
+        if (!$user->canApproveBundleVocabulary() && $set->created_by !== $user->id) {
+            abort(403);
+        }
+
+        $words = BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $set->id)
+            ->orderBy('sort_order')
+            ->paginate(100);
+
+        $data = [
+            'pageTitle' => trans('panel.bundle_vocabulary_set_detail'),
+            'set' => $set,
+            'words' => $words,
+            'canApprove' => $user->canApproveBundleVocabulary(),
+            'availableBundles' => $this->getAvailableBundlesForVocabulary($user),
+        ];
+
+        return view('design_1.panel.dictionary.bundle_vocabulary_show', $data);
+    }
+
+    public function updateBundleVocabularySet(Request $request, $id)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $set = BundleVocabularySet::query()->findOrFail($id);
+
+        if (!$user->canApproveBundleVocabulary() && $set->created_by !== $user->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'source_file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:20480',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $set->name = $request->name;
+            $set->description = $request->description;
+
+            if ($request->hasFile('source_file')) {
+                $parsedWords = $this->parseUploadedVocabularyFile($request->file('source_file'));
+
+                if (empty($parsedWords)) {
+                    return back()->withErrors([
+                        'source_file' => trans('panel.bundle_vocabulary_no_valid_words'),
+                    ])->withInput();
+                }
+
+                if (!empty($set->source_file_path)) {
+                    Storage::disk('public')->delete($set->source_file_path);
+                }
+
+                $set->source_file_path = $request->file('source_file')->store('bundle-vocabulary', 'public');
+                $set->status = BundleVocabularySet::STATUS_DRAFT;
+                $set->submitted_at = null;
+                $set->approved_at = null;
+                $set->approved_by = null;
+                $set->rejected_at = null;
+                $set->rejection_note = null;
+                $set->save();
+
+                $this->replaceVocabularySetWords($set, $parsedWords);
+            } else {
+                $set->save();
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            Log::error('Bundle vocabulary set update failed', [
+                'set_id' => $id,
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'source_file' => trans('panel.bundle_vocabulary_update_failed'),
+            ])->withInput();
+        }
+
+        return back()->with('success', trans('panel.bundle_vocabulary_updated'));
+    }
+
+    public function submitBundleVocabularySet($id)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $set = BundleVocabularySet::query()->findOrFail($id);
+
+        if ($set->created_by !== $user->id && !$user->canApproveBundleVocabulary()) {
+            abort(403);
+        }
+
+        if ((int)$set->words_count < 1) {
+            return back()->withErrors([
+                'submit' => trans('panel.bundle_vocabulary_submit_requires_words'),
+            ]);
+        }
+
+        $set->status = BundleVocabularySet::STATUS_PENDING;
+        $set->submitted_at = now();
+        $set->approved_at = null;
+        $set->rejected_at = null;
+        $set->rejection_note = null;
+        $set->approved_by = null;
+        $set->save();
+
+        return back()->with('success', trans('panel.bundle_vocabulary_submitted'));
+    }
+
+    public function approveBundleVocabularySet($id)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canApproveBundleVocabulary()) {
+            abort(403);
+        }
+
+        $set = BundleVocabularySet::query()->findOrFail($id);
+
+        if ((int)$set->words_count < 1) {
+            return back()->withErrors([
+                'approve' => trans('panel.bundle_vocabulary_submit_requires_words'),
+            ]);
+        }
+
+        $set->status = BundleVocabularySet::STATUS_APPROVED;
+        $set->approved_by = $user->id;
+        $set->approved_at = now();
+        $set->rejected_at = null;
+        $set->rejection_note = null;
+        $set->save();
+
+        return back()->with('success', trans('panel.bundle_vocabulary_approved'));
+    }
+
+    public function rejectBundleVocabularySet(Request $request, $id)
+    {
+        $user = Auth::user();
+        /** @var User $user */
+
+        if (!$user->canApproveBundleVocabulary()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'rejection_note' => 'required|string|min:3|max:2000',
+        ]);
+
+        $set = BundleVocabularySet::query()->findOrFail($id);
+
+        $set->status = BundleVocabularySet::STATUS_REJECTED;
+        $set->approved_by = $user->id;
+        $set->approved_at = null;
+        $set->rejected_at = now();
+        $set->rejection_note = $request->rejection_note;
+        $set->save();
+
+        return back()->with('success', trans('panel.bundle_vocabulary_rejected'));
+    }
+
+    private function getAvailableBundlesForVocabulary($user)
+    {
+        $query = Bundle::query()->select('id', 'slug', 'creator_id', 'teacher_id');
+
+        if (!$user->canApproveBundleVocabulary()) {
+            $organizationTeacherIds = [];
+            if ($user->isOrganization()) {
+                $organizationTeacherIds = $user->getOrganizationTeachers()->pluck('id')->toArray();
+            }
+
+            $query->where(function ($subQuery) use ($user, $organizationTeacherIds) {
+                $subQuery->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+
+                if (!empty($organizationTeacherIds)) {
+                    $subQuery->orWhereIn('teacher_id', $organizationTeacherIds);
+                }
+            });
+        }
+
+        return $query->orderByDesc('id')->get();
+    }
+
+    private function assertUserCanUploadToBundle($user, int $bundleId): void
+    {
+        if ($user->canApproveBundleVocabulary()) {
+            return;
+        }
+
+        $allowedBundleIds = $this->getAvailableBundlesForVocabulary($user)->pluck('id')->toArray();
+
+        if (!in_array($bundleId, $allowedBundleIds)) {
+            abort(403);
+        }
+    }
+
+    private function parseUploadedVocabularyFile(UploadedFile $file): array
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $rows = [];
+
+        if (in_array($extension, ['csv', 'txt'])) {
+            $handle = fopen($file->getRealPath(), 'r');
+
+            if ($handle !== false) {
+                while (($row = fgetcsv($handle)) !== false) {
+                    $rows[] = $row;
+                }
+
+                fclose($handle);
+            }
+        } else {
+            $sheets = Excel::toArray([], $file);
+            $rows = $sheets[0] ?? [];
+        }
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        [$columnMap, $startIndex] = $this->resolveVocabularyColumnMap($rows);
+
+        $parsed = [];
+        $sortOrder = 1;
+
+        for ($i = $startIndex; $i < count($rows); $i++) {
+            $row = $rows[$i];
+
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $word = $this->cleanCellValue($row[$columnMap['word']] ?? null);
+
+            if (empty($word)) {
+                continue;
+            }
+
+            $definition = $this->cleanCellValue($row[$columnMap['definition']] ?? null);
+            $translation = $this->cleanCellValue($row[$columnMap['translation']] ?? null);
+
+            if (empty($translation)) {
+                $translation = $this->translateToVietnamese($word);
+            }
+
+            $imageUrl = $this->cleanCellValue($row[$columnMap['image_url']] ?? null);
+            if (empty($imageUrl)) {
+                $imageUrl = $this->buildVocabularyIllustrationUrl($word);
+            }
+
+            $parsed[] = [
+                'word' => $word,
+                'part_of_speech' => $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null),
+                'pronunciation' => $this->cleanCellValue($row[$columnMap['pronunciation']] ?? null),
+                'definition' => $definition,
+                'translation_vi' => $translation,
+                'example' => $this->cleanCellValue($row[$columnMap['example']] ?? null),
+                'image_url' => $imageUrl,
+                'sort_order' => $sortOrder,
+            ];
+
+            $sortOrder++;
+        }
+
+        return $parsed;
+    }
+
+    private function resolveVocabularyColumnMap(array $rows): array
+    {
+        $defaultMap = [
+            'word' => 0,
+            'definition' => 1,
+            'translation' => 2,
+            'example' => 3,
+            'part_of_speech' => 4,
+            'pronunciation' => 5,
+            'image_url' => 6,
+        ];
+
+        $header = $rows[0] ?? [];
+        if (!is_array($header)) {
+            return [$defaultMap, 0];
+        }
+
+        $normalizedHeader = array_map(function ($value) {
+            return strtolower(trim((string)$value));
+        }, $header);
+
+        $aliases = [
+            'word' => ['word', 'term', 'vocabulary'],
+            'definition' => ['definition', 'meaning', 'explanation'],
+            'translation' => ['translation', 'translation_vi', 'vietnamese', 'vi', 'nghia'],
+            'example' => ['example', 'sample', 'example_sentence'],
+            'part_of_speech' => ['part_of_speech', 'part of speech', 'pos', 'word_type'],
+            'pronunciation' => ['pronunciation', 'ipa', 'phonetic'],
+            'image_url' => ['image', 'image_url', 'image link', 'illustration'],
+        ];
+
+        $resolvedMap = $defaultMap;
+        $hasHeader = false;
+
+        foreach ($aliases as $key => $possibleNames) {
+            foreach ($possibleNames as $name) {
+                $index = array_search($name, $normalizedHeader, true);
+                if ($index !== false) {
+                    $resolvedMap[$key] = $index;
+                    if ($key === 'word') {
+                        $hasHeader = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return [$resolvedMap, $hasHeader ? 1 : 0];
+    }
+
+    private function cleanCellValue($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $cleaned = trim(strip_tags((string)$value));
+
+        return $cleaned === '' ? null : $cleaned;
+    }
+
+    private function translateToVietnamese(string $text): string
+    {
+        static $translator = null;
+        static $cache = [];
+
+        $cacheKey = mb_strtolower(trim($text));
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
+
+        $translated = $text;
+
+        try {
+            if ($translator === null) {
+                $translator = new GoogleTranslate();
+                $translator->setSource('en');
+                $translator->setTarget('vi');
+            }
+
+            $result = trim((string)$translator->translate($text));
+            if (!empty($result)) {
+                $translated = $result;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Vocabulary translation fallback used', [
+                'text' => $text,
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        $cache[$cacheKey] = $translated;
+
+        return $translated;
+    }
+
+    private function buildVocabularyIllustrationUrl(string $word): string
+    {
+        $safeWord = urlencode(mb_strtolower(trim($word)));
+
+        return "https://loremflickr.com/640/420/{$safeWord}?lock=" . abs(crc32($word));
+    }
+
+    private function replaceVocabularySetWords(BundleVocabularySet $set, array $parsedWords): void
+    {
+        BundleVocabularyWord::query()->where('vocabulary_set_id', $set->id)->delete();
+
+        $now = now();
+        $rows = [];
+
+        foreach ($parsedWords as $word) {
+            $rows[] = [
+                'vocabulary_set_id' => $set->id,
+                'word' => $word['word'],
+                'part_of_speech' => $word['part_of_speech'] ?? null,
+                'pronunciation' => $word['pronunciation'] ?? null,
+                'definition' => $word['definition'] ?? null,
+                'translation_vi' => $word['translation_vi'] ?? null,
+                'example' => $word['example'] ?? null,
+                'image_url' => $word['image_url'] ?? null,
+                'sort_order' => $word['sort_order'] ?? 0,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            BundleVocabularyWord::query()->insert($chunk);
+        }
+
+        $set->words_count = count($rows);
+        $set->save();
+    }
+
+    private function resolvePreferredWordListForStudent($user): array
+    {
+        $approvedSets = $this->getApprovedBundleVocabularySetsForUser($user);
+
+        if ($approvedSets->isNotEmpty()) {
+            $bundleWordList = $this->syncBundleVocabularyFlashcardsForUser($user, $approvedSets);
+
+            if (!empty($bundleWordList)) {
+                return [
+                    'source' => 'bundle',
+                    'wordList' => $bundleWordList,
+                    'bundleSetIds' => $approvedSets->pluck('id')->toArray(),
+                ];
+            }
+        }
+
+        $myWordList = WordList::with('flashcards')->firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'category' => 'user',
+                'name' => 'My Word List'
+            ],
+            [
+                'description' => 'My personal vocabulary collection',
+                'is_public' => false,
+                'word_count' => 0
+            ]
+        );
+
+        return [
+            'source' => 'my',
+            'wordList' => $myWordList,
+            'bundleSetIds' => [],
+        ];
+    }
+
+    private function getApprovedBundleVocabularySetsForUser($user)
+    {
+        $bundleIds = $user->getPurchasedBundlesIds();
+
+        if (empty($bundleIds)) {
+            return collect();
+        }
+
+        return BundleVocabularySet::query()
+            ->approved()
+            ->whereIn('bundle_id', $bundleIds)
+            ->orderByDesc('approved_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    private function syncBundleVocabularyFlashcardsForUser($user, $approvedSets)
+    {
+        $setIds = $approvedSets->pluck('id')->toArray();
+        if (empty($setIds)) {
+            return null;
+        }
+
+        $words = BundleVocabularyWord::query()
+            ->whereIn('vocabulary_set_id', $setIds)
+            ->orderBy('vocabulary_set_id')
+            ->orderBy('sort_order')
+            ->get();
+
+        if ($words->isEmpty()) {
+            return null;
+        }
+
+        $bundleWordList = WordList::query()->firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'category' => 'bundle_auto',
+                'name' => 'Bundle Vocabulary',
+            ],
+            [
+                'description' => 'Vocabulary synced from approved bundles',
+                'is_public' => false,
+                'word_count' => 0,
+            ]
+        );
+
+        $bundleTitleById = [];
+        $bundles = Bundle::query()
+            ->whereIn('id', $approvedSets->pluck('bundle_id')->toArray())
+            ->get(['id', 'slug']);
+
+        foreach ($bundles as $bundle) {
+            $bundleTitleById[$bundle->id] = $bundle->title ?: $bundle->slug;
+        }
+
+        $bundleTitles = [];
+        foreach ($approvedSets as $set) {
+            if (!empty($bundleTitleById[$set->bundle_id])) {
+                $bundleTitles[] = $bundleTitleById[$set->bundle_id];
+            }
+        }
+        $bundleTitles = array_unique($bundleTitles);
+
+        if (!empty($bundleTitles)) {
+            $bundleWordList->description = trans('panel.bundle_vocabulary_auto_description', [
+                'bundles' => implode(', ', $bundleTitles),
+            ]);
+        }
+
+        $syncData = [];
+        $order = 1;
+
+        foreach ($words as $word) {
+            $flashcard = Flashcard::query()->updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'word' => $word->word,
+                    'part_of_speech' => $word->part_of_speech,
+                ],
+                [
+                    'pronunciation' => $word->pronunciation,
+                    'definition' => $word->definition ?: ($word->translation_vi ?: $word->word),
+                    'example' => $word->example,
+                    'translation' => $word->translation_vi,
+                ]
+            );
+
+            $syncData[$flashcard->id] = ['order' => $order];
+            $order++;
+        }
+
+        $bundleWordList->flashcards()->sync($syncData);
+        $bundleWordList->updateWordCount();
+        $bundleWordList->save();
+
+        return $bundleWordList->load('flashcards');
     }
 }

@@ -244,6 +244,11 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         Route::get('/', 'SearchController@index');
     });
 
+    Route::group(['prefix' => 'dictionary'], function () {
+        Route::view('/', 'design_1.web.dictionary.index');
+        Route::post('/search-first', [\App\Http\Controllers\Panel\DictionaryController::class, 'searchFirst']);
+    });
+
     Route::group(['prefix' => 'tags'], function () {
         Route::get('/{type}/{tag}', 'TagsController@index');
     });

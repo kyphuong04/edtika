@@ -279,7 +279,7 @@ class MyCourseCommentsController extends Controller
 
         if (!empty($comment)) {
 
-            CommentReport::create([
+            $commentReport = CommentReport::create([
                 'webinar_id' => $comment->webinar_id,
                 'product_id' => $comment->product_id,
                 'user_id' => $user->id,
@@ -288,9 +288,12 @@ class MyCourseCommentsController extends Controller
                 'created_at' => time()
             ]);
 
+            $page = !empty($comment->product_id) ? 'products' : 'webinars';
+
             $notifyOptions = [
                 '[u.name]' => $user->full_name,
-                '[content_type]' => trans('admin/main.comment')
+                '[content_type]' => trans('admin/main.comment'),
+                '[link]' => getAdminPanelUrl("/comments/{$page}/reports/{$commentReport->id}/show")
             ];
             sendNotification("new_report_item_for_admin", $notifyOptions, 1);
 

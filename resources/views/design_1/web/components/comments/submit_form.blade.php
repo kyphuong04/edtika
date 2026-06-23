@@ -1,3 +1,17 @@
+<style>
+    .btn {
+        background-color: #511D99;
+        border-color: #511D99;
+        color: #fff;
+    }
+
+    .btn:hover {
+        background-color: #fff;
+        border-color: #511D99;
+        color: #511D99;
+    }
+</style>
+
 @if(empty($authUser))
     <div class="d-flex-center flex-column text-center rounded-12 border-gray-200 border-dashed bg-white p-32 pb-40">
         <div class="d-flex-center size-56 rounded-12 bg-primary-20">
@@ -45,7 +59,7 @@
                 </div>
 
                 <div class="d-flex align-items-center mt-16 mt-lg-0">
-                    <button type="button" class="js-submit-comment-btn btn btn-lg btn-primary">{{ trans('update.submit_comment') }}</button>
+                    <button type="button" class="js-submit-comment-btn btn btn-lg">{{ trans('update.submit_comment') }}</button>
                 </div>
             </div>
         </form>

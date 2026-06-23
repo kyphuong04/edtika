@@ -111,6 +111,7 @@ class BlogPostsController extends Controller
         $data = [
             'pageTitle' => trans('update.create_a_post'),
             'locale' => mb_strtolower(app()->getLocale()),
+            'blogCategories' => BlogCategory::all(),
         ];
 
         if (request()->ajax()) {
@@ -136,6 +137,7 @@ class BlogPostsController extends Controller
         $validator = Validator::make($request->all(), [
             'locale' => 'required',
             'title' => 'required|string|max:255',
+            'category_id' => 'required|numeric|exists:blog_categories,id',
             'subtitle' => 'nullable|string',
             'image' => 'required|file',
             'content' => 'required|string',
@@ -168,6 +170,7 @@ class BlogPostsController extends Controller
         $notifyOptions = [
             '[u.name]' => $user->full_name,
             '[blog_title]' => $blog->title,
+            '[link]' => getAdminPanelUrl("/blog/{$blog->id}/edit"),
         ];
         sendNotification("new_user_blog_post", $notifyOptions, 1);
 
@@ -212,6 +215,7 @@ class BlogPostsController extends Controller
                 'pageTitle' => trans('public.edit') . ' | ' . $post->title,
                 'locale' => mb_strtolower($locale),
                 'post' => $post,
+                'blogCategories' => $blogCategories,
             ];
 
             if ($request->ajax()) {
@@ -240,6 +244,7 @@ class BlogPostsController extends Controller
         $validator = Validator::make($request->all(), [
             'locale' => 'required',
             'title' => 'required|string|max:255',
+            'category_id' => 'required|numeric|exists:blog_categories,id',
             'subtitle' => 'nullable|string',
             'image' => 'nullable|file',
             'content' => 'required|string',
@@ -327,7 +332,7 @@ class BlogPostsController extends Controller
 
         return [
             'slug' => !empty($blog) ? $blog->slug : Blog::makeSlug($data['title']),
-            // remove category_id (not required)
+            'category_id' => $data['category_id'],
             'author_id' => $user->id,
             'enable_comment' => true,
             'study_time' => $data['study_time'] ?? null,

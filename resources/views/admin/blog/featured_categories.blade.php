@@ -47,7 +47,7 @@
 
                                                 @foreach($featuredCategories as $featuredCategory)
                                                     <tr>
-                                                        <td class="text-left">{{ $featuredCategory->category->title }}</td>
+                                                        <td class="text-left">{{ !empty($featuredCategory->category) ? $featuredCategory->category->title : 'Deleted' }}</td>
 
                                                         <td width="80px">
     <div class="btn-group dropdown table-actions position-relative">

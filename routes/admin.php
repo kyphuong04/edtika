@@ -957,6 +957,14 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::post('/{id}/sendNotification', 'BundleController@sendNotificationToStudents');
         });
 
+        Route::group(['prefix' => 'bundle-vocabulary'], function () {
+            Route::get('/', 'BundleVocabularyController@index');
+            Route::get('/{id}', 'BundleVocabularyController@show');
+            Route::post('/{id}/update', 'BundleVocabularyController@update');
+            Route::post('/{id}/approve', 'BundleVocabularyController@approve');
+            Route::post('/{id}/reject', 'BundleVocabularyController@reject');
+        });
+
         Route::group(['prefix' => 'bundle-webinars'], function () {
             Route::post('/store', 'BundleWebinarsController@store');
             Route::post('/{id}/edit', 'BundleWebinarsController@edit');

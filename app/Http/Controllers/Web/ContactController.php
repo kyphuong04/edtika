@@ -43,13 +43,14 @@ class ContactController extends Controller
         unset($data['_token']);
         $data['created_at'] = time();
 
-        Contact::create($data);
+        $contact = Contact::create($data);
 
         $notifyOptions = [
             '[c.u.title]' => $data['subject'],
             '[u.name]' => $data['name'],
             '[time.date]' => dateTimeFormat(time(), 'j M Y H:i'),
             '[c.u.message]' => $data['message'],
+            '[link]' => getAdminPanelUrl("/contacts/{$contact->id}/reply"),
         ];
 
         sendNotification('contact_message_submission_for_admin', $notifyOptions, 1);

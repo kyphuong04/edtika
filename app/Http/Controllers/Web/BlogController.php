@@ -74,6 +74,7 @@ class BlogController extends Controller
             'filterMaxStudyTime' => $filterMaxStudyTime,
             'popularPosts' => $this->getPopularPosts(),
             'recentPosts' => $this->getRecentPosts(),
+            'categorySections' => [],
         ];
 
         $data = array_merge($data, $getListData);
@@ -82,7 +83,55 @@ class BlogController extends Controller
             $data = array_merge($data, $this->getBlogFeaturedContents());
         }
 
+        if (empty($selectedCategory) and empty($selectedAuthor)) {
+            $data['categorySections'] = $this->getCategorySections();
+        }
+
         return view('design_1.web.blog.lists.index', $data);
+    }
+
+    private function getCategorySections()
+    {
+        $categories = BlogCategory::query()
+            ->withCount([
+                'blog' => function ($query) {
+                    $query->where('status', 'publish');
+                }
+            ])
+            ->get();
+
+        return $categories
+            ->filter(function ($category) {
+                return $category->blog_count > 0;
+            })
+            ->map(function ($category) {
+                $posts = Blog::query()
+                    ->where('status', 'publish')
+                    ->where('category_id', $category->id)
+                    ->with([
+                        'category',
+                        'author' => function ($query) {
+                            $query->select('id', 'username', 'full_name', 'bio', 'avatar', 'avatar_settings', 'role_id', 'role_name');
+                        }
+                    ])
+                    ->withCount([
+                        'comments' => function ($query) {
+                            $query->where('status', 'active');
+                        }
+                    ])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(3)
+                    ->get();
+
+                return [
+                    'category' => $category,
+                    'posts' => $posts,
+                ];
+            })
+            ->filter(function ($section) {
+                return $section['posts']->isNotEmpty();
+            })
+            ->values();
     }
 
     private function handleFilters(Request $request, $query, $selectedCategory = null, $selectedAuthor = null)
