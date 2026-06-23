@@ -232,7 +232,7 @@
     <div class="materials-tabs">
         <a href="/panel/bundles" class="tab-btn">Curriculum</a>
         <a href="/panel/courses" class="tab-btn active">My Curriculum</a>
-        <a href="/panel/vocab-coming-soon" class="tab-btn">Vocab &amp; Dictionary</a>
+        <a href="{{ auth()->check() && auth()->user()->canManageBundleVocabulary() ? '/panel/dictionary/bundle-vocabulary/manage' : '/panel/dictionary' }}" class="tab-btn">Vocab &amp; Dictionary</a>
     </div>
 
     {{-- ── My Curriculums Section ──────────────────────── --}}

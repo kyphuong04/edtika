@@ -66,9 +66,24 @@
             min-height: 220px;
         }
 
+        .blog-post-modal-form .note-editor .note-editing-area {
+            overflow: auto;
+        }
+
+        .blog-post-modal-form .note-editor .note-editable img {
+            width: auto !important;
+            height: auto !important;
+            max-width: none !important;
+        }
+
         .btn {
             background-color: #511D99;
             border-color: #511D99;
+
+                    /* Add bg-white-editor class support for description field */
+                    .blog-post-modal-form .bg-white-editor {
+                        margin-top: 24px;
+                    }
             color: #fff;
         }
 
@@ -136,18 +151,32 @@
             const requestFailedText = @json(trans('public.request_failed'));
 
             function initBlogPostEditor($modal) {
-                const $editor = $modal.find('.js-blog-post-editor');
+                const editorConfig = {
+                    dialogsInBody: true,
+                    tabsize: 2,
+                    height: 280,
+                    toolbar: [
+                        ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+                        ['para', ['ul', 'ol', 'paragraph'], ['link', 'unlink'], ['picture', 'video']],
+                    ]
+                };
 
-                if ($editor.length && $.fn.summernote && !$editor.next('.note-editor').length) {
-                    $editor.summernote({
-                        dialogsInBody: true,
-                        tabsize: 2,
-                        height: 280,
-                        placeholder: $editor.attr('placeholder'),
-                        toolbar: [
-                            ['font', ['bold', 'italic', 'underline', 'strikethrough']],
-                            ['para', ['ul', 'ol', 'paragraph'], ['link', 'unlink'], ['picture', 'video']],
-                        ]
+                // Initialize content editor
+                const $contentEditor = $modal.find('.js-blog-post-editor');
+                if ($contentEditor.length && $.fn.summernote && !$contentEditor.next('.note-editor').length) {
+                    $contentEditor.summernote({
+                        ...editorConfig,
+                        placeholder: $contentEditor.attr('placeholder')
+                    });
+                }
+
+                // Initialize description editor
+                const $descriptionEditor = $modal.find('.js-blog-post-editor-description');
+                if ($descriptionEditor.length && $.fn.summernote && !$descriptionEditor.next('.note-editor').length) {
+                    $descriptionEditor.summernote({
+                        ...editorConfig,
+                        height: 150,
+                        placeholder: $descriptionEditor.attr('placeholder')
                     });
                 }
             }

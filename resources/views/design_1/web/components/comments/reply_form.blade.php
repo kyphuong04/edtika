@@ -1,3 +1,17 @@
+<style>
+    .btn-1 {
+        background-color: #fff;
+        border-color: #511D99;
+        color: #511D99;
+    }
+
+    .btn-1:hover {
+        background-color: #511D99;
+        border-color: #511D99;
+        color: #fff;
+    }
+</style>
+
 <div class="bg-white mt-16 p-16 rounded-8 border-gray-200 border-dashed">
     <h5 class="font-14 font-weight-bold">{{ trans('update.reply_to_comment') }}</h5>
 
@@ -22,7 +36,7 @@
             </div>
 
             <div class="d-flex align-items-center">
-                <button type="button" class="js-close-comment-reply-btn btn btn-lg bg-gray-400 text-gray-500 mr-12">{{ trans('public.close') }}</button>
+                <button type="button" class="js-close-comment-reply-btn btn-1 btn-lg mr-12">{{ trans('public.close') }}</button>
                 <button type="button" class="js-submit-comment-reply-btn btn btn-lg btn-primary">{{ trans('panel.reply') }}</button>
             </div>
         </div>

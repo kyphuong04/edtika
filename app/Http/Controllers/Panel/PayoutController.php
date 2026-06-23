@@ -116,7 +116,8 @@ class PayoutController extends Controller
             $notifyOptions = [
                 '[payout.amount]' => handlePrice($getUserPayout),
                 '[amount]' => handlePrice($getUserPayout),
-                '[u.name]' => $user->full_name
+                '[u.name]' => $user->full_name,
+                '[link]' => getAdminPanelUrl('/financial/payouts')
             ];
 
             sendNotification('payout_request', $notifyOptions, $user->id);

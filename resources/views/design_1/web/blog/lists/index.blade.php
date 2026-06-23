@@ -217,27 +217,9 @@
             display: block;
         }
 
-        .edtika-news-page__hero {
-            height: clamp(210px, 30vw, 330px);
-            width: 100%;
-            border-radius: 44px;
-            overflow: hidden;
-            background: #c9c7d5;
-            position: relative;
-            box-shadow: 0 20px 36px rgba(46, 39, 66, 0.12);
-            margin-bottom: 0;
-        }
-
-        .edtika-news-page__hero img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: .56;
-        }
-
         .edtika-news-page__hero-card {
             width: 100%;
-            margin: -54px auto 0;
+            margin: 20px auto 0;
             border-radius: 38px;
             border: 1px solid var(--edtika-glass-border);
             background: var(--edtika-glass);
@@ -301,6 +283,35 @@
 
         .edtika-news-page__section {
             padding: 34px 0 0;
+        }
+
+        .edtika-news-page__category-section {
+            margin-bottom: 34px;
+        }
+
+        .edtika-news-page__category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .edtika-news-page__category-title {
+            margin: 0;
+            font-size: clamp(28px, 3vw, 40px);
+            line-height: 1.12;
+            font-weight: 900;
+            color: #15151d;
+            letter-spacing: -0.01em;
+        }
+
+        .edtika-news-page__category-link {
+            font-size: 15px;
+            font-weight: 700;
+            color: #511d99;
+            text-decoration: none;
+            white-space: nowrap;
         }
 
         .edtika-news-page__grid {
@@ -693,12 +704,8 @@
                 font-size: 40px;
             }
 
-            .edtika-news-page__hero {
-                border-radius: 28px;
-            }
-
             .edtika-news-page__hero-card {
-                margin-top: -40px;
+                margin-top: 14px;
                 border-radius: 26px;
                 padding: 18px 14px;
             }
@@ -776,10 +783,6 @@
                 </div>
             </header>
 
-            <section class="edtika-news-page__hero" aria-label="{{ $isEnglish ? 'News hero' : 'Banner tin tức' }}">
-                <img src="{{ $pageHeroImage }}" alt="{{ $blogPageTitle }}">
-            </section>
-
             <section class="edtika-news-page__hero-card" aria-label="{{ $isEnglish ? 'News summary' : 'Tổng quan tin tức' }}">
                 <img src="{{ asset('store/icons/Document.png') }}" alt="Document icon" class="edtika-news-page__hero-icon">
 
@@ -789,49 +792,78 @@
             </section>
 
             <section class="edtika-news-page__section">
-                <div class="edtika-news-page__grid">
-                    @forelse($posts as $post)
-                        <article class="edtika-news-card">
-                            <a href="{{ $post->getUrl() }}">
-                                <img src="{{ $post->image }}" class="edtika-news-card__thumb" alt="{{ $post->title }}">
-                            </a>
-
-                            <div class="edtika-news-card__body">
-                                <h3 class="edtika-news-card__title">
-                                    <a href="{{ $post->getUrl() }}">{{ $post->title }}</a>
-                                </h3>
-
-                                <div class="edtika-news-card__meta">
-                                    <span class="edtika-news-card__author">
-                                        <img src="{{ !empty($post->author) ? $post->author->getAvatar(32) : asset('store/icons/users.png') }}" alt="{{ !empty($post->author) ? $post->author->full_name : 'Author' }}">
-                                        <span>{{ !empty($post->author) ? $post->author->full_name : ($isEnglish ? 'Author' : 'Tác giả') }}</span>
-                                    </span>
-
-                                    <span class="edtika-news-card__meta-icons">
-                                        <span class="edtika-news-card__meta-item">
-                                            <img src="{{ asset('store/icons/calendar.png') }}" alt="Calendar icon">
-                                            <span>{{ dateTimeFormat($post->created_at, 'j M Y') }}</span>
-                                        </span>
-
-                                        <span class="edtika-news-card__meta-item">
-                                            <img src="{{ asset('store/icons/chat.png') }}" alt="Comment icon">
-                                            <span>{{ $post->comments_count }}</span>
-                                        </span>
-                                    </span>
-                                </div>
+                @if(empty($selectedCategory) and empty($selectedAuthor) and !empty($categorySections) and count($categorySections) > 0)
+                    @foreach($categorySections as $categorySection)
+                        <div class="edtika-news-page__category-section">
+                            <div class="edtika-news-page__category-header">
+                                <h2 class="edtika-news-page__category-title">{{ $categorySection['category']->title }}</h2>
+                                <a href="{{ $categorySection['category']->getUrl() }}" class="edtika-news-page__category-link">{{ $isEnglish ? 'View all' : 'Xem tất cả' }}</a>
                             </div>
-                        </article>
-                    @empty
-                        <div class="edtika-news-page__empty">
-                            {{ $isEnglish ? 'No news articles are available at the moment.' : 'Hiện tại chưa có bài viết nào.' }}
-                        </div>
-                    @endforelse
-                </div>
 
-                @if(!empty($pagination) && count($posts) > 0)
-                    <div class="edtika-news-page__pagination">
-                        {!! $pagination !!}
+                            <div class="edtika-news-page__grid">
+                                @foreach($categorySection['posts'] as $post)
+                                    <article class="edtika-news-card">
+                                        <a href="{{ $post->getUrl() }}">
+                                            <img src="{{ $post->image }}" class="edtika-news-card__thumb" alt="{{ $post->title }}">
+                                        </a>
+
+                                        <div class="edtika-news-card__body">
+                                            <h3 class="edtika-news-card__title">
+                                                <a href="{{ $post->getUrl() }}">{{ $post->title }}</a>
+                                            </h3>
+
+                                            <p class="mt-10 mb-0 text-gray-500 font-14" style="line-height: 1.55;">{{ \Illuminate\Support\Str::limit(strip_tags($post->description), 150) }}</p>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="edtika-news-page__grid">
+                        @forelse($posts as $post)
+                            <article class="edtika-news-card">
+                                <a href="{{ $post->getUrl() }}">
+                                    <img src="{{ $post->image }}" class="edtika-news-card__thumb" alt="{{ $post->title }}">
+                                </a>
+
+                                <div class="edtika-news-card__body">
+                                    <h3 class="edtika-news-card__title">
+                                        <a href="{{ $post->getUrl() }}">{{ $post->title }}</a>
+                                    </h3>
+
+                                    <div class="edtika-news-card__meta">
+                                        <span class="edtika-news-card__author">
+                                            <img src="{{ !empty($post->author) ? $post->author->getAvatar(32) : asset('store/icons/users.png') }}" alt="{{ !empty($post->author) ? $post->author->full_name : 'Author' }}">
+                                            <span>{{ !empty($post->author) ? $post->author->full_name : ($isEnglish ? 'Author' : 'Tác giả') }}</span>
+                                        </span>
+
+                                        <span class="edtika-news-card__meta-icons">
+                                            <span class="edtika-news-card__meta-item">
+                                                <img src="{{ asset('store/icons/calendar.png') }}" alt="Calendar icon">
+                                                <span>{{ dateTimeFormat($post->created_at, 'j M Y') }}</span>
+                                            </span>
+
+                                            <span class="edtika-news-card__meta-item">
+                                                <img src="{{ asset('store/icons/chat.png') }}" alt="Comment icon">
+                                                <span>{{ $post->comments_count }}</span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </article>
+                        @empty
+                            <div class="edtika-news-page__empty">
+                                {{ $isEnglish ? 'No news articles are available at the moment.' : 'Hiện tại chưa có bài viết nào.' }}
+                            </div>
+                        @endforelse
                     </div>
+
+                    @if(!empty($pagination) && count($posts) > 0)
+                        <div class="edtika-news-page__pagination">
+                            {!! $pagination !!}
+                        </div>
+                    @endif
                 @endif
             </section>
         </div>

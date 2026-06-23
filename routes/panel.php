@@ -589,6 +589,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     Route::group(['prefix' => 'ielts-tests'], function () {
         Route::get('/', 'IeltsTestController@index')->name('panel.ielts_tests.index');
         Route::get('/mock', 'IeltsTestController@indexMock')->name('panel.ielts_tests.mock');
+        Route::get('/diagnostic', 'IeltsTestController@indexDiagnostic')->name('panel.ielts_tests.diagnostic');
         Route::get('/practice', 'IeltsTestController@indexPractice')->name('panel.ielts_tests.practice');
         Route::get('/{id}', 'IeltsTestController@show')->name('panel.ielts_tests.show');
         Route::post('/{id}/start', 'IeltsTestController@startTest')->name('panel.ielts_tests.start');
@@ -630,6 +631,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/store-inline-complete', 'IeltsTestInlineController@storeInlineComplete')->name('panel.my_ielts_tests.store_inline_complete');
         Route::post('/store-with-groups', 'IeltsTestInlineController@storeWithQuestionGroups')->name('panel.my_ielts_tests.store_with_groups');
         Route::get('/{id}/preview-student', 'IeltsTestInlineController@previewAsStudent')->name('panel.my_ielts_tests.preview_student');
+        Route::get('/{id}/exit-preview', 'IeltsTestInlineController@exitPreview')->name('panel.my_ielts_tests.exit_preview');
         Route::get('/{id}/edit-inline', 'IeltsTestInlineController@editInlineComplete')->name('panel.my_ielts_tests.edit_inline');
         Route::post('/{id}/update-inline-complete', 'IeltsTestInlineController@updateInlineComplete')->name('panel.my_ielts_tests.update_inline_complete');
 
@@ -775,15 +777,26 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
         // Academic Word Lists (Band-based)
         Route::get('/academic-word-lists/{id}', 'DictionaryController@getAcademicWordList');
+        Route::get('/bundle-word-lists/{id}', 'DictionaryController@getBundleWordList');
         Route::post('/academic-word-lists/mark-learned', 'DictionaryController@markWordAsLearned');
         
         // Practice Mode
         Route::post('/practice/start', 'DictionaryController@startPractice');
+        Route::post('/practice/start-bundle-word-list', 'DictionaryController@startBundleWordListPractice');
         Route::post('/practice/start-my-word-list', 'DictionaryController@startMyWordListPractice');
         Route::post('/practice/submit-answer', 'DictionaryController@submitPracticeAnswer');
         
         // My Word List
         Route::get('/my-word-list', 'DictionaryController@getMyWordList');
+
+        // Bundle Vocabulary Library
+        Route::get('/bundle-vocabulary/manage', 'DictionaryController@bundleVocabularyManage');
+        Route::post('/bundle-vocabulary/store', 'DictionaryController@storeBundleVocabularySet');
+        Route::get('/bundle-vocabulary/{id}', 'DictionaryController@showBundleVocabularySet');
+        Route::post('/bundle-vocabulary/{id}/update', 'DictionaryController@updateBundleVocabularySet');
+        Route::post('/bundle-vocabulary/{id}/submit', 'DictionaryController@submitBundleVocabularySet');
+        Route::post('/bundle-vocabulary/{id}/approve', 'DictionaryController@approveBundleVocabularySet');
+        Route::post('/bundle-vocabulary/{id}/reject', 'DictionaryController@rejectBundleVocabularySet');
     });
 
 });

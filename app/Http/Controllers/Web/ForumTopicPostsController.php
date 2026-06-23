@@ -291,7 +291,8 @@ class ForumTopicPostsController extends Controller
 
             $notifyOptions = [
                 '[u.name]' => $user->full_name,
-                '[content_type]' => trans('public.' . $data['item_type'])
+                '[content_type]' => trans('public.' . $data['item_type']),
+                '[link]' => getAdminPanelUrl('/reports/forum-topics')
             ];
             sendNotification("new_report_item_for_admin", $notifyOptions, 1);
 

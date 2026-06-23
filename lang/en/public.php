@@ -411,4 +411,5 @@ return [
 'redirect_to_app' => 'Redirecting to the app',
 'loading' => 'Loading...',
 'join' => 'Join',
+'no_result' => 'No results found.',
 ];

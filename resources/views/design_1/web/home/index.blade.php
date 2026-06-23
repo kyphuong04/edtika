@@ -12,9 +12,9 @@
     $locale = $isEnglish ? 'en' : 'vi';
     $isHomeActive = request()->path() === '/';
     $isClassesActive = request()->is('classes') || request()->is('classes/*');
-    $isPlacementActive = request()->is('panel/ielts-tests/practice') || request()->is('panel/ielts-tests/practice/*');
+    $isPlacementActive = request()->is('panel/ielts-tests/diagnostic') || request()->is('panel/ielts-tests/diagnostic/*');
     $isMockActive = request()->is('panel/ielts-tests/mock') || request()->is('panel/ielts-tests/mock/*');
-    $isDictionaryActive = request()->is('panel/dictionary') || request()->is('panel/dictionary/*');
+    $isDictionaryActive = request()->is('dictionary') || request()->is('dictionary/*') || request()->is('panel/dictionary') || request()->is('panel/dictionary/*');
     $isNewsActive = request()->is('blog') || request()->is('blog/*');
 
     $homeText = [
@@ -439,17 +439,22 @@
             ['question' => 'Tôi có thể bắt đầu học ngay không?', 'answer' => 'Có. Bạn có thể bắt đầu bằng bài test trình độ miễn phí để hệ thống đánh giá band hiện tại và đề xuất lộ trình học phù hợp.'],
         ];
 
-    $blogArticles = $isEnglish
-        ? [
-            ['thumbnail' => asset('store/icons/image.png'), 'author' => 'Tracy Tran', 'date' => '04/04/2024', 'title' => 'How to find the perfect mentor for your learning journey?'],
-            ['thumbnail' => asset('store/icons/image.png'), 'author' => 'Tracy Tran', 'date' => '04/04/2024', 'title' => '11 tips to study more effectively and efficiently.'],
-            ['thumbnail' => asset('store/icons/image.png'), 'author' => 'Tracy Tran', 'date' => '04/04/2024', 'title' => 'Unlock your potential in school and in life.'],
-        ]
-        : [
-            ['thumbnail' => asset('store/icons/image.png'), 'author' => 'Tracy Tran', 'date' => '04/04/2024', 'title' => 'Làm thế nào để tìm được Mentor hoàn hảo cho hành trình học tập của bạn?'],
-            ['thumbnail' => asset('store/icons/image.png'), 'author' => 'Tracy Tran', 'date' => '04/04/2024', 'title' => '11 lời khuyên giúp bạn học tập nâng cao suất và hiệu quả.'],
-            ['thumbnail' => asset('store/icons/image.png'), 'author' => 'Tracy Tran', 'date' => '04/04/2024', 'title' => 'Khái phá tiềm năng của bạn trong học đường và cuộc sống.'],
+    $latestBlogPosts = \App\Models\Blog::query()
+        ->where('status', 'publish')
+        ->with('author')
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get();
+
+    $blogArticles = $latestBlogPosts->map(function ($post) use ($isEnglish) {
+        return [
+            'thumbnail' => !empty($post->image) ? $post->image : asset('store/icons/image.png'),
+            'author' => !empty($post->author) ? $post->author->full_name : ($isEnglish ? 'Author' : 'Tác giả'),
+            'date' => !empty($post->created_at) ? dateTimeFormat($post->created_at, 'd/m/Y') : '',
+            'title' => $post->title,
+            'url' => $post->getUrl(),
         ];
+    })->values()->all();
 
     $flowSteps = $homeText[$locale]['flow']['steps'];
     $whyCards = $homeText[$locale]['why']['cards'];
@@ -3698,9 +3703,9 @@
                     <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $t['nav']['home'] }}</a>
                     <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $t['nav']['classes'] }}</a>
                     @if(auth()->check())
-                        <a href="/panel/ielts-tests/practice" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
+                        <a href="/panel/ielts-tests/diagnostic" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
                     @else
-                        <a href="/panel/ielts-tests/practice" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['placementTest'] }}</a>
+                        <a href="/panel/ielts-tests/diagnostic" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['placementTest'] }}</a>
                     @endif
                     @if(auth()->check())
                         <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $t['nav']['mockTest'] }}</a>
@@ -3708,9 +3713,9 @@
                         <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['mockTest'] }}</a>
                     @endif
                     @if(auth()->check())
-                        <a href="/panel/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
+                        <a href="/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
                     @else
-                        <a href="/panel/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['dictionary'] }}</a>
+                        <a href="/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
                     @endif
                     <a href="/blog" class="edtika-homepage__nav-link {{ $isNewsActive ? 'is-active' : '' }}">{{ $t['nav']['knowledge&news'] }}</a>
                 </nav>
@@ -3871,7 +3876,7 @@
                 </div>
 
                 <div class="edtika-bundles__footer-actions">
-                    <a href="/panel/ielts-tests/practice" class="edtika-bundles__cta" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $t['bundles']['placementCta'] }}</a>
+                    <a href="/panel/ielts-tests/diagnostic" class="edtika-bundles__cta" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $t['bundles']['placementCta'] }}</a>
                     <a href="{{ $bundleCarouselCards[$activeBundleIndex]['detail_url'] }}" class="edtika-bundles__cta" id="bundleDetailCta">{{ $t['bundles']['detailCta'] }}</a>
                 </div>
             </section>
@@ -4006,14 +4011,16 @@
                     <div class="edtika-blog__grid">
                         @foreach($blogArticles as $article)
                             <article class="edtika-blog__card">
-                                <img src="{{ $article['thumbnail'] }}" alt="{{ $article['title'] }}" class="edtika-blog__thumbnail">
-                                <div class="edtika-blog__content">
-                                    <div class="edtika-blog__meta">
-                                        <span class="edtika-blog__author">{{ $article['author'] }}</span>
-                                        <span class="edtika-blog__date">{{ $article['date'] }}</span>
+                                <a href="{{ $article['url'] }}" class="d-block text-decoration-none text-reset">
+                                    <img src="{{ $article['thumbnail'] }}" alt="{{ $article['title'] }}" class="edtika-blog__thumbnail">
+                                    <div class="edtika-blog__content">
+                                        <div class="edtika-blog__meta">
+                                            <span class="edtika-blog__author">{{ $article['author'] }}</span>
+                                            <span class="edtika-blog__date">{{ $article['date'] }}</span>
+                                        </div>
+                                        <h4 class="edtika-blog__article-title">{{ $article['title'] }}</h4>
                                     </div>
-                                    <h4 class="edtika-blog__article-title">{{ $article['title'] }}</h4>
-                                </div>
+                                </a>
                             </article>
                         @endforeach
                     </div>

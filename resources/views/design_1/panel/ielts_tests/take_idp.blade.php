@@ -126,11 +126,68 @@
             content: '→';
             font-size: 14px;
         }
+
+        .idp-exit-preview-btn {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid var(--idp-border-strong);
+            background: #fff;
+            color: var(--idp-primary-deep);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .idp-exit-preview-btn:hover {
+            background: var(--idp-primary-soft);
+            color: var(--idp-primary-deep);
+        }
         
-        /* ========== PART BAR (hidden) ========== */
-        .idp-part-bar { display: none; }
-        .idp-part-title { display: none; }
-        .idp-part-instruction { display: none; }
+        /* ========== PART BAR ========== */
+        .idp-part-bar {
+            position: fixed;
+            top: 140px;
+            left: 12px;
+            right: 12px;
+            min-height: 40px;
+            background: #fff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            z-index: 997;
+            overflow-x: auto;
+        }
+        .idp-part-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--idp-border-strong);
+            color: var(--idp-primary-deep);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            transition: all .2s ease;
+            background: #fff;
+        }
+        .idp-part-chip:hover {
+            background: var(--idp-primary-soft);
+            color: var(--idp-primary-deep);
+        }
+        .idp-part-chip.active {
+            background: var(--idp-primary);
+            border-color: var(--idp-primary);
+            color: #fff;
+        }
         
         /* ========== SECTION LABEL BAR ========== */
         .idp-section-label-bar {
@@ -189,25 +246,40 @@
             margin-bottom: 12px; 
         }
         .idp-passage-text { 
-            font-family: Arial, sans-serif;
-            font-size: 16px; 
-            line-height: 1.5; 
-            text-align: justify;
-            color: #000;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+            text-align: initial;
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
-        .idp-passage-text p { margin-bottom: 14px; }
-        
-        /* Force Arial on ALL passage content elements - Override any inline styles */
-        .idp-passage-text,
-        .idp-passage-text *,
-        .idp-passage-text p,
-        .idp-passage-text span,
-        .idp-passage-text div,
-        .idp-passage-text strong,
-        .idp-passage-text em,
-        .idp-passage-text i,
-        .idp-passage-text b {
-            font-family: Arial, sans-serif !important;
+
+        .idp-part-instructions {
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+            margin-bottom: 14px;
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .idp-part-media {
+            margin-bottom: 14px;
+        }
+
+        .idp-part-media-item {
+            margin-bottom: 10px;
+        }
+
+        .idp-part-media-item img,
+        .idp-part-media-item video,
+        .idp-part-media-item audio {
+            max-width: 100%;
+            height: auto;
         }
         
         /* Divider */
@@ -585,6 +657,35 @@
             gap: 28px;
             flex-shrink: 0;
         }
+
+        .idp-part-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .idp-part-nav-btn {
+            padding: 9px 14px;
+            border: 1px solid var(--idp-border-strong);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--idp-primary-deep);
+            font-size: 13px;
+            font-weight: 700;
+            background: #fff;
+            transition: all .2s ease;
+            white-space: nowrap;
+        }
+
+        .idp-part-nav-btn:hover {
+            background: var(--idp-primary-soft);
+            color: var(--idp-primary-deep);
+        }
+
+        .idp-part-nav-btn.disabled {
+            pointer-events: none;
+            opacity: .45;
+        }
         
         .idp-nav-text-btn {
             padding: 13px 22px;
@@ -880,6 +981,12 @@
                 top: 136px;
                 left: 8px; right: 8px;
             }
+
+            .idp-part-bar {
+                top: 130px;
+                left: 8px;
+                right: 8px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -924,6 +1031,16 @@
             
             .idp-main {
                 bottom: 80px;
+            }
+
+            .idp-part-chip {
+                padding: 7px 12px;
+                font-size: 12px;
+            }
+
+            .idp-part-nav-btn {
+                padding: 8px 10px;
+                font-size: 11px;
             }
         }
     </style>
@@ -983,9 +1100,42 @@
             $groupedQuestions->push(collect($currentGroup));
         }
 
-        // Resolve listening audio source: part audio has priority over section audio
-        $currentPartId = $firstQ->part_id ?? null;
-        $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+        // Resolve active part (from query/controller first, then question fallback)
+        $sectionParts = isset($sectionParts) && $sectionParts instanceof \Illuminate\Support\Collection
+            ? $sectionParts->values()
+            : collect($sectionParts ?? [])->values();
+
+        $currentPartId = !empty($activePartId) ? (int) $activePartId : null;
+        $currentPart = $currentPartId ? $sectionParts->firstWhere('id', $currentPartId) : null;
+
+        if (!$currentPart) {
+            $currentPartId = $firstQ->part_id ?? null;
+            $currentPart = $currentPartId ? \App\Models\IeltsTestPart::find($currentPartId) : null;
+        }
+
+        if (!$currentPart && $sectionParts->isNotEmpty()) {
+            $currentPart = $sectionParts->first();
+            $currentPartId = $currentPart->id ?? null;
+        }
+
+        if (!$currentPart) {
+            $currentPart = \App\Models\IeltsTestPart::where('section_id', $currentSection->id)
+                ->orderBy('sort_order')
+                ->first();
+            $currentPartId = $currentPart->id ?? null;
+        }
+
+        $hasPartSwitcher = $skill !== 'writing' && $sectionParts->count() > 1;
+        $currentPartIndex = !empty($currentPartId)
+            ? $sectionParts->search(fn($part) => (int) $part->id === (int) $currentPartId)
+            : null;
+        $previousPart = (is_numeric($currentPartIndex) && $currentPartIndex > 0)
+            ? $sectionParts->get($currentPartIndex - 1)
+            : null;
+        $nextPart = (is_numeric($currentPartIndex) && $currentPartIndex < ($sectionParts->count() - 1))
+            ? $sectionParts->get($currentPartIndex + 1)
+            : null;
+
         $currentPartAudioUrl = null;
         if (!empty($currentPart->audio_file)) {
             $audioFile = $currentPart->audio_file;
@@ -996,6 +1146,48 @@
             }
         }
         $resolvedListeningAudioUrl = $currentPartAudioUrl ?? ($currentSection->audio_url ?? null);
+
+        $currentPartTitle = $currentPart->title ?? null;
+        $currentPartInstructions = $currentPart->instructions ?? null;
+        $currentPartPassage = $currentPart->passage ?? null;
+
+        $currentPartImageUrl = null;
+        if (!empty($currentPart->task_image)) {
+            $partImageFile = $currentPart->task_image;
+            if (str_starts_with($partImageFile, '/') || str_starts_with($partImageFile, 'http')) {
+                $currentPartImageUrl = $partImageFile;
+            } else {
+                $currentPartImageUrl = \Storage::disk('public')->url($partImageFile);
+            }
+        }
+
+        $currentPartVideoUrl = null;
+        if (!empty($currentPart->video_file)) {
+            $partVideoFile = $currentPart->video_file;
+            if (str_starts_with($partVideoFile, '/') || str_starts_with($partVideoFile, 'http')) {
+                $currentPartVideoUrl = $partVideoFile;
+            } else {
+                $currentPartVideoUrl = \Storage::disk('public')->url($partVideoFile);
+            }
+        }
+
+        // Inline builder stores the main reading body in part passage.
+        // Prefer part data first so preview shows full author-entered content.
+        $resolvedPassageTitle = $currentPartTitle ?? $currentSection->passage_title;
+        $resolvedPassageText = $currentPartPassage ?? $currentSection->passage_text ?? $currentSection->content ?? '';
+
+        $normalizePossiblyTruncatedRichText = static function ($html) {
+            return $html;
+        };
+
+        $displayPartInstructions = $normalizePossiblyTruncatedRichText($currentPartInstructions);
+        $displayPassageText = $normalizePossiblyTruncatedRichText($resolvedPassageText);
+        $hasPartLeftPanelContent = !empty($resolvedPassageTitle)
+            || !empty($currentPartInstructions)
+            || !empty($resolvedPassageText)
+            || !empty($currentPartAudioUrl)
+            || !empty($currentPartImageUrl)
+            || !empty($currentPartVideoUrl);
         
         // Helper function to get instruction text based on question type
         if (!function_exists('getQuestionInstruction')) {
@@ -1070,6 +1262,11 @@
             <span class="idp-username">{{ $userName }}</span>
         </div>
         <div class="idp-timer" id="examTimer">TIME: 00:00:00</div>
+        @if(!empty($isMentorPreview) && !empty($mentorPreviewExitUrl))
+            <a class="idp-exit-preview-btn" href="{{ $mentorPreviewExitUrl }}" onclick="return confirm('Thoát chế độ xem trước và quay lại màn hình tạo đề?');">
+                Exit Preview
+            </a>
+        @endif
         <button class="idp-finish-btn" onclick="showModal()">
             @if($test->isMockTest())
                 Finish Section
@@ -1090,8 +1287,21 @@
     </div>
     @endif
 
+    @if($hasPartSwitcher)
+        <div class="idp-part-bar">
+            @foreach($sectionParts as $partIndex => $part)
+                <a
+                    class="idp-part-chip {{ (int) $part->id === (int) $currentPartId ? 'active' : '' }}"
+                    href="{{ route('panel.ielts_tests.take', ['attemptId' => $attempt->id, 'part_id' => $part->id]) }}"
+                >
+                    Part {{ $partIndex + 1 }}
+                </a>
+            @endforeach
+        </div>
+    @endif
+
     {{-- MAIN CONTENT --}}
-    <main class="idp-main" @if($skill === 'writing') style="top: 84px;" @endif>
+    <main class="idp-main" @if($skill === 'writing') style="top: 84px;" @elseif($hasPartSwitcher) style="top: 188px;" @endif>
         @if($skill === 'speaking')
             {{-- SPEAKING LAYOUT --}}
             @include('design_1.panel.ielts_tests.partials.idp_speaking_complete', [
@@ -1106,7 +1316,7 @@
                 'question' => $firstQ,
                 'userAnswer' => $userAnswers[$firstQ->id ?? 0] ?? ''
             ])
-        @elseif($skill === 'listening' && empty($currentSection->passage_text))
+        @elseif($skill === 'listening' && empty($currentSection->passage_text) && !$hasPartLeftPanelContent)
             {{-- LISTENING FULL WIDTH (no passage) --}}
             <div class="idp-right" style="flex: none; width: 100%;">
                 @if($attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
@@ -1126,21 +1336,54 @@
         @else
             {{-- READING / LISTENING WITH PASSAGE --}}
             <div class="idp-left" id="leftPanel">
-                @if(!empty($currentSection->passage_title))
-                    <h2 class="idp-passage-title">{{ $currentSection->passage_title }}</h2>
+                @if(!empty($resolvedPassageTitle))
+                    <h2 class="idp-passage-title">{{ $resolvedPassageTitle }}</h2>
                 @endif
                 @if(!empty($currentSection->subtitle))
                     <p class="idp-passage-note">{{ $currentSection->subtitle }}</p>
                 @endif
+
+                @if(!empty($displayPartInstructions))
+                    <div class="idp-part-instructions">{!! $displayPartInstructions !!}</div>
+                @endif
+
+                @if(!empty($currentPartAudioUrl) || !empty($currentPartImageUrl) || !empty($currentPartVideoUrl))
+                    <div class="idp-part-media">
+                        @if(!empty($currentPartAudioUrl))
+                            <div class="idp-part-media-item">
+                                <audio controls>
+                                    <source src="{{ $currentPartAudioUrl }}" type="audio/mpeg">
+                                    Your browser does not support audio playback.
+                                </audio>
+                            </div>
+                        @endif
+
+                        @if(!empty($currentPartImageUrl))
+                            <div class="idp-part-media-item">
+                                <img src="{{ $currentPartImageUrl }}" alt="Part image">
+                            </div>
+                        @endif
+
+                        @if(!empty($currentPartVideoUrl))
+                            <div class="idp-part-media-item">
+                                <video controls>
+                                    <source src="{{ $currentPartVideoUrl }}" type="video/mp4">
+                                    Your browser does not support video playback.
+                                </video>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 <div class="idp-passage-text">
-                    {!! $currentSection->passage_text ?? $currentSection->content ?? '' !!}
+                    {!! $displayPassageText !!}
                 </div>
             </div>
             
             <div class="idp-divider" id="divider"><span class="idp-divider-icon">↔</span></div>
             
             <div class="idp-right" id="rightPanel">
-                @if($skill === 'listening' && $attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
+                @if($skill === 'listening' && $attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl) && !$hasPartLeftPanelContent)
                     <div class="idp-audio-inline">
                         <audio id="audioPlayer" controls>
                             <source src="{{ $resolvedListeningAudioUrl }}" type="audio/mpeg">
@@ -1247,6 +1490,22 @@
         {{-- Right half: Navigation Buttons --}}
         <div class="idp-footer-half">
             <div class="idp-nav-btns">
+                @if($hasPartSwitcher)
+                    <div class="idp-part-nav">
+                        <a
+                            class="idp-part-nav-btn {{ empty($previousPart) ? 'disabled' : '' }}"
+                            href="{{ !empty($previousPart) ? route('panel.ielts_tests.take', ['attemptId' => $attempt->id, 'part_id' => $previousPart->id]) : '#' }}"
+                        >
+                            Prev part
+                        </a>
+                        <a
+                            class="idp-part-nav-btn {{ empty($nextPart) ? 'disabled' : '' }}"
+                            href="{{ !empty($nextPart) ? route('panel.ielts_tests.take', ['attemptId' => $attempt->id, 'part_id' => $nextPart->id]) : '#' }}"
+                        >
+                            Next part
+                        </a>
+                    </div>
+                @endif
                 <button class="idp-nav-text-btn prev" onclick="prevQ()" id="prevBtn">
                     Previous question
                 </button>

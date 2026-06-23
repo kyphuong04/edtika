@@ -183,6 +183,7 @@ class BecomeInstructorController extends Controller
                 $notifyOptions = [
                     '[u.name]' => $user->full_name,
                     '[time.date]' => dateTimeFormat(time(), 'j M Y H:i'),
+                    '[link]' => getAdminPanelUrl("/users/{$user->id}/edit"),
                 ];
                 sendNotification("new_become_instructor_request", $notifyOptions, 1);
 

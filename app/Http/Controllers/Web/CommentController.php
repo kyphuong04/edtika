@@ -278,7 +278,7 @@ class CommentController extends Controller
                 ->first();
 
             if (!empty($comment)) {
-                CommentReport::create([
+                $commentReport = CommentReport::create([
                     $itemName => $itemId,
                     'user_id' => $user->id,
                     'comment_id' => $comment->id,
@@ -286,9 +286,20 @@ class CommentController extends Controller
                     'created_at' => time()
                 ]);
 
+                $page = 'webinars';
+
+                if ($itemName === 'product_id') {
+                    $page = 'products';
+                } elseif ($itemName === 'blog_id') {
+                    $page = 'blog';
+                } elseif ($itemName === 'bundle_id') {
+                    $page = 'bundles';
+                }
+
                 $notifyOptions = [
                     '[u.name]' => $user->full_name,
-                    '[content_type]' => trans('admin/main.comment')
+                    '[content_type]' => trans('admin/main.comment'),
+                    '[link]' => getAdminPanelUrl("/comments/{$page}/reports/{$commentReport->id}/show")
                 ];
                 sendNotification("new_report_item_for_admin", $notifyOptions, 1);
 

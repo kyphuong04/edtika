@@ -9,6 +9,6 @@
     @endif
 
     @if(!empty($btn))
-        <a href="{{ $btn['url'] }}" class="btn btn-primary mt-16" style="background-color: #511D99; border-color: #511D99;">{{ $btn['text'] }}</a>
+        <a href="{{ $btn['url'] }}" class="btn mt-16">{{ $btn['text'] }}</a>
     @endif
 </div>
