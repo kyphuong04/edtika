@@ -2,6 +2,18 @@
 
 @push('styles_top')
     <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
+    <style>
+        /* Keep blog content images at their original size inside Summernote on edit/create */
+        .note-editor .note-editing-area {
+            overflow: auto;
+        }
+
+        .note-editor .note-editable img {
+            width: auto !important;
+            height: auto !important;
+            max-width: none !important;
+        }
+    </style>
 @endpush
 
 @section('content')

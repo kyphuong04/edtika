@@ -159,6 +159,51 @@ class IeltsTestController extends Controller
         
         return view('design_1.panel.ielts_tests.practice', $data);
     }
+
+    /**
+     * Display only diagnostic tests.
+     */
+    public function indexDiagnostic()
+    {
+        $authUser = auth()->user();
+
+        $diagnosticTests = IeltsTest::with('sections', 'practiceCategory')
+            ->where('type', 'diagnostic')
+            ->where(function ($q) {
+                $q->where('status', 'published')
+                    ->orWhere('status', 'approved');
+            })
+            ->where('is_active', 1)
+            ->get();
+
+        foreach ($diagnosticTests as $test) {
+            $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
+            $test->best_attempt = $test->getUserBestAttempt($authUser->id);
+            $test->last_attempt = \App\Models\IeltsTestAttempt::where('test_id', $test->id)
+                ->where('user_id', $authUser->id)
+                ->where('status', 'completed')
+                ->orderBy('id', 'desc')
+                ->first();
+            $test->can_take = $test->canUserTake($authUser->id);
+        }
+
+        $sidebarData = $this->getSidebarData($authUser);
+        $isEnglish = mb_strtolower(app()->getLocale()) === 'en';
+
+        $data = [
+            'pageTitle' => 'Diagnostic Tests',
+            'practiceTests' => $diagnosticTests,
+            'authUser' => $authUser,
+            'emptyStateTitle' => $isEnglish
+                ? 'No diagnostic tests have been uploaded yet.'
+                : 'Chưa có bộ đề Diagnostic Tests nào được upload lên.',
+            'emptyStateHint' => $isEnglish
+                ? 'Please check back later or contact your administrator for availability.'
+                : 'Vui lòng quay lại sau hoặc liên hệ quản trị viên để được cập nhật bộ đề mới.',
+        ] + $sidebarData;
+
+        return view('design_1.panel.ielts_tests.practice', $data);
+    }
     
     /**
      * Get common sidebar data for test listing pages.
@@ -336,7 +381,7 @@ class IeltsTestController extends Controller
     /**
      * Take test interface
      */
-    public function takeTest($attemptId)
+    public function takeTest(Request $request, $attemptId)
     {
         $attempt = IeltsTestAttempt::with(['test.sections.questions', 'answers', 'currentSection.questionGroup'])
             ->findOrFail($attemptId);
@@ -378,8 +423,8 @@ class IeltsTestController extends Controller
             }
         }
         
-        // Load questions with their groups for IDP-style grouping
-        $questions = $currentSection->questions()
+        // Load all section questions with their groups for IDP-style grouping
+        $sectionQuestions = $currentSection->questions()
             ->with('questionGroup')
             ->orderBy('question_number')
             ->orderBy('id')
@@ -387,19 +432,68 @@ class IeltsTestController extends Controller
 
         // If no direct questions found, try to populate from question bank
         // This handles the newer bank-based workflow where questions are stored in IeltsMockQuestionBank
-        if ($questions->isEmpty() && $currentSection->question_group_id) {
+        if ($sectionQuestions->isEmpty() && $currentSection->question_group_id) {
             $this->populateQuestionsFromBank($currentSection);
 
             // Reload questions after population
-            $questions = $currentSection->questions()
+            $sectionQuestions = $currentSection->questions()
                 ->with('questionGroup')
                 ->orderBy('question_number')
                 ->orderBy('id')
                 ->get();
         }
+
+        $sectionParts = $currentSection->parts()->get();
+        $requestedPartId = (int) $request->query('part_id', 0);
+        $activePartId = null;
+
+        if ($sectionParts->isNotEmpty()) {
+            if ($requestedPartId > 0 && $sectionParts->contains('id', $requestedPartId)) {
+                $activePartId = $requestedPartId;
+            } else {
+                $partIdsInQuestions = $sectionQuestions
+                    ->map(function ($question) {
+                        if (!empty($question->part_id)) {
+                            return (int) $question->part_id;
+                        }
+
+                        return (int) optional($question->questionGroup)->part_id;
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $activePartId = $sectionParts
+                    ->first(function ($part) use ($partIdsInQuestions) {
+                        return $partIdsInQuestions->contains((int) $part->id);
+                    })
+                    ->id ?? $sectionParts->first()->id;
+            }
+        }
+
+        $questions = $sectionQuestions;
+
+        if (!empty($activePartId)) {
+            $questions = $sectionQuestions
+                ->filter(function ($question) use ($activePartId) {
+                    $questionPartId = !empty($question->part_id)
+                        ? (int) $question->part_id
+                        : (int) optional($question->questionGroup)->part_id;
+
+                    return $questionPartId === (int) $activePartId;
+                })
+                ->values();
+
+            if ($questions->isEmpty()) {
+                $questions = $sectionQuestions;
+            }
+        }
         
         // Get existing answers
         $userAnswers = $attempt->answers()->pluck('answer_text', 'question_id')->toArray();
+
+        $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
+            && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
         
         $data = [
             'pageTitle' => 'Taking: ' . $attempt->test->title,
@@ -407,7 +501,11 @@ class IeltsTestController extends Controller
             'test' => $attempt->test,
             'currentSection' => $currentSection,
             'questions' => $questions,
+            'sectionParts' => $sectionParts,
+            'activePartId' => $activePartId,
             'userAnswers' => $userAnswers,
+            'isMentorPreview' => $isMentorPreview,
+            'mentorPreviewExitUrl' => $isMentorPreview ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id) : null,
         ];
         
         // Use IDP-style interface for all tests

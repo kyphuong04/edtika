@@ -1,3 +1,13 @@
+@php
+    $bundleVocabularyPendingCount = 0;
+
+    if (method_exists($authUser, 'canApproveBundleVocabulary') && $authUser->canApproveBundleVocabulary()) {
+        $bundleVocabularyPendingCount = \App\Models\BundleVocabularySet::query()
+            ->where('status', \App\Models\BundleVocabularySet::STATUS_PENDING)
+            ->count();
+    }
+@endphp
+
 @if($authUser->can('admin_webinars') or
                 $authUser->can('admin_bundles') or
                 $authUser->can('admin_categories') or
@@ -61,8 +71,20 @@
                 </li>
             @endcan()
 
+            @if((method_exists($authUser, 'canManageBundleVocabulary') && $authUser->canManageBundleVocabulary()) && !$authUser->can('admin_bundles'))
+                <li class="nav-item {{ request()->is(getAdminPanelUrl('/bundle-vocabulary*', false)) ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ getAdminPanelUrl() }}/bundle-vocabulary">
+                        <x-iconsax-bul-book class="icons" width="24px" height="24px"/>
+                        <span>{{ trans('panel.bundle_vocabulary_library') }}</span>
+                        @if($bundleVocabularyPendingCount > 0)
+                            <span class="badge badge-warning ml-auto">{{ $bundleVocabularyPendingCount }}</span>
+                        @endif
+                    </a>
+                </li>
+            @endif
+
             @can('admin_bundles')
-                <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/bundles*', false)) and !request()->is(getAdminPanelUrl('/bundles/comments*', false))) ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ ((request()->is(getAdminPanelUrl('/bundles*', false)) and !request()->is(getAdminPanelUrl('/bundles/comments*', false))) || request()->is(getAdminPanelUrl('/bundle-vocabulary*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <x-iconsax-bul-box class="icons" width="24px" height="24px"/>
                         <span>{{ trans('update.bundles') }}</span>
@@ -80,6 +102,14 @@
                                 <a href="{{ getAdminPanelUrl() }}/bundles" class="nav-link @if(!empty($sidebarBeeps['bundles']) and $sidebarBeeps['bundles']) beep beep-sidebar @endif">{{ trans('admin/main.list') }}</a>
                             </li>
                         @endcan()
+
+                        @if(method_exists($authUser, 'canManageBundleVocabulary') && $authUser->canManageBundleVocabulary())
+                            <li class="{{ request()->is(getAdminPanelUrl('/bundle-vocabulary', false)) && !request()->get('status') ? 'active' : '' }}">
+                                <a href="{{ getAdminPanelUrl() }}/bundle-vocabulary" class="nav-link">{{ trans('panel.bundle_vocabulary_library') }}</a>
+                            </li>
+                        @endif
+
+
                        
                     </ul>
                 </li>

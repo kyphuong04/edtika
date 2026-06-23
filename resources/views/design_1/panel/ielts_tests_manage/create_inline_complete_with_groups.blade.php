@@ -655,7 +655,11 @@
         <div id="uploadedFilesContainer" style="display:none;"></div>
 
         {{-- Action Buttons --}}
-        <div class="mt-30 d-flex justify-content-end align-items-center gap-8">
+        <div class="mt-30 d-flex justify-content-between align-items-center gap-8 flex-wrap">
+            <div id="autosaveStatus" class="text-muted font-12">
+                Auto Save: chưa có bản nháp cục bộ
+            </div>
+            <div class="d-flex justify-content-end align-items-center gap-8 flex-wrap">
             <a href="{{ $cancelUrl ?? route('panel.my_ielts_tests.index') }}" class="btn btn-lg rounded-12 d-none d-md-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;">
                 <i class="fas fa-times mr-5"></i>Cancel
             </a>
@@ -668,6 +672,7 @@
             <button type="submit" name="submit_action" value="submit" class="btn-1 btn-lg rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" id="submitBtn">
                 {{ $submitButtonText ?? 'Submit Test for Approval' }}
             </button>
+            </div>
         </div>
     </form>
 
@@ -791,6 +796,11 @@ const SECTIONS_CONFIG = {
 
 let currentTestType = @json($currentTestType ?? null);
 let uploadSequence = 0;
+const AUTOSAVE_INTERVAL_MS = 15000;
+const AUTOSAVE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const AUTOSAVE_STORAGE_KEY = 'ielts-inline-autosave:{{ auth()->id() }}:{{ isset($test) ? ('test-' . $test->id) : 'new' }}';
+let autosaveTimer = null;
+let autosaveLastSignature = '';
 
 @php
     $inlineTestData = $testData ?? [
@@ -936,6 +946,186 @@ function initContentEditors(context) {
     });
 }
 
+function updateAutosaveStatus(message, isError = false) {
+    const statusEl = document.getElementById('autosaveStatus');
+    if (!statusEl) {
+        return;
+    }
+
+    statusEl.textContent = message;
+    statusEl.classList.toggle('text-danger', isError);
+    statusEl.classList.toggle('text-muted', !isError);
+}
+
+function buildAutosavePayload() {
+    const typeEl = document.querySelector('select[name="type"]');
+    const titleEl = document.querySelector('input[name="title"]');
+    const formatEl = document.querySelector('select[name="format"]');
+    const descEl = document.querySelector('textarea[name="description"]');
+    const difficultyEl = document.querySelector('select[name="difficulty_level"]');
+    const bandMinEl = document.querySelector('input[name="target_band_min"]');
+    const bandMaxEl = document.querySelector('input[name="target_band_max"]');
+
+    return {
+        version: 1,
+        path: window.location.pathname,
+        savedAt: Date.now(),
+        form: {
+            type: typeEl ? typeEl.value : '',
+            title: titleEl ? titleEl.value : '',
+            format: formatEl ? formatEl.value : '',
+            description: descEl ? getEditorHtmlValue(descEl) : '',
+            difficulty_level: difficultyEl ? difficultyEl.value : '',
+            target_band_min: bandMinEl ? bandMinEl.value : '',
+            target_band_max: bandMaxEl ? bandMaxEl.value : ''
+        },
+        testData: testData
+    };
+}
+
+function getAutosaveSignature(payload) {
+    return JSON.stringify({
+        form: payload.form,
+        testData: payload.testData
+    });
+}
+
+function saveAutosaveSnapshot(force = false) {
+    if (typeof window.localStorage === 'undefined') {
+        return;
+    }
+
+    try {
+        const payload = buildAutosavePayload();
+        const signature = getAutosaveSignature(payload);
+
+        if (!force && signature === autosaveLastSignature) {
+            return;
+        }
+
+        window.localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(payload));
+        autosaveLastSignature = signature;
+
+        const savedTime = new Date(payload.savedAt).toLocaleTimeString();
+        updateAutosaveStatus('Auto Save: đã lưu lúc ' + savedTime + ' (không bao gồm file upload)');
+    } catch (error) {
+        updateAutosaveStatus('Auto Save lỗi: không thể lưu bản nháp cục bộ', true);
+    }
+}
+
+function loadAutosaveSnapshot() {
+    if (typeof window.localStorage === 'undefined') {
+        return null;
+    }
+
+    try {
+        const raw = window.localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const payload = JSON.parse(raw);
+        if (!payload || !payload.savedAt || !payload.form || !payload.testData) {
+            return null;
+        }
+
+        if ((Date.now() - payload.savedAt) > AUTOSAVE_MAX_AGE_MS) {
+            window.localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+            return null;
+        }
+
+        return payload;
+    } catch (error) {
+        return null;
+    }
+}
+
+function normalizeSections(rawSections) {
+    const normalized = {
+        listening: { parts: [] },
+        reading: { parts: [] },
+        writing: { parts: [] },
+        speaking: { parts: [] },
+        grammar: { parts: [] },
+        vocabulary: { parts: [] }
+    };
+
+    if (!rawSections || typeof rawSections !== 'object') {
+        return normalized;
+    }
+
+    Object.keys(normalized).forEach((skill) => {
+        const source = rawSections[skill];
+        if (source && Array.isArray(source.parts)) {
+            normalized[skill] = source;
+        }
+    });
+
+    return normalized;
+}
+
+function applyAutosaveSnapshot(payload) {
+    const typeEl = document.querySelector('select[name="type"]');
+    const titleEl = document.querySelector('input[name="title"]');
+    const formatEl = document.querySelector('select[name="format"]');
+    const descEl = document.querySelector('textarea[name="description"]');
+    const difficultyEl = document.querySelector('select[name="difficulty_level"]');
+    const bandMinEl = document.querySelector('input[name="target_band_min"]');
+    const bandMaxEl = document.querySelector('input[name="target_band_max"]');
+
+    if (typeEl) typeEl.value = payload.form.type || '';
+    if (titleEl) titleEl.value = payload.form.title || '';
+    if (formatEl) formatEl.value = payload.form.format || '';
+    if (difficultyEl) difficultyEl.value = payload.form.difficulty_level || 'intermediate';
+    if (bandMinEl) bandMinEl.value = payload.form.target_band_min || '';
+    if (bandMaxEl) bandMaxEl.value = payload.form.target_band_max || '';
+    if (descEl) setEditorHtmlValue(descEl, payload.form.description || '');
+
+    currentTestType = payload.form.type || currentTestType;
+    testData = {
+        sections: normalizeSections(payload.testData.sections)
+    };
+
+    if (currentTestType) {
+        updateTestRequirements();
+        renderExistingTestData();
+        updateCompletenessStatus();
+    }
+
+    autosaveLastSignature = getAutosaveSignature(buildAutosavePayload());
+    const savedAt = new Date(payload.savedAt).toLocaleString();
+    updateAutosaveStatus('Đã khôi phục bản nháp cục bộ lúc ' + savedAt + ' (không bao gồm file upload)');
+}
+
+function maybeRestoreAutosaveSnapshot() {
+    const payload = loadAutosaveSnapshot();
+    if (!payload) {
+        return;
+    }
+
+    const savedAt = new Date(payload.savedAt).toLocaleString();
+    const shouldRestore = window.confirm('Phát hiện bản nháp Auto Save lúc ' + savedAt + '. Bạn có muốn khôi phục không?\n\nLưu ý: File upload (audio/image/video) không thể khôi phục tự động.');
+
+    if (!shouldRestore) {
+        const existingPayload = buildAutosavePayload();
+        autosaveLastSignature = getAutosaveSignature(existingPayload);
+        updateAutosaveStatus('Đang dùng dữ liệu hiện tại. Bản nháp cũ vẫn được giữ trong máy.');
+        return;
+    }
+
+    applyAutosaveSnapshot(payload);
+}
+
+function startAutosaveLoop() {
+    if (autosaveTimer) {
+        window.clearInterval(autosaveTimer);
+    }
+
+    autosaveTimer = window.setInterval(function () {
+        saveAutosaveSnapshot(false);
+    }, AUTOSAVE_INTERVAL_MS);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     setupFormValidation();
     setupFilePreviews();
@@ -950,6 +1140,20 @@ document.addEventListener('DOMContentLoaded', function() {
         renderExistingTestData();
         updateCompletenessStatus();
     }
+
+    maybeRestoreAutosaveSnapshot();
+    startAutosaveLoop();
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+            saveAutosaveSnapshot(true);
+        }
+    });
+
+    window.addEventListener('beforeunload', function () {
+        saveAutosaveSnapshot(true);
+    });
+
     document.addEventListener('input', function(event) {
         const target = event.target;
         if (!target || !target.classList) {
@@ -961,9 +1165,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (form && form.querySelector('.note-completion-answers')) {
                 renderNoteCompletionAnswerInputs(form);
             }
+
+            if (form && form.querySelector('.completion-answers')) {
+                renderCompletionAnswerInputs(form);
+            }
         }
 
-        if (target.classList.contains('tc-cell-text') || target.classList.contains('tc-cell-answer') || target.classList.contains('tc-col-title') || target.classList.contains('tc-row-title')) {
+        if (target.classList.contains('tc-cell-text') || target.classList.contains('tc-cell-answer') || target.classList.contains('tc-col-title')) {
             const form = target.closest('.question-inline-form');
             if (!form) {
                 return;
@@ -971,17 +1179,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (target.classList.contains('tc-cell-text')) {
                 const td = target.closest('td');
-                const answerWrap = td ? td.querySelector('.tc-answer-wrap') : null;
-                const answerList = td ? td.querySelector('.tc-answer-list') : null;
-                if (answerWrap) {
-                    const hasBlank = target.value.includes('___');
-                    answerWrap.style.display = hasBlank ? 'block' : 'none';
-                    if (!hasBlank) {
-                        if (answerList) {
-                            answerList.innerHTML = makeTableCellAnswerListHTML();
-                        }
-                    }
-                }
+                syncTableCellAnswerInputs(td);
             }
 
             updateTableCompletionState(form);
@@ -1141,30 +1339,89 @@ function renderExistingTestData() {
             return;
         }
 
-        sectionData.parts.forEach((part) => {
-            const audioFile = part?.files?.audio || part.audio_file || null;
-            const imageFile = part?.files?.image || part.image_file || null;
-            const videoFile = part?.files?.video || part.video_file || null;
-            const partItem = displayPart(sectionEl, part, audioFile, imageFile, videoFile);
+        renderSectionParts(sectionEl, skill);
+    });
+}
 
-            (part.groups || []).forEach((group) => {
-                displayQuestionGroup(partItem, part, group);
-            });
+function renderSectionParts(sectionEl, skill) {
+    if (!sectionEl || !skill || !testData.sections[skill]) {
+        return;
+    }
 
-            updatePartStats(partItem, part);
+    const partsList = sectionEl.querySelector('.parts-list');
+    if (!partsList) {
+        return;
+    }
+
+    partsList.innerHTML = '';
+
+    const sectionData = testData.sections[skill];
+    (sectionData.parts || []).forEach((part) => {
+        const audioFile = part?.files?.audio || part.audio_file || null;
+        const imageFile = part?.files?.image || part.image_file || null;
+        const videoFile = part?.files?.video || part.video_file || null;
+        const partItem = displayPart(sectionEl, part, audioFile, imageFile, videoFile);
+
+        (part.groups || []).forEach((group) => {
+            displayQuestionGroup(partItem, part, group);
         });
 
-        updateSectionStats(sectionEl);
+        updatePartStats(partItem, part);
     });
+
+    updateSectionStats(sectionEl);
+}
+
+function resetPartEditorState(form) {
+    if (!form) {
+        return;
+    }
+
+    form.removeAttribute('data-edit-mode');
+    form.removeAttribute('data-edit-part-id');
+
+    const heading = form.querySelector('h5');
+    if (heading) {
+        heading.innerHTML = '<i class="fas fa-plus-circle mr-8"></i>Add New Part';
+    }
+
+    const submitBtn = form.querySelector('button[onclick="addPart(this)"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-plus mr-5"></i>Create Part';
+    }
+}
+
+function resetGroupEditorState(form) {
+    if (!form) {
+        return;
+    }
+
+    form.removeAttribute('data-edit-mode');
+    form.removeAttribute('data-edit-group-id');
+
+    const submitBtn = form.querySelector('button[onclick="addQuestionGroup(this)"]');
+    if (submitBtn) {
+        if (form.querySelector('.group-type-select') && form.querySelector('select.group-type-select')) {
+            submitBtn.innerHTML = '<i class="fas fa-plus mr-5"></i>Create Group & Add Questions';
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-plus mr-5"></i>Create Group';
+        }
+    }
 }
 
 function toggleAddPartForm(button) {
     const form = button.closest('.section-container').querySelector('.add-part-form');
+    if (form.classList.contains('hidden')) {
+        resetPartEditorState(form);
+    }
     form.classList.toggle('hidden');
 }
 
 function toggleAddGroupForm(button) {
     const form = button.closest('.part-item').querySelector('.group-inline-form');
+    if (form.classList.contains('hidden')) {
+        resetGroupEditorState(form);
+    }
     form.classList.toggle('hidden');
 }
 
@@ -1172,6 +1429,8 @@ function addPart(button) {
     const section = button.closest('.section-container');
     const skill = section.getAttribute('data-skill');
     const form = section.querySelector('.add-part-form');
+    const isEditMode = form.getAttribute('data-edit-mode') === 'true';
+    const editPartId = form.getAttribute('data-edit-part-id');
 
     const title = form.querySelector('.part-title-input').value.trim();
     const instructions = getContentEditorValue(form.querySelector('.part-instructions-input'));
@@ -1187,33 +1446,56 @@ function addPart(button) {
         return;
     }
 
-    const uploadId = `part_${Date.now()}_${++uploadSequence}`;
-    const fileInputNames = preserveSelectedFiles(form, uploadId);
-
-    const part = {
-        id: Date.now(),
-        upload_id: uploadId,
-        title,
-        instructions: instructions || null,
-        passage: passage || null,
-        groups: [],
-        file_input_names: fileInputNames,
-        files: {
-            audio: audioFile ? audioFile.name : null,
-            image: imageFile ? imageFile.name : null,
-            video: videoFile ? videoFile.name : null
+    if (isEditMode) {
+        const part = testData.sections[skill].parts.find(p => String(p.id) === String(editPartId));
+        if (!part) {
+            alert('Part not found. Please try again.');
+            return;
         }
-    };
 
-    testData.sections[skill].parts.push(part);
+        const uploadId = part.upload_id || `part_${Date.now()}_${++uploadSequence}`;
+        const fileInputNames = preserveSelectedFiles(form, uploadId);
 
-    displayPart(section, part, audioFile, imageFile, videoFile);
+        part.upload_id = uploadId;
+        part.title = title;
+        part.instructions = instructions || null;
+        part.passage = passage || null;
+        part.file_input_names = fileInputNames;
+        part.files = {
+            audio: audioFile ? audioFile.name : (part.files?.audio || null),
+            image: imageFile ? imageFile.name : (part.files?.image || null),
+            video: videoFile ? videoFile.name : (part.files?.video || null)
+        };
+    } else {
+        const uploadId = `part_${Date.now()}_${++uploadSequence}`;
+        const fileInputNames = preserveSelectedFiles(form, uploadId);
+
+        const part = {
+            id: Date.now(),
+            upload_id: uploadId,
+            title,
+            instructions: instructions || null,
+            passage: passage || null,
+            groups: [],
+            file_input_names: fileInputNames,
+            files: {
+                audio: audioFile ? audioFile.name : null,
+                image: imageFile ? imageFile.name : null,
+                video: videoFile ? videoFile.name : null
+            }
+        };
+
+        testData.sections[skill].parts.push(part);
+    }
+
+    renderSectionParts(section, skill);
 
     form.querySelector('.part-title-input').value = '';
     setContentEditorValue(form.querySelector('.part-instructions-input'), '');
     setContentEditorValue(form.querySelector('.part-passage'), '');
     form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => input.value = '');
     form.querySelectorAll('.file-preview').forEach(preview => preview.style.display = 'none');
+    resetPartEditorState(form);
 
     form.classList.add('hidden');
     updateSectionStats(section);
@@ -1233,6 +1515,8 @@ function addQuestionGroup(button) {
     }
 
     const form = partItem.querySelector('.group-inline-form');
+    const isEditMode = form.getAttribute('data-edit-mode') === 'true';
+    const editGroupId = form.getAttribute('data-edit-group-id');
     const titleEl = form ? form.querySelector('.group-title-input') : null;
     const title = titleEl ? titleEl.value.trim() : '';
     const qTypeEl = form ? form.querySelector('.group-type-select') : null;
@@ -1251,35 +1535,67 @@ function addQuestionGroup(button) {
         return;
     }
 
-    const uploadId = `group_${Date.now()}_${++uploadSequence}`;
-    const fileInputNames = preserveSelectedFiles(form, uploadId);
+    if (isEditMode) {
+        const group = part.groups.find(g => String(g.id) === String(editGroupId));
+        if (!group) {
+            alert('Question group not found. Please try again.');
+            return;
+        }
 
-    const group = {
-        id: Date.now(),
-        upload_id: uploadId,
-        title,
-        question_type: questionType,
-        max_words: maxWords || null,
-        target_band: targetBand || null,
-        passage: passage || null,
-        task_image: groupTaskImageUrl || null,
-        questions: [],
-        file_input_names: fileInputNames,
-        files: {}
-    };
+        const uploadId = group.upload_id || `group_${Date.now()}_${++uploadSequence}`;
+        const fileInputNames = preserveSelectedFiles(form, uploadId);
 
-    part.groups.push(group);
+        group.upload_id = uploadId;
+        group.title = title;
+        group.question_type = questionType;
+        group.max_words = maxWords || null;
+        group.target_band = targetBand || null;
+        group.passage = passage || null;
+        group.task_image = groupTaskImageUrl || null;
+        group.file_input_names = fileInputNames;
+        group.files = group.files || {};
+    } else {
+        const uploadId = `group_${Date.now()}_${++uploadSequence}`;
+        const fileInputNames = preserveSelectedFiles(form, uploadId);
 
-    displayQuestionGroup(partItem, part, group);
+        const group = {
+            id: Date.now(),
+            upload_id: uploadId,
+            title,
+            question_type: questionType,
+            max_words: maxWords || null,
+            target_band: targetBand || null,
+            passage: passage || null,
+            task_image: groupTaskImageUrl || null,
+            questions: [],
+            file_input_names: fileInputNames,
+            files: {}
+        };
+
+        part.groups.push(group);
+    }
+
+    renderSectionParts(section, skill);
 
     form.querySelector('.group-title-input').value = '';
-    form.querySelector('.group-type-select').value = 'multiple_choice_single';
-    form.querySelector('.group-max-words').value = '';
-    form.querySelector('.group-target-band').value = '';
+    const typeSelect = form.querySelector('.group-type-select');
+    if (typeSelect && typeSelect.tagName.toLowerCase() === 'select') {
+        typeSelect.value = 'multiple_choice_single';
+    }
+    const maxWordsInput = form.querySelector('.group-max-words');
+    if (maxWordsInput) {
+        maxWordsInput.value = '';
+    }
+
+    const targetBandInput = form.querySelector('.group-target-band');
+    if (targetBandInput) {
+        targetBandInput.value = '';
+    }
     setContentEditorValue(form.querySelector('.group-passage'), '');
     const gImg = form.querySelector('.group-task-image-url'); if (gImg) gImg.value = '';
     form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => input.value = '');
     form.querySelectorAll('.file-preview').forEach(preview => preview.style.display = 'none');
+    resetGroupEditorState(form);
 
     form.classList.add('hidden');
     updatePartStats(partItem, part);
@@ -1543,7 +1859,7 @@ function displayQuestionGroup(partItem, part, group) {
         <div class="group-meta">
             <span><i class="fas fa-tags"></i> ${escapeHtml(getQuestionTypeLabel(group.question_type))}</span>
             <span class="question-total"><i class="fas fa-list-ol"></i> 0 questions</span>
-            ${group.max_words ? `<span><i class="fas fa-font"></i> ${escapeHtml(String(group.max_words))} words max</span>` : ''}
+            ${group.max_words ? `<span><i class="fas fa-font"></i> ${escapeHtml(String(group.max_words))} word(s) / number(s) max</span>` : ''}
             ${group.target_band ? `<span><i class="fas fa-bullseye"></i> Band ${escapeHtml(String(group.target_band))}</span>` : ''}
         </div>
         ${groupRichContentHTML}
@@ -1699,21 +2015,47 @@ function editPartTitle(button) {
         return;
     }
 
-    const nextTitle = prompt('Edit Part Title', part.title || '');
-    if (nextTitle === null) {
+    const form = section.querySelector('.add-part-form');
+    if (!form) {
         return;
     }
 
-    const trimmedTitle = nextTitle.trim();
-    if (!trimmedTitle) {
-        alert('Part title cannot be empty.');
-        return;
+    form.classList.remove('hidden');
+    form.setAttribute('data-edit-mode', 'true');
+    form.setAttribute('data-edit-part-id', String(part.id));
+
+    const heading = form.querySelector('h5');
+    if (heading) {
+        heading.innerHTML = '<i class="fas fa-edit mr-8"></i>Edit Part';
     }
 
-    part.title = trimmedTitle;
-    const titleEl = partItem.querySelector('.part-title');
-    if (titleEl) {
-        titleEl.textContent = trimmedTitle;
+    const submitBtn = form.querySelector('button[onclick="addPart(this)"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save mr-5"></i>Update Part';
+    }
+
+    const titleInput = form.querySelector('.part-title-input');
+    if (titleInput) {
+        titleInput.value = part.title || '';
+        titleInput.focus();
+    }
+
+    setContentEditorValue(form.querySelector('.part-instructions-input'), part.instructions || '');
+    setContentEditorValue(form.querySelector('.part-passage'), part.passage || '');
+
+    const filePreviews = form.querySelectorAll('.file-preview');
+    if (filePreviews.length >= 3) {
+        const previewValues = [part.files?.audio, part.files?.image, part.files?.video];
+        filePreviews.forEach((preview, index) => {
+            const value = previewValues[index] || '';
+            if (value) {
+                preview.textContent = value;
+                preview.style.display = 'inline-flex';
+            } else {
+                preview.textContent = '';
+                preview.style.display = 'none';
+            }
+        });
     }
 }
 
@@ -1736,21 +2078,46 @@ function editGroupTitle(button) {
         return;
     }
 
-    const nextTitle = prompt('Edit Question Group Title', group.title || '');
-    if (nextTitle === null) {
+    const form = partItem.querySelector('.group-inline-form');
+    if (!form) {
         return;
     }
 
-    const trimmedTitle = nextTitle.trim();
-    if (!trimmedTitle) {
-        alert('Question group title cannot be empty.');
-        return;
+    form.classList.remove('hidden');
+    form.setAttribute('data-edit-mode', 'true');
+    form.setAttribute('data-edit-group-id', String(group.id));
+
+    const submitBtn = form.querySelector('button[onclick="addQuestionGroup(this)"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save mr-5"></i>Update Group';
     }
 
-    group.title = trimmedTitle;
-    const titleEl = groupItem.querySelector('.group-title');
-    if (titleEl) {
-        titleEl.textContent = trimmedTitle;
+    const titleInput = form.querySelector('.group-title-input');
+    if (titleInput) {
+        titleInput.value = group.title || '';
+        titleInput.focus();
+    }
+
+    const typeInput = form.querySelector('.group-type-select');
+    if (typeInput) {
+        typeInput.value = group.question_type || typeInput.value || 'short_answer';
+    }
+
+    const maxWordsInput = form.querySelector('.group-max-words');
+    if (maxWordsInput) {
+        maxWordsInput.value = group.max_words || '';
+    }
+
+    const targetBandInput = form.querySelector('.group-target-band');
+    if (targetBandInput) {
+        targetBandInput.value = group.target_band || '';
+    }
+
+    setContentEditorValue(form.querySelector('.group-passage'), group.passage || '');
+
+    const groupImageInput = form.querySelector('.group-task-image-url');
+    if (groupImageInput) {
+        groupImageInput.value = group.task_image || '';
     }
 }
 
@@ -1779,8 +2146,14 @@ function resetQuestionForm(form) {
     const noteAnswerWrap = form.querySelector('.note-completion-answers');
     if (noteAnswerWrap) noteAnswerWrap.innerHTML = '';
 
+    const completionAnswerWrap = form.querySelector('.completion-answers');
+    if (completionAnswerWrap) completionAnswerWrap.innerHTML = '';
+
     const noteSummary = form.querySelector('.note-completion-summary');
     if (noteSummary) noteSummary.innerHTML = 'Type the note text with <code>___</code> for each blank.';
+
+    const completionSummary = form.querySelector('.completion-summary');
+    if (completionSummary) completionSummary.innerHTML = 'Type the sentence/summary text with <code>___</code> for each blank.';
 
     const tcWrap = form.querySelector('.tc-builder-wrap');
     if (tcWrap) tcWrap.classList.add('hidden');
@@ -1794,7 +2167,7 @@ function resetQuestionForm(form) {
     const matchingColumnsCount = form.querySelector('.matching-columns-count');
     if (matchingColumnsCount) matchingColumnsCount.value = '5';
 
-    form.querySelectorAll('.tc-col-title, .tc-row-title, .tc-cell-text, .tc-cell-answer').forEach(i => i.value = '');
+    form.querySelectorAll('.tc-col-title, .tc-cell-text, .tc-cell-answer').forEach(i => i.value = '');
     form.querySelectorAll('.mc-option-row input[type="text"]').forEach(i => i.value = '');
     form.querySelectorAll('.mc-option-row input[type="radio"], .mc-option-row input[type="checkbox"]').forEach(i => i.checked = false);
 
@@ -1897,6 +2270,8 @@ function editQuestion(button, questionIndex) {
     } else if (qType === 'note_completion') {
         renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswer));
         bindNoteCompletionLivePreview(form);
+    } else if (qType === 'sentence_completion' || qType === 'summary_completion') {
+        renderCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswer));
     } else if (qType === 'table_completion' && question.table_structure) {
         const tcWrap = form.querySelector('.tc-builder-wrap');
         const structureInput = form.querySelector('.tc-table-structure-json');
@@ -1918,9 +2293,9 @@ function editQuestion(button, questionIndex) {
             const body = form.querySelector('.tc-builder-body');
 
             if (head && body) {
-                let headHtml = '<tr><th style="min-width:160px;">Row / Column</th>';
+                let headHtml = '<tr>';
                 headers.forEach((h, i) => {
-                    headHtml += `<th><input type="text" class="tc-col-title" data-col="${i}" placeholder="Column ${i + 1}" value="${escapeHtml(h)}"></th>`;
+                    headHtml += `<th><input type="text" class="tc-col-title form-control" data-col="${i}" placeholder="Column ${i + 1}" value="${escapeHtml(h)}"></th>`;
                 });
                 headHtml += '</tr>';
                 head.innerHTML = headHtml;
@@ -1935,9 +2310,8 @@ function editQuestion(button, questionIndex) {
                 rows.forEach((row, r) => {
                     // Handle both old format (array) and new format (object with cells property)
                     const rowCells = row.cells || row;
-                    const rowLabel = (row.row_label !== undefined) ? row.row_label : (typeof row === 'object' && !Array.isArray(row) ? '' : '');
-                    
-                    bodyHtml += `<tr><th><input type="text" class="tc-row-title" data-row="${r}" placeholder="Row ${r + 1}" value="${escapeHtml(rowLabel)}"></th>`;
+
+                    bodyHtml += '<tr>';
                     for (let c = 0; c < headers.length; c++) {
                         const key = `${r}-${c}`;
                         bodyHtml += makeTableCellEditor(r, c, existingAnswers[key] || []);
@@ -1963,28 +2337,8 @@ function editQuestion(button, questionIndex) {
                         console.log(`DEBUG: Filled textarea with "${cellValue}"`);
                     }
                     
-                    // Show answer wrap if cell has ___
-                    if (cellValue && cellValue.includes('___')) {
-                        const answerWrap = td.querySelector('.tc-answer-wrap');
-                        const answerList = td.querySelector('.tc-answer-list');
-                        
-                        if (answerWrap) {
-                            answerWrap.style.display = 'block';
-                            answerWrap.classList.remove('hidden');
-                        }
-                        
-                        // Populate answer inputs
-                        const key = `${rowIdx}-${colIdx}`;
-                        const cellAnswers = existingAnswers[key] || [];
-                        console.log(`DEBUG: Cell has ___, populating answers for key=${key}:`, cellAnswers);
-                        
-                        if (answerList && cellAnswers.length > 0) {
-                            answerList.innerHTML = cellAnswers.map((answer, i) => 
-                                makeTableCellAnswerRowHTML(answer, i > 0)
-                            ).join('');
-                            console.log(`DEBUG: Populated ${cellAnswers.length} answers`);
-                        }
-                    }
+                    // Sync answer inputs to exact blank count for this cell.
+                    syncTableCellAnswerInputs(td);
                 });
             }
             tcWrap.classList.remove('hidden');
@@ -2204,6 +2558,26 @@ function saveQuestionToGroup(button) {
             return;
         }
 
+    } else if (qType === 'sentence_completion' || qType === 'summary_completion') {
+        const completionAnswers = collectCompletionAnswers(form);
+        const blankCount = countNoteCompletionBlanks(text);
+
+        if (blankCount === 0) {
+            alert('Please include at least one blank using ___.');
+            return;
+        }
+
+        if (completionAnswers.length !== blankCount) {
+            alert(`Please enter ${blankCount} answer${blankCount > 1 ? 's' : ''} for the ${blankCount} blank${blankCount > 1 ? 's' : ''}.`);
+            return;
+        }
+
+        questionData.correctAnswers = completionAnswers;
+        questionData.correctAnswer = completionAnswers.length === 1
+            ? completionAnswers[0]
+            : JSON.stringify(completionAnswers);
+        questionData.slotCount = completionAnswers.length;
+
     } else if (qType === 'note_completion') {
         const noteAnswers = collectNoteCompletionAnswers(form);
         const blankCount = countNoteCompletionBlanks(text);
@@ -2228,6 +2602,25 @@ function saveQuestionToGroup(button) {
         const answersInput = form.querySelector('.tc-table-answers-json');
         const tableStructure = structureInput && structureInput.value ? JSON.parse(structureInput.value) : { headers: [], rows: [] };
         const tableAnswers = answersInput && answersInput.value ? JSON.parse(answersInput.value) : { answers: [] };
+
+        const blankCells = Array.from(form.querySelectorAll('.tc-builder-body td')).filter((td) => {
+            const textValue = String(td.querySelector('.tc-cell-text')?.value || '');
+            return getCompletionBlankCount(textValue) > 0;
+        });
+
+        for (const td of blankCells) {
+            const rowNumber = (parseInt(td.getAttribute('data-row'), 10) || 0) + 1;
+            const colNumber = (parseInt(td.getAttribute('data-col'), 10) || 0) + 1;
+            const textValue = String(td.querySelector('.tc-cell-text')?.value || '');
+            const blankCount = getCompletionBlankCount(textValue);
+            const answerValues = getTableCellAnswerValues(td);
+            const filledCount = answerValues.filter(Boolean).length;
+
+            if (answerValues.length !== blankCount || filledCount !== blankCount) {
+                alert(`Cell R${rowNumber}C${colNumber} has ${blankCount} blank${blankCount > 1 ? 's' : ''}. Please fill ${blankCount} answer${blankCount > 1 ? 's' : ''}.`);
+                return;
+            }
+        }
 
         if (!textPlain) {
             alert('Table title / instruction is required.');
@@ -2468,10 +2861,26 @@ function normalizeTableCellAnswers(rawAnswer) {
     return text ? [text] : [];
 }
 
-function countNoteCompletionBlanks(text) {
-    const plainText = editorHtmlToPlainText(String(text || ''));
-    const matches = plainText.match(/_{2,}/g);
+function normalizeCompletionBlankSource(value) {
+    return editorHtmlToPlainText(String(value || ''))
+        .replace(/[_\uFF3F\u2017]/g, '_')
+        .replace(/\u200B/g, ' ')
+        .replace(/\uFEFF/g, ' ');
+}
+
+function hasCompletionBlank(value) {
+    const normalized = normalizeCompletionBlankSource(value);
+    return /(?:_\s*){2,}/.test(normalized);
+}
+
+function getCompletionBlankCount(value) {
+    const normalized = normalizeCompletionBlankSource(value);
+    const matches = normalized.match(/(?:_\s*){2,}/g);
     return matches ? matches.length : 0;
+}
+
+function countNoteCompletionBlanks(text) {
+    return getCompletionBlankCount(text);
 }
 
 function getInlineQuestionType(form) {
@@ -2534,6 +2943,13 @@ function makeNoteCompletionAnswerRowHTML(value = '', index = 0) {
     </div>`;
 }
 
+function makeCompletionAnswerRowHTML(value = '', index = 0) {
+    return `<div class="completion-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
+        <span style="width:72px;flex:0 0 auto;font-size:13px;font-weight:600;color:#6b7280;">Blank ${index + 1}</span>
+        <input type="text" class="form-control form-control-sm completion-answer-input" data-blank-index="${index}" placeholder="Answer for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
+    </div>`;
+}
+
 function renderNoteCompletionAnswerInputs(form, values = []) {
     const textInput = form.querySelector('.question-text-input');
     const summary = form.querySelector('.note-completion-summary');
@@ -2557,12 +2973,45 @@ function renderNoteCompletionAnswerInputs(form, values = []) {
     container.innerHTML = Array.from({ length: blankCount }, (_, index) => makeNoteCompletionAnswerRowHTML(normalizedValues[index] || '', index)).join('');
 }
 
+function renderCompletionAnswerInputs(form, values = []) {
+    const textInput = form.querySelector('.question-text-input');
+    const summary = form.querySelector('.completion-summary');
+    const container = form.querySelector('.completion-answers');
+
+    if (!summary || !container) {
+        return;
+    }
+
+    const blankCount = countNoteCompletionBlanks(textInput ? getContentEditorValue(textInput) : '');
+    summary.innerHTML = blankCount > 0
+        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one answer per blank in order.`
+        : 'Type the sentence/summary text with <code>___</code> for each blank.';
+
+    if (blankCount === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const normalizedValues = Array.isArray(values) ? values : normalizeNoteCompletionAnswers(values);
+    container.innerHTML = Array.from({ length: blankCount }, (_, index) => makeCompletionAnswerRowHTML(normalizedValues[index] || '', index)).join('');
+}
+
 function collectNoteCompletionAnswers(form) {
     if (!form) {
         return [];
     }
 
     return Array.from(form.querySelectorAll('.note-completion-answer-input'))
+        .map(input => input.value.trim())
+        .filter(Boolean);
+}
+
+function collectCompletionAnswers(form) {
+    if (!form) {
+        return [];
+    }
+
+    return Array.from(form.querySelectorAll('.completion-answer-input'))
         .map(input => input.value.trim())
         .filter(Boolean);
 }
@@ -2588,24 +3037,78 @@ function bindNoteCompletionLivePreview(form) {
 
 function makeTableCellAnswerRowHTML(value = '', removable = false) {
     return `<div class="tc-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
-        <input type="text" class="form-control form-control-sm tc-cell-answer" placeholder="Đáp án" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
-        <button type="button" class="btn btn-sm tc-remove-answer-btn" onclick="removeTableCellAnswer(this)" title="Xóa đáp án" aria-label="Xóa đáp án" style="flex:0 0 auto; border:1px solid #ef4444; color:#ef4444; background:#fff; width:26px; height:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; line-height:1; font-size:18px; font-weight:700;">
-            ×
-        </button>
+        <input type="text" class="form-control form-control-sm tc-cell-answer" placeholder="Đáp án cho blank" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
     </div>`;
 }
 
-function makeTableCellAnswerListHTML(existingAnswers = []) {
-    const answers = existingAnswers.length ? existingAnswers : [''];
+function makeTableCellAnswerListHTML(existingAnswers = [], desiredCount = 1) {
+    const safeCount = Math.max(0, parseInt(desiredCount, 10) || 0);
+    if (safeCount === 0) {
+        return '';
+    }
+
+    const normalized = Array.from({ length: safeCount }, (_, index) => {
+        return typeof existingAnswers[index] === 'string' ? existingAnswers[index] : '';
+    });
+
+    const answers = normalized.length ? normalized : [''];
     return answers.map((answer, index) => makeTableCellAnswerRowHTML(answer, index > 0)).join('');
+}
+
+function getTableCellAnswerValues(td) {
+    if (!td) {
+        return [];
+    }
+
+    return Array.from(td.querySelectorAll('.tc-cell-answer')).map(input => String(input.value || '').trim());
+}
+
+function syncTableCellAnswerInputs(td, explicitBlankCount = null) {
+    if (!td) {
+        return 0;
+    }
+
+    const textarea = td.querySelector('.tc-cell-text');
+    const answerWrap = td.querySelector('.tc-answer-wrap');
+    const answerList = td.querySelector('.tc-answer-list');
+    const addBtn = td.querySelector('.tc-add-answer-btn');
+    const value = textarea ? String(textarea.value || '') : '';
+    const blankCount = explicitBlankCount === null ? getCompletionBlankCount(value) : Math.max(0, parseInt(explicitBlankCount, 10) || 0);
+
+    if (!answerWrap || !answerList) {
+        return blankCount;
+    }
+
+    if (blankCount <= 0) {
+        answerWrap.style.display = 'none';
+        answerWrap.classList.add('hidden');
+        answerList.innerHTML = '';
+        if (addBtn) {
+            addBtn.style.display = 'none';
+        }
+        return 0;
+    }
+
+    const existingValues = getTableCellAnswerValues(td);
+    if (existingValues.length !== blankCount) {
+        answerList.innerHTML = makeTableCellAnswerListHTML(existingValues, blankCount);
+    }
+    answerWrap.style.display = 'block';
+    answerWrap.classList.remove('hidden');
+
+    if (addBtn) {
+        addBtn.style.display = 'none';
+    }
+
+    return blankCount;
 }
 
 function makeTableCellEditor(rowIndex, colIndex, existingAnswers = []) {
     return `<td data-row="${rowIndex}" data-col="${colIndex}">
-        <textarea class="tc-cell-text" rows="3" placeholder="Nhập nội dung ô. Dùng ___ cho blank"></textarea>
+        <textarea class="tc-cell-text form-control" rows="3" placeholder="Nhập nội dung ô. Dùng ___ cho blank"></textarea>
         <div class="tc-answer-wrap hidden" style="display:none; margin-top:6px;">
             <div class="tc-answer-list">
-                ${makeTableCellAnswerListHTML(existingAnswers)}
+                ${makeTableCellAnswerListHTML(existingAnswers, Math.max(1, existingAnswers.length || 1))}
             </div>
             <button type="button" class="btn btn-sm btn-link p-0 tc-add-answer-btn" onclick="addTableCellAnswer(this)">
                 <i class="fas fa-plus"></i> Thêm đáp án
@@ -2662,7 +3165,8 @@ function buildTableCompletionBuilder(button) {
 
     const rowsInput = form.querySelector('.tc-num-rows');
     const colsInput = form.querySelector('.tc-num-cols');
-    const rows = Math.max(1, parseInt(rowsInput?.value, 10) || 3);
+    const totalRows = Math.max(2, parseInt(rowsInput?.value, 10) || 3);
+    const rows = Math.max(1, totalRows - 1);
     const cols = Math.max(1, parseInt(colsInput?.value, 10) || 3);
     const wrap = form.querySelector('.tc-builder-wrap');
     const head = form.querySelector('.tc-builder-head');
@@ -2678,16 +3182,16 @@ function buildTableCompletionBuilder(button) {
         });
     }
 
-    let headHtml = '<tr><th style="min-width:160px;">Row / Column</th>';
+    let headHtml = '<tr>';
     for (let c = 0; c < cols; c++) {
-        headHtml += `<th><input type="text" class="tc-col-title" data-col="${c}" placeholder="Cột ${c + 1}"></th>`;
+        headHtml += `<th><input type="text" class="tc-col-title form-control" data-col="${c}" placeholder="Cột ${c + 1}"></th>`;
     }
     headHtml += '</tr>';
     head.innerHTML = headHtml;
 
     let bodyHtml = '';
     for (let r = 0; r < rows; r++) {
-        bodyHtml += `<tr><th><input type="text" class="tc-row-title" data-row="${r}" placeholder="Hàng ${r + 1}"></th>`;
+        bodyHtml += '<tr>';
         for (let c = 0; c < cols; c++) {
             const key = `${r}-${c}`;
             bodyHtml += makeTableCellEditor(r, c, existingAnswers[key] || []);
@@ -2709,47 +3213,24 @@ function updateTableCompletionState(form) {
     });
 
     form.querySelectorAll('.tc-builder-body tr').forEach((tr, rowIndex) => {
-        const rowLabel = tr.querySelector('.tc-row-title')?.value.trim() || '';
         const cells = [];
         tr.querySelectorAll('td').forEach(td => {
             const textarea = td.querySelector('.tc-cell-text');
-            const answerWrap = td.querySelector('.tc-answer-wrap');
-            const answerList = td.querySelector('.tc-answer-list');
-            const answerInputs = td.querySelectorAll('.tc-cell-answer');
             const value = (textarea?.value || '').trim();
             cells.push(value);
 
-            if (value.includes('___')) {
-                if (answerWrap) {
-                    answerWrap.style.display = 'block';
-                }
-
-                if (answerList && !answerList.querySelector('.tc-answer-item')) {
-                    answerList.innerHTML = makeTableCellAnswerListHTML();
-                }
-
-                const cellAnswers = Array.from(answerInputs)
-                    .map(input => (input.value || '').trim())
-                    .filter(Boolean);
-
-                if (cellAnswers.length) {
-                    answers.push({ row: rowIndex, col: parseInt(td.dataset.col, 10), answers: cellAnswers });
-                }
-            } else {
-                if (answerWrap) {
-                    answerWrap.style.display = 'none';
-                }
-
-                if (answerList) {
-                    answerList.innerHTML = makeTableCellAnswerListHTML();
-                }
+            const blankCount = syncTableCellAnswerInputs(td);
+            if (blankCount > 0) {
+                const cellAnswers = getTableCellAnswerValues(td);
+                answers.push({
+                    row: rowIndex,
+                    col: parseInt(td.dataset.col, 10),
+                    answers: cellAnswers,
+                    blank_count: blankCount
+                });
             }
         });
-        // Store row as object with cells and row_label to preserve data in JSON serialization
-        rows.push({
-            cells: cells,
-            row_label: rowLabel
-        });
+        rows.push(cells);
     });
 
     const structureInput = form.querySelector('.tc-table-structure-json');
@@ -2990,11 +3471,11 @@ function getQuestionFormHTML(questionType) {
                     <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
                 </div>
             </div>
+            <div class="alert alert-info py-2 px-3 mb-12 completion-summary">
+                Type the sentence/summary text with <code>___</code> for each blank.
+            </div>
+            <div class="completion-answers"></div>
             <div class="form-row">
-                <div class="form-group">
-                    <label class="input-label">Correct Answer(s)</label>
-                    <input type="text" class="form-control question-answer-input" placeholder="Enter the word(s) that fill the blank">
-                </div>
                 <div class="form-group" style="max-width:120px;">
                     <label class="input-label">Points</label>
                     <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
@@ -3295,6 +3776,8 @@ function updateCompletenessStatus() {
 function setupFormValidation() {
     document.getElementById('testForm').addEventListener('submit', function(e) {
         e.preventDefault();
+
+        saveAutosaveSnapshot(true);
 
         const submitter = e.submitter || document.activeElement;
         const submitAction = submitter && submitter.getAttribute && submitter.getAttribute('name') === 'submit_action'

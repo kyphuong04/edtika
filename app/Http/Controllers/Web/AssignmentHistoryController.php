@@ -81,10 +81,14 @@ class AssignmentHistoryController extends Controller
                         'created_at' => time(),
                     ]);
 
+                    $shouldNotifyAdminReview = false;
+
                     if ($assignmentHistory->status == WebinarAssignmentHistory::$notSubmitted) {
                         $assignmentHistory->update([
                             'status' => WebinarAssignmentHistory::$pending
                         ]);
+
+                        $shouldNotifyAdminReview = ($user->id != $assignment->creator_id);
                     }
 
                     $notifyOptions = [
@@ -98,6 +102,15 @@ class AssignmentHistoryController extends Controller
                         sendNotification('instructor_send_message', $notifyOptions, $assignmentHistory->student_id);
                     } else {
                         sendNotification('student_send_message', $notifyOptions, $assignmentHistory->instructor_id);
+
+                        if ($shouldNotifyAdminReview) {
+                            sendNotification('content_review_request', [
+                                '[u.name]' => $assignmentHistory->student->full_name,
+                                '[item_title]' => $assignment->title,
+                                '[content_type]' => 'Assignment',
+                                '[link]' => getAdminPanelUrl("/assignments/{$assignment->id}/history/{$assignmentHistory->id}/conversations"),
+                            ], 1);
+                        }
                     }
 
                     return response()->json([

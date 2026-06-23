@@ -187,7 +187,8 @@ class AccountingController extends Controller
 
             $notifyOptions = [
                 '[amount]' => handlePrice($amount),
-                '[u.name]' => $userAuth->full_name
+                '[u.name]' => $userAuth->full_name,
+                '[link]' => getAdminPanelUrl('/financial/offline_payments')
             ];
             sendNotification('offline_payment_request', $notifyOptions, $userAuth->id);
             sendNotification('new_offline_payment_request', $notifyOptions, 1);

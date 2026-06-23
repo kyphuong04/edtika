@@ -5,6 +5,48 @@
     $rtlLanguages = !empty($generalSettings['rtl_languages']) ? $generalSettings['rtl_languages'] : [];
     $isRtl = ((in_array(mb_strtoupper(app()->getLocale()), $rtlLanguages)) or (!empty($generalSettings['rtl_layout']) and $generalSettings['rtl_layout'] == 1));
     $themeCustomCssAndJs = getThemeCustomCssAndJs();
+    $isEnglish = mb_strtolower(app()->getLocale()) === 'en';
+    $authModalText = [
+        'dialogAria' => $isEnglish ? 'Sign in and register' : 'Đăng nhập và đăng ký',
+        'closeAria' => $isEnglish ? 'Close' : 'Đóng',
+        'tabsAria' => 'Auth Tabs',
+        'loginTab' => $isEnglish ? 'Log in' : 'Đăng nhập',
+        'registerTab' => $isEnglish ? 'Register' : 'Đăng ký',
+        'loginTitle' => $isEnglish ? 'Log in to your account' : 'Đăng nhập vào tài khoản của bạn',
+        'loginMethodsAria' => $isEnglish ? 'Login Methods' : 'Phương thức đăng nhập',
+        'emailMethod' => 'Email',
+        'phoneMethod' => $isEnglish ? 'Phone' : 'Điện thoại',
+        'password' => $isEnglish ? 'Password' : 'Mật khẩu',
+        'forgotPassword' => $isEnglish ? 'Forgot password?' : 'Bạn quên mật khẩu?',
+        'noAccount' => $isEnglish ? "Don't have an account?" : 'Bạn chưa có tài khoản?',
+        'hasAccount' => $isEnglish ? 'Already have an account?' : 'Bạn đã có tài khoản?',
+        'registerTitle' => $isEnglish ? 'Create a new account' : 'Tạo tài khoản mới',
+        'fullName' => $isEnglish ? 'Full name' : 'Họ và tên',
+        'confirmPassword' => $isEnglish ? 'Confirm password' : 'Nhập lại mật khẩu',
+        'sliderImageAlt' => 'Auth slider image',
+    ];
+
+    $authThemeSettings = getThemeAuthenticationPagesSettings();
+    $authSliderBackground = (!empty($authThemeSettings) and !empty($authThemeSettings['slider_background_image'])) ? $authThemeSettings['slider_background_image'] : null;
+    $authSliderSlides = (!empty($authThemeSettings) and !empty($authThemeSettings['slider_contents']) and is_array($authThemeSettings['slider_contents']))
+        ? array_values($authThemeSettings['slider_contents'])
+        : [];
+
+    if (empty($authSliderSlides)) {
+        $authSliderSlides = [
+            [
+                'image' => asset('store/icons/—Pngtree—abstract purple line wave background_5542852 1.png'),
+                'title' => '',
+                'subtitle' => '',
+            ],
+        ];
+    }
+
+    $authSliderSlides = array_slice($authSliderSlides, 0, 3);
+
+    while (count($authSliderSlides) < 3) {
+        $authSliderSlides[] = $authSliderSlides[count($authSliderSlides) - 1];
+    }
 @endphp
 
 <head>
@@ -392,34 +434,94 @@
             border-radius: 26px;
             overflow: hidden;
             position: relative;
-            background: linear-gradient(145deg, rgba(73, 25, 138, 0.86), rgba(126, 83, 198, 0.84));
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .edtika-auth-slider__slides {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .edtika-auth-slider__slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px 30px 72px;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.34s ease;
+            background: rgba(255, 255, 255, 0.88);
+        }
+
+        .edtika-auth-slider__slide.is-active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .edtika-auth-slider__image-wrap {
+            width: min(78%, 360px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 220px;
         }
 
         .edtika-auth-slider__image {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.9;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .edtika-auth-slider__title {
+            margin: 14px 0 0;
+            color: #1b2450;
+            font-size: 34px;
+            line-height: 1.22;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .edtika-auth-slider__subtitle {
+            margin: 10px 0 0;
+            color: #8da0c2;
+            font-size: 19px;
+            line-height: 1.42;
+            font-weight: 500;
         }
 
         .edtika-auth-slider__pagination {
             position: absolute;
             left: 50%;
-            bottom: 22px;
+            bottom: 20px;
             transform: translateX(-50%);
             display: flex;
             gap: 8px;
+            align-items: center;
+            z-index: 2;
         }
 
-        .edtika-auth-slider__pagination span {
+        .edtika-auth-slider__pagination button {
             width: 10px;
             height: 10px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.44);
+            border: 0;
+            border-radius: 999px;
+            background: rgba(81, 29, 153, 0.36);
+            transition: width 0.24s ease, background-color 0.24s ease;
+            padding: 0;
         }
 
-        .edtika-auth-slider__pagination span.is-active {
-            background: #fff;
+        .edtika-auth-slider__pagination button.is-active {
+            width: 30px;
+            background: #511D99;
         }
 
         @media (max-width: 992px) {
@@ -457,22 +559,29 @@
     @yield('content')
 
     <div class="edtika-auth-modal" id="edtikaAuthModal" aria-hidden="true">
-        <div class="edtika-auth-modal__dialog" role="dialog" aria-modal="true" aria-label="Auth dialog">
-            <button type="button" class="edtika-auth-modal__close" id="edtikaAuthModalClose" aria-label="Close">&times;</button>
+        <div class="edtika-auth-modal__dialog" role="dialog" aria-modal="true" aria-label="{{ $authModalText['dialogAria'] }}">
+            <button type="button" class="edtika-auth-modal__close" id="edtikaAuthModalClose" aria-label="{{ $authModalText['closeAria'] }}">&times;</button>
 
             <div class="edtika-auth-modal__content">
                 <div class="edtika-auth-modal__form-side">
-                    <div class="edtika-auth-modal__tabs" role="tablist" aria-label="Auth tabs">
-                        <button type="button" class="edtika-auth-modal__tab is-active" data-auth-tab="login">{{ trans('auth.login') }}</button>
-                        <button type="button" class="edtika-auth-modal__tab" data-auth-tab="register">{{ trans('auth.register') }}</button>
+                    <div class="edtika-auth-modal__tabs" role="tablist" aria-label="{{ $authModalText['tabsAria'] }}">
+                        <button type="button" class="edtika-auth-modal__tab is-active" data-auth-tab="login">{{ $authModalText['loginTab'] }}</button>
+                        <button type="button" class="edtika-auth-modal__tab" data-auth-tab="register">{{ $authModalText['registerTab'] }}</button>
                     </div>
 
                     <div class="edtika-auth-pane is-active" data-auth-pane="login">
-                        <h3 class="edtika-auth-pane__title">{{ trans('auth.login') }}</h3>
+                        <h3 class="edtika-auth-pane__title">{{ $authModalText['loginTitle'] }}</h3>
 
-                        <div class="edtika-auth-methods" role="tablist" aria-label="Login methods">
-                            <button type="button" class="edtika-auth-method is-active" data-login-method="email">Email</button>
-                            <button type="button" class="edtika-auth-method" data-login-method="phone">Phone</button>
+                        @if(session()->has('login_failed_active_session'))
+                            <div class="mb-16 p-16 rounded-12 border-danger bg-danger-20">
+                                <div class="font-14 font-weight-bold text-danger">{{ session()->get('login_failed_active_session')['title'] ?? trans('update.login_failed') }}</div>
+                                <div class="mt-4 font-12 text-danger">{{ session()->get('login_failed_active_session')['msg'] ?? trans('update.device_limit_reached_please_try_again') }}</div>
+                            </div>
+                        @endif
+
+                        <div class="edtika-auth-methods" role="tablist" aria-label="{{ $authModalText['loginMethodsAria'] }}">
+                            <button type="button" class="edtika-auth-method is-active" data-login-method="email">{{ $authModalText['emailMethod'] }}</button>
+                            <button type="button" class="edtika-auth-method" data-login-method="phone">{{ $authModalText['phoneMethod'] }}</button>
                         </div>
 
                         <form method="POST" action="/login">
@@ -485,52 +594,48 @@
                             </div>
 
                             <div class="edtika-auth-field" data-login-field="phone" style="display: none;">
-                                <label class="edtika-auth-label" for="edtikaLoginPhone">Phone *</label>
+                                <label class="edtika-auth-label" for="edtikaLoginPhone">{{ $authModalText['phoneMethod'] }} *</label>
                                 <input id="edtikaLoginPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
                             </div>
 
                             <div class="edtika-auth-field">
-                                <label class="edtika-auth-label" for="edtikaLoginPassword">{{ trans('auth.password') }} *</label>
+                                <label class="edtika-auth-label" for="edtikaLoginPassword">{{ $authModalText['password'] }} *</label>
                                 <div class="edtika-auth-input-wrap">
                                     <input id="edtikaLoginPassword" class="edtika-auth-input" type="password" name="password" autocomplete="current-password">
-                                    <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaLoginPassword" aria-label="{{ trans('public.show') }} {{ trans('auth.password') }}">
+                                    <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaLoginPassword" aria-label="{{ app()->getLocale() === 'en' ? 'Show password' : 'Hiển thị mật khẩu' }}">
                                         <x-iconsax-lin-eye-slash class="icons-eye-slash d-none" width="24px" height="24px"/>
                                         <x-iconsax-lin-eye class="icons-eye" width="24px" height="24px"/>
                                     </button>
                                 </div>
                             </div>
 
-                            <button type="button" class="edtika-auth-forgot" data-auth-tab-switch="forgot">{{ trans('auth.forgot_password') }}</button>
-                            <button type="submit" class="edtika-auth-submit">{{ trans('auth.login') }}</button>
+                            <button type="button" class="edtika-auth-forgot" data-auth-tab-switch="forgot">{{ $authModalText['forgotPassword'] }}</button>
+                            <button type="submit" class="edtika-auth-submit">{{ $authModalText['loginTab'] }}</button>
                         </form>
 
                         <div class="edtika-auth-switch-note">
-                            {{ trans('auth.no_account') ?? 'Don\'t have an account?' }} <button type="button" data-auth-tab-switch="register">{{ trans('auth.register') }}</button>
+                            {{ $authModalText['noAccount'] }} <button type="button" data-auth-tab-switch="register">{{ $authModalText['registerTab'] }}</button>
                         </div>
                     </div>
 
                     <div class="edtika-auth-pane" data-auth-pane="register">
-                        <h3 class="edtika-auth-pane__title">{{ trans('auth.register') }}</h3>
+                        <h3 class="edtika-auth-pane__title">{{ $authModalText['registerTitle'] }}</h3>
 
                         <form method="POST" action="/register">
                             @csrf
 
-                            @php
-                                $registerIsEnglish = app()->getLocale() === 'en';
-                            @endphp
-
                             <div class="edtika-auth-field">
-                                <label class="edtika-auth-label">{{ $registerIsEnglish ? 'Choose role' : 'Chọn vai trò' }}</label>
+                                <label class="edtika-auth-label">{{ app()->getLocale() === 'en' ? 'Choose role' : 'Chọn vai trò' }}</label>
 
                                 <div class="edtika-auth-role-switch">
                                     <label class="edtika-auth-role-option">
                                         <input type="radio" name="account_type" value="user" checked>
-                                        <span>{{ $registerIsEnglish ? 'Student' : 'Học viên' }}</span>
+                                        <span>{{ app()->getLocale() === 'en' ? 'Student' : 'Học viên' }}</span>
                                     </label>
 
                                     <label class="edtika-auth-role-option">
                                         <input type="radio" name="account_type" value="teacher">
-                                        <span>{{ $registerIsEnglish ? 'Teacher' : 'Giảng viên' }}</span>
+                                        <span>{{ app()->getLocale() === 'en' ? 'Teacher' : 'Giảng viên' }}</span>
                                     </label>
                                 </div>
                             </div>
@@ -541,20 +646,20 @@
                             </div>
 
                             <div class="edtika-auth-field">
-                                <label class="edtika-auth-label" for="edtikaRegisterPhone">{{ $registerIsEnglish ? 'Phone (Optional)' : 'Điện thoại (Tùy chọn)' }}</label>
+                                <label class="edtika-auth-label" for="edtikaRegisterPhone">{{ app()->getLocale() === 'en' ? 'Phone (Optional)' : 'Điện thoại (Tùy chọn)' }}</label>
                                 <input id="edtikaRegisterPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
                             </div>
 
                             <div class="edtika-auth-field">
-                                <label class="edtika-auth-label" for="edtikaRegisterFullName">Full name *</label>
+                                <label class="edtika-auth-label" for="edtikaRegisterFullName">{{ $authModalText['fullName'] }} *</label>
                                 <input id="edtikaRegisterFullName" class="edtika-auth-input" type="text" name="full_name" autocomplete="name">
                             </div>
 
                             <div class="edtika-auth-field">
-                                <label class="edtika-auth-label" for="edtikaRegisterPassword">{{ trans('auth.password') }} *</label>
+                                <label class="edtika-auth-label" for="edtikaRegisterPassword">{{ $authModalText['password'] }} *</label>
                                 <div class="edtika-auth-input-wrap">
                                     <input id="edtikaRegisterPassword" class="edtika-auth-input" type="password" name="password" autocomplete="new-password">
-                                    <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPassword" aria-label="{{ trans('public.show') }} {{ trans('auth.password') }}">
+                                    <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPassword" aria-label="{{ app()->getLocale() === 'en' ? 'Show password' : 'Hiển thị mật khẩu' }}">
                                         <x-iconsax-lin-eye-slash class="icons-eye-slash d-none" width="24px" height="24px"/>
                                         <x-iconsax-lin-eye class=" icons-eye" width="24px" height="24px"/>
                                     </button>
@@ -562,10 +667,10 @@
                             </div>
 
                             <div class="edtika-auth-field">
-                                <label class="edtika-auth-label" for="edtikaRegisterPasswordConfirmation">Confirm password *</label>
+                                <label class="edtika-auth-label" for="edtikaRegisterPasswordConfirmation">{{ $authModalText['confirmPassword'] }} *</label>
                                 <div class="edtika-auth-input-wrap">
                                     <input id="edtikaRegisterPasswordConfirmation" class="edtika-auth-input" type="password" name="password_confirmation" autocomplete="new-password">
-                                    <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPasswordConfirmation" aria-label="{{ trans('public.show') }} Confirm password">
+                                    <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPasswordConfirmation" aria-label="{{ app()->getLocale() === 'en' ? 'Show password confirmation' : 'Hiển thị nhập lại mật khẩu' }}">
                                         <x-iconsax-lin-eye-slash class="icons-eye-slash d-none" width="24px" height="24px"/>
                                         <x-iconsax-lin-eye class="icons-eye" width="24px" height="24px"/>
                                     </button>
@@ -576,15 +681,15 @@
                                 <input type="checkbox" name="term" value="1" required>
                                 <span class="edtika-auth-check__box">✓</span>
                                 <span class="edtika-auth-check__text">
-                                    {{ $registerIsEnglish ? 'I agree to the' : 'Tôi đồng ý với' }} <strong>{{ $registerIsEnglish ? 'terms & rules' : 'điều khoản & quy tắc' }}</strong>
+                                    {{ app()->getLocale() === 'en' ? 'I agree to the' : 'Tôi đồng ý với' }} <strong>{{ app()->getLocale() === 'en' ? 'terms & rules' : 'điều khoản & quy tắc' }}</strong>
                                 </span>
                             </label>
 
-                            <button type="submit" class="edtika-auth-submit">{{ trans('auth.register') }}</button>
+                            <button type="submit" class="edtika-auth-submit">{{ $authModalText['registerTab'] }}</button>
                         </form>
 
                         <div class="edtika-auth-switch-note">
-                            {{ trans('auth.has_account') ?? 'Already have an account?' }} <button type="button" data-auth-tab-switch="login">{{ trans('auth.login') }}</button>
+                            {{ $authModalText['hasAccount'] }} <button type="button" data-auth-tab-switch="login">{{ $authModalText['loginTab'] }}</button>
                         </div>
                     </div>
 
@@ -595,9 +700,9 @@
                             @csrf
                             <input type="hidden" name="type" id="edtikaForgotType" value="email">
 
-                            <div class="edtika-auth-methods" role="tablist" aria-label="Forgot password methods">
-                                <button type="button" class="edtika-auth-method is-active" data-forgot-method="email">Email</button>
-                                <button type="button" class="edtika-auth-method" data-forgot-method="phone">Phone</button>
+                            <div class="edtika-auth-methods" role="tablist" aria-label="{{ app()->getLocale() === 'en' ? 'Forgot password methods' : 'Phương thức lấy lại mật khẩu' }}">
+                                <button type="button" class="edtika-auth-method is-active" data-forgot-method="email">{{ $authModalText['emailMethod'] }}</button>
+                                <button type="button" class="edtika-auth-method" data-forgot-method="phone">{{ $authModalText['phoneMethod'] }}</button>
                             </div>
 
                             <div class="edtika-auth-field" data-forgot-field="email">
@@ -606,7 +711,7 @@
                             </div>
 
                             <div class="edtika-auth-field" data-forgot-field="phone" style="display: none;">
-                                <label class="edtika-auth-label" for="edtikaForgotPhone">Phone *</label>
+                                <label class="edtika-auth-label" for="edtikaForgotPhone">{{ $authModalText['phoneMethod'] }} *</label>
                                 <input id="edtikaForgotPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
                             </div>
 
@@ -620,21 +725,64 @@
                         </form>
 
                         <div class="edtika-auth-switch-note">
-                            <button type="button" data-auth-tab-switch="login">{{ trans('auth.login') }}</button>
+                            <button type="button" data-auth-tab-switch="login">{{ $authModalText['loginTab'] }}</button>
                             <span> / </span>
-                            <button type="button" data-auth-tab-switch="register">{{ trans('auth.register') }}</button>
+                            <button type="button" data-auth-tab-switch="register">{{ $authModalText['registerTab'] }}</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="edtika-auth-modal__slider-side">
-                    <div class="edtika-auth-slider">
-                        <img class="edtika-auth-slider__image" src="{{ asset('store/icons/—Pngtree—abstract purple line wave background_5542852 1.png') }}" alt="Auth slider image">
+                    <div class="edtika-auth-slider" @if(!empty($authSliderBackground)) style="background-image: url('{{ $authSliderBackground }}'); background-size: cover; background-position: center;" @endif>
+                        <div class="edtika-auth-slider__slides">
+                            @foreach($authSliderSlides as $authSlideIndex => $authSlide)
+                                @php
+                                    $authSlideTitle = $authSlide['title'] ?? '';
+                                    $authSlideSubtitle = $authSlide['subtitle'] ?? '';
 
-                        <div class="edtika-auth-slider__pagination" aria-hidden="true">
-                            <span class="is-active"></span>
-                            <span></span>
-                            <span></span>
+                                    $authTitleMap = [
+                                        'Affordable Quality Education' => trans('update.affordable_quality_education'),
+                                        'Advance Your Career' => trans('update.advance_your_career'),
+                                        'Instant Certificate Access' => trans('update.instant_certificate_access'),
+                                    ];
+
+                                    $authSubtitleMap = [
+                                        'High-value courses at accessible prices' => trans('update.high_value_courses_at_accessible_prices'),
+                                        'Build your resume with proven expertise' => trans('update.build_your_resume_with_proven_expertise'),
+                                        'Download certificates right after completion' => trans('update.download_certificates_right_after_completion'),
+                                    ];
+
+                                    if (!empty($authSlideTitle) && array_key_exists($authSlideTitle, $authTitleMap)) {
+                                        $authSlideTitle = $authTitleMap[$authSlideTitle];
+                                    }
+
+                                    if (!empty($authSlideSubtitle) && array_key_exists($authSlideSubtitle, $authSubtitleMap)) {
+                                        $authSlideSubtitle = $authSubtitleMap[$authSlideSubtitle];
+                                    }
+                                @endphp
+
+                                <div class="edtika-auth-slider__slide {{ $authSlideIndex === 0 ? 'is-active' : '' }}" data-auth-slide>
+                                    @if(!empty($authSlide['image']))
+                                        <div class="edtika-auth-slider__image-wrap">
+                                            <img class="edtika-auth-slider__image" src="{{ $authSlide['image'] }}" alt="{{ $authModalText['sliderImageAlt'] }}">
+                                        </div>
+                                    @endif
+
+                                    @if(!empty($authSlideTitle))
+                                        <h4 class="edtika-auth-slider__title">{{ $authSlideTitle }}</h4>
+                                    @endif
+
+                                    @if(!empty($authSlideSubtitle))
+                                        <p class="edtika-auth-slider__subtitle">{{ $authSlideSubtitle }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="edtika-auth-slider__pagination" aria-label="Auth modal slider pagination">
+                            @foreach($authSliderSlides as $authSlideIndex => $authSlide)
+                                <button type="button" class="{{ $authSlideIndex === 0 ? 'is-active' : '' }}" data-auth-slider-dot aria-label="Slide {{ $authSlideIndex + 1 }}" aria-current="{{ $authSlideIndex === 0 ? 'true' : 'false' }}"></button>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -720,6 +868,53 @@
         var forgotFieldBlocks = document.querySelectorAll('[data-forgot-field]');
         var forgotTypeInput = document.getElementById('edtikaForgotType');
         var passwordToggleBtns = document.querySelectorAll('[data-password-toggle]');
+        var authSliderSlides = document.querySelectorAll('[data-auth-slide]');
+        var authSliderDots = document.querySelectorAll('[data-auth-slider-dot]');
+        var authSliderIntervalId = null;
+        var authSliderActiveIndex = 0;
+        var authSliderDelay = 3400;
+        var authLoginFailedSession = @json(session()->get('login_failed_active_session'));
+        var authModalShouldOpen = @json(session()->get('auth_modal_open', false));
+
+        var setActiveAuthSlide = function (nextIndex) {
+            if (!authSliderSlides.length) {
+                return;
+            }
+
+            var totalSlides = authSliderSlides.length;
+            authSliderActiveIndex = ((nextIndex % totalSlides) + totalSlides) % totalSlides;
+
+            authSliderSlides.forEach(function (slide, slideIndex) {
+                slide.classList.toggle('is-active', slideIndex === authSliderActiveIndex);
+            });
+
+            authSliderDots.forEach(function (dot, dotIndex) {
+                var isCurrent = dotIndex === authSliderActiveIndex;
+                dot.classList.toggle('is-active', isCurrent);
+                dot.setAttribute('aria-current', isCurrent ? 'true' : 'false');
+            });
+        };
+
+        var stopAuthSliderAutoplay = function () {
+            if (authSliderIntervalId) {
+                window.clearInterval(authSliderIntervalId);
+                authSliderIntervalId = null;
+            }
+        };
+
+        var startAuthSliderAutoplay = function () {
+            if (authSliderIntervalId || authSliderSlides.length < 2) {
+                return;
+            }
+
+            authSliderIntervalId = window.setInterval(function () {
+                if (!authModal || !authModal.classList.contains('is-open')) {
+                    return;
+                }
+
+                setActiveAuthSlide(authSliderActiveIndex + 1);
+            }, authSliderDelay);
+        };
 
         var setAuthTab = function (tabName) {
             authTabs.forEach(function (tab) {
@@ -740,6 +935,7 @@
             authModal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
             setAuthTab('login');
+            startAuthSliderAutoplay();
         };
 
         var closeAuthModal = function () {
@@ -750,6 +946,7 @@
             authModal.classList.remove('is-open');
             authModal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
+            stopAuthSliderAutoplay();
         };
 
         authModalOpenBtns.forEach(function (btn) {
@@ -860,8 +1057,22 @@
             });
         });
 
+        authSliderDots.forEach(function (dot, dotIndex) {
+            dot.addEventListener('click', function () {
+                setActiveAuthSlide(dotIndex);
+            });
+        });
+
         setLoginMethod('email');
         setForgotMethod('email');
+
+        if (authLoginFailedSession || authModalShouldOpen) {
+            openAuthModal();
+        }
+
+        if (authSliderSlides.length) {
+            setActiveAuthSlide(0);
+        }
     })();
 </script>
 
