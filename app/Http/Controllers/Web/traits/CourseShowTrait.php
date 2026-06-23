@@ -186,7 +186,8 @@ trait CourseShowTrait
 
                 $notifyOptions = [
                     '[u.name]' => $user->full_name,
-                    '[content_type]' => trans('product.course')
+                    '[content_type]' => trans('product.course'),
+                    '[link]' => getAdminPanelUrl("/webinars/{$webinar->id}/edit")
                 ];
                 sendNotification("new_report_item_for_admin", $notifyOptions, 1);
 

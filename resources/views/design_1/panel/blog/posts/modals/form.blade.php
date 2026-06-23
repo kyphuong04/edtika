@@ -1,7 +1,10 @@
 @php
     $postTitle = (!empty($post) && !empty($post->translate($locale ?? app()->getLocale()))) ? $post->translate($locale ?? app()->getLocale())->title : old('title');
+    $postSubtitle = (!empty($post) && !empty($post->translate($locale ?? app()->getLocale()))) ? ($post->translate($locale ?? app()->getLocale())->subtitle ?? '') : old('subtitle');
     $postContent = (!empty($post) && !empty($post->translate($locale ?? app()->getLocale()))) ? $post->translate($locale ?? app()->getLocale())->content : old('content');
     $postDescription = (!empty($post) && !empty($post->translate($locale ?? app()->getLocale()))) ? $post->translate($locale ?? app()->getLocale())->description : old('description');
+    $postStudyTime = !empty($post) ? $post->study_time : old('study_time');
+    $selectedCategoryId = !empty($post) ? $post->category_id : old('category_id');
     $buttonLabel = !empty($post) ? trans('public.save') : trans('update.create_a_post');
 @endphp
 
@@ -9,14 +12,41 @@
     {{ csrf_field() }}
 
     <input type="hidden" name="locale" value="{{ $locale ?? mb_strtolower(app()->getLocale()) }}">
-    <input type="hidden" name="subtitle" value="{{ (!empty($post) && !empty($post->translate($locale ?? app()->getLocale()))) ? ($post->translate($locale ?? app()->getLocale())->subtitle ?? '') : old('subtitle') }}">
-    <input type="hidden" name="description" value="{{ $postDescription }}">
-    <input type="hidden" name="study_time" value="{{ !empty($post) ? $post->study_time : old('study_time') }}">
+
+    <div class="form-group">
+        <label class="form-group-label">{{ trans('admin/main.category') }}</label>
+        <select name="category_id" class="form-control form-control-lg rounded-16 @error('category_id') is-invalid @enderror">
+            <option value="">{{ trans('admin/main.choose_category') }}</option>
+
+            @foreach(($blogCategories ?? []) as $category)
+                <option value="{{ $category->id }}" {{ (string)$selectedCategoryId === (string)$category->id ? 'selected' : '' }}>{{ $category->title }}</option>
+            @endforeach
+        </select>
+        <div class="invalid-feedback d-block js-blog-post-error" data-field="category_id">@error('category_id') {{ $message }} @enderror</div>
+    </div>
 
     <div class="form-group">
         <label class="form-group-label sr-only">{{ trans('admin/main.title') }}</label>
         <input type="text" name="title" class="form-control form-control-lg rounded-16 @error('title') is-invalid @enderror" value="{{ $postTitle }}" placeholder="Article Title">
         <div class="invalid-feedback js-blog-post-error" data-field="title">@error('title') {{ $message }} @enderror</div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-group-label">{{ trans('admin/main.subtitle') ?? 'Phụ đề' }}</label>
+        <input type="text" name="subtitle" class="form-control form-control-lg rounded-16 @error('subtitle') is-invalid @enderror" value="{{ $postSubtitle }}" placeholder="Article Subtitle">
+        <div class="invalid-feedback js-blog-post-error" data-field="subtitle">@error('subtitle') {{ $message }} @enderror</div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-group-label">{{ trans('public.study_time') ?? 'Thời gian đọc (phút)' }}</label>
+        <input type="number" name="study_time" class="form-control form-control-lg rounded-16 @error('study_time') is-invalid @enderror" value="{{ $postStudyTime }}" placeholder="e.g., 5" min="0">
+        <div class="invalid-feedback js-blog-post-error" data-field="study_time">@error('study_time') {{ $message }} @enderror</div>
+    </div>
+
+    <div class="form-group bg-white-editor mt-24">
+        <label class="form-group-label">{{ trans('admin/main.description') ?? 'Mô tả' }}</label>
+        <textarea name="description" class="form-control js-blog-post-editor-description @error('description') is-invalid @enderror" placeholder="Article Description">{!! $postDescription !!}</textarea>
+        <div class="invalid-feedback d-block js-blog-post-error" data-field="description">@error('description') {{ $message }} @enderror</div>
     </div>
 
     <div class="form-group mt-24">
@@ -35,7 +65,7 @@
     </div>
 
     <div class="form-group bg-white-editor mt-24">
-        <label class="form-group-label sr-only">{{ trans('public.content') }}</label>
+        <label class="form-group-label">{{ trans('public.content') ?? 'Nội dung' }}</label>
         <textarea name="content" class="form-control js-blog-post-editor @error('content') is-invalid @enderror" placeholder="Type your content">{!! $postContent !!}</textarea>
         <div class="invalid-feedback d-block js-blog-post-error" data-field="content">@error('content') {{ $message }} @enderror</div>
     </div>

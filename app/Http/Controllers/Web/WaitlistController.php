@@ -69,7 +69,7 @@ class WaitlistController extends Controller
             $email = $data['email'] ?? null;
             $phone = $data['phone'] ?? null;
 
-            Waitlist::query()->updateOrCreate([
+            $waitlist = Waitlist::query()->updateOrCreate([
                 'webinar_id' => $course->id,
                 'user_id' => $userId,
                 'email' => $email,
@@ -82,6 +82,7 @@ class WaitlistController extends Controller
             $notifyOptions = [
                 '[c.title]' => $course->title,
                 '[u.name]' => !empty($fullName) ? $fullName : (!empty($user) ? $user->full_name : 'User'),
+                '[link]' => getAdminPanelUrl("/waitlists/{$waitlist->id}/view_list"),
             ];
 
             sendNotification("waitlist_submission_for_admin", $notifyOptions, 1);

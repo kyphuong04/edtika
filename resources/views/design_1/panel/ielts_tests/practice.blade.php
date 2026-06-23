@@ -437,8 +437,8 @@
             @if($practiceTests->isEmpty())
                 <div class="wf-empty">
                     <img src="/assets/default/img/no-results/support.png" alt="">
-                    <h3>{{ trans('update.no_practice_tests_available') }}</h3>
-                    <p>{{ trans('update.no_practice_tests_hint') }}</p>
+                    <h3>{{ $emptyStateTitle ?? trans('update.no_practice_tests_available') }}</h3>
+                    <p>{{ $emptyStateHint ?? trans('update.no_practice_tests_hint') }}</p>
                 </div>
             @else
 

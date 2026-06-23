@@ -5,7 +5,6 @@
     .dictionary-container {
         max-width: 100%;
         margin: 0;
-        padding: 0 30px;
     }
     
     .user-stats-card {
@@ -423,6 +422,32 @@
         background-color: #1e293b;
         border-color: #334155;
         color: #f1f5f9;
+    }
+
+    /* Keep long vocabulary lists inside a scrollable panel */
+    .words-container {
+        max-height: min(58vh, 520px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 6px;
+    }
+
+    .words-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .words-container::-webkit-scrollbar-track {
+        background: #eef2ff;
+        border-radius: 10px;
+    }
+
+    .words-container::-webkit-scrollbar-thumb {
+        background: rgba(81, 29, 153, 0.35);
+        border-radius: 10px;
+    }
+
+    .words-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(81, 29, 153, 0.5);
     }
 
     /* ── Word item card ── */
@@ -1221,16 +1246,13 @@
         .col-lg-4 {
             margin-bottom: 30px;
         }
-        
-        .dictionary-container {
-            padding: 0 10px;
+
+        .words-container {
+            max-height: 46vh;
         }
     }
     
     @media (min-width: 992px) {
-        .dictionary-container {
-            padding: 0 20px;
-        }
         
         /* Add gap between columns */
         .row {
@@ -1246,9 +1268,6 @@
     }
     
     @media (min-width: 1200px) {
-        .dictionary-container {
-            padding: 0 40px;
-        }
         
         .row {
             margin-left: -15px;
@@ -1259,12 +1278,6 @@
         .col-lg-4 {
             padding-left: 15px;
             padding-right: 15px;
-        }
-    }
-    
-    @media (min-width: 1400px) {
-        .dictionary-container {
-            padding: 0 50px;
         }
     }
 
@@ -1333,7 +1346,7 @@
     .sidebar-card-overlay.show { display: flex; }
     .sidebar-card-display-text {
         font-size: 13px;
-        color: #f1f5f9;
+        color: #511D99;
         text-align: center;
         line-height: 1.6;
     }
@@ -1469,6 +1482,17 @@
 
 @section('content')
 <div class="dictionary-container">
+    @if(!empty($canManageBundleVocabulary) && $canManageBundleVocabulary)
+        <div class="d-flex align-items-center justify-content-end mb-16">
+            <a href="{{ url('/panel/dictionary/bundle-vocabulary/manage') }}" class="btn btn-outline-primary btn-sm">
+                {{ trans('panel.bundle_vocabulary_library') }}
+                @if(!empty($bundleVocabularyPendingCount) && $bundleVocabularyPendingCount > 0)
+                    <span class="badge badge-warning ml-8">{{ $bundleVocabularyPendingCount }}</span>
+                @endif
+            </a>
+        </div>
+    @endif
+
     <!-- Main Content Grid -->
     <div class="row">
         <!-- Left Column: Search, Word Lists (66%) -->
@@ -1497,13 +1521,22 @@
                 @foreach($academicWordLists as $wordList)
                 <div class="word-list-card {{ $wordList['is_locked'] ? 'locked' : '' }}" 
                      data-list-id="{{ $wordList['id'] }}"
+                     data-source-id="{{ $wordList['source_id'] }}"
+                     data-source-type="{{ $wordList['source_type'] }}"
                      data-list-type="academic">
                     @if($wordList['is_locked'])
                         <i class="iconsax lock-icon" data-icon="lock-1"></i>
                     @endif
                     
                     <div class="word-list-header">
-                        <h3 class="word-list-name">{{ $wordList['name'] }} (Band {{ $wordList['band_level'] }})</h3>
+                        <h3 class="word-list-name">
+                            {{ $wordList['name'] }}
+                            @if($wordList['source_type'] === 'academic')
+                                (Band {{ $wordList['band_level'] }})
+                            @else
+                                (Bundle)
+                            @endif
+                        </h3>
                         <span class="word-count-badge">Tổng số từ: {{ $wordList['word_count'] }} từ</span>
                     </div>
                     <p class="word-list-description">{{ $wordList['description'] }}</p>
@@ -1737,6 +1770,8 @@
 
     let currentWordListId = null;
     let currentWordListType = null;
+    let currentWordListSourceType = null;
+    let currentWordListSourceId = null;
     let currentQuestions = [];
     let currentWordData = null;
     let currentQuestionIndex = 0;
@@ -1771,11 +1806,11 @@
 
     function loadSidebarFlashcards() {
         $.ajax({
-            url: '/panel/dictionary/my-word-list',
+            url: '/panel/dictionary/flashcards-preview',
             method: 'GET',
             success: function(response) {
-                if (response.success && response.data && response.data.flashcards) {
-                    sidebarCards = response.data.flashcards;
+                if (response.success && response.data) {
+                    sidebarCards = response.data;
                     sidebarIndex = 0;
                     renderSidebarCard();
                 }
@@ -1808,7 +1843,6 @@
 
         // Load word illustration
         if (card.word) {
-            const word = encodeURIComponent(card.word.toLowerCase());
             const img = document.getElementById('sidebarCardImage');
             const placeholder = document.getElementById('sidebarCardPlaceholder');
             img.style.display = 'none';
@@ -1821,7 +1855,12 @@
                 img.style.display = 'none';
                 placeholder.style.display = 'flex';
             };
-            img.src = 'https://loremflickr.com/280/140/' + word + '?lock=' + sidebarIndex;
+            if (card.image_url) {
+                img.src = card.image_url;
+            } else {
+                const word = encodeURIComponent(card.word.toLowerCase());
+                img.src = 'https://loremflickr.com/280/140/' + word + '?lock=' + sidebarIndex;
+            }
             img.alt = card.word;
         }
     }
@@ -1829,9 +1868,10 @@
     $('#sidebarTurnBtn').on('click', function() {
         if (!sidebarCards.length) return;
         const card = sidebarCards[sidebarIndex];
+        const displayText = card.translation || card.definition || '';
         if (!sidebarFlipped) {
             sidebarFlipped = true;
-            $('#sidebarCardDisplayText').text(card.definition || '');
+            $('#sidebarCardDisplayText').text(displayText);
             $('#sidebarCardOverlay').addClass('show');
         } else {
             sidebarFlipped = false;
@@ -2205,6 +2245,8 @@
 
         let listId   = $card.data('list-id');
         let listType = $card.data('list-type');
+        let sourceId = $card.data('source-id');
+        let sourceType = $card.data('source-type');
         let expandedSection = $card.find('.word-list-expanded');
 
         if (expandedSection.hasClass('show')) {
@@ -2213,7 +2255,7 @@
             $('.word-list-expanded').removeClass('show');
             expandedSection.addClass('show');
             if (listType === 'academic') {
-                loadAcademicWordList(listId);
+                loadAcademicWordList(listId, sourceType, sourceId);
             } else {
                 loadMyWordList();
             }
@@ -2226,13 +2268,19 @@
     });
 
     // Load Academic Word List
-    function loadAcademicWordList(listId) {
+    function loadAcademicWordList(listId, sourceType, sourceId) {
+        const resolvedSourceType = sourceType || 'academic';
+        const resolvedSourceId = sourceId || listId;
+        const endpoint = resolvedSourceType === 'bundle'
+            ? '/panel/dictionary/bundle-word-lists/' + resolvedSourceId
+            : '/panel/dictionary/academic-word-lists/' + resolvedSourceId;
+
         $.ajax({
-            url: '/panel/dictionary/academic-word-lists/' + listId,
+            url: endpoint,
             method: 'GET',
             success: function(response) {
                 if (response.success) {
-                    renderWords(response.data.words, listId, 'academic');
+                    renderWords(response.data.words, listId, 'academic', resolvedSourceType, resolvedSourceId);
                 }
             },
             error: function(error) {
@@ -2248,7 +2296,8 @@
             method: 'GET',
             success: function(response) {
                 if (response.success) {
-                    renderWords(response.data.flashcards, response.data.id, 'my');
+                    updateMyWordListMeta(response.data);
+                    renderWords(response.data.flashcards, response.data.id, 'my', 'my', response.data.id);
                 }
             },
             error: function(error) {
@@ -2258,18 +2307,19 @@
     }
 
     // Render words in the list
-    function renderWords(words, listId, listType) {
-        let container = listType === 'academic' ? 
-            $('#words-' + listId) : 
-            $('#words-my-' + listId);
+    function renderWords(words, listId, listType, sourceType, sourceId) {
+        let container = listType === 'academic'
+            ? $('#words-' + listId)
+            : $('#myWordListSection .words-container').first();
         
         container.empty();
 
         words.forEach(function(word) {
             let pronunciation = word.pronunciation ? `<span class="word-pronunciation">/${word.pronunciation}/</span>` : '';
             let showTick = word.is_learned || (listType === 'my' && practicedCorrectIds.has(word.id));
+            let wordSource = word.word_source || sourceType || listType;
             let wordHtml = `
-                <div class="word-item" data-word-id="${word.id}" data-word="${word.word}">
+                <div class="word-item" data-word-id="${word.id}" data-word="${word.word}" data-word-source="${wordSource}">
                     <input type="checkbox" class="word-checkbox" data-word-id="${word.id}">
                     <div class="word-content">
                         <div class="word-title-row">
@@ -2288,11 +2338,36 @@
 
         currentWordListId = listId;
         currentWordListType = listType;
+        currentWordListSourceType = sourceType || listType;
+        currentWordListSourceId = sourceId || listId;
+    }
+
+    function updateMyWordListMeta(data) {
+        if (!data) return;
+
+        const section = $('#myWordListSection');
+        const card = section.find('.word-list-card').first();
+
+        card.attr('data-list-id', data.id || card.data('list-id'));
+
+        section.find('.word-list-name').first().text(data.name || '{{ trans('panel.my_word_list') }}');
+        section.find('.word-list-description').first().text(data.description || '');
+
+        const totalWords = Number(data.word_count || 0);
+        section.find('.word-count-badge').first().text('Tổng số từ: ' + totalWords + ' từ');
+
+        $('#toggleMyWordListBtn').text('{{ trans('panel.my_word_list') }}');
     }
 
     // Mark word as learned
     $(document).on('click', '.learned-badge', function(e) {
         e.stopPropagation();
+
+        const wordSource = $(this).closest('.word-item').data('word-source');
+        if (wordSource !== 'academic') {
+            $(this).toggleClass('show');
+            return;
+        }
         
         let wordId = $(this).data('word-id');
         
@@ -2380,7 +2455,7 @@
         e.stopPropagation();
         
         let selectedIds = [];
-        $('.word-checkbox:checked').each(function() {
+        $(this).closest('.word-list-expanded').find('.word-checkbox:checked').each(function() {
             selectedIds.push($(this).data('word-id'));
         });
 
@@ -2394,17 +2469,22 @@
 
     // Start Practice Session
     function startPractice(wordIds) {
-        let url = currentWordListType === 'academic' ? 
-            '/panel/dictionary/practice/start' : 
-            '/panel/dictionary/practice/start-my-word-list';
+        let url = '/panel/dictionary/practice/start-my-word-list';
         
         let data = {
             _token: $('meta[name="csrf-token"]').attr('content')
         };
 
         if (currentWordListType === 'academic') {
-            data.word_list_id = currentWordListId;
-            data.word_ids = wordIds;
+            if (currentWordListSourceType === 'bundle') {
+                url = '/panel/dictionary/practice/start-bundle-word-list';
+                data.vocabulary_set_id = currentWordListSourceId;
+                data.flashcard_ids = wordIds;
+            } else {
+                url = '/panel/dictionary/practice/start';
+                data.word_list_id = currentWordListSourceId;
+                data.word_ids = wordIds;
+            }
         } else {
             data.flashcard_ids = wordIds;
         }
@@ -2507,7 +2587,7 @@
         $('#nextQuestionBtn').prop('disabled', false);
         
         // Submit answer to server
-        let wordKey = currentWordListType === 'academic' ? 'word_id' : 'flashcard_id';
+        let wordKey = (currentWordListType === 'academic' && currentWordListSourceType !== 'bundle') ? 'word_id' : 'flashcard_id';
         let submitData = {
             [wordKey]: question[wordKey],
             selected_answer: selectedAnswer,
@@ -2544,7 +2624,7 @@
         
         // Reload the word list to show updated learned/tick status
         if (currentWordListType === 'academic') {
-            loadAcademicWordList(currentWordListId);
+            loadAcademicWordList(currentWordListId, currentWordListSourceType, currentWordListSourceId);
             practicedCorrectIds.clear();
         } else {
             loadMyWordList(); // renderWords will re-apply ticks from practicedCorrectIds

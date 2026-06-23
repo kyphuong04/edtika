@@ -299,14 +299,14 @@ class IeltsTestInlineController extends Controller
             'question_number' => $sortOrder,  // Always use sequential order to ensure uniqueness
             'question_order' => $sortOrder,
             'question_type' => $questionType,
-            'question_text' => $questionData['text'] ?? $questionData['question_text'] ?? '',
-            'instruction' => $questionData['instruction'] ?? null,
-            'explanation' => $questionData['explanation'] ?? null,
+            'question_text' => $this->sanitizeInlineText($questionData['text'] ?? $questionData['question_text'] ?? '', 65000) ?? '',
+            'instruction' => $this->sanitizeInlineText($questionData['instruction'] ?? null, 65000),
+            'explanation' => $this->sanitizeInlineText($questionData['explanation'] ?? null, 65000),
             'answer_options' => $answerOptions,
-            'correct_answer' => $correctAnswer,
-            'question_data' => $questionData['question_data'] ?? null,
-            'table_structure' => $questionData['table_structure'] ?? null,
-            'flow_data' => $questionData['flow_data'] ?? null,
+            'correct_answer' => is_string($correctAnswer) ? $this->sanitizeInlineText($correctAnswer, 65000) : $correctAnswer,
+            'question_data' => $this->sanitizeInlineNestedPayload($questionData['question_data'] ?? null),
+            'table_structure' => $this->sanitizeInlineNestedPayload($questionData['table_structure'] ?? null),
+            'flow_data' => $this->sanitizeInlineNestedPayload($questionData['flow_data'] ?? null),
             'auto_gradable' => $autoGradable,
             'points' => $questionData['points'] ?? 1,
             'word_limit' => $questionData['wordLimit'] ?? $questionData['word_limit'] ?? null,
@@ -377,6 +377,8 @@ class IeltsTestInlineController extends Controller
                 ]]);
             }
         }
+
+        $groupsData = $this->sanitizeInlineGroupsPayload($groupsData);
 
         if ($previewMode) {
             $hasAnyPart = false;
@@ -655,6 +657,8 @@ class IeltsTestInlineController extends Controller
             }
         }
 
+        $groupsData = $this->sanitizeInlineGroupsPayload($groupsData);
+
         if ($previewMode) {
             $hasAnyPart = false;
             foreach ($groupsData['sections'] as $sectionData) {
@@ -843,7 +847,37 @@ class IeltsTestInlineController extends Controller
             'updated_at' => time(),
         ]);
 
+        session()->put('mentor_preview_attempt_id', $attempt->id);
+        session()->put('mentor_preview_test_id', $test->id);
+
         return redirect()->route('panel.ielts_tests.take', $attempt->id);
+    }
+
+    public function exitPreview($id)
+    {
+        $this->authorizeCreatorAccess();
+
+        $test = $this->findOwnedInlineTestOrFail($id);
+        $userId = auth()->id();
+
+        $previewAttemptId = (int) session('mentor_preview_attempt_id', 0);
+        if ($previewAttemptId > 0) {
+            IeltsTestAttempt::query()
+                ->where('id', $previewAttemptId)
+                ->where('test_id', $test->id)
+                ->where('user_id', $userId)
+                ->where('status', 'in_progress')
+                ->delete();
+        }
+
+        session()->forget('mentor_preview_attempt_id');
+        session()->forget('mentor_preview_test_id');
+
+        return redirect()->route('panel.my_ielts_tests.edit_inline', $test->id)->with(['toast' => [
+            'title' => 'Success',
+            'msg' => 'Exited student preview mode.',
+            'status' => 'success',
+        ]]);
     }
 
     private function persistInlineQuestionGroups(IeltsTest $test, array $groupsData, Request $request, User $user, bool $submitForApproval = true): void
@@ -1166,11 +1200,11 @@ class IeltsTestInlineController extends Controller
             'creator_id' => $creatorId,
             'skill' => $section->skill,
             'question_type' => $groupData['question_type'] ?? 'multiple_choice',
-            'title' => $groupData['title'] ?? '',
-            'description' => $groupData['description'] ?? null,
-            'instructions' => $groupData['instructions'] ?? null,
-            'passage' => $groupData['passage'] ?? null,
-            'transcript' => $groupData['transcript'] ?? null,
+            'title' => $this->sanitizeInlineText($groupData['title'] ?? '', 255) ?? '',
+            'description' => $this->sanitizeInlineText($groupData['description'] ?? null, 65000),
+            'instructions' => $this->sanitizeInlineText($groupData['instructions'] ?? null, 65000),
+            'passage' => $this->sanitizeInlineText($groupData['passage'] ?? null, 65000),
+            'transcript' => $this->sanitizeInlineText($groupData['transcript'] ?? null, 65000),
             'audio_file' => $audioFilePath,
             'task_image' => $taskImagePath,
             'video_file' => $videoFilePath,
@@ -1229,13 +1263,13 @@ class IeltsTestInlineController extends Controller
             'question_number' => $questionNumber,
             'question_order' => $questionNumber,
             'question_type' => $questionType,
-            'question_text' => $questionData['text'] ?? $questionData['question_text'] ?? '',
-            'instruction' => $questionData['instruction'] ?? null,
+            'question_text' => $this->sanitizeInlineText($questionData['text'] ?? $questionData['question_text'] ?? '', 65000) ?? '',
+            'instruction' => $this->sanitizeInlineText($questionData['instruction'] ?? null, 65000),
             'answer_options' => $answerOptions,
-            'correct_answer' => $correctAnswer,
-            'question_data' => !empty($normalizedQuestionData) ? $normalizedQuestionData : null,
-            'table_structure' => $questionData['table_structure'] ?? null,
-            'flow_data' => $questionData['flow_data'] ?? null,
+            'correct_answer' => is_string($correctAnswer) ? $this->sanitizeInlineText($correctAnswer, 65000) : $correctAnswer,
+            'question_data' => !empty($normalizedQuestionData) ? $this->sanitizeInlineNestedPayload($normalizedQuestionData) : null,
+            'table_structure' => $this->sanitizeInlineNestedPayload($questionData['table_structure'] ?? null),
+            'flow_data' => $this->sanitizeInlineNestedPayload($questionData['flow_data'] ?? null),
             'auto_gradable' => $autoGradable,
             'points' => $questionData['points'] ?? 1,
             'word_limit' => $questionData['wordLimit'] ?? $questionData['word_limit'] ?? null,
@@ -1282,11 +1316,11 @@ class IeltsTestInlineController extends Controller
 
         $part = IeltsTestPart::create([
             'section_id' => $section->id,
-            'title' => $partData['title'] ?? "Part {$partOrder}",
-            'description' => $partData['description'] ?? null,
-            'instructions' => $partData['instructions'] ?? null,
-            'passage' => $partData['passage'] ?? null,
-            'transcript' => $partData['transcript'] ?? null,
+            'title' => $this->sanitizeInlineText($partData['title'] ?? "Part {$partOrder}", 255) ?? "Part {$partOrder}",
+            'description' => $this->sanitizeInlineText($partData['description'] ?? null, 65000),
+            'instructions' => $this->sanitizeInlineText($partData['instructions'] ?? null, 65000),
+            'passage' => $this->sanitizeInlineText($partData['passage'] ?? null, 65000),
+            'transcript' => $this->sanitizeInlineText($partData['transcript'] ?? null, 65000),
             'audio_file' => $audioFilePath,
             'task_image' => $taskImagePath,
             'video_file' => $videoFilePath,
@@ -1345,13 +1379,13 @@ class IeltsTestInlineController extends Controller
             'question_number' => $questionNumber,
             'question_order' => $questionNumber,
             'question_type' => $questionType,
-            'question_text' => $questionData['text'] ?? $questionData['question_text'] ?? '',
-            'instruction' => $questionData['instruction'] ?? null,
+            'question_text' => $this->sanitizeInlineText($questionData['text'] ?? $questionData['question_text'] ?? '', 65000) ?? '',
+            'instruction' => $this->sanitizeInlineText($questionData['instruction'] ?? null, 65000),
             'answer_options' => $answerOptions,
-            'correct_answer' => $correctAnswer,
-            'question_data' => !empty($normalizedQuestionData) ? $normalizedQuestionData : null,
-            'table_structure' => $questionData['table_structure'] ?? null,
-            'flow_data' => $questionData['flow_data'] ?? null,
+            'correct_answer' => is_string($correctAnswer) ? $this->sanitizeInlineText($correctAnswer, 65000) : $correctAnswer,
+            'question_data' => !empty($normalizedQuestionData) ? $this->sanitizeInlineNestedPayload($normalizedQuestionData) : null,
+            'table_structure' => $this->sanitizeInlineNestedPayload($questionData['table_structure'] ?? null),
+            'flow_data' => $this->sanitizeInlineNestedPayload($questionData['flow_data'] ?? null),
             'auto_gradable' => $autoGradable,
             'points' => $questionData['points'] ?? 1,
             'word_limit' => $questionData['wordLimit'] ?? $questionData['word_limit'] ?? null,
@@ -1381,6 +1415,247 @@ class IeltsTestInlineController extends Controller
         ];
 
         return $mapping[$type] ?? 'multiple_choice';
+    }
+
+    private function sanitizeInlineGroupsPayload(array $groupsData): array
+    {
+        if (empty($groupsData['sections']) || !is_array($groupsData['sections'])) {
+            return $groupsData;
+        }
+
+        foreach ($groupsData['sections'] as $skill => &$sectionData) {
+            if (!is_array($sectionData)) {
+                $sectionData = [];
+            }
+
+            $sectionData['description'] = $this->sanitizeInlineText($sectionData['description'] ?? null, 65000);
+
+            $parts = $sectionData['parts'] ?? $sectionData['groups'] ?? [];
+            if (!is_array($parts)) {
+                $parts = [];
+            }
+
+            foreach ($parts as &$partData) {
+                if (!is_array($partData)) {
+                    $partData = [];
+                }
+
+                unset($partData['file_input_names']);
+
+                $partData['title'] = $this->sanitizeInlineText($partData['title'] ?? null, 255);
+                $partData['description'] = $this->sanitizeInlineText($partData['description'] ?? null, 65000);
+                $partData['instructions'] = $this->sanitizeInlineText($partData['instructions'] ?? null, 65000);
+                $partData['passage'] = $this->sanitizeInlineText($partData['passage'] ?? null, 65000);
+                $partData['transcript'] = $this->sanitizeInlineText($partData['transcript'] ?? null, 65000);
+
+                if (!empty($partData['files']) && is_array($partData['files'])) {
+                    foreach (['audio', 'image', 'video'] as $fileType) {
+                        $partData['files'][$fileType] = $this->sanitizeInlineFileValue($partData['files'][$fileType] ?? null);
+                    }
+                }
+
+                $groups = $partData['groups'] ?? [];
+                if (!is_array($groups)) {
+                    $groups = [];
+                }
+
+                foreach ($groups as &$groupData) {
+                    if (!is_array($groupData)) {
+                        $groupData = [];
+                    }
+
+                    unset($groupData['file_input_names']);
+
+                    $groupData['title'] = $this->sanitizeInlineText($groupData['title'] ?? null, 255);
+                    $groupData['description'] = $this->sanitizeInlineText($groupData['description'] ?? null, 65000);
+                    $groupData['instructions'] = $this->sanitizeInlineText($groupData['instructions'] ?? null, 65000);
+                    $groupData['passage'] = $this->sanitizeInlineText($groupData['passage'] ?? null, 65000);
+                    $groupData['transcript'] = $this->sanitizeInlineText($groupData['transcript'] ?? null, 65000);
+                    $groupData['task_image'] = $this->sanitizeInlineFileValue($groupData['task_image'] ?? null);
+
+                    if (!empty($groupData['files']) && is_array($groupData['files'])) {
+                        foreach (['audio', 'image', 'video'] as $fileType) {
+                            $groupData['files'][$fileType] = $this->sanitizeInlineFileValue($groupData['files'][$fileType] ?? null);
+                        }
+                    }
+
+                    $questions = $groupData['questions'] ?? [];
+                    if (!is_array($questions)) {
+                        $questions = [];
+                    }
+
+                    foreach ($questions as &$questionData) {
+                        if (!is_array($questionData)) {
+                            $questionData = [];
+                        }
+
+                        $questionData['title'] = $this->sanitizeInlineText($questionData['title'] ?? null, 255);
+                        $questionData['text'] = $this->sanitizeInlineText($questionData['text'] ?? $questionData['question_text'] ?? null, 65000);
+                        $questionData['instruction'] = $this->sanitizeInlineText($questionData['instruction'] ?? null, 65000);
+                        $questionData['explanation'] = $this->sanitizeInlineText($questionData['explanation'] ?? null, 65000);
+
+                        if (isset($questionData['correctAnswer']) && is_string($questionData['correctAnswer'])) {
+                            $questionData['correctAnswer'] = $this->sanitizeInlineText($questionData['correctAnswer'], 65000);
+                        }
+                    }
+                    unset($questionData);
+
+                    $groupData['questions'] = $questions;
+                }
+                unset($groupData);
+
+                $partData['groups'] = $groups;
+            }
+            unset($partData);
+
+            $sectionData['parts'] = $parts;
+            if (isset($sectionData['groups'])) {
+                unset($sectionData['groups']);
+            }
+
+            $groupsData['sections'][$skill] = $sectionData;
+        }
+        unset($sectionData);
+
+        return $groupsData;
+    }
+
+    private function sanitizeInlineText($value, int $maxLength = 65000): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        // Prevent huge SQL packets from pasted base64 media inside rich text content.
+        $value = preg_replace('/<img[^>]*src=["\']data:image\/[^"\']+["\'][^>]*>/i', '', $value);
+        $value = preg_replace('/data:(image|audio|video)\/[a-z0-9.+-]+;base64,[a-z0-9+\/=\r\n]+/i', '', $value);
+
+        // Keep author styling, but remove heavy utility classes that bloat payload size.
+        $value = preg_replace('/\s(?:class|id|dir|lang|role|contenteditable|spellcheck|autocorrect|autocapitalize|translate|tabindex|draggable)=("|\').*?\1/isu', '', $value);
+        $value = preg_replace('/\s(?:data|aria)-[a-z0-9_:-]+=("|\').*?\1/isu', '', $value);
+
+        // Clean oversized inline style attributes while preserving meaningful formatting.
+        $value = preg_replace_callback('/\sstyle=("|\')(.*?)\1/isu', static function ($matches) {
+            $quote = $matches[1];
+            $style = html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            $rules = preg_split('/\s*;\s*/', trim($style), -1, PREG_SPLIT_NO_EMPTY);
+            $cleanRules = [];
+
+            foreach ($rules as $rule) {
+                if (!str_contains($rule, ':')) {
+                    continue;
+                }
+
+                [$property, $val] = array_map('trim', explode(':', $rule, 2));
+                if ($property === '' || $val === '') {
+                    continue;
+                }
+
+                $propertyLower = strtolower($property);
+                $valueLower = strtolower($val);
+
+                // Drop Tailwind runtime CSS vars and var() chains that cause huge payloads.
+                if (str_starts_with($propertyLower, '--tw-') || str_contains($valueLower, 'var(--tw-')) {
+                    continue;
+                }
+
+                // Ignore obviously huge style fragments copied from external pages.
+                if (strlen($property) > 64 || strlen($val) > 256) {
+                    continue;
+                }
+
+                $cleanRules[] = $property . ': ' . $val;
+            }
+
+            if (empty($cleanRules)) {
+                return '';
+            }
+
+            return ' style=' . $quote . implode('; ', $cleanRules) . $quote;
+        }, $value);
+
+        // Remove script/style blocks if any are pasted from external sources.
+        $value = preg_replace('/<\s*(script|style)\b[^>]*>.*?<\s*\/\s*\1\s*>/is', '', $value);
+
+        if (strlen($value) > $maxLength) {
+            // Keep semantic formatting tags and compact HTML instead of flattening to plain text.
+            if (str_contains($value, '<')) {
+                // 1) Remove all inline styles if payload is still too large.
+                $value = preg_replace('/\sstyle=("|\').*?\1/isu', '', $value);
+            }
+
+            if (strlen($value) > $maxLength && str_contains($value, '<')) {
+                // 2) Drop remaining non-essential HTML attributes while preserving tags.
+                $value = preg_replace_callback('/<([a-z0-9]+)([^>]*)>/i', static function ($matches) {
+                    $tag = strtolower($matches[1]);
+
+                    // Keep link targets for anchors to avoid breaking URLs.
+                    if ($tag === 'a') {
+                        if (preg_match('/\shref=("|\').*?\1/isu', $matches[2], $href)) {
+                            return '<a' . $href[0] . '>';
+                        }
+                        return '<a>';
+                    }
+
+                    return '<' . $tag . '>';
+                }, $value);
+            }
+
+            if (strlen($value) > $maxLength) {
+                // 3) Final hard cap as absolute safeguard.
+                $value = substr($value, 0, $maxLength);
+            }
+        }
+
+        return trim($value) === '' ? null : trim($value);
+    }
+
+    private function sanitizeInlineFileValue($value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        if ($value === '' || str_starts_with(strtolower($value), 'data:')) {
+            return null;
+        }
+
+        if (strlen($value) > 2048) {
+            $value = substr($value, 0, 2048);
+        }
+
+        return $value;
+    }
+
+    private function sanitizeInlineNestedPayload($value, int $maxStringLength = 65000)
+    {
+        if (is_string($value)) {
+            return $this->sanitizeInlineText($value, $maxStringLength);
+        }
+
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        foreach ($value as $key => $item) {
+            if (is_array($item)) {
+                $value[$key] = $this->sanitizeInlineNestedPayload($item, $maxStringLength);
+                continue;
+            }
+
+            if (is_string($item)) {
+                $value[$key] = $this->sanitizeInlineText($item, $maxStringLength);
+            }
+        }
+
+        return $value;
     }
 
     private function authorizeCreatorAccess(): void

@@ -334,6 +334,28 @@
             margin: 0 24px;
         }
 
+        .edtika-classes-page__avatar-link {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 18px rgba(33, 24, 56, 0.18);
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .edtika-classes-page__avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         .edtika-classes-page__nav-link {
             position: relative;
             color: #1f1a32;
@@ -451,15 +473,15 @@
             left: 50%;
             transform: translateX(-50%);
             width: 100vw;
-            height: 176px;
-            background: #d2d2d6;
+            height: 0;
+            background: transparent;
             z-index: 0;
         }
 
         .edtika-classes-page__hero-stage {
             position: relative;
             z-index: 1;
-            padding-top: 62px;
+            padding-top: 20px;
         }
 
         .edtika-classes-page__hero-stage::before,
@@ -473,11 +495,11 @@
         .edtika-classes-page__hero-stage::before {
             top: 20px;
             left: 50%;
-            width: 34px;
-            height: 34px;
+            width: 0;
+            height: 0;
             border-radius: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.38);
+            background: transparent;
         }
 
         .edtika-classes-page__hero-stage::after {
@@ -486,9 +508,7 @@
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 13px solid transparent;
-            border-right: 13px solid transparent;
-            border-bottom: 20px solid rgba(255, 255, 255, 0.24);
+            border: 0;
         }
 
         .edtika-classes-page__hero,
@@ -958,386 +978,6 @@
             text-decoration: none;
         }
 
-        .edtika-auth-modal {
-            position: fixed;
-            inset: 0;
-            z-index: 1200;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: rgba(16, 16, 20, 0.38);
-        }
-
-        .edtika-auth-modal.is-open {
-            display: flex;
-        }
-
-        .edtika-auth-modal__dialog {
-            width: min(1180px, 100%);
-            height: min(734px, calc(100vh - 40px));
-            overflow: hidden;
-            border-radius: 36px;
-            background: rgba(212, 211, 254, 0.22);
-            border: 1px solid rgba(255, 255, 255, 0.46);
-            box-shadow: 0 24px 56px rgba(28, 19, 50, 0.24);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            position: relative;
-        }
-
-        .edtika-auth-modal__close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 0;
-            background: rgba(81, 29, 153, 0.18);
-            color: #2e1454;
-            font-size: 24px;
-            line-height: 1;
-            cursor: pointer;
-            z-index: 3;
-        }
-
-        .edtika-auth-modal__content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            height: 100%;
-            min-height: 0;
-        }
-
-        .edtika-auth-modal__form-side {
-            padding: 72px 60px 52px;
-            overflow-y: auto;
-            min-height: 0;
-            max-height: 100%;
-        }
-
-        .edtika-auth-modal__tabs {
-            display: inline-flex;
-            gap: 8px;
-            padding: 4px;
-            border-radius: 999px;
-            border: 1px solid rgba(81, 29, 153, 0.2);
-            background: rgba(255, 255, 255, 0.36);
-            margin-bottom: 28px;
-        }
-
-        .edtika-auth-modal__tab {
-            border: 0;
-            border-radius: 999px;
-            min-width: 132px;
-            height: 38px;
-            padding: 0 18px;
-            font-weight: 700;
-            font-size: 14px;
-            color: #2a2a33;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        .edtika-auth-modal__tab.is-active {
-            color: #fff;
-            background: #511D99;
-        }
-
-        .edtika-auth-pane {
-            display: none;
-        }
-
-        .edtika-auth-pane.is-active {
-            display: block;
-        }
-
-        .edtika-auth-pane__title {
-            margin: 0 0 24px;
-            font-size: 42px;
-            line-height: 1.18;
-            color: #101014;
-            font-weight: 900;
-        }
-
-        .edtika-auth-methods {
-            display: flex;
-            gap: 6px;
-            padding: 4px;
-            border: 1px solid rgba(81, 29, 153, 0.24);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.34);
-            margin-bottom: 22px;
-        }
-
-        .edtika-auth-method {
-            flex: 1;
-            height: 40px;
-            border-radius: 999px;
-            border: 0;
-            background: transparent;
-            color: #2f2f38;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .edtika-auth-method.is-active {
-            background: #511D99;
-            color: #fff;
-        }
-
-        .edtika-auth-role-switch {
-            display: flex;
-            gap: 4px;
-            padding: 4px;
-            border: 1px solid rgba(81, 29, 153, 0.28);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.34);
-        }
-
-        .edtika-auth-role-option {
-            flex: 1;
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .edtika-auth-role-option input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .edtika-auth-role-option span {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 40px;
-            border-radius: 999px;
-            color: #2f2f38;
-            font-size: 14px;
-            font-weight: 700;
-            transition: background-color .2s ease, color .2s ease;
-        }
-
-        .edtika-auth-role-option input:checked + span {
-            background: #511D99;
-            color: #fff;
-        }
-
-        .edtika-auth-field {
-            margin-bottom: 14px;
-        }
-
-        .edtika-auth-label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #2f2f38;
-        }
-
-        .edtika-auth-input-wrap {
-            position: relative;
-        }
-
-        .edtika-auth-input {
-            width: 100%;
-            height: 44px;
-            border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.16);
-            background: rgba(255, 255, 255, 0.5);
-            padding: 0 14px;
-            font-size: 15px;
-            color: #1f1f27;
-        }
-
-        .edtika-auth-input-wrap .edtika-auth-input {
-            padding-right: 46px;
-        }
-
-        .edtika-auth-input:focus {
-            outline: none;
-            border-color: rgba(81, 29, 153, 0.45);
-            background: rgba(255, 255, 255, 0.68);
-        }
-
-        .edtika-auth-input-icon {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #511D99;
-            font-size: 18px;
-            width: 36px;
-            height: 36px;
-            border: 0;
-            background: rgba(81,29,153,0.08);
-            padding: 6px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            pointer-events: auto;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-            transition: background .12s ease, transform .08s ease, color .12s ease;
-            z-index: 2;
-        }
-
-        .edtika-auth-input-icon:hover {
-            background: rgba(81,29,153,0.12);
-            transform: translateY(-50%) scale(1.03);
-            color: #3b0f9c;
-        }
-
-        .edtika-auth-input-icon:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(81,29,153,0.12);
-        }
-
-        .edtika-auth-input-icon i {
-            pointer-events: none;
-        }
-
-        .edtika-auth-forgot {
-            display: block;
-            width: 100%;
-            text-align: right;
-            margin-top: 2px;
-            margin-bottom: 18px;
-            border: 0;
-            background: transparent;
-            padding: 0;
-            cursor: pointer;
-            color: #2f2f38;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .edtika-auth-submit {
-            width: 100%;
-            height: 48px;
-            border: 0;
-            border-radius: 999px;
-            background: #511D99;
-            color: #fff;
-            font-size: 17px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .edtika-auth-check {
-            margin: 4px 0 16px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            user-select: none;
-            font-size: 14px;
-            color: #2f2f38;
-        }
-
-        .edtika-auth-check input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .edtika-auth-check__box {
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
-            border: 1px solid rgba(81, 29, 153, 0.4);
-            background: rgba(255, 255, 255, 0.6);
-            color: transparent;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 900;
-            transition: background-color .2s ease, border-color .2s ease, color .2s ease;
-        }
-
-        .edtika-auth-check input:checked + .edtika-auth-check__box {
-            background: #511D99;
-            border-color: #511D99;
-            color: #fff;
-        }
-
-        .edtika-auth-check__text strong {
-            font-weight: 800;
-            color: #15151d;
-        }
-
-        .edtika-auth-switch-note {
-            margin-top: 20px;
-            text-align: center;
-            color: #6b6b76;
-            font-size: 14px;
-        }
-
-        .edtika-auth-switch-note button {
-            border: 0;
-            background: transparent;
-            color: #15151d;
-            font-weight: 700;
-            cursor: pointer;
-            padding: 0;
-        }
-
-        .edtika-auth-modal__slider-side {
-            background: rgba(16, 16, 20, 0.18);
-            padding: 28px;
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            min-height: 0;
-        }
-
-        .edtika-auth-slider {
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-            border-radius: 26px;
-            overflow: hidden;
-            position: relative;
-            background: rgba(255, 255, 255, 0.12);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .edtika-auth-slider__image {
-            width: min(88%, 520px);
-            height: auto;
-            object-fit: cover;
-            border-radius: 20px;
-            opacity: 0.94;
-        }
-
-        .edtika-auth-slider__pagination {
-            position: absolute;
-            bottom: 20px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .edtika-auth-slider__pagination span {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.34);
-        }
-
-        .edtika-auth-slider__pagination span.is-active {
-            width: 30px;
-            background: #511D99;
-        }
-
         .edtika-footer {
             position: relative;
             isolation: isolate;
@@ -1572,18 +1212,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .edtika-auth-modal__content {
-                grid-template-columns: 1fr;
-            }
-
-            .edtika-auth-modal__slider-side {
-                display: none;
-            }
-
-            .edtika-auth-modal__form-side {
-                padding: 48px 26px 30px;
-            }
-
             .edtika-footer__top {
                 grid-template-columns: 1fr;
                 gap: 42px;
@@ -1608,21 +1236,21 @@
 
         @media (max-width: 767px) {
             .edtika-classes-page__main::before {
-                height: 136px;
+                height: 0;
             }
 
             .edtika-classes-page__hero-stage {
-                padding-top: 44px;
+                padding-top: 12px;
             }
 
             .edtika-classes-page__hero-stage::before {
-                width: 24px;
-                height: 24px;
+                width: 0;
+                height: 0;
                 top: 14px;
             }
 
             .edtika-classes-page__hero-stage::after {
-                top: 34px;
+                top: 0;
             }
 
             .edtika-classes-page__container,
@@ -1777,21 +1405,6 @@
                 font-size: 16px;
             }
 
-            .edtika-auth-modal {
-                padding: 10px;
-            }
-
-            .edtika-auth-modal__dialog {
-                border-radius: 24px;
-            }
-
-            .edtika-auth-pane__title {
-                font-size: 30px;
-            }
-
-            .edtika-auth-modal__tab {
-                min-width: 108px;
-            }
         }
     </style>
 @endpush
@@ -1800,9 +1413,9 @@
     <div class="edtika-classes-page">
         <div class="edtika-classes-page__container">
             <header class="edtika-classes-page__header">
-                <a href="/" class="edtika-classes-page__brand" aria-label="EDTIKA Home">EDTIKA</a>
+                <a href="/" class="edtika-classes-page__brand" aria-label="Edtika">EDTIKA</a>
 
-                <nav class="edtika-classes-page__nav" aria-label="{{ $isEnglish ? 'Main navigation' : 'Điều hướng chính' }}">
+                <nav class="edtika-classes-page__nav" aria-label="Điều hướng chính">
                     @foreach($headerLinks as $headerLink)
                         <a href="{{ $headerLink['url'] }}" class="edtika-classes-page__nav-link {{ !empty($headerLink['active']) ? 'is-active' : '' }}" @if(!empty($headerLink['requiresAuth']) && auth()->guest()) data-open-auth-modal="true" @endif>
                             {{ $headerLink['label'] }}
@@ -1819,7 +1432,13 @@
                         </form>
                     </div>
 
-                    <a href="/login" class="edtika-classes-page__login" data-open-auth-modal="true">Đăng nhập</a>
+                    @if(auth()->check())
+                        <a href="/panel" class="edtika-classes-page__avatar-link" aria-label="{{ auth()->user()->full_name }}" title="{{ auth()->user()->full_name }}">
+                            <img src="{{ auth()->user()->getAvatar(80) }}" alt="{{ auth()->user()->full_name }}" class="edtika-classes-page__avatar-image">
+                        </a>
+                    @else
+                        <a href="/login" class="edtika-classes-page__login" data-open-auth-modal="true">{{ $isEnglish ? 'Log in' : 'Đăng nhập' }}</a>
+                    @endif
                 </div>
             </header>
 
@@ -1958,186 +1577,6 @@
             </main>
         </div>
 
-        <div class="edtika-auth-modal" id="edtikaAuthModal" aria-hidden="true">
-            <div class="edtika-auth-modal__dialog" role="dialog" aria-modal="true" aria-label="Hộp thoại đăng nhập">
-                <button type="button" class="edtika-auth-modal__close" id="edtikaAuthModalClose" aria-label="Đóng">&times;</button>
-
-                <div class="edtika-auth-modal__content">
-                    <div class="edtika-auth-modal__form-side">
-                        <div class="edtika-auth-modal__tabs" role="tablist" aria-label="Tabs xác thực">
-                            <button type="button" class="edtika-auth-modal__tab is-active" data-auth-tab="login">Đăng nhập</button>
-                            <button type="button" class="edtika-auth-modal__tab" data-auth-tab="register">Đăng ký</button>
-                        </div>
-
-                        <div class="edtika-auth-pane is-active" data-auth-pane="login">
-                            <h3 class="edtika-auth-pane__title">Đăng nhập vào tài khoản của bạn</h3>
-
-                            <div class="edtika-auth-methods" role="tablist" aria-label="Phương thức đăng nhập">
-                                <button type="button" class="edtika-auth-method is-active" data-login-method="email">Email</button>
-                                <button type="button" class="edtika-auth-method" data-login-method="phone">Điện thoại</button>
-                            </div>
-
-                            <form method="POST" action="/login">
-                                @csrf
-                                <input type="hidden" name="type" id="edtikaLoginType" value="email">
-
-                                <div class="edtika-auth-field" data-login-field="email">
-                                    <label class="edtika-auth-label" for="edtikaLoginEmail">Email *</label>
-                                    <input id="edtikaLoginEmail" class="edtika-auth-input" type="email" name="email" autocomplete="email">
-                                </div>
-
-                                <div class="edtika-auth-field" data-login-field="phone" style="display: none;">
-                                    <label class="edtika-auth-label" for="edtikaLoginPhone">Điện thoại *</label>
-                                    <input id="edtikaLoginPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
-                                </div>
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label" for="edtikaLoginPassword">Mật khẩu *</label>
-                                    <div class="edtika-auth-input-wrap">
-                                        <input id="edtikaLoginPassword" class="edtika-auth-input" type="password" name="password" autocomplete="current-password">
-                                        <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaLoginPassword" aria-label="Hiển thị mật khẩu">
-                                            <x-iconsax-lin-eye-slash class="icons-eye-slash text-gray-400 d-none" width="24px" height="24px"/>
-                                            <x-iconsax-lin-eye class="icons-eye text-gray-400 " width="24px" height="24px"/>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <button type="button" class="edtika-auth-forgot" data-auth-tab-switch="forgot">Bạn quên mật khẩu?</button>
-                                <button type="submit" class="edtika-auth-submit">Đăng nhập</button>
-                            </form>
-
-                            <div class="edtika-auth-switch-note">
-                                Bạn chưa có tài khoản? <button type="button" data-auth-tab-switch="register">Đăng ký</button>
-                            </div>
-                        </div>
-
-                        <div class="edtika-auth-pane" data-auth-pane="register">
-                            <h3 class="edtika-auth-pane__title">Tạo tài khoản mới</h3>
-
-                            <form method="POST" action="/register">
-                                @csrf
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label">Chọn vai trò</label>
-
-                                    <div class="edtika-auth-role-switch">
-                                        <label class="edtika-auth-role-option">
-                                            <input type="radio" name="account_type" value="user" checked>
-                                            <span>Học viên</span>
-                                        </label>
-
-                                        <label class="edtika-auth-role-option">
-                                            <input type="radio" name="account_type" value="teacher">
-                                            <span>Giảng viên</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label" for="edtikaRegisterEmail">Email *</label>
-                                    <input id="edtikaRegisterEmail" class="edtika-auth-input" type="email" name="email" autocomplete="email">
-                                </div>
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label" for="edtikaRegisterPhone">Điện thoại (Tùy chọn)</label>
-                                    <input id="edtikaRegisterPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
-                                </div>
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label" for="edtikaRegisterFullName">Họ và tên *</label>
-                                    <input id="edtikaRegisterFullName" class="edtika-auth-input" type="text" name="full_name" autocomplete="name">
-                                </div>
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label" for="edtikaRegisterPassword">Mật khẩu *</label>
-                                    <div class="edtika-auth-input-wrap">
-                                        <input id="edtikaRegisterPassword" class="edtika-auth-input" type="password" name="password" autocomplete="new-password">
-                                        <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPassword" aria-label="Hiển thị mật khẩu">
-                                            <x-iconsax-lin-eye-slash class="icons-eye-slash text-gray-400 d-none" width="24px" height="24px"/>
-                                            <x-iconsax-lin-eye class="icons-eye text-gray-400 " width="24px" height="24px"/>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="edtika-auth-field">
-                                    <label class="edtika-auth-label" for="edtikaRegisterPasswordConfirmation">Nhập lại mật khẩu *</label>
-                                    <div class="edtika-auth-input-wrap">
-                                        <input id="edtikaRegisterPasswordConfirmation" class="edtika-auth-input" type="password" name="password_confirmation" autocomplete="new-password">
-                                        <button type="button" class="edtika-auth-input-icon" data-password-toggle data-password-target="edtikaRegisterPasswordConfirmation" aria-label="Hiển thị nhập lại mật khẩu">
-                                            <x-iconsax-lin-eye-slash class="icons-eye-slash text-gray-400 d-none" width="24px" height="24px"/>
-                                            <x-iconsax-lin-eye class="icons-eye text-gray-400 " width="24px" height="24px"/>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <label class="edtika-auth-check">
-                                    <input type="checkbox" name="term" value="1" required>
-                                    <span class="edtika-auth-check__box">✓</span>
-                                    <span class="edtika-auth-check__text">Tôi đồng ý với <strong>điều khoản &amp; quy tắc</strong></span>
-                                </label>
-
-                                <button type="submit" class="edtika-auth-submit">Đăng ký</button>
-                            </form>
-
-                            <div class="edtika-auth-switch-note">
-                                Bạn đã có tài khoản? <button type="button" data-auth-tab-switch="login">Đăng nhập</button>
-                            </div>
-                        </div>
-
-                        <div class="edtika-auth-pane" data-auth-pane="forgot">
-                            <h3 class="edtika-auth-pane__title">Khôi phục mật khẩu</h3>
-
-                            <form method="POST" action="/forget-password">
-                                @csrf
-                                <input type="hidden" name="type" id="edtikaForgotType" value="email">
-
-                                <div class="edtika-auth-methods" role="tablist" aria-label="Phương thức lấy lại mật khẩu">
-                                    <button type="button" class="edtika-auth-method is-active" data-forgot-method="email">Email</button>
-                                    <button type="button" class="edtika-auth-method" data-forgot-method="phone">Điện thoại</button>
-                                </div>
-
-                                <div class="edtika-auth-field" data-forgot-field="email">
-                                    <label class="edtika-auth-label" for="edtikaForgotEmail">Email *</label>
-                                    <input id="edtikaForgotEmail" class="edtika-auth-input" type="email" name="email" autocomplete="email">
-                                </div>
-
-                                <div class="edtika-auth-field" data-forgot-field="phone" style="display: none;">
-                                    <label class="edtika-auth-label" for="edtikaForgotPhone">Điện thoại *</label>
-                                    <input id="edtikaForgotPhone" class="edtika-auth-input" type="text" name="mobile" autocomplete="tel">
-                                </div>
-
-                                @if(!empty(getGeneralSecuritySettings('captcha_for_forgot_pass')))
-                                    <div class="edtika-auth-field">
-                                        @include('design_1.web.includes.captcha_input')
-                                    </div>
-                                @endif
-
-                                <button type="submit" class="edtika-auth-submit">Đặt lại mật khẩu</button>
-                            </form>
-
-                            <div class="edtika-auth-switch-note">
-                                <button type="button" data-auth-tab-switch="login">Đăng nhập</button>
-                                <span> / </span>
-                                <button type="button" data-auth-tab-switch="register">Đăng ký</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="edtika-auth-modal__slider-side">
-                        <div class="edtika-auth-slider">
-                            <img class="edtika-auth-slider__image" src="{{ asset('store/icons/—Pngtree—abstract purple line wave background_5542852 1.png') }}" alt="Auth slider image">
-
-                            <div class="edtika-auth-slider__pagination" aria-hidden="true">
-                                <span class="is-active"></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <footer class="edtika-footer" aria-label="Chân trang">
             <div class="edtika-footer__top">
                 <div>
@@ -2245,20 +1684,6 @@
                 const suggestedCoursesByTarget = @json($suggestedCoursesByTarget);
                 const iconsBasePath = @json(asset('store/icons'));
 
-                const authModal = document.getElementById('edtikaAuthModal');
-                const authModalCloseBtn = document.getElementById('edtikaAuthModalClose');
-                const authModalOpenBtns = document.querySelectorAll('[data-open-auth-modal="true"]');
-                const authTabs = document.querySelectorAll('[data-auth-tab]');
-                const authPanes = document.querySelectorAll('[data-auth-pane]');
-                const authTabSwitchBtns = document.querySelectorAll('[data-auth-tab-switch]');
-                const loginMethodBtns = document.querySelectorAll('[data-login-method]');
-                const loginFieldBlocks = document.querySelectorAll('[data-login-field]');
-                const loginTypeInput = document.getElementById('edtikaLoginType');
-                const forgotMethodBtns = document.querySelectorAll('[data-forgot-method]');
-                const forgotFieldBlocks = document.querySelectorAll('[data-forgot-field]');
-                const forgotTypeInput = document.getElementById('edtikaForgotType');
-                const passwordToggleBtns = document.querySelectorAll('[data-password-toggle]');
-
                 function renderHighlightsByTarget(targetKey) {
                     if (!$factsSection.length) {
                         return;
@@ -2319,52 +1744,6 @@
                             $(this).text(value);
                         });
                     });
-                }
-
-                function setAuthTab(tabName) {
-                    authTabs.forEach(function (tab) {
-                        tab.classList.toggle('is-active', tab.getAttribute('data-auth-tab') === tabName);
-                    });
-
-                    authPanes.forEach(function (pane) {
-                        pane.classList.toggle('is-active', pane.getAttribute('data-auth-pane') === tabName);
-                    });
-                }
-
-                function openAuthModal() {
-                    if (!authModal) {
-                        return;
-                    }
-
-                    authModal.classList.add('is-open');
-                    authModal.setAttribute('aria-hidden', 'false');
-                    document.body.style.overflow = 'hidden';
-                    setAuthTab('login');
-                }
-
-                function closeAuthModal() {
-                    if (!authModal) {
-                        return;
-                    }
-
-                    authModal.classList.remove('is-open');
-                    authModal.setAttribute('aria-hidden', 'true');
-                    document.body.style.overflow = '';
-                }
-
-                function setLoginMethod(method) {
-                    loginMethodBtns.forEach(function (methodBtn) {
-                        methodBtn.classList.toggle('is-active', methodBtn.getAttribute('data-login-method') === method);
-                    });
-
-                    loginFieldBlocks.forEach(function (fieldBlock) {
-                        const isTarget = fieldBlock.getAttribute('data-login-field') === method;
-                        fieldBlock.style.display = isTarget ? 'block' : 'none';
-                    });
-
-                    if (loginTypeInput) {
-                        loginTypeInput.value = method === 'phone' ? 'mobile' : 'email';
-                    }
                 }
 
                 function syncTargetState() {
@@ -2446,104 +1825,9 @@
                     renderSuggestedCoursesByTarget($targetField.val());
                 });
 
-                authModalOpenBtns.forEach(function (btn) {
-                    btn.addEventListener('click', function (event) {
-                        event.preventDefault();
-                        openAuthModal();
-                    });
-                });
-
-                if (authModalCloseBtn) {
-                    authModalCloseBtn.addEventListener('click', closeAuthModal);
-                }
-
-                if (authModal) {
-                    authModal.addEventListener('click', function (event) {
-                        if (event.target === authModal) {
-                            closeAuthModal();
-                        }
-                    });
-                }
-
-                window.addEventListener('keydown', function (event) {
-                    if (event.key === 'Escape') {
-                        closeAuthModal();
-                    }
-                });
-
-                authTabs.forEach(function (tabBtn) {
-                    tabBtn.addEventListener('click', function () {
-                        setAuthTab(tabBtn.getAttribute('data-auth-tab'));
-                    });
-                });
-
-                authTabSwitchBtns.forEach(function (tabSwitchBtn) {
-                    tabSwitchBtn.addEventListener('click', function () {
-                        setAuthTab(tabSwitchBtn.getAttribute('data-auth-tab-switch'));
-                    });
-                });
-
-                loginMethodBtns.forEach(function (methodBtn) {
-                    methodBtn.addEventListener('click', function () {
-                        setLoginMethod(methodBtn.getAttribute('data-login-method'));
-                    });
-                });
-
-                function setForgotMethod(method) {
-                    forgotMethodBtns.forEach(function (methodBtn) {
-                        methodBtn.classList.toggle('is-active', methodBtn.getAttribute('data-forgot-method') === method);
-                    });
-
-                    forgotFieldBlocks.forEach(function (fieldBlock) {
-                        const isTarget = fieldBlock.getAttribute('data-forgot-field') === method;
-                        fieldBlock.style.display = isTarget ? 'block' : 'none';
-                    });
-
-                    if (forgotTypeInput) {
-                        forgotTypeInput.value = method === 'phone' ? 'mobile' : 'email';
-                    }
-                }
-
-                forgotMethodBtns.forEach(function (methodBtn) {
-                    methodBtn.addEventListener('click', function () {
-                        setForgotMethod(methodBtn.getAttribute('data-forgot-method'));
-                    });
-                });
-
-                passwordToggleBtns.forEach(function (toggleBtn) {
-                    toggleBtn.addEventListener('click', function () {
-                        const targetId = toggleBtn.getAttribute('data-password-target');
-                        const targetInput = targetId ? document.getElementById(targetId) : null;
-
-                        if (!targetInput) {
-                            return;
-                        }
-
-                        const isHidden = targetInput.getAttribute('type') === 'password';
-                        targetInput.setAttribute('type', isHidden ? 'text' : 'password');
-
-                        const nowHidden = targetInput.getAttribute('type') === 'password';
-
-                        const icon = toggleBtn.querySelector('i');
-                        if (icon) {
-                            icon.classList.toggle('fa-eye', !nowHidden);
-                            icon.classList.toggle('fa-eye-slash', nowHidden);
-                        } else {
-                            const eye = toggleBtn.querySelector('.icons-eye');
-                            const eyeSlash = toggleBtn.querySelector('.icons-eye-slash');
-                            if (eye && eyeSlash) {
-                                eye.classList.toggle('d-none', nowHidden);
-                                eyeSlash.classList.toggle('d-none', !nowHidden);
-                            }
-                        }
-                    });
-                });
-
                 syncTargetState();
                 renderHighlightsByTarget($targetField.val());
                 renderSuggestedCoursesByTarget($targetField.val());
-                setLoginMethod('email');
-                setForgotMethod('email');
             });
         })(jQuery);
     </script>

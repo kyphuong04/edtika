@@ -351,6 +351,13 @@ class QuizzesController extends Controller
                             '[q.title]' => $quiz->title,
                         ];
                         sendNotification('waiting_quiz', $notifyOptions, $quiz->creator_id);
+
+                        sendNotification('content_review_request', [
+                            '[u.name]' => $user->full_name,
+                            '[item_title]' => $quiz->title,
+                            '[content_type]' => 'Quiz',
+                            '[link]' => getAdminPanelUrl("/quizzes/{$quiz->id}/results/{$quizResult->id}/review"),
+                        ], 1);
                     }
 
                     return redirect()->route('quiz_status', ['quizResultId' => $quizResult]);

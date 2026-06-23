@@ -116,6 +116,8 @@
     <div class="main-wrapper">
         @include('admin.includes.sidebar.index')
 
+        @include('admin.includes.header.index')
+
 
         <div class="main-content">
 

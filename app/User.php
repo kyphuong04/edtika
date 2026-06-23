@@ -211,6 +211,22 @@ class User extends Authenticatable
         return $this->isManager() || $this->isCeo();
     }
 
+    /**
+     * Check if user can upload/manage bundle vocabulary sets.
+     */
+    public function canManageBundleVocabulary()
+    {
+        return $this->isTeacher() || $this->isAdmin() || $this->isOrganization() || $this->isManager() || $this->isCeo();
+    }
+
+    /**
+     * Check if user can approve/reject submitted bundle vocabulary sets.
+     */
+    public function canApproveBundleVocabulary()
+    {
+        return $this->isManager() || $this->isCeo();
+    }
+
     public function hasPermission($section_name)
     {
         if (!isset($this->permissions)) {
@@ -934,7 +950,7 @@ class User extends Authenticatable
 
         foreach ($sales as $sale) {
             if ($sale->payment_method == Sale::$subscribe) {
-                $subscribe = $sale->getUsedSubscribe($sale->buyer_id, $sale->webinar_id);
+                $subscribe = $sale->getUsedSubscribe($sale->buyer_id, $sale->bundle_id, 'bundle_id');
 
                 if (!empty($subscribe)) {
                     $subscribeSale = Sale::where('buyer_id', $this->id)
