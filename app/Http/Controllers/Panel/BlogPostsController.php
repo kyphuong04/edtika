@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\BlogCategory;
 use App\Models\Comment;
+use App\Models\RelatedPost;
 use App\Models\Reward;
 use App\Models\RewardAccounting;
 use App\Models\Translation\BlogTranslation;
@@ -112,6 +113,11 @@ class BlogPostsController extends Controller
             'pageTitle' => trans('update.create_a_post'),
             'locale' => mb_strtolower(app()->getLocale()),
             'blogCategories' => BlogCategory::all(),
+            'availableRelatedPosts' => Blog::query()
+                ->where('author_id', $user->id)
+                ->with(['author'])
+                ->orderBy('created_at', 'desc')
+                ->get(),
         ];
 
         if (request()->ajax()) {
@@ -142,6 +148,8 @@ class BlogPostsController extends Controller
             'image' => 'required|file',
             'content' => 'required|string',
             'study_time' => 'nullable|numeric',
+            'related_post_ids' => 'nullable|array',
+            'related_post_ids.*' => 'nullable|numeric|exists:blog,id',
         ]);
 
         if ($validator->fails()) {
@@ -206,16 +214,18 @@ class BlogPostsController extends Controller
             $locale = $request->get('locale', app()->getLocale());
 
             $blogCategories = BlogCategory::all();
-            $otherPosts = Blog::query()->where('id', '!=', $post->id)
-                ->with([
-                    'author'
-                ])->get();
 
             $data = [
                 'pageTitle' => trans('public.edit') . ' | ' . $post->title,
                 'locale' => mb_strtolower($locale),
                 'post' => $post,
                 'blogCategories' => $blogCategories,
+                'availableRelatedPosts' => Blog::query()
+                    ->where('author_id', $user->id)
+                    ->where('id', '!=', $post->id)
+                    ->with(['author'])
+                    ->orderBy('created_at', 'desc')
+                    ->get(),
             ];
 
             if ($request->ajax()) {
@@ -249,6 +259,8 @@ class BlogPostsController extends Controller
             'image' => 'nullable|file',
             'content' => 'required|string',
             'study_time' => 'nullable|numeric',
+            'related_post_ids' => 'nullable|array',
+            'related_post_ids.*' => 'nullable|numeric|exists:blog,id',
         ]);
 
         if ($validator->fails()) {
@@ -367,6 +379,48 @@ class BlogPostsController extends Controller
         $blog->update([
             'image' => $imagePath
         ]);
+
+        $this->syncRelatedPosts($request, $user, $blog);
+    }
+
+    private function syncRelatedPosts(Request $request, $user, $blog)
+    {
+        $relatedPostIds = collect($request->input('related_post_ids', []))
+            ->filter(function ($id) {
+                return !empty($id);
+            })
+            ->map(function ($id) {
+                return (int)$id;
+            })
+            ->unique()
+            ->values();
+
+        $allowedIds = [];
+
+        if ($relatedPostIds->isNotEmpty()) {
+            $allowedIds = Blog::query()
+                ->whereIn('id', $relatedPostIds->all())
+                ->where('id', '!=', $blog->id)
+                ->where('author_id', $user->id)
+                ->pluck('id')
+                ->all();
+        }
+
+        RelatedPost::query()
+            ->where('targetable_id', $blog->id)
+            ->where('targetable_type', Blog::class)
+            ->whereNotIn('post_id', $allowedIds)
+            ->delete();
+
+        foreach ($allowedIds as $relatedId) {
+            RelatedPost::query()->updateOrCreate([
+                'targetable_id' => $blog->id,
+                'targetable_type' => Blog::class,
+                'post_id' => $relatedId,
+            ], [
+                'order' => null,
+            ]);
+        }
     }
 }
 

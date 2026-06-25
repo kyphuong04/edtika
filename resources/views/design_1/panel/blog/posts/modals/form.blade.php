@@ -5,6 +5,9 @@
     $postDescription = (!empty($post) && !empty($post->translate($locale ?? app()->getLocale()))) ? $post->translate($locale ?? app()->getLocale())->description : old('description');
     $postStudyTime = !empty($post) ? $post->study_time : old('study_time');
     $selectedCategoryId = !empty($post) ? $post->category_id : old('category_id');
+    $selectedRelatedPostIds = !empty($post)
+        ? $post->relatedPosts()->pluck('post_id')->toArray()
+        : (old('related_post_ids', []));
     $buttonLabel = !empty($post) ? trans('public.save') : trans('update.create_a_post');
 @endphp
 
@@ -47,6 +50,26 @@
         <label class="form-group-label">{{ trans('admin/main.description') ?? 'Mô tả' }}</label>
         <textarea name="description" class="form-control js-blog-post-editor-description @error('description') is-invalid @enderror" placeholder="Article Description">{!! $postDescription !!}</textarea>
         <div class="invalid-feedback d-block js-blog-post-error" data-field="description">@error('description') {{ $message }} @enderror</div>
+    </div>
+
+    <div class="form-group mt-24">
+        <label class="form-group-label">{{ trans('update.related_posts') }}</label>
+        @php
+            $availableRelatedPosts = collect($availableRelatedPosts ?? [])->filter(function ($item) {
+                return !empty($item) && !empty($item->id);
+            });
+        @endphp
+        <select name="related_post_ids[]" class="form-control form-control-lg rounded-16 js-blog-related-posts-select @error('related_post_ids') is-invalid @enderror" multiple data-placeholder="{{ trans('update.select_related_post') }}">
+            @forelse($availableRelatedPosts as $relatedPostOption)
+                <option value="{{ $relatedPostOption->id }}" {{ in_array($relatedPostOption->id, $selectedRelatedPostIds) ? 'selected' : '' }}>
+                    {{ $relatedPostOption->title }}{{ !empty($relatedPostOption->author) ? ' - '.$relatedPostOption->author->full_name : '' }}
+                </option>
+            @empty
+                <option value="" disabled>{{ trans('update.blog_post_no_result') }}</option>
+            @endforelse
+        </select>
+        <small class="text-gray-500 d-block mt-8">{{ trans('update.assign_related_posts_to_the_this_article') }}</small>
+        <div class="invalid-feedback d-block js-blog-post-error" data-field="related_post_ids">@error('related_post_ids') {{ $message }} @enderror</div>
     </div>
 
     <div class="form-group mt-24">

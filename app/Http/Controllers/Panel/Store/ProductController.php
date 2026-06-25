@@ -162,6 +162,7 @@ class ProductController extends Controller
             '[u.name]' => $user->full_name,
             '[item_title]' => $product->title,
             '[content_type]' => trans('update.product'),
+            '[link]' => getAdminPanelUrl("/store/products/{$product->id}/edit"),
         ];
         sendNotification("new_item_created", $notifyOptions, 1);
 
@@ -401,6 +402,7 @@ class ProductController extends Controller
                 '[u.name]' => $user->full_name,
                 '[item_title]' => $product->title,
                 '[content_type]' => trans('update.product'),
+                '[link]' => getAdminPanelUrl("/store/products/{$product->id}/edit"),
             ];
             sendNotification("content_review_request", $notifyOptions, 1);
         }

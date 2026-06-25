@@ -215,6 +215,7 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('{id}/delete', 'NotificationsController@delete');
             Route::get('/mark_all_read', 'NotificationsController@markAllRead');
             Route::get('/{id}/mark_as_read', 'NotificationsController@markAsRead');
+            Route::get('/{id}/visit', 'NotificationsController@visit');
 
             Route::group(['prefix' => 'templates'], function () {
                 Route::get('/', 'NotificationTemplatesController@index');

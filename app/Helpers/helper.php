@@ -1665,6 +1665,7 @@ function sendNotification($template, $options, $user_id = null, $group_id = null
     if (!empty($notificationTemplate)) {
         $title = str_replace(array_keys($options), array_values($options), $notificationTemplate->title);
         $message = str_replace(array_keys($options), array_values($options), $notificationTemplate->template);
+        $actionUrl = $options['action_url'] ?? $options['[link]'] ?? null;
 
         $check = \App\Models\Notification::where('user_id', $user_id)
             ->where('group_id', $group_id)
@@ -1677,7 +1678,7 @@ function sendNotification($template, $options, $user_id = null, $group_id = null
         $ignoreDuplicateTemplates = ['new_badge', 'registration_package_expired'];
 
         if (empty($check) or !in_array($template, $ignoreDuplicateTemplates)) {
-            \App\Models\Notification::create([
+            $notificationData = [
                 'user_id' => $user_id,
                 'group_id' => $group_id,
                 'title' => $title,
@@ -1685,7 +1686,13 @@ function sendNotification($template, $options, $user_id = null, $group_id = null
                 'sender' => $sender,
                 'type' => $type,
                 'created_at' => time()
-            ]);
+            ];
+
+            if (!empty($actionUrl) && \Illuminate\Support\Facades\Schema::hasColumn('notifications', 'action_url')) {
+                $notificationData['action_url'] = $actionUrl;
+            }
+
+            \App\Models\Notification::create($notificationData);
 
             if (env('APP_ENV') == 'production') {
                 $user = \App\User::where('id', $user_id)->first();

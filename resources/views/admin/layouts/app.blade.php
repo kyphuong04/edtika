@@ -3,6 +3,8 @@
     $rtlLanguages = !empty($generalSettings['rtl_languages']) ? $generalSettings['rtl_languages'] : [];
     $isRtl = ((in_array(mb_strtoupper(app()->getLocale()), $rtlLanguages)) or (!empty($generalSettings['rtl_layout']) and $generalSettings['rtl_layout'] == 1));
     $themeCustomCssAndJs = getThemeCustomCssAndJs();
+    $authUser = auth()->user();
+    $isManagerOrCeoAdmin = !empty($authUser) && ($authUser->isManager() || $authUser->isCeo());
 @endphp
 <head>
     @include('design_1.web.includes.metas')
@@ -107,10 +109,80 @@
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
         }
+
+        .manager-ceo-admin-theme .admin-header,
+        .manager-ceo-admin-theme .navbar.active,
+        .manager-ceo-admin-theme .navbar-bg {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .manager-ceo-admin-theme .navbar-bg {
+            display: none !important;
+        }
+
+        .manager-ceo-admin-theme .admin-header > .d-flex.align-items-center.justify-content-end {
+            background: transparent !important;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .manager-ceo-admin-theme .btn-primary,
+        .manager-ceo-admin-theme .btn-primary.disabled,
+        .manager-ceo-admin-theme .btn-outline-primary,
+        .manager-ceo-admin-theme .btn-outline-primary.disabled {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+            color: #fff !important;
+        }
+
+        .manager-ceo-admin-theme .btn-primary:focus,
+        .manager-ceo-admin-theme .btn-primary:focus:active,
+        .manager-ceo-admin-theme .btn-primary:active,
+        .manager-ceo-admin-theme .btn-primary:hover,
+        .manager-ceo-admin-theme .btn-primary.disabled:focus,
+        .manager-ceo-admin-theme .btn-primary.disabled:focus:active,
+        .manager-ceo-admin-theme .btn-primary.disabled:active,
+        .manager-ceo-admin-theme .btn-primary.disabled:hover,
+        .manager-ceo-admin-theme .btn-outline-primary:hover,
+        .manager-ceo-admin-theme .btn-outline-primary:focus,
+        .manager-ceo-admin-theme .btn-outline-primary:active,
+        .manager-ceo-admin-theme .btn-outline-primary.disabled:hover,
+        .manager-ceo-admin-theme .btn-outline-primary.disabled:focus,
+        .manager-ceo-admin-theme .btn-outline-primary.disabled:active {
+            background-color: #451781 !important;
+            border-color: #451781 !important;
+            color: #fff !important;
+        }
+
+        .manager-ceo-admin-theme .main-sidebar .sidebar-menu > li.active > a,
+        body.manager-ceo-admin-theme.sidebar-mini .main-sidebar .sidebar-menu > li.active > a,
+        body.manager-ceo-admin-theme:not(.sidebar-mini) .sidebar-style-1 .sidebar-menu li.active a,
+        body.manager-ceo-admin-theme:not(.sidebar-mini) .sidebar-style-2 .sidebar-menu > li.active > a {
+            background-color: #511D99 !important;
+            color: #fff !important;
+            box-shadow: 0 8px 18px rgba(81, 29, 153, 0.22) !important;
+        }
+
+        .manager-ceo-admin-theme .main-sidebar .sidebar-menu > li.active > a .icons,
+        .manager-ceo-admin-theme .main-sidebar .sidebar-menu > li.active > a span,
+        .manager-ceo-admin-theme .main-sidebar .sidebar-menu > li.active > a.has-dropdown:after {
+            color: #fff !important;
+        }
+
+        .manager-ceo-admin-theme .main-sidebar .sidebar-menu > li ul.dropdown-menu li.active > a,
+        .manager-ceo-admin-theme .main-sidebar .sidebar-menu > li ul.dropdown-menu li.active > a:hover,
+        body.manager-ceo-admin-theme.sidebar-mini .main-sidebar .sidebar-menu > li ul.dropdown-menu li.active > a,
+        body.manager-ceo-admin-theme.sidebar-mini .main-sidebar .sidebar-menu > li ul.dropdown-menu li.active > a:hover {
+            background-color: #511D99 !important;
+            color: #fff !important;
+            border-radius: 0 !important;
+        }
     </style>
     <link rel="stylesheet" href="/assets/design_1/css/overrides.css">
 </head>
-<body class="sidebar-mini sidebar-hover-expand {{ $isRtl ? 'rtl' : '' }}">
+<body class="sidebar-mini sidebar-hover-expand {{ $isRtl ? 'rtl' : '' }} {{ $isManagerOrCeoAdmin ? 'manager-ceo-admin-theme' : '' }}">
 
 <div id="app">
     <div class="main-wrapper">

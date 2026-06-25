@@ -20,6 +20,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     Route::group(['prefix' => 'events'], function () {
         Route::get('/', 'EventsController@index');
         Route::post('/get-by-day', 'EventsController@getEventsByDay');
+        Route::post('/live-course/store', 'EventsController@storeLiveCourse');
     });
 
     Route::post('/content-delete-request', 'ContentDeleteRequestController@store');

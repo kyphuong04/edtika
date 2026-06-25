@@ -11,6 +11,7 @@ use App\Models\NotificationStatus;
 use App\Models\Role;
 use App\Models\Sale;
 use App\Models\Webinar;
+use App\Models\IeltsTest;
 use App\User;
 use Illuminate\Http\Request;
 use App\Models\Api\UserFirebaseSessions;
@@ -350,6 +351,80 @@ class NotificationsController extends Controller
         }
 
         return response()->json([], 200);
+    }
+
+    public function visit($id)
+    {
+        $notification = Notification::findOrFail($id);
+
+        $adminUser = User::getMainAdmin();
+
+        if (!empty($adminUser)) {
+            NotificationStatus::updateOrCreate(
+                [
+                    'user_id' => $adminUser->id,
+                    'notification_id' => $notification->id,
+                ],
+                [
+                    'seen_at' => time()
+                ]
+            );
+        }
+
+        $targetUrl = $this->resolveNotificationTargetUrl($notification);
+
+        if (!empty($targetUrl)) {
+            return redirect($targetUrl);
+        }
+
+        return redirect(getAdminPanelUrl("/notifications?notification={$notification->id}"));
+    }
+
+    private function resolveNotificationTargetUrl(Notification $notification): ?string
+    {
+        $actionUrl = $notification->getAttribute('action_url');
+
+        if (!empty($actionUrl)) {
+            return html_entity_decode($actionUrl, ENT_QUOTES, 'UTF-8');
+        }
+
+        $message = (string) $notification->message;
+
+        if (preg_match('/href=["\']([^"\']+)["\']/i', $message, $matches)) {
+            return html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+        }
+
+        if (preg_match('#https?://[^\s<"\']+#i', $message, $matches)) {
+            return html_entity_decode($matches[0], ENT_QUOTES, 'UTF-8');
+        }
+
+        if (preg_match('#/(admin|panel)/[^\s<"\']+#i', $message, $matches)) {
+            return html_entity_decode($matches[0], ENT_QUOTES, 'UTF-8');
+        }
+
+        if ($notification->title === 'New IELTS Test Pending Approval' && preg_match("/'([^']+)' is ready for review\./", $message, $matches)) {
+            $test = IeltsTest::query()
+                ->where('title', $matches[1])
+                ->orderByDesc('id')
+                ->first();
+
+            if (!empty($test)) {
+                return getAdminPanelUrl("/ielts-tests/{$test->id}/review");
+            }
+        }
+
+        if ($notification->title === 'Question Group Pending Approval' && preg_match('/submitted "([^"]+)"/', $message, $matches)) {
+            $group = \App\Models\IeltsQuestionGroup::query()
+                ->where('title', $matches[1])
+                ->orderByDesc('id')
+                ->first();
+
+            if (!empty($group)) {
+                return route('panel.question-groups.show', $group->id);
+            }
+        }
+
+        return null;
     }
 }
 

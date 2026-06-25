@@ -3166,7 +3166,7 @@ function buildTableCompletionBuilder(button) {
     const rowsInput = form.querySelector('.tc-num-rows');
     const colsInput = form.querySelector('.tc-num-cols');
     const totalRows = Math.max(2, parseInt(rowsInput?.value, 10) || 3);
-    const rows = Math.max(1, totalRows - 1);
+    const rows = totalRows;
     const cols = Math.max(1, parseInt(colsInput?.value, 10) || 3);
     const wrap = form.querySelector('.tc-builder-wrap');
     const head = form.querySelector('.tc-builder-head');

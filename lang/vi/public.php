@@ -411,4 +411,5 @@ return [
     'loading' => 'Đang tải...',
     'join' => 'Tham gia',
     'no_result' => 'Không tìm thấy kết quả.',
+    'error' => 'Lỗi',
 ];

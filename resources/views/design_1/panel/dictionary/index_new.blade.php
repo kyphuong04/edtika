@@ -1560,6 +1560,7 @@
                             <button class="action-btn btn-select-all">{{ trans('panel.select_all') }}</button>
                             <button class="action-btn btn-deselect-all">{{ trans('panel.deselect_all') }}</button>
                             <button class="action-btn btn-practice">{{ trans('panel.practice') }}</button>
+                            <button class="action-btn btn-practice btn-flashcard">{{ 'Luyện tập bằng Flashcard' }}</button>
                         </div>
                     </div>
                 </div>
@@ -1598,6 +1599,7 @@
                             <button class="action-btn btn-deselect-all">{{ trans('panel.deselect_all') }}</button>
                             <button class="action-btn btn-delete">{{ trans('panel.delete') }}</button>
                             <button class="action-btn btn-practice">{{ trans('panel.practice') }}</button>
+                            <button class="action-btn btn-practice btn-flashcard">{{ 'Luyện tập bằng Flashcard' }}</button>
                         </div>
                     </div>
                 </div>
@@ -1623,6 +1625,29 @@
                 <div class="practice-actions">
                     <button class="practice-btn btn-exit" id="exitPracticeBtn">{{ trans('panel.exit') }}</button>
                     <button class="practice-btn btn-next" id="nextQuestionBtn" disabled>{{ trans('panel.next') }}</button>
+                </div>
+            </div>
+
+            <!-- Flashcard Practice Container (hidden by default) -->
+            <div class="practice-mode-container hidden" id="flashcardPracticeContainer" style="text-align:center;">
+                <div style="max-width:720px;margin:0 auto;padding:20px;">
+
+                    <div id="flashcardCard" style="background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:26px;min-height:360px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;">
+                        <div id="flashcardVisual" style="width:100%;max-width:560px;height:190px;border:1px solid rgba(81,29,153,0.12);border-radius:22px;background:#fff;margin-bottom:20px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                            <img id="flashcardImage" src="" alt="" style="max-width:100%;max-height:100%;display:none;object-fit:cover;">
+                        </div>
+
+                        <div id="flashcardWord" style="font-size:42px;font-weight:800;color:#1e293b;line-height:1.1;margin-bottom:8px;">-</div>
+                        <div id="flashcardPron" style="font-size:34px;color:#475569;font-style:italic;line-height:1.1;margin-bottom:16px;"></div>
+                        <div id="flashcardBack" style="display:none;font-size:24px;color:#475569;line-height:1.6;max-width:92%;width:100%;text-align:center;">Definition / Translation</div>
+                    </div>
+
+                    <div style="display:flex;justify-content:center;gap:20px;margin-top:18px;">
+                        <button class="practice-btn btn-exit" id="flashcardExitBtn">{{ trans('panel.exit') }}</button>
+                        <button class="practice-btn btn-next" id="flashcardPrevBtn" disabled>‹ Trước đó</button>
+                        <button class="practice-btn btn-next" id="flashcardTurnBtn">Lật thẻ</button>
+                        <button class="practice-btn btn-next" id="flashcardNextBtn" disabled>Tiếp theo ›</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1778,7 +1803,7 @@
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let selectedAnswer = null;
-    let practicedCorrectIds = new Set(); // flashcard IDs answered correctly in practice
+    let practicedCorrectIds = new Set(); // word/flashcard IDs answered correctly in normal practice
 
     // ── Profile card: hover (CSS handles it) + click toggle (JS) ──────
     $('#dictProfileTrigger').on('click', function(e) {
@@ -2316,7 +2341,7 @@
 
         words.forEach(function(word) {
             let pronunciation = word.pronunciation ? `<span class="word-pronunciation">/${word.pronunciation}/</span>` : '';
-            let showTick = word.is_learned || (listType === 'my' && practicedCorrectIds.has(word.id));
+            let showTick = word.is_learned || practicedCorrectIds.has(word.id);
             let wordSource = word.word_source || sourceType || listType;
             let wordHtml = `
                 <div class="word-item" data-word-id="${word.id}" data-word="${word.word}" data-word-source="${wordSource}">
@@ -2451,7 +2476,7 @@
     });
 
     // Start Practice
-    $(document).on('click', '.btn-practice', function(e) {
+    $(document).on('click', '.btn-practice:not(.btn-flashcard)', function(e) {
         e.stopPropagation();
         
         let selectedIds = [];
@@ -2501,6 +2526,7 @@
                     incorrectAnswers = 0;
                     
                     // Hide word lists and show practice mode
+                    $('#flashcardPracticeContainer').addClass('hidden');
                     $('#academicWordListsSection, #myWordListSection').addClass('hidden');
                     $('#practiceModeContainer').removeClass('hidden');
                     
@@ -2573,10 +2599,12 @@
         // Update scores
         if (isCorrect) {
             correctAnswers++;
-            // Show the green tick on the word item in My Word List and remember it
-            if (currentWordListType === 'my' && question.flashcard_id) {
-                practicedCorrectIds.add(question.flashcard_id);
-                $(`.learned-badge[data-word-id="${question.flashcard_id}"]`).addClass('show');
+
+            // Show the learned tick for any correctly answered item in normal practice.
+            const practicedId = question.word_id || question.flashcard_id;
+            if (practicedId) {
+                practicedCorrectIds.add(practicedId);
+                $(`.learned-badge[data-word-id="${practicedId}"]`).addClass('show');
             }
         } else {
             incorrectAnswers++;
@@ -2615,6 +2643,7 @@
 
     function exitPractice() {
         $('#practiceModeContainer').addClass('hidden');
+        $('#flashcardPracticeContainer').addClass('hidden');
         
         if (currentWordListType === 'academic') {
             $('#academicWordListsSection').removeClass('hidden');
@@ -2625,11 +2654,8 @@
         // Reload the word list to show updated learned/tick status
         if (currentWordListType === 'academic') {
             loadAcademicWordList(currentWordListId, currentWordListSourceType, currentWordListSourceId);
-            practicedCorrectIds.clear();
         } else {
-            loadMyWordList(); // renderWords will re-apply ticks from practicedCorrectIds
-            // Clear after a brief delay so renderWords finishes first
-            setTimeout(function() { practicedCorrectIds.clear(); }, 1500);
+            loadMyWordList();
         }
     }
 
@@ -2672,6 +2698,175 @@
                 $(this).hide();
             }
         });
+    });
+
+    // ---- Flashcard practice handlers ----
+    let flashcardCards = [];
+    let flashcardIndex = 0;
+    let flashcardFlipped = false;
+
+    $(document).on('click', '.btn-flashcard', function(e) {
+        e.stopPropagation();
+
+        let selectedIds = [];
+        $(this).closest('.word-list-expanded').find('.word-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('word-id'));
+        });
+
+        if (selectedIds.length === 0) {
+            alert('Vui lòng chọn từ để luyện tập bằng flashcard');
+            return;
+        }
+
+        startFlashcardPractice(selectedIds);
+    });
+
+    function startFlashcardPractice(selectedIds) {
+        let endpoint = '';
+
+        if (currentWordListType === 'academic') {
+            if (currentWordListSourceType === 'bundle') {
+                endpoint = '/panel/dictionary/bundle-word-lists/' + currentWordListSourceId;
+            } else {
+                endpoint = '/panel/dictionary/academic-word-lists/' + currentWordListSourceId;
+            }
+        } else {
+            endpoint = '/panel/dictionary/my-word-list';
+        }
+
+        $.ajax({
+            url: endpoint,
+            method: 'GET',
+            success: function(res) {
+                if (!res.success) {
+                    alert(res.message || 'Không thể tải từ vựng');
+                    return;
+                }
+
+                let list = [];
+                if (res.data && res.data.words) list = res.data.words;
+                else if (res.data && res.data.flashcards) list = res.data.flashcards;
+                else if (Array.isArray(res)) list = res;
+
+                // Filter chosen words
+                const chosen = list.filter(function(item) {
+                    return selectedIds.indexOf(item.id) !== -1;
+                });
+
+                if (chosen.length === 0) {
+                    alert('Không có từ hợp lệ để luyện tập');
+                    return;
+                }
+
+                flashcardCards = chosen.map(function(item) {
+                    return {
+                        id: item.id,
+                        word: item.word || item.headword || '',
+                        pronunciation: item.pronunciation || item.pronunciations && item.pronunciations[0] && (item.pronunciations[0].ipa || item.pronunciations[0].text) || '',
+                        definition: item.definition || item.translation || item.definition || '',
+                        translation: item.translation || item.translation_vi || '',
+                        image_url: item.image_url || ''
+                    };
+                });
+
+                flashcardIndex = 0;
+                flashcardFlipped = false;
+
+                // Show flashcard UI
+                $('#practiceModeContainer').addClass('hidden');
+                $('#academicWordListsSection, #myWordListSection').addClass('hidden');
+                $('#flashcardPracticeContainer').removeClass('hidden');
+                renderFlashcard();
+            },
+            error: function(err) {
+                console.error('Flashcard load error', err);
+                alert('Lỗi khi tải flashcards');
+            }
+        });
+    }
+
+    function renderFlashcard() {
+        if (!flashcardCards.length) {
+            $('#flashcardWord').text('-');
+            $('#flashcardPron').text('');
+            $('#flashcardBack').text('');
+            $('#flashcardImage').hide().attr('src', '');
+            $('#flashcardCard').css('justify-content', 'flex-start');
+            $('#flashcardVisual').show();
+            $('#flashcardWord, #flashcardPron').show();
+            $('#flashcardBack').hide();
+            $('#flashcardPrevBtn, #flashcardNextBtn').prop('disabled', true);
+            return;
+        }
+
+        const card = flashcardCards[flashcardIndex];
+        $('#flashcardWord').text(card.word);
+        $('#flashcardPron').text(card.pronunciation ? '/' + card.pronunciation + '/' : '');
+        $('#flashcardBack').text(card.translation || card.definition || '');
+        // Always reset each navigated card to front side.
+        $('#flashcardCard').css('justify-content', 'flex-start');
+        $('#flashcardVisual').show();
+        $('#flashcardWord, #flashcardPron').show();
+        $('#flashcardBack').hide();
+
+        if (card.image_url) {
+            $('#flashcardImage').attr('src', card.image_url).show();
+        } else {
+            $('#flashcardImage').hide().attr('src', '');
+        }
+
+        flashcardFlipped = false;
+        $('#flashcardPrevBtn').prop('disabled', flashcardIndex === 0);
+        $('#flashcardNextBtn').prop('disabled', flashcardIndex === flashcardCards.length - 1);
+        $('#flashcardTurnBtn').text('Lật thẻ');
+    }
+
+    $('#flashcardTurnBtn').on('click', function() {
+        if (!flashcardCards.length) return;
+        flashcardFlipped = !flashcardFlipped;
+        if (flashcardFlipped) {
+            $('#flashcardCard').css('justify-content', 'center');
+            $('#flashcardVisual').hide();
+            $('#flashcardWord, #flashcardPron').hide();
+            $('#flashcardBack').css('display', 'block');
+            $('#flashcardTurnBtn').text('Ẩn');
+        } else {
+            $('#flashcardCard').css('justify-content', 'flex-start');
+            $('#flashcardBack').hide();
+            $('#flashcardVisual').show();
+            $('#flashcardWord, #flashcardPron').show();
+            $('#flashcardTurnBtn').text('Lật thẻ');
+        }
+    });
+
+    $('#flashcardNextBtn').on('click', function() {
+        if (flashcardIndex < flashcardCards.length - 1) {
+            flashcardIndex++;
+            renderFlashcard();
+        }
+    });
+
+    $('#flashcardPrevBtn').on('click', function() {
+        if (flashcardIndex > 0) {
+            flashcardIndex--;
+            renderFlashcard();
+        }
+    });
+
+    $('#flashcardExitBtn').on('click', function() {
+        $('#flashcardPracticeContainer').addClass('hidden');
+        $('#practiceModeContainer').addClass('hidden');
+        if (currentWordListType === 'academic') {
+            $('#academicWordListsSection').removeClass('hidden');
+        } else {
+            $('#myWordListSection').removeClass('hidden');
+        }
+        // reload lists to refresh any progress UI
+        if (currentWordListType === 'academic') {
+            loadAcademicWordList(currentWordListId, currentWordListSourceType, currentWordListSourceId);
+        } else {
+            loadMyWordList();
+        }
     });
 
 })(jQuery);

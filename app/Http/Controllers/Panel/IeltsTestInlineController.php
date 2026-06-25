@@ -326,14 +326,20 @@ class IeltsTestInlineController extends Controller
             });
 
         foreach ($approvers as $approver) {
-            Notification::create([
+            $notificationData = [
                 'user_id' => $approver->id,
                 'sender' => Notification::$SystemSender,
                 'title' => 'New IELTS Test Pending Approval',
                 'message' => "'{$test->title}' is ready for review.",
                 'type' => 'single',
                 'created_at' => time(),
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'action_url')) {
+                $notificationData['action_url'] = getAdminPanelUrl("/ielts-tests/{$test->id}/review");
+            }
+
+            Notification::create($notificationData);
         }
     }
 
@@ -559,8 +565,16 @@ class IeltsTestInlineController extends Controller
 
                             $questions = $groupData['questions'] ?? [];
                             foreach ($questions as $questionData) {
-                                $questionCount++;
-                                $this->createQuestionInPart($section, $part, $group, $questionData, $questionCount);
+                                // For table completion questions, count each blank as a separate question number
+                                $questionType = $questionData['type'] ?? 'multiple_choice';
+                                if ($questionType === 'table_completion') {
+                                    $slotCount = $questionData['slotCount'] ?? 1;
+                                    $this->createQuestionInPart($section, $part, $group, $questionData, $questionCount + 1);
+                                    $questionCount += $slotCount;
+                                } else {
+                                    $questionCount++;
+                                    $this->createQuestionInPart($section, $part, $group, $questionData, $questionCount);
+                                }
                             }
                         }
                     }
@@ -944,8 +958,16 @@ class IeltsTestInlineController extends Controller
                     $group = $this->createQuestionGroupWithMedia($section, $groupData, $request, $user->id, $part, $groupOrder);
 
                     foreach (($groupData['questions'] ?? []) as $questionData) {
-                        $questionCount++;
-                        $this->createQuestionInPart($section, $part, $group, $questionData, $questionCount);
+                        // For table completion questions, count each blank as a separate question number
+                        $questionType = $questionData['type'] ?? 'multiple_choice';
+                        if ($questionType === 'table_completion') {
+                            $slotCount = $questionData['slotCount'] ?? 1;
+                            $this->createQuestionInPart($section, $part, $group, $questionData, $questionCount + 1);
+                            $questionCount += $slotCount;
+                        } else {
+                            $questionCount++;
+                            $this->createQuestionInPart($section, $part, $group, $questionData, $questionCount);
+                        }
                     }
                 }
             }

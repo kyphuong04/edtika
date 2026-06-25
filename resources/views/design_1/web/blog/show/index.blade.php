@@ -21,6 +21,21 @@
         ['label' => $isEnglish ? 'Dictionary & Flashcards' : 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
         ['label' => $isEnglish ? 'Knowledge & News' : 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
     ];
+
+    $relatedSidebarPosts = collect();
+
+    if (!empty($post->relatedPosts) && $post->relatedPosts->isNotEmpty()) {
+        $relatedSidebarPosts = $post->relatedPosts
+            ->pluck('post')
+            ->filter();
+    }
+
+    $latestPosts = \App\Models\Blog::query()
+        ->where('status', 'publish')
+        ->where('id', '!=', $post->id)
+        ->orderBy('created_at', 'desc')
+        ->limit(6)
+        ->get();
 @endphp
 
 @push("styles_top")
@@ -40,7 +55,7 @@
             margin-right: calc(50% - 50vw);
             background: linear-gradient(180deg, #ecebf3 0%, #edf0f6 62%, #eaf4f1 100%);
             position: relative;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .edtika-news-page__container {
@@ -50,6 +65,7 @@
             max-width: 1312px;
             padding: 0 28px;
             margin: 0 auto;
+            overflow: visible;
         }
 
         .edtika-news-page__header {
@@ -254,7 +270,6 @@
         }
 
         .edtika-news-show__content {
-            margin-top: 34px;
             border-radius: 26px;
             border: 1px solid var(--edtika-glass-border);
             background: #fff;
@@ -262,6 +277,171 @@
             -webkit-backdrop-filter: blur(14px) saturate(130%);
             box-shadow: 0 16px 32px rgba(52, 42, 84, 0.14);
             padding: 26px;
+            min-width: 0;
+        }
+
+        .edtika-news-show-layout {
+            margin-top: 34px;
+            display: grid;
+            grid-template-columns: minmax(210px, 248px) minmax(0, 1fr) minmax(230px, 280px);
+            gap: 18px;
+            align-items: start;
+            overflow: visible;
+        }
+
+        .edtika-news-show-layout > * {
+            min-width: 0;
+        }
+
+        .edtika-news-show__sidebar-card {
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.58);
+            background: rgba(255, 255, 255, 0.84);
+            backdrop-filter: blur(14px) saturate(130%);
+            -webkit-backdrop-filter: blur(14px) saturate(130%);
+            box-shadow: 0 12px 26px rgba(40, 34, 63, 0.12);
+            padding: 18px 16px;
+            position: relative;
+        }
+
+        .edtika-news-show__sidebar--toc {
+            border-radius: 26px;
+            overflow: visible;
+            align-self: start;
+            position: sticky;
+            top: 96px;
+            z-index: 10;
+            height: fit-content;
+        }
+
+        .edtika-news-show__sidebar--toc .edtika-news-show__sidebar-card {
+            border-radius: 26px;
+            position: sticky !important;
+            top: 96px !important;
+            z-index: 12;
+        }
+
+        .edtika-news-show__sidebar--related {
+            border-radius: 26px;
+            overflow: visible;
+            align-self: start;
+            position: sticky;
+            top: 96px;
+            z-index: 10;
+            height: fit-content;
+        }
+
+        .edtika-news-show__sidebar--related .edtika-news-show__sidebar-card {
+            border-radius: 26px;
+            position: sticky !important;
+            top: 96px !important;
+            z-index: 12;
+        }
+
+        .edtika-news-show__sidebar-title {
+            margin: 0;
+            font-size: 32px;
+            line-height: 1.2;
+            font-weight: 800;
+            color: #2f3441;
+        }
+
+        .edtika-news-show__toc-list {
+            margin: 16px 0 0;
+            padding: 0;
+            list-style: none;
+            max-height: calc(100vh - 180px);
+            overflow: auto;
+        }
+
+        .edtika-news-show__toc-item {
+            margin-top: 8px;
+        }
+
+        .edtika-news-show__toc-item:first-child {
+            margin-top: 0;
+        }
+
+        .edtika-news-show__toc-link {
+            display: block;
+            color: #718096;
+            text-decoration: none;
+            font-weight: 600;
+            line-height: 1.45;
+            transition: color .2s ease;
+        }
+
+        .edtika-news-show__toc-item.is-level-3 .edtika-news-show__toc-link,
+        .edtika-news-show__toc-item.is-level-4 .edtika-news-show__toc-link,
+        .edtika-news-show__toc-item.is-level-5 .edtika-news-show__toc-link,
+        .edtika-news-show__toc-item.is-level-6 .edtika-news-show__toc-link {
+            padding-left: 14px;
+            font-size: 14px;
+        }
+
+        .edtika-news-show__toc-item.is-active .edtika-news-show__toc-link {
+            color: #e54f26;
+            font-weight: 800;
+        }
+
+        .edtika-news-show__related-list {
+            margin-top: 14px;
+            max-height: calc(100vh - 190px);
+            overflow: auto;
+        }
+
+        .edtika-news-show__related-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 12px;
+            text-decoration: none;
+            color: #1f2430;
+        }
+
+        .edtika-news-show__related-item:first-child {
+            margin-top: 0;
+        }
+
+        .edtika-news-show__related-image {
+            width: 86px;
+            height: 64px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .edtika-news-show__related-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .edtika-news-show__latest {
+            margin-top: 28px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.58);
+            background: rgba(255, 255, 255, 0.88);
+            box-shadow: 0 14px 26px rgba(40, 34, 63, 0.1);
+            padding: 20px 22px 28px;
+        }
+
+        .edtika-news-show__latest-title {
+            margin: 0;
+            color: #1f2430;
+            font-size: 28px;
+            line-height: 1.2;
+            font-weight: 800;
+        }
+
+        .edtika-news-show__description,
+        .edtika-news-show__article {
+            overflow-wrap: anywhere;
         }
 
         .edtika-news-show__description {
@@ -497,6 +677,58 @@
                 display: none;
             }
 
+            .edtika-news-show-layout {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .edtika-news-show__sidebar-card {
+                position: static;
+                top: auto;
+            }
+
+            .edtika-news-show__sidebar--toc {
+                border-radius: 0;
+                overflow: visible;
+                position: static;
+                top: auto;
+                z-index: auto;
+            }
+
+            .edtika-news-show__sidebar--related {
+                border-radius: 0;
+                overflow: visible;
+                position: static;
+                top: auto;
+                z-index: auto;
+            }
+
+            .edtika-news-show__sidebar--toc .edtika-news-show__sidebar-card {
+                border-radius: 22px;
+            }
+
+            .edtika-news-show__sidebar--related .edtika-news-show__sidebar-card {
+                border-radius: 22px;
+                position: static !important;
+                top: auto !important;
+            }
+
+            .edtika-news-show__sidebar--toc .edtika-news-show__sidebar-card {
+                display: block;
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                transform: none;
+            }
+
+            .edtika-news-show__sidebar--toc {
+                order: -1;
+            }
+
+            .edtika-news-show__toc-list {
+                max-height: none;
+            }
+
             .edtika-footer__top {
                 grid-template-columns: 1fr;
                 gap: 42px;
@@ -542,6 +774,18 @@
 
             .edtika-news-show__content {
                 padding: 16px;
+            }
+
+            .edtika-news-show__sidebar-title {
+                font-size: 26px;
+            }
+
+            .edtika-news-show__latest {
+                padding: 16px;
+            }
+
+            .edtika-news-show__latest-title {
+                font-size: 24px;
             }
 
             .edtika-footer__right {
@@ -594,29 +838,59 @@
                 </div>
             </header>
 
-            <section class="edtika-news-page__hero">
-                <img src="{{ $post->image }}" alt="{{ $post->title }}">
-            </section>
-
-            <section class="edtika-news-show__content">
-                @include('design_1.web.blog.show.includes.header')
-
-                @if(!empty($post->description))
-                    <div class="edtika-news-show__description mt-24">
-                        {!! nl2br($post->description) !!}
+            <div class="edtika-news-show-layout">
+                <aside class="edtika-news-show__sidebar edtika-news-show__sidebar--toc js-article-toc-wrapper" hidden>
+                    <div class="edtika-news-show__sidebar-card js-article-toc-card">
+                        <h2 class="edtika-news-show__sidebar-title">{{ $isEnglish ? 'Table of content' : 'Mục lục' }}</h2>
+                        <ul class="edtika-news-show__toc-list js-article-toc-list"></ul>
                     </div>
+                </aside>
+
+                <section class="edtika-news-show__content edtika-news-show__content--main">
+                    @include('design_1.web.blog.show.includes.header')
+
+                    @if(!empty($post->description))
+                        <div class="edtika-news-show__description mt-24">
+                            {!! nl2br($post->description) !!}
+                        </div>
+                    @endif
+
+                    <div class="edtika-news-show__article js-blog-article-content">
+                        {!! nl2br($post->content) !!}
+                    </div>
+
+                    @if($post->enable_comment)
+                        @include('design_1.web.blog.show.includes.comments')
+                    @endif
+                </section>
+
+                @if($relatedSidebarPosts->isNotEmpty())
+                    <aside class="edtika-news-show__sidebar edtika-news-show__sidebar--related">
+                        <div class="edtika-news-show__sidebar-card">
+                            <h2 class="edtika-news-show__sidebar-title">{{ $isEnglish ? 'You may also be interested?' : 'Có thể bạn cũng quan tâm?' }}</h2>
+
+                            <div class="edtika-news-show__related-list">
+                                @foreach($relatedSidebarPosts->take(5) as $relatedPost)
+                                    <a href="{{ $relatedPost->getUrl() }}" class="edtika-news-show__related-item">
+                                        <img src="{{ $relatedPost->image }}" alt="{{ $relatedPost->title }}" class="edtika-news-show__related-image">
+                                        <p class="edtika-news-show__related-title">{{ $relatedPost->title }}</p>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </aside>
                 @endif
+            </div>
 
-                <div class="edtika-news-show__article">
-                    {!! nl2br($post->content) !!}
-                </div>
+            @if($latestPosts->isNotEmpty())
+                <section class="edtika-news-show__latest">
+                    <h2 class="edtika-news-show__latest-title">{{ $isEnglish ? 'Suggested Latest Posts' : 'Gợi ý Bài viết Mới nhất' }}</h2>
 
-                @include('design_1.web.blog.show.includes.suggested_post')
-
-                @if($post->enable_comment)
-                    @include('design_1.web.blog.show.includes.comments')
-                @endif
-            </section>
+                    <div class="row">
+                        @include('design_1.web.blog.components.cards.grids.index',['posts' => $latestPosts, 'gridCardClassName' => "col-12 col-md-6 col-lg-4 mt-16"])
+                    </div>
+                </section>
+            @endif
         </div>
 
         <footer class="edtika-footer" aria-label="{{ $isEnglish ? 'Footer' : 'Chân trang' }}">
@@ -719,4 +993,136 @@
 
     <script src="{{ getDesign1ScriptPath("comments") }}"></script>
     <script src="{{ getDesign1ScriptPath("show_blog") }}"></script>
+
+    <script>
+        (function ($) {
+            "use strict";
+
+            $(function () {
+                const $article = $('.js-blog-article-content').first();
+                const $tocWrapper = $('.js-article-toc-wrapper');
+                const $tocCard = $('.js-article-toc-card');
+                const $tocList = $('.js-article-toc-list');
+
+                if (!$article.length || !$tocWrapper.length || !$tocCard.length || !$tocList.length) {
+                    return;
+                }
+
+                const selectors = 'h1, h2, h3, h4, h5, h6, p:has(> strong:first-child), p:has(> b:first-child), li:has(> strong:first-child), li:has(> b:first-child)';
+
+                const headingNodes = $article.find(selectors).filter(function () {
+                    const text = $(this).text().replace(/\s+/g, ' ').trim();
+                    return text.length >= 6;
+                });
+
+                if (!headingNodes.length) {
+                    return;
+                }
+
+                $tocWrapper.removeAttr('hidden');
+
+                const headingItems = [];
+
+                headingNodes.each(function (index) {
+                    const $node = $(this);
+                    const text = $node.text().replace(/\s+/g, ' ').trim();
+
+                    if (!text) {
+                        return;
+                    }
+
+                    let level = 2;
+                    const tagName = ($node.prop('tagName') || '').toLowerCase();
+
+                    if (tagName.charAt(0) === 'h') {
+                        const parsedLevel = parseInt(tagName.replace('h', ''), 10);
+
+                        if (!isNaN(parsedLevel)) {
+                            level = parsedLevel;
+                        }
+                    } else if (!/^([IVXLC]+\.|\d+[\.)])\s+/i.test(text)) {
+                        level = 3;
+                    }
+
+                    let headingId = $node.attr('id');
+
+                    if (!headingId) {
+                        headingId = 'post-heading-' + (index + 1);
+                        $node.attr('id', headingId);
+                    }
+
+                    const $listItem = $('<li>', {
+                        'class': 'edtika-news-show__toc-item is-level-' + level,
+                        'data-target-id': headingId,
+                    });
+
+                    const $link = $('<a>', {
+                        'class': 'edtika-news-show__toc-link',
+                        'href': '#' + headingId,
+                        'text': text,
+                    });
+
+                    $listItem.append($link);
+                    $tocList.append($listItem);
+
+                    headingItems.push({
+                        id: headingId,
+                        node: $node.get(0),
+                    });
+                });
+
+                if (!headingItems.length) {
+                    $tocWrapper.attr('hidden', true);
+                    return;
+                }
+
+                $tocWrapper.removeClass('is-pinned is-visible').css('min-height', '');
+                $tocCard.css({
+                    left: '',
+                    width: '',
+                });
+
+                const $tocItems = $tocList.find('.edtika-news-show__toc-item');
+
+                const markActiveHeading = function (headingId) {
+                    $tocItems.removeClass('is-active');
+                    $tocItems.filter('[data-target-id="' + headingId + '"]').addClass('is-active');
+                };
+
+                let activeId = headingItems[0].id;
+                markActiveHeading(activeId);
+
+                const observer = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            activeId = entry.target.id;
+                            markActiveHeading(activeId);
+                        }
+                    });
+                }, {
+                    rootMargin: '-22% 0px -58% 0px',
+                    threshold: [0, 1],
+                });
+
+                headingItems.forEach(function (item) {
+                    observer.observe(item.node);
+                });
+
+                $tocList.on('click', '.edtika-news-show__toc-link', function (event) {
+                    event.preventDefault();
+
+                    const targetSelector = $(this).attr('href');
+                    const $target = $(targetSelector);
+
+                    if (!$target.length) {
+                        return;
+                    }
+
+                    const scrollTop = $target.offset().top - 110;
+
+                    $('html, body').animate({ scrollTop: scrollTop }, 250);
+                });
+            });
+        })(jQuery);
+    </script>
 @endpush
