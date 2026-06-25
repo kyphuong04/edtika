@@ -76,6 +76,10 @@
             max-width: none !important;
         }
 
+        .blog-post-modal-form .select2-container {
+            width: 100% !important;
+        }
+
         .btn {
             background-color: #511D99;
             border-color: #511D99;
@@ -202,6 +206,36 @@
                 });
             }
 
+            function initRelatedPostsSelect($scope) {
+                const $select = $scope.find('.js-blog-related-posts-select');
+
+                if (!$select.length || !$.fn.select2) {
+                    return;
+                }
+
+                $select.each(function () {
+                    const $item = $(this);
+                    const $swalModal = $item.closest('.swal2-popup');
+                    const dropdownParent = $swalModal.length ? $swalModal : $scope;
+                    const placeholderText = $item.data('placeholder') || '{{ trans('update.select_related_post') }}';
+
+                    if ($item.hasClass('select2-hidden-accessible')) {
+                        $item.select2('destroy');
+                    }
+
+                    $item.select2({
+                        width: '100%',
+                        closeOnSelect: false,
+                        placeholder: placeholderText,
+                        dropdownParent: dropdownParent,
+                    });
+
+                    $item.off('select2:open.blogRelated').on('select2:open.blogRelated', function () {
+                        $('.select2-container--open').css('z-index', '99999');
+                    });
+                });
+            }
+
             function clearBlogPostErrors($form) {
                 $form.find('.is-invalid').removeClass('is-invalid');
                 $form.find('.js-blog-post-error').text('');
@@ -209,8 +243,9 @@
 
             function applyBlogPostErrors($form, errors) {
                 Object.keys(errors || {}).forEach(function (field) {
-                    const $field = $form.find('[name="' + field + '"]');
-                    const $error = $form.find('.js-blog-post-error[data-field="' + field + '"]');
+                    const normalizedField = field.replace(/\.\d+$/, '');
+                    const $field = $form.find('[name="' + field + '"]').add($form.find('[name="' + normalizedField + '"]')).add($form.find('[name="' + normalizedField + '[]"]'));
+                    const $error = $form.find('.js-blog-post-error[data-field="' + normalizedField + '"]');
 
                     if ($field.length) {
                         $field.addClass('is-invalid');
@@ -233,6 +268,7 @@
                     $footer.html('&nbsp;');
                     initBlogPostEditor($body);
                     bindImagePreview($body);
+                    initRelatedPostsSelect($body);
                 }, '', '48rem');
             });
 

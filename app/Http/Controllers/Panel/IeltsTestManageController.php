@@ -412,14 +412,20 @@ class IeltsTestManageController extends Controller
             });
 
         foreach ($approvers as $approver) {
-            Notification::create([
+            $notificationData = [
                 'user_id' => $approver->id,
                 'sender' => Notification::$SystemSender,
                 'title' => 'New IELTS Test Pending Approval',
                 'message' => "'{$test->title}' is ready for review.",
                 'type' => 'single',
                 'created_at' => time(),
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'action_url')) {
+                $notificationData['action_url'] = getAdminPanelUrl("/ielts-tests/{$test->id}/review");
+            }
+
+            Notification::create($notificationData);
         }
 
         return redirect()

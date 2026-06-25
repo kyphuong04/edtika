@@ -263,7 +263,7 @@ class QuestionGroupController extends Controller
             ->get();
         
         foreach ($approvers as $approver) {
-            \App\Models\Notification::create([
+            $notificationData = [
                 'user_id' => $approver->id,
                 'sender_id' => auth()->id(),
                 'title' => 'Question Group Pending Approval',
@@ -271,7 +271,13 @@ class QuestionGroupController extends Controller
                 'sender' => \App\Models\Notification::$SystemSender,
                 'type' => 'single',
                 'created_at' => time(),
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('notifications', 'action_url')) {
+                $notificationData['action_url'] = route('panel.question-groups.show', $group->id);
+            }
+
+            \App\Models\Notification::create($notificationData);
         }
         
         return redirect()->route('panel.question-groups.index', ['type' => $group->bank_type])
