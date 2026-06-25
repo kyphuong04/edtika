@@ -422,6 +422,37 @@ class BlogPostsController extends Controller
             ]);
         }
     }
+    public function getPostsByCategory(Request $request)
+    {
+        $this->authorize("panel_blog_new_article");
+
+        $categoryId = $request->get('category_id');
+        $excludeId = $request->get('exclude_id');
+
+        $posts = Blog::query()
+            ->where('status', 'publish')
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
+            })
+            ->when($excludeId, function ($query) use ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            })
+            ->with(['author' => function ($query) {
+                $query->select('id', 'full_name');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'author_id']);
+
+        $result = $posts->map(function ($post) {
+            return [
+                'id'     => $post->id,
+                'title'  => $post->title,
+                'author' => $post->author?->full_name,
+            ];
+        });
+
+        return response()->json($result);
+    }
 }
 
 
