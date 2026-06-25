@@ -412,4 +412,5 @@ return [
 'loading' => 'Loading...',
 'join' => 'Join',
 'no_result' => 'No results found.',
+'error' => 'Error',
 ];

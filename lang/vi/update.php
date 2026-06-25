@@ -5042,4 +5042,5 @@ return [
     'new_live_course_notification_title'  => 'Buổi học trực tiếp mới: :title',
     'new_live_course_notification_body'   => ':teacher vừa lên lịch buổi học trực tiếp ":title" vào lúc :date.',
     'zoom_meeting_will_be_created_automatically' => 'Phòng Zoom sẽ được tạo tự động. Hãy đảm bảo tài khoản Zoom đã được kết nối.',
+    'live_courses' => 'Khóa học trực tiếp'
 ];

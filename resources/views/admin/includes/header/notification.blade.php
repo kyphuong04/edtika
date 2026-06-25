@@ -28,7 +28,7 @@
             </div>
 
             @foreach($unReadNotifications->take(3) as $unReadNotification)
-                <a href="{{ getAdminPanelUrl("/notifications?notification={$unReadNotification->id}") }}" class="language-dropdown__item  d-flex align-items-center w-100 px-16 py-8 text-dark bg-transparent">
+                <a href="{{ getAdminPanelUrl("/notifications/{$unReadNotification->id}/visit") }}" class="language-dropdown__item  d-flex align-items-center w-100 px-16 py-8 text-dark bg-transparent">
                     <div class="">
                         <x-iconsax-bul-notification class="icons text-gray-500" width="24px" height="24px"/>
                     </div>

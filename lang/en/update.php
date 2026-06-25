@@ -5037,4 +5037,5 @@ return [
     'new_live_course_notification_title'  => 'New Live Session: :title',
     'new_live_course_notification_body'   => ':teacher has scheduled a new live session ":title" on :date.',
     'zoom_meeting_will_be_created_automatically' => 'A Zoom meeting will be created automatically. Make sure your Zoom account is connected.',
+    'live_courses' => 'Live Courses',
 ];

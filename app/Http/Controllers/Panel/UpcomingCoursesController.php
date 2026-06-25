@@ -178,6 +178,7 @@ class UpcomingCoursesController extends Controller
             $notifyOptions = [
                 '[u.name]' => $user->full_name,
                 '[item_title]' => $upcomingCourse->title,
+                '[link]' => getAdminPanelUrl("/upcoming_courses/{$upcomingCourse->id}/edit"),
             ];
             sendNotification("upcoming_course_submission", $notifyOptions, $user->id);
             sendNotification("upcoming_course_submission_for_admin", $notifyOptions, 1);
