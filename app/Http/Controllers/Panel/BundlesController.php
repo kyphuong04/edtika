@@ -208,6 +208,7 @@ class BundlesController extends Controller
             '[u.name]' => $user->full_name,
             '[item_title]' => $bundle->title,
             '[content_type]' => trans('update.bundle'),
+            '[link]' => getAdminPanelUrl("/bundles/{$bundle->id}/edit"),
         ];
         sendNotification("bundle_submission", $notifyOptions, $user->id);
         sendNotification("bundle_submission_for_admin", $notifyOptions, 1);
@@ -498,6 +499,7 @@ class BundlesController extends Controller
                 '[u.name]' => $user->full_name,
                 '[item_title]' => $bundle->title,
                 '[content_type]' => trans('update.bundle'),
+                '[link]' => getAdminPanelUrl("/bundles/{$bundle->id}/edit"),
             ];
             sendNotification("content_review_request", $notifyOptions, 1);
         }

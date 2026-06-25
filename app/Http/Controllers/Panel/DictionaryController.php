@@ -1604,9 +1604,9 @@ class DictionaryController extends Controller
             $progress->increment('practice_count');
             if ($isCorrect) {
                 $progress->increment('correct_count');
-                
-                // Mark as learned if correct_count >= 3
-                if ($progress->correct_count >= 3 && !$progress->is_learned) {
+
+                // Persist learned state immediately after first correct answer.
+                if (!$progress->is_learned) {
                     $progress->update([
                         'is_learned' => true,
                         'learned_at' => now(),
@@ -1629,9 +1629,9 @@ class DictionaryController extends Controller
             $progress->increment('practice_count');
             if ($isCorrect) {
                 $progress->increment('correct_count');
-                
-                // Mark as learned if correct_count >= 3
-                if ($progress->correct_count >= 3 && !$progress->is_learned) {
+
+                // Persist learned state immediately after first correct answer.
+                if (!$progress->is_learned) {
                     $progress->update([
                         'is_learned' => true,
                         'learned_at' => now(),

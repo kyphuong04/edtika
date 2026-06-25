@@ -157,6 +157,7 @@ class WebinarController extends Controller
             '[u.name]' => $user->full_name,
             '[item_title]' => $webinar->title,
             '[content_type]' => trans('admin/main.course'),
+            '[link]' => getAdminPanelUrl("/webinars/{$webinar->id}/edit"),
         ];
         sendNotification("new_item_created", $notifyOptions, 1);
 
@@ -635,6 +636,7 @@ class WebinarController extends Controller
                 '[u.name]' => $user->full_name,
                 '[item_title]' => $webinar->title,
                 '[content_type]' => trans('admin/main.course'),
+                '[link]' => getAdminPanelUrl("/webinars/{$webinar->id}/edit"),
             ];
             sendNotification("content_review_request", $notifyOptions, 1);
         }

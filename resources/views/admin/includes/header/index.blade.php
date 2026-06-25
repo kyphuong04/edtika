@@ -107,7 +107,9 @@
         @include('admin.includes.header.language')
 
         {{-- Notification --}}
-        @include('admin.includes.header.notification')
+        @if(empty($authUser) || (!$authUser->isManager() && !$authUser->isCeo()))
+            @include('admin.includes.header.notification')
+        @endif
 
         <div class="admin-header__item-divider"></div>
 
