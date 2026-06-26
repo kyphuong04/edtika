@@ -107,14 +107,42 @@ class IeltsGradingController extends Controller
         $query = IeltsTestAttempt::with(['test.webinar', 'user'])
             ->where('status', 'completed');
 
+        // if ($skill === 'writing') {
+        //     $query->where('writing_graded_by', $authUser->id)
+        //           ->whereNotNull('writing_band')
+        //           ->orderByDesc('writing_graded_at');
+        // } else {
+        //     $query->where('speaking_graded_by', $authUser->id)
+        //           ->whereNotNull('speaking_band')
+        //           ->orderByDesc('speaking_graded_at');
+        // }
+
+        // $attempts = $query->paginate(20);
+
+        // return view('design_1.panel.ielts_grading.graded', [
+        //     'pageTitle' => 'Danh sách đã chấm',
+        //     'skill'     => $skill,
+        //     'attempts'  => $attempts,
+        // ]);
         if ($skill === 'writing') {
             $query->where('writing_graded_by', $authUser->id)
-                  ->whereNotNull('writing_band')
-                  ->orderByDesc('writing_graded_at');
+                ->whereNotNull('writing_band')
+                ->orderByDesc('writing_graded_at');
         } else {
             $query->where('speaking_graded_by', $authUser->id)
-                  ->whereNotNull('speaking_band')
-                  ->orderByDesc('speaking_graded_at');
+                ->whereNotNull('speaking_band')
+                ->orderByDesc('speaking_graded_at');
+        }
+
+        // Search filter
+        if ($search = $request->get('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($q) use ($search) {
+                    $q->where('full_name', 'like', '%' . $search . '%');
+                })->orWhereHas('test', function ($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%');
+                });
+            });
         }
 
         $attempts = $query->paginate(20);
@@ -123,6 +151,7 @@ class IeltsGradingController extends Controller
             'pageTitle' => 'Danh sách đã chấm',
             'skill'     => $skill,
             'attempts'  => $attempts,
+            'search'    => $request->get('q', ''),
         ]);
     }
     
