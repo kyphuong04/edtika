@@ -104,6 +104,55 @@
         font-size: 14px;
         color: #9ca3af;
     }
+    .gl-search-bar {
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+    }
+    .gl-search-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .gl-search-input {
+        flex: 1;
+        min-width: 200px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: 1px solid #d1d5db;
+        font-size: 13px;
+        color: #111827;
+        outline: none;
+        transition: border .15s;
+    }
+    .gl-search-input:focus {
+        border-color: #6366f1;
+    }
+    .gl-search-btn {
+        padding: 8px 20px;
+        border-radius: 20px;
+        background: #6366f1;
+        border: none;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .gl-search-btn:hover { background: #4f46e5; }
+    .gl-search-clear {
+        padding: 8px 14px;
+        border-radius: 20px;
+        border: 1px solid #d1d5db;
+        font-size: 13px;
+        color: #6b7280;
+        text-decoration: none;
+        transition: background .15s;
+    }
+    .gl-search-clear:hover { background: #f3f4f6; color: #111827; text-decoration: none; }
 </style>
 @endpush
 
@@ -120,6 +169,23 @@
         </a>
     </div>
 
+    {{-- Search bar --}}
+    <div class="gl-search-bar">
+        <form method="GET" action="{{ route('panel.ielts_grading.graded') }}" class="gl-search-form">
+            <input type="hidden" name="skill" value="{{ $skill }}">
+            <input
+                type="text"
+                name="q"
+                class="gl-search-input"
+                placeholder="Tìm theo tên học viên hoặc tên bài thi..."
+                value="{{ request('q') }}"
+            >
+            <button type="submit" class="gl-search-btn">Tìm kiếm</button>
+            @if(request('q'))
+                <a href="{{ route('panel.ielts_grading.graded', ['skill' => $skill]) }}" class="gl-search-clear">Xóa</a>
+            @endif
+        </form>
+    </div>
     {{-- Graded attempts list --}}
     @if($attempts->count() > 0)
         @foreach($attempts as $attempt)
