@@ -27,6 +27,101 @@ class DictionaryController extends Controller
     // Using Free Dictionary API - free, no key required, has UK + US pronunciation audio
     private $freeDictBaseUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
+    public function publicIndex()
+    {
+        $publishedBundleVocabularySets = BundleVocabularySet::query()
+            ->with(['bundle'])
+            ->publishedForDictionary()
+            ->where('words_count', '>', 0)
+            ->orderByDesc('approved_at')
+            ->orderByDesc('id')
+            ->get()
+            ->map(function (BundleVocabularySet $set) {
+                $originalPrice = (float) $set->original_price;
+                $salePrice = (float) $set->sale_price;
+                $currencyCode = in_array($set->currency_code, BundleVocabularySet::$currencies, true)
+                    ? $set->currency_code
+                    : BundleVocabularySet::CURRENCY_VND;
+
+                $discountPercent = 0;
+                if ($originalPrice > 0 && $salePrice <= $originalPrice) {
+                    $discountPercent = (int) round((($originalPrice - $salePrice) / $originalPrice) * 100);
+                }
+
+                $bundleSlug = !empty($set->bundle) ? $set->bundle->slug : null;
+
+                return [
+                    'id' => $set->id,
+                    'set_name' => $set->name,
+                    'set_description' => $set->description,
+                    'bundle_slug' => $bundleSlug,
+                    'word_count' => (int) $set->words_count,
+                    'original_price' => $originalPrice,
+                    'sale_price' => $salePrice,
+                    'currency_code' => $currencyCode,
+                    'original_price_label' => number_format($originalPrice, 0, '.', ',') . ' ' . $currencyCode,
+                    'sale_price_label' => number_format($salePrice, 0, '.', ',') . ' ' . $currencyCode,
+                    'discount_percent' => $discountPercent,
+                ];
+            })
+            ->values();
+
+        return view('design_1.web.dictionary.index', [
+            'publishedBundleVocabularySets' => $publishedBundleVocabularySets,
+        ]);
+    }
+
+    public function publicPreviewBundleVocabularySet($id)
+    {
+        $set = BundleVocabularySet::query()
+            ->publishedForDictionary()
+            ->where('words_count', '>', 0)
+            ->find($id);
+
+        if (!$set) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Word List package not found.',
+            ], 404);
+        }
+
+        $words = BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $set->id)
+            ->orderBy('sort_order')
+            ->limit(5)
+            ->get([
+                'id',
+                'word',
+                'part_of_speech',
+                'pronunciation',
+                'definition',
+                'translation_vi',
+                'example',
+            ])
+            ->map(function (BundleVocabularyWord $word) {
+                return [
+                    'id' => $word->id,
+                    'word' => $word->word,
+                    'part_of_speech' => $word->part_of_speech,
+                    'pronunciation' => $word->pronunciation,
+                    'definition' => $word->definition,
+                    'translation' => $word->translation_vi,
+                    'example' => $word->example,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $set->id,
+                'name' => $set->name,
+                'word_count' => (int) $set->words_count,
+                'preview_words' => $words,
+            ],
+        ]);
+    }
+
     public function index()
     {
         $user = Auth::user();

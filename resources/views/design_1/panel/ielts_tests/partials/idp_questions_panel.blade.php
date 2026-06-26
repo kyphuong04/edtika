@@ -40,8 +40,7 @@
         $questionRangeStart = (int) ($firstQ->question_number ?? 1);
         $questionRangeEnd = (int) ($questions->last()->question_number ?? $questionRangeStart);
 
-        if ($questionType === 'table_completion') {
-            $tableStructure = $firstQ->table_structure ?? null;
+        if ($questionType === 'table_completion') {            $tableStructure = $firstQ->table_structure ?? null;
 
             if (!$tableStructure && !empty($firstQ->question_data)) {
                 $firstQuestionData = is_array($firstQ->question_data)
@@ -73,6 +72,14 @@
             }
 
             $questionRangeEnd = $questionRangeStart + max(1, $blankCount) - 1;
+        }
+
+        if (in_array($questionType, ['drag_drop_disappear', 'drag_drop_reuse'])) {
+            $ddBlankCount = 0;
+            foreach ($questions as $ddQ) {
+                $ddBlankCount += max(1, substr_count($ddQ->question_text ?? '', '___'));
+            }
+            $questionRangeEnd = $questionRangeStart + max(1, $ddBlankCount) - 1;
         }
     @endphp
 
@@ -220,6 +227,22 @@
                 'questions' => $questions,
                 'userAnswers' => $userAnswers,
                 'wordBank' => $wordBank
+            ])
+            @break
+
+        @case('drag_drop_disappear')
+            @include('design_1.panel.ielts_tests.partials.idp_type_dragdrop_matching', [
+                'questions'   => $questions,
+                'userAnswers' => $userAnswers,
+                'dragType'    => 'disappear',
+            ])
+            @break
+
+        @case('drag_drop_reuse')
+            @include('design_1.panel.ielts_tests.partials.idp_type_dragdrop_matching', [
+                'questions'   => $questions,
+                'userAnswers' => $userAnswers,
+                'dragType'    => 'reuse',
             ])
             @break
             
