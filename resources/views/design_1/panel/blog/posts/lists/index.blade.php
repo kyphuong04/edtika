@@ -96,6 +96,38 @@
             border-color: #511D99;
             color: #511D99;
         }
+        /* Summernote fontsize dropdown */
+        .note-fontsize .dropdown-menu {
+            min-width: 80px !important;
+            padding: 4px 0 !important;
+            display: none;
+            flex-direction: column !important;
+        }
+
+        .note-fontsize .dropdown-menu.show {
+            display: flex !important;
+        }
+
+        .note-fontsize .dropdown-menu li {
+            width: 100% !important;
+            height: auto !important;
+            padding: 0 !important;
+        }
+
+        .note-fontsize .dropdown-menu li a {
+            display: block !important;
+            width: 100% !important;
+            padding: 6px 16px !important;
+            font-size: 14px !important;
+            color: #374151 !important;
+            text-align: left !important;
+            white-space: nowrap;
+        }
+
+        .note-fontsize .dropdown-menu li a:hover {
+            background-color: #f3f4f6 !important;
+            color: #511D99 !important;
+        }
     </style>
 @endpush
 
@@ -155,13 +187,36 @@
             const requestFailedText = @json(trans('public.request_failed'));
 
             function initBlogPostEditor($modal) {
+                // const editorConfig = {
+                //     dialogsInBody: true,
+                //     tabsize: 2,
+                //     height: 280,
+                //     toolbar: [
+                //         ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+                //         ['para', ['ul', 'ol', 'paragraph'], ['link', 'unlink'], ['picture', 'video']],
+                //     ]
+                // };
                 const editorConfig = {
                     dialogsInBody: true,
                     tabsize: 2,
                     height: 280,
+                    fontSizes: ['12', '14', '16', '18', '20', '24', '28', '32', '36', '48'],
                     toolbar: [
                         ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+                        ['fontsize', ['fontsize']],
                         ['para', ['ul', 'ol', 'paragraph'], ['link', 'unlink'], ['picture', 'video']],
+                    ]
+                };
+
+                const descriptionEditorConfig = {
+                    dialogsInBody: true,
+                    tabsize: 2,
+                    height: 150,
+                    fontSizes: ['12', '14', '16', '18', '20', '24', '28', '32', '36', '48'],
+                    toolbar: [
+                        ['font', ['bold', 'italic', 'underline', 'strikethrough']],
+                        ['fontsize', ['fontsize']],
+                        ['para', ['ul', 'ol', 'paragraph'], ['link', 'unlink']],
                     ]
                 };
 
@@ -177,9 +232,13 @@
                 // Initialize description editor
                 const $descriptionEditor = $modal.find('.js-blog-post-editor-description');
                 if ($descriptionEditor.length && $.fn.summernote && !$descriptionEditor.next('.note-editor').length) {
+                    // $descriptionEditor.summernote({
+                    //     ...editorConfig,
+                    //     height: 150,
+                    //     placeholder: $descriptionEditor.attr('placeholder')
+                    // });
                     $descriptionEditor.summernote({
-                        ...editorConfig,
-                        height: 150,
+                        ...descriptionEditorConfig,
                         placeholder: $descriptionEditor.attr('placeholder')
                     });
                 }
