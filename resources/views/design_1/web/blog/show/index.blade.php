@@ -340,7 +340,7 @@
 
         .edtika-news-show__sidebar-title {
             margin: 0;
-            font-size: 24px;
+            font-size: 18px;
             line-height: 1.2;
             font-weight: 800;
             color: #2f3441;
@@ -377,6 +377,7 @@
         .edtika-news-show__toc-item.is-level-6 .edtika-news-show__toc-link {
             padding-left: 14px;
             font-size: 14px;
+            font-weight: 400;
         }
 
         .edtika-news-show__toc-item.is-active .edtika-news-show__toc-link {
@@ -777,7 +778,7 @@
             }
 
             .edtika-news-show__sidebar-title {
-                font-size: 26px;
+                font-size: 18px;
             }
 
             .edtika-news-show__latest {
@@ -850,7 +851,7 @@
                     @include('design_1.web.blog.show.includes.header')
 
                     @if(!empty($post->description))
-                        <div class="edtika-news-show__description mt-24">
+                        <div class="edtika-news-show__description mt-24 js-toc-ignore">
                             {!! nl2br($post->description) !!}
                         </div>
                     @endif
@@ -1010,10 +1011,14 @@
 
                 // const selectors = 'h1, h2, h3, h4, h5, h6, p:has(> strong:first-child), p:has(> b:first-child), li:has(> strong:first-child), li:has(> b:first-child)';
                 // const selectors = 'h1, h2, h3, h4, h5, h6';
-                const selectors = 'h2';
+                const selectors = 'h2, h3';
+                // const headingNodes = $article.find(selectors).filter(function () {
+                //     const text = $(this).text().replace(/\s+/g, ' ').trim();
+                //     return text.length >= 6;
+                // });
                 const headingNodes = $article.find(selectors).filter(function () {
                     const text = $(this).text().replace(/\s+/g, ' ').trim();
-                    return text.length >= 6;
+                    return text.length >= 6 && $(this).closest('.js-toc-ignore').length === 0;
                 });
 
                 if (!headingNodes.length) {
