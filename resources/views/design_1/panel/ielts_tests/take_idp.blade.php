@@ -1233,6 +1233,8 @@
                     
                     'drag_drop' => 'Drag the correct answer to each gap.',
                     'dragdrop' => 'Drag the correct answer to each gap.',
+                    'drag_drop_disappear' => 'Choose the correct option from the list and drag it to each gap. Each option can only be used once.',
+                    'drag_drop_reuse' => 'Choose the correct option from the list and drag it to each gap. Options may be used more than once.',
                     
                     // Fallback for any other types
                     'fill_blank' => 'Complete the gaps. Write your answer in the box provided.',
@@ -1410,8 +1412,7 @@
             $savedAnswerJson = $userAnswers[$q->id] ?? '';
             $savedAnswerData = is_string($savedAnswerJson) ? json_decode($savedAnswerJson, true) : $savedAnswerJson;
 
-            if ($questionType === 'table_completion') {
-                $tableStructure = $q->table_structure ?? null;
+            if ($questionType === 'table_completion') {                $tableStructure = $q->table_structure ?? null;
 
                 if (!$tableStructure && !empty($q->question_data)) {
                     $questionData = is_array($q->question_data)
@@ -1452,6 +1453,27 @@
                         'id' => $q->id,
                         'number' => $questionNumber + $blankIndex,
                         'answered' => !empty($savedAnswers[$blankIndex]['answer'] ?? null),
+                    ]);
+                }
+
+                continue;
+            }
+
+            // Drag & Drop types also have multiple blanks per question
+            if (in_array($questionType, ['drag_drop_disappear', 'drag_drop_reuse'])) {
+                $rawText    = $q->question_text ?? '';
+                $blankCount = max(1, substr_count($rawText, '___'));
+
+                $savedAnswers = [];
+                if (is_array($savedAnswerData)) {
+                    $savedAnswers = $savedAnswerData;
+                }
+
+                for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
+                    $currentQuestions->push([
+                        'id'       => $q->id,
+                        'number'   => $questionNumber + $blankIndex,
+                        'answered' => !empty($savedAnswers[$blankIndex] ?? null),
                     ]);
                 }
 
