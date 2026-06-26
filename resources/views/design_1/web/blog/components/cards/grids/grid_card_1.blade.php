@@ -5,8 +5,10 @@
 <div class="post-card position-relative">
 
     <a href="{{ $post->getUrl() }}">
-        <div class="post-card__image position-relative w-100 rounded-16 bg-gray-100">
-            <img src="{{ $post->image }}" class="img-cover rounded-16" alt="{{ $post->title }}">
+        <!-- <div class="post-card__image position-relative w-100 rounded-16 bg-gray-100">
+            <img src="{{ $post->image }}" class="img-cover rounded-16" alt="{{ $post->title }}"> -->
+        <div class="post-card__image position-relative w-100 rounded-16 bg-gray-100" style="height: 160px; overflow: hidden;">
+            <img src="{{ $post->image }}" class="img-cover rounded-16" alt="{{ $post->title }}" style="width: 100%; height: 100%; object-fit: cover;">
 
 
             @if(count($postGridBadges))
@@ -26,12 +28,12 @@
         <div class="post-card__mask"></div>
 
         <div class="post-card__body d-flex flex-column position-relative bg-white rounded-16 border-gray-200 z-index-2">
-            <div class="p-12 mb-16">
+            <div class="p-8 mb-8">
                 <a href="{{ $post->getUrl() }}">
-                    <h3 class="post-card__title font-16 font-weight-bold text-dark">{{ $post->title }}</h3>
+                    <h3 class="post-card__title font-14 font-weight-bold text-dark">{{ $post->title }}</h3>
                 </a>
 
-                <div class="d-flex align-items-center mt-16">
+                <div class="d-flex align-items-center mt-8">
                     <div class="size-32 rounded-circle">
                         <img src="{{ $post->author->getAvatar(32) }}" class="img-cover rounded-circle" alt="{{ $post->author->full_name }}">
                     </div>
@@ -43,7 +45,7 @@
                 </div>
             </div>
 
-            <div class="d-flex align-items-center justify-content-between mt-auto p-12 pb-16 border-top-gray-100">
+            <div class="d-flex align-items-center justify-content-between mt-auto p-8 pb-8 border-top-gray-100">
                 <div class="d-flex align-items-center">
                     <x-iconsax-lin-calendar-2 class="icons text-gray-500" width="16px" height="16px"/>
                     <span class="ml-4 font-14 text-gray-500">{{ dateTimeFormat($post->created_at, 'j M Y') }}</span>
