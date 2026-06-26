@@ -401,6 +401,10 @@
     $aimBand          = $aimBand ?? null;
     $aiCriteria       = $aiCriteria ?? [];
     $annotatedEssays  = $teacherCriteria['annotated_essays'] ?? [];
+    $hasAiBand        = ($aiOverallBand !== null && $aiOverallBand !== '');
+    $hasAiCriteria    = !empty(array_filter($aiCriteria, fn ($value) => $value !== null && $value !== ''));
+    $hasAiData        = $hasAiBand || $hasAiCriteria;
+    $aiMissingMessage = 'Bài này chưa được chấm bởi AI.';
 
     $webinarTitle = optional($test->webinar)->title ?? null;
     $skillLabel   = strtoupper($skill);
@@ -588,7 +592,10 @@
                 @endphp
 
                 @if($promptText)
-                    <div class="gd-question-prompt">{!! nl2br(e($promptText)) !!}</div>
+                    @php
+                        $promptHasHtml = is_string($promptText) && preg_match('/<[^>]+>/', $promptText);
+                    @endphp
+                    <div class="gd-question-prompt">{!! $promptHasHtml ? $promptText : nl2br(e($promptText)) !!}</div>
                 @else
                     <p style="color:#9ca3af;font-size:.83rem;margin:0;">No question content for this section.</p>
                 @endif
@@ -922,6 +929,14 @@ $(function () {
 
 /* ── AI card view toggle (speaking: also toggles .gd-page.ai-mode) ── */
 function gdToggleAIView(showDetail) {
+    if (showDetail && !window.gdHasAiData) {
+        if (typeof notify === 'function') {
+            notify('warning', window.gdAiMissingMessage || 'Bài này chưa được chấm bởi AI.');
+        } else {
+            alert(window.gdAiMissingMessage || 'Bài này chưa được chấm bởi AI.');
+        }
+        return;
+    }
     document.getElementById('gdAISummary').style.display = showDetail ? 'none' : '';
     document.getElementById('gdAIDetail').style.display  = showDetail ? ''     : 'none';
     var page = document.querySelector('.gd-page');
@@ -930,6 +945,9 @@ function gdToggleAIView(showDetail) {
         else            { page.classList.remove('ai-mode'); }
     }
 }
+
+window.gdHasAiData = @json($hasAiData);
+window.gdAiMissingMessage = @json($aiMissingMessage);
 
 /* ── Speaking: toggle collapsible task area ── */
 function spGdToggleTask(id) {

@@ -1,11 +1,27 @@
+@php
+    $skillChartSeries = $ieltsData['activityData']['series'] ?? [];
+    $skillChartLabels = $ieltsData['activityData']['labels'] ?? [];
+    $skillChartHasData = collect($skillChartSeries)->contains(function ($series) {
+        return !empty(array_filter($series['data'] ?? [], function ($value) {
+            return (float) $value > 0;
+        }));
+    });
+@endphp
+
 @push('scripts_bottom')
 <script>
     (function () {
         "use strict";
-        var skillChartSeries  = @json($ieltsData['activityData']['series'] ?? []);
-        var skillChartLabels  = @json($ieltsData['activityData']['labels'] ?? []);
+        var skillChartSeries  = @json($skillChartSeries);
+        var skillChartLabels  = @json($skillChartLabels);
+        var skillChartHasData = @json($skillChartHasData);
+        if (Array.isArray(skillChartSeries)) {
+            skillChartHasData = skillChartHasData || skillChartSeries.some(function (series) {
+            return Array.isArray(series.data) && series.data.some(function (value) { return Number(value) > 0; });
+            });
+        }
 
-        if (typeof ApexCharts !== 'undefined' && document.querySelector('#ieltsSkillActivityChart')) {
+        if (typeof ApexCharts !== 'undefined' && document.querySelector('#ieltsSkillActivityChart') && skillChartHasData) {
             var options = {
                 chart: {
                     type: 'bar',
@@ -34,9 +50,13 @@
                         borderRadiusWhenStacked: 'all',
                     }
                 },
-                dataLabels: { enabled: false },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function (val) { return val > 0 ? val : ''; },
+                    style: { fontSize: '10px', colors: ['#374151'] },
+                },
                 tooltip: {
-                    y: { formatter: function(val) { return val + ' min'; } }
+                    y: { formatter: function(val) { return val + ' activity'; } }
                 },
             };
             new ApexCharts(document.querySelector('#ieltsSkillActivityChart'), options).render();
@@ -66,5 +86,11 @@
             @endforeach
         </div>
     </div>
-    <div id="ieltsSkillActivityChart"></div>
+    @if($skillChartHasData)
+        <div id="ieltsSkillActivityChart"></div>
+    @else
+        <div class="d-flex-center flex-column text-center rounded-16 bg-gray-100" style="min-height:220px;">
+            <p class="font-12 text-gray-500 mb-0">Chưa có dữ liệu hoạt động trong 7 ngày gần nhất.</p>
+        </div>
+    @endif
 </div>
