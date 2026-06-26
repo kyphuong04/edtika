@@ -15,6 +15,7 @@
     $isDictionaryActive = request()->is('dictionary') || request()->is('dictionary/*') || request()->is('panel/dictionary') || request()->is('panel/dictionary/*');
     $isNewsActive = request()->is('blog') || request()->is('blog/*');
     $isGuestDictionary = !auth()->check();
+    $publishedBundleVocabularySets = $publishedBundleVocabularySets ?? collect();
 @endphp
 
 @push('styles_top')
@@ -479,6 +480,315 @@
         cursor: not-allowed;
     }
 
+    .word-list-store-section {
+        background: #ffffff;
+        border: 1px solid rgba(81, 29, 153, 0.10);
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    }
+
+    .word-list-store-header {
+        margin-bottom: 14px;
+    }
+
+    .word-list-store-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .word-list-store-subtitle {
+        margin: 8px 0 0;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .word-list-store-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .word-list-package-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+    }
+
+    .word-list-package-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+
+    .word-list-package-meta {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .word-list-package-prices {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .word-list-package-price-sale {
+        font-size: 20px;
+        font-weight: 800;
+        color: #511D99;
+    }
+
+    .word-list-package-price-original {
+        font-size: 13px;
+        color: #6b7280;
+        text-decoration: line-through;
+    }
+
+    .word-list-package-discount {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: rgba(16, 185, 129, 0.12);
+        color: #047857;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .word-list-package-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 12px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: none;
+        background: #511D99;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .word-list-package-btn:hover,
+    .word-list-package-btn:focus {
+        color: #fff;
+        text-decoration: none;
+        background: #421670;
+    }
+
+    .word-list-store-empty {
+        border: 1px dashed #dbe3ee;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .wordlist-preview-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        z-index: 1300;
+    }
+
+    .wordlist-preview-modal.is-open {
+        display: block;
+    }
+
+    .wordlist-preview-modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.5);
+    }
+
+    .wordlist-preview-modal__dialog {
+        position: relative;
+        width: min(680px, calc(100vw - 24px));
+        margin: 48px auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.3);
+        overflow: hidden;
+    }
+
+    .wordlist-preview-modal__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 16px 18px;
+        border-bottom: 1px solid #eceef4;
+    }
+
+    .wordlist-preview-modal__title {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.2;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .wordlist-preview-modal__subtitle {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .wordlist-preview-modal__close {
+        border: none;
+        background: transparent;
+        font-size: 28px;
+        line-height: 1;
+        color: #475569;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .wordlist-preview-modal__body {
+        padding: 18px;
+    }
+
+    .wordlist-preview-state {
+        min-height: 22px;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .wordlist-preview-progress {
+        margin-bottom: 12px;
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .wordlist-flashcard {
+        perspective: 1200px;
+    }
+
+    .wordlist-flashcard__inner {
+        position: relative;
+        min-height: 250px;
+        transition: transform 0.45s ease;
+        transform-style: preserve-3d;
+    }
+
+    .wordlist-flashcard.is-flipped .wordlist-flashcard__inner {
+        transform: rotateY(180deg);
+    }
+
+    .wordlist-flashcard__face {
+        position: absolute;
+        inset: 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 18px;
+        background: #f8fafc;
+        backface-visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .wordlist-flashcard__face--back {
+        transform: rotateY(180deg);
+        background: #f7f2ff;
+    }
+
+    .wordlist-flashcard__word {
+        font-size: 34px;
+        font-weight: 900;
+        color: #511D99;
+        line-height: 1.2;
+    }
+
+    .wordlist-flashcard__meta {
+        margin-top: 10px;
+        font-size: 15px;
+        color: #475569;
+    }
+
+    .wordlist-flashcard__audio {
+        margin-top: 14px;
+        width: fit-content;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        background: #fff;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 14px;
+        cursor: pointer;
+    }
+
+    .wordlist-flashcard__meaning {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.5;
+    }
+
+    .wordlist-flashcard__translation {
+        margin-top: 12px;
+        font-size: 16px;
+        color: #334155;
+    }
+
+    .wordlist-flashcard__example {
+        margin-top: 12px;
+        font-size: 14px;
+        color: #64748b;
+        font-style: italic;
+        line-height: 1.5;
+    }
+
+    .wordlist-flashcard__flip-btn {
+        margin-top: 12px;
+        width: 100%;
+        border: none;
+        border-radius: 10px;
+        background: #511D99;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 14px;
+        cursor: pointer;
+    }
+
+    .wordlist-preview-actions {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .wordlist-preview-nav {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 14px;
+        cursor: pointer;
+    }
+
+    .wordlist-preview-nav:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
     .dictionary-result-container {
         background: #ffffff;
         border: 1px solid rgba(81, 29, 153, 0.10);
@@ -734,6 +1044,19 @@
             flex-direction: column;
         }
 
+        .word-list-store-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .wordlist-preview-modal__dialog {
+            margin: 14px auto;
+            width: calc(100vw - 16px);
+        }
+
+        .wordlist-flashcard__word {
+            font-size: 28px;
+        }
+
         .search-btn {
             width: 100%;
         }
@@ -832,8 +1155,87 @@
                 <div class="dictionary-result-container" id="guestDictionaryPlaceholder">
                     <div class="dictionary-placeholder">{{ app()->getLocale() === 'en' ? 'Enter a word to start searching.' : 'Nhập từ vựng để bắt đầu tra cứu.' }}</div>
                 </div>
+
+                <div class="word-list-store-section">
+                    <div class="word-list-store-header">
+                        <h3 class="word-list-store-title">{{ trans('panel.bundle_vocabulary_store_title') }}</h3>
+                        <p class="word-list-store-subtitle">{{ trans('panel.bundle_vocabulary_store_subtitle') }}</p>
+                    </div>
+
+                    @if($publishedBundleVocabularySets->isNotEmpty())
+                        <div class="word-list-store-grid">
+                            @foreach($publishedBundleVocabularySets as $set)
+                                <article class="word-list-package-card">
+                                    <h4 class="word-list-package-name">{{ $set['set_name'] }}</h4>
+
+                                    <div class="word-list-package-meta">
+                                        {{ $set['bundle_slug'] ? ('Bundle: ' . $set['bundle_slug']) : ('Bundle #' . $set['id']) }}
+                                        · {{ $set['word_count'] }} {{ app()->getLocale() === 'en' ? 'words' : 'từ' }}
+                                    </div>
+
+                                    <div class="word-list-package-prices">
+                                        <span class="word-list-package-price-sale">{{ $set['sale_price_label'] }}</span>
+                                        <span class="word-list-package-price-original">{{ $set['original_price_label'] }}</span>
+
+                                        @if($set['discount_percent'] > 0)
+                                            <span class="word-list-package-discount">-{{ $set['discount_percent'] }}%</span>
+                                        @endif
+                                    </div>
+
+                                    <button class="word-list-package-btn js-open-wordlist-preview" type="button" data-set-id="{{ $set['id'] }}" data-set-name="{{ $set['set_name'] }}">{{ trans('panel.bundle_vocabulary_store_view_bundle') }}</button>
+                                </article>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="word-list-store-empty">{{ trans('panel.bundle_vocabulary_store_empty') }}</div>
+                    @endif
+                </div>
             </div>
         </section>
+
+        <div class="wordlist-preview-modal" id="wordListPreviewModal" aria-hidden="true">
+            <div class="wordlist-preview-modal__backdrop js-wordlist-preview-close"></div>
+            <div class="wordlist-preview-modal__dialog" role="dialog" aria-modal="true" aria-label="Word List preview">
+                <div class="wordlist-preview-modal__header">
+                    <div>
+                        <h3 class="wordlist-preview-modal__title" id="wordListPreviewTitle">{{ trans('panel.bundle_vocabulary_preview_title') }}</h3>
+                        <p class="wordlist-preview-modal__subtitle">{{ trans('panel.bundle_vocabulary_preview_subtitle') }}</p>
+                    </div>
+                    <button type="button" class="wordlist-preview-modal__close js-wordlist-preview-close" aria-label="Close">&times;</button>
+                </div>
+
+                <div class="wordlist-preview-modal__body">
+                    <div class="wordlist-preview-state" id="wordListPreviewState"></div>
+
+                    <div class="wordlist-preview-card-wrap hidden" id="wordListPreviewCardWrap">
+                        <div class="wordlist-preview-progress" id="wordListPreviewProgress"></div>
+
+                        <div class="wordlist-flashcard" id="wordListFlashcard">
+                            <div class="wordlist-flashcard__inner">
+                                <div class="wordlist-flashcard__face wordlist-flashcard__face--front">
+                                    <div class="wordlist-flashcard__word" id="wordListPreviewWord"></div>
+                                    <div class="wordlist-flashcard__meta" id="wordListPreviewPronunciation"></div>
+                                    <button type="button" class="wordlist-flashcard__audio" id="wordListPreviewSpeakBtn">{{ trans('panel.bundle_vocabulary_preview_speak') }}</button>
+                                </div>
+
+                                <div class="wordlist-flashcard__face wordlist-flashcard__face--back">
+                                    <div class="wordlist-flashcard__meaning" id="wordListPreviewDefinition"></div>
+                                    <div class="wordlist-flashcard__translation" id="wordListPreviewTranslation"></div>
+                                    <div class="wordlist-flashcard__example" id="wordListPreviewExample"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="wordlist-flashcard__flip-btn" id="wordListPreviewFlipBtn">{{ trans('panel.bundle_vocabulary_preview_flip') }}</button>
+
+                        <div class="wordlist-preview-actions">
+                            <button type="button" class="wordlist-preview-nav" id="wordListPreviewPrevBtn">{{ trans('panel.bundle_vocabulary_preview_prev') }}</button>
+                            <button type="button" class="wordlist-preview-nav" id="wordListPreviewNextBtn">{{ trans('panel.bundle_vocabulary_preview_next') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <footer class="edtika-footer" aria-label="{{ $isEnglish ? 'Dictionary Footer' : 'Chân trang từ điển' }}">
             <div class="edtika-footer__top">
@@ -914,6 +1316,22 @@
     var csrfToken = $('meta[name="csrf-token"]').attr('content');
     var dictionaryResult = $('#guestDictionaryResult');
     var dictionaryPlaceholder = $('#guestDictionaryPlaceholder');
+    var wordListPreviewModal = $('#wordListPreviewModal');
+    var wordListPreviewState = $('#wordListPreviewState');
+    var wordListPreviewTitle = $('#wordListPreviewTitle');
+    var wordListPreviewCardWrap = $('#wordListPreviewCardWrap');
+    var wordListPreviewProgress = $('#wordListPreviewProgress');
+    var wordListFlashcard = $('#wordListFlashcard');
+    var wordListPreviewWord = $('#wordListPreviewWord');
+    var wordListPreviewPronunciation = $('#wordListPreviewPronunciation');
+    var wordListPreviewDefinition = $('#wordListPreviewDefinition');
+    var wordListPreviewTranslation = $('#wordListPreviewTranslation');
+    var wordListPreviewExample = $('#wordListPreviewExample');
+    var wordListPreviewPrevBtn = $('#wordListPreviewPrevBtn');
+    var wordListPreviewNextBtn = $('#wordListPreviewNextBtn');
+
+    var currentPreviewWords = [];
+    var currentPreviewIndex = 0;
 
     function escAttr(value) {
         return String(value || '')
@@ -1108,6 +1526,83 @@
         document.body.style.overflow = 'hidden';
     }
 
+    function openWordListPreviewModal() {
+        wordListPreviewModal.addClass('is-open').attr('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeWordListPreviewModal() {
+        wordListPreviewModal.removeClass('is-open').attr('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        currentPreviewWords = [];
+        currentPreviewIndex = 0;
+        wordListPreviewCardWrap.addClass('hidden');
+        wordListPreviewState.text('');
+        wordListFlashcard.removeClass('is-flipped');
+    }
+
+    function setPreviewLoadingState(message) {
+        wordListPreviewState.text(message || '');
+        wordListPreviewCardWrap.addClass('hidden');
+        wordListFlashcard.removeClass('is-flipped');
+    }
+
+    function renderCurrentPreviewWord() {
+        if (!Array.isArray(currentPreviewWords) || currentPreviewWords.length < 1) {
+            setPreviewLoadingState('{{ trans('panel.bundle_vocabulary_preview_empty') }}');
+            return;
+        }
+
+        var currentWord = currentPreviewWords[currentPreviewIndex] || {};
+        wordListFlashcard.removeClass('is-flipped');
+
+        wordListPreviewProgress.text('{{ trans('panel.bundle_vocabulary_preview_progress') }} ' + (currentPreviewIndex + 1) + '/5');
+        wordListPreviewWord.text(currentWord.word || '-');
+
+        var pronunciationText = '';
+        if (currentWord.part_of_speech) {
+            pronunciationText += currentWord.part_of_speech;
+        }
+        if (currentWord.pronunciation) {
+            pronunciationText += (pronunciationText ? ' • ' : '') + '/' + currentWord.pronunciation + '/';
+        }
+        wordListPreviewPronunciation.text(pronunciationText);
+
+        wordListPreviewDefinition.text(currentWord.definition || '{{ trans('panel.bundle_vocabulary_preview_no_definition') }}');
+        wordListPreviewTranslation.text(currentWord.translation || '');
+        wordListPreviewExample.text(currentWord.example ? '"' + currentWord.example + '"' : '');
+
+        wordListPreviewPrevBtn.prop('disabled', currentPreviewIndex === 0);
+        wordListPreviewNextBtn.prop('disabled', currentPreviewIndex >= currentPreviewWords.length - 1);
+
+        wordListPreviewCardWrap.removeClass('hidden');
+        wordListPreviewState.text('');
+    }
+
+    function fetchAndOpenWordListPreview(setId, setName) {
+        openWordListPreviewModal();
+        wordListPreviewTitle.text((setName || '{{ trans('panel.bundle_vocabulary_preview_title') }}') + ' ({{ trans('panel.bundle_vocabulary_preview_first_5') }})');
+        setPreviewLoadingState('{{ trans('panel.loading') }}...');
+
+        $.ajax({
+            url: '/dictionary/word-list-packages/' + setId + '/preview',
+            method: 'GET',
+            success: function (res) {
+                if (!res || !res.success || !res.data || !Array.isArray(res.data.preview_words)) {
+                    setPreviewLoadingState('{{ trans('panel.bundle_vocabulary_preview_open_error') }}');
+                    return;
+                }
+
+                currentPreviewWords = res.data.preview_words;
+                currentPreviewIndex = 0;
+                renderCurrentPreviewWord();
+            },
+            error: function () {
+                setPreviewLoadingState('{{ trans('panel.bundle_vocabulary_preview_open_error') }}');
+            }
+        });
+    }
+
     $('#guestDictionarySearchBtn').on('click', performSearch);
 
     $('#guestDictionarySearchInput').on('keypress', function (e) {
@@ -1179,6 +1674,48 @@
     });
 
     $(document).on('click', '#dictResultBackBtn', closeResult);
+
+    $(document).on('click', '.js-open-wordlist-preview', function () {
+        var setId = $(this).data('set-id');
+        var setName = $(this).data('set-name') || '{{ trans('panel.bundle_vocabulary_preview_title') }}';
+
+        if (!setId) {
+            return;
+        }
+
+        fetchAndOpenWordListPreview(setId, setName);
+    });
+
+    $(document).on('click', '.js-wordlist-preview-close', closeWordListPreviewModal);
+
+    $(document).on('click', '#wordListPreviewFlipBtn', function () {
+        wordListFlashcard.toggleClass('is-flipped');
+    });
+
+    $(document).on('click', '#wordListPreviewPrevBtn', function () {
+        if (currentPreviewIndex > 0) {
+            currentPreviewIndex--;
+            renderCurrentPreviewWord();
+        }
+    });
+
+    $(document).on('click', '#wordListPreviewNextBtn', function () {
+        if (currentPreviewIndex < currentPreviewWords.length - 1) {
+            currentPreviewIndex++;
+            renderCurrentPreviewWord();
+        }
+    });
+
+    $(document).on('click', '#wordListPreviewSpeakBtn', function () {
+        var currentWord = currentPreviewWords[currentPreviewIndex] || {};
+        speakWord(currentWord.word || '');
+    });
+
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && wordListPreviewModal.hasClass('is-open')) {
+            closeWordListPreviewModal();
+        }
+    });
 })(jQuery);
 </script>
 @endpush

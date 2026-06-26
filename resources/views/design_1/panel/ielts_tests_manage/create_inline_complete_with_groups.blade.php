@@ -798,9 +798,19 @@ let currentTestType = @json($currentTestType ?? null);
 let uploadSequence = 0;
 const AUTOSAVE_INTERVAL_MS = 15000;
 const AUTOSAVE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const AUTOSAVE_DEBOUNCE_MS = 1200;
 const AUTOSAVE_STORAGE_KEY = 'ielts-inline-autosave:{{ auth()->id() }}:{{ isset($test) ? ('test-' . $test->id) : 'new' }}';
+const AUTOSAVE_SERVER_SAVE_URL = @json(route('panel.my_ielts_tests.autosave_inline.save'));
+const AUTOSAVE_SERVER_LOAD_URL = @json(route('panel.my_ielts_tests.autosave_inline.get'));
+const AUTOSAVE_CSRF_TOKEN = @json(csrf_token());
+const AUTOSAVE_TEST_ID = @json(isset($test) ? (int) $test->id : null);
+let autosaveServerSeed = @json($autosavePayload ?? null);
 let autosaveTimer = null;
+let autosaveDebounceTimer = null;
 let autosaveLastSignature = '';
+let autosaveLastServerSignature = '';
+let autosaveServerRequestInFlight = false;
+let autosavePendingServerPayload = null;
 
 @php
     $inlineTestData = $testData ?? [
@@ -991,26 +1001,100 @@ function getAutosaveSignature(payload) {
 }
 
 function saveAutosaveSnapshot(force = false) {
-    if (typeof window.localStorage === 'undefined') {
-        return;
-    }
-
     try {
         const payload = buildAutosavePayload();
         const signature = getAutosaveSignature(payload);
 
-        if (!force && signature === autosaveLastSignature) {
+        if (!force && signature === autosaveLastSignature && signature === autosaveLastServerSignature) {
             return;
         }
 
-        window.localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(payload));
+        if (typeof window.localStorage !== 'undefined') {
+            window.localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(payload));
+        }
+
         autosaveLastSignature = signature;
+        saveAutosaveSnapshotToServer(payload, signature, force);
 
         const savedTime = new Date(payload.savedAt).toLocaleTimeString();
-        updateAutosaveStatus('Auto Save: đã lưu lúc ' + savedTime + ' (không bao gồm file upload)');
+        updateAutosaveStatus('Auto Save: đã lưu lúc ' + savedTime + ' (file upload vẫn cần lưu thủ công)');
     } catch (error) {
         updateAutosaveStatus('Auto Save lỗi: không thể lưu bản nháp cục bộ', true);
     }
+}
+
+function performServerAutosaveRequest(payload, signature, force) {
+    autosaveServerRequestInFlight = true;
+
+    fetch(AUTOSAVE_SERVER_SAVE_URL, {
+        method: 'POST',
+        credentials: 'same-origin',
+        keepalive: !!force,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': AUTOSAVE_CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            test_id: AUTOSAVE_TEST_ID,
+            payload: payload
+        })
+    }).then(function (response) {
+        if (!response.ok) {
+            throw new Error('Autosave server error');
+        }
+
+        return response.json();
+    }).then(function (result) {
+        if (result && result.success) {
+            autosaveLastServerSignature = signature;
+        }
+    }).catch(function () {
+        updateAutosaveStatus('Auto Save: đã lưu tạm trên trình duyệt, đang chờ đồng bộ server...', true);
+    }).finally(function () {
+        autosaveServerRequestInFlight = false;
+
+        if (autosavePendingServerPayload) {
+            const pending = autosavePendingServerPayload;
+            autosavePendingServerPayload = null;
+            performServerAutosaveRequest(pending.payload, pending.signature, pending.force);
+        }
+    });
+}
+
+function saveAutosaveSnapshotToServer(payload, signature, force = false) {
+    if (!force && signature === autosaveLastServerSignature) {
+        return;
+    }
+
+    if (autosaveServerRequestInFlight) {
+        autosavePendingServerPayload = {
+            payload: payload,
+            signature: signature,
+            force: force
+        };
+        return;
+    }
+
+    performServerAutosaveRequest(payload, signature, force);
+}
+
+function queueAutosaveSnapshot(force = false) {
+    if (autosaveDebounceTimer) {
+        window.clearTimeout(autosaveDebounceTimer);
+        autosaveDebounceTimer = null;
+    }
+
+    if (force) {
+        saveAutosaveSnapshot(true);
+        return;
+    }
+
+    autosaveDebounceTimer = window.setTimeout(function () {
+        saveAutosaveSnapshot(false);
+        autosaveDebounceTimer = null;
+    }, AUTOSAVE_DEBOUNCE_MS);
 }
 
 function loadAutosaveSnapshot() {
@@ -1038,6 +1122,48 @@ function loadAutosaveSnapshot() {
     } catch (error) {
         return null;
     }
+}
+
+async function fetchServerAutosaveSnapshot() {
+    try {
+        const query = AUTOSAVE_TEST_ID ? ('?test_id=' + encodeURIComponent(String(AUTOSAVE_TEST_ID))) : '';
+        const response = await fetch(AUTOSAVE_SERVER_LOAD_URL + query, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const result = await response.json();
+        return (result && result.success && result.payload) ? result.payload : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function pickLatestAutosaveSnapshot(localPayload, serverPayload) {
+    if (!localPayload && !serverPayload) {
+        return null;
+    }
+
+    if (!localPayload) {
+        return serverPayload;
+    }
+
+    if (!serverPayload) {
+        return localPayload;
+    }
+
+    const localSavedAt = Number(localPayload.savedAt || 0);
+    const serverSavedAt = Number(serverPayload.savedAt || 0);
+
+    return serverSavedAt >= localSavedAt ? serverPayload : localPayload;
 }
 
 function normalizeSections(rawSections) {
@@ -1097,20 +1223,26 @@ function applyAutosaveSnapshot(payload) {
     updateAutosaveStatus('Đã khôi phục bản nháp cục bộ lúc ' + savedAt + ' (không bao gồm file upload)');
 }
 
-function maybeRestoreAutosaveSnapshot() {
-    const payload = loadAutosaveSnapshot();
+async function maybeRestoreAutosaveSnapshot() {
+    const localPayload = loadAutosaveSnapshot();
+    let serverPayload = autosaveServerSeed;
+
+    const fetchedServerPayload = await fetchServerAutosaveSnapshot();
+    if (fetchedServerPayload) {
+        serverPayload = fetchedServerPayload;
+    }
+
+    const payload = pickLatestAutosaveSnapshot(localPayload, serverPayload);
     if (!payload) {
         return;
     }
 
-    const savedAt = new Date(payload.savedAt).toLocaleString();
-    const shouldRestore = window.confirm('Phát hiện bản nháp Auto Save lúc ' + savedAt + '. Bạn có muốn khôi phục không?\n\nLưu ý: File upload (audio/image/video) không thể khôi phục tự động.');
-
-    if (!shouldRestore) {
-        const existingPayload = buildAutosavePayload();
-        autosaveLastSignature = getAutosaveSignature(existingPayload);
-        updateAutosaveStatus('Đang dùng dữ liệu hiện tại. Bản nháp cũ vẫn được giữ trong máy.');
-        return;
+    if (typeof window.localStorage !== 'undefined') {
+        try {
+            window.localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(payload));
+        } catch (error) {
+            // Ignore local storage write errors and continue with in-memory restore.
+        }
     }
 
     applyAutosaveSnapshot(payload);
@@ -1131,6 +1263,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFilePreviews();
     initAnswerHelpEditors(document);
     initContentEditors(document);
+    
     if (currentTestType) {
         const typeSelect = document.getElementById('testTypeSelect');
         if (typeSelect) {
@@ -1140,18 +1273,22 @@ document.addEventListener('DOMContentLoaded', function() {
         renderExistingTestData();
         updateCompletenessStatus();
     }
+    
+    // Restore from localStorage AFTER testData is initialized (after exiting preview)
+    restoreFormStateFromLocalStorage();
 
-    maybeRestoreAutosaveSnapshot();
-    startAutosaveLoop();
+    maybeRestoreAutosaveSnapshot().finally(function () {
+        startAutosaveLoop();
+    });
 
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden') {
-            saveAutosaveSnapshot(true);
+            queueAutosaveSnapshot(true);
         }
     });
 
     window.addEventListener('beforeunload', function () {
-        saveAutosaveSnapshot(true);
+        queueAutosaveSnapshot(true);
     });
 
     document.addEventListener('input', function(event) {
@@ -1159,6 +1296,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!target || !target.classList) {
             return;
         }
+
+        queueAutosaveSnapshot(false);
 
         if (target.classList.contains('question-text-input')) {
             const form = target.closest('.question-inline-form');
@@ -1188,7 +1327,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.addEventListener('change', function(event) {
         const target = event.target;
-        if (!target || !target.classList || !target.classList.contains('question-type-select')) {
+        if (!target || !target.classList) {
+            return;
+        }
+
+        queueAutosaveSnapshot(false);
+
+        if (!target.classList.contains('question-type-select')) {
             return;
         }
 
@@ -1199,6 +1344,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         renderNoteCompletionAnswerInputs(form);
     });
+
+    const autosaveObservedRoot = document.getElementById('sectionsContainer');
+    if (autosaveObservedRoot && typeof MutationObserver !== 'undefined') {
+        const autosaveMutationObserver = new MutationObserver(function () {
+            queueAutosaveSnapshot(false);
+        });
+
+        autosaveMutationObserver.observe(autosaveObservedRoot, {
+            childList: true,
+            subtree: true
+        });
+    }
 });
 
 function setupFilePreviews() {
@@ -1789,6 +1946,10 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
                                 <option value="table_completion">Table Completion</option>
                                 <option value="diagram_labeling">Diagram Labeling</option>
                             </optgroup>
+                            <optgroup label="Drag &amp; Drop">
+                                <option value="drag_drop_disappear">Drag &amp; Drop (Remove from List)</option>
+                                <option value="drag_drop_reuse">Drag &amp; Drop (Keep in List)</option>
+                            </optgroup>
                             <optgroup label="Other">
                                 <option value="short_answer">Short Answer</option>
                             </optgroup>
@@ -2343,6 +2504,40 @@ function editQuestion(button, questionIndex) {
             }
             tcWrap.classList.remove('hidden');
         }
+    } else if (qType === 'drag_drop_disappear' || qType === 'drag_drop_reuse') {
+        // Populate Draggable Options
+        const ddOptionsList = form.querySelector('.dd-options-list');
+        if (ddOptionsList) {
+            ddOptionsList.innerHTML = (question.options || []).map((opt) => `
+                <div class="dd-option-row d-flex align-items-center mb-2" style="gap:8px;">
+                    <input type="text" class="form-control form-control-sm dd-option-input" placeholder="Option text" value="${escapeHtml(opt)}">
+                    <button type="button" class="btn btn-sm btn-outline-danger dd-remove-option-btn" onclick="removeDDOption(this)" title="Remove"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+        }
+        
+        // Populate Correct Answers per Blank
+        const ddAnswersList = form.querySelector('.dd-answers-list');
+        const ddSummary = form.querySelector('.dd-blank-summary');
+        if (ddAnswersList) {
+            const answers = question.correctAnswers || [];
+            const blankCount = answers.length || countNoteCompletionBlanks(question.text || '');
+            
+            if (ddSummary) {
+                ddSummary.innerHTML = blankCount > 0
+                    ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Set the correct option per blank.`
+                    : 'Type the text with <code>___</code> for each blank.';
+            }
+            
+            ddAnswersList.innerHTML = answers.map((ans, i) => `
+                <div class="d-flex align-items-center mb-2" style="gap:8px;">
+                    <span style="width:72px;flex:0 0 auto;font-size:13px;font-weight:600;color:#6b7280;">Blank ${i + 1}</span>
+                    <input type="text" class="form-control form-control-sm dd-answer-input" data-blank-index="${i}" placeholder="Correct option for blank ${i + 1}" value="${escapeHtml(ans)}" style="flex:1;min-width:0;">
+                </div>
+            `).join('');
+        }
+        
+        console.log('✓ Drag & drop form populated with', (question.options || []).length, 'options and', (question.correctAnswers || []).length, 'answers');
     } else {
         const answerInput = form.querySelector('.question-answer-input');
         if (answerInput) answerInput.value = question.correctAnswer || '';
@@ -2413,8 +2608,9 @@ function saveQuestionToGroup(button) {
     const pointsValue = parseFloat(form.querySelector('.question-points-input').value);
     const points = Number.isFinite(pointsValue) ? pointsValue : 0;
     const isMatchingType = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType);
+    const isDragDropType = ['drag_drop_disappear', 'drag_drop_reuse'].includes(qType);
 
-    if (!textPlain && !isMatchingType) {
+    if (!textPlain && !isMatchingType && !isDragDropType) {
         alert('Question text is required.');
         return;
     }
@@ -2645,6 +2841,45 @@ function saveQuestionToGroup(button) {
         questionData.correctAnswer = JSON.stringify(tableAnswers.answers);
         questionData.slotCount = tableAnswers.answers.length;
 
+    } else if (isDragDropType) {
+        const ddOptions = collectDDOptions(form);
+        const ddAnswers = collectDDAnswers(form);
+        const blankCount = countNoteCompletionBlanks(text);
+
+        if (!textPlain) {
+            alert('Please enter the question text with ___ blanks.');
+            return;
+        }
+
+        if (blankCount === 0) {
+            alert('Please include at least one blank using ___.');
+            return;
+        }
+
+        if (ddOptions.length < 1) {
+            alert('Please add at least one draggable option.');
+            return;
+        }
+
+        if (ddAnswers.length !== blankCount) {
+            alert(`Please enter ${blankCount} correct answer${blankCount > 1 ? 's' : ''} for the ${blankCount} blank${blankCount > 1 ? 's' : ''} (click "Sync Blanks from Text" first).`);
+            return;
+        }
+
+        for (let i = 0; i < ddAnswers.length; i++) {
+            if (!ddAnswers[i]) {
+                alert(`Blank ${i + 1} has no correct answer.`);
+                return;
+            }
+        }
+
+        questionData.options = ddOptions;          // 'options' key → controller reads $questionData['options']
+        questionData.correctAnswers = ddAnswers;
+        questionData.correctAnswer = JSON.stringify(ddAnswers);
+        questionData.slotCount = blankCount;
+        // NOTE: do NOT put drag_type in question_data – question_data column is longtext (not JSON)
+        //       and the type is already encoded in questionData.type / the DB question_type column.
+
     } else {
         const answerInput = form.querySelector('.question-answer-input');
         questionData.correctAnswer = answerInput ? answerInput.value.trim() || null : null;
@@ -2740,8 +2975,14 @@ function renderQuestionsList(groupItem, group) {
                 detailHTML = `<div style="font-size:12px;margin-top:4px;">
                     <span class="question-answer-badge">Table: ${colCount} cols, ${blankCount} blanks</span>
                 </div>`;
-            } else if (qType === 'note_completion') {
-                const blankCount = (Array.isArray(question.correctAnswers) ? question.correctAnswers.length : normalizeNoteCompletionAnswers(question.correctAnswer).length) || (question.slotCount || 1);
+            } else if (qType === 'drag_drop_disappear' || qType === 'drag_drop_reuse') {
+                const opts = (question.options || []);
+                const ans = Array.isArray(question.correctAnswers) ? question.correctAnswers : [];
+                detailHTML = `<div style="font-size:12px;margin-top:4px;">
+                    <span class="question-answer-badge">${opts.length} option${opts.length !== 1 ? 's' : ''}, ${ans.length} blank${ans.length !== 1 ? 's' : ''}</span>
+                    <span style="margin-left:6px;color:#16a34a;">✓ ${ans.map(a => escapeHtml(a)).join(', ')}</span>
+                </div>`;
+            } else if (qType === 'note_completion') {                const blankCount = (Array.isArray(question.correctAnswers) ? question.correctAnswers.length : normalizeNoteCompletionAnswers(question.correctAnswer).length) || (question.slotCount || 1);
                 detailHTML = `<div style="font-size:12px;margin-top:4px;">
                     <span class="question-answer-badge">Note: ${blankCount} blanks</span>
                 </div>`;
@@ -2802,6 +3043,8 @@ function getQuestionTypeLabel(type) {
         table_completion: 'Table Completion',
         diagram_labeling: 'Diagram Labeling',
         short_answer: 'Short Answer',
+        drag_drop_disappear: 'Drag & Drop – Remove from List',
+        drag_drop_reuse: 'Drag & Drop – Keep in List',
     };
     return labels[type] || type;
 }
@@ -2942,6 +3185,68 @@ function makeNoteCompletionAnswerRowHTML(value = '', index = 0) {
         <input type="text" class="form-control form-control-sm note-completion-answer-input" data-blank-index="${index}" placeholder="Answer for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
     </div>`;
 }
+
+// ── Drag & Drop helpers ────────────────────────────────────────────────────
+
+function collectDDOptions(form) {
+    return Array.from(form.querySelectorAll('.dd-option-input'))
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
+}
+
+function collectDDAnswers(form) {
+    return Array.from(form.querySelectorAll('.dd-answer-input'))
+        .map(inp => inp.value.trim());
+}
+
+function addDDOption(button) {
+    const list = button.closest('.dd-options-section').querySelector('.dd-options-list');
+    const div = document.createElement('div');
+    div.className = 'dd-option-row d-flex align-items-center mb-2';
+    div.style.gap = '8px';
+    div.innerHTML = `<input type="text" class="form-control form-control-sm dd-option-input" placeholder="Option text">
+        <button type="button" class="btn btn-sm btn-outline-danger dd-remove-option-btn" onclick="removeDDOption(this)" title="Remove"><i class="fas fa-times"></i></button>`;
+    list.appendChild(div);
+}
+
+function removeDDOption(button) {
+    const list = button.closest('.dd-options-section').querySelector('.dd-options-list');
+    const rows = list.querySelectorAll('.dd-option-row');
+    if (rows.length <= 1) { alert('You need at least one option.'); return; }
+    button.closest('.dd-option-row').remove();
+}
+
+function syncDDAnswerInputs(button) {
+    const form = button.closest('.question-inline-form');
+    if (!form) return;
+    const textInput = form.querySelector('.question-text-input');
+    const text = textInput ? getContentEditorValue(textInput) : '';
+    const blankCount = countNoteCompletionBlanks(text);
+    const container = form.querySelector('.dd-answers-list');
+    const summary = form.querySelector('.dd-blank-summary');
+    if (!container) return;
+
+    const existing = Array.from(container.querySelectorAll('.dd-answer-input')).map(i => i.value);
+
+    if (summary) {
+        summary.innerHTML = blankCount > 0
+            ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Set the correct option per blank.`
+            : 'Type the text with <code>___</code> for each blank.';
+    }
+
+    container.innerHTML = '';
+    for (let i = 0; i < blankCount; i++) {
+        const val = existing[i] || '';
+        const row = document.createElement('div');
+        row.className = 'd-flex align-items-center mb-2';
+        row.style.gap = '8px';
+        row.innerHTML = `<span style="width:72px;flex:0 0 auto;font-size:13px;font-weight:600;color:#6b7280;">Blank ${i + 1}</span>
+            <input type="text" class="form-control form-control-sm dd-answer-input" data-blank-index="${i}" placeholder="Correct option for blank ${i + 1}" value="${escapeHtml(val)}" style="flex:1;min-width:0;">`;
+        container.appendChild(row);
+    }
+}
+
+// ── End Drag & Drop helpers ────────────────────────────────────────────────
 
 function makeCompletionAnswerRowHTML(value = '', index = 0) {
     return `<div class="completion-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
@@ -3251,6 +3556,7 @@ function getQuestionFormHTML(questionType) {
     const isYNNG = questionType === 'yes_no_not_given';
     const isMatching = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(questionType);
     const isCompletion = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling'].includes(questionType);
+    const isDragDrop = questionType === 'drag_drop_disappear' || questionType === 'drag_drop_reuse';
 
     let html = '';
     const titleField = `<div class="form-row">
@@ -3482,6 +3788,53 @@ function getQuestionFormHTML(questionType) {
                 </div>
             </div>`;
         }
+
+    } else if (isDragDrop) {
+        const ddLabel = questionType === 'drag_drop_disappear'
+            ? 'Drag &amp; Drop – Remove from List'
+            : 'Drag &amp; Drop – Keep in List';
+        html += `<div class="mb-8"><span class="question-type-badge">${ddLabel}</span></div>
+        ${titleField}
+        <div class="form-row">
+            <div class="form-group flex-fill">
+                <label class="input-label">Question / Passage * <small class="text-muted">(use ___ for each blank)</small></label>
+                <textarea class="form-control question-text-input js-richtext-editor" data-height="160" rows="3" placeholder="Enter the text. Use ___ where students should drop an option."></textarea>
+            </div>
+        </div>
+        <div class="alert alert-info py-2 px-3 mb-12 dd-blank-summary">
+            Type the text with <code>___</code> for each blank. Add options below, then set the correct answer per blank.
+        </div>
+        <div class="form-row">
+            <div class="form-group flex-fill">
+                <label class="input-label">Answer Help</label>
+                <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint or explanation for review..."></textarea>
+            </div>
+        </div>
+        <div class="dd-options-section" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:12px;">
+            <label class="input-label">Draggable Options <small class="text-muted">(the pool of answer chips)</small></label>
+            <div class="dd-options-list" style="margin-bottom:8px;">
+                <div class="dd-option-row d-flex align-items-center mb-2" style="gap:8px;">
+                    <input type="text" class="form-control form-control-sm dd-option-input" placeholder="Option text">
+                    <button type="button" class="btn btn-sm btn-outline-danger dd-remove-option-btn" onclick="removeDDOption(this)" title="Remove"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="dd-option-row d-flex align-items-center mb-2" style="gap:8px;">
+                    <input type="text" class="form-control form-control-sm dd-option-input" placeholder="Option text">
+                    <button type="button" class="btn btn-sm btn-outline-danger dd-remove-option-btn" onclick="removeDDOption(this)" title="Remove"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addDDOption(this)"><i class="fas fa-plus mr-4"></i> Add Option</button>
+        </div>
+        <div class="dd-answers-section" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;margin-bottom:12px;">
+            <label class="input-label">Correct Answer per Blank <small class="text-muted">(must exactly match one of the options above)</small></label>
+            <div class="dd-answers-list"></div>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-8" onclick="syncDDAnswerInputs(this)"><i class="fas fa-sync mr-4"></i> Sync Blanks from Text</button>
+        </div>
+        <div class="form-row">
+            <div class="form-group" style="max-width:120px;">
+                <label class="input-label">Points (per blank)</label>
+                <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
+            </div>
+        </div>`;
 
     } else {
         html += `${titleField}<div class="form-row">
@@ -3800,6 +4153,9 @@ function setupFormValidation() {
                     alert('Please add at least 1 part before previewing the test.');
                     return;
                 }
+                
+                // SAVE form state to localStorage BEFORE navigating to preview
+                saveFormStateToLocalStorage();
             }
 
             preserveSectionAudioFiles();
@@ -3873,6 +4229,125 @@ function setupFormValidation() {
 }
 
     // Ensure section audio inputs are preserved whenever the form is submitted
+// ─── Form State Preservation (localStorage for preview exit) ─────────────────
+
+/**
+ * Get test ID from either Blade context or URL
+ */
+function getTestId() {
+    // Try Blade variable first
+    let testId = @json($test->id ?? null);
+    if (testId) return testId;
+    
+    // Fallback: extract from URL (e.g., /114/edit-inline)
+    const match = window.location.pathname.match(/\/(\d+)\/edit-inline/);
+    if (match) return match[1];
+    
+    return null;
+}
+
+/**
+ * Save current form state to localStorage before navigating away
+ * Used to restore data when user exits preview mode
+ */
+function saveFormStateToLocalStorage() {
+    try {
+        const testId = getTestId();
+        if (!testId) {
+            console.log('No testId found, skipping localStorage save');
+            return;
+        }
+        
+        const key = 'ielts_test_form_state_' + testId;
+        const state = {
+            sections: testData.sections,
+            timestamp: Date.now(),
+            version: 1
+        };
+        
+        localStorage.setItem(key, JSON.stringify(state));
+        console.log('✓ Form state saved to localStorage for test', testId);
+    } catch (err) {
+        console.error('Failed to save form state:', err);
+    }
+}
+
+/**
+ * Restore form state from localStorage after returning from preview
+ * Called on page load to rebuild the form with previous data
+ */
+function restoreFormStateFromLocalStorage() {
+    try {
+        const testId = getTestId();
+        if (!testId) {
+            console.log('⚠ No testId found, skipping localStorage restore');
+            return;
+        }
+        
+        const key = 'ielts_test_form_state_' + testId;
+        const saved = localStorage.getItem(key);
+        
+        if (!saved) {
+            console.log('ℹ No saved form state found for test', testId);
+            return;
+        }
+        
+        const state = JSON.parse(saved);
+        if (!state.sections) {
+            console.log('⚠ Invalid saved state (no sections)');
+            return;
+        }
+        
+        // Only restore if it's recent (less than 30 minutes old)
+        const ageMinutes = (Date.now() - state.timestamp) / (60 * 1000);
+        if (ageMinutes > 30) {
+            console.log('ℹ Saved state is too old (' + ageMinutes.toFixed(1) + ' minutes), discarding');
+            localStorage.removeItem(key);
+            return;
+        }
+        
+        console.log('✓ Restoring form state from preview exit (saved ' + ageMinutes.toFixed(1) + ' minutes ago)');
+        
+        // Merge the restored state into testData
+        if (window.testData && window.testData.sections) {
+            testData.sections = state.sections;
+            console.log('✓ Merging restored data into testData...');
+            
+            // Re-render all sections to show restored data
+            renderExistingTestData();
+            updateCompletenessStatus();
+            
+            console.log('✓ Form state successfully restored!');
+            
+            // Clear localStorage after successful restore
+            localStorage.removeItem(key);
+        } else {
+            console.warn('⚠ testData not initialized, cannot restore');
+        }
+        
+    } catch (err) {
+        console.error('✗ Failed to restore form state:', err);
+    }
+}
+
+/**
+ * Clear saved form state for a test
+ */
+function clearFormStateLocalStorage() {
+    try {
+        const testId = getTestId();
+        if (!testId) return;
+        
+        const key = 'ielts_test_form_state_' + testId;
+        localStorage.removeItem(key);
+        console.log('Form state cleared for test', testId);
+    } catch (err) {
+        console.error('Failed to clear form state:', err);
+    }
+}
+
+// ─── End Form State Preservation ──────────────────────────────────────────────
+
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('testForm');
         if (form) {
