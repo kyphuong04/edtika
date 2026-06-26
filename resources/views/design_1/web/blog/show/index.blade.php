@@ -340,7 +340,7 @@
 
         .edtika-news-show__sidebar-title {
             margin: 0;
-            font-size: 32px;
+            font-size: 24px;
             line-height: 1.2;
             font-weight: 800;
             color: #2f3441;
@@ -887,7 +887,7 @@
                     <h2 class="edtika-news-show__latest-title">{{ $isEnglish ? 'Suggested Latest Posts' : 'Gợi ý Bài viết Mới nhất' }}</h2>
 
                     <div class="row">
-                        @include('design_1.web.blog.components.cards.grids.index',['posts' => $latestPosts, 'gridCardClassName' => "col-12 col-md-6 col-lg-4 mt-16"])
+                        @include('design_1.web.blog.components.cards.grids.index',['posts' => $latestPosts, 'gridCardClassName' => "col-12 col-md-6 col-lg-3 mt-16"])
                     </div>
                 </section>
             @endif
@@ -1008,8 +1008,9 @@
                     return;
                 }
 
-                const selectors = 'h1, h2, h3, h4, h5, h6, p:has(> strong:first-child), p:has(> b:first-child), li:has(> strong:first-child), li:has(> b:first-child)';
-
+                // const selectors = 'h1, h2, h3, h4, h5, h6, p:has(> strong:first-child), p:has(> b:first-child), li:has(> strong:first-child), li:has(> b:first-child)';
+                // const selectors = 'h1, h2, h3, h4, h5, h6';
+                const selectors = 'h2';
                 const headingNodes = $article.find(selectors).filter(function () {
                     const text = $(this).text().replace(/\s+/g, ' ').trim();
                     return text.length >= 6;
