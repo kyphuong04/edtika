@@ -18,8 +18,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class DictionaryController extends Controller
@@ -54,6 +57,8 @@ class DictionaryController extends Controller
                     'id' => $set->id,
                     'set_name' => $set->name,
                     'set_description' => $set->description,
+                    'intro_content' => $set->intro_content,
+                    'feature_content' => $set->feature_content,
                     'bundle_slug' => $bundleSlug,
                     'word_count' => (int) $set->words_count,
                     'original_price' => $originalPrice,
@@ -75,7 +80,6 @@ class DictionaryController extends Controller
     {
         $set = BundleVocabularySet::query()
             ->publishedForDictionary()
-            ->where('words_count', '>', 0)
             ->find($id);
 
         if (!$set) {
@@ -85,39 +89,15 @@ class DictionaryController extends Controller
             ], 404);
         }
 
-        $words = BundleVocabularyWord::query()
-            ->where('vocabulary_set_id', $set->id)
-            ->orderBy('sort_order')
-            ->limit(5)
-            ->get([
-                'id',
-                'word',
-                'part_of_speech',
-                'pronunciation',
-                'definition',
-                'translation_vi',
-                'example',
-            ])
-            ->map(function (BundleVocabularyWord $word) {
-                return [
-                    'id' => $word->id,
-                    'word' => $word->word,
-                    'part_of_speech' => $word->part_of_speech,
-                    'pronunciation' => $word->pronunciation,
-                    'definition' => $word->definition,
-                    'translation' => $word->translation_vi,
-                    'example' => $word->example,
-                ];
-            })
-            ->values();
-
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $set->id,
                 'name' => $set->name,
                 'word_count' => (int) $set->words_count,
-                'preview_words' => $words,
+                'description' => $set->description,
+                'intro_content' => $set->intro_content,
+                'feature_content' => $set->feature_content,
             ],
         ]);
     }
@@ -726,6 +706,8 @@ class DictionaryController extends Controller
                         'pronunciation' => $flashcard->pronunciation,
                         'definition' => $flashcard->definition,
                         'translation' => $flashcard->translation,
+                        'audio_url' => $word->audio_url,
+                        'collocation' => $word->collocation,
                         'example' => $flashcard->example,
                         'image_url' => $word->image_url,
                         'source' => 'bundle',
@@ -1769,10 +1751,14 @@ class DictionaryController extends Controller
             return [
                 'id' => $flashcard->id,
                 'word' => $flashcard->word,
+                'part_of_speech' => $flashcard->part_of_speech,
                 'pronunciation' => $flashcard->pronunciation,
                 'definition' => $flashcard->definition,
                 'example' => $flashcard->example,
                 'translation' => $flashcard->translation,
+                'audio_url' => null,
+                'collocation' => null,
+                'image_url' => null,
                 'is_learned' => $progress ? $progress->is_learned : false,
                 'practice_count' => $progress ? $progress->practice_count : 0,
                 'correct_count' => $progress ? $progress->correct_count : 0,
@@ -1852,14 +1838,18 @@ class DictionaryController extends Controller
             return [
                 'id' => $flashcard->id,
                 'word' => $flashcard->word,
+                'part_of_speech' => $flashcard->part_of_speech,
                 'pronunciation' => $flashcard->pronunciation,
                 'definition' => $flashcard->definition,
                 'example' => $flashcard->example,
                 'translation' => $flashcard->translation,
+                'audio_url' => $word->audio_url,
+                'collocation' => $word->collocation,
                 'is_learned' => $progress ? $progress->is_learned : false,
                 'practice_count' => $progress ? $progress->practice_count : 0,
                 'correct_count' => $progress ? $progress->correct_count : 0,
                 'word_source' => 'bundle',
+                'image_url' => $word->image_url,
             ];
         });
     }
@@ -1916,6 +1906,8 @@ class DictionaryController extends Controller
             'bundle_id' => 'required|integer|exists:bundles,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'intro_content' => 'nullable|string',
+            'feature_content' => 'nullable|string',
             'source_file' => 'required|file|mimes:csv,txt,xlsx,xls|max:20480',
         ]);
 
@@ -1938,6 +1930,8 @@ class DictionaryController extends Controller
                 'created_by' => $user->id,
                 'name' => $request->name,
                 'description' => $request->description,
+                'intro_content' => $request->intro_content,
+                'feature_content' => $request->feature_content,
                 'status' => BundleVocabularySet::STATUS_DRAFT,
                 'words_count' => 0,
             ]);
@@ -2020,6 +2014,8 @@ class DictionaryController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'intro_content' => 'nullable|string',
+            'feature_content' => 'nullable|string',
             'source_file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:20480',
         ]);
 
@@ -2028,6 +2024,8 @@ class DictionaryController extends Controller
         try {
             $set->name = $request->name;
             $set->description = $request->description;
+            $set->intro_content = $request->intro_content;
+            $set->feature_content = $request->feature_content;
 
             if ($request->hasFile('source_file')) {
                 $parsedWords = $this->parseUploadedVocabularyFile($request->file('source_file'));
@@ -2210,8 +2208,7 @@ class DictionaryController extends Controller
                 fclose($handle);
             }
         } else {
-            $sheets = Excel::toArray([], $file);
-            $rows = $sheets[0] ?? [];
+            $rows = $this->extractSpreadsheetRows($file);
         }
 
         if (empty($rows)) {
@@ -2239,11 +2236,19 @@ class DictionaryController extends Controller
             $definition = $this->cleanCellValue($row[$columnMap['definition']] ?? null);
             $translation = $this->cleanCellValue($row[$columnMap['translation']] ?? null);
 
+            if (empty($definition)) {
+                $definition = $translation;
+            }
+
+            if (empty($translation)) {
+                $translation = $definition;
+            }
+
             if (empty($translation)) {
                 $translation = $this->translateToVietnamese($word);
             }
 
-            $imageUrl = $this->cleanCellValue($row[$columnMap['image_url']] ?? null);
+            $imageUrl = $this->sanitizeExternalUrl($row[$columnMap['image_url']] ?? null);
             if (empty($imageUrl)) {
                 $imageUrl = $this->buildVocabularyIllustrationUrl($word);
             }
@@ -2254,6 +2259,8 @@ class DictionaryController extends Controller
                 'pronunciation' => $this->cleanCellValue($row[$columnMap['pronunciation']] ?? null),
                 'definition' => $definition,
                 'translation_vi' => $translation,
+                'audio_url' => $this->sanitizeExternalUrl($row[$columnMap['audio_url']] ?? null),
+                'collocation' => $this->cleanCellValue($row[$columnMap['collocation']] ?? null),
                 'example' => $this->cleanCellValue($row[$columnMap['example']] ?? null),
                 'image_url' => $imageUrl,
                 'sort_order' => $sortOrder,
@@ -2267,7 +2274,7 @@ class DictionaryController extends Controller
 
     private function resolveVocabularyColumnMap(array $rows): array
     {
-        $defaultMap = [
+        $legacyDefaultMap = [
             'word' => 0,
             'definition' => 1,
             'translation' => 2,
@@ -2275,44 +2282,206 @@ class DictionaryController extends Controller
             'part_of_speech' => 4,
             'pronunciation' => 5,
             'image_url' => 6,
+            'audio_url' => 7,
+            'collocation' => 8,
+        ];
+
+        $newDefaultMap = [
+            'word' => 0,
+            'part_of_speech' => 1,
+            'image_url' => 2,
+            'translation' => 3,
+            'pronunciation' => 4,
+            'audio_url' => 5,
+            'collocation' => 6,
+            'example' => 7,
+            'definition' => 3,
         ];
 
         $header = $rows[0] ?? [];
         if (!is_array($header)) {
-            return [$defaultMap, 0];
+            return [$legacyDefaultMap, 0];
         }
 
-        $normalizedHeader = array_map(function ($value) {
-            return strtolower(trim((string)$value));
-        }, $header);
+        $normalizedHeader = array_map([$this, 'normalizeVocabularyHeader'], $header);
 
         $aliases = [
-            'word' => ['word', 'term', 'vocabulary'],
-            'definition' => ['definition', 'meaning', 'explanation'],
-            'translation' => ['translation', 'translation_vi', 'vietnamese', 'vi', 'nghia'],
-            'example' => ['example', 'sample', 'example_sentence'],
-            'part_of_speech' => ['part_of_speech', 'part of speech', 'pos', 'word_type'],
-            'pronunciation' => ['pronunciation', 'ipa', 'phonetic'],
-            'image_url' => ['image', 'image_url', 'image link', 'illustration'],
+            'word' => ['word', 'term', 'vocabulary', 'tu'],
+            'part_of_speech' => ['part_of_speech', 'part_of_speech_pos', 'part_of_speech_word_type', 'part_of_speech_type', 'pos', 'word_type', 'type', 'loai_tu'],
+            'image_url' => ['image', 'image_url', 'image_link', 'illustration', 'hinh_anh', 'hinh'],
+            'translation' => ['translation', 'translation_vi', 'vietnamese', 'vi', 'nghia', 'meaning'],
+            'definition' => ['definition', 'explanation', 'dinh_nghia'],
+            'pronunciation' => ['pronunciation', 'ipa', 'phonetic', 'phien_am'],
+            'audio_url' => ['audio', 'audio_url', 'audio_link', 'audio_hyperlink', 'sound', 'phat_am'],
+            'collocation' => ['collocation', 'collocations', 'cum_tu'],
+            'example' => ['example', 'sample', 'example_sentence', 'vi_du'],
         ];
 
-        $resolvedMap = $defaultMap;
+        $columnCount = count($header);
+        $resolvedMap = $columnCount >= 8 ? $newDefaultMap : $legacyDefaultMap;
         $hasHeader = false;
+        $matchedHeaderColumns = 0;
 
         foreach ($aliases as $key => $possibleNames) {
             foreach ($possibleNames as $name) {
                 $index = array_search($name, $normalizedHeader, true);
                 if ($index !== false) {
                     $resolvedMap[$key] = $index;
-                    if ($key === 'word') {
-                        $hasHeader = true;
-                    }
+                    $matchedHeaderColumns++;
                     break;
                 }
             }
         }
 
+        if ($matchedHeaderColumns >= 2) {
+            $hasHeader = true;
+        }
+
         return [$resolvedMap, $hasHeader ? 1 : 0];
+    }
+
+    private function normalizeVocabularyHeader($value): string
+    {
+        $normalized = trim((string) $value);
+        $normalized = preg_replace('/^[\x{FEFF}\x{200B}\x{2060}]+/u', '', $normalized);
+        $normalized = mb_strtolower($normalized);
+        $normalized = Str::ascii($normalized);
+        $normalized = $this->replaceVietnameseAccents($normalized);
+        $normalized = preg_replace('/[^a-z0-9]+/', '_', $normalized);
+
+        return trim((string) $normalized, '_');
+    }
+
+    private function replaceVietnameseAccents(string $value): string
+    {
+        return strtr($value, [
+            'à' => 'a', 'á' => 'a', 'ạ' => 'a', 'ả' => 'a', 'ã' => 'a',
+            'â' => 'a', 'ầ' => 'a', 'ấ' => 'a', 'ậ' => 'a', 'ẩ' => 'a', 'ẫ' => 'a',
+            'ă' => 'a', 'ằ' => 'a', 'ắ' => 'a', 'ặ' => 'a', 'ẳ' => 'a', 'ẵ' => 'a',
+            'è' => 'e', 'é' => 'e', 'ẹ' => 'e', 'ẻ' => 'e', 'ẽ' => 'e',
+            'ê' => 'e', 'ề' => 'e', 'ế' => 'e', 'ệ' => 'e', 'ể' => 'e', 'ễ' => 'e',
+            'ì' => 'i', 'í' => 'i', 'ị' => 'i', 'ỉ' => 'i', 'ĩ' => 'i',
+            'ò' => 'o', 'ó' => 'o', 'ọ' => 'o', 'ỏ' => 'o', 'õ' => 'o',
+            'ô' => 'o', 'ồ' => 'o', 'ố' => 'o', 'ộ' => 'o', 'ổ' => 'o', 'ỗ' => 'o',
+            'ơ' => 'o', 'ờ' => 'o', 'ớ' => 'o', 'ợ' => 'o', 'ở' => 'o', 'ỡ' => 'o',
+            'ù' => 'u', 'ú' => 'u', 'ụ' => 'u', 'ủ' => 'u', 'ũ' => 'u',
+            'ư' => 'u', 'ừ' => 'u', 'ứ' => 'u', 'ự' => 'u', 'ử' => 'u', 'ữ' => 'u',
+            'ỳ' => 'y', 'ý' => 'y', 'ỵ' => 'y', 'ỷ' => 'y', 'ỹ' => 'y',
+            'đ' => 'd',
+        ]);
+    }
+
+    private function extractSpreadsheetRows(UploadedFile $file): array
+    {
+        try {
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getSheet(0);
+
+            $highestRow = (int) $sheet->getHighestDataRow();
+            $highestColumnIndex = Coordinate::columnIndexFromString($sheet->getHighestDataColumn());
+
+            $rows = [];
+
+            for ($rowIndex = 1; $rowIndex <= $highestRow; $rowIndex++) {
+                $rowValues = [];
+                $hasValue = false;
+
+                for ($columnIndex = 1; $columnIndex <= $highestColumnIndex; $columnIndex++) {
+                    $coordinate = Coordinate::stringFromColumnIndex($columnIndex) . $rowIndex;
+                    $cell = $sheet->getCell($coordinate);
+
+                    $value = $cell->getFormattedValue();
+                    $hyperlink = $this->extractSpreadsheetCellHyperlink($cell);
+
+                    if (!empty($hyperlink)) {
+                        $value = $hyperlink;
+                    }
+
+                    if (!$hasValue && trim((string) $value) !== '') {
+                        $hasValue = true;
+                    }
+
+                    $rowValues[] = $value;
+                }
+
+                if ($hasValue) {
+                    $rows[] = $rowValues;
+                }
+            }
+
+            return $rows;
+        } catch (\Throwable $e) {
+            Log::warning('Spreadsheet hyperlink parsing failed, fallback to toArray', [
+                'file' => $file->getClientOriginalName(),
+                'message' => $e->getMessage(),
+            ]);
+
+            $sheets = Excel::toArray([], $file);
+
+            return $sheets[0] ?? [];
+        }
+    }
+
+    private function extractSpreadsheetCellHyperlink($cell): ?string
+    {
+        try {
+            $hyperlink = $cell->getHyperlink();
+            if (!empty($hyperlink) && !empty($hyperlink->getUrl())) {
+                return trim((string) $hyperlink->getUrl());
+            }
+        } catch (\Throwable $e) {
+            // Ignore and continue with formula parsing.
+        }
+
+        $rawValue = $cell->getValue();
+        if (!is_string($rawValue)) {
+            return null;
+        }
+
+        $formula = trim($rawValue);
+        if (!str_starts_with(strtoupper($formula), '=HYPERLINK(')) {
+            return null;
+        }
+
+        if (preg_match('/^=HYPERLINK\(\s*"([^"]+)"\s*[;,]/i', $formula, $matches)) {
+            return trim((string) $matches[1]);
+        }
+
+        if (preg_match('/^=HYPERLINK\(\s*\'([^\']+)\'\s*[;,]/i', $formula, $matches)) {
+            return trim((string) $matches[1]);
+        }
+
+        return null;
+    }
+
+    private function sanitizeExternalUrl($value): ?string
+    {
+        $cleaned = $this->cleanCellValue($value);
+        if (empty($cleaned)) {
+            return null;
+        }
+
+        $cleaned = trim($cleaned, " \t\n\r\0\x0B\"'");
+
+        if (preg_match('/^=HYPERLINK\("([^\"]+)"/i', $cleaned, $matches)) {
+            $cleaned = trim($matches[1]);
+        }
+
+        if (preg_match('/^=HYPERLINK\(\s*\'([^\']+)\'\s*[;,]/i', $cleaned, $matches)) {
+            $cleaned = trim($matches[1]);
+        }
+
+        if (str_starts_with($cleaned, '//')) {
+            $cleaned = 'https:' . $cleaned;
+        }
+
+        $cleaned = str_replace(' ', '%20', $cleaned);
+
+        if (!preg_match('/^https?:\/\//i', $cleaned)) {
+            return null;
+        }
+
+        return filter_var($cleaned, FILTER_VALIDATE_URL) ? $cleaned : null;
     }
 
     private function cleanCellValue($value): ?string
@@ -2383,6 +2552,8 @@ class DictionaryController extends Controller
                 'pronunciation' => $word['pronunciation'] ?? null,
                 'definition' => $word['definition'] ?? null,
                 'translation_vi' => $word['translation_vi'] ?? null,
+                'audio_url' => $word['audio_url'] ?? null,
+                'collocation' => $word['collocation'] ?? null,
                 'example' => $word['example'] ?? null,
                 'image_url' => $word['image_url'] ?? null,
                 'sort_order' => $word['sort_order'] ?? 0,

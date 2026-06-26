@@ -129,6 +129,22 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="input-label">{{ trans('panel.bundle_vocabulary_intro_content') }}</label>
+                    <textarea name="intro_content" class="form-control" rows="4" placeholder="{{ trans('panel.bundle_vocabulary_intro_content_placeholder') }}">{{ old('intro_content') }}</textarea>
+                    @error('intro_content')
+                        <div class="text-danger mt-4">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">{{ trans('panel.bundle_vocabulary_feature_content') }}</label>
+                    <textarea name="feature_content" class="form-control" rows="4" placeholder="{{ trans('panel.bundle_vocabulary_feature_content_placeholder') }}">{{ old('feature_content') }}</textarea>
+                    @error('feature_content')
+                        <div class="text-danger mt-4">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label class="input-label">{{ trans('panel.bundle_vocabulary_source_file') }}</label>
                     <input type="file" name="source_file" class="form-control" accept=".csv,.txt,.xls,.xlsx" required>
                     <p class="font-12 text-gray-500 mt-8 mb-0">{{ trans('panel.bundle_vocabulary_file_template_hint') }}</p>

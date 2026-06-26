@@ -99,12 +99,21 @@ class DashboardController extends Controller
         $data['mockTestDate'] = UserMeta::where('user_id', $user->id)->where('name', 'mock_test_date')->value('value');
 
         // Word of the Day (rotates daily, from academic word list)
+        $dayIndex = 0;
         $wordCount = AcademicWordListWord::count();
         if ($wordCount > 0) {
-            $dayIndex        = (int) date('z') % $wordCount;
-            $data['wordOfDay'] = AcademicWordListWord::skip($dayIndex)->first();
+            $dayIndex = (int) date('z') % $wordCount;
+            $data['wordOfDay'] = AcademicWordListWord::orderBy('id')->skip($dayIndex)->first();
         } else {
-            $data['wordOfDay'] = null;
+            $dailyFallbackWords = [
+                ['word' => 'food additives', 'pronunciation' => 'fuːd əˈdɪktɪvz', 'translation' => 'chất phụ gia thực phẩm', 'definition' => 'Substances added to food to preserve or improve it.', 'example' => 'Food additives improve the taste of food.'],
+                ['word' => 'sustainable', 'pronunciation' => 'səˈsteɪnəbl', 'translation' => 'bền vững', 'definition' => 'Able to be maintained over the long term without exhausting resources.', 'example' => 'We need sustainable solutions for climate change.'],
+                ['word' => 'significant', 'pronunciation' => 'sɪɡˈnɪfɪkənt', 'translation' => 'đáng kể', 'definition' => 'Large or important enough to be noticed.', 'example' => 'The results showed a significant improvement.'],
+                ['word' => 'achieve', 'pronunciation' => 'əˈtʃiːv', 'translation' => 'đạt được', 'definition' => 'To successfully complete or reach a goal.', 'example' => 'She worked hard to achieve her target band score.'],
+                ['word' => 'advantage', 'pronunciation' => 'ədˈvɑːntɪdʒ', 'translation' => 'lợi thế', 'definition' => 'A condition or circumstance that puts someone in a favorable position.', 'example' => 'Reading regularly gives students an advantage.'],
+            ];
+
+            $data['wordOfDay'] = $dailyFallbackWords[$dayIndex % count($dailyFallbackWords)];
         }
 
         return $data;
@@ -267,13 +276,16 @@ class DashboardController extends Controller
 
         $activityData = $this->buildSkillActivityChart($user);
 
+        $userOverall = $latestAttempt ? (float)($latestAttempt->overall_band ?? 0) : 0;
+
         $radarData = [
-            'labels' => ['Listening', 'Reading', 'Writing', 'Speaking'],
+            'labels' => ['Listening', 'Reading', 'Writing', 'Speaking', 'Overall'],
             'data'   => [
                 $skillBands['listening'],
                 $skillBands['reading'],
                 $skillBands['writing'],
                 $skillBands['speaking'],
+                $userOverall > 0 ? $userOverall : round(collect($skillBands)->only(['listening', 'reading', 'writing', 'speaking'])->filter(fn ($band) => $band > 0)->avg() ?: 0, 1),
             ],
         ];
 
@@ -287,7 +299,6 @@ class DashboardController extends Controller
             ->get()
             ->map(fn($item) => ['user' => $item->user, 'best_band' => $item->best_band]);
 
-        $userOverall = $latestAttempt ? (float)($latestAttempt->overall_band ?? 0) : 0;
         $userRank    = IeltsTestAttempt::whereNotNull('completed_at')
             ->whereNotNull('overall_band')
             ->select('user_id', DB::raw('MAX(overall_band) as best_band'))
@@ -682,14 +693,31 @@ class DashboardController extends Controller
                       ->orWhereBetween('writing_finished_at',  [$start, $end])
                       ->orWhereBetween('speaking_finished_at', [$start, $end]);
                 })
-                ->get();
+                ->get([
+                    'completed_at',
+                    'listening_finished_at',
+                    'reading_finished_at',
+                    'writing_finished_at',
+                    'speaking_finished_at',
+                    'listening_band',
+                    'reading_band',
+                    'writing_band',
+                    'speaking_band',
+                ]);
 
             foreach (array_keys($skillMap) as $skill) {
                 $mins = 0;
                 foreach ($attempts as $a) {
                     $ft = $a->{$skill . '_finished_at'};
+                    $band = (float) ($a->{$skill . '_band'} ?? 0);
+
                     if ($ft && $ft >= $start && $ft <= $end) {
-                        $mins += max(5, (int) round(($ft - ($a->started_at ?? $ft)) / 60));
+                        $mins += 1;
+                        continue;
+                    }
+
+                    if (!$ft && $band > 0 && (int) ($a->completed_at ?? 0) >= $start && (int) ($a->completed_at ?? 0) <= $end) {
+                        $mins += 1;
                     }
                 }
                 $skillMap[$skill][] = $mins;
