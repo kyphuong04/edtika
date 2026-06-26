@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\IeltsQuestionGroup;
 use App\Models\IeltsTest;
+use App\Models\IeltsTestAutosave;
 use App\Models\IeltsTestPart;
 use App\Models\IeltsTestQuestion;
 use App\Models\IeltsTestSection;
@@ -57,12 +58,15 @@ class IeltsTestInlineController extends Controller
     {
         $this->authorizeCreatorAccess();
 
+        $autosavePayload = $this->getServerAutosavePayload(null);
+
         return view('design_1.panel.ielts_tests_manage.create_inline_complete_with_groups', [
             'pageTitle' => 'Create Complete IELTS Test',
             'formAction' => route('panel.my_ielts_tests.store_with_groups'),
             'submitButtonText' => 'Submit Test for Approval',
             'cancelUrl' => route('panel.my_ielts_tests.index'),
             'currentTestType' => null,
+            'autosavePayload' => $autosavePayload,
             'testData' => [
                 'sections' => [
                     'listening' => ['parts' => []],
@@ -89,6 +93,8 @@ class IeltsTestInlineController extends Controller
             ->where('created_by', auth()->id())
             ->findOrFail($id);
 
+        $autosavePayload = $this->getServerAutosavePayload((int) $test->id);
+
         return view('design_1.panel.ielts_tests_manage.create_inline_complete_with_groups', [
             'pageTitle' => 'Edit IELTS Test',
             'test' => $test,
@@ -96,7 +102,66 @@ class IeltsTestInlineController extends Controller
             'submitButtonText' => 'Update & Submit for Approval',
             'cancelUrl' => route('panel.my_ielts_tests.index'),
             'currentTestType' => $test->type,
+            'autosavePayload' => $autosavePayload,
             'testData' => $this->buildInlineTestData($test),
+        ]);
+    }
+
+    public function getAutosaveDraft(Request $request)
+    {
+        $this->authorizeCreatorAccess();
+
+        $testId = $request->filled('test_id') ? (int) $request->input('test_id') : null;
+        if ($testId !== null) {
+            $this->findOwnedInlineTestOrFail($testId);
+        }
+
+        $payload = $this->getServerAutosavePayload($testId);
+
+        return response()->json([
+            'success' => true,
+            'payload' => $payload,
+        ]);
+    }
+
+    public function saveAutosaveDraft(Request $request)
+    {
+        $this->authorizeCreatorAccess();
+
+        $validated = $request->validate([
+            'test_id' => 'nullable|integer',
+            'payload' => 'required|array',
+            'payload.form' => 'required|array',
+            'payload.testData' => 'required|array',
+            'payload.savedAt' => 'nullable|integer',
+        ]);
+
+        $testId = $validated['test_id'] ?? null;
+        if ($testId !== null) {
+            $this->findOwnedInlineTestOrFail((int) $testId);
+        }
+
+        $payload = $this->sanitizeAutosavePayload($validated['payload']);
+        $contextKey = $this->buildAutosaveContextKey($testId ? (int) $testId : null);
+        $now = time();
+
+        IeltsTestAutosave::query()->updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'context_key' => $contextKey,
+            ],
+            [
+                'test_id' => $testId ? (int) $testId : null,
+                'payload_json' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'saved_at_ms' => (int) ($payload['savedAt'] ?? (int) round(microtime(true) * 1000)),
+                'updated_at' => $now,
+                'created_at' => $now,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'savedAt' => (int) ($payload['savedAt'] ?? 0),
         ]);
     }
 
@@ -1167,6 +1232,8 @@ class IeltsTestInlineController extends Controller
             'short_answer' => 'short_answer',
             'essay' => 'essay',
             'speaking_prompt' => 'essay',
+            'drag_drop_disappear' => 'drag_drop_disappear',
+            'drag_drop_reuse' => 'drag_drop_reuse',
         ];
 
         return $mapping[$type] ?? $type;
@@ -1434,6 +1501,8 @@ class IeltsTestInlineController extends Controller
             'essay' => 'essay',
             'speaking_prompt' => 'essay',
             'matching' => 'matching',
+            'drag_drop_disappear' => 'drag_drop_disappear',
+            'drag_drop_reuse' => 'drag_drop_reuse',
         ];
 
         return $mapping[$type] ?? 'multiple_choice';
@@ -1678,6 +1747,84 @@ class IeltsTestInlineController extends Controller
         }
 
         return $value;
+    }
+
+    private function buildAutosaveContextKey(?int $testId = null): string
+    {
+        return $testId ? ('test-' . $testId) : 'new';
+    }
+
+    private function getServerAutosavePayload(?int $testId = null): ?array
+    {
+        $maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+        $contextKey = $this->buildAutosaveContextKey($testId);
+
+        $autosave = IeltsTestAutosave::query()
+            ->where('user_id', auth()->id())
+            ->where('context_key', $contextKey)
+            ->first();
+
+        if (!$autosave || empty($autosave->payload_json)) {
+            return null;
+        }
+
+        $payload = json_decode($autosave->payload_json, true);
+        if (!is_array($payload) || empty($payload['form']) || empty($payload['testData'])) {
+            return null;
+        }
+
+        $savedAt = isset($payload['savedAt']) ? (int) $payload['savedAt'] : 0;
+        if ($savedAt <= 0) {
+            $savedAt = (int) ($autosave->saved_at_ms ?? 0);
+        }
+
+        if ($savedAt <= 0) {
+            $savedAt = (int) round(microtime(true) * 1000);
+        }
+
+        if (((int) round(microtime(true) * 1000) - $savedAt) > $maxAgeMs) {
+            $autosave->delete();
+            return null;
+        }
+
+        $payload['savedAt'] = $savedAt;
+
+        return $this->sanitizeAutosavePayload($payload);
+    }
+
+    private function sanitizeAutosavePayload(array $payload): array
+    {
+        $form = $payload['form'] ?? [];
+        if (!is_array($form)) {
+            $form = [];
+        }
+
+        $testData = $payload['testData'] ?? [];
+        if (!is_array($testData)) {
+            $testData = [];
+        }
+
+        if (!isset($testData['sections']) || !is_array($testData['sections'])) {
+            $testData['sections'] = [];
+        }
+
+        $testData = $this->sanitizeInlineGroupsPayload($testData);
+
+        return [
+            'version' => isset($payload['version']) ? (int) $payload['version'] : 1,
+            'path' => isset($payload['path']) && is_string($payload['path']) ? $payload['path'] : request()->path(),
+            'savedAt' => isset($payload['savedAt']) ? (int) $payload['savedAt'] : (int) round(microtime(true) * 1000),
+            'form' => [
+                'type' => $this->sanitizeInlineText((string) ($form['type'] ?? ''), 40) ?? '',
+                'title' => $this->sanitizeInlineText((string) ($form['title'] ?? ''), 255) ?? '',
+                'format' => $this->sanitizeInlineText((string) ($form['format'] ?? ''), 40) ?? '',
+                'description' => $this->sanitizeInlineText((string) ($form['description'] ?? ''), 65000) ?? '',
+                'difficulty_level' => $this->sanitizeInlineText((string) ($form['difficulty_level'] ?? ''), 40) ?? '',
+                'target_band_min' => $this->sanitizeInlineText((string) ($form['target_band_min'] ?? ''), 20) ?? '',
+                'target_band_max' => $this->sanitizeInlineText((string) ($form['target_band_max'] ?? ''), 20) ?? '',
+            ],
+            'testData' => $testData,
+        ];
     }
 
     private function authorizeCreatorAccess(): void

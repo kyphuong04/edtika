@@ -103,14 +103,30 @@ class BundleVocabularyController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'original_price' => 'nullable|numeric|min:0.01|max:9999999999.99',
+            'sale_price' => 'nullable|numeric|min:0|max:9999999999.99|lte:original_price',
+            'currency_code' => 'required|string|in:VND,USD',
+            'is_published_global' => 'nullable|boolean',
             'source_file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:20480',
         ]);
+
+        if ($request->boolean('is_published_global')
+            && (!$request->filled('original_price') || !$request->filled('sale_price'))
+        ) {
+            return back()->withErrors([
+                'original_price' => trans('panel.bundle_vocabulary_pricing_required_for_publish'),
+            ])->withInput();
+        }
 
         DB::beginTransaction();
 
         try {
             $set->name = $request->name;
             $set->description = $request->description;
+            $set->original_price = $request->filled('original_price') ? $request->original_price : null;
+            $set->sale_price = $request->filled('sale_price') ? $request->sale_price : null;
+            $set->currency_code = $request->currency_code;
+            $set->is_published_global = (bool) $request->boolean('is_published_global');
 
             if ($request->hasFile('source_file')) {
                 $parsedWords = $this->parseUploadedVocabularyFile($request->file('source_file'));

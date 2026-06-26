@@ -148,6 +148,41 @@
                         <textarea name="description" class="form-control" rows="3">{{ old('description', $set->description) }}</textarea>
                     </div>
 
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label class="font-13 font-weight-bold text-dark">{{ trans('panel.bundle_vocabulary_original_price') }}</label>
+                                <input type="number" step="0.01" min="0" name="original_price" class="form-control" value="{{ old('original_price', $set->original_price) }}" placeholder="0.00">
+                                @error('original_price')<div class="text-danger mt-4">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="form-group">
+                                <label class="font-13 font-weight-bold text-dark">{{ trans('panel.bundle_vocabulary_sale_price') }}</label>
+                                <input type="number" step="0.01" min="0" name="sale_price" class="form-control" value="{{ old('sale_price', $set->sale_price) }}" placeholder="0.00">
+                                @error('sale_price')<div class="text-danger mt-4">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-13 font-weight-bold text-dark">{{ trans('panel.bundle_vocabulary_currency') }}</label>
+                        <select name="currency_code" class="form-control" required>
+                            <option value="VND" {{ old('currency_code', $set->currency_code ?? 'VND') === 'VND' ? 'selected' : '' }}>{{ trans('panel.bundle_vocabulary_currency_vnd') }}</option>
+                            <option value="USD" {{ old('currency_code', $set->currency_code ?? 'VND') === 'USD' ? 'selected' : '' }}>{{ trans('panel.bundle_vocabulary_currency_usd') }}</option>
+                        </select>
+                        @error('currency_code')<div class="text-danger mt-4">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="isPublishedGlobal" name="is_published_global" value="1" {{ old('is_published_global', $set->is_published_global) ? 'checked' : '' }}>
+                            <label class="custom-control-label" for="isPublishedGlobal">{{ trans('panel.bundle_vocabulary_publish_global') }}</label>
+                        </div>
+                        <p class="font-12 text-gray-500 mt-6 mb-0">{{ trans('panel.bundle_vocabulary_publish_global_hint') }}</p>
+                    </div>
+
                     <div class="form-group">
                         <label class="font-13 font-weight-bold text-dark">{{ trans('panel.bundle_vocabulary_source_file') }}</label>
                         <input type="file" name="source_file" class="form-control" accept=".csv,.txt,.xls,.xlsx">

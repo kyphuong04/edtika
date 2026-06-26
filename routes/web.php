@@ -245,8 +245,9 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     });
 
     Route::group(['prefix' => 'dictionary'], function () {
-        Route::view('/', 'design_1.web.dictionary.index');
+        Route::get('/', [\App\Http\Controllers\Panel\DictionaryController::class, 'publicIndex']);
         Route::post('/search-first', [\App\Http\Controllers\Panel\DictionaryController::class, 'searchFirst']);
+        Route::get('/word-list-packages/{id}/preview', [\App\Http\Controllers\Panel\DictionaryController::class, 'publicPreviewBundleVocabularySet']);
     });
 
     Route::group(['prefix' => 'tags'], function () {
