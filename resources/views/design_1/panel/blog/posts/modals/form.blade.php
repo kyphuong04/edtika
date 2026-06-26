@@ -11,14 +11,14 @@
     $buttonLabel = !empty($post) ? trans('public.save') : trans('update.create_a_post');
 @endphp
 
-<form action="/panel/blog/{{ !empty($post) ? $post->id.'/update' : 'store' }}" method="post" enctype="multipart/form-data" class="blog-post-modal-form js-blog-post-modal-form">
+<form action="/panel/blog/{{ !empty($post) ? $post->id.'/update' : 'store' }}" method="post" enctype="multipart/form-data" class="blog-post-modal-form js-blog-post-modal-form" data-post-id="{{ !empty($post) ? $post->id : '' }}">
     {{ csrf_field() }}
 
     <input type="hidden" name="locale" value="{{ $locale ?? mb_strtolower(app()->getLocale()) }}">
 
     <div class="form-group">
         <label class="form-group-label">{{ trans('admin/main.category') }}</label>
-        <select name="category_id" class="form-control form-control-lg rounded-16 @error('category_id') is-invalid @enderror">
+        <select name="category_id" class="form-control form-control-lg rounded-16 js-blog-category-select @error('category_id') is-invalid @enderror">
             <option value="">{{ trans('admin/main.choose_category') }}</option>
 
             @foreach(($blogCategories ?? []) as $category)

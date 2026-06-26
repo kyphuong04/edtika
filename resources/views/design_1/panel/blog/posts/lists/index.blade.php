@@ -236,6 +236,92 @@
                 });
             }
 
+            // Load bài viết theo category qua AJAX
+            function loadRelatedPostsByCategory($scope, categoryId, selectedIds) {
+                const $form = $scope.closest('form.js-blog-post-modal-form');
+                const postId = $form.data('post-id') || '';
+                const $select = $scope.find('.js-blog-related-posts-select');
+
+                if (!categoryId) {
+                    // Nếu chưa chọn category thì clear danh sách
+                    if ($select.hasClass('select2-hidden-accessible')) {
+                        $select.select2('destroy');
+                    }
+                    $select.empty().append(
+                        $('<option>', {
+                            value: '',
+                            disabled: true,
+                            text: '{{ trans('update.blog_post_no_result') }}'
+                        })
+                    );
+                    initRelatedPostsSelect($scope);
+                    return;
+                }
+
+                // Hiện loading
+                $select.prop('disabled', true);
+
+                $.ajax({
+                    url: '/panel/blog/posts-by-category',
+                    type: 'GET',
+                    data: {
+                        category_id: categoryId,
+                        exclude_id: postId,
+                    },
+                    success: function (posts) {
+                        if ($select.hasClass('select2-hidden-accessible')) {
+                            $select.select2('destroy');
+                        }
+
+                        $select.empty();
+
+                        if (!posts || posts.length === 0) {
+                            $select.append(
+                                $('<option>', {
+                                    value: '',
+                                    disabled: true,
+                                    text: '{{ trans('update.blog_post_no_result') }}'
+                                })
+                            );
+                        } else {
+                            posts.forEach(function (post) {
+                                const label = post.title + (post.author ? ' - ' + post.author : '');
+                                const isSelected = Array.isArray(selectedIds) && selectedIds.includes(post.id);
+                                $select.append(
+                                    $('<option>', {
+                                        value: post.id,
+                                        selected: isSelected,
+                                        text: label,
+                                    })
+                                );
+                            });
+                        }
+
+                        initRelatedPostsSelect($scope);
+                    },
+                    error: function () {
+                        if (typeof notify !== 'undefined') {
+                            notify('danger', requestFailedText);
+                        }
+                    },
+                    complete: function () {
+                        $select.prop('disabled', false);
+                    }
+                });
+            }
+
+            // Lắng nghe thay đổi category
+            $('body').on('change', '.js-blog-category-select', function () {
+                const $scope = $(this).closest('.swal2-popup, .blog-post-modal-form');
+                const categoryId = $(this).val();
+                const $relatedSelect = $scope.find('.js-blog-related-posts-select');
+                const currentSelectedIds = $relatedSelect.val()
+                    ? $relatedSelect.val().map(Number)
+                    : [];
+
+                loadRelatedPostsByCategory($scope, categoryId, currentSelectedIds);
+            });
+
             function clearBlogPostErrors($form) {
                 $form.find('.is-invalid').removeClass('is-invalid');
                 $form.find('.js-blog-post-error').text('');
@@ -268,7 +354,22 @@
                     $footer.html('&nbsp;');
                     initBlogPostEditor($body);
                     bindImagePreview($body);
-                    initRelatedPostsSelect($body);
+
+                    // Lấy category và selected ids hiện tại khi modal mở
+                    const $categorySelect = $body.find('.js-blog-category-select');
+                    const initialCategoryId = $categorySelect.val();
+                    const initialSelectedIds = $body.find('.js-blog-related-posts-select')
+                        .find('option[selected]')
+                        .map(function () { return Number($(this).val()); })
+                        .get();
+
+                    if (initialCategoryId) {
+                        // Nếu đã có category (edit mode) thì load ngay theo category
+                        loadRelatedPostsByCategory($body, initialCategoryId, initialSelectedIds);
+                    } else {
+                        // Nếu chưa có category (create mode) thì chỉ init select2
+                        initRelatedPostsSelect($body);
+                    }
                 }, '', '48rem');
             });
 

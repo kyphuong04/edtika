@@ -566,6 +566,9 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/', 'BlogPostsController@index');
         Route::get('/new', 'BlogPostsController@create');
         Route::post('/store', 'BlogPostsController@store');
+
+        Route::get('/posts-by-category', 'BlogPostsController@getPostsByCategory');
+
         Route::get('/{post_id}/edit', 'BlogPostsController@edit');
         Route::post('/{post_id}/update', 'BlogPostsController@update');
         Route::get('/{post_id}/delete', 'BlogPostsController@delete');
