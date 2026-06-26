@@ -10,16 +10,23 @@
     $skillProgress = $ieltsData['skillProgress'] ?? [];
     $skillBands    = $ieltsData['skillBands']    ?? [];
     $skillDetails  = $ieltsData['skillDetails']  ?? [];
+    $currentCourseTitle = $currentCourseTitle ?? data_get($helloBox ?? [], 'continueLearningCourses.0.title') ?? data_get($coursesOverview ?? [], 'courses.0.title');
 @endphp
 
 <div class="bg-white rounded-24 p-12 h-100">
+    <div class="text-center mb-12" style="padding:2px 8px 8px;">
+        <div class="font-11 text-gray-500 font-weight-bold text-uppercase mb-4" style="letter-spacing:.08em;">Current course</div>
+        <h4 class="font-18 font-weight-bold text-dark mb-0 text-ellipsis" style="line-height:1.25;">
+            {{ $currentCourseTitle ?: 'Your active IELTS course' }}
+        </h4>
+    </div>
+
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px;align-content:start;justify-items:center;max-width:360px;margin:0 auto;">
         @foreach($skillMeta as $key => $meta)
             @php
                 $detail = $skillDetails[$key] ?? [];
                 $pct  = $detail['progress'] ?? ($skillProgress[$key] ?? 0);
                 $band = $detail['band'] ?? ($skillBands[$key] ?? 0);
-                $course = $detail['course'] ?? null;
                 $size = 62;
                 $r    = 26;
                 $circ = round(2 * M_PI * $r, 2);
@@ -47,9 +54,6 @@
                 </div>
                 {{-- Skill name --}}
                 <span style="font-size:12px;font-weight:600;color:#6B7280;margin-top:0;text-align:center;line-height:1.2;">{{ $meta['name'] }}</span>
-                <span style="font-size:10px;color:#9CA3AF;text-align:center;line-height:1.25;min-height:25px;display:block;">
-                    {{ $course ?: 'No course yet' }}
-                </span>
             </a>
         @endforeach
     </div>

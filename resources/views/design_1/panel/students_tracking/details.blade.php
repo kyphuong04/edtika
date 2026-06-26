@@ -408,7 +408,7 @@
     'use strict';
     var el = document.getElementById('sdRadarChart');
     if (!el || typeof ApexCharts === 'undefined') return;
-    var bands  = @json(array_values($skillBands));
+    var bands  = @json(array_values($radarBands ?? $skillBands));
     var labels = ['Listening', 'Reading', 'Writing', 'Speaking', 'Overall'];
     new ApexCharts(el, {
         chart: {

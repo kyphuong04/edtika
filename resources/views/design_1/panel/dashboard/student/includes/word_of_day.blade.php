@@ -1,6 +1,7 @@
 @php
     /** @var \App\Models\AcademicWordListWord|null $wordOfDay */
     $word = $wordOfDay ?? null;
+    $fallbackWord = is_array($word) ? $word : null;
 @endphp
 
 <div class="bg-white rounded-24 p-20 h-100 d-flex flex-column">
@@ -9,25 +10,59 @@
         <span class="font-11 text-gray-400">{{ now()->format('d M Y') }}</span>
     </div>
 
-    @if($word)
-        <div class="flex-grow-1">
-            <p class="font-18 font-weight-bold text-dark mb-4">{{ $word->word }}</p>
+    @if(is_object($word))
+        <div class="flex-grow-1 rounded-20 p-16" style="background:linear-gradient(180deg,#ffffff 0%,#f8f6ff 100%);border:1px solid #efe8ff;">
+            <div class="d-flex align-items-center justify-content-between mb-10">
+                <span class="badge badge-light font-11 px-10 py-6" style="background:#efe8ff;color:#5b21b6;">Word of the day</span>
+                @if(!empty($word->word_type))
+                    <span class="font-11 text-gray-400">{{ $word->word_type }}</span>
+                @endif
+            </div>
 
-            @if($word->pronunciation)
-                <p class="font-12 text-gray-500 mb-8">{{ $word->pronunciation }}</p>
+            <p class="font-22 font-weight-bold text-dark mb-2">{{ $word->word }}</p>
+
+            @if(!empty($word->pronunciation))
+                <p class="font-12 text-gray-500 mb-8">/{{ $word->pronunciation }}/</p>
             @endif
 
-            @if($word->translation)
-                <p class="font-12 text-primary mb-8 font-weight-bold">{{ $word->translation }}</p>
+            @if(!empty($word->translation))
+                <p class="font-13 text-primary mb-10 font-weight-bold">{{ $word->translation }}</p>
             @endif
 
-            @if($word->definition)
-                <p class="font-12 text-dark mb-8">{{ $word->definition }}</p>
+            @if(!empty($word->definition))
+                <p class="font-12 text-dark mb-10">{{ $word->definition }}</p>
             @endif
 
-            @if($word->example)
-                <div class="p-12 rounded-12 bg-gray-100 border-left-primary" style="border-left:3px solid var(--primary);">
+            @if(!empty($word->example))
+                <div class="p-12 rounded-12 bg-white border-left-primary" style="border-left:3px solid var(--primary);">
                     <p class="font-12 text-gray-500 mb-0 font-italic">{{ $word->example }}</p>
+                </div>
+            @endif
+        </div>
+    @elseif(!empty($fallbackWord))
+        <div class="flex-grow-1 rounded-20 p-16" style="background:linear-gradient(180deg,#ffffff 0%,#f8f6ff 100%);border:1px solid #efe8ff;">
+            <div class="d-flex align-items-center justify-content-between mb-10">
+                <span class="badge badge-light font-11 px-10 py-6" style="background:#efe8ff;color:#5b21b6;">Word of the day</span>
+                <span class="font-11 text-gray-400">Daily fallback</span>
+            </div>
+
+            <p class="font-22 font-weight-bold text-dark mb-2">{{ $fallbackWord['word'] }}</p>
+
+            @if(!empty($fallbackWord['pronunciation']))
+                <p class="font-12 text-gray-500 mb-8">/{{ $fallbackWord['pronunciation'] }}/</p>
+            @endif
+
+            @if(!empty($fallbackWord['translation']))
+                <p class="font-13 text-primary mb-10 font-weight-bold">{{ $fallbackWord['translation'] }}</p>
+            @endif
+
+            @if(!empty($fallbackWord['definition']))
+                <p class="font-12 text-dark mb-10">{{ $fallbackWord['definition'] }}</p>
+            @endif
+
+            @if(!empty($fallbackWord['example']))
+                <div class="p-12 rounded-12 bg-white border-left-primary" style="border-left:3px solid var(--primary);">
+                    <p class="font-12 text-gray-500 mb-0 font-italic">{{ $fallbackWord['example'] }}</p>
                 </div>
             @endif
         </div>
