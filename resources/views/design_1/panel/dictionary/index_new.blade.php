@@ -831,12 +831,12 @@
     
     .answer-pronunciation {
         font-size: 13px;
-        color: #64748b;
+        color: #511D99;
         font-style: italic;
     }
     
     .dark-mode .answer-pronunciation {
-        color: #94a3b8;
+        color: #511D99;
     }
     
     .practice-actions {
@@ -871,13 +871,14 @@
     
     .btn-next {
         background: transparent;
-        color: #475569;
-        border: 2px solid #cbd5e1;
+        color: #511D99;
+        border: 2px solid #511D99;
     }
     
     .btn-next:hover {
-        background: #f1f5f9;
-        border-color: #94a3b8;
+        background: #511D99;
+        border-color: #511D99;
+        color: white;
     }
     
     .btn-next:disabled {
@@ -894,19 +895,21 @@
     }
     
     .dark-mode .btn-exit:hover {
-        background: #0f172a;
-        border-color: #64748b;
+        background: #511D99;
+        border-color: #511D99;
+        color: white;
     }
     
     .dark-mode .btn-next {
         background: transparent;
-        color: #cbd5e1;
-        border-color: #475569;
+        color: #511D99;
+        border-color: #511D99;
     }
     
     .dark-mode .btn-next:hover {
-        background: #0f172a;
-        border-color: #64748b;
+        background: #511D99;
+        border-color: #511D99;
+        color: white;
     }
     
     .hidden {
@@ -1347,8 +1350,14 @@
     .sidebar-card-display-text {
         font-size: 13px;
         color: #511D99;
-        text-align: center;
-        line-height: 1.6;
+        text-align: left;
+        line-height: 1.45;
+        white-space: normal;
+        width: 100%;
+    }
+    .sidebar-card-display-text strong {
+        color: #511D99;
+        font-weight: 700;
     }
     .sidebar-card-meta { text-align: center; margin-bottom: 10px; }
     .sidebar-card-word {
@@ -1630,19 +1639,34 @@
 
             <!-- Flashcard Practice Container (hidden by default) -->
             <div class="practice-mode-container hidden" id="flashcardPracticeContainer" style="text-align:center;">
-                <div style="max-width:720px;margin:0 auto;padding:20px;">
+                <div style="max-width:760px;margin:0 auto;padding:20px;">
 
-                    <div id="flashcardCard" style="background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:26px;min-height:360px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;">
-                        <div id="flashcardVisual" style="width:100%;max-width:560px;height:190px;border:1px solid rgba(81,29,153,0.12);border-radius:22px;background:#fff;margin-bottom:20px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                            <img id="flashcardImage" src="" alt="" style="max-width:100%;max-height:100%;display:none;object-fit:cover;">
-                        </div>
+                    <div id="flashcardCard" style="background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:26px;min-height:420px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;">
+                        <div id="flashcardFrontLabel" style="display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;letter-spacing:0.02em;margin-bottom:14px;">MẶT TRƯỚC</div>
+                        <div id="flashcardBackLabel" style="display:none;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;background:#16a34a;color:#fff;font-weight:700;font-size:14px;letter-spacing:0.02em;margin-bottom:14px;">MẶT SAU</div>
 
                         <div id="flashcardWord" style="font-size:42px;font-weight:800;color:#1e293b;line-height:1.1;margin-bottom:8px;">-</div>
-                        <div id="flashcardPron" style="font-size:34px;color:#475569;font-style:italic;line-height:1.1;margin-bottom:16px;"></div>
-                        <div id="flashcardBack" style="display:none;font-size:24px;color:#475569;line-height:1.6;max-width:92%;width:100%;text-align:center;">Definition / Translation</div>
+                        <div id="flashcardPartOfSpeech" style="display:inline-flex;align-items:center;justify-content:center;font-size:22px;color:#334155;line-height:1.2;margin-bottom:14px;"></div>
+
+                        <div id="flashcardVisual" style="width:100%;max-width:600px;height:230px;border:1px solid rgba(81,29,153,0.12);border-radius:22px;background:#fff;margin-bottom:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                            <img id="flashcardImage" src="" alt="" style="max-width:100%;max-height:100%;display:none;object-fit:cover;">
+                            <div id="flashcardImageFallback" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;padding:16px;">No image</div>
+                        </div>
+
+                        <div id="flashcardBack" style="display:none;font-size:18px;color:#334155;line-height:1.7;max-width:96%;width:100%;text-align:left;">
+                            <div style="margin-bottom:10px;"><strong style="color:#166534;">Nghĩa:</strong> <span id="flashcardMeaning">-</span></div>
+                            <div style="margin-bottom:10px;"><strong style="color:#1d4ed8;">IPA:</strong> <span id="flashcardIpa">-</span></div>
+                            <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <strong style="color:#7c3aed;">Audio:</strong>
+                                <button type="button" id="flashcardAudioBtn" style="display:none;border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;">Nghe phát âm</button>
+                                <span id="flashcardAudioText">-</span>
+                            </div>
+                            <div style="margin-bottom:10px;"><strong style="color:#7c3aed;">Collocation:</strong> <span id="flashcardCollocation">-</span></div>
+                            <div style="margin-bottom:10px;"><strong style="color:#0f766e;">Example:</strong> <span id="flashcardExample">-</span></div>
+                        </div>
                     </div>
 
-                    <div style="display:flex;justify-content:center;gap:20px;margin-top:18px;">
+                    <div style="display:flex;justify-content:center;gap:20px;margin-top:18px;flex-wrap:wrap;">
                         <button class="practice-btn btn-exit" id="flashcardExitBtn">{{ trans('panel.exit') }}</button>
                         <button class="practice-btn btn-next" id="flashcardPrevBtn" disabled>‹ Trước đó</button>
                         <button class="practice-btn btn-next" id="flashcardTurnBtn">Lật thẻ</button>
@@ -1829,18 +1853,27 @@
     let sidebarIndex = 0;
     let sidebarFlipped = false;
 
-    function loadSidebarFlashcards() {
-        $.ajax({
-            url: '/panel/dictionary/flashcards-preview',
-            method: 'GET',
-            success: function(response) {
-                if (response.success && response.data) {
-                    sidebarCards = response.data;
-                    sidebarIndex = 0;
-                    renderSidebarCard();
-                }
-            }
+    function setSidebarCardsFromWords(words) {
+        const safeWords = Array.isArray(words) ? words : [];
+
+        sidebarCards = safeWords.map(function(item) {
+            return {
+                id: item.id,
+                word: item.word || item.headword || '',
+                part_of_speech: item.part_of_speech || '',
+                pronunciation: item.pronunciation || '',
+                definition: item.definition || '',
+                translation: item.translation || item.translation_vi || '',
+                audio_url: item.audio_url || '',
+                collocation: item.collocation || '',
+                example: item.example || '',
+                image_url: item.image_url || ''
+            };
         });
+
+        sidebarIndex = 0;
+        sidebarFlipped = false;
+        renderSidebarCard();
     }
 
     function renderSidebarCard() {
@@ -1857,9 +1890,8 @@
         }
         sidebarFlipped = false;
         const card = sidebarCards[sidebarIndex];
-        const posLabel = card.part_of_speech ? ' (' + card.part_of_speech + ')' : '';
-        $('#sidebarCardWord').text((card.word || '') + posLabel);
-        $('#sidebarCardPron').text(card.pronunciation ? '/' + card.pronunciation + '/' : '');
+        $('#sidebarCardWord').text(card.word || '');
+        $('#sidebarCardPron').text(card.part_of_speech ? '(' + card.part_of_speech + ')' : '');
         $('#sidebarCardDisplayText').text('');
         $('#sidebarCardOverlay').removeClass('show');
         $('#sidebarCardCounter').text('Card ' + (sidebarIndex + 1) + ' of ' + sidebarCards.length);
@@ -1893,14 +1925,26 @@
     $('#sidebarTurnBtn').on('click', function() {
         if (!sidebarCards.length) return;
         const card = sidebarCards[sidebarIndex];
-        const displayText = card.translation || card.definition || '';
+        const escapeSidebarText = function(value) {
+            return $('<div>').text(value || '-').html();
+        };
+        const backParts = [
+            { label: 'Nghĩa', value: card.translation || card.definition || '-' },
+            { label: 'IPA', value: card.pronunciation ? '/' + card.pronunciation + '/' : '-' },
+            { label: 'Audio', value: card.audio_url || '-' },
+            { label: 'Collocation', value: card.collocation || '-' },
+            { label: 'Example', value: card.example || '-' },
+        ];
+        const displayHtml = backParts.map(function(part) {
+            return '<strong>' + part.label + ':</strong> ' + escapeSidebarText(part.value);
+        }).join('<br>');
         if (!sidebarFlipped) {
             sidebarFlipped = true;
-            $('#sidebarCardDisplayText').text(displayText);
+            $('#sidebarCardDisplayText').html(displayHtml);
             $('#sidebarCardOverlay').addClass('show');
         } else {
             sidebarFlipped = false;
-            $('#sidebarCardDisplayText').text('');
+            $('#sidebarCardDisplayText').html('');
             $('#sidebarCardOverlay').removeClass('show');
         }
     });
@@ -1917,7 +1961,6 @@
 
     // Auto-load My Word List on page init
     loadMyWordList();
-    loadSidebarFlashcards();
 
     // Search functionality
     let isSearching = false; // Prevent duplicate searches
@@ -2365,6 +2408,9 @@
         currentWordListType = listType;
         currentWordListSourceType = sourceType || listType;
         currentWordListSourceId = sourceId || listId;
+
+        // Sidebar widget must follow the currently opened vocabulary set.
+        setSidebarCardsFromWords(words);
     }
 
     function updateMyWordListMeta(data) {
@@ -2705,6 +2751,19 @@
     let flashcardIndex = 0;
     let flashcardFlipped = false;
 
+    function shuffleArray(items) {
+        const arr = items.slice();
+
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+
+        return arr;
+    }
+
     $(document).on('click', '.btn-flashcard', function(e) {
         e.stopPropagation();
 
@@ -2758,16 +2817,22 @@
                     return;
                 }
 
-                flashcardCards = chosen.map(function(item) {
+                const mappedCards = chosen.map(function(item) {
                     return {
                         id: item.id,
                         word: item.word || item.headword || '',
+                        part_of_speech: item.part_of_speech || '',
                         pronunciation: item.pronunciation || item.pronunciations && item.pronunciations[0] && (item.pronunciations[0].ipa || item.pronunciations[0].text) || '',
-                        definition: item.definition || item.translation || item.definition || '',
+                        definition: item.definition || item.translation || '',
                         translation: item.translation || item.translation_vi || '',
-                        image_url: item.image_url || ''
+                        image_url: item.image_url || '',
+                        audio_url: item.audio_url || '',
+                        collocation: item.collocation || '',
+                        example: item.example || ''
                     };
                 });
+
+                flashcardCards = shuffleArray(mappedCards);
 
                 flashcardIndex = 0;
                 flashcardFlipped = false;
@@ -2788,12 +2853,19 @@
     function renderFlashcard() {
         if (!flashcardCards.length) {
             $('#flashcardWord').text('-');
-            $('#flashcardPron').text('');
-            $('#flashcardBack').text('');
+            $('#flashcardPartOfSpeech').text('');
+            $('#flashcardMeaning').text('-');
+            $('#flashcardIpa').text('-');
+            $('#flashcardCollocation').text('-');
+            $('#flashcardExample').text('-');
+            $('#flashcardAudioBtn').hide().data('audio', '');
+            $('#flashcardAudioText').text('-');
             $('#flashcardImage').hide().attr('src', '');
+            $('#flashcardImageFallback').show();
             $('#flashcardCard').css('justify-content', 'flex-start');
             $('#flashcardVisual').show();
-            $('#flashcardWord, #flashcardPron').show();
+            $('#flashcardWord, #flashcardPartOfSpeech, #flashcardFrontLabel').show();
+            $('#flashcardBackLabel').hide();
             $('#flashcardBack').hide();
             $('#flashcardPrevBtn, #flashcardNextBtn').prop('disabled', true);
             return;
@@ -2801,18 +2873,44 @@
 
         const card = flashcardCards[flashcardIndex];
         $('#flashcardWord').text(card.word);
-        $('#flashcardPron').text(card.pronunciation ? '/' + card.pronunciation + '/' : '');
-        $('#flashcardBack').text(card.translation || card.definition || '');
+        $('#flashcardPartOfSpeech').text(card.part_of_speech ? '(' + card.part_of_speech + ')' : '');
+        $('#flashcardMeaning').text(card.translation || card.definition || '-');
+        $('#flashcardIpa').text(card.pronunciation ? '/' + card.pronunciation + '/' : '-');
+        $('#flashcardCollocation').text(card.collocation || '-');
+        $('#flashcardExample').text(card.example || '-');
+
+        if (card.audio_url) {
+            $('#flashcardAudioBtn').show().data('audio', card.audio_url);
+            $('#flashcardAudioText').text('');
+        } else {
+            $('#flashcardAudioBtn').hide().data('audio', '');
+            $('#flashcardAudioText').text('-');
+        }
+
         // Always reset each navigated card to front side.
         $('#flashcardCard').css('justify-content', 'flex-start');
         $('#flashcardVisual').show();
-        $('#flashcardWord, #flashcardPron').show();
+        $('#flashcardWord, #flashcardPartOfSpeech, #flashcardFrontLabel').show();
+        $('#flashcardBackLabel').hide();
         $('#flashcardBack').hide();
 
         if (card.image_url) {
-            $('#flashcardImage').attr('src', card.image_url).show();
+            const imageEl = document.getElementById('flashcardImage');
+            const fallbackEl = document.getElementById('flashcardImageFallback');
+            imageEl.style.display = 'none';
+            fallbackEl.style.display = 'flex';
+            imageEl.onload = function() {
+                fallbackEl.style.display = 'none';
+                imageEl.style.display = 'block';
+            };
+            imageEl.onerror = function() {
+                imageEl.style.display = 'none';
+                fallbackEl.style.display = 'flex';
+            };
+            imageEl.src = card.image_url;
         } else {
             $('#flashcardImage').hide().attr('src', '');
+            $('#flashcardImageFallback').show();
         }
 
         flashcardFlipped = false;
@@ -2825,17 +2923,50 @@
         if (!flashcardCards.length) return;
         flashcardFlipped = !flashcardFlipped;
         if (flashcardFlipped) {
-            $('#flashcardCard').css('justify-content', 'center');
+            $('#flashcardCard').css('justify-content', 'flex-start');
             $('#flashcardVisual').hide();
-            $('#flashcardWord, #flashcardPron').hide();
+            $('#flashcardWord, #flashcardPartOfSpeech, #flashcardFrontLabel').hide();
+            $('#flashcardBackLabel').css('display', 'inline-flex');
             $('#flashcardBack').css('display', 'block');
             $('#flashcardTurnBtn').text('Ẩn');
         } else {
             $('#flashcardCard').css('justify-content', 'flex-start');
             $('#flashcardBack').hide();
+            $('#flashcardBackLabel').hide();
+            $('#flashcardFrontLabel').show();
             $('#flashcardVisual').show();
-            $('#flashcardWord, #flashcardPron').show();
+            $('#flashcardWord, #flashcardPartOfSpeech').show();
             $('#flashcardTurnBtn').text('Lật thẻ');
+        }
+    });
+
+    $('#flashcardAudioBtn').on('click', function() {
+        let url = $(this).data('audio');
+        if (!url) {
+            return;
+        }
+
+        if (typeof url === 'string' && url.startsWith('//')) {
+            url = 'https:' + url;
+        }
+
+        const audio = new Audio(url);
+        const button = $(this);
+        button.prop('disabled', true).text('Đang phát...');
+
+        const resetButton = function() {
+            button.prop('disabled', false).text('Nghe phát âm');
+        };
+
+        audio.onended = resetButton;
+        audio.onerror = resetButton;
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(function() {
+                resetButton();
+                window.open(url, '_blank', 'noopener,noreferrer');
+            });
         }
     });
 

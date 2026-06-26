@@ -250,6 +250,24 @@ class StudentTrackingController extends Controller
             'overall'   => (float)($sbRow->o ?? 0),
         ];
 
+        $latestRadarAttempt = IeltsTestAttempt::query()
+            ->where('user_id', $student_id)
+            ->whereNotNull('completed_at')
+            ->orderBy('completed_at', 'desc')
+            ->first();
+
+        $radarBands = [
+            'listening' => (float) ($latestRadarAttempt->listening_band ?? $skillBands['listening']),
+            'reading'   => (float) ($latestRadarAttempt->reading_band ?? $skillBands['reading']),
+            'writing'   => (float) ($latestRadarAttempt->writing_band ?? $skillBands['writing']),
+            'speaking'  => (float) ($latestRadarAttempt->speaking_band ?? $skillBands['speaking']),
+            'overall'   => (float) ($latestRadarAttempt->overall_band ?? $skillBands['overall']),
+        ];
+
+        if ($radarBands['overall'] <= 0) {
+            $radarBands['overall'] = round(collect($radarBands)->except('overall')->filter(fn ($band) => $band > 0)->avg() ?: 0, 1);
+        }
+
         // Estimated band: avg overall from mocks, fallback to latest attempt
         $student->estimated_band = $skillBands['overall'] > 0
             ? $skillBands['overall']
@@ -367,6 +385,7 @@ class StudentTrackingController extends Controller
             'mockTestResults'   => $mockTestResults,
             'coursesData'       => $coursesData,
             'swHistory'         => $swHistory,
+            'radarBands'        => $radarBands,
         ]);
     }
 

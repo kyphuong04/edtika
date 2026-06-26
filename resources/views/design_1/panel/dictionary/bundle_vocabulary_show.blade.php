@@ -97,6 +97,22 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="input-label">{{ trans('panel.bundle_vocabulary_intro_content') }}</label>
+                    <textarea name="intro_content" class="form-control" rows="4" placeholder="{{ trans('panel.bundle_vocabulary_intro_content_placeholder') }}">{{ old('intro_content', $set->intro_content) }}</textarea>
+                    @error('intro_content')
+                        <div class="text-danger mt-4">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">{{ trans('panel.bundle_vocabulary_feature_content') }}</label>
+                    <textarea name="feature_content" class="form-control" rows="4" placeholder="{{ trans('panel.bundle_vocabulary_feature_content_placeholder') }}">{{ old('feature_content', $set->feature_content) }}</textarea>
+                    @error('feature_content')
+                        <div class="text-danger mt-4">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label class="input-label">{{ trans('panel.bundle_vocabulary_source_file') }}</label>
                     <input type="file" name="source_file" class="form-control" accept=".csv,.txt,.xls,.xlsx">
                     <p class="font-12 text-gray-500 mt-8 mb-0">{{ trans('panel.bundle_vocabulary_file_template_hint') }}</p>
@@ -149,8 +165,13 @@
                             <th>#</th>
                             <th>Word</th>
                             <th>POS</th>
+                            <th>IPA</th>
                             <th>{{ trans('panel.definition') }}</th>
                             <th>{{ trans('panel.translation') }}</th>
+                            <th>Audio</th>
+                            <th>Collocation</th>
+                            <th>Example</th>
+                            <th>Image</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -159,12 +180,29 @@
                                 <td>{{ $word->sort_order }}</td>
                                 <td>{{ $word->word }}</td>
                                 <td>{{ $word->part_of_speech }}</td>
+                                <td>{{ $word->pronunciation }}</td>
                                 <td>{{ $word->definition }}</td>
                                 <td>{{ $word->translation_vi }}</td>
+                                <td>
+                                    @if(!empty($word->audio_url))
+                                        <a href="{{ $word->audio_url }}" target="_blank" rel="noopener noreferrer">Audio link</a>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>{{ $word->collocation }}</td>
+                                <td>{{ $word->example }}</td>
+                                <td>
+                                    @if(!empty($word->image_url))
+                                        <a href="{{ $word->image_url }}" target="_blank" rel="noopener noreferrer">Image link</a>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-gray-500">{{ trans('public.no_result') }}</td>
+                                <td colspan="10" class="text-center text-gray-500">{{ trans('public.no_result') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
