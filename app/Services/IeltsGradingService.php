@@ -135,31 +135,13 @@ class IeltsGradingService
     protected function checkAnswer(IeltsTestAnswer $answer): bool
     {
         $question = $answer->question;
-        $userAnswer = strtolower(trim($answer->answer_text ?? ''));
-        $correctAnswer = strtolower(trim($question->correct_answer ?? ''));
+        $submittedAnswer = $answer->answer_text ?? $answer->answer_options;
 
-        if (empty($userAnswer)) {
+        if ($submittedAnswer === null || $submittedAnswer === '') {
             return false;
         }
 
-        // Direct match
-        if ($userAnswer === $correctAnswer) {
-            return true;
-        }
-
-        // Check alternative answers
-        $alternatives = $question->alternative_answers ?? [];
-        if (is_string($alternatives)) {
-            $alternatives = json_decode($alternatives, true) ?? [];
-        }
-
-        foreach ($alternatives as $alt) {
-            if (strtolower(trim($alt)) === $userAnswer) {
-                return true;
-            }
-        }
-
-        return false;
+        return (bool) $question->checkAnswer($submittedAnswer);
     }
 
     /**

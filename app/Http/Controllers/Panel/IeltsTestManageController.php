@@ -103,6 +103,12 @@ class IeltsTestManageController extends Controller
     {
         $test = $this->findOwnedTestOrFail($id);
 
+        if ($test->status !== 'draft') {
+            return redirect()
+                ->route('panel.my_ielts_tests.index')
+                ->with('error', 'Only draft tests can be deleted directly.');
+        }
+
         foreach ($test->sections as $section) {
             $section->questions()->delete();
             $section->delete();

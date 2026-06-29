@@ -81,6 +81,42 @@
             }
             $questionRangeEnd = $questionRangeStart + max(1, $ddBlankCount) - 1;
         }
+
+        if (in_array($questionType, ['note_completion', 'form_completion'])) {
+            $noteBlankCount = 0;
+            foreach ($questions as $noteQ) {
+                $noteText = (string) ($noteQ->question_text ?? '');
+                $matches = [];
+                preg_match_all('/_{2,}|\[\s*\d*\s*\]|____/', $noteText, $matches);
+                $blankInText = !empty($matches[0]) ? count($matches[0]) : 0;
+
+                if ($blankInText === 0 && !empty($noteQ->correct_answer) && is_string($noteQ->correct_answer) && str_contains($noteQ->correct_answer, '|')) {
+                    $blankInText = count(array_filter(array_map('trim', explode('|', $noteQ->correct_answer)), static fn($item) => $item !== ''));
+                }
+
+                $noteBlankCount += max(1, $blankInText);
+            }
+
+            $questionRangeEnd = $questionRangeStart + max(1, $noteBlankCount) - 1;
+        }
+
+        if (in_array($questionType, ['summary_completion', 'sentence_completion', 'short_answer'])) {
+            $completionBlankCount = 0;
+            foreach ($questions as $completionQ) {
+                $completionText = (string) ($completionQ->question_text ?? '');
+                $matches = [];
+                preg_match_all('/_{2,}|\[\s*\d*\s*\]|____/', $completionText, $matches);
+                $blankInText = !empty($matches[0]) ? count($matches[0]) : 0;
+
+                if ($blankInText === 0 && !empty($completionQ->correct_answer) && is_string($completionQ->correct_answer) && str_contains($completionQ->correct_answer, '|')) {
+                    $blankInText = count(array_filter(array_map('trim', explode('|', $completionQ->correct_answer)), static fn($item) => $item !== ''));
+                }
+
+                $completionBlankCount += max(1, $blankInText);
+            }
+
+            $questionRangeEnd = $questionRangeStart + max(1, $completionBlankCount) - 1;
+        }
     @endphp
 
     @if($showPartLabel)

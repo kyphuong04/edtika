@@ -5,44 +5,75 @@
     <div class="idp-note-title">{{ $title }}</div>
 @endif
 
-<ul class="idp-note-bullet" style="list-style: none; padding: 0;">
+<div class="idp-note-bullet" style="padding: 0;">
     @foreach($questions as $q)
         @php
-            $qNum = $q->question_number ?? $loop->iteration;
-            $saved = $userAnswers[$q->id] ?? '';
+            $baseQNum = (int) ($q->question_number ?? $loop->iteration);
+            $savedRaw = $userAnswers[$q->id] ?? '';
             $text = $q->question_text ?? $q->content ?? '';
-            
-            // Detect if it's a section header (no blank)
-            $isHeader = !preg_match('/_{2,}|\[\s*\d*\s*\]|____/', $text) && empty($text);
+
+            $savedAnswers = [];
+            $decodedSaved = is_string($savedRaw) ? json_decode($savedRaw, true) : $savedRaw;
+
+            if (is_array($decodedSaved) && isset($decodedSaved['answers']) && is_array($decodedSaved['answers'])) {
+                $savedAnswers = array_values(array_map(static function ($item) {
+                    return is_array($item) ? ($item['answer'] ?? '') : (string) $item;
+                }, $decodedSaved['answers']));
+            } elseif (is_string($savedRaw) && str_contains($savedRaw, '|')) {
+                $savedAnswers = array_map('trim', explode('|', $savedRaw));
+            } elseif (!empty($savedRaw)) {
+                $savedAnswers = [(string) $savedRaw];
+            }
+
+            $hasBlank = preg_match('/_{2,}|\[\s*\d*\s*\]|____/', (string) $text) === 1;
         @endphp
-        
-        @if($isHeader && !empty($q->section_title))
-            <li style="font-weight: bold; margin-top: 12px; margin-bottom: 6px;">
+
+        @if(!$hasBlank && !empty($q->section_title))
+            <div style="font-weight: bold; margin-top: 12px; margin-bottom: 6px;">
                 {{ $q->section_title }}
-            </li>
+            </div>
+        @elseif($hasBlank)
+            @php $blankIndex = -1; @endphp
+            <div class="idp-question idp-note-question" data-q-num="{{ $baseQNum }}" style="margin-bottom: 10px;">
+                {!! preg_replace_callback(
+                    '/_{2,}|\[\s*\d*\s*\]|____/',
+                    function () use (&$blankIndex, $q, $baseQNum, $savedAnswers) {
+                        $blankIndex++;
+                        $blankQNum = $baseQNum + $blankIndex;
+                        $value = $savedAnswers[$blankIndex] ?? '';
+
+                        return '<span class="idp-note-blank-wrap" data-q-num="' . $blankQNum . '">' .
+                               '<span class="idp-q-num">' . $blankQNum . '</span>' .
+                               '<input type="text" class="idp-input" data-qid="' . $q->id . '" data-q-num="' . $blankQNum . '" data-blank-index="' . $blankIndex . '" value="' . e($value) . '" oninput="saveNoteCompletionAnswer(this)">' .
+                               '</span>';
+                    },
+                    (string) $text
+                ) !!}
+            </div>
         @else
-            <li class="idp-question" data-q-num="{{ $qNum }}" style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                <span style="margin-right: 4px;">•</span>
-                @if(preg_match('/_{2,}|\[\s*\d*\s*\]|____/', $text))
-                    <span>
-                        {!! preg_replace_callback(
-                            '/_{2,}|\[\s*\d*\s*\]|____/',
-                            function($m) use ($q, $qNum, $saved) {
-                                return '<span class="idp-q-num">' . $qNum . '</span> ' .
-                                       '<input type="text" class="idp-input" value="' . e($saved) . '" 
-                                               oninput="autoSave(' . $q->id . ', this.value)">';
-                            },
-                            $text,
-                            1
-                        ) !!}
-                    </span>
-                @else
-                    <span class="idp-q-text">{!! $text !!}</span>
-                    <span class="idp-q-num">{{ $qNum }}</span>
-                    <input type="text" class="idp-input" value="{{ $saved }}" 
-                           oninput="autoSave({{ $q->id }}, this.value)">
-                @endif
-            </li>
+            <div class="idp-question idp-note-question" data-q-num="{{ $baseQNum }}" style="margin-bottom: 10px;">
+                <span class="idp-q-text">{!! $text !!}</span>
+            </div>
         @endif
     @endforeach
-</ul>
+</div>
+
+<script>
+if (typeof window.saveNoteCompletionAnswer !== 'function') {
+    window.saveNoteCompletionAnswer = function (el) {
+        const questionId = el.dataset.qid;
+        if (!questionId || typeof saveAnswer !== 'function') {
+            return;
+        }
+
+        const inputs = Array.from(document.querySelectorAll(`.idp-input[data-qid="${questionId}"][data-blank-index]`))
+            .sort((a, b) => Number(a.dataset.blankIndex || 0) - Number(b.dataset.blankIndex || 0));
+
+        const values = inputs.map((input) => input.value || '');
+        const serialized = values.join('|');
+        const qNum = parseInt(el.dataset.qNum || '', 10) || null;
+
+        saveAnswer(questionId, serialized, qNum);
+    };
+}
+</script>

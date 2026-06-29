@@ -1,33 +1,149 @@
-﻿{{--
+{{--
     IELTS Writing Section - Wireframe-matched design
     Left: WRITING panel (task content + image)
     Right: YOUR WRITING panel (textarea + word count)
 --}}
 @php
-    $task         = $question ?? $section ?? null;
-    $taskText     = $task->question_text ?? $task->content ?? $section->content ?? $section->passage_text ?? '';
-    $partNum      = $section->part_number ?? 1;
-    $minWords     = $partNum == 1 ? 150 : 250;
-    $recommendedTime = $partNum == 1 ? 20 : 40;
-    $savedAnswer  = $userAnswer ?? '';
-    $questionNum  = $task->question_number ?? 1;
-    // Resolve task image from IeltsQuestionGroup.
-    // Questions created via admin do NOT have question_group_id set, so we
-    // fall back to looking up the group by section_id directly.
-    $imageUrl = null;
-    $rawTaskImg = null;
-    $taskGroup = ($task instanceof \App\Models\IeltsTestQuestion) ? $task->questionGroup : null;
-    if (!$taskGroup && $section) {
-        $taskGroup = \App\Models\IeltsQuestionGroup::where('section_id', $section->id)->first();
+    $writingQuestions = collect($questions ?? [])->filter(fn($q) => !empty($q))->values();
+
+    if ($writingQuestions->isEmpty() && !empty($question)) {
+        $writingQuestions = collect([$question]);
     }
-    $rawTaskImg = $taskGroup?->task_image ?? null;
-    if ($rawTaskImg) {
-        $imageUrl = (str_starts_with($rawTaskImg, 'http') || str_starts_with($rawTaskImg, '/'))
-            ? $rawTaskImg
-            : \Storage::disk('public')->url($rawTaskImg);
-    } else {
-        $imageUrl = $task?->image_url ?? $section?->image_url ?? null;
+
+    $sectionGroups = collect();
+    if (!empty($section?->id)) {
+        $sectionGroups = \App\Models\IeltsQuestionGroup::where('section_id', $section->id)
+            ->orderBy('question_start')
+            ->get();
     }
+
+    $resolveMediaUrl = function ($path) {
+        if (empty($path) || !is_string($path)) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return \Storage::disk('public')->url($path);
+    };
+
+    $extractTaskImageFromQuestionData = function ($questionData) {
+        if (empty($questionData)) {
+            return null;
+        }
+
+        $decoded = is_array($questionData) ? $questionData : json_decode($questionData, true);
+        if (is_string($decoded)) {
+            $decoded = json_decode($decoded, true);
+        }
+
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        foreach (['task_image', 'task_image_url', 'image', 'image_url'] as $key) {
+            if (!empty($decoded[$key]) && is_string($decoded[$key])) {
+                return $decoded[$key];
+            }
+        }
+
+        return null;
+    };
+
+    $taskItems = [];
+
+    foreach ($writingQuestions as $idx => $q) {
+        $questionNumber = (int) ($q->question_number ?? ($idx + 1));
+
+        $taskText = $q->question_text
+            ?? $q->content
+            ?? $section->content
+            ?? $section->passage_text
+            ?? '';
+
+        $isHtmlTask = $taskText !== strip_tags($taskText);
+
+        if ($isHtmlTask) {
+            $renderedTaskHtml = $taskText;
+        } else {
+            $taskParts = preg_split('/\r?\n\r?\n/', trim((string) $taskText), 2);
+            $boldLine  = $taskParts[0] ?? '';
+            $bodyText  = $taskParts[1] ?? '';
+
+            $renderedTaskHtml = '';
+            if (!empty($boldLine)) {
+                $renderedTaskHtml .= '<p class="wf-wr-q-bold">' . nl2br(e($boldLine)) . '</p>';
+            }
+            if (!empty($bodyText)) {
+                $renderedTaskHtml .= '<div class="wf-wr-q-text">' . nl2br(e($bodyText)) . '</div>';
+            }
+        }
+
+        $taskPart = !empty($q->part_id) ? \App\Models\IeltsTestPart::find($q->part_id) : null;
+        $taskGroup = $q->questionGroup;
+
+        if (!$taskGroup && $sectionGroups->isNotEmpty()) {
+            $taskGroup = $sectionGroups->first(function ($group) use ($questionNumber) {
+                return !empty($group->question_start)
+                    && !empty($group->question_end)
+                    && $questionNumber >= (int) $group->question_start
+                    && $questionNumber <= (int) $group->question_end;
+            });
+        }
+
+        $rawImagePathCandidates = [
+            $taskGroup?->task_image ?? null,
+            $q->question_image ?? null,
+            $q->image_file ?? null,
+            $extractTaskImageFromQuestionData($q->question_data ?? null),
+            $taskPart?->task_image ?? null,
+            $section->image_file ?? null,
+            $section->image_url ?? null,
+        ];
+
+        $rawImagePath = collect($rawImagePathCandidates)->first(fn($value) => !empty($value));
+        $imageUrl = $resolveMediaUrl($rawImagePath);
+
+        $partNum = (int) ($taskPart->part_number ?? ($questionNumber > 1 ? 2 : 1));
+        $minWords = $partNum === 1 ? 150 : 250;
+        $recommendedTime = $partNum === 1 ? 20 : 40;
+
+        $savedAnswer = (string) ($userAnswers[$q->id] ?? ($userAnswer ?? ''));
+
+        $taskItems[] = [
+            'questionId' => (int) ($q->id ?? 0),
+            'questionNumber' => $questionNumber,
+            'minWords' => $minWords,
+            'recommendedTime' => $recommendedTime,
+            'renderedTaskHtml' => $renderedTaskHtml,
+            'imageUrl' => $imageUrl,
+            'hasImageFlag' => !empty($q->has_image),
+            'savedAnswer' => $savedAnswer,
+        ];
+    }
+
+    $activeTask = $taskItems[0] ?? [
+        'questionId' => 0,
+        'questionNumber' => 1,
+        'minWords' => 150,
+        'recommendedTime' => 20,
+        'renderedTaskHtml' => '',
+        'imageUrl' => null,
+        'hasImageFlag' => false,
+        'savedAnswer' => '',
+    ];
+
+    $taskPayload = collect($taskItems)->map(function ($item) {
+        return [
+            'questionId' => (int) $item['questionId'],
+            'questionNumber' => (int) $item['questionNumber'],
+            'minWords' => (int) $item['minWords'],
+            'recommendedTime' => (int) $item['recommendedTime'],
+            'savedAnswer' => (string) ($item['savedAnswer'] ?? ''),
+        ];
+    })->values();
 @endphp
 
 <style>
@@ -74,6 +190,9 @@
 .wf-wr-panel-body::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
 
 /* ── LEFT: task content ─ */
+.wf-wr-task-card { display: none; }
+.wf-wr-task-card.is-active { display: block; }
+
 .wf-wr-q-label {
     font-size: 14px; color: #333; margin-bottom: 10px; line-height: 1.5;
 }
@@ -180,46 +299,27 @@
     <div class="wf-wr-panel wf-wr-left" id="writingTaskPanel">
         <div class="wf-wr-panel-header">WRITING</div>
         <div class="wf-wr-panel-body">
+            @foreach($taskItems as $index => $item)
+                <div class="wf-wr-task-card {{ $index === 0 ? 'is-active' : '' }}" data-writing-index="{{ $index }}" data-q-num="{{ $item['questionNumber'] }}">
+                    <p class="wf-wr-q-label">
+                        Question {{ $item['questionNumber'] }}: You should spend about <strong>{{ $item['recommendedTime'] }} minutes</strong> on this task.
+                    </p>
 
-            <p class="wf-wr-q-label">
-                Question {{ $questionNum }}: You should spend about <strong>{{ $recommendedTime }} minutes</strong> on this task.
-            </p>
+                    <div class="wf-wr-q-text">{!! $item['renderedTaskHtml'] !!}</div>
 
-            @php
-                $isHtmlTask = $taskText !== strip_tags($taskText);
-            @endphp
+                    <p class="wf-wr-word-min">Write at least <strong>{{ $item['minWords'] }} words</strong>.</p>
 
-            @if($isHtmlTask)
-                {{-- HTML-formatted task text: render as-is --}}
-                <div class="wf-wr-q-text">{!! $taskText !!}</div>
-            @else
-                @php
-                    // Plain text: split into bold intro + body on double blank line
-                    $taskParts = preg_split('/\r?\n\r?\n/', trim($taskText), 2);
-                    $boldLine  = $taskParts[0] ?? '';
-                    $bodyText  = $taskParts[1] ?? '';
-                @endphp
-                @if($boldLine)
-                    <p class="wf-wr-q-bold">{!! nl2br(e($boldLine)) !!}</p>
-                @endif
-                @if($bodyText)
-                    <div class="wf-wr-q-text">{!! nl2br(e($bodyText)) !!}</div>
-                @endif
-            @endif
-
-            <p class="wf-wr-word-min">Write at least <strong>{{ $minWords }} words</strong>.</p>
-
-            {{-- Image: actual image or placeholder if imageUrl stored on question --}}
-            @if(!empty($imageUrl))
-                <div class="wf-wr-img-box">
-                    <img src="{{ $imageUrl }}" alt="Task diagram">
+                    @if(!empty($item['imageUrl']))
+                        <div class="wf-wr-img-box">
+                            <img src="{{ $item['imageUrl'] }}" alt="Task diagram">
+                        </div>
+                    @elseif(!empty($item['hasImageFlag']))
+                        <div class="wf-wr-img-box">
+                            <div class="wf-wr-img-placeholder">[Image not available]</div>
+                        </div>
+                    @endif
                 </div>
-            @elseif($task && ($task->has_image ?? false))
-                <div class="wf-wr-img-box">
-                    <div class="wf-wr-img-placeholder">[Image not available]</div>
-                </div>
-            @endif
-
+            @endforeach
         </div>
     </div>
 
@@ -236,17 +336,17 @@
             <textarea
                 id="writingAnswer"
                 class="wf-wr-textarea"
-                data-question-id="{{ $task->id ?? 0 }}"
+                data-question-id="{{ $activeTask['questionId'] }}"
                 placeholder="Write your essay here..."
                 oninput="WfWriting.onInput()"
-            >{{ $savedAnswer }}</textarea>
+            >{{ $activeTask['savedAnswer'] }}</textarea>
 
             <div class="wf-wr-bottom-bar">
                 <div class="wf-wr-wordcount-pill">
                     Word count: <span id="wfWordCount">0</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span id="wfAutoSave" class="wf-wr-autosave">&bull; Saving...</span>
+                    <span id="wfAutoSave" class="wf-wr-autosave">&bull; Saved</span>
                     <div class="wf-wr-font-btns">
                         <button type="button" class="wf-wr-font-btn" onclick="WfWriting.decreaseFontSize()">A&minus;</button>
                         <button type="button" class="wf-wr-font-btn" onclick="WfWriting.increaseFontSize()">A+</button>
@@ -260,29 +360,62 @@
 </div>{{-- end container --}}
 
 <script>
-const WfWriting = {
-    minWords:   {{ $minWords }},
-    questionId: {{ $task->id ?? 0 }},
-    fontSize:   15,
-    saveTimer:  null,
+window.WfWriting = {
+    questionItems: @json($taskPayload),
+    currentIndex: 0,
+    fontSize: 15,
+    saveTimer: null,
 
     init: function () {
+        if (!Array.isArray(this.questionItems) || this.questionItems.length === 0) {
+            this.questionItems = [{ questionId: 0, questionNumber: 1, minWords: 150, recommendedTime: 20, savedAnswer: '' }];
+        }
+
         this.updateWordCount();
         this.initResizer();
+
         const ta = document.getElementById('writingAnswer');
-        if (ta) ta.focus();
+        if (ta) {
+            ta.focus();
+        }
+    },
+
+    getCurrentItem: function () {
+        return this.questionItems[this.currentIndex] || this.questionItems[0];
     },
 
     onInput: function () {
         this.updateWordCount();
+        this.persistCurrentAnswerLocally();
         this.scheduleAutoSave();
+    },
+
+    persistCurrentAnswerLocally: function () {
+        const ta = document.getElementById('writingAnswer');
+        const item = this.getCurrentItem();
+        if (!ta || !item) return;
+
+        item.savedAnswer = ta.value;
+        this.updateAnsweredCircle(item.questionNumber, ta.value);
+    },
+
+    updateAnsweredCircle: function (questionNumber, value) {
+        const circle = document.querySelector('.idp-q-circle[data-q-num="' + questionNumber + '"]');
+        if (!circle) return;
+
+        if (value && value.trim()) {
+            circle.classList.add('answered');
+        } else {
+            circle.classList.remove('answered');
+        }
     },
 
     updateWordCount: function () {
         const ta    = document.getElementById('writingAnswer');
         if (!ta) return;
+
         const text  = ta.value.trim();
-        const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+        const words = text ? text.split(/\s+/).filter(function (w) { return w.length > 0; }).length : 0;
         const el    = document.getElementById('wfWordCount');
         if (el) el.textContent = words;
     },
@@ -290,38 +423,108 @@ const WfWriting = {
     scheduleAutoSave: function () {
         clearTimeout(this.saveTimer);
         const sp = document.getElementById('wfAutoSave');
-        if (sp) { sp.textContent = '\u2022 Typing...'; sp.style.color = '#f59e0b'; }
-        this.saveTimer = setTimeout(() => this.saveAnswer(), 2000);
+        if (sp) {
+            sp.textContent = '\u2022 Typing...';
+            sp.style.color = '#f59e0b';
+        }
+
+        this.saveTimer = setTimeout(() => this.saveAnswer(), 1200);
     },
 
     saveAnswer: function () {
-        const ta  = document.getElementById('writingAnswer');
-        const sp  = document.getElementById('wfAutoSave');
-        if (!ta) return;
-        const csrf    = document.querySelector('meta[name="csrf-token"]')?.content || '';
-        // saveUrl is defined in the outer template's <script> block (same page scope)
-        const url = (typeof saveUrl !== 'undefined' && saveUrl) ? saveUrl : null;
-        if (!url) {
-            if (sp) { sp.textContent = '\u2022 Saved'; sp.style.color = '#10b981'; }
+        const ta = document.getElementById('writingAnswer');
+        const sp = document.getElementById('wfAutoSave');
+        const item = this.getCurrentItem();
+
+        if (!ta || !item || !item.questionId) {
+            if (sp) {
+                sp.textContent = '\u2022 Saved';
+                sp.style.color = '#10b981';
+            }
             return;
         }
+
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const url = (typeof saveUrl !== 'undefined' && saveUrl) ? saveUrl : null;
+        if (!url) {
+            if (sp) {
+                sp.textContent = '\u2022 Saved';
+                sp.style.color = '#10b981';
+            }
+            return;
+        }
+
         fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({ question_id: this.questionId, answer_text: ta.value })
-        }).then(r => {
-            if (sp) { sp.textContent = r.ok ? '\u2022 Saved' : '\u2022 Error'; sp.style.color = r.ok ? '#10b981' : '#ef4444'; }
-        }).catch(() => {
-            if (sp) { sp.textContent = '\u2022 Error'; sp.style.color = '#ef4444'; }
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrf,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ question_id: item.questionId, answer_text: ta.value })
+        }).then(function (r) {
+            if (sp) {
+                sp.textContent = r.ok ? '\u2022 Saved' : '\u2022 Error';
+                sp.style.color = r.ok ? '#10b981' : '#ef4444';
+            }
+        }).catch(function () {
+            if (sp) {
+                sp.textContent = '\u2022 Error';
+                sp.style.color = '#ef4444';
+            }
         });
     },
 
+    goToQuestionNum: function (questionNumber) {
+        const index = this.questionItems.findIndex(function (item) {
+            return Number(item.questionNumber) === Number(questionNumber);
+        });
+
+        if (index >= 0) {
+            this.switchToIndex(index);
+        }
+    },
+
+    switchToIndex: function (index) {
+        if (index < 0 || index >= this.questionItems.length) {
+            return;
+        }
+
+        this.persistCurrentAnswerLocally();
+        this.currentIndex = index;
+
+        document.querySelectorAll('.wf-wr-task-card').forEach(function (card) {
+            card.classList.remove('is-active');
+        });
+
+        const activeCard = document.querySelector('.wf-wr-task-card[data-writing-index="' + index + '"]');
+        if (activeCard) {
+            activeCard.classList.add('is-active');
+        }
+
+        const ta = document.getElementById('writingAnswer');
+        const item = this.getCurrentItem();
+        if (ta && item) {
+            ta.value = item.savedAnswer || '';
+            ta.setAttribute('data-question-id', String(item.questionId || 0));
+            this.updateWordCount();
+        }
+    },
+
     increaseFontSize: function () {
-        if (this.fontSize < 28) { this.fontSize += 2; this.applyFont(); }
+        if (this.fontSize < 28) {
+            this.fontSize += 2;
+            this.applyFont();
+        }
     },
+
     decreaseFontSize: function () {
-        if (this.fontSize > 12) { this.fontSize -= 2; this.applyFont(); }
+        if (this.fontSize > 12) {
+            this.fontSize -= 2;
+            this.applyFont();
+        }
     },
+
     applyFont: function () {
         const ta = document.getElementById('writingAnswer');
         if (ta) ta.style.fontSize = this.fontSize + 'px';
@@ -331,14 +534,25 @@ const WfWriting = {
         const div   = document.getElementById('writingDivider');
         const left  = document.getElementById('writingTaskPanel');
         if (!div || !left) return;
+
         let drag = false;
-        div.addEventListener('mousedown',  () => { drag = true;  document.body.style.cursor = 'col-resize'; });
-        document.addEventListener('mouseup',    () => { drag = false; document.body.style.cursor = ''; });
-        document.addEventListener('mousemove', e => {
+
+        div.addEventListener('mousedown', function () {
+            drag = true;
+            document.body.style.cursor = 'col-resize';
+        });
+
+        document.addEventListener('mouseup', function () {
+            drag = false;
+            document.body.style.cursor = '';
+        });
+
+        document.addEventListener('mousemove', function (e) {
             if (!drag) return;
+
             const container = left.parentElement;
-            const rect      = container.getBoundingClientRect();
-            const pct       = ((e.clientX - rect.left) / rect.width) * 100;
+            const rect = container.getBoundingClientRect();
+            const pct = ((e.clientX - rect.left) / rect.width) * 100;
             if (pct > 20 && pct < 75) {
                 left.style.flex = '0 0 ' + pct + '%';
             }
@@ -346,5 +560,9 @@ const WfWriting = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => WfWriting.init());
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.WfWriting && typeof window.WfWriting.init === 'function') {
+        window.WfWriting.init();
+    }
+});
 </script>
