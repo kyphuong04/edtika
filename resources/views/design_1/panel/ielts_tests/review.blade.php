@@ -1530,7 +1530,7 @@ function togglePrompt(idx) {
                             $hasAns      = $answer && !empty($answer->answer_text);
                             $isCorr      = $hasAns && $answer->is_correct;
                             $studentAns  = $hasAns ? trim($answer->answer_text) : null;
-                            $correctAns  = $question->correct_answer ?? null;
+                            $correctAns  = $question->formatted_correct_answer ?? ($question->correct_answer ?? null);
                             $tableHeaders = [];
                             $tableRows = [];
                             $tableAnswersMap = [];
@@ -1619,7 +1619,7 @@ function togglePrompt(idx) {
                                                                         break;
                                                                     }
                                                                 }
-                                                                $correctLabel = !empty($cellAnswers) ? implode('/', $cellAnswers) : '';
+                                                                $correctLabel = !empty($cellAnswers) ? implode(' / ', $cellAnswers) : '';
                                                                 $parts = preg_split('/(___)/', $cellText, -1, PREG_SPLIT_DELIM_CAPTURE);
                                                                 $hasBlank = is_array($parts) && count($parts) > 1;
                                                             @endphp

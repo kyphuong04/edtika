@@ -473,7 +473,8 @@ class IeltsTestController extends Controller
 
         $questions = $sectionQuestions;
 
-        if (!empty($activePartId)) {
+        // Writing should keep all task questions (Task 1 + Task 2) in one screen flow.
+        if (!empty($activePartId) && ($currentSection->skill ?? null) !== 'writing') {
             $questions = $sectionQuestions
                 ->filter(function ($question) use ($activePartId) {
                     $questionPartId = !empty($question->part_id)

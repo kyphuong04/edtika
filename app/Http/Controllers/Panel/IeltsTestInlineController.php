@@ -54,11 +54,14 @@ class IeltsTestInlineController extends Controller
         ]);
     }
 
-    public function createInlineComplete()
+    public function createInlineComplete(Request $request)
     {
         $this->authorizeCreatorAccess();
 
-        $autosavePayload = $this->getServerAutosavePayload(null);
+        // New test should start with a blank state by default.
+        // Use ?resume=1 to explicitly restore unfinished "new" autosave.
+        $shouldRestoreAutosave = $request->boolean('resume');
+        $autosavePayload = $shouldRestoreAutosave ? $this->getServerAutosavePayload(null) : null;
 
         return view('design_1.panel.ielts_tests_manage.create_inline_complete_with_groups', [
             'pageTitle' => 'Create Complete IELTS Test',
@@ -67,6 +70,7 @@ class IeltsTestInlineController extends Controller
             'cancelUrl' => route('panel.my_ielts_tests.index'),
             'currentTestType' => null,
             'autosavePayload' => $autosavePayload,
+            'autosaveRestoreEnabled' => $shouldRestoreAutosave,
             'testData' => [
                 'sections' => [
                     'listening' => ['parts' => []],
@@ -103,6 +107,7 @@ class IeltsTestInlineController extends Controller
             'cancelUrl' => route('panel.my_ielts_tests.index'),
             'currentTestType' => $test->type,
             'autosavePayload' => $autosavePayload,
+            'autosaveRestoreEnabled' => true,
             'testData' => $this->buildInlineTestData($test),
         ]);
     }
@@ -1159,6 +1164,7 @@ class IeltsTestInlineController extends Controller
         $answerOptions = $question->answer_options ?? [];
         $correctAnswer = $question->correct_answer;
         $correctAnswers = null;
+        $correctAnswerGroups = null;
 
         if (is_string($correctAnswer)) {
             $decodedCorrect = json_decode($correctAnswer, true);
@@ -1167,10 +1173,34 @@ class IeltsTestInlineController extends Controller
             }
         }
 
-        if (is_array($correctAnswer) && in_array($questionType, ['multiple_choice_multiple', 'note_completion'], true)) {
+        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'diagram_labeling'], true)) {
+            $correctAnswerGroups = $this->normalizeInlineCompletionAnswerGroups($correctAnswer);
+            $correctAnswers = array_map(static function (array $group) {
+                return implode(' / ', $group);
+            }, $correctAnswerGroups);
+        } elseif (is_array($correctAnswer) && in_array($questionType, [
+            'multiple_choice_multiple',
+            'drag_drop_disappear',
+            'drag_drop_reuse',
+        ], true)) {
             $correctAnswers = array_values(array_filter(array_map('trim', $correctAnswer)));
         } elseif (is_string($correctAnswer) && $questionType === 'multiple_choice_multiple') {
             $correctAnswers = array_values(array_filter(array_map('trim', explode(',', $correctAnswer))));
+        } elseif (is_string($correctAnswer) && in_array($questionType, [
+            'drag_drop_disappear',
+            'drag_drop_reuse',
+        ], true)) {
+            $trimmedAnswer = trim($correctAnswer);
+
+            if ($trimmedAnswer !== '') {
+                if (str_contains($trimmedAnswer, '|')) {
+                    $correctAnswers = array_values(array_filter(array_map('trim', explode('|', $trimmedAnswer))));
+                } elseif (str_contains($trimmedAnswer, "\n") || str_contains($trimmedAnswer, "\r")) {
+                    $correctAnswers = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $trimmedAnswer))));
+                } else {
+                    $correctAnswers = [$trimmedAnswer];
+                }
+            }
         }
 
         $questionData = $question->question_data;
@@ -1209,7 +1239,109 @@ class IeltsTestInlineController extends Controller
             $payload['slotCount'] = max(1, count($correctAnswers));
         }
 
+        if ($correctAnswerGroups !== null) {
+            $payload['correctAnswerGroups'] = $correctAnswerGroups;
+        }
+
         return $payload;
+    }
+
+    private function normalizeInlineCompletionAnswerGroups($value): array
+    {
+        if (is_array($value)) {
+            if ($value === []) {
+                return [];
+            }
+
+            $hasNestedArrays = false;
+            foreach ($value as $item) {
+                if (is_array($item)) {
+                    $hasNestedArrays = true;
+                    break;
+                }
+            }
+
+            if ($hasNestedArrays) {
+                $groups = [];
+                foreach ($value as $group) {
+                    $variants = $this->normalizeInlineCompletionVariants($group);
+                    if (!empty($variants)) {
+                        $groups[] = $variants;
+                    }
+                }
+
+                return $groups;
+            }
+
+            $groups = [];
+            foreach ($value as $item) {
+                $variants = $this->normalizeInlineCompletionVariants($item);
+                if (!empty($variants)) {
+                    $groups[] = [$variants[0]];
+                }
+            }
+
+            return $groups;
+        }
+
+        if ($value === null) {
+            return [];
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        if (str_starts_with($text, '[') || str_starts_with($text, '{')) {
+            $decoded = json_decode($text, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $this->normalizeInlineCompletionAnswerGroups($decoded);
+            }
+        }
+
+        if (str_contains($text, '|')) {
+            $groups = [];
+            foreach (explode('|', $text) as $part) {
+                $variants = $this->normalizeInlineCompletionVariants($part);
+                if (!empty($variants)) {
+                    $groups[] = [$variants[0]];
+                }
+            }
+
+            return $groups;
+        }
+
+        if (str_contains($text, "\n") || str_contains($text, "\r")) {
+            $groups = [];
+            foreach (preg_split('/\r\n|\r|\n/', $text) as $part) {
+                $variants = $this->normalizeInlineCompletionVariants($part);
+                if (!empty($variants)) {
+                    $groups[] = [$variants[0]];
+                }
+            }
+
+            return $groups;
+        }
+
+        $variants = $this->normalizeInlineCompletionVariants($text);
+        return !empty($variants) ? [$variants] : [];
+    }
+
+    private function normalizeInlineCompletionVariants($value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter(array_map(static function ($item) {
+                return trim((string) $item);
+            }, $value)));
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/\s*\/\s*/', $text))));
     }
 
     private function normalizeInlineQuestionType(string $type): string
@@ -1229,6 +1361,7 @@ class IeltsTestInlineController extends Controller
             'note_completion' => 'note_completion',
             'table_completion' => 'table_completion',
             'diagram_labeling' => 'diagram_labeling',
+            'diagram_label' => 'diagram_labeling',
             'short_answer' => 'short_answer',
             'essay' => 'essay',
             'speaking_prompt' => 'essay',
@@ -1493,9 +1626,11 @@ class IeltsTestInlineController extends Controller
             'yes_no_ng' => 'yes_no_ng',
             'fill_blank' => 'fill_blank',
             'sentence_completion' => 'sentence_completion',
+            'summary_completion' => 'summary_completion',
             'note_completion' => 'note_completion',
             'table_completion' => 'table_completion',
             'flow_chart' => 'flow_chart',
+            'diagram_labeling' => 'diagram_labeling',
             'diagram_label' => 'diagram_label',
             'short_answer' => 'short_answer',
             'essay' => 'essay',

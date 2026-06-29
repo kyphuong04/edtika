@@ -239,14 +239,27 @@
                                                         </a>
 
                                                         @if($test->canBeEdited())
-                                                            <a href="#"
-                                                               class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4 delete-test-btn"
-                                                               data-request-url="{{ url('/panel/content-delete-request') }}"
-                                                               data-test-id="{{ $test->id }}"
-                                                               data-test-title="{{ $test->title }}">
-                                                                <x-iconsax-lin-trash class="icons text-danger mr-2" width="18px" height="18px"/>
-                                                                <span class="text-danger font-14">Xóa</span>
-                                                            </a>
+                                                            @if($test->status === 'draft')
+                                                                <a href="#"
+                                                                   class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4 delete-test-btn"
+                                                                   data-delete-url="{{ route('panel.my_ielts_tests.delete', $test->id) }}"
+                                                                   data-delete-mode="direct"
+                                                                   data-test-id="{{ $test->id }}"
+                                                                   data-test-title="{{ $test->title }}">
+                                                                    <x-iconsax-lin-trash class="icons text-danger mr-2" width="18px" height="18px"/>
+                                                                    <span class="text-danger font-14">Xóa bản nháp</span>
+                                                                </a>
+                                                            @else
+                                                                <a href="#"
+                                                                   class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4 delete-test-btn"
+                                                                   data-request-url="{{ url('/panel/content-delete-request') }}"
+                                                                   data-delete-mode="request"
+                                                                   data-test-id="{{ $test->id }}"
+                                                                   data-test-title="{{ $test->title }}">
+                                                                    <x-iconsax-lin-trash class="icons text-danger mr-2" width="18px" height="18px"/>
+                                                                    <span class="text-danger font-14">Xóa</span>
+                                                                </a>
+                                                            @endif
                                                         @endif
                                                     </div>
                                                 </div>
@@ -278,9 +291,9 @@
                     </div>
                 </div>
                 <h4 id="modalTitle" class="font-20 font-weight-bold text-dark-blue mb-10"></h4>
-                <p id="modalMessage" class="text-gray font-14 mb-20"></p>
+                <p id="modalMessage" class="text-gray-500 font-14 mb-20"></p>
                 <div class="d-flex justify-content-center gap-10">
-                    <button type="button" class="btn btn-light px-30" data-dismiss="modal">{{ trans('update.cancel') }}</button>
+                    <button type="button" class="btn btn-light px-30 mr-10" data-dismiss="modal">{{ trans('update.cancel') }}</button>
                     <button type="button" id="modalConfirmBtn" class="btn px-30"></button>
                 </div>
             </div>
@@ -290,68 +303,179 @@
 
 <script>
 let confirmCallback = null;
+let confirmModalElement = null;
+let confirmModalInstance = null;
+
+function getConfirmModalInstance() {
+    if (!confirmModalElement) {
+        confirmModalElement = document.getElementById('confirmModal');
+    }
+
+    if (!confirmModalElement || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+        return null;
+    }
+
+    if (!confirmModalInstance) {
+        confirmModalInstance = new bootstrap.Modal(confirmModalElement);
+    }
+
+    return confirmModalInstance;
+}
 
 function showConfirmModal(options) {
-    const modal = $('#confirmModal');
+    const modalElement = document.getElementById('confirmModal');
+    const modalIcon = document.getElementById('modalIcon');
+    const modalIconElement = document.getElementById('modalIconElement');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+    if (!modalElement || !modalIcon || !modalIconElement || !modalTitle || !modalMessage || !modalConfirmBtn) {
+        const confirmed = window.confirm(options.message || 'Are you sure?');
+        if (confirmed && typeof options.onConfirm === 'function') {
+            options.onConfirm();
+        }
+        return;
+    }
+
     const iconBg = options.type === 'danger' ? '#fee2e2' : '#dcfce7';
     const iconColor = options.type === 'danger' ? '#dc2626' : '#16a34a';
     const iconClass = options.type === 'danger' ? 'fa fa-exclamation-triangle' : 'fa fa-paper-plane';
-    
-    $('#modalIcon').css('background-color', iconBg);
-    $('#modalIconElement').attr('class', iconClass + ' font-30').css('color', iconColor);
-    $('#modalTitle').text(options.title);
-    $('#modalMessage').text(options.message);
-    $('#modalConfirmBtn')
-        .text(options.confirmText)
-        .attr('class', 'btn px-30 ' + (options.type === 'danger' ? 'btn-danger' : 'btn-success'));
-    
+
+    modalIcon.style.backgroundColor = iconBg;
+    modalIconElement.className = iconClass + ' font-30';
+    modalIconElement.style.color = iconColor;
+    modalTitle.textContent = options.title || '';
+    modalMessage.textContent = options.message || '';
+    modalConfirmBtn.textContent = options.confirmText || 'Confirm';
+    modalConfirmBtn.className = 'btn px-30 ' + (options.type === 'danger' ? 'btn-danger' : 'btn-success');
+
     confirmCallback = options.onConfirm;
-    modal.modal('show');
+    const modalInstance = getConfirmModalInstance();
+
+    if (modalInstance) {
+        modalInstance.show();
+        return;
+    }
+
+    modalElement.style.display = 'block';
+    modalElement.classList.add('show');
+    modalElement.setAttribute('aria-modal', 'true');
+    modalElement.removeAttribute('aria-hidden');
+    document.body.classList.add('modal-open');
 }
 
-$(document).ready(function() {
-    $('#modalConfirmBtn').on('click', function() {
-        $('#confirmModal').modal('hide');
-        if (confirmCallback) {
-            confirmCallback();
+function hideConfirmModal() {
+    const modalElement = document.getElementById('confirmModal');
+    const modalInstance = getConfirmModalInstance();
+
+    if (modalInstance) {
+        modalInstance.hide();
+        return;
+    }
+
+    if (!modalElement) {
+        return;
+    }
+
+    modalElement.classList.remove('show');
+    modalElement.style.display = 'none';
+    modalElement.setAttribute('aria-hidden', 'true');
+    modalElement.removeAttribute('aria-modal');
+    document.body.classList.remove('modal-open');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmButton = document.getElementById('modalConfirmBtn');
+    const cancelButtons = document.querySelectorAll('#confirmModal [data-dismiss="modal"]');
+
+    if (confirmButton) {
+        confirmButton.addEventListener('click', function() {
+            hideConfirmModal();
+            if (confirmCallback) {
+                confirmCallback();
+                confirmCallback = null;
+            }
+        });
+    }
+
+    cancelButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            hideConfirmModal();
             confirmCallback = null;
-        }
+        });
     });
-    
-    // Delete request
-    $('.delete-test-btn').on('click', function(e) {
-        e.preventDefault();
-        const requestUrl = $(this).data('request-url');
-        const testId = $(this).data('test-id');
-        const testTitle = $(this).data('test-title');
-        
-        showConfirmModal({
-            type: 'danger',
-            title: 'Gửi yêu cầu xóa',
-            message: 'Yêu cầu xóa "' + testTitle + '" sẽ cần manager/CEO duyệt trước khi hệ thống thực sự xóa đề này.',
-            confirmText: 'Gửi yêu cầu',
-            onConfirm: function() {
-                $.ajax({
-                    url: requestUrl,
-                    method: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        item_id: testId,
-                        item_type: 'ielts_test',
-                        description: 'Request delete IELTS test: ' + testTitle
-                    },
-                    success: function() {
-                        alert('Yêu cầu xóa đã được gửi để manager/CEO duyệt.');
-                        window.location.reload();
-                    },
-                    error: function(xhr) {
-                        const message = xhr.responseJSON && xhr.responseJSON.errors
-                            ? Object.values(xhr.responseJSON.errors).flat().join('\n')
-                            : 'Không thể gửi yêu cầu xóa.';
-                        alert(message);
+
+    document.querySelectorAll('.delete-test-btn').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const deleteMode = button.dataset.deleteMode;
+            const deleteUrl = button.dataset.deleteUrl;
+            const requestUrl = button.dataset.requestUrl;
+            const testId = button.dataset.testId;
+            const testTitle = button.dataset.testTitle;
+
+            if (deleteMode === 'direct' && deleteUrl) {
+                showConfirmModal({
+                    type: 'danger',
+                    title: 'Xóa bản nháp',
+                    message: 'Bạn có chắc muốn xóa vĩnh viễn bản nháp "' + testTitle + '"?',
+                    confirmText: 'Xóa ngay',
+                    onConfirm: function() {
+                        window.location.href = deleteUrl;
                     }
                 });
+                return;
             }
+
+            showConfirmModal({
+                type: 'danger',
+                title: 'Gửi yêu cầu xóa',
+                message: 'Yêu cầu xóa "' + testTitle + '" sẽ cần manager/CEO duyệt trước khi hệ thống thực sự xóa đề này.',
+                confirmText: 'Gửi yêu cầu',
+                onConfirm: function() {
+                    fetch(requestUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            item_id: testId,
+                            item_type: 'ielts_test',
+                            description: 'Request delete IELTS test: ' + testTitle
+                        })
+                    })
+                        .then(async function(response) {
+                            if (response.ok) {
+                                return response;
+                            }
+
+                            let payload = null;
+                            try {
+                                payload = await response.json();
+                            } catch (error) {
+                                payload = null;
+                            }
+
+                            const message = payload && payload.errors
+                                ? Object.values(payload.errors).flat().join('\n')
+                                : 'Không thể gửi yêu cầu xóa.';
+
+                            throw new Error(message);
+                        })
+                        .then(function() {
+                            alert('Yêu cầu xóa đã được gửi để manager/CEO duyệt.');
+                            window.location.reload();
+                        })
+                        .catch(function(error) {
+                            alert(error.message || 'Không thể gửi yêu cầu xóa.');
+                        });
+                }
+            });
         });
     });
 });

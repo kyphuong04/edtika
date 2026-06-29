@@ -31,14 +31,6 @@
     }
 @endphp
 
-@if(!empty($matchOptions))
-    <div class="idp-options" style="margin-bottom: 10px; margin-left: 0;">
-        @foreach($matchOptions as $label => $desc)
-            <div style="font-size:14px; margin-bottom:4px;"><strong>{{ $label }}.</strong> {!! $desc !!}</div>
-        @endforeach
-    </div>
-@endif
-
 <table class="idp-match-table">
     <thead>
         <tr>
