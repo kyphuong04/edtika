@@ -804,6 +804,7 @@ const AUTOSAVE_SERVER_SAVE_URL = @json(route('panel.my_ielts_tests.autosave_inli
 const AUTOSAVE_SERVER_LOAD_URL = @json(route('panel.my_ielts_tests.autosave_inline.get'));
 const AUTOSAVE_CSRF_TOKEN = @json(csrf_token());
 const AUTOSAVE_TEST_ID = @json(isset($test) ? (int) $test->id : null);
+const AUTOSAVE_RESTORE_ENABLED = @json($autosaveRestoreEnabled ?? true);
 let autosaveServerSeed = @json($autosavePayload ?? null);
 let autosaveTimer = null;
 let autosaveDebounceTimer = null;
@@ -1224,6 +1225,11 @@ function applyAutosaveSnapshot(payload) {
 }
 
 async function maybeRestoreAutosaveSnapshot() {
+    if (!AUTOSAVE_RESTORE_ENABLED) {
+        updateAutosaveStatus('Auto Save: đang bật cho phiên hiện tại (không khôi phục bản nháp cũ)');
+        return;
+    }
+
     const localPayload = loadAutosaveSnapshot();
     let serverPayload = autosaveServerSeed;
 
@@ -2413,26 +2419,34 @@ function editQuestion(button, questionIndex) {
         const answerSelect = form.querySelector('.question-answer-select');
         if (answerSelect) answerSelect.value = question.correctAnswer || '';
     } else if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
-        const optionMap = normalizeMatchingOptionsMap(question.options);
+        const matchingQuestions = (group.questions || []).filter(item => (item.type || qType) === qType);
+        const primaryMatchingQuestion = matchingQuestions[0] || question;
+        const optionMap = normalizeMatchingOptionsMap(primaryMatchingQuestion.options);
         const optionCount = Math.max(2, Object.keys(optionMap).length || 5);
+        const matchingRows = matchingQuestions.length
+            ? matchingQuestions.map(item => ({
+                text: item.text || '',
+                correctAnswer: item.correctAnswer || ''
+            }))
+            : [{
+                text: question.text || '',
+                correctAnswer: question.correctAnswer || ''
+            }];
 
         const statementsInput = form.querySelector('.matching-statements-count');
         const columnsInput = form.querySelector('.matching-columns-count');
-        if (statementsInput) statementsInput.value = '1';
+        if (statementsInput) statementsInput.value = String(matchingRows.length);
         if (columnsInput) columnsInput.value = String(optionCount);
 
-        buildMatchingMatrixInForm(form, 1, optionCount, {
+        buildMatchingMatrixInForm(form, matchingRows.length, optionCount, {
             options: optionMap,
-            rows: [{
-                text: question.text || '',
-                correctAnswer: question.correctAnswer || ''
-            }]
+            rows: matchingRows
         });
     } else if (qType === 'note_completion') {
-        renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswer));
+        renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswers || question.correctAnswer));
         bindNoteCompletionLivePreview(form);
-    } else if (qType === 'sentence_completion' || qType === 'summary_completion') {
-        renderCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswer));
+    } else if (qType === 'sentence_completion' || qType === 'summary_completion' || qType === 'diagram_labeling') {
+        renderCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswers || question.correctAnswer));
     } else if (qType === 'table_completion' && question.table_structure) {
         const tcWrap = form.querySelector('.tc-builder-wrap');
         const structureInput = form.querySelector('.tc-table-structure-json');
@@ -2723,12 +2737,37 @@ function saveQuestionToGroup(button) {
         const editIndexMatching = parseInt(form.getAttribute('data-edit-index'), 10);
 
         if (isEditModeMatching && Number.isFinite(editIndexMatching)) {
-            const firstMatchingQuestion = { ...matchingQuestions[0] };
-            delete firstMatchingQuestion.id;
-            questionData = {
-                ...questionData,
-                ...firstMatchingQuestion
-            };
+            const existingMatchingQuestions = (group.questions || []).filter(item => (item.type || qType) === qType);
+
+            const updatedMatchingQuestions = matchingQuestions.map((item, index) => {
+                const existing = existingMatchingQuestions[index] || {};
+                const nextItem = {
+                    ...existing,
+                    ...item,
+                    title: title || null,
+                    question_data: {
+                        ...(existing.question_data || {}),
+                    }
+                };
+
+                if (title) {
+                    nextItem.question_data.title = title;
+                }
+
+                return nextItem;
+            });
+
+            group.questions = updatedMatchingQuestions;
+
+            resetQuestionForm(form);
+            initializeMatchingBuilder(form);
+            form.classList.add('hidden');
+
+            renderQuestionsList(groupItem, group);
+            updatePartStats(partItem, part);
+            updateSectionStats(section);
+            updateCompletenessStatus();
+            return;
         } else {
             matchingQuestions.forEach((item) => {
                 item.title = title || null;
@@ -2754,8 +2793,9 @@ function saveQuestionToGroup(button) {
             return;
         }
 
-    } else if (qType === 'sentence_completion' || qType === 'summary_completion') {
+    } else if (qType === 'sentence_completion' || qType === 'summary_completion' || qType === 'diagram_labeling') {
         const completionAnswers = collectCompletionAnswers(form);
+        const completionAnswerGroups = collectCompletionAnswerGroups(form);
         const blankCount = countNoteCompletionBlanks(text);
 
         if (blankCount === 0) {
@@ -2769,13 +2809,12 @@ function saveQuestionToGroup(button) {
         }
 
         questionData.correctAnswers = completionAnswers;
-        questionData.correctAnswer = completionAnswers.length === 1
-            ? completionAnswers[0]
-            : JSON.stringify(completionAnswers);
-        questionData.slotCount = completionAnswers.length;
+        questionData.correctAnswer = JSON.stringify(completionAnswerGroups);
+        questionData.slotCount = completionAnswerGroups.length;
 
     } else if (qType === 'note_completion') {
         const noteAnswers = collectNoteCompletionAnswers(form);
+        const noteAnswerGroups = collectNoteCompletionAnswerGroups(form);
         const blankCount = countNoteCompletionBlanks(text);
 
         if (blankCount === 0) {
@@ -2789,8 +2828,8 @@ function saveQuestionToGroup(button) {
         }
 
         questionData.correctAnswers = noteAnswers;
-        questionData.correctAnswer = JSON.stringify(noteAnswers);
-        questionData.slotCount = noteAnswers.length;
+    questionData.correctAnswer = JSON.stringify(noteAnswerGroups);
+    questionData.slotCount = noteAnswerGroups.length;
 
     } else if (qType === 'table_completion') {
         updateTableCompletionState(form);
@@ -2931,14 +2970,21 @@ function saveQuestionToGroup(button) {
 }
 
 function getGroupSlotCount(group) {
-    return (group.questions || []).reduce((sum, q) => sum + (q.slotCount || 1), 0);
+    const questions = normalizeQuestionsForRender(group ? group.questions : []);
+    return questions.reduce((sum, q) => sum + (q.slotCount || 1), 0);
 }
 
 function renderQuestionsList(groupItem, group) {
     const list = groupItem.querySelector('.questions-list');
     const totalSpan = groupItem.querySelector('.question-total');
-    const totalSlots = getGroupSlotCount(group);
-    const totalQuestions = group.questions.length;
+    const normalizedQuestions = normalizeQuestionsForRender(group ? group.questions : []);
+
+    if (group) {
+        group.questions = normalizedQuestions;
+    }
+
+    const totalSlots = normalizedQuestions.reduce((sum, q) => sum + (q.slotCount || 1), 0);
+    const totalQuestions = normalizedQuestions.length;
 
     if (totalSpan) {
         totalSpan.innerHTML = `<i class="fas fa-list-ol"></i> ${totalSlots} question${totalSlots !== 1 ? 's' : ''}`;
@@ -2956,18 +3002,20 @@ function renderQuestionsList(groupItem, group) {
 
     list.style.display = 'block';
     let slotIndex = 1;
-    list.innerHTML = group.questions.map((question, qIndex) => {
-        const slotCount = question.slotCount || 1;
-        const isCollapsed = question.collapsed !== false;
-        const isTitleExpanded = question.titleExpanded === true || !isCollapsed;
-        const titleValue = question.title || (question.question_data && question.question_data.title) || '';
-        const slotLabel = slotCount > 1
-            ? `Q${slotIndex}–Q${slotIndex + slotCount - 1}`
-            : `Q${slotIndex}`;
-        slotIndex += slotCount;
+    const renderedCards = normalizedQuestions.map((question, qIndex) => {
+        try {
+            const slotCount = question.slotCount || 1;
+            const isCollapsed = question.collapsed !== false;
+            const isTitleExpanded = question.titleExpanded === true || !isCollapsed;
+            const titleValue = question.title || (question.question_data && question.question_data.title) || '';
+            const qText = (question.text || (question.question_data && question.question_data.statement) || '');
+            const slotLabel = slotCount > 1
+                ? `Q${slotIndex}–Q${slotIndex + slotCount - 1}`
+                : `Q${slotIndex}`;
+            slotIndex += slotCount;
 
-        let detailHTML = '';
-        const qType = question.type || group.question_type || 'short_answer';
+            let detailHTML = '';
+            const qType = question.type || group.question_type || 'short_answer';
 
             if (qType === 'table_completion' && question.table_structure) {
                 const blankCount = (question.table_structure.answers || []).length;
@@ -2982,48 +3030,82 @@ function renderQuestionsList(groupItem, group) {
                     <span class="question-answer-badge">${opts.length} option${opts.length !== 1 ? 's' : ''}, ${ans.length} blank${ans.length !== 1 ? 's' : ''}</span>
                     <span style="margin-left:6px;color:#16a34a;">✓ ${ans.map(a => escapeHtml(a)).join(', ')}</span>
                 </div>`;
-            } else if (qType === 'note_completion') {                const blankCount = (Array.isArray(question.correctAnswers) ? question.correctAnswers.length : normalizeNoteCompletionAnswers(question.correctAnswer).length) || (question.slotCount || 1);
+            } else if (qType === 'note_completion') {
+                const blankCount = (Array.isArray(question.correctAnswers) ? question.correctAnswers.length : normalizeNoteCompletionAnswers(question.correctAnswer).length) || (question.slotCount || 1);
                 detailHTML = `<div style="font-size:12px;margin-top:4px;">
                     <span class="question-answer-badge">Note: ${blankCount} blanks</span>
                 </div>`;
             } else if (qType === 'multiple_choice_single' || qType === 'multiple_choice_multiple') {
-            const opts = (question.options || []).map((o, i) => {
-                const isCorrect = qType === 'multiple_choice_multiple'
-                    ? (question.correctAnswers || []).includes(o)
-                    : question.correctAnswer === o;
-                return `<span style="margin-right:6px;color:${isCorrect ? '#16a34a' : '#374151'};font-weight:${isCorrect ? '700' : '400'};">${String.fromCharCode(65 + i)}. ${escapeHtml(o)}${isCorrect ? ' ✓' : ''}</span>`;
-            }).join('');
-            detailHTML = `<div style="font-size:12px;margin-top:4px;">${opts}</div>`;
-        } else if (question.correctAnswer) {
-            detailHTML = `<span class="question-answer-badge">✓ ${escapeHtml(question.correctAnswer)}</span>`;
-        }
+                const opts = (question.options || []).map((o, i) => {
+                    const isCorrect = qType === 'multiple_choice_multiple'
+                        ? (question.correctAnswers || []).includes(o)
+                        : question.correctAnswer === o;
+                    return `<span style="margin-right:6px;color:${isCorrect ? '#16a34a' : '#374151'};font-weight:${isCorrect ? '700' : '400'};">${String.fromCharCode(65 + i)}. ${escapeHtml(o)}${isCorrect ? ' ✓' : ''}</span>`;
+                }).join('');
+                detailHTML = `<div style="font-size:12px;margin-top:4px;">${opts}</div>`;
+            } else if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+                const matchingAnswer = String(question.correctAnswer || '').trim();
+                detailHTML = matchingAnswer
+                    ? `<span class="question-answer-badge">✓ ${escapeHtml(matchingAnswer)}</span>`
+                    : '';
+            } else if (question.correctAnswer) {
+                detailHTML = `<span class="question-answer-badge">✓ ${escapeHtml(question.correctAnswer)}</span>`;
+            }
 
-        return `<div class="mb-12" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;position:relative;">
-            <div class="question-card-header">
-                <div class="question-card-main">
-                    <span class="question-badge">${slotLabel}</span>
-                    ${titleValue ? `<div class="question-title-wrap"><div class="question-title-text collapsible-title ${isTitleExpanded ? 'expanded' : ''}">${escapeHtml(titleValue)}</div></div>` : ''}
-                    <div class="question-preview-text">${escapeHtml(editorHtmlToPlainText(question.text || ''))}</div>
+            return `<div class="mb-12" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;position:relative;">
+                <div class="question-card-header">
+                    <div class="question-card-main">
+                        <span class="question-badge">${slotLabel}</span>
+                        ${titleValue ? `<div class="question-title-wrap"><div class="question-title-text collapsible-title ${isTitleExpanded ? 'expanded' : ''}">${escapeHtml(titleValue)}</div></div>` : ''}
+                        <div class="question-preview-text">${escapeHtml(editorHtmlToPlainText(qText))}</div>
+                    </div>
+                    <div class="question-actions">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleQuestionCollapse(this, ${qIndex})" title="${isCollapsed ? 'Expand question' : 'Collapse question'}">
+                            <i class="fas ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="editQuestion(this, ${qIndex})" title="Edit question">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteQuestion(this, ${qIndex})" title="Delete question">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="question-actions">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleQuestionCollapse(this, ${qIndex})" title="${isCollapsed ? 'Expand question' : 'Collapse question'}">
-                        <i class="fas ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editQuestion(this, ${qIndex})" title="Edit question">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteQuestion(this, ${qIndex})" title="Delete question">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <div class="question-card-body ${isCollapsed ? 'hidden' : ''}" style="margin-top:8px;">
+                    <div style="font-size:13px;color:#1f2937;line-height:1.45;">${qText}</div>
+                    ${question.explanation ? `<div style="margin-top:6px;font-size:12px;color:#0f766e;font-weight:600;">Answer Help:</div><div style="font-size:12px;color:#0f766e;">${question.explanation}</div>` : ''}
+                    ${detailHTML}
                 </div>
-            </div>
-            <div class="question-card-body ${isCollapsed ? 'hidden' : ''}" style="margin-top:8px;">
-                <div style="font-size:13px;color:#1f2937;line-height:1.45;">${question.text || ''}</div>
-                ${question.explanation ? `<div style="margin-top:6px;font-size:12px;color:#0f766e;font-weight:600;">Answer Help:</div><div style="font-size:12px;color:#0f766e;">${question.explanation}</div>` : ''}
-                ${detailHTML}
-            </div>
-        </div>`;
-    }).join('');
+            </div>`;
+        } catch (error) {
+            console.warn('Failed to render a question item', error, question);
+            return '';
+        }
+    }).filter(Boolean);
+
+    list.innerHTML = renderedCards.join('');
+
+    if (!renderedCards.length) {
+        list.style.display = 'none';
+    }
+}
+
+function normalizeQuestionsForRender(rawQuestions) {
+    if (Array.isArray(rawQuestions)) {
+        return rawQuestions
+            .filter(item => item && typeof item === 'object')
+            .map(item => ({ ...item }));
+    }
+
+    if (rawQuestions && typeof rawQuestions === 'object') {
+        return Object.keys(rawQuestions)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((key) => rawQuestions[key])
+            .filter(item => item && typeof item === 'object')
+            .map(item => ({ ...item }));
+    }
+
+    return [];
 }
 
 function getQuestionTypeLabel(type) {
@@ -3138,12 +3220,12 @@ function getInlineQuestionType(form) {
 
 function normalizeNoteCompletionAnswers(rawAnswer) {
     if (Array.isArray(rawAnswer)) {
-        return rawAnswer.map(value => String(value).trim()).filter(Boolean);
+        return rawAnswer.map(value => formatCompletionAnswerVariants(value)).filter(Boolean);
     }
 
     if (rawAnswer && typeof rawAnswer === 'object') {
         if (Array.isArray(rawAnswer.answers)) {
-            return rawAnswer.answers.map(value => String(value).trim()).filter(Boolean);
+            return rawAnswer.answers.map(value => formatCompletionAnswerVariants(value)).filter(Boolean);
         }
 
         if (rawAnswer.answer !== undefined) {
@@ -3160,15 +3242,19 @@ function normalizeNoteCompletionAnswers(rawAnswer) {
         try {
             const parsed = JSON.parse(text);
             if (Array.isArray(parsed)) {
-                return parsed.map(value => String(value).trim()).filter(Boolean);
+                return normalizeNoteCompletionAnswers(parsed);
             }
         } catch (error) {
             // fall back to plain text handling
         }
 
+        if (text.includes('|')) {
+            return text.split('|').map(value => formatCompletionAnswerVariants(value)).filter(Boolean);
+        }
+
         return text.includes('\n')
-            ? text.split(/\r?\n/).map(value => value.trim()).filter(Boolean)
-            : [text];
+            ? text.split(/\r?\n/).map(value => formatCompletionAnswerVariants(value)).filter(Boolean)
+            : [formatCompletionAnswerVariants(text)];
     }
 
     if (rawAnswer === null || rawAnswer === undefined) {
@@ -3176,13 +3262,42 @@ function normalizeNoteCompletionAnswers(rawAnswer) {
     }
 
     const text = String(rawAnswer).trim();
-    return text ? [text] : [];
+    return text ? [formatCompletionAnswerVariants(text)] : [];
+}
+
+function splitCompletionAnswerVariants(rawValue) {
+    if (Array.isArray(rawValue)) {
+        return rawValue
+            .map(value => String(value).trim())
+            .filter(Boolean);
+    }
+
+    const text = String(rawValue ?? '').trim();
+    if (!text) {
+        return [];
+    }
+
+    return text
+        .split(/\s*\/\s*/)
+        .map(value => value.trim())
+        .filter(Boolean);
+}
+
+function formatCompletionAnswerVariants(rawValue) {
+    const variants = splitCompletionAnswerVariants(rawValue);
+    return variants.join(' / ');
+}
+
+function collectCompletionAnswerGroupsFromInputs(inputs) {
+    return Array.from(inputs)
+        .map(input => splitCompletionAnswerVariants(input.value))
+        .filter(group => group.length > 0);
 }
 
 function makeNoteCompletionAnswerRowHTML(value = '', index = 0) {
     return `<div class="note-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
         <span style="width:72px;flex:0 0 auto;font-size:13px;font-weight:600;color:#6b7280;">Blank ${index + 1}</span>
-        <input type="text" class="form-control form-control-sm note-completion-answer-input" data-blank-index="${index}" placeholder="Answer for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
+        <input type="text" class="form-control form-control-sm note-completion-answer-input" data-blank-index="${index}" placeholder="Answer(s) for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
     </div>`;
 }
 
@@ -3251,7 +3366,7 @@ function syncDDAnswerInputs(button) {
 function makeCompletionAnswerRowHTML(value = '', index = 0) {
     return `<div class="completion-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
         <span style="width:72px;flex:0 0 auto;font-size:13px;font-weight:600;color:#6b7280;">Blank ${index + 1}</span>
-        <input type="text" class="form-control form-control-sm completion-answer-input" data-blank-index="${index}" placeholder="Answer for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
+        <input type="text" class="form-control form-control-sm completion-answer-input" data-blank-index="${index}" placeholder="Answer(s) for blank ${index + 1}" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
     </div>`;
 }
 
@@ -3266,7 +3381,7 @@ function renderNoteCompletionAnswerInputs(form, values = []) {
 
     const blankCount = countNoteCompletionBlanks(textInput ? getContentEditorValue(textInput) : '');
     summary.innerHTML = blankCount > 0
-        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one answer per blank in order.`
+        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one or more accepted answers per blank, separated by <code>/</code>.`
         : 'Type the note text with <code>___</code> for each blank.';
 
     if (blankCount === 0) {
@@ -3289,7 +3404,7 @@ function renderCompletionAnswerInputs(form, values = []) {
 
     const blankCount = countNoteCompletionBlanks(textInput ? getContentEditorValue(textInput) : '');
     summary.innerHTML = blankCount > 0
-        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one answer per blank in order.`
+        ? `Detected <strong>${blankCount}</strong> blank${blankCount > 1 ? 's' : ''}. Enter one or more accepted answers per blank, separated by <code>/</code>.`
         : 'Type the sentence/summary text with <code>___</code> for each blank.';
 
     if (blankCount === 0) {
@@ -3306,9 +3421,16 @@ function collectNoteCompletionAnswers(form) {
         return [];
     }
 
-    return Array.from(form.querySelectorAll('.note-completion-answer-input'))
-        .map(input => input.value.trim())
-        .filter(Boolean);
+    return collectCompletionAnswerGroupsFromInputs(form.querySelectorAll('.note-completion-answer-input'))
+        .map(group => group.join(' / '));
+}
+
+function collectNoteCompletionAnswerGroups(form) {
+    if (!form) {
+        return [];
+    }
+
+    return collectCompletionAnswerGroupsFromInputs(form.querySelectorAll('.note-completion-answer-input'));
 }
 
 function collectCompletionAnswers(form) {
@@ -3316,9 +3438,16 @@ function collectCompletionAnswers(form) {
         return [];
     }
 
-    return Array.from(form.querySelectorAll('.completion-answer-input'))
-        .map(input => input.value.trim())
-        .filter(Boolean);
+    return collectCompletionAnswerGroupsFromInputs(form.querySelectorAll('.completion-answer-input'))
+        .map(group => group.join(' / '));
+}
+
+function collectCompletionAnswerGroups(form) {
+    if (!form) {
+        return [];
+    }
+
+    return collectCompletionAnswerGroupsFromInputs(form.querySelectorAll('.completion-answer-input'));
 }
 
 function bindNoteCompletionLivePreview(form) {
@@ -3342,7 +3471,7 @@ function bindNoteCompletionLivePreview(form) {
 
 function makeTableCellAnswerRowHTML(value = '', removable = false) {
     return `<div class="tc-answer-item d-flex align-items-center mb-2" style="gap:8px;width:100%;">
-        <input type="text" class="form-control form-control-sm tc-cell-answer" placeholder="Đáp án cho blank" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
+        <input type="text" class="form-control form-control-sm tc-cell-answer" placeholder="Đáp án cho blank (dùng / cho đáp án thay thế)" value="${escapeHtml(value)}" style="flex:1; min-width:0;">
     </div>`;
 }
 
@@ -3728,7 +3857,7 @@ function getQuestionFormHTML(questionType) {
                 </div>
             </div>
             <div class="alert alert-info py-2 px-3 mb-12">
-                Nhập nội dung trong từng ô. Ô nào có <code>___</code> sẽ là chỗ trống cho học viên điền đáp án.
+                Nhập nội dung trong từng ô. Ô nào có <code>___</code> sẽ là chỗ trống cho học viên điền đáp án. Dùng <code>/</code> trong ô đáp án để thêm nhiều phương án đúng.
             </div>
             <div class="tc-builder-wrap hidden">
                 <div class="table-responsive" style="overflow-x:auto;">
@@ -3754,7 +3883,7 @@ function getQuestionFormHTML(questionType) {
                 </div>
             </div>
             <div class="alert alert-info py-2 px-3 mb-12 note-completion-summary">
-                Type the note text with <code>___</code> for each blank.
+                Type the note text with <code>___</code> for each blank. Use <code>/</code> inside an answer field for multiple accepted answers.
             </div>
             <div class="note-completion-answers"></div>
             <div class="form-row mt-8">
@@ -3778,7 +3907,7 @@ function getQuestionFormHTML(questionType) {
                 </div>
             </div>
             <div class="alert alert-info py-2 px-3 mb-12 completion-summary">
-                Type the sentence/summary text with <code>___</code> for each blank.
+                Type the sentence/summary text with <code>___</code> for each blank. Use <code>/</code> inside an answer field for multiple accepted answers.
             </div>
             <div class="completion-answers"></div>
             <div class="form-row">
@@ -4143,6 +4272,10 @@ function setupFormValidation() {
         }
 
         if (submitAction === 'draft' || submitAction === 'preview') {
+            if (!syncOpenMatchingFormsIntoTestData()) {
+                return;
+            }
+
             if (submitAction === 'preview') {
                 let totalParts = 0;
                 Object.values(testData.sections).forEach(section => {
@@ -4270,6 +4403,38 @@ function saveFormStateToLocalStorage() {
     } catch (err) {
         console.error('Failed to save form state:', err);
     }
+}
+
+function syncOpenMatchingFormsIntoTestData() {
+    const openForms = Array.from(document.querySelectorAll('.group-item .question-inline-form'))
+        .filter(form => !form.classList.contains('hidden'));
+
+    for (const form of openForms) {
+        const qType = getInlineQuestionType(form);
+        if (!['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+            continue;
+        }
+
+        const hasContent = Array.from(form.querySelectorAll('.matching-statement-text'))
+            .some(input => String(input.value || '').trim() !== '');
+
+        if (!hasContent) {
+            continue;
+        }
+
+        const saveButton = form.querySelector('button[onclick="saveQuestionToGroup(this)"]');
+        if (!saveButton) {
+            continue;
+        }
+
+        saveQuestionToGroup(saveButton);
+
+        if (!form.classList.contains('hidden')) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
