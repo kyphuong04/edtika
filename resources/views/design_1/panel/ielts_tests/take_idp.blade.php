@@ -1316,6 +1316,8 @@
             @include('design_1.panel.ielts_tests.partials.idp_writing_complete', [
                 'section' => $currentSection,
                 'question' => $firstQ,
+                'questions' => $allQuestions,
+                'userAnswers' => $userAnswers,
                 'userAnswer' => $userAnswers[$firstQ->id ?? 0] ?? ''
             ])
         @elseif($skill === 'listening' && empty($currentSection->passage_text) && !$hasPartLeftPanelContent)
@@ -1480,6 +1482,40 @@
                 continue;
             }
 
+            if (in_array($questionType, ['summary_completion', 'sentence_completion', 'short_answer'])) {
+                $rawText = (string) ($q->question_text ?? '');
+                $matches = [];
+                preg_match_all('/_{2,}|\[\s*\d*\s*\]|____/', $rawText, $matches);
+                $blankCount = !empty($matches[0]) ? count($matches[0]) : 0;
+
+                $savedAnswers = [];
+                if (is_array($savedAnswerData) && isset($savedAnswerData['answers']) && is_array($savedAnswerData['answers'])) {
+                    $savedAnswers = array_values(array_map(static function ($item) {
+                        return is_array($item) ? ($item['answer'] ?? '') : (string) $item;
+                    }, $savedAnswerData['answers']));
+                } elseif (is_array($savedAnswerData)) {
+                    $savedAnswers = array_values(array_map(static function ($item) {
+                        return is_array($item) ? ($item['answer'] ?? '') : (string) $item;
+                    }, $savedAnswerData));
+                } elseif (is_string($savedAnswerJson) && str_contains($savedAnswerJson, '|')) {
+                    $savedAnswers = array_map('trim', explode('|', $savedAnswerJson));
+                } elseif (!empty($savedAnswerJson)) {
+                    $savedAnswers = [(string) $savedAnswerJson];
+                }
+
+                $blankCount = max(1, $blankCount, count($savedAnswers));
+
+                for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
+                    $currentQuestions->push([
+                        'id'       => $q->id,
+                        'number'   => $questionNumber + $blankIndex,
+                        'answered' => !empty(trim((string) ($savedAnswers[$blankIndex] ?? ''))),
+                    ]);
+                }
+
+                continue;
+            }
+
             $currentQuestions->push([
                 'id' => $q->id,
                 'number' => $questionNumber,
@@ -1635,8 +1671,13 @@
         // Navigation - Track current question
         let currentQuestionIndex = 0;
         const questionNumbers = @json($questionNumbers);
+        const isWritingSkill = '{{ $skill }}' === 'writing';
         
         function goToQuestion(num, index) {
+            if (isWritingSkill && window.WfWriting && typeof window.WfWriting.goToQuestionNum === 'function') {
+                window.WfWriting.goToQuestionNum(num);
+            }
+
             // Scroll to question in the content area
             const questionEl = document.querySelector(`.idp-question-item[data-q-num="${num}"], tr[data-q-num="${num}"], .idp-q-item[data-q-num="${num}"], .tc-cell-input[data-q-num="${num}"], .tc-input-wrapper[data-q-num="${num}"]`);
             if(questionEl) {

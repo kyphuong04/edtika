@@ -19,6 +19,7 @@ class IeltsTestQuestion extends Model
         'auto_gradable' => 'boolean',
         'points' => 'float',
         'answer_options' => 'array',
+        'question_data' => 'array',
         'table_structure' => 'array',
         'flow_data' => 'array',
     ];
@@ -52,6 +53,25 @@ class IeltsTestQuestion extends Model
         if (is_string($this->correct_answer)) {
             return json_decode($this->correct_answer, true) ?? [$this->correct_answer];
         }
+        return $this->correct_answer;
+    }
+
+    public function getFormattedCorrectAnswerAttribute()
+    {
+        if ($this->usesCompletionAnswerGroups()) {
+            $groups = $this->normalizeCompletionAnswerGroups($this->correct_answer_array);
+
+            return implode(' | ', array_map(static function (array $variants) {
+                return implode(' / ', $variants);
+            }, $groups));
+        }
+
+        if (is_array($this->correct_answer_array)) {
+            return implode(', ', array_map(static function ($value) {
+                return is_array($value) ? implode(' / ', $value) : (string) $value;
+            }, $this->correct_answer_array));
+        }
+
         return $this->correct_answer;
     }
     
@@ -147,6 +167,36 @@ class IeltsTestQuestion extends Model
         // Ensure it's an array
         if (!is_array($correctAnswers)) {
             $correctAnswers = [$correctAnswers];
+        }
+
+        if ($this->usesCompletionAnswerGroups()) {
+            $expectedGroups = $this->normalizeCompletionAnswerGroups($correctAnswers);
+            $submittedGroups = $this->normalizeSubmittedCompletionAnswers($userAnswer);
+
+            if (empty($expectedGroups) || count($expectedGroups) !== count($submittedGroups)) {
+                return false;
+            }
+
+            foreach ($expectedGroups as $index => $variants) {
+                $submittedValue = $submittedGroups[$index][0] ?? null;
+                if ($submittedValue === null) {
+                    return false;
+                }
+
+                $matched = false;
+                foreach ($variants as $variant) {
+                    if ($submittedValue === $this->normalizeAnswer($variant)) {
+                        $matched = true;
+                        break;
+                    }
+                }
+
+                if (!$matched) {
+                    return false;
+                }
+            }
+
+            return true;
         }
         
         // Normalize answer
@@ -254,9 +304,14 @@ class IeltsTestQuestion extends Model
     private function normalizeTableAnswerVariants($answer)
     {
         if (is_array($answer)) {
-            return array_values(array_filter(array_map(function ($value) {
-                return is_string($value) ? trim($value) : trim((string) $value);
-            }, $answer)));
+            $variants = [];
+            foreach ($answer as $value) {
+                foreach ($this->normalizeTableAnswerVariants($value) as $variant) {
+                    $variants[] = $variant;
+                }
+            }
+
+            return array_values(array_filter($variants));
         }
 
         if ($answer === null || $answer === '') {
@@ -273,11 +328,182 @@ class IeltsTestQuestion extends Model
                 return array_values(array_filter(array_map('trim', explode('|', $answer))));
             }
 
+            if (str_contains($answer, '/')) {
+                return array_values(array_filter(array_map('trim', preg_split('/\s*\/\s*/', $answer))));
+            }
+
             return [trim($answer)];
         }
 
         $text = trim((string) $answer);
         return $text !== '' ? [$text] : [];
+    }
+
+    private function usesCompletionAnswerGroups(): bool
+    {
+        return in_array($this->question_type, ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling', 'diagram_label'], true);
+    }
+
+    private function normalizeCompletionAnswerGroups($value): array
+    {
+        if (is_array($value)) {
+            if ($value === []) {
+                return [];
+            }
+
+            $hasNestedArrays = false;
+            foreach ($value as $item) {
+                if (is_array($item)) {
+                    $hasNestedArrays = true;
+                    break;
+                }
+            }
+
+            if ($hasNestedArrays) {
+                $groups = [];
+                foreach ($value as $group) {
+                    $variants = $this->normalizeCompletionAnswerVariants($group);
+                    if (!empty($variants)) {
+                        $groups[] = $variants;
+                    }
+                }
+
+                return $groups;
+            }
+
+            $groups = [];
+            foreach ($value as $item) {
+                $variants = $this->normalizeCompletionAnswerVariants($item);
+                if (!empty($variants)) {
+                    $groups[] = [$variants[0]];
+                }
+            }
+
+            return $groups;
+        }
+
+        if ($value === null) {
+            return [];
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        if (str_contains($text, '|')) {
+            $groups = [];
+            foreach (explode('|', $text) as $part) {
+                $variants = $this->normalizeCompletionAnswerVariants($part);
+                if (!empty($variants)) {
+                    $groups[] = [$variants[0]];
+                }
+            }
+
+            return $groups;
+        }
+
+        if (str_contains($text, "\n") || str_contains($text, "\r")) {
+            $groups = [];
+            foreach (preg_split('/\r\n|\r|\n/', $text) as $part) {
+                $variants = $this->normalizeCompletionAnswerVariants($part);
+                if (!empty($variants)) {
+                    $groups[] = [$variants[0]];
+                }
+            }
+
+            return $groups;
+        }
+
+        $variants = $this->normalizeCompletionAnswerVariants($text);
+        return !empty($variants) ? [$variants] : [];
+    }
+
+    private function normalizeCompletionAnswerVariants($value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter(array_map(function ($item) {
+                return trim((string) $item);
+            }, $value)));
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/\s*\/\s*/', $text))));
+    }
+
+    private function normalizeSubmittedCompletionAnswers($value): array
+    {
+        if (is_array($value)) {
+            $groups = [];
+            foreach ($value as $item) {
+                if (is_array($item)) {
+                    $variants = array_values(array_filter(array_map(function ($subItem) {
+                        return $this->normalizeAnswer($subItem);
+                    }, $item)));
+                } else {
+                    $normalized = $this->normalizeAnswer($item);
+                    $variants = $normalized !== '' ? [$normalized] : [];
+                }
+
+                if (!empty($variants)) {
+                    $groups[] = $variants;
+                }
+            }
+
+            return $groups;
+        }
+
+        if ($value === null) {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                return [];
+            }
+
+            if (str_starts_with($trimmed, '[') || str_starts_with($trimmed, '{')) {
+                $decoded = json_decode($trimmed, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return $this->normalizeSubmittedCompletionAnswers($decoded);
+                }
+            }
+
+            if (str_contains($trimmed, '|')) {
+                $groups = [];
+                foreach (explode('|', $trimmed) as $part) {
+                    $normalized = $this->normalizeAnswer($part);
+                    if ($normalized !== '') {
+                        $groups[] = [$normalized];
+                    }
+                }
+
+                return $groups;
+            }
+
+            if (str_contains($trimmed, "\n") || str_contains($trimmed, "\r")) {
+                $groups = [];
+                foreach (preg_split('/\r\n|\r|\n/', $trimmed) as $part) {
+                    $normalized = $this->normalizeAnswer($part);
+                    if ($normalized !== '') {
+                        $groups[] = [$normalized];
+                    }
+                }
+
+                return $groups;
+            }
+
+            $normalized = $this->normalizeAnswer($trimmed);
+            return $normalized !== '' ? [[$normalized]] : [];
+        }
+
+        $normalized = $this->normalizeAnswer((string) $value);
+        return $normalized !== '' ? [[$normalized]] : [];
     }
     
     /**
