@@ -39,7 +39,7 @@ class Setting extends Model implements TranslatableContract
         $othersPersonalization, $installmentsSettings, $installmentsTermsSettings, $registrationBonusSettings, $registrationBonusTermsSettings, $statisticsSettings,
         $maintenanceSettings, $restrictionSettings, $generalOptions, $giftsGeneralSettings, $aiContentsSettings, $certificateSettings, $abandonedCartSettings, $smsChannelsSettings,
         $commissionSettings, $instructorFinderSettings, $becomeInstructorSettings, $forumsHomepageSettings, $forumsHomepageRevolverSettings, $forumsCtaSectionSettings, $forumsGeneralSettings, $forumsImagesSettings, $guarantyTextSettings, $contentReviewInformationSettings, $blogFeaturedContentsSettings,
-        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings, $ieltsSettings;
+        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings, $ieltsSettings, $floatingSupportCtaSettings;
 
     // settings name , Using these keys, values are taken from the settings table
     static $seoMetasName = 'seo_metas';
@@ -103,6 +103,7 @@ class Setting extends Model implements TranslatableContract
     static $userDashboardDataSettingsName = 'user_dashboard_data';
     static $mobileAppGeneralSettingsName = 'mobile_app_general_settings';
     static $ieltsSettingsName = 'ielts_settings';
+    static $floatingSupportCtaSettingsName = 'floating_support_cta';
 
     //statics
     static $pagesSeoMetas = ['home', 'search', 'tags', 'categories', 'classes', 'login', 'register', 'contact', 'blog', 'certificate_validation',
@@ -126,6 +127,7 @@ class Setting extends Model implements TranslatableContract
             self::$referralName,
             self::$notificationTemplatesName,
             self::$contactPageName,
+            self::$floatingSupportCtaSettingsName,
         ];
     }
 
@@ -184,6 +186,14 @@ class Setting extends Model implements TranslatableContract
     static function getGeneralSettings($key = null)
     {
         return self::getSetting(self::$general, self::$generalName, $key);
+    }
+
+    /**
+     * @return array|string
+     */
+    static function getFloatingSupportCtaSettings($key = null)
+    {
+        return self::getSetting(self::$floatingSupportCtaSettings, self::$floatingSupportCtaSettingsName, $key);
     }
 
     /**

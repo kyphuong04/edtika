@@ -51,7 +51,16 @@
 
     $tableHeaders = $tableStructure['headers'] ?? [];
     $tableRows = $tableStructure['rows'] ?? [];
-    $blankStartNumber = (int) ($firstQuestion->question_number ?? 1);
+    $hasHeaderRow = false;
+    if (is_array($tableHeaders) && !empty($tableHeaders)) {
+        foreach ($tableHeaders as $headerValue) {
+            if (trim((string) $headerValue) !== '') {
+                $hasHeaderRow = true;
+                break;
+            }
+        }
+    }
+    $blankStartNumber = (int) ($displayStartNumber ?? ($firstQuestion->question_number ?? 1));
     $blankSequence = 0;
 
     // Use title/instruction from firstQuestion by default, but prefer sourceQuestion if it has them
@@ -87,7 +96,7 @@
         @endif
 
         <table class="idp-table-completion-styled">
-            @if(!empty($tableHeaders))
+            @if($hasHeaderRow)
                 <thead>
                     <tr>
                         @foreach($tableHeaders as $header)

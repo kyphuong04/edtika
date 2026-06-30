@@ -50,6 +50,10 @@
                                 <li class="nav-item">
                                     <a class="nav-link" id="sms_channels-tab" data-toggle="tab" href="#sms_channels" role="tab" aria-controls="sms_channels" aria-selected="true">{{ trans('update.sms_channels') }}</a>
                                 </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link" id="floating_support_cta-tab" data-toggle="tab" href="#floating_support_cta" role="tab" aria-controls="floating_support_cta" aria-selected="true">Floating CTA</a>
+                                </li>
                             </ul>
 
                             <div class="tab-content" id="myTabContent2">
@@ -60,6 +64,7 @@
                                 @include('admin.settings.general.security',['itemValue' => (!empty($settings) and !empty($settings['security'])) ? $settings['security']->value : ''])
                                 @include('admin.settings.general.options',['itemValue' => (!empty($settings) and !empty($settings['general_options'])) ? $settings['general_options']->value : ''])
                                 @include('admin.settings.general.sms_channels',['itemValue' => (!empty($settings) and !empty($settings['sms_channels'])) ? $settings['sms_channels']->value : ''])
+                                @include('admin.settings.general.floating_support_cta',['itemValue' => (!empty($settings) and !empty($settings['floating_support_cta'])) ? $settings['floating_support_cta']->value : ''])
                             </div>
 
                         </div>

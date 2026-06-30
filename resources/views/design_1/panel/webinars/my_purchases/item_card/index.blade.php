@@ -22,12 +22,14 @@
 @if(!empty($saleItem))
     <div class="panel-course-card-1 position-relative rounded-24">
         <div class="position-relative d-flex flex-column flex-lg-row  gap-12 z-index-2 bg-white p-12 rounded-24">
-            {{-- Image --}}
+            {{-- Image (only for webinars, not bundles) --}}
+            @if(!empty($sale->webinar))
             <div class="panel-course-card-1__image position-relative rounded-16 bg-gray-100">
                 <a href="{{ $panelDetailUrl }}" {{ $panelDetailTarget }}>
                     <img src="{{ $saleItem->getImage() }}" alt="" class="img-cover rounded-16">
                 </a>
             </div>
+            @endif
 
             {{-- Content --}}
             <div class="panel-course-card-1__content flex-1 d-flex flex-column rounded-16">

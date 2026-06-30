@@ -1026,7 +1026,7 @@ body {
                         @if(!empty($wq['question']->explanation))
                             <div style="margin-bottom: 28px;">
                                 <div class="wv-feedback-title">Model Answer &ndash; Task {{ $wq['partNum'] ?? ($wqIdx+1) }}</div>
-                                <div class="wv-feedback-body">{!! nl2br(e($wq['question']->explanation)) !!}</div>
+                                <div class="wv-feedback-body">{!! clean($wq['question']->explanation) !!}</div>
                             </div>
                         @endif
                     @endforeach
@@ -1747,7 +1747,7 @@ function togglePrompt(idx) {
                             <div class="rv-answer-help">
                                 <div class="rv-answer-help-title">ANSWER HELP</div>
                                 @if(!empty($question->explanation))
-                                    <div class="rv-answer-help-text">{!! nl2br(e($question->explanation)) !!}</div>
+                                    <div class="rv-answer-help-text">{!! clean($question->explanation) !!}</div>
                                 @else
                                     <div class="rv-answer-help-empty">No explanation provided.</div>
                                 @endif

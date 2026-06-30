@@ -828,7 +828,22 @@
             },
             error: function (err) {
                 $this.removeClass('loadingbar').prop('disabled', false);
-                var errors = err.responseJSON;
+                let errors = (err && err.responseJSON && typeof err.responseJSON === "object") ? err.responseJSON : {};
+                const isPayloadTooLarge = Number(err?.status ?? 0) === 413;
+                const defaultTooLargeMessage = (typeof fileTooLargeUploadHintLang !== "undefined" && fileTooLargeUploadHintLang)
+                    ? fileTooLargeUploadHintLang
+                    : "File is too large. Please increase server upload limits (post_max_size/upload_max_filesize or LimitRequestBody) and try again.";
+
+                if (isPayloadTooLarge && !errors.custom_alert) {
+                    errors.custom_alert = defaultTooLargeMessage;
+                }
+
+                if (isPayloadTooLarge && !errors.toast_alert) {
+                    errors.toast_alert = {
+                        title: (typeof requestFailedLang !== "undefined" && requestFailedLang) ? requestFailedLang : 'Request Failed',
+                        msg: defaultTooLargeMessage,
+                    }
+                }
 
                 if (errors && errors.errors) {
                     Object.keys(errors.errors).forEach((key) => {

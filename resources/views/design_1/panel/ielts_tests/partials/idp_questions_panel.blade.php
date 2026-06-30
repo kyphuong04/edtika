@@ -3,7 +3,10 @@
     Each group has its own instructions and question type layout
 --}}
 
-@php $prevPartId = null; @endphp
+@php
+    $prevPartId = null;
+    $displayQuestionCursor = null;
+@endphp
 
 @foreach($groupedQuestions as $groupKey => $questions)
     @php
@@ -37,8 +40,12 @@
         $showPartLabel = $currentPartId && $currentPartId !== $prevPartId;
         if($showPartLabel) $prevPartId = $currentPartId;
 
-        $questionRangeStart = (int) ($firstQ->question_number ?? 1);
-        $questionRangeEnd = (int) ($questions->last()->question_number ?? $questionRangeStart);
+        if ($displayQuestionCursor === null) {
+            $displayQuestionCursor = (int) ($firstQ->question_number ?? 1);
+        }
+
+        $questionRangeStart = $displayQuestionCursor;
+        $displayQuestionCount = max(1, (int) $questions->count());
 
         if ($questionType === 'table_completion') {            $tableStructure = $firstQ->table_structure ?? null;
 
@@ -71,7 +78,7 @@
                 }
             }
 
-            $questionRangeEnd = $questionRangeStart + max(1, $blankCount) - 1;
+            $displayQuestionCount = max(1, $blankCount);
         }
 
         if (in_array($questionType, ['drag_drop_disappear', 'drag_drop_reuse'])) {
@@ -79,7 +86,7 @@
             foreach ($questions as $ddQ) {
                 $ddBlankCount += max(1, substr_count($ddQ->question_text ?? '', '___'));
             }
-            $questionRangeEnd = $questionRangeStart + max(1, $ddBlankCount) - 1;
+            $displayQuestionCount = max(1, $ddBlankCount);
         }
 
         if (in_array($questionType, ['note_completion', 'form_completion'])) {
@@ -97,7 +104,7 @@
                 $noteBlankCount += max(1, $blankInText);
             }
 
-            $questionRangeEnd = $questionRangeStart + max(1, $noteBlankCount) - 1;
+            $displayQuestionCount = max(1, $noteBlankCount);
         }
 
         if (in_array($questionType, ['summary_completion', 'sentence_completion', 'short_answer'])) {
@@ -115,8 +122,11 @@
                 $completionBlankCount += max(1, $blankInText);
             }
 
-            $questionRangeEnd = $questionRangeStart + max(1, $completionBlankCount) - 1;
+            $displayQuestionCount = max(1, $completionBlankCount);
         }
+
+        $questionRangeEnd = $questionRangeStart + $displayQuestionCount - 1;
+        $displayQuestionCursor = $questionRangeEnd + 1;
     @endphp
 
     @if($showPartLabel)
@@ -233,7 +243,8 @@
             @include('design_1.panel.ielts_tests.partials.idp_type_table', [
                 'questions' => $questions,
                 'userAnswers' => $userAnswers,
-                'tableData' => $group->table_data ?? null
+                'tableData' => $group->table_data ?? null,
+                'displayStartNumber' => $questionRangeStart,
             ])
             @break
             

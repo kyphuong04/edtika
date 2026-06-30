@@ -1230,6 +1230,17 @@ async function maybeRestoreAutosaveSnapshot() {
         return;
     }
 
+    const params = new URLSearchParams(window.location.search || '');
+    const isPreviewReturn = params.get('restore_state') === '1';
+    const isEditingExistingTest = !!AUTOSAVE_TEST_ID;
+
+    // Avoid overriding persisted DB data on normal edit page loads.
+    // Only allow snapshot restore when creating a new test or explicitly returning from preview.
+    if (isEditingExistingTest && !isPreviewReturn) {
+        updateAutosaveStatus('Auto Save: dùng dữ liệu máy chủ cho bản chỉnh sửa hiện tại');
+        return;
+    }
+
     const localPayload = loadAutosaveSnapshot();
     let serverPayload = autosaveServerSeed;
 
@@ -2060,9 +2071,15 @@ function displayQuestionGroup(partItem, part, group) {
 
     groupsList.appendChild(groupDiv);
 
-    initAnswerHelpEditors(groupDiv);
-    initContentEditors(groupDiv);
+    // Render question cards first so they are visible even if rich editor init fails.
     renderQuestionsList(groupDiv, group);
+
+    try {
+        initAnswerHelpEditors(groupDiv);
+        initContentEditors(groupDiv);
+    } catch (error) {
+        console.warn('Editor init failed for group card, keeping question list visible:', error);
+    }
     updatePartStats(partItem, part);
 
     return groupDiv;
@@ -2341,8 +2358,11 @@ function resetQuestionForm(form) {
     // Reset to default 2 options for multiple choice
     const optionsList = form.querySelector('.mc-options-list');
     if (optionsList) {
-        optionsList.innerHTML = makeMCOptionRow('radio', 0, optionsList.getAttribute('data-group-name')) +
-                                makeMCOptionRow('radio', 1, optionsList.getAttribute('data-group-name'));
+        const inputType = optionsList.getAttribute('data-input-type') || 'radio';
+        const groupName = optionsList.getAttribute('data-group-name') || ('mc_correct_' + Date.now());
+        optionsList.setAttribute('data-group-name', groupName);
+        optionsList.innerHTML = makeMCOptionRow(inputType, 0, groupName) +
+                                makeMCOptionRow(inputType, 1, groupName);
     }
 
     // Remove edit mode data
@@ -2400,10 +2420,14 @@ function editQuestion(button, questionIndex) {
         const optionsList = form.querySelector('.mc-options-list');
         const inputType = qType === 'multiple_choice_single' ? 'radio' : 'checkbox';
         const groupName = optionsList.getAttribute('data-group-name') || ('mc_grp_' + Date.now());
+        const normalizedCorrectAnswers = normalizeMultipleChoiceCorrectAnswers(question);
+
+        optionsList.setAttribute('data-input-type', inputType);
+        optionsList.setAttribute('data-group-name', groupName);
 
         optionsList.innerHTML = (question.options || []).map((option, i) => {
             const isCorrect = qType === 'multiple_choice_multiple'
-                ? (question.correctAnswers || []).includes(option)
+                ? normalizedCorrectAnswers.includes(option)
                 : question.correctAnswer === option;
             return `<div class="mc-option-row">
                 <span style="font-size:13px;font-weight:600;color:#6b7280;min-width:20px;">${String.fromCharCode(65 + i)}.</span>
@@ -2663,7 +2687,8 @@ function saveQuestionToGroup(button) {
             const optText = row.querySelector('input[type="text"]').value.trim();
             if (optText) {
                 options.push(optText);
-                if (row.querySelector('input[type="checkbox"]').checked) {
+                const selectionInput = row.querySelector('input[type="checkbox"], .correct-marker input');
+                if (selectionInput && selectionInput.checked) {
                     correctAnswers.push(optText);
                 }
             }
@@ -2971,7 +2996,10 @@ function saveQuestionToGroup(button) {
 
 function getGroupSlotCount(group) {
     const questions = normalizeQuestionsForRender(group ? group.questions : []);
-    return questions.reduce((sum, q) => sum + (q.slotCount || 1), 0);
+    return questions.reduce((sum, q) => {
+        const slotCount = Number.isFinite(Number(q.slotCount)) ? Number(q.slotCount) : 1;
+        return sum + Math.max(1, slotCount);
+    }, 0);
 }
 
 function renderQuestionsList(groupItem, group) {
@@ -3003,19 +3031,29 @@ function renderQuestionsList(groupItem, group) {
     list.style.display = 'block';
     let slotIndex = 1;
     const renderedCards = normalizedQuestions.map((question, qIndex) => {
+        const qType = (question && question.type) || group.question_type || 'short_answer';
+        const slotCountBase = Number.isFinite(Number(question && question.slotCount)) ? Number(question.slotCount) : 1;
+        const slotCount = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)
+            ? 1
+            : Math.max(1, slotCountBase);
+        const slotLabel = slotCount > 1
+            ? `Q${slotIndex}–Q${slotIndex + slotCount - 1}`
+            : `Q${slotIndex}`;
+        slotIndex += slotCount;
+
         try {
-            const slotCount = question.slotCount || 1;
             const isCollapsed = question.collapsed !== false;
             const isTitleExpanded = question.titleExpanded === true || !isCollapsed;
             const titleValue = question.title || (question.question_data && question.question_data.title) || '';
-            const qText = (question.text || (question.question_data && question.question_data.statement) || '');
-            const slotLabel = slotCount > 1
-                ? `Q${slotIndex}–Q${slotIndex + slotCount - 1}`
-                : `Q${slotIndex}`;
-            slotIndex += slotCount;
+            const qText = (
+                question.text
+                || question.question_text
+                || (question.question_data && question.question_data.statement)
+                || question.statement
+                || ''
+            );
 
             let detailHTML = '';
-            const qType = question.type || group.question_type || 'short_answer';
 
             if (qType === 'table_completion' && question.table_structure) {
                 const blankCount = (question.table_structure.answers || []).length;
@@ -3036,15 +3074,16 @@ function renderQuestionsList(groupItem, group) {
                     <span class="question-answer-badge">Note: ${blankCount} blanks</span>
                 </div>`;
             } else if (qType === 'multiple_choice_single' || qType === 'multiple_choice_multiple') {
+                const normalizedCorrectAnswers = normalizeMultipleChoiceCorrectAnswers(question);
                 const opts = (question.options || []).map((o, i) => {
                     const isCorrect = qType === 'multiple_choice_multiple'
-                        ? (question.correctAnswers || []).includes(o)
+                        ? normalizedCorrectAnswers.includes(o)
                         : question.correctAnswer === o;
                     return `<span style="margin-right:6px;color:${isCorrect ? '#16a34a' : '#374151'};font-weight:${isCorrect ? '700' : '400'};">${String.fromCharCode(65 + i)}. ${escapeHtml(o)}${isCorrect ? ' ✓' : ''}</span>`;
                 }).join('');
                 detailHTML = `<div style="font-size:12px;margin-top:4px;">${opts}</div>`;
             } else if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
-                const matchingAnswer = String(question.correctAnswer || '').trim();
+                const matchingAnswer = String(question.correctAnswer || question.correct_answer || '').trim();
                 detailHTML = matchingAnswer
                     ? `<span class="question-answer-badge">✓ ${escapeHtml(matchingAnswer)}</span>`
                     : '';
@@ -3079,7 +3118,34 @@ function renderQuestionsList(groupItem, group) {
             </div>`;
         } catch (error) {
             console.warn('Failed to render a question item', error, question);
-            return '';
+            const fallbackText = safeQuestionTextForRender(question);
+            const fallbackAnswer = safeQuestionAnswerForRender(question);
+            const fallbackIsCollapsed = question && question.collapsed !== false;
+            const fallbackLabel = slotLabel;
+
+            return `<div class="mb-12" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;position:relative;">
+                <div class="question-card-header">
+                    <div class="question-card-main">
+                        <span class="question-badge">${fallbackLabel}</span>
+                        <div class="question-preview-text">${escapeHtml(editorHtmlToPlainText(fallbackText))}</div>
+                    </div>
+                    <div class="question-actions">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleQuestionCollapse(this, ${qIndex})" title="${fallbackIsCollapsed ? 'Expand question' : 'Collapse question'}">
+                            <i class="fas ${fallbackIsCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="editQuestion(this, ${qIndex})" title="Edit question">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteQuestion(this, ${qIndex})" title="Delete question">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="question-card-body ${fallbackIsCollapsed ? 'hidden' : ''}" style="margin-top:8px;">
+                    <div style="font-size:13px;color:#1f2937;line-height:1.45;">${escapeHtml(fallbackText || '(content unavailable)')}</div>
+                    ${fallbackAnswer ? `<span class="question-answer-badge">✓ ${escapeHtml(fallbackAnswer)}</span>` : ''}
+                </div>
+            </div>`;
         }
     }).filter(Boolean);
 
@@ -3093,16 +3159,119 @@ function renderQuestionsList(groupItem, group) {
 function normalizeQuestionsForRender(rawQuestions) {
     if (Array.isArray(rawQuestions)) {
         return rawQuestions
-            .filter(item => item && typeof item === 'object')
-            .map(item => ({ ...item }));
+            .map((item, index) => normalizeQuestionForRender(item, index))
+            .filter(Boolean);
     }
 
     if (rawQuestions && typeof rawQuestions === 'object') {
         return Object.keys(rawQuestions)
-            .sort((a, b) => Number(a) - Number(b))
+            .sort((a, b) => {
+                const aNum = Number(a);
+                const bNum = Number(b);
+                if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+                    return aNum - bNum;
+                }
+
+                return String(a).localeCompare(String(b));
+            })
             .map((key) => rawQuestions[key])
-            .filter(item => item && typeof item === 'object')
-            .map(item => ({ ...item }));
+            .map((item, index) => normalizeQuestionForRender(item, index))
+            .filter(Boolean);
+    }
+
+    return [];
+}
+
+function normalizeQuestionForRender(item, index) {
+    if (!item && item !== 0) {
+        return null;
+    }
+
+    if (typeof item === 'object') {
+        const normalized = { ...item };
+
+        if (!normalized.text && normalized.question_text) {
+            normalized.text = normalized.question_text;
+        }
+
+        if (!normalized.correctAnswer && normalized.correct_answer) {
+            normalized.correctAnswer = normalized.correct_answer;
+        }
+
+        if ((normalized.type === 'multiple_choice_multiple' || normalized.question_type === 'multiple_choice_multiple') && !Array.isArray(normalized.correctAnswers)) {
+            normalized.correctAnswers = normalizeMultipleChoiceCorrectAnswers(normalized);
+        }
+
+        return normalized;
+    }
+
+    // Defensive fallback for malformed payloads that contain primitive entries.
+    return {
+        id: `legacy_${index}`,
+        type: 'short_answer',
+        text: String(item),
+        correctAnswer: '',
+        slotCount: 1,
+    };
+}
+
+function safeQuestionTextForRender(question) {
+    if (!question || typeof question !== 'object') {
+        return String(question || '');
+    }
+
+    const directText = question.text || question.question_text || question.statement;
+    if (directText) {
+        return String(directText);
+    }
+
+    if (question.question_data && typeof question.question_data === 'object') {
+        return String(question.question_data.statement || question.question_data.title || '');
+    }
+
+    return '';
+}
+
+function safeQuestionAnswerForRender(question) {
+    if (!question || typeof question !== 'object') {
+        return '';
+    }
+
+    const answer = question.correctAnswer || question.correct_answer;
+    return answer == null ? '' : String(answer);
+}
+
+function normalizeMultipleChoiceCorrectAnswers(question) {
+    if (!question || typeof question !== 'object') {
+        return [];
+    }
+
+    if (Array.isArray(question.correctAnswers)) {
+        return question.correctAnswers.map(value => String(value).trim()).filter(Boolean);
+    }
+
+    const raw = question.correctAnswer || question.correct_answer;
+
+    if (Array.isArray(raw)) {
+        return raw.map(value => String(value).trim()).filter(Boolean);
+    }
+
+    if (typeof raw === 'string') {
+        const text = raw.trim();
+        if (!text) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                return parsed.map(value => String(value).trim()).filter(Boolean);
+            }
+        } catch (error) {
+            // Fall back to comma-separated parsing.
+        }
+
+        return text.split(',').map(value => value.trim()).filter(Boolean);
     }
 
     return [];
@@ -3600,7 +3769,7 @@ function buildTableCompletionBuilder(button) {
     const rowsInput = form.querySelector('.tc-num-rows');
     const colsInput = form.querySelector('.tc-num-cols');
     const totalRows = Math.max(2, parseInt(rowsInput?.value, 10) || 3);
-    const rows = totalRows;
+    const rows = Math.max(1, totalRows - 1);
     const cols = Math.max(1, parseInt(colsInput?.value, 10) || 3);
     const wrap = form.querySelector('.tc-builder-wrap');
     const head = form.querySelector('.tc-builder-head');
@@ -3839,8 +4008,8 @@ function getQuestionFormHTML(questionType) {
             </div>
             <div class="form-row align-items-end">
                 <div class="form-group" style="max-width:110px;">
-                    <label class="input-label">Rows</label>
-                    <input type="number" class="form-control tc-num-rows" min="1" max="12" value="3">
+                    <label class="input-label">Rows (include header)</label>
+                    <input type="number" class="form-control tc-num-rows" min="2" max="12" value="3">
                 </div>
                 <div class="form-group" style="max-width:110px;">
                     <label class="input-label">Cols</label>
@@ -4271,6 +4440,9 @@ function setupFormValidation() {
             submitActionInput.value = submitAction;
         }
 
+        // Preserve unsaved edits (especially Answer Help) from currently open edit forms.
+        syncOpenQuestionEditFormsForDraft();
+
         if (submitAction === 'draft' || submitAction === 'preview') {
             if (!syncOpenMatchingFormsIntoTestData()) {
                 return;
@@ -4361,6 +4533,106 @@ function setupFormValidation() {
     });
 }
 
+function resolveOpenQuestionFormContext(form) {
+    const groupItem = form ? form.closest('.group-item') : null;
+    const partItem = form ? form.closest('.part-item') : null;
+    const section = form ? form.closest('.section-container') : null;
+
+    if (!groupItem || !partItem || !section) {
+        return null;
+    }
+
+    const skill = section.getAttribute('data-skill');
+    const partId = partItem.getAttribute('data-part-id');
+    const groupId = groupItem.getAttribute('data-group-id');
+    const part = testData.sections[skill]?.parts?.find(p => String(p.id) === String(partId));
+    const group = part ? (part.groups || []).find(g => String(g.id) === String(groupId)) : null;
+
+    if (!part || !group) {
+        return null;
+    }
+
+    return { groupItem, partItem, section, skill, part, group };
+}
+
+function syncOpenQuestionEditFormsForDraft() {
+    const openForms = Array.from(document.querySelectorAll('.group-item .question-inline-form'))
+        .filter(form => !form.classList.contains('hidden'));
+
+    openForms.forEach((form) => {
+        if (form.getAttribute('data-edit-mode') !== 'true') {
+            return;
+        }
+
+        const editIndex = parseInt(form.getAttribute('data-edit-index'), 10);
+        if (!Number.isFinite(editIndex)) {
+            return;
+        }
+
+        const ctx = resolveOpenQuestionFormContext(form);
+        if (!ctx) {
+            return;
+        }
+
+        const qType = getInlineQuestionType(form) || (ctx.group.question_type || 'short_answer');
+        const existingQuestion = (ctx.group.questions || [])[editIndex];
+
+        if (!existingQuestion) {
+            return;
+        }
+
+        const explanationInput = form.querySelector('.question-explanation-input');
+        const explanation = explanationInput ? getAnswerHelpValue(explanationInput) : null;
+
+        const titleInput = form.querySelector('.question-title-input');
+        const title = titleInput ? titleInput.value.trim() : '';
+
+        const textInput = form.querySelector('.question-text-input');
+        const text = textInput ? getContentEditorValue(textInput) : existingQuestion.text;
+
+        const pointsInput = form.querySelector('.question-points-input');
+        const pointsValue = pointsInput ? parseFloat(pointsInput.value) : NaN;
+        const points = Number.isFinite(pointsValue) ? pointsValue : existingQuestion.points;
+
+        const patchQuestion = function (question) {
+            const nextQuestion = {
+                ...question,
+                explanation: explanation || null,
+                points,
+                title: title || null,
+                text,
+                question_data: {
+                    ...(question.question_data || {})
+                }
+            };
+
+            if (title) {
+                nextQuestion.question_data.title = title;
+            }
+
+            return nextQuestion;
+        };
+
+        if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+            ctx.group.questions = (ctx.group.questions || []).map((question) => {
+                if ((question.type || qType) !== qType) {
+                    return question;
+                }
+
+                return patchQuestion(question);
+            });
+        } else {
+            ctx.group.questions[editIndex] = patchQuestion(existingQuestion);
+        }
+
+        renderQuestionsList(ctx.groupItem, ctx.group);
+        updatePartStats(ctx.partItem, ctx.part);
+        updateSectionStats(ctx.section);
+    });
+
+    updateCompletenessStatus();
+}
+
     // Ensure section audio inputs are preserved whenever the form is submitted
 // ─── Form State Preservation (localStorage for preview exit) ─────────────────
 
@@ -4443,6 +4715,13 @@ function syncOpenMatchingFormsIntoTestData() {
  */
 function restoreFormStateFromLocalStorage() {
     try {
+        const params = new URLSearchParams(window.location.search || '');
+        const restoreState = params.get('restore_state');
+        if (restoreState !== '1') {
+            console.log('ℹ Skip local restore (not returning from preview)');
+            return;
+        }
+
         const testId = getTestId();
         if (!testId) {
             console.log('⚠ No testId found, skipping localStorage restore');

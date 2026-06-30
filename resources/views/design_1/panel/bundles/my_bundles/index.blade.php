@@ -162,6 +162,33 @@
     .materials-bundle-card__price {
         font-size: 16px;
         font-weight: 700;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+    }
+    .materials-bundle-card__discount-price {
+        color: #511D99;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .materials-bundle-card__original-price {
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: line-through;
+    }
+    .materials-bundle-card__discount-percent {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(239, 68, 68, .12);
+        color: #b91c1c;
+        font-size: 11px;
+        font-weight: 700;
     }
     .materials-bundle-card__actions {
         position: absolute;

@@ -47,6 +47,30 @@
     while (count($authSliderSlides) < 3) {
         $authSliderSlides[] = $authSliderSlides[count($authSliderSlides) - 1];
     }
+
+    $floatingSupportCtaSettings = getFloatingSupportCtaSettings();
+    $floatingSupportCtaEnabled = !isset($floatingSupportCtaSettings['enabled']) || !empty($floatingSupportCtaSettings['enabled']);
+    $floatingSupportLabel = !empty($floatingSupportCtaSettings['support_label'])
+        ? $floatingSupportCtaSettings['support_label']
+        : ($isEnglish ? 'Support' : 'Hỗ trợ');
+    $floatingSupportContactPhone = !empty($floatingSupportCtaSettings['contact_phone'])
+        ? trim($floatingSupportCtaSettings['contact_phone'])
+        : trim((string) getGeneralSettings('site_phone'));
+    if (empty($floatingSupportContactPhone) && !empty($floatingSupportCtaSettings['contact_url']) && stripos($floatingSupportCtaSettings['contact_url'], 'tel:') === 0) {
+        $floatingSupportContactPhone = trim(substr($floatingSupportCtaSettings['contact_url'], 4));
+    }
+
+    $floatingSupportContactPhoneForTel = preg_replace('/(?!^\+)\D+/', '', $floatingSupportContactPhone);
+    $floatingSupportContactHref = !empty($floatingSupportContactPhoneForTel) ? ('tel:' . $floatingSupportContactPhoneForTel) : '#';
+    $floatingSupportContactLabel = !empty($floatingSupportContactPhone)
+        ? $floatingSupportContactPhone
+        : ($isEnglish ? 'Contact phone' : 'Số liên hệ');
+    $floatingSupportZaloLabel = !empty($floatingSupportCtaSettings['zalo_label'])
+        ? $floatingSupportCtaSettings['zalo_label']
+        : ($isEnglish ? 'Contact via Zalo' : 'Liên hệ qua Zalo');
+    $floatingSupportZaloUrl = !empty($floatingSupportCtaSettings['zalo_url']) ? $floatingSupportCtaSettings['zalo_url'] : 'https://zalo.me/';
+    $floatingSupportToTopLabel = $isEnglish ? 'Back to top' : 'Quay về đầu trang';
+    $floatingSupportZaloExternal = (bool) preg_match('/^https?:\/\//i', $floatingSupportZaloUrl);
 @endphp
 
 <head>
@@ -524,6 +548,76 @@
             background: #511D99;
         }
 
+        .edtika-floating-cta {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .edtika-floating-cta__menu {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+
+        .edtika-floating-cta.is-open .edtika-floating-cta__menu {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .edtika-floating-cta__toggle,
+        .edtika-floating-cta__item {
+            border: 0;
+            border-radius: 999px;
+            background: #511D99;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1;
+            text-decoration: none;
+            box-shadow: 0 12px 28px rgba(44, 16, 84, 0.28);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .edtika-floating-cta__toggle {
+            min-width: 116px;
+            height: 48px;
+            padding: 0 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .edtika-floating-cta__item {
+            min-width: 170px;
+            height: 42px;
+            padding: 0 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: #511D99;
+            border: 1px solid rgba(81, 29, 153, 0.18);
+        }
+
+        .edtika-floating-cta__item:hover,
+        .edtika-floating-cta__toggle:hover {
+            text-decoration: none;
+            filter: brightness(0.97);
+        }
+
         @media (max-width: 992px) {
             .edtika-auth-modal__content {
                 grid-template-columns: 1fr;
@@ -535,6 +629,25 @@
 
             .edtika-auth-modal__form-side {
                 padding: 56px 22px 34px;
+            }
+
+            .edtika-floating-cta {
+                right: 14px;
+                bottom: 14px;
+            }
+
+            .edtika-floating-cta__toggle {
+                min-width: 104px;
+                height: 44px;
+                padding: 0 18px;
+                font-size: 13px;
+            }
+
+            .edtika-floating-cta__item {
+                min-width: 156px;
+                height: 40px;
+                padding: 0 14px;
+                font-size: 13px;
             }
         }
     </style>
@@ -790,6 +903,28 @@
         </div>
     </div>
 
+    @if($floatingSupportCtaEnabled)
+        <div class="edtika-floating-cta" id="edtikaFloatingCta">
+            <div class="edtika-floating-cta__menu" id="edtikaFloatingCtaMenu" aria-hidden="true">
+                <a class="edtika-floating-cta__item" href="{{ $floatingSupportContactHref }}" @if(empty($floatingSupportContactPhoneForTel)) onclick="return false;" @endif>
+                    {{ $floatingSupportContactLabel }}
+                </a>
+
+                <a class="edtika-floating-cta__item" href="{{ $floatingSupportZaloUrl }}" @if($floatingSupportZaloExternal) target="_blank" rel="noopener noreferrer" @endif>
+                    {{ $floatingSupportZaloLabel }}
+                </a>
+
+                <button type="button" class="edtika-floating-cta__item" data-cta-top="true">
+                    {{ $floatingSupportToTopLabel }}
+                </button>
+            </div>
+
+            <button type="button" class="edtika-floating-cta__toggle" id="edtikaFloatingCtaToggle" aria-expanded="false" aria-controls="edtikaFloatingCtaMenu">
+                {{ $floatingSupportLabel }}
+            </button>
+        </div>
+    @endif
+
     @if(!isset($appFooter) and !empty($themeFooterData['component_name']))
         @include("design_1.web.theme.footers.{$themeFooterData['component_name']}.index")
     @endif
@@ -875,6 +1010,34 @@
         var authSliderDelay = 3400;
         var authLoginFailedSession = @json(session()->get('login_failed_active_session'));
         var authModalShouldOpen = @json(session()->get('auth_modal_open', false));
+        var floatingCtaRoot = document.getElementById('edtikaFloatingCta');
+        var floatingCtaToggleBtn = document.getElementById('edtikaFloatingCtaToggle');
+        var floatingCtaMenu = document.getElementById('edtikaFloatingCtaMenu');
+        var floatingCtaToTopBtn = document.querySelector('[data-cta-top="true"]');
+
+        var openFloatingCta = function () {
+            if (!floatingCtaRoot || !floatingCtaToggleBtn) {
+                return;
+            }
+
+            floatingCtaRoot.classList.add('is-open');
+            floatingCtaToggleBtn.setAttribute('aria-expanded', 'true');
+            if (floatingCtaMenu) {
+                floatingCtaMenu.setAttribute('aria-hidden', 'false');
+            }
+        };
+
+        var closeFloatingCta = function () {
+            if (!floatingCtaRoot || !floatingCtaToggleBtn) {
+                return;
+            }
+
+            floatingCtaRoot.classList.remove('is-open');
+            floatingCtaToggleBtn.setAttribute('aria-expanded', 'false');
+            if (floatingCtaMenu) {
+                floatingCtaMenu.setAttribute('aria-hidden', 'true');
+            }
+        };
 
         var setActiveAuthSlide = function (nextIndex) {
             if (!authSliderSlides.length) {
@@ -971,8 +1134,36 @@
         window.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeAuthModal();
+                closeFloatingCta();
             }
         });
+
+        if (floatingCtaToggleBtn && floatingCtaRoot) {
+            floatingCtaToggleBtn.addEventListener('click', function () {
+                if (floatingCtaRoot.classList.contains('is-open')) {
+                    closeFloatingCta();
+                } else {
+                    openFloatingCta();
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!floatingCtaRoot.contains(event.target)) {
+                    closeFloatingCta();
+                }
+            });
+        }
+
+        if (floatingCtaToTopBtn) {
+            floatingCtaToTopBtn.addEventListener('click', function () {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+
+                closeFloatingCta();
+            });
+        }
 
         authTabs.forEach(function (tabBtn) {
             tabBtn.addEventListener('click', function () {

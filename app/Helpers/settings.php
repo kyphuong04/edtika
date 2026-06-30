@@ -60,6 +60,15 @@ function getGeneralSettings($key = null)
 
 /**
  * @param null $key
+ * @return array|string
+ */
+function getFloatingSupportCtaSettings($key = null)
+{
+    return App\Models\Setting::getFloatingSupportCtaSettings($key);
+}
+
+/**
+ * @param null $key
  * $key => "agora_resolution" | "agora_max_bitrate" | "agora_min_bitrate" | "agora_frame_rate" | "agora_live_streaming" | "agora_chat" | "agora_cloud_rec" | "agora_in_free_courses"
  * "new_interactive_file" | "timezone_in_register" | "timezone_in_create_webinar"
  * "sequence_content_status" | "webinar_assignment_status" | "webinar_private_content_status" | "disable_view_content_after_user_register"

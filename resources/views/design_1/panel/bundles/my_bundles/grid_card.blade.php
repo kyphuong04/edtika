@@ -13,6 +13,11 @@
     $totalStudents = count($bundle->sales);
     $totalSales    = handlePrice($bundle->sales->sum('amount'));
     $totalHours    = convertMinutesToHourAndMinute($bundle->getBundleDuration());
+    $bundlePriceCurrency = $bundle->getPriceCurrency();
+    $bundleBestTicketData = $bundle->bestTicket(true);
+    $bundleDiscountedPrice = $bundleBestTicketData['bestTicket'] ?? $bundle->price;
+    $bundleDiscountPercent = $bundleBestTicketData['percent'] ?? 0;
+    $hasBundleDiscount = ($bundle->price > 0 && $bundleDiscountedPrice < $bundle->price);
 
     $statusMap = [
         'pending' => [
@@ -156,13 +161,20 @@
         {{-- Price --}}
         <div class="materials-bundle-card__stat materials-bundle-card__price">
             @if($bundle->price > 0)
-                @if($bundle->bestTicket() < $bundle->price)
-                    <span style="color: #511D99">
-                        {{ handleBundlePriceByCurrency($bundle->bestTicket(), $bundle->getPriceCurrency()) }}
+                @if($hasBundleDiscount)
+                    <span class="materials-bundle-card__discount-price">
+                        {{ handleBundlePriceByCurrency($bundleDiscountedPrice, $bundlePriceCurrency) }}
                     </span>
+                    <span class="materials-bundle-card__original-price">
+                        {{ handleBundlePriceByCurrency($bundle->price, $bundlePriceCurrency) }}
+                    </span>
+
+                    @if($bundleDiscountPercent > 0)
+                        <span class="materials-bundle-card__discount-percent">-{{ $bundleDiscountPercent }}%</span>
+                    @endif
                 @else
-                    <span style="color: #511D99">
-                        {{ handleBundlePriceByCurrency($bundle->price, $bundle->getPriceCurrency()) }}
+                    <span class="materials-bundle-card__discount-price">
+                        {{ handleBundlePriceByCurrency($bundle->price, $bundlePriceCurrency) }}
                     </span>
                 @endif
             @else

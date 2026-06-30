@@ -957,7 +957,10 @@ class IeltsTestInlineController extends Controller
         session()->forget('mentor_preview_attempt_id');
         session()->forget('mentor_preview_test_id');
 
-        return redirect()->route('panel.my_ielts_tests.edit_inline', $test->id)->with(['toast' => [
+        return redirect()->route('panel.my_ielts_tests.edit_inline', [
+            'id' => $test->id,
+            'restore_state' => 1,
+        ])->with(['toast' => [
             'title' => 'Success',
             'msg' => 'Exited student preview mode.',
             'status' => 'success',
@@ -1487,6 +1490,7 @@ class IeltsTestInlineController extends Controller
             'question_type' => $questionType,
             'question_text' => $this->sanitizeInlineText($questionData['text'] ?? $questionData['question_text'] ?? '', 65000) ?? '',
             'instruction' => $this->sanitizeInlineText($questionData['instruction'] ?? null, 65000),
+            'explanation' => $this->sanitizeInlineText($questionData['explanation'] ?? null, 65000),
             'answer_options' => $answerOptions,
             'correct_answer' => is_string($correctAnswer) ? $this->sanitizeInlineText($correctAnswer, 65000) : $correctAnswer,
             'question_data' => !empty($normalizedQuestionData) ? $this->sanitizeInlineNestedPayload($normalizedQuestionData) : null,
@@ -1603,6 +1607,7 @@ class IeltsTestInlineController extends Controller
             'question_type' => $questionType,
             'question_text' => $this->sanitizeInlineText($questionData['text'] ?? $questionData['question_text'] ?? '', 65000) ?? '',
             'instruction' => $this->sanitizeInlineText($questionData['instruction'] ?? null, 65000),
+            'explanation' => $this->sanitizeInlineText($questionData['explanation'] ?? null, 65000),
             'answer_options' => $answerOptions,
             'correct_answer' => is_string($correctAnswer) ? $this->sanitizeInlineText($correctAnswer, 65000) : $correctAnswer,
             'question_data' => !empty($normalizedQuestionData) ? $this->sanitizeInlineNestedPayload($normalizedQuestionData) : null,

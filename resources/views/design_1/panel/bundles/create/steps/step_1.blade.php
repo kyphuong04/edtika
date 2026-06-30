@@ -57,40 +57,6 @@
     </div>
 
 
-    <div class="form-group mb-0">
-        <h3 class="font-14 font-weight-bold position-relative d-inline-flex is-required">{{ trans('update.thumbnail_&_cover') }}</h3>
-    </div>
-
-    <div class="row">
-
-        @include('design_1.panel.bundles.create.includes.media',[
-            'media' => !empty($bundle) ? $bundle->thumbnail : null,
-            'mediaName' => 'thumbnail',
-            'mediaTitle' => trans('update.thumbnail'),
-        ])
-
-        @include('design_1.panel.bundles.create.includes.media',[
-            'media' => !empty($bundle) ? $bundle->image_cover : null,
-            'mediaName' => 'image_cover',
-            'mediaTitle' => trans('public.cover_image'),
-        ])
-
-
-        <div class="col-12 mt-8">
-            @error('thumbnail')
-            <div class="invalid-feedback">
-                {{ $message }}
-            </div>
-            @enderror
-
-            @error('image_cover')
-            <div class="invalid-feedback">
-                {{ $message }}
-            </div>
-            @enderror
-        </div>
-    </div>
-
     {{-- Video --}}
     <h3 class="font-14 font-weight-bold my-24">{{ trans('public.demo_video') }} ({{ trans('public.optional') }})</h3>
 

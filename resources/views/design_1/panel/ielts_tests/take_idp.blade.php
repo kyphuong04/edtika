@@ -868,6 +868,103 @@
         .idp-modal-btn { padding: 8px 24px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
         .idp-modal-btn.cancel { background: rgba(81, 29, 153, 0.10); color: var(--idp-primary-deep); }
         .idp-modal-btn.confirm { background: var(--idp-primary); color: #fff; }
+
+        /* ========== STUDENT HIGHLIGHT / NOTE ========== */
+        .idp-user-highlight {
+            background: #fff1a8;
+            border-radius: 3px;
+            padding: 0 1px;
+            cursor: pointer;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+        }
+
+        .idp-user-highlight.has-note {
+            background: #ffd98a;
+            border-bottom: 1px dashed rgba(81, 29, 153, 0.65);
+        }
+
+        .idp-annotate-toolbar {
+            position: fixed;
+            z-index: 2500;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1px solid var(--idp-border-strong);
+            box-shadow: 0 8px 26px rgba(33, 20, 59, 0.18);
+            border-radius: 10px;
+            padding: 6px;
+        }
+
+        .idp-annotate-btn {
+            border: 1px solid var(--idp-border-strong);
+            background: #fff;
+            color: var(--idp-primary-deep);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .idp-annotate-btn:hover {
+            background: var(--idp-primary-soft);
+        }
+
+        .idp-annotate-note-pop {
+            position: fixed;
+            z-index: 2550;
+            display: none;
+            width: min(340px, calc(100vw - 24px));
+            background: #fff;
+            border: 1px solid var(--idp-border-strong);
+            border-radius: 12px;
+            box-shadow: 0 14px 36px rgba(33, 20, 59, 0.2);
+            padding: 12px;
+        }
+
+        .idp-annotate-note-title {
+            font-size: 12px;
+            color: var(--idp-muted);
+            margin-bottom: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .idp-annotate-note-text {
+            font-size: 13px;
+            color: var(--idp-text);
+            line-height: 1.5;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .idp-annotate-note-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .idp-annotate-note-btn {
+            border: 1px solid var(--idp-border-strong);
+            background: #fff;
+            color: var(--idp-primary-deep);
+            border-radius: 7px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .idp-annotate-note-btn.delete {
+            border-color: rgba(220, 38, 38, 0.45);
+            color: #b42323;
+        }
         
         /* ========== RESPONSIVE STYLES ========== */
         @media (max-width: 1200px) {
@@ -1322,7 +1419,7 @@
             ])
         @elseif($skill === 'listening' && empty($currentSection->passage_text) && !$hasPartLeftPanelContent)
             {{-- LISTENING FULL WIDTH (no passage) --}}
-            <div class="idp-right" style="flex: none; width: 100%;">
+            <div class="idp-right" id="rightPanel" style="flex: none; width: 100%;">
                 @if($attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
                     <div class="idp-audio-inline">
                         <audio id="audioPlayer" controls>
@@ -1408,8 +1505,8 @@
     @php
         // Expand table completion questions so every blank becomes its own navigable item
         $currentQuestions = collect();
+        $displayQuestionCursor = (int) ($allQuestions->first()->question_number ?? 1);
         foreach ($allQuestions as $q) {
-            $questionNumber = (int) ($q->question_number ?? 0);
             $questionType = $q->question_type ?? 'fill_blank';
             $savedAnswerJson = $userAnswers[$q->id] ?? '';
             $savedAnswerData = is_string($savedAnswerJson) ? json_decode($savedAnswerJson, true) : $savedAnswerJson;
@@ -1453,9 +1550,10 @@
                 for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
                     $currentQuestions->push([
                         'id' => $q->id,
-                        'number' => $questionNumber + $blankIndex,
+                        'number' => $displayQuestionCursor,
                         'answered' => !empty($savedAnswers[$blankIndex]['answer'] ?? null),
                     ]);
+                    $displayQuestionCursor++;
                 }
 
                 continue;
@@ -1474,9 +1572,10 @@
                 for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
                     $currentQuestions->push([
                         'id'       => $q->id,
-                        'number'   => $questionNumber + $blankIndex,
+                        'number'   => $displayQuestionCursor,
                         'answered' => !empty($savedAnswers[$blankIndex] ?? null),
                     ]);
+                    $displayQuestionCursor++;
                 }
 
                 continue;
@@ -1508,9 +1607,49 @@
                 for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
                     $currentQuestions->push([
                         'id'       => $q->id,
-                        'number'   => $questionNumber + $blankIndex,
+                        'number'   => $displayQuestionCursor,
                         'answered' => !empty(trim((string) ($savedAnswers[$blankIndex] ?? ''))),
                     ]);
+                    $displayQuestionCursor++;
+                }
+
+                continue;
+            }
+
+            if (in_array($questionType, ['note_completion', 'form_completion'])) {
+                $rawText = (string) ($q->question_text ?? '');
+                $matches = [];
+                preg_match_all('/_{2,}|\[\s*\d*\s*\]|____/', $rawText, $matches);
+                $blankCount = !empty($matches[0]) ? count($matches[0]) : 0;
+
+                if ($blankCount === 0 && !empty($q->correct_answer) && is_string($q->correct_answer) && str_contains($q->correct_answer, '|')) {
+                    $blankCount = count(array_filter(array_map('trim', explode('|', $q->correct_answer)), static fn($item) => $item !== ''));
+                }
+
+                $savedAnswers = [];
+                if (is_array($savedAnswerData) && isset($savedAnswerData['answers']) && is_array($savedAnswerData['answers'])) {
+                    $savedAnswers = array_values(array_map(static function ($item) {
+                        return is_array($item) ? ($item['answer'] ?? '') : (string) $item;
+                    }, $savedAnswerData['answers']));
+                } elseif (is_array($savedAnswerData)) {
+                    $savedAnswers = array_values(array_map(static function ($item) {
+                        return is_array($item) ? ($item['answer'] ?? '') : (string) $item;
+                    }, $savedAnswerData));
+                } elseif (is_string($savedAnswerJson) && str_contains($savedAnswerJson, '|')) {
+                    $savedAnswers = array_map('trim', explode('|', $savedAnswerJson));
+                } elseif (!empty($savedAnswerJson)) {
+                    $savedAnswers = [(string) $savedAnswerJson];
+                }
+
+                $blankCount = max(1, $blankCount, count($savedAnswers));
+
+                for ($blankIndex = 0; $blankIndex < $blankCount; $blankIndex++) {
+                    $currentQuestions->push([
+                        'id'       => $q->id,
+                        'number'   => $displayQuestionCursor,
+                        'answered' => !empty(trim((string) ($savedAnswers[$blankIndex] ?? ''))),
+                    ]);
+                    $displayQuestionCursor++;
                 }
 
                 continue;
@@ -1518,9 +1657,10 @@
 
             $currentQuestions->push([
                 'id' => $q->id,
-                'number' => $questionNumber,
+                'number' => $displayQuestionCursor,
                 'answered' => !empty($userAnswers[$q->id] ?? null)
             ]);
+            $displayQuestionCursor++;
         }
 
         $currentQuestions = $currentQuestions->sortBy('number')->values();
@@ -1596,11 +1736,31 @@
         </div>
     </div>
 
+    <div class="idp-annotate-toolbar" id="annotateToolbar">
+        <button type="button" class="idp-annotate-btn" id="annotateHighlightBtn">Highlight</button>
+        <button type="button" class="idp-annotate-btn" id="annotateNoteBtn">Add note</button>
+        <button type="button" class="idp-annotate-btn" id="annotateUndoBtn">Undo</button>
+        <button type="button" class="idp-annotate-btn" id="annotateCancelBtn">Cancel</button>
+    </div>
+
+    <div class="idp-annotate-note-pop" id="annotateNotePop">
+        <div class="idp-annotate-note-title">Your note</div>
+        <div class="idp-annotate-note-text" id="annotateNoteText"></div>
+        <div class="idp-annotate-note-actions">
+            <button type="button" class="idp-annotate-note-btn" id="annotateNoteEdit">Edit</button>
+            <button type="button" class="idp-annotate-note-btn delete" id="annotateNoteDelete">Delete</button>
+            <button type="button" class="idp-annotate-note-btn" id="annotateNoteClose">Close</button>
+        </div>
+    </div>
+
     <script>
         const attemptId = {{ $attempt->id }};
         const csrf = '{{ csrf_token() }}';
         const saveUrl = '{{ route("panel.ielts_tests.save_answer", $attempt->id) }}';
         const submitUrl = '{{ route("panel.ielts_tests.finish_section", $attempt->id) }}';
+        const sectionId = {{ (int) ($currentSection->id ?? 0) }};
+        const activePartId = {{ (int) ($currentPartId ?? 0) }};
+        const noteStorageKey = `ielts_notes_attempt_${attemptId}_section_${sectionId}_part_${activePartId}`;
         
         // Create map of question ID to question number
         const questionIdToNumber = {};
@@ -1672,6 +1832,12 @@
         let currentQuestionIndex = 0;
         const questionNumbers = @json($questionNumbers);
         const isWritingSkill = '{{ $skill }}' === 'writing';
+
+        // Highlight / note state
+        let pendingSelectionRange = null;
+        let pendingSelectionContainer = null;
+        let activeHighlightNode = null;
+        let suppressToolbarAutoHideUntil = 0;
         
         function goToQuestion(num, index) {
             if (isWritingSkill && window.WfWriting && typeof window.WfWriting.goToQuestionNum === 'function') {
@@ -1729,6 +1895,7 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateNavButtons();
+            initStudentAnnotations();
         });
         
         // Exam timer - counts up from 00:00:00
@@ -1824,6 +1991,425 @@
             }
             updateWordCount();
         });
+
+        function getStoredAnnotations() {
+            try {
+                const raw = localStorage.getItem(noteStorageKey);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                console.warn('Cannot read notes from storage:', error);
+                return [];
+            }
+        }
+
+        function setStoredAnnotations(annotations) {
+            try {
+                localStorage.setItem(noteStorageKey, JSON.stringify(Array.isArray(annotations) ? annotations : []));
+            } catch (error) {
+                console.warn('Cannot save notes to storage:', error);
+            }
+        }
+
+        function getAnnotationContainers() {
+            const ids = ['leftPanel', 'rightPanel'];
+            return ids
+                .map((id) => document.getElementById(id))
+                .filter((el) => !!el);
+        }
+
+        function isAnnotatableRange(range) {
+            if (!range || range.collapsed) {
+                return false;
+            }
+
+            const containers = getAnnotationContainers();
+            if (!containers.length) {
+                return false;
+            }
+
+            const commonNode = range.commonAncestorContainer.nodeType === 1
+                ? range.commonAncestorContainer
+                : range.commonAncestorContainer.parentElement;
+
+            if (!commonNode) {
+                return false;
+            }
+
+            const activeContainer = containers.find((container) => container.contains(commonNode));
+            if (!activeContainer) {
+                return false;
+            }
+
+            const blockedSelector = 'input, textarea, select, button, audio, video, .idp-q-circle, .idp-nav-text-btn, .idp-user-highlight';
+            const startElement = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+            const endElement = range.endContainer.nodeType === 1 ? range.endContainer : range.endContainer.parentElement;
+
+            if ((startElement && startElement.closest(blockedSelector)) || (endElement && endElement.closest(blockedSelector))) {
+                return false;
+            }
+
+            pendingSelectionContainer = activeContainer;
+            return true;
+        }
+
+        function getTextOffsetWithinContainer(container, node, offset) {
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            let total = 0;
+            let current;
+            while ((current = walker.nextNode())) {
+                if (current === node) {
+                    return total + offset;
+                }
+                total += current.nodeValue.length;
+            }
+            return -1;
+        }
+
+        function serializeRange(container, range) {
+            const startNode = range.startContainer;
+            const endNode = range.endContainer;
+            const start = getTextOffsetWithinContainer(container, startNode, range.startOffset);
+            const end = getTextOffsetWithinContainer(container, endNode, range.endOffset);
+
+            if (start < 0 || end < 0 || end <= start) {
+                return null;
+            }
+
+            return { start, end };
+        }
+
+        function locateTextPosition(container, targetOffset) {
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            let total = 0;
+            let current;
+            while ((current = walker.nextNode())) {
+                const nextTotal = total + current.nodeValue.length;
+                if (targetOffset <= nextTotal) {
+                    return {
+                        node: current,
+                        offset: Math.max(0, targetOffset - total)
+                    };
+                }
+                total = nextTotal;
+            }
+            return null;
+        }
+
+        function buildRangeFromOffsets(container, start, end) {
+            const startPos = locateTextPosition(container, start);
+            const endPos = locateTextPosition(container, end);
+            if (!startPos || !endPos) {
+                return null;
+            }
+
+            const range = document.createRange();
+            range.setStart(startPos.node, startPos.offset);
+            range.setEnd(endPos.node, endPos.offset);
+            return range;
+        }
+
+        function wrapRangeWithHighlight(range, annotation) {
+            if (!range || range.collapsed) {
+                return null;
+            }
+
+            const wrapper = document.createElement('span');
+            wrapper.className = 'idp-user-highlight';
+            wrapper.dataset.annotationId = annotation.id;
+            wrapper.dataset.annotationContainer = annotation.containerId;
+            wrapper.dataset.note = annotation.note || '';
+            if (annotation.note) {
+                wrapper.classList.add('has-note');
+            }
+
+            const fragment = range.extractContents();
+            wrapper.appendChild(fragment);
+            range.insertNode(wrapper);
+            return wrapper;
+        }
+
+        function showAnnotateToolbar(range) {
+            const toolbar = document.getElementById('annotateToolbar');
+            if (!toolbar || !range) {
+                return;
+            }
+
+            const rect = range.getBoundingClientRect();
+            if (!rect || (!rect.width && !rect.height)) {
+                return;
+            }
+
+            const top = Math.max(8, rect.top + window.scrollY - 44);
+            const left = Math.max(8, rect.left + window.scrollX + (rect.width / 2) - 110);
+
+            toolbar.style.top = `${top}px`;
+            toolbar.style.left = `${left}px`;
+            toolbar.style.display = 'flex';
+        }
+
+        function hideAnnotateToolbar() {
+            const toolbar = document.getElementById('annotateToolbar');
+            if (toolbar) {
+                toolbar.style.display = 'none';
+            }
+            pendingSelectionRange = null;
+            pendingSelectionContainer = null;
+        }
+
+        function hideNotePopover() {
+            const pop = document.getElementById('annotateNotePop');
+            if (pop) {
+                pop.style.display = 'none';
+            }
+            activeHighlightNode = null;
+        }
+
+        function applyPendingSelection(addNote) {
+            if (!pendingSelectionRange || !pendingSelectionContainer) {
+                return;
+            }
+
+            const text = pendingSelectionRange.toString().trim();
+            if (!text) {
+                hideAnnotateToolbar();
+                return;
+            }
+
+            const note = addNote ? window.prompt('Nhap ghi chu cho doan vua boi den (co the de trong):', '') : '';
+            if (addNote && note === null) {
+                hideAnnotateToolbar();
+                return;
+            }
+
+            const serialized = serializeRange(pendingSelectionContainer, pendingSelectionRange);
+            if (!serialized) {
+                hideAnnotateToolbar();
+                return;
+            }
+
+            const annotation = {
+                id: `ann_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                containerId: pendingSelectionContainer.id,
+                start: serialized.start,
+                end: serialized.end,
+                note: (note || '').trim(),
+                excerpt: text,
+                createdAt: Date.now()
+            };
+
+            wrapRangeWithHighlight(pendingSelectionRange, annotation);
+
+            const annotations = getStoredAnnotations();
+            annotations.push(annotation);
+            setStoredAnnotations(annotations);
+
+            const selection = window.getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+            }
+
+            hideAnnotateToolbar();
+        }
+
+        function removeAnnotation(annotationId) {
+            if (!annotationId) {
+                return;
+            }
+
+            const highlight = document.querySelector(`.idp-user-highlight[data-annotation-id="${annotationId}"]`);
+            if (highlight && highlight.parentNode) {
+                const parent = highlight.parentNode;
+                while (highlight.firstChild) {
+                    parent.insertBefore(highlight.firstChild, highlight);
+                }
+                parent.removeChild(highlight);
+            }
+
+            const next = getStoredAnnotations().filter((item) => item.id !== annotationId);
+            setStoredAnnotations(next);
+        }
+
+        function undoLastAnnotation() {
+            const annotations = getStoredAnnotations();
+            if (!annotations.length) {
+                return;
+            }
+
+            const latest = [...annotations].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+            if (!latest || !latest.id) {
+                return;
+            }
+
+            removeAnnotation(latest.id);
+            hideAnnotateToolbar();
+            hideNotePopover();
+        }
+
+        function editAnnotation(annotationId) {
+            const annotations = getStoredAnnotations();
+            const target = annotations.find((item) => item.id === annotationId);
+            if (!target) {
+                return;
+            }
+
+            const nextNote = window.prompt('Cap nhat ghi chu:', target.note || '');
+            if (nextNote === null) {
+                return;
+            }
+
+            target.note = nextNote.trim();
+            setStoredAnnotations(annotations);
+
+            const highlight = document.querySelector(`.idp-user-highlight[data-annotation-id="${annotationId}"]`);
+            if (highlight) {
+                highlight.dataset.note = target.note;
+                highlight.classList.toggle('has-note', !!target.note);
+            }
+        }
+
+        function restoreAnnotations() {
+            const annotations = getStoredAnnotations();
+            if (!annotations.length) {
+                return;
+            }
+
+            annotations.forEach((annotation) => {
+                const container = document.getElementById(annotation.containerId || '');
+                if (!container) {
+                    return;
+                }
+
+                const range = buildRangeFromOffsets(container, annotation.start, annotation.end);
+                if (!range || range.collapsed) {
+                    return;
+                }
+
+                wrapRangeWithHighlight(range, annotation);
+            });
+        }
+
+        function initStudentAnnotations() {
+            const toolbar = document.getElementById('annotateToolbar');
+            if (!toolbar) {
+                return;
+            }
+
+            restoreAnnotations();
+
+            document.addEventListener('mouseup', function () {
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0) {
+                    hideAnnotateToolbar();
+                    return;
+                }
+
+                const range = selection.getRangeAt(0);
+                if (!isAnnotatableRange(range)) {
+                    hideAnnotateToolbar();
+                    return;
+                }
+
+                pendingSelectionRange = range.cloneRange();
+                showAnnotateToolbar(range);
+                suppressToolbarAutoHideUntil = Date.now() + 350;
+            });
+
+            document.getElementById('annotateHighlightBtn')?.addEventListener('click', function () {
+                applyPendingSelection(false);
+            });
+
+            document.getElementById('annotateNoteBtn')?.addEventListener('click', function () {
+                applyPendingSelection(true);
+            });
+
+            document.getElementById('annotateUndoBtn')?.addEventListener('click', function () {
+                undoLastAnnotation();
+            });
+
+            document.getElementById('annotateCancelBtn')?.addEventListener('click', function () {
+                const selection = window.getSelection();
+                if (selection) {
+                    selection.removeAllRanges();
+                }
+                hideAnnotateToolbar();
+            });
+
+            document.addEventListener('click', function (event) {
+                if (Date.now() < suppressToolbarAutoHideUntil) {
+                    return;
+                }
+
+                const highlight = event.target.closest('.idp-user-highlight');
+                const toolbarClicked = event.target.closest('#annotateToolbar');
+                const notePop = document.getElementById('annotateNotePop');
+
+                if (highlight) {
+                    const note = highlight.dataset.note || '';
+                    const annotationId = highlight.dataset.annotationId;
+                    if (!note) {
+                        return;
+                    }
+
+                    activeHighlightNode = highlight;
+                    const rect = highlight.getBoundingClientRect();
+                    notePop.style.left = `${Math.max(8, rect.left + window.scrollX)}px`;
+                    notePop.style.top = `${Math.max(8, rect.bottom + window.scrollY + 8)}px`;
+                    document.getElementById('annotateNoteText').textContent = note;
+                    notePop.dataset.annotationId = annotationId;
+                    notePop.style.display = 'block';
+                    hideAnnotateToolbar();
+                    return;
+                }
+
+                if (!toolbarClicked && !event.target.closest('#annotateNotePop')) {
+                    hideAnnotateToolbar();
+                    hideNotePopover();
+                }
+            });
+
+            document.getElementById('annotateNoteClose')?.addEventListener('click', function () {
+                hideNotePopover();
+            });
+
+            document.getElementById('annotateNoteDelete')?.addEventListener('click', function () {
+                const pop = document.getElementById('annotateNotePop');
+                const annotationId = pop.dataset.annotationId;
+                removeAnnotation(annotationId);
+                hideNotePopover();
+            });
+
+            document.getElementById('annotateNoteEdit')?.addEventListener('click', function () {
+                const pop = document.getElementById('annotateNotePop');
+                const annotationId = pop.dataset.annotationId;
+                editAnnotation(annotationId);
+
+                const highlight = document.querySelector(`.idp-user-highlight[data-annotation-id="${annotationId}"]`);
+                const updated = highlight?.dataset.note || '';
+                if (!updated) {
+                    hideNotePopover();
+                    return;
+                }
+
+                document.getElementById('annotateNoteText').textContent = updated;
+            });
+
+            document.addEventListener('keydown', function (event) {
+                const key = (event.key || '').toLowerCase();
+                if (!(event.ctrlKey || event.metaKey) || key !== 'z') {
+                    return;
+                }
+
+                const tag = (event.target?.tagName || '').toLowerCase();
+                const isEditable = event.target?.isContentEditable || ['input', 'textarea', 'select'].includes(tag);
+                if (isEditable) {
+                    return;
+                }
+
+                event.preventDefault();
+                undoLastAnnotation();
+            });
+        }
     </script>
 </body>
 </html>
