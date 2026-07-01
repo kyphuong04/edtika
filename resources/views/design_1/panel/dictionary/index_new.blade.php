@@ -3012,7 +3012,7 @@
         $('#flashcardTopic').text(card.topic || '');
         $('#flashcardWord').text(card.word);
         $('#flashcardPartOfSpeech').html(
-            (card.part_of_speech ? '<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 12px;border-radius:999px;background:#511D99;color:#fff;font-weight:700;font-size:13px;">(' + card.part_of_speech + ')</span>' : '')
+            (card.part_of_speech ? '<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 12px;border-radius:999px;background:#511D99;color:#fff;font-weight:700;font-size:13px;">' + card.part_of_speech + '</span>' : '')
         );
 
         // Back side
