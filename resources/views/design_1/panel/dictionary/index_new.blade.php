@@ -1788,7 +1788,7 @@
                     <!-- FRONT: word + part of speech badge -->
                     <div class="sidebar-card-meta" id="sidebarCardFrontMeta" style="margin-bottom:14px;">
                         <div class="sidebar-card-word" id="sidebarCardWord" style="font-size:22px;font-weight:800;color:#511D99;">-</div>
-                        <div id="sidebarCardPron" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;"></div>
+                
                     </div>
 
                     <!-- FRONT: illustration -->
@@ -3012,8 +3012,7 @@
         $('#flashcardTopic').text(card.topic || '');
         $('#flashcardWord').text(card.word);
         $('#flashcardPartOfSpeech').html(
-            (card.part_of_speech ? '<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 12px;border-radius:999px;background:#511D99;color:#fff;font-weight:700;font-size:13px;">(' + card.part_of_speech + ')</span>' : '') +
-            (posText ? ' <span>' + posText + '</span>' : '')
+            (card.part_of_speech ? '<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 12px;border-radius:999px;background:#511D99;color:#fff;font-weight:700;font-size:13px;">(' + card.part_of_speech + ')</span>' : '')
         );
 
         // Back side
