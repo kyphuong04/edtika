@@ -1641,28 +1641,53 @@
             <div class="practice-mode-container hidden" id="flashcardPracticeContainer" style="text-align:center;">
                 <div style="max-width:760px;margin:0 auto;padding:20px;">
 
-                    <div id="flashcardCard" style="background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:26px;min-height:420px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;">
-                        <div id="flashcardFrontLabel" style="display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;letter-spacing:0.02em;margin-bottom:14px;">MẶT TRƯỚC</div>
-                        <div id="flashcardBackLabel" style="display:none;align-items:center;justify-content:center;padding:6px 14px;border-radius:999px;background:#16a34a;color:#fff;font-weight:700;font-size:14px;letter-spacing:0.02em;margin-bottom:14px;">MẶT SAU</div>
+                    <div id="flashcardCard" style="position:relative;background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:30px 26px;min-height:420px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;">
 
-                        <div id="flashcardWord" style="font-size:42px;font-weight:800;color:#1e293b;line-height:1.1;margin-bottom:8px;">-</div>
-                        <div id="flashcardPartOfSpeech" style="display:inline-flex;align-items:center;justify-content:center;font-size:22px;color:#334155;line-height:1.2;margin-bottom:14px;"></div>
+                        {{-- ── FRONT SIDE LABEL ───────────────────────── --}}
+                        <div id="flashcardFrontLabel" style="display:inline-flex;align-items:center;justify-content:center;padding:7px 22px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:13px;letter-spacing:0.06em;margin-bottom:18px;">MẶT TRƯỚC</div>
+                        {{-- ── BACK SIDE LABEL ────────────────────────── --}}
+                        <div id="flashcardBackLabel" style="display:none;align-items:center;justify-content:center;padding:7px 22px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:13px;letter-spacing:0.06em;margin-bottom:10px;">MẶT SAU</div>
 
-                        <div id="flashcardVisual" style="width:100%;max-width:600px;height:230px;border:1px solid rgba(81,29,153,0.12);border-radius:22px;background:#fff;margin-bottom:18px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                            <img id="flashcardImage" src="" alt="" style="max-width:100%;max-height:100%;display:none;object-fit:cover;">
-                            <div id="flashcardImageFallback" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;padding:16px;">No image</div>
+                        {{-- ── FRONT: topic + word + part of speech + illustration ── --}}
+                        <div id="flashcardFrontGroup" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+                            <div id="flashcardTopic" style="font-size:13px;font-weight:700;letter-spacing:0.04em;color:#3b6fa8;text-transform:uppercase;margin-bottom:6px;"></div>
+
+                            <div id="flashcardWord" style="font-size:46px;font-weight:800;color:#1e2a4a;line-height:1.1;margin-bottom:14px;text-align:center;">-</div>
+
+                            <div id="flashcardPartOfSpeech" style="display:inline-flex;align-items:center;gap:8px;font-size:15px;color:#334155;line-height:1.2;margin-bottom:18px;"></div>
+
+                            <div id="flashcardVisual" style="width:100%;max-width:340px;height:200px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                                <img id="flashcardImage" src="" alt="" style="max-width:100%;max-height:100%;display:none;object-fit:contain;">
+                                <div id="flashcardImageFallback" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;padding:16px;">No image</div>
+                            </div>
                         </div>
 
-                        <div id="flashcardBack" style="display:none;font-size:18px;color:#334155;line-height:1.7;max-width:96%;width:100%;text-align:left;">
-                            <div style="margin-bottom:10px;"><strong style="color:#166534;">Nghĩa:</strong> <span id="flashcardMeaning">-</span></div>
-                            <div style="margin-bottom:10px;"><strong style="color:#1d4ed8;">IPA:</strong> <span id="flashcardIpa">-</span></div>
-                            <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                                <strong style="color:#7c3aed;">Audio:</strong>
-                                <button type="button" id="flashcardAudioBtn" style="display:none;border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;">Nghe phát âm</button>
-                                <span id="flashcardAudioText">-</span>
+                        {{-- ── BACK: word + IPA + audio icon + Vietnamese meaning + collocations + example ── --}}
+                        <div id="flashcardBack" style="display:none;width:100%;text-align:center;">
+                            <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
+                                <span id="flashcardBackWord" style="font-size:24px;font-weight:800;color:#2563eb;">-</span>
+                                <span id="flashcardBackPos" style="font-size:18px;font-weight:700;color:#2563eb;margin-left:4px;"></span>
+                                <button type="button" id="flashcardAudioBtn" style="display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#2563eb;cursor:pointer;padding:4px;">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12c0-1.77-.92-3.29-2.5-4.03v8.06c1.58-.74 2.5-2.26 2.5-4.03z" /><path d="M14 4.3v2.06c2.89.86 5 3.54 5 6.64s-2.11 5.78-5 6.64v2.06c4.01-.91 7-4.49 7-8.7s-2.99-7.79-7-8.7z"/></svg>
+                                </button>
                             </div>
-                            <div style="margin-bottom:10px;"><strong style="color:#7c3aed;">Collocation:</strong> <span id="flashcardCollocation">-</span></div>
-                            <div style="margin-bottom:10px;"><strong style="color:#0f766e;">Example:</strong> <span id="flashcardExample">-</span></div>
+                            <span id="flashcardAudioText" style="display:none;"></span>
+
+                            <div id="flashcardIpa" style="font-size:14px;color:#64748b;margin-bottom:16px;">-</div>
+
+                            <div id="flashcardMeaning" style="font-size:22px;font-weight:800;letter-spacing:0.02em;color:#1e293b;text-transform:uppercase;margin-bottom:18px;">-</div>
+
+                            <div style="border-top:1px dashed #cbd5e1;width:100%;margin-bottom:18px;"></div>
+
+                            <div id="flashcardCollocationBlock" style="text-align:left;margin-bottom:14px;">
+                                <strong style="font-size:14px;color:#1e293b;">Collocations:</strong>
+                                <ul id="flashcardCollocationList" style="margin:8px 0 0;padding-left:20px;font-size:14px;color:#334155;line-height:1.8;"></ul>
+                            </div>
+
+                            <div id="flashcardExampleBlock" style="text-align:left;font-size:14px;color:#334155;line-height:1.7;">
+                                <strong style="color:#1e293b;">Example:</strong>
+                                <span id="flashcardExample">-</span>
+                            </div>
                         </div>
                     </div>
 
@@ -1753,28 +1778,45 @@
 
             <!-- Flashcards Widget -->
             <div class="stats-widget">
-                <h3 class="widget-title">{{ trans('panel.flashcards') }}</h3>
+                <h3 class="widget-title" style="text-align:center;text-transform:uppercase;">{{ trans('panel.flashcards') }}</h3>
                 <div class="sidebar-flashcard-widget" id="sidebarFlashcardWidget">
 
-                    <!-- Card Display Area -->
-                    <div class="sidebar-card-display" id="sidebarCardDisplay">
-                        <!-- Word illustration image -->
-                        <div class="sidebar-card-img-placeholder" id="sidebarCardPlaceholder"></div>
-                        <img id="sidebarCardImage" class="sidebar-card-image" src="" alt="" style="display:none;">
-                        <!-- Definition overlay (shown when card is turned) -->
-                        <div class="sidebar-card-overlay" id="sidebarCardOverlay">
-                            <span class="sidebar-card-display-text" id="sidebarCardDisplayText"></span>
+                    <div style="text-align:center;">
+                        <div id="sidebarSideLabel" style="display:inline-flex;align-items:center;justify-content:center;padding:5px 16px;border-radius:999px;background:#2563eb;color:#fff;font-weight:800;font-size:11px;letter-spacing:0.05em;margin-bottom:12px;">MẶT TRƯỚC</div>
+                    </div>
+
+                    <!-- FRONT: word + part of speech badge -->
+                    <div class="sidebar-card-meta" id="sidebarCardFrontMeta" style="margin-bottom:14px;">
+                        <div class="sidebar-card-word" id="sidebarCardWord" style="font-size:22px;font-weight:800;color:#1e2a4a;">-</div>
+                        <div id="sidebarCardPron" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;"></div>
+                    </div>
+
+                    <!-- FRONT: illustration -->
+                    <div class="sidebar-card-display" id="sidebarCardDisplay" style="border:none;box-shadow:none;background:transparent;">
+                        <div class="sidebar-card-img-placeholder" id="sidebarCardPlaceholder" style="background:transparent;"></div>
+                        <img id="sidebarCardImage" class="sidebar-card-image" src="" alt="" style="display:none;height:120px;object-fit:contain;border-radius:0;">
+                    </div>
+
+                    <!-- BACK: meaning + details -->
+                    <div id="sidebarCardBack" style="display:none;text-align:center;padding:4px 2px 0;">
+                        <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
+                            <span id="sidebarBackWord" style="font-size:16px;font-weight:800;color:#2563eb;">-</span>
+                            <span id="sidebarBackPos" style="font-size:13px;font-weight:700;color:#2563eb;margin-left:4px;"></span>
+                        </div>
+                        <div id="sidebarBackIpa" style="font-size:12px;color:#64748b;margin-bottom:10px;">-</div>
+                        <div id="sidebarBackMeaning" style="font-size:15px;font-weight:800;color:#1e293b;text-transform:uppercase;margin-bottom:12px;">-</div>
+                        <div style="border-top:1px dashed #cbd5e1;width:100%;margin-bottom:12px;"></div>
+                        <div id="sidebarCollocationBlock" style="text-align:left;font-size:12px;margin-bottom:10px;">
+                            <strong style="color:#1e293b;">Collocations:</strong>
+                            <ul id="sidebarCollocationList" style="margin:6px 0 0;padding-left:16px;color:#334155;line-height:1.6;"></ul>
+                        </div>
+                        <div id="sidebarExampleBlock" style="text-align:left;font-size:12px;color:#334155;line-height:1.5;">
+                            <strong style="color:#1e293b;">Example:</strong> <span id="sidebarExample">-</span>
                         </div>
                     </div>
 
-                    <!-- Word + Pronunciation -->
-                    <div class="sidebar-card-meta">
-                        <div class="sidebar-card-word" id="sidebarCardWord">-</div>
-                        <div class="sidebar-card-pron" id="sidebarCardPron"></div>
-                    </div>
-
                     <!-- Turn Button -->
-                    <div class="text-center" style="margin: 8px 0 10px;">
+                    <div class="text-center" style="margin: 12px 0 10px;">
                         <button class="btn btn-outline-secondary btn-sm px-4" id="sidebarTurnBtn"
                                 style="border-radius: 20px; min-width: 90px;">
                             {{ trans('panel.turn') }}
@@ -1876,27 +1918,79 @@
         renderSidebarCard();
     }
 
+    function sidebarRenderCollocationList(raw) {
+        const $list = $('#sidebarCollocationList');
+        $list.empty();
+
+        if (!raw) {
+            $('#sidebarCollocationBlock').hide();
+            return;
+        }
+
+        const items = Array.isArray(raw)
+            ? raw
+            : String(raw).split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+
+        if (!items.length) {
+            $('#sidebarCollocationBlock').hide();
+            return;
+        }
+
+        items.forEach(function(item) {
+            $list.append($('<li></li>').text(item));
+        });
+        $('#sidebarCollocationBlock').show();
+    }
+    function sidebarPosLabel(pos) {
+        const map = {
+            'n': 'Danh từ', 'noun': 'Danh từ',
+            'v': 'Động từ', 'verb': 'Động từ',
+            'adj': 'Tính từ', 'adjective': 'Tính từ',
+            'adv': 'Trạng từ', 'adverb': 'Trạng từ'
+        };
+        if (!pos) return '';
+        const key = pos.toLowerCase().trim();
+        return map[key] || pos;
+    }
+
     function renderSidebarCard() {
         if (!sidebarCards.length) {
             $('#sidebarCardWord').text('-');
             $('#sidebarCardPron').text('');
-            $('#sidebarCardDisplayText').text('');
-            $('#sidebarCardOverlay').removeClass('show');
             $('#sidebarCardImage').hide();
             $('#sidebarCardPlaceholder').show();
             $('#sidebarCardCounter').text('Card 0 of 0');
             $('#sidebarPrevBtn, #sidebarNextBtn').prop('disabled', true);
+            $('#sidebarCardFrontMeta, #sidebarCardDisplay, #sidebarSideLabel').show();
+            $('#sidebarCardBack').hide();
             return;
         }
         sidebarFlipped = false;
         const card = sidebarCards[sidebarIndex];
+
+        // Front
         $('#sidebarCardWord').text(card.word || '');
-        $('#sidebarCardPron').text(card.part_of_speech ? '(' + card.part_of_speech + ')' : '');
-        $('#sidebarCardDisplayText').text('');
-        $('#sidebarCardOverlay').removeClass('show');
+        $('#sidebarCardPron').html(
+            (card.part_of_speech ? '<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:999px;background:#2563eb;color:#fff;font-weight:700;font-size:12px;">(' + card.part_of_speech.charAt(0) + ')</span>' : '') +
+            (sidebarPosLabel(card.part_of_speech) ? ' <span style="font-size:13px;color:#334155;">| ' + sidebarPosLabel(card.part_of_speech) + '</span>' : '')
+        );
+        // Back
+        $('#sidebarBackWord').text(card.word || '');
+        $('#sidebarBackPos').text(card.part_of_speech ? '(' + card.part_of_speech + ')' : '');
+        $('#sidebarBackMeaning').text(card.translation || card.definition || '-');
+        $('#sidebarBackIpa').text(card.pronunciation ? '/' + card.pronunciation + '/' : '-');
+        sidebarRenderCollocationList(card.collocation);
+        $('#sidebarExample').text(card.example || '-');
+
         $('#sidebarCardCounter').text('Card ' + (sidebarIndex + 1) + ' of ' + sidebarCards.length);
         $('#sidebarPrevBtn').prop('disabled', sidebarIndex === 0);
         $('#sidebarNextBtn').prop('disabled', sidebarIndex === sidebarCards.length - 1);
+
+        // Reset to front
+        $('#sidebarCardFrontMeta, #sidebarCardDisplay').show();
+        $('#sidebarSideLabel').text('MẶT TRƯỚC').show();
+        $('#sidebarCardBack').hide();
+        $('#sidebarTurnBtn').text('{{ trans("panel.turn") }}');
 
         // Load word illustration
         if (card.word) {
@@ -1924,28 +2018,18 @@
 
     $('#sidebarTurnBtn').on('click', function() {
         if (!sidebarCards.length) return;
-        const card = sidebarCards[sidebarIndex];
-        const escapeSidebarText = function(value) {
-            return $('<div>').text(value || '-').html();
-        };
-        const backParts = [
-            { label: 'Nghĩa', value: card.translation || card.definition || '-' },
-            { label: 'IPA', value: card.pronunciation ? '/' + card.pronunciation + '/' : '-' },
-            { label: 'Audio', value: card.audio_url || '-' },
-            { label: 'Collocation', value: card.collocation || '-' },
-            { label: 'Example', value: card.example || '-' },
-        ];
-        const displayHtml = backParts.map(function(part) {
-            return '<strong>' + part.label + ':</strong> ' + escapeSidebarText(part.value);
-        }).join('<br>');
-        if (!sidebarFlipped) {
-            sidebarFlipped = true;
-            $('#sidebarCardDisplayText').html(displayHtml);
-            $('#sidebarCardOverlay').addClass('show');
+        sidebarFlipped = !sidebarFlipped;
+
+        if (sidebarFlipped) {
+            $('#sidebarCardFrontMeta, #sidebarCardDisplay').hide();
+            $('#sidebarSideLabel').text('MẶT SAU');
+            $('#sidebarCardBack').show();
+            $(this).text('Ẩn');
         } else {
-            sidebarFlipped = false;
-            $('#sidebarCardDisplayText').html('');
-            $('#sidebarCardOverlay').removeClass('show');
+            $('#sidebarCardFrontMeta, #sidebarCardDisplay').show();
+            $('#sidebarSideLabel').text('MẶT TRƯỚC');
+            $('#sidebarCardBack').hide();
+            $(this).text('{{ trans("panel.turn") }}');
         }
     });
 
@@ -2850,21 +2934,71 @@
         });
     }
 
+    function posLabel(pos) {
+        const map = {
+            'n': 'Danh từ', 'noun': 'Danh từ',
+            'v': 'Động từ', 'verb': 'Động từ',
+            'adj': 'Tính từ', 'adjective': 'Tính từ',
+            'adv': 'Trạng từ', 'adverb': 'Trạng từ'
+        };
+        if (!pos) return '';
+        const key = pos.toLowerCase().trim();
+        return map[key] || pos;
+    }
+
+    function renderCollocationList(raw) {
+        const $list = $('#flashcardCollocationList');
+        $list.empty();
+
+        if (!raw) {
+            $('#flashcardCollocationBlock').hide();
+            return;
+        }
+
+        const items = Array.isArray(raw)
+            ? raw
+            : String(raw).split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+
+        if (!items.length) {
+            $('#flashcardCollocationBlock').hide();
+            return;
+        }
+
+        items.forEach(function(item) {
+            $list.append($('<li></li>').text(item));
+        });
+        $('#flashcardCollocationBlock').show();
+    }
+
+    function renderExampleHighlighted(example, word) {
+        if (!example) return '-';
+        if (!word) return example;
+
+        try {
+            const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp('(' + escaped + ')', 'ig');
+            return $('<div></div>').text(example).html().replace(re, '<strong style="text-decoration:underline;">$1</strong>');
+        } catch (e) {
+            return example;
+        }
+    }
+
     function renderFlashcard() {
         if (!flashcardCards.length) {
+            $('#flashcardTopic').text('');
             $('#flashcardWord').text('-');
             $('#flashcardPartOfSpeech').text('');
+            $('#flashcardBackWord').text('-');
+            $('#flashcardBackPos').text('');
             $('#flashcardMeaning').text('-');
             $('#flashcardIpa').text('-');
-            $('#flashcardCollocation').text('-');
-            $('#flashcardExample').text('-');
+            renderCollocationList('');
+            $('#flashcardExample').html('-');
             $('#flashcardAudioBtn').hide().data('audio', '');
-            $('#flashcardAudioText').text('-');
             $('#flashcardImage').hide().attr('src', '');
             $('#flashcardImageFallback').show();
             $('#flashcardCard').css('justify-content', 'flex-start');
-            $('#flashcardVisual').show();
-            $('#flashcardWord, #flashcardPartOfSpeech, #flashcardFrontLabel').show();
+            $('#flashcardFrontGroup, #flashcardFrontLabel').show();
             $('#flashcardBackLabel').hide();
             $('#flashcardBack').hide();
             $('#flashcardPrevBtn, #flashcardNextBtn').prop('disabled', true);
@@ -2872,25 +3006,33 @@
         }
 
         const card = flashcardCards[flashcardIndex];
+        const posText = posLabel(card.part_of_speech);
+
+        // Front side
+        $('#flashcardTopic').text(card.topic || '');
         $('#flashcardWord').text(card.word);
-        $('#flashcardPartOfSpeech').text(card.part_of_speech ? '(' + card.part_of_speech + ')' : '');
+        $('#flashcardPartOfSpeech').html(
+            (card.part_of_speech ? '<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 12px;border-radius:999px;background:#2563eb;color:#fff;font-weight:700;font-size:13px;">(' + card.part_of_speech + ')</span>' : '') +
+            (posText ? ' <span>' + posText + '</span>' : '')
+        );
+
+        // Back side
+        $('#flashcardBackWord').text(card.word);
+        $('#flashcardBackPos').text(card.part_of_speech ? '(' + card.part_of_speech + ')' : '');
         $('#flashcardMeaning').text(card.translation || card.definition || '-');
         $('#flashcardIpa').text(card.pronunciation ? '/' + card.pronunciation + '/' : '-');
-        $('#flashcardCollocation').text(card.collocation || '-');
-        $('#flashcardExample').text(card.example || '-');
+        renderCollocationList(card.collocation);
+        $('#flashcardExample').html(renderExampleHighlighted(card.example, card.word));
 
         if (card.audio_url) {
             $('#flashcardAudioBtn').show().data('audio', card.audio_url);
-            $('#flashcardAudioText').text('');
         } else {
             $('#flashcardAudioBtn').hide().data('audio', '');
-            $('#flashcardAudioText').text('-');
         }
 
         // Always reset each navigated card to front side.
         $('#flashcardCard').css('justify-content', 'flex-start');
-        $('#flashcardVisual').show();
-        $('#flashcardWord, #flashcardPartOfSpeech, #flashcardFrontLabel').show();
+        $('#flashcardFrontGroup, #flashcardFrontLabel').show();
         $('#flashcardBackLabel').hide();
         $('#flashcardBack').hide();
 
@@ -2924,8 +3066,7 @@
         flashcardFlipped = !flashcardFlipped;
         if (flashcardFlipped) {
             $('#flashcardCard').css('justify-content', 'flex-start');
-            $('#flashcardVisual').hide();
-            $('#flashcardWord, #flashcardPartOfSpeech, #flashcardFrontLabel').hide();
+            $('#flashcardFrontGroup, #flashcardFrontLabel').hide();
             $('#flashcardBackLabel').css('display', 'inline-flex');
             $('#flashcardBack').css('display', 'block');
             $('#flashcardTurnBtn').text('Ẩn');
@@ -2934,8 +3075,7 @@
             $('#flashcardBack').hide();
             $('#flashcardBackLabel').hide();
             $('#flashcardFrontLabel').show();
-            $('#flashcardVisual').show();
-            $('#flashcardWord, #flashcardPartOfSpeech').show();
+            $('#flashcardFrontGroup').show();
             $('#flashcardTurnBtn').text('Lật thẻ');
         }
     });

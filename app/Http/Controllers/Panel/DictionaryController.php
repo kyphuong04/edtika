@@ -2253,6 +2253,12 @@ class DictionaryController extends Controller
                 $imageUrl = $this->buildVocabularyIllustrationUrl($word);
             }
 
+            \Log::info('Vocabulary import debug', [
+            'word' => $word,
+            'column_map_audio_index' => $columnMap['audio_url'] ?? 'NOT_SET',
+            'raw_audio_value' => $row[$columnMap['audio_url']] ?? 'NULL_OR_MISSING',
+            'sanitized_audio' => $this->sanitizeExternalUrl($row[$columnMap['audio_url']] ?? null),
+        ]);
             $parsed[] = [
                 'word' => $word,
                 'part_of_speech' => $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null),
@@ -2426,11 +2432,17 @@ class DictionaryController extends Controller
     {
         try {
             $hyperlink = $cell->getHyperlink();
+            \Log::info('Hyperlink debug', [
+                'coordinate' => $cell->getCoordinate(),
+                'has_hyperlink_object' => !empty($hyperlink),
+                'hyperlink_url' => !empty($hyperlink) ? $hyperlink->getUrl() : null,
+                'cell_value' => $cell->getValue(),
+            ]);
             if (!empty($hyperlink) && !empty($hyperlink->getUrl())) {
                 return trim((string) $hyperlink->getUrl());
             }
         } catch (\Throwable $e) {
-            // Ignore and continue with formula parsing.
+            \Log::warning('Hyperlink extraction exception', ['message' => $e->getMessage()]);
         }
 
         $rawValue = $cell->getValue();
