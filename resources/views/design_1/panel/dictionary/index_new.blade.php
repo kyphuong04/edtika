@@ -1667,7 +1667,7 @@
                             <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
                                 <span id="flashcardBackWord" style="font-size:24px;font-weight:800;color:#511D99;">-</span>
                                 <span id="flashcardBackPos" style="font-size:18px;font-weight:700;color:#511D99;margin-left:4px;"></span>
-                                <button type="button" id="flashcardAudioBtn" style="display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#2563eb;cursor:pointer;padding:4px;">
+                                <button type="button" id="flashcardAudioBtn" style="display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#511D99;cursor:pointer;padding:4px;">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12c0-1.77-.92-3.29-2.5-4.03v8.06c1.58-.74 2.5-2.26 2.5-4.03z" /><path d="M14 4.3v2.06c2.89.86 5 3.54 5 6.64s-2.11 5.78-5 6.64v2.06c4.01-.91 7-4.49 7-8.7s-2.99-7.79-7-8.7z"/></svg>
                                 </button>
                             </div>
@@ -1675,7 +1675,7 @@
 
                             <div id="flashcardIpa" style="font-size:14px;color:#64748b;margin-bottom:16px;">-</div>
 
-                            <div id="flashcardMeaning" style="font-size:20px;font-weight:800;letter-spacing:0.02em;color:#1e293b;text-transform:uppercase;margin-bottom:18px;">-</div>
+                            <div id="flashcardMeaning" style="font-size:20px;font-weight:800;letter-spacing:0.02em;color:#1e293b;margin-bottom:18px;">-</div>
 
                             <div style="border-top:1px dashed #cbd5e1;width:100%;margin-bottom:18px;"></div>
 
