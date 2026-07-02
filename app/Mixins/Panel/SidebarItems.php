@@ -261,12 +261,12 @@ class SidebarItems
             } 
             // Student/User → Two separate flat items (no dropdown)
             else {
-                $items['diagnostic_tests'] = [
-                    'icon' => self::getIcon('ielts_tests'),
-                    'text' => trans('update.ielts_diagnostic_test'),
-                    'url' => '/panel/ielts-tests/diagnostic',
-                    'items' => []
-                ];
+                // $items['diagnostic_tests'] = [
+                //     'icon' => self::getIcon('ielts_tests'),
+                //     'text' => trans('update.ielts_diagnostic_test'),
+                //     'url' => '/panel/ielts-tests/diagnostic',
+                //     'items' => []
+                // ];
 
                 $items['practice_tests'] = [
                     'icon' => self::getIcon('ielts_tests'),

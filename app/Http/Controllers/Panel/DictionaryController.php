@@ -2249,23 +2249,21 @@ class DictionaryController extends Controller
             }
 
             $imageUrl = $this->sanitizeExternalUrl($row[$columnMap['image_url']] ?? null);
+            $imageUrl = $imageUrl ? $this->convertGoogleDriveUrl($imageUrl, 'view') : null;
             if (empty($imageUrl)) {
                 $imageUrl = $this->buildVocabularyIllustrationUrl($word);
             }
 
-            \Log::info('Vocabulary import debug', [
-            'word' => $word,
-            'column_map_audio_index' => $columnMap['audio_url'] ?? 'NOT_SET',
-            'raw_audio_value' => $row[$columnMap['audio_url']] ?? 'NULL_OR_MISSING',
-            'sanitized_audio' => $this->sanitizeExternalUrl($row[$columnMap['audio_url']] ?? null),
-        ]);
+            $audioUrl = $this->sanitizeExternalUrl($row[$columnMap['audio_url']] ?? null);
+            $audioUrl = $audioUrl ? $this->convertGoogleDriveUrl($audioUrl, 'audio') : null;
+
             $parsed[] = [
                 'word' => $word,
                 'part_of_speech' => $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null),
                 'pronunciation' => $this->cleanCellValue($row[$columnMap['pronunciation']] ?? null),
                 'definition' => $definition,
                 'translation_vi' => $translation,
-                'audio_url' => $this->sanitizeExternalUrl($row[$columnMap['audio_url']] ?? null),
+                'audio_url' => $audioUrl,
                 'collocation' => $this->cleanCellValue($row[$columnMap['collocation']] ?? null),
                 'example' => $this->cleanCellValue($row[$columnMap['example']] ?? null),
                 'image_url' => $imageUrl,
@@ -2380,8 +2378,12 @@ class DictionaryController extends Controller
     private function extractSpreadsheetRows(UploadedFile $file): array
     {
         try {
+            // $spreadsheet = IOFactory::load($file->getRealPath());
+            // $sheet = $spreadsheet->getSheet(0);
             $spreadsheet = IOFactory::load($file->getRealPath());
             $sheet = $spreadsheet->getSheet(0);
+            $xmlHyperlinks = $this->extractAllHyperlinksFromXml($file->getRealPath(), 0);
+            \Log::info('XML Hyperlinks extracted', ['count' => count($xmlHyperlinks), 'sample' => array_slice($xmlHyperlinks, 0, 5, true)]);
 
             $highestRow = (int) $sheet->getHighestDataRow();
             $highestColumnIndex = Coordinate::columnIndexFromString($sheet->getHighestDataColumn());
@@ -2397,7 +2399,28 @@ class DictionaryController extends Controller
                     $cell = $sheet->getCell($coordinate);
 
                     $value = $cell->getFormattedValue();
-                    $hyperlink = $this->extractSpreadsheetCellHyperlink($cell);
+                    if (in_array(Coordinate::stringFromColumnIndex($columnIndex), ['C', 'F'])) {
+                        \Log::info('Cell debug', [
+                            'coordinate' => Coordinate::stringFromColumnIndex($columnIndex) . $rowIndex,
+                            'formatted_value' => $cell->getFormattedValue(),
+                            'raw_value' => $cell->getValue(),
+                            'raw_value_type' => gettype($cell->getValue()),
+                            'is_richtext' => ($cell->getValue() instanceof \PhpOffice\PhpSpreadsheet\RichText\RichText),
+                        ]);
+                    }
+                    $hyperlink = $this->extractSpreadsheetCellHyperlink($cell, $xmlHyperlinks);
+
+                    if (!empty($hyperlink)) {
+                        $value = $hyperlink;
+                    } else {
+                        // Try to extract URL from =HYPERLINK() formula directly
+                        $rawValue = $cell->getValue();
+                        if (is_string($rawValue) && stripos($rawValue, '=HYPERLINK(') === 0) {
+                            if (preg_match('/=HYPERLINK\s*\(\s*["\']([^"\']+)["\']/i', $rawValue, $m)) {
+                                $value = trim($m[1]);
+                            }
+                        }
+                    }
 
                     if (!empty($hyperlink)) {
                         $value = $hyperlink;
@@ -2428,21 +2451,27 @@ class DictionaryController extends Controller
         }
     }
 
-    private function extractSpreadsheetCellHyperlink($cell): ?string
+    private function extractSpreadsheetCellHyperlink($cell, array $xmlHyperlinks = []): ?string
     {
+        // First: try XML hyperlinks map (most reliable for Google Sheets exports)
+        $coordinate = $cell->getCoordinate();
+        \Log::info('Hyperlink lookup', [
+            'coordinate' => $coordinate,
+            'found_in_xml' => isset($xmlHyperlinks[$coordinate]),
+            'xml_value' => $xmlHyperlinks[$coordinate] ?? 'NOT_FOUND',
+        ]);
+        if (!empty($xmlHyperlinks[$coordinate])) {
+            return trim((string) $xmlHyperlinks[$coordinate]);
+        }
+
+        // Fallback: PhpSpreadsheet native cell hyperlink
         try {
             $hyperlink = $cell->getHyperlink();
-            \Log::info('Hyperlink debug', [
-                'coordinate' => $cell->getCoordinate(),
-                'has_hyperlink_object' => !empty($hyperlink),
-                'hyperlink_url' => !empty($hyperlink) ? $hyperlink->getUrl() : null,
-                'cell_value' => $cell->getValue(),
-            ]);
             if (!empty($hyperlink) && !empty($hyperlink->getUrl())) {
                 return trim((string) $hyperlink->getUrl());
             }
         } catch (\Throwable $e) {
-            \Log::warning('Hyperlink extraction exception', ['message' => $e->getMessage()]);
+            // Ignore and continue with formula parsing.
         }
 
         $rawValue = $cell->getValue();
@@ -2464,6 +2493,69 @@ class DictionaryController extends Controller
         }
 
         return null;
+    }
+
+    private function extractAllHyperlinksFromXml(string $filePath, int $sheetIndex = 0): array
+    {
+        $hyperlinks = [];
+
+        try {
+            $zip = new \ZipArchive();
+            if ($zip->open($filePath) !== true) {
+                return $hyperlinks;
+            }
+
+            // Find the sheet XML file
+            $sheetFile = "xl/worksheets/sheet" . ($sheetIndex + 1) . ".xml";
+            $relsFile  = "xl/worksheets/_rels/sheet" . ($sheetIndex + 1) . ".xml.rels";
+
+            $sheetXml = $zip->getFromName($sheetFile);
+            $relsXml  = $zip->getFromName($relsFile);
+            $zip->close();
+
+            if (!$sheetXml || !$relsXml) {
+                return $hyperlinks;
+            }
+
+            // Parse relationships: map rId => URL
+            $relsDoc = new \DOMDocument();
+            @$relsDoc->loadXML($relsXml);
+            $relationships = [];
+            foreach ($relsDoc->getElementsByTagName('Relationship') as $rel) {
+                $id     = $rel->getAttribute('Id');
+                $target = $rel->getAttribute('Target');
+                $type   = $rel->getAttribute('Type');
+                if (str_contains($type, 'hyperlink')) {
+                    $relationships[$id] = $target;
+                }
+            }
+
+            if (empty($relationships)) {
+                return $hyperlinks;
+            }
+
+            // Parse sheet XML: find <hyperlink> elements and map cell ref => URL
+            $sheetDoc = new \DOMDocument();
+            @$sheetDoc->loadXML($sheetXml);
+            $ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+            $rNs = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+            foreach ($sheetDoc->getElementsByTagNameNS($ns, 'hyperlink') as $hl) {
+                $ref = $hl->getAttribute('ref');
+                $rId = $hl->getAttributeNS($rNs, 'id');
+
+                if ($ref && $rId && isset($relationships[$rId])) {
+                    // ref có thể là range vd "F2:F2", lấy ô đầu tiên
+                    $cell = explode(':', $ref)[0];
+                    $hyperlinks[$cell] = $relationships[$rId];
+                }
+            }
+
+        } catch (\Throwable $e) {
+            // Silently fail, return empty array
+        }
+
+        return $hyperlinks;
     }
 
     private function sanitizeExternalUrl($value): ?string
@@ -2580,6 +2672,18 @@ class DictionaryController extends Controller
 
         $set->words_count = count($rows);
         $set->save();
+    }
+    private function convertGoogleDriveUrl(string $url, string $type = 'view'): string
+    {
+        // Match Google Drive file URL patterns
+        if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $url, $matches)) {
+            $fileId = $matches[1];
+            if ($type === 'audio') {
+                return "https://drive.google.com/uc?export=download&id={$fileId}";
+            }
+            return "https://drive.google.com/uc?export=view&id={$fileId}";
+        }
+        return $url;
     }
 
     private function resolvePreferredWordListForStudent($user): array
