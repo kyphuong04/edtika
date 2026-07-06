@@ -654,8 +654,24 @@ body {
     $jsQuestions  = [];
     $jsSectionTitles = [];
 
+    $resolvedPassages = [];
+$resolvedAudios = [];
+
     if (!$isWritingReview && !$isSpeakingReview) {
         foreach ($rlSections as $si => $section) {
+            // Resolve passage: ưu tiên nội dung từ Part (inline builder), fallback về Section
+            $parts = $section->parts()->orderBy('sort_order')->get();
+            $passageText = $section->passage_text ?? $section->content ?? '';
+            if (empty(trim(strip_tags($passageText))) && $parts->isNotEmpty()) {
+                $passageText = $parts->pluck('passage')->filter()->implode('<hr style="margin:20px 0;">');
+            }
+            $resolvedPassages[$si] = $passageText;
+
+            // Resolve audio tương tự (ưu tiên audio của Part)
+            $partAudio = $parts->pluck('audio_file')->filter()->first();
+            $resolvedAudios[$si] = $section->audio_url
+                ?? ($partAudio ? \Storage::disk('public')->url($partAudio) : null);
+
             foreach ($section->questions->sortBy('question_number') as $question) {
                 $answer    = $attempt->answers->where('question_id', $question->id)->first();
                 $hasAnswer = $answer && !empty($answer->answer_text);
@@ -1464,15 +1480,15 @@ function togglePrompt(idx) {
             <div id="rvLeftSection-{{ $si }}" style="display:{{ $si === 0 ? 'flex' : 'none' }}; flex-direction:column; height:100%;">
                 <div class="rv-panel-heading">{{ mb_strtoupper($section->skill) }}</div>
                 <div class="rv-panel-body">
-                    @if($section->skill === 'listening' && !empty($section->audio_url))
+                    @if($section->skill === 'listening' && !empty($resolvedAudios[$si]))
                         <div class="rv-audio-box">
                             <div style="font-weight:600; margin-bottom:8px;">Audio Recording</div>
-                            <audio controls><source src="{{ $section->audio_url }}">Your browser does not support audio.</audio>
+                            <audio controls><source src="{{ $resolvedAudios[$si] }}">Your browser does not support audio.</audio>
                             <div style="font-size:13px; color:#777; margin-top:10px;">You can replay the audio while reviewing.</div>
                         </div>
                     @endif
-                    @if($section->passage_text)
-                        <div class="rv-passage-text">{!! $section->passage_text !!}</div>
+                    @if(!empty($resolvedPassages[$si]))
+                        <div class="rv-passage-text">{!! $resolvedPassages[$si] !!}</div>
                     @else
                         <div class="rv-no-passage">No passage content available.</div>
                     @endif

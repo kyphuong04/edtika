@@ -1417,23 +1417,48 @@
                 'userAnswers' => $userAnswers,
                 'userAnswer' => $userAnswers[$firstQ->id ?? 0] ?? ''
             ])
-        @elseif($skill === 'listening' && empty($currentSection->passage_text) && !$hasPartLeftPanelContent)
-            {{-- LISTENING FULL WIDTH (no passage) --}}
-            <div class="idp-right" id="rightPanel" style="flex: none; width: 100%;">
-                @if($attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
-                    <div class="idp-audio-inline">
-                        <audio id="audioPlayer" controls>
-                            <source src="{{ $resolvedListeningAudioUrl }}" type="audio/mpeg">
-                            Your browser does not support audio playback.
-                        </audio>
-                    </div>
-                @endif
-                @include('design_1.panel.ielts_tests.partials.idp_questions_panel', [
-                    'groupedQuestions' => $groupedQuestions,
-                    'userAnswers' => $userAnswers,
-                    'skill' => $skill
-                ])
-            </div>
+        @elseif($skill === 'listening')
+        {{-- LISTENING FULL WIDTH — luôn 1 cột, giống thi IELTS thật --}}
+        <div class="idp-right" id="rightPanel" style="flex: none; width: 100%;">
+
+            @if(!empty($resolvedPassageTitle))
+                <h2 class="idp-passage-title">{{ $resolvedPassageTitle }}</h2>
+            @endif
+
+            @if(!empty($displayPartInstructions))
+                <div class="idp-part-instructions">{!! $displayPartInstructions !!}</div>
+            @endif
+
+            @if($attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
+                <div class="idp-audio-inline">
+                    <audio id="audioPlayer" controls>
+                        <source src="{{ $resolvedListeningAudioUrl }}" type="audio/mpeg">
+                        Your browser does not support audio playback.
+                    </audio>
+                </div>
+            @endif
+
+            @if(!empty($currentPartImageUrl))
+                <div class="idp-part-media-item" style="margin-bottom:14px;">
+                    <img src="{{ $currentPartImageUrl }}" alt="Part image">
+                </div>
+            @endif
+
+            @if(!empty($currentPartVideoUrl))
+                <div class="idp-part-media-item" style="margin-bottom:14px;">
+                    <video controls>
+                        <source src="{{ $currentPartVideoUrl }}" type="video/mp4">
+                        Your browser does not support video playback.
+                    </video>
+                </div>
+            @endif
+
+            @include('design_1.panel.ielts_tests.partials.idp_questions_panel', [
+                'groupedQuestions' => $groupedQuestions,
+                'userAnswers' => $userAnswers,
+                'skill' => $skill
+            ])
+        </div>
         @else
             {{-- READING / LISTENING WITH PASSAGE --}}
             <div class="idp-left" id="leftPanel">

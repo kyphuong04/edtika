@@ -129,7 +129,7 @@
         $displayQuestionCursor = $questionRangeEnd + 1;
     @endphp
 
-    @if($showPartLabel)
+    <!-- @if($showPartLabel)
         @php $part = \App\Models\IeltsTestPart::find($currentPartId); @endphp
         @if($part)
         <div style="background:#1a3a5c;color:#fff;padding:8px 16px;font-weight:700;font-size:13px;letter-spacing:.5px;margin-bottom:4px;">
@@ -137,6 +137,9 @@
         </div>
         @endif
     @elseif(!$loop->first)
+        <hr class="idp-group-separator">
+    @endif -->
+    @if(!$showPartLabel && !$loop->first)
         <hr class="idp-group-separator">
     @endif
 
