@@ -603,6 +603,28 @@ body {
 }
 .rv-nav-btn:hover { background: #3f1777; border-color: #3f1777; }
 .rv-nav-btn:disabled { background: #f5f5f5; color: #aaa; border-color: #ddd; cursor: not-allowed; }
+/* ── INLINE ANSWER BADGE (multi-blank, giống format IELTS chuẩn) ─── */
+.rv-inline-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    vertical-align: middle; margin: 0 4px;
+    white-space: nowrap;
+}
+.rv-inline-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #d1fae5; color: #065f46;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.rv-inline-icon { font-size: 13px; font-weight: 900; }
+.rv-inline-icon.ok   { color: #16a34a; }
+.rv-inline-icon.bad  { color: #dc2626; }
+.rv-inline-arrow { color: #9ca3af; font-size: 13px; }
+.rv-inline-answer {
+    font-weight: 700; text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.rv-inline-answer.ok  { color: #16a34a; }
+.rv-inline-answer.bad { color: #16a34a; } /* đáp án đúng luôn hiện màu xanh, dù học viên sai */
 </style>
 </head>
 <body>
@@ -1592,6 +1614,10 @@ function togglePrompt(idx) {
                             $isMCQ      = in_array($qType, ['multiple_choice','multiple_choice_single','true_false_not_given','true_false','yes_no_not_given']);
                             $isMatching = str_contains($qType, 'matching');
                             $isFill     = !$isMCQ && !$isMatching;
+                            $multiBlankTypes = ['note_completion', 'form_completion', 'sentence_completion', 'summary_completion', 'short_answer'];
+                            $isMultiBlank = $isFill
+                                && in_array($qType, $multiBlankTypes)
+                                && preg_match('/_{2,}|\[\s*\d*\s*\]|____/', (string) ($question->question_text ?? '')) === 1;
 
                             if (in_array($qType, ['true_false_not_given','true_false']))
                                 $options = [['key'=>'True','text'=>'True'],['key'=>'False','text'=>'False'],['key'=>'Not given','text'=>'Not given']];
@@ -1601,7 +1627,7 @@ function togglePrompt(idx) {
 
                         <div class="rv-question" id="rvQ-{{ $question->question_number }}" data-qidx="{{ $qFlatIdxCur }}">
                             <div class="rv-question-label">Question {{ $question->question_number }}:</div>
-                            @if($question->question_text)
+                            @if($question->question_text && !$isMultiBlank)
                                 <div class="rv-question-text">{!! $question->question_text !!}</div>
                             @endif
 
@@ -1675,6 +1701,60 @@ function togglePrompt(idx) {
                                         <strong>Table structure not found.</strong> Please contact your instructor.
                                     </div>
                                 @endif
+                            @elseif($isMultiBlank)
+                                @php
+                                    $rawCorrect = $question->correct_answer ?? '';
+                                    $correctDecoded = is_string($rawCorrect) ? json_decode($rawCorrect, true) : $rawCorrect;
+
+                                    $rawSaved = $answer->answer_text ?? '';
+                                    $decodedSaved = is_string($rawSaved) ? json_decode($rawSaved, true) : $rawSaved;
+                                    if (is_array($decodedSaved) && isset($decodedSaved['answers']) && is_array($decodedSaved['answers'])) {
+                                        $savedParts = array_values(array_map(fn($it) => is_array($it) ? ($it['answer'] ?? '') : (string) $it, $decodedSaved['answers']));
+                                    } elseif (is_string($rawSaved) && str_contains($rawSaved, '|')) {
+                                        $savedParts = array_map('trim', explode('|', $rawSaved));
+                                    } elseif (!empty($rawSaved)) {
+                                        $savedParts = [(string) $rawSaved];
+                                    } else {
+                                        $savedParts = [];
+                                    }
+
+                                    $mbBlankIdx = -1;
+                                    $mbBaseQNum = (int) ($question->question_number ?? 1);
+                                @endphp
+
+                                <div class="rv-question-text">
+                                    {!! preg_replace_callback(
+                                        '/_{2,}|\[\s*\d*\s*\]|____/',
+                                        function () use (&$mbBlankIdx, $savedParts, $correctDecoded, $mbBaseQNum) {
+                                            $mbBlankIdx++;
+                                            $blankQNum = $mbBaseQNum + $mbBlankIdx;
+                                            $sVal = trim((string) ($savedParts[$mbBlankIdx] ?? ''));
+
+                                            $acceptable = [];
+                                            if (is_array($correctDecoded) && isset($correctDecoded[$mbBlankIdx])) {
+                                                $acceptable = is_array($correctDecoded[$mbBlankIdx]) ? $correctDecoded[$mbBlankIdx] : [$correctDecoded[$mbBlankIdx]];
+                                            }
+                                            $cVal = trim((string) ($acceptable[0] ?? ''));
+
+                                            $ok = $sVal !== '' && collect($acceptable)->contains(function ($a) use ($sVal) {
+                                                return strtolower(trim((string) $a)) === strtolower($sVal);
+                                            });
+
+                                            $icon = $ok
+                                                ? '<span class="rv-inline-icon ok">&#10003;</span>'
+                                                : '<span class="rv-inline-icon bad">&#10007;</span><span class="rv-inline-arrow">&rarr;</span>';
+
+                                            $answerCls = $ok ? 'ok' : 'bad';
+
+                                            return '<span class="rv-inline-badge">'
+                                                . '<span class="rv-inline-num">' . $blankQNum . '</span>'
+                                                . $icon
+                                                . '<span class="rv-inline-answer ' . $answerCls . '">' . e($cVal) . '</span>'
+                                                . '</span>';
+                                        },
+                                        (string) ($question->question_text ?? '')
+                                    ) !!}
+                                </div>
                             @elseif($isMCQ && count($options))
                                 <div class="rv-options">
                                     @foreach($options as $optIdx => $opt)

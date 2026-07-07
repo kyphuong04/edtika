@@ -113,13 +113,13 @@
                                 $cellText = is_string($cellContent) ? $cellContent : (string) $cellContent;
                                 $cellKey = $rowIndex . '-' . $colIndex;
                                 $savedValue = $savedMap[$cellKey] ?? '';
-                                $parts = preg_split('/(___)/', $cellText, -1, PREG_SPLIT_DELIM_CAPTURE);
+                                $parts = preg_split('/(_{2,})/', $cellText, -1, PREG_SPLIT_DELIM_CAPTURE);
                                 $hasBlank = is_array($parts) && count($parts) > 1;
                             @endphp
                             <td>
                                 @if($hasBlank)
                                     @foreach($parts as $part)
-                                        @if($part === '___')
+                                        @if(preg_match('/^_{2,}$/', $part))
                                             @php $blankSequence++; @endphp
                                             @php $blankNumber = $blankStartNumber + $blankSequence - 1; @endphp
                                             <span class="tc-input-wrapper">

@@ -71,7 +71,7 @@
                     $blankCount = 0;
                     foreach ($tableStructure['rows'] as $row) {
                         foreach ((array) $row as $cellContent) {
-                            $blankCount += substr_count((string) $cellContent, '___');
+                            $blankCount += preg_match_all('/_{2,}/', (string) $cellContent);
                         }
                     }
                     $blankCount = max(1, $blankCount);
