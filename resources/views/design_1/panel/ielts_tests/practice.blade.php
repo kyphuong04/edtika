@@ -440,6 +440,58 @@
                     <h3>{{ $emptyStateTitle ?? trans('update.no_practice_tests_available') }}</h3>
                     <p>{{ $emptyStateHint ?? trans('update.no_practice_tests_hint') }}</p>
                 </div>
+            @elseif(!($groupBySkill ?? true))
+            {{-- ==========================================================
+                UNIFIED LIST MODE (Diagnostic Tests)
+                Each test = ONE row, ONE Start button.
+                No per-skill splitting. Test flows Listening -> Reading ->
+                Writing -> Speaking automatically via finishSection().
+            ========================================================== --}}
+            <div class="wf-skill-section open">
+                <div class="wf-skill-rows" style="display:block;">
+                    <div class="wf-part-group">
+                        <div class="wf-part-group__rows">
+                            @foreach($practiceTests as $test)
+                                @php $rowProgress = ($test->user_attempts ?? 0) > 0 ? 100 : 0; @endphp
+                                <div class="wf-practice-row">
+                                    <div class="wf-practice-row-inner">
+                                        <div style="flex:1;">
+                                            <div class="wf-practice-row-title">{{ $test->title }}</div>
+                                            @if(($test->user_attempts ?? 0) > 0)
+                                                <div class="wf-practice-row-attempts">Completed {{ $test->user_attempts }}x</div>
+                                            @endif
+                                        </div>
+                                        <div class="wf-row-actions">
+                                            @if(($test->user_attempts ?? 0) > 0)
+                                                @if(!empty($test->allow_retake))
+                                                    <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
+                                                        @csrf
+                                                        {{-- Intentionally NO 'skill' hidden input:
+                                                            startTest() will auto-pick the first section
+                                                            by sort_order (Listening first) when skill is omitted. --}}
+                                                        <button type="submit" class="wf-btn-retry">Retry</button>
+                                                    </form>
+                                                @endif
+                                                @if($test->last_attempt)
+                                                    <a href="{{ route('panel.ielts_tests.results', $test->last_attempt->id) }}" class="wf-btn-start">View result</a>
+                                                @endif
+                                            @else
+                                                <form action="{{ route('panel.ielts_tests.start', $test->id) }}" method="POST" style="margin:0;">
+                                                    @csrf
+                                                    <button type="submit" class="wf-btn-start">Start &rarr;</button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="wf-practice-row-prog">
+                                        <div class="wf-practice-row-prog-fill" style="width: {{ $rowProgress }}%; background: var(--wf-accent);"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
             @else
 
             @php

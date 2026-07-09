@@ -38,6 +38,25 @@ class IeltsTest extends Model
     ];
     
     // Relationships
+
+    public function scopeDiagnosticTests($query)
+    {
+        return $query->where('type', 'diagnostic');
+    }
+
+    public function isDiagnosticTest()
+    {
+        return $this->type === 'diagnostic';
+    }
+
+    /**
+     * Practice & Diagnostic tests both use flexible (seekable/replayable) audio.
+     * Only Mock tests use the strict "no rewind" exam-style audio overlay.
+     */
+    public function usesFlexibleAudioPlayback()
+    {
+        return $this->isPracticeTest() || $this->isDiagnosticTest();
+    }
     
     public function sections()
     {
@@ -271,6 +290,15 @@ class IeltsTest extends Model
                 }
             }
         }
+
+        // Diagnostic tests: intended as a one-time placement test by default.
+        // Allow retake only if explicitly enabled on the test.
+        if ($this->isDiagnosticTest() && !$this->allow_retake) {
+            $attemptsCount = $this->getUserAttemptsCount($userId);
+            if ($attemptsCount >= 1) {
+                return 'max_attempts';
+            }
+        }
         
         return true;
     }
@@ -389,4 +417,5 @@ class IeltsTest extends Model
             'errors' => $errors
         ];
     }
+    
 }

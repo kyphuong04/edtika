@@ -212,6 +212,34 @@ class User extends Authenticatable
     }
 
     /**
+     * All Adaptive Placement Test attempts this user has taken, most recent first.
+     */
+    public function placementAttempts()
+    {
+        return $this->hasMany('App\Models\IeltsPlacementAttempt', 'user_id', 'id')
+            ->orderByDesc('created_at');
+    }
+
+    /**
+     * The most recent COMPLETED placement result — this is the official
+     * CEFR level used for contracts / outcome commitments with the student.
+     */
+    public function latestPlacementResult()
+    {
+        return $this->hasOne('App\Models\IeltsPlacementAttempt', 'user_id', 'id')
+            ->where('status', 'completed')
+            ->orderByDesc('completed_at');
+    }
+
+    /**
+     * True if this user has at least one completed placement test on record.
+     */
+    public function hasPlacementResult()
+    {
+        return $this->placementAttempts()->where('status', 'completed')->exists();
+    }
+
+    /**
      * Check if user can upload/manage bundle vocabulary sets.
      */
     public function canManageBundleVocabulary()

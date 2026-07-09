@@ -169,10 +169,14 @@ class BundlesController extends Controller
             abort(404);
         }
 
+        // $rules = [
+        //     'title' => 'required|max:255',
+        //     'thumbnail' => 'required',
+        //     'image_cover' => 'required',
+        //     'description' => 'required',
+        // ];
         $rules = [
             'title' => 'required|max:255',
-            'thumbnail' => 'required',
-            'image_cover' => 'required',
             'description' => 'required',
         ];
 

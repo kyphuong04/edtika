@@ -167,14 +167,24 @@ class IeltsTestController extends Controller
     {
         $authUser = auth()->user();
 
+        // $diagnosticTests = IeltsTest::with('sections', 'practiceCategory')
+        //     ->where('type', 'diagnostic')
+        //     ->where(function ($q) {
+        //         $q->where('status', 'published')
+        //             ->orWhere('status', 'approved');
+        //     })
+        //     ->where('is_active', 1)
+        //     ->get();
         $diagnosticTests = IeltsTest::with('sections', 'practiceCategory')
             ->where('type', 'diagnostic')
-            ->where(function ($q) {
+            ->where(function ($q) use ($authUser) {
                 $q->where('status', 'published')
-                    ->orWhere('status', 'approved');
+                    ->orWhere('status', 'approved')
+                    // Creator always sees their own tests regardless of status
+                    // (draft, pending_approval, rejected...) for review/QA purposes.
+                    ->orWhere('created_by', $authUser->id);
             })
-            ->where('is_active', 1)
-            ->get();
+        ->get();
 
         foreach ($diagnosticTests as $test) {
             $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
@@ -194,6 +204,7 @@ class IeltsTestController extends Controller
             'pageTitle' => 'Diagnostic Tests',
             'practiceTests' => $diagnosticTests,
             'authUser' => $authUser,
+            'groupBySkill' => false,
             'emptyStateTitle' => $isEnglish
                 ? 'No diagnostic tests have been uploaded yet.'
                 : 'Chưa có bộ đề Diagnostic Tests nào được upload lên.',

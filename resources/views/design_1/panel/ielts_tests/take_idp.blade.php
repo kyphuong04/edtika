@@ -1429,7 +1429,7 @@
                 <div class="idp-part-instructions">{!! $displayPartInstructions !!}</div>
             @endif
 
-            @if($attempt->test->isPracticeTest() && !empty($resolvedListeningAudioUrl))
+            @if($attempt->test->usesFlexibleAudioPlayback() && !empty($resolvedListeningAudioUrl))
                 <div class="idp-audio-inline">
                     <audio id="audioPlayer" controls>
                         <source src="{{ $resolvedListeningAudioUrl }}" type="audio/mpeg">

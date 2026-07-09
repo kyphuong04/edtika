@@ -178,7 +178,7 @@ class IeltsTestInlineController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:mock,practice',
+            'type' => 'required|in:mock,practice,diagnostic',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
             'target_band_min' => 'nullable|numeric|min:0|max:9',
@@ -427,7 +427,7 @@ class IeltsTestInlineController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:mock,practice',
+            'type' => 'required|in:mock,practice,diagnostic',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
             'target_band_min' => 'nullable|numeric|min:0|max:9',
@@ -714,7 +714,7 @@ class IeltsTestInlineController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:mock,practice',
+            'type' => 'required|in:mock,practice,diagnostic',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
             'target_band_min' => 'nullable|numeric|min:0|max:9',

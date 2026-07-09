@@ -566,6 +566,7 @@
                             <option value="">-- Select Type --</option>
                             <option value="mock" {{ old('type', $test->type ?? '') === 'mock' ? 'selected' : '' }}>Mock Test (All 4 Skills)</option>
                             <option value="practice" {{ old('type', $test->type ?? '') === 'practice' ? 'selected' : '' }}>Practice Test (1 Skill)</option>
+                            <option value="diagnostic" {{ old('type', $test->type ?? '') === 'diagnostic' ? 'selected' : '' }}>Diagnostic Test (Bài test đầu vào)</option>
                         </select>
                         @error('type')
                             <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
