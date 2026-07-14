@@ -1,6 +1,7 @@
 ﻿<?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\PlacementTestController;
 
 $prefix = getAdminPanelUrlPrefix();
 
@@ -40,6 +41,18 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
         Route::get('/team-performance', 'DashboardController@teamPerformance');
         Route::get('/admin-performance', 'DashboardController@adminPerformance');
         Route::get('/lead-performance', 'DashboardController@leadPerformance');
+
+ 
+        Route::group(['prefix' => 'placement-tests'], function () {
+            Route::get('/', [PlacementTestController::class, 'index'])->name('admin.placement_tests.index');
+            Route::get('/create', [PlacementTestController::class, 'create'])->name('admin.placement_tests.create');
+            Route::post('/', [PlacementTestController::class, 'store'])->name('admin.placement_tests.store');
+            Route::get('/{placementTest}/edit', [PlacementTestController::class, 'edit'])->name('admin.placement_tests.edit');
+            Route::put('/{placementTest}', [PlacementTestController::class, 'update'])->name('admin.placement_tests.update');
+            Route::delete('/{placementTest}', [PlacementTestController::class, 'destroy'])->name('admin.placement_tests.destroy');
+            Route::patch('/{placementTest}/toggle-status', [PlacementTestController::class, 'toggleStatus'])->name('admin.placement_tests.toggle_status');
+        });
+
 
         Route::group(['prefix' => 'dashboard'], function () {
             Route::post('/getSaleStatisticsData', 'DashboardController@getSaleStatisticsData');

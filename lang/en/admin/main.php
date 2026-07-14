@@ -66,6 +66,7 @@ return [
 'search_classes' => 'Search classes',
 'search_consultants' => 'Search consultants',
 'search_reservatores' => 'Search reservatores',
+'placement_tests' => 'Placement Tests',
 'waiting' => 'Waiting',
 'accepted' => 'Accepted',
 'open' => 'Open',

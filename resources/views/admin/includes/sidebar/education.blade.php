@@ -150,7 +150,7 @@
 
             {{-- IELTS Tests - TEMPORARY: Permission bypassed for testing --}}
             @if(true) {{-- TODO: Change back to @can('admin_ielts_tests') after fixing permissions --}}
-                <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false))) ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false)) or request()->is(getAdminPanelUrl('/placement-tests*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <x-iconsax-bul-clipboard-text class="icons" width="24px" height="24px"/>
                         <span>{{ trans('update.ielts_tests') }}</span>
@@ -173,9 +173,13 @@
                         <li class="{{ (request()->is(getAdminPanelUrl('/practice-categories', false))) ? 'active' : '' }}">
                             <a class="nav-link" href="{{ getAdminPanelUrl() }}/practice-categories">{{ trans('update.practice_categories') }}</a>
                         </li>
+                        <li class="{{ (request()->is(getAdminPanelUrl('/placement-tests*', false))) ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ getAdminPanelUrl() }}/placement-tests/create">{{ trans('update.placement_tests') }}</a>
+                        </li>
                     </ul>
                 </li>
             @endif
+            
 
             @can('admin_certificate')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/certificates*', false))) ? 'active' : '' }}">

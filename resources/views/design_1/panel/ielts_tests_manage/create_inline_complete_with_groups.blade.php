@@ -1545,6 +1545,7 @@ function renderSectionParts(sectionEl, skill) {
     });
 
     updateSectionStats(sectionEl);
+    renumberSectionQuestions(sectionEl);
 }
 
 function resetPartEditorState(form) {
@@ -2181,7 +2182,7 @@ function toggleQuestionCollapse(button, questionIndex) {
         updatedQuestion.titleExpanded = updatedQuestion.collapsed === false;
     }
 
-    renderQuestionsList(groupItem, group);
+    renumberSectionQuestions(section);
 }
 
 function editPartTitle(button) {
@@ -2608,7 +2609,7 @@ function deleteQuestion(button, questionIndex) {
 
     group.questions.splice(questionIndex, 1);
 
-    renderQuestionsList(groupItem, group);
+    renumberSectionQuestions(section);
     updatePartStats(partItem, part);
     updateSectionStats(section);
     updateCompletenessStatus();
@@ -2789,7 +2790,7 @@ function saveQuestionToGroup(button) {
             initializeMatchingBuilder(form);
             form.classList.add('hidden');
 
-            renderQuestionsList(groupItem, group);
+            renumberSectionQuestions(section);
             updatePartStats(partItem, part);
             updateSectionStats(section);
             updateCompletenessStatus();
@@ -2812,7 +2813,7 @@ function saveQuestionToGroup(button) {
             initializeMatchingBuilder(form);
             form.classList.add('hidden');
 
-            renderQuestionsList(groupItem, group);
+            renumberSectionQuestions(section);
             updatePartStats(partItem, part);
             updateSectionStats(section);
             updateCompletenessStatus();
@@ -2989,7 +2990,7 @@ function saveQuestionToGroup(button) {
     initializeMatchingBuilder(form);
     form.classList.add('hidden');
 
-    renderQuestionsList(groupItem, group);
+    renumberSectionQuestions(section);
     updatePartStats(partItem, part);
     updateSectionStats(section);
     updateCompletenessStatus();
@@ -3003,7 +3004,28 @@ function getGroupSlotCount(group) {
     }, 0);
 }
 
-function renderQuestionsList(groupItem, group) {
+function renumberSectionQuestions(sectionEl) {
+    if (!sectionEl) return;
+    const skill = sectionEl.getAttribute('data-skill');
+    let offset = 0;
+
+    sectionEl.querySelectorAll('.part-item').forEach(partEl => {
+        partEl.querySelectorAll('.group-item').forEach(groupEl => {
+            const partId = partEl.getAttribute('data-part-id');
+            const groupId = groupEl.getAttribute('data-group-id');
+            const part = (testData.sections[skill]?.parts || []).find(p => String(p.id) === String(partId));
+            const group = part ? (part.groups || []).find(g => String(g.id) === String(groupId)) : null;
+
+            if (group) {
+                // renderQuestionsList(groupEl, group, offset);
+                renderQuestionsList(groupEl, group, offset + 1);
+                offset += getGroupSlotCount(group);
+            }
+        });
+    });
+}
+
+function renderQuestionsList(groupItem, group, startNumber = 1) {
     const list = groupItem.querySelector('.questions-list');
     const totalSpan = groupItem.querySelector('.question-total');
     const normalizedQuestions = normalizeQuestionsForRender(group ? group.questions : []);
@@ -3030,7 +3052,7 @@ function renderQuestionsList(groupItem, group) {
     }
 
     list.style.display = 'block';
-    let slotIndex = 1;
+    let slotIndex = startNumber;
     const renderedCards = normalizedQuestions.map((question, qIndex) => {
         const qType = (question && question.type) || group.question_type || 'short_answer';
         const slotCountBase = Number.isFinite(Number(question && question.slotCount)) ? Number(question.slotCount) : 1;

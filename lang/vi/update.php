@@ -10,8 +10,10 @@ return [
     'features' => 'Tính năng',
 
     'resolution' => 'Độ phân giải',
+    
     'max_bitrate' => 'Bitrate tối đa',
     'min_bitrate' => 'Bitrate tối thiểu',
+    'placement_tests' => 'Bài kiểm tra đầu vào',
     'frame_rate' => 'Tốc độ khung hình',
     'agora_live_streaming' => 'Lớp học trực tiếp trong ứng dụng',
     'agora_chat' => 'Bật trò chuyện trên trang lớp học trực tiếp',
