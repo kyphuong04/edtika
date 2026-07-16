@@ -13,6 +13,11 @@ return new class extends Migration
             $table->enum('level', ['A1', 'A2', 'B1', 'B2', 'B2+']);
             $table->string('title');
             $table->text('description')->nullable();
+
+            // Đoạn văn đọc dùng chung cho các câu hỏi trong đề (tối đa 1 đoạn/đề).
+            // Nullable vì không phải đề nào cũng có reading passage.
+            $table->text('reading_passage')->nullable();
+
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();

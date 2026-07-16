@@ -79,15 +79,50 @@ class PlacementTestController extends Controller
         $formAction = route('admin.placement_tests.update', $placementTest);
 
         $questionsData = $placementTest->questions->map(function (PlacementQuestion $q) {
+            $rawCorrect = $q->correct_answer;
+
+            // DB luôn lưu correct_answer dạng mảng (chuẩn hoá ở syncQuestions).
+            // Ở đây "giải nén" lại về đúng định dạng JS phía client đang thao tác:
+            //  - multiple_choice / listening_image_choice: chuỗi phẳng (vd "Option A" / "A")
+            //  - error_correction: đưa vào field correct_answer_text riêng
+            //  - sentence_completion: giữ nguyên mảng lồng theo từng chỗ trống
+            $correctAnswerFlat = null;
+            $correctAnswerText = '';
+            $correctAnswerNested = null;
+
+            if ($q->type === 'sentence_completion') {
+                $correctAnswerNested = $rawCorrect;
+            } elseif ($q->type === 'error_correction') {
+                $correctAnswerText = is_array($rawCorrect) ? ($rawCorrect[0] ?? '') : (string) $rawCorrect;
+            } else {
+                // multiple_choice, listening_image_choice
+                $correctAnswerFlat = is_array($rawCorrect) ? ($rawCorrect[0] ?? null) : $rawCorrect;
+            }
+
             return [
-                'id'             => $q->id,
-                'type'           => $q->type,
-                'has_audio'      => $q->has_audio,
-                'audio_url'      => $q->audio_path ? Storage::url($q->audio_path) : null,
-                'question_text'  => $q->question_text,
-                'options'        => $q->options ?? [],
-                'correct_answer' => $q->correct_answer,
-                'points'         => $q->points,
+                'id'                      => $q->id,
+                'type'                    => $q->type,
+                'has_audio'               => $q->has_audio,
+                'linked_to_passage'       => $q->linked_to_passage,
+                'audio_url'               => $q->audio_path ? Storage::url($q->audio_path) : null,
+                'existing_audio_path'     => $q->audio_path,
+                'audio_input_name'        => null,
+                'question_text'           => $q->question_text,
+                'options'                 => $q->type === 'multiple_choice' ? ($q->options ?? []) : [],
+                // listening_image_choice: options là mảng đường dẫn ảnh -> kèm URL để preview
+                // + giữ nguyên đường dẫn gốc để JS gửi lại khi không đổi ảnh mới.
+                'option_image_urls'       => $q->type === 'listening_image_choice'
+                    ? array_map(fn ($path) => $path ? Storage::url($path) : null, array_pad($q->options ?? [], 3, null))
+                    : [null, null, null],
+                'existing_option_images'  => $q->type === 'listening_image_choice'
+                    ? array_pad($q->options ?? [], 3, null)
+                    : [null, null, null],
+                'option_image_input_names' => [null, null, null],
+                'word_bank'               => $q->word_bank ?? [],
+                'blank_hints'             => $q->blank_hints ?? [],
+                'correct_answer'          => $q->type === 'sentence_completion' ? $correctAnswerNested : $correctAnswerFlat,
+                'correct_answer_text'     => $correctAnswerText,
+                'points'                  => $q->points,
             ];
         })->values();
 
@@ -105,11 +140,12 @@ class PlacementTestController extends Controller
         DB::beginTransaction();
         try {
             $test = PlacementTest::create([
-                'level'       => $validated['level'],
-                'title'       => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'status'      => $request->input('submit_action') === 'publish' ? 'published' : 'draft',
-                'created_by'  => auth()->id(),
+                'level'            => $validated['level'],
+                'title'            => $validated['title'],
+                'description'      => $validated['description'] ?? null,
+                'reading_passage'  => $validated['reading_passage'] ?? null,
+                'status'           => $request->input('submit_action') === 'publish' ? 'published' : 'draft',
+                'created_by'       => auth()->id(),
             ]);
 
             $this->syncQuestions($test, $request);
@@ -137,17 +173,25 @@ class PlacementTestController extends Controller
         DB::beginTransaction();
         try {
             $placementTest->update([
-                'level'       => $validated['level'],
-                'title'       => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'status'      => $request->input('submit_action') === 'publish' ? 'published' : $placementTest->status,
+                'level'           => $validated['level'],
+                'title'           => $validated['title'],
+                'description'     => $validated['description'] ?? null,
+                'reading_passage' => $validated['reading_passage'] ?? null,
+                'status'          => $request->input('submit_action') === 'publish' ? 'published' : $placementTest->status,
             ]);
 
-            // Xoá câu hỏi cũ + file audio cũ, rồi tạo lại theo dữ liệu mới gửi lên.
+            // Xoá câu hỏi cũ + file audio / ảnh cũ, rồi tạo lại theo dữ liệu mới gửi lên.
             // (Đơn giản và an toàn hơn so với diff từng câu ở bước đầu tiên này.)
             foreach ($placementTest->questions as $oldQuestion) {
                 if ($oldQuestion->audio_path) {
                     Storage::disk('public')->delete($oldQuestion->audio_path);
+                }
+                if ($oldQuestion->type === 'listening_image_choice') {
+                    foreach (($oldQuestion->options ?? []) as $imgPath) {
+                        if ($imgPath) {
+                            Storage::disk('public')->delete($imgPath);
+                        }
+                    }
                 }
             }
             $placementTest->questions()->delete();
@@ -175,6 +219,13 @@ class PlacementTestController extends Controller
         foreach ($placementTest->questions as $question) {
             if ($question->audio_path) {
                 Storage::disk('public')->delete($question->audio_path);
+            }
+            if ($question->type === 'listening_image_choice') {
+                foreach (($question->options ?? []) as $imgPath) {
+                    if ($imgPath) {
+                        Storage::disk('public')->delete($imgPath);
+                    }
+                }
             }
         }
 
@@ -204,17 +255,23 @@ class PlacementTestController extends Controller
     private function validateTest(Request $request): array
     {
         return $request->validate([
-            'level'       => 'required|in:A1,A2,B1,B2,B2+',
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'questions_data' => 'required|string',
+            'level'           => 'required|in:A1,A2,B1,B2,B2+',
+            'title'           => 'required|string|max:255',
+            'description'     => 'nullable|string',
+            'reading_passage' => 'nullable|string',
+            'questions_data'  => 'required|string',
         ]);
     }
 
     /**
      * Đọc JSON câu hỏi được build ở client (hidden input `questions_data`),
-     * ghép với file audio thực tế gửi kèm (input file có name = audio_input_name),
-     * rồi ghi vào bảng placement_questions.
+     * ghép với file audio/ảnh thực tế gửi kèm, rồi ghi vào bảng placement_questions.
+     *
+     * Chuẩn hoá correct_answer luôn là mảng để logic chấm về sau nhất quán:
+     *  - multiple_choice:        ["đáp án đúng"]
+     *  - sentence_completion:    [["ans1","alt1"], ["ans2"]]  (theo từng chỗ trống)
+     *  - error_correction:       ["câu đúng hoàn chỉnh"]      (so khớp không phân biệt hoa/thường)
+     *  - listening_image_choice: ["A"] / ["B"] / ["C"]
      */
     private function syncQuestions(PlacementTest $test, Request $request): void
     {
@@ -228,9 +285,18 @@ class PlacementTestController extends Controller
             throw new \RuntimeException('Mỗi đề tối đa ' . PlacementTest::MAX_QUESTIONS . ' câu hỏi.');
         }
 
+        $passageLinkedCount = 0;
+
         foreach ($questions as $index => $q) {
+            $type = $q['type'] ?? 'multiple_choice';
+
+            if (!array_key_exists($type, PlacementTest::QUESTION_TYPES)) {
+                throw new \RuntimeException('Câu ' . ($index + 1) . ' có dạng câu hỏi không hợp lệ.');
+            }
+
+            // ── Audio (áp dụng cho mọi dạng, kể cả listening_image_choice) ──
             $audioPath = null;
-            $hasAudio = !empty($q['has_audio']);
+            $hasAudio = !empty($q['has_audio']) || $type === 'listening_image_choice';
 
             if ($hasAudio) {
                 $inputName = $q['audio_input_name'] ?? null;
@@ -238,24 +304,87 @@ class PlacementTestController extends Controller
                 if ($inputName && $request->hasFile($inputName)) {
                     $audioPath = $request->file($inputName)->store('placement-tests/audio', 'public');
                 } elseif (!empty($q['existing_audio_path'])) {
-                    // Giữ nguyên file audio cũ khi sửa đề mà không chọn file mới.
                     $audioPath = $q['existing_audio_path'];
                 } else {
-                    throw new \RuntimeException('Câu ' . ($index + 1) . ' được đánh dấu có audio nhưng chưa có file.');
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' cần file audio nhưng chưa có.');
                 }
+            }
+
+            // ── Dữ liệu riêng theo từng dạng ──
+            $options = null;
+            $wordBank = null;
+            $blankHints = null;
+            $linkedToPassage = false;
+            $correctAnswer = null;
+
+            if ($type === 'multiple_choice') {
+                $options = $q['options'] ?? [];
+                if (count($options) < 2) {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' cần tối thiểu 2 lựa chọn.');
+                }
+                if (empty($q['correct_answer'])) {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' chưa chọn đáp án đúng.');
+                }
+                $correctAnswer = [$q['correct_answer']];
+
+                $linkedToPassage = !empty($q['linked_to_passage']);
+                if ($linkedToPassage) {
+                    $passageLinkedCount++;
+                }
+            } elseif ($type === 'sentence_completion') {
+                $wordBank = !empty($q['word_bank']) ? array_values(array_filter($q['word_bank'])) : null;
+                $blankHints = $q['blank_hints'] ?? null;
+                if (!is_array($q['correct_answer'] ?? null) || count($q['correct_answer']) === 0) {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' chưa nhập đủ đáp án cho các chỗ trống.');
+                }
+                $correctAnswer = $q['correct_answer'];
+            } elseif ($type === 'error_correction') {
+                $answerText = trim((string) ($q['correct_answer_text'] ?? ''));
+                if ($answerText === '') {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' (Error Correction) chưa nhập câu đúng.');
+                }
+                $correctAnswer = [$answerText];
+            } elseif ($type === 'listening_image_choice') {
+                $optionImagePaths = [];
+                $inputNames = $q['option_image_input_names'] ?? [null, null, null];
+                $existingPaths = $q['existing_option_images'] ?? [null, null, null];
+
+                for ($i = 0; $i < 3; $i++) {
+                    $inputName = $inputNames[$i] ?? null;
+                    if ($inputName && $request->hasFile($inputName)) {
+                        $optionImagePaths[$i] = $request->file($inputName)->store('placement-tests/images', 'public');
+                    } elseif (!empty($existingPaths[$i])) {
+                        $optionImagePaths[$i] = $existingPaths[$i];
+                    } else {
+                        throw new \RuntimeException('Câu ' . ($index + 1) . ' (Listening - Image) thiếu ảnh cho lựa chọn ' . chr(65 + $i) . '.');
+                    }
+                }
+                $options = $optionImagePaths;
+
+                if (empty($q['correct_answer']) || !in_array($q['correct_answer'], ['A', 'B', 'C'], true)) {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' chưa chọn ảnh đáp án đúng (A/B/C).');
+                }
+                $correctAnswer = [$q['correct_answer']];
             }
 
             PlacementQuestion::create([
                 'placement_test_id' => $test->id,
                 'order_index'       => $index,
-                'type'              => $q['type'],
+                'type'              => $type,
                 'has_audio'         => $hasAudio,
+                'linked_to_passage' => $linkedToPassage,
                 'audio_path'        => $audioPath,
-                'question_text'     => $q['question_text'],
-                'options'           => $q['type'] === 'multiple_choice' ? ($q['options'] ?? []) : null,
-                'correct_answer'    => $q['correct_answer'] ?? null,
+                'question_text'     => $q['question_text'] ?? '',
+                'options'           => $options,
+                'word_bank'         => $wordBank,
+                'blank_hints'       => $blankHints,
+                'correct_answer'    => $correctAnswer,
                 'points'            => $q['points'] ?? 1,
             ]);
+        }
+
+        if ($passageLinkedCount > 0 && empty($test->reading_passage)) {
+            throw new \RuntimeException('Có câu hỏi Reading Comprehension nhưng đề chưa nhập đoạn văn (Reading Passage).');
         }
     }
 }

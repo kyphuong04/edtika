@@ -18,10 +18,20 @@ class PlacementTest extends Model
 
     public const MAX_QUESTIONS = 10;
 
+    // 4 dạng câu hỏi được phép trong đề Placement Test.
+    // "Listening" (Q9-10 đề mẫu) = listening_image_choice: MC với 3 ảnh A/B/C + audio bắt buộc.
+    public const QUESTION_TYPES = [
+        'multiple_choice'        => 'Multiple Choice',
+        'sentence_completion'    => 'Sentence Completion',
+        'error_correction'       => 'Find & Correct the Mistake',
+        'listening_image_choice' => 'Listening - Choose the Image (A/B/C)',
+    ];
+
     protected $fillable = [
         'level',
         'title',
         'description',
+        'reading_passage',
         'status',
         'created_by',
     ];

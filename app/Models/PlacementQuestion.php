@@ -13,17 +13,23 @@ class PlacementQuestion extends Model
         'type',
         'has_audio',
         'audio_path',
+        'linked_to_passage',
         'question_text',
         'options',
+        'word_bank',
+        'blank_hints',
         'correct_answer',
         'points',
     ];
 
     protected $casts = [
-        'has_audio'      => 'boolean',
-        'options'        => 'array',
-        'correct_answer' => 'array',
-        'points'         => 'float',
+        'has_audio'          => 'boolean',
+        'linked_to_passage'  => 'boolean',
+        'options'            => 'array',
+        'word_bank'          => 'array',
+        'blank_hints'        => 'array',
+        'correct_answer'     => 'array',
+        'points'             => 'float',
     ];
 
     public function placementTest(): BelongsTo

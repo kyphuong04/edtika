@@ -1486,6 +1486,169 @@
         opacity: 1 !important;
         transform: translateY(0) !important;
     }
+    .word-detail-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        z-index: 1400;
+    }
+    .word-detail-modal.is-open { display: block; }
+
+    .word-detail-modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.5);
+    }
+
+    .word-detail-modal__dialog {
+        position: relative;
+        width: min(640px, calc(100vw - 24px));
+        margin: 60px auto;
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.3);
+        overflow: hidden;
+        max-height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+    }
+    .dark-mode .word-detail-modal__dialog {
+        background: #1e293b;
+    }
+
+    .word-detail-modal__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 18px 22px;
+        border-bottom: 1px solid #eceef4;
+    }
+    .dark-mode .word-detail-modal__header {
+        border-bottom-color: #334155;
+    }
+
+    .word-detail-modal__close {
+        border: none;
+        background: transparent;
+        font-size: 28px;
+        line-height: 1;
+        color: #475569;
+        cursor: pointer;
+        padding: 0;
+    }
+    .dark-mode .word-detail-modal__close { color: #cbd5e1; }
+
+    .word-detail-modal__body {
+        padding: 22px;
+        overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .wdm-word {
+        font-size: 30px;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    .dark-mode .wdm-word { color: #f1f5f9; }
+
+    .wdm-pron-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .wdm-pron-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        border: 1px solid rgba(81, 29, 153, 0.10);
+        border-radius: 12px;
+        padding: 6px 12px;
+    }
+    .dark-mode .wdm-pron-item {
+        background: #0f172a;
+        border-color: rgba(255,255,255,0.12);
+    }
+    .wdm-pron-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: #511D99;
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    .wdm-pron-ipa {
+        font-size: 15px;
+        color: #511D99;
+        font-style: italic;
+    }
+    .dark-mode .wdm-pron-ipa { color: #c4b5fd; }
+    .wdm-pron-audio-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #511D99;
+        display: flex;
+        align-items: center;
+    }
+    .dark-mode .wdm-pron-audio-btn { color: #c4b5fd; }
+
+    .wdm-pos {
+        display: inline-block;
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 14px 0 10px;
+    }
+    .dark-mode .wdm-pos {
+        background: #1e1b4b;
+        color: #c4b5fd;
+    }
+
+    .wdm-def {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.6;
+        margin-bottom: 4px;
+    }
+    .dark-mode .wdm-def { color: #d1d5db; }
+
+    .wdm-example {
+        color: #64748b;
+        font-style: italic;
+        font-size: 13px;
+        padding-left: 12px;
+        border-left: 3px solid #e2e8f0;
+        margin: 4px 0 10px;
+    }
+    .dark-mode .wdm-example {
+        color: #94a3b8;
+        border-left-color: #334155;
+    }
+
+    .wdm-syn {
+        font-size: 13px;
+        color: #64748b;
+        margin: 4px 0 10px;
+    }
+    .dark-mode .wdm-syn { color: #94a3b8; }
+    .wdm-syn strong { color: #475569; }
+    .dark-mode .wdm-syn strong { color: #cbd5e1; }
+
+    .wdm-loading, .wdm-empty {
+        text-align: center;
+        color: #94a3b8;
+        padding: 30px 0;
+    }
+    
 </style>
 @endpush
 
@@ -1849,6 +2012,18 @@
                     <p>{{ trans('panel.ranking_hint') }}</p>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+<div class="word-detail-modal" id="wordDetailModal" aria-hidden="true">
+    <div class="word-detail-modal__backdrop js-word-detail-close"></div>
+    <div class="word-detail-modal__dialog" role="dialog" aria-modal="true" aria-label="Word detail">
+        <div class="word-detail-modal__header">
+            <div></div>
+            <button type="button" class="word-detail-modal__close js-word-detail-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="word-detail-modal__body" id="wordDetailModalBody">
+            <div class="wdm-loading">Đang tải...</div>
         </div>
     </div>
 </div>
@@ -3138,6 +3313,156 @@
             loadMyWordList();
         }
     });
+
+    // ── Click vào từ trong danh sách → mở dialog chi tiết ─────────────
+    const wordDetailCache = {};
+    const $wordDetailModal = $('#wordDetailModal');
+    const $wordDetailModalBody = $('#wordDetailModalBody');
+
+    function renderWordDetailBody(data) {
+        if (!data) {
+            return '<div class="wdm-empty">Không tìm thấy dữ liệu.</div>';
+        }
+
+        const wordText = data.headword || data.word || '';
+        let html = `<div class="wdm-word">${wordText}</div>`;
+
+        if (Array.isArray(data.pronunciations) && data.pronunciations.length) {
+            html += '<div class="wdm-pron-row">';
+            data.pronunciations.forEach(function (p) {
+                const label = p.label || '';
+                const ipa = p.ipa || p.text || '';
+                let audio = p.audio || '';
+                if (audio && audio.startsWith('//')) audio = 'https:' + audio;
+
+                html += '<div class="wdm-pron-item">';
+                if (label) html += `<span class="wdm-pron-label">${label}</span>`;
+                if (ipa) html += `<span class="wdm-pron-ipa">/${ipa}/</span>`;
+                html += `<button type="button" class="wdm-pron-audio-btn" data-audio="${audio}" data-word="${wordText}" onclick="playWordDetailAudio(this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                </button>`;
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (Array.isArray(data.meanings) && data.meanings.length) {
+            data.meanings.forEach(function (m) {
+                if (m.partOfSpeech) {
+                    html += `<div class="wdm-pos">${m.partOfSpeech}</div>`;
+                }
+
+                if (Array.isArray(m.definitions) && m.definitions.length) {
+                    m.definitions.slice(0, 4).forEach(function (def, idx) {
+                        if (def.definition) {
+                            html += `<div class="wdm-def"><strong>${idx + 1}.</strong> ${def.definition}</div>`;
+                        }
+                        if (def.example) {
+                            html += `<div class="wdm-example">"${def.example}"</div>`;
+                        }
+                    });
+                }
+
+                if (Array.isArray(m.synonyms) && m.synonyms.length) {
+                    html += `<div class="wdm-syn"><strong>Synonyms:</strong> ${m.synonyms.join(', ')}</div>`;
+                }
+                if (Array.isArray(m.antonyms) && m.antonyms.length) {
+                    html += `<div class="wdm-syn"><strong>Antonyms:</strong> ${m.antonyms.join(', ')}</div>`;
+                }
+            });
+        } else {
+            html += '<div class="wdm-empty">Chưa có định nghĩa chi tiết.</div>';
+        }
+
+        return html;
+    }
+
+    window.playWordDetailAudio = function (btnEl) {
+        let url = btnEl.getAttribute('data-audio');
+        const wordText = btnEl.getAttribute('data-word');
+        if (url && url.startsWith('//')) url = 'https:' + url;
+
+        if (url) {
+            const audio = new Audio(url);
+            audio.play().catch(function () {
+                speakWordDetail(wordText);
+            });
+        } else {
+            speakWordDetail(wordText);
+        }
+    };
+
+    function speakWordDetail(word) {
+        if (!word || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(word.trim());
+        utter.lang = 'en-US';
+        utter.rate = 0.9;
+        window.speechSynthesis.speak(utter);
+    }
+
+    function openWordDetailModal() {
+        $wordDetailModal.addClass('is-open').attr('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeWordDetailModal() {
+        $wordDetailModal.removeClass('is-open').attr('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>');
+    }
+
+    $(document).on('click', '.word-item', function (e) {
+        // Không mở dialog nếu click vào checkbox hoặc dấu tick "đã học"
+        if ($(e.target).is('.word-checkbox, .learned-badge') || $(e.target).closest('.learned-badge').length) {
+            return;
+        }
+
+        const wordText = $(this).data('word');
+        if (!wordText) return;
+
+        openWordDetailModal();
+        $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>');
+
+        if (wordDetailCache[wordText]) {
+            $wordDetailModalBody.html(renderWordDetailBody(wordDetailCache[wordText]));
+            return;
+        }
+
+        $.ajax({
+            url: '/panel/dictionary/search-first',
+            method: 'POST',
+            data: {
+                query: wordText,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (response.success && response.data) {
+                    wordDetailCache[wordText] = response.data;
+                    $wordDetailModalBody.html(renderWordDetailBody(response.data));
+                } else {
+                    $wordDetailModalBody.html('<div class="wdm-empty">Không tìm thấy dữ liệu.</div>');
+                }
+            },
+            error: function () {
+                $wordDetailModalBody.html('<div class="wdm-empty">Lỗi khi tải dữ liệu.</div>');
+            }
+        });
+    });
+
+    $(document).on('click', '.js-word-detail-close', closeWordDetailModal);
+
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && $wordDetailModal.hasClass('is-open')) {
+            closeWordDetailModal();
+        }
+    });
+
+    
 
 })(jQuery);
 </script>

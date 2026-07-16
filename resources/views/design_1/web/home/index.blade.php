@@ -3703,9 +3703,9 @@
                     <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $t['nav']['home'] }}</a>
                     <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $t['nav']['classes'] }}</a>
                     @if(auth()->check())
-                        <a href="/panel/ielts-tests/diagnostic" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
+                        <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
                     @else
-                        <a href="/panel/ielts-tests/diagnostic" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['placementTest'] }}</a>
+                        <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['placementTest'] }}</a>
                     @endif
                     @if(auth()->check())
                         <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $t['nav']['mockTest'] }}</a>
@@ -3876,7 +3876,7 @@
                 </div>
 
                 <div class="edtika-bundles__footer-actions">
-                    <a href="/panel/ielts-tests/diagnostic" class="edtika-bundles__cta" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $t['bundles']['placementCta'] }}</a>
+                    <a href="/placement-test" class="edtika-bundles__cta" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $t['bundles']['placementCta'] }}</a>
                     <a href="{{ $bundleCarouselCards[$activeBundleIndex]['detail_url'] }}" class="edtika-bundles__cta" id="bundleDetailCta">{{ $t['bundles']['detailCta'] }}</a>
                 </div>
             </section>

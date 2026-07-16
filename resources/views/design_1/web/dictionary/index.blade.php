@@ -1035,9 +1035,9 @@
                 <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Home' : 'Trang chủ' }}</a>
                 <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Courses' : 'Khóa học' }}</a>
                 @if(auth()->check())
-                    <a href="/panel/ielts-tests/diagnostic" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
+                    <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
                 @else
-                    <a href="/panel/ielts-tests/diagnostic" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
+                    <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
                 @endif
                 @if(auth()->check())
                     <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Mock Tests' : 'Luyện đề' }}</a>
@@ -1162,7 +1162,7 @@
                     <div>
                         <h4 class="edtika-footer__column-title">{{ $isEnglish ? 'Support' : 'Hỗ trợ' }}<span class="edtika-footer__title-mark" aria-hidden="true"></span></h4>
                         <ul class="edtika-footer__list">
-                            <li><a href="/panel/ielts-tests/diagnostic">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a></li>
+                            <li><a href="/placement-test">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a></li>
                             <li><a href="/panel/ielts-tests/mock">{{ $isEnglish ? 'Mock Tests' : 'Luyện đề' }}</a></li>
                             <li><a href="/dictionary">{{ $isEnglish ? 'Dictionary & Flashcards' : 'Từ điển & Flashcard' }}</a></li>
                         </ul>

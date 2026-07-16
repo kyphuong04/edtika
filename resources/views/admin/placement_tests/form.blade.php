@@ -72,6 +72,12 @@
                 <label class="input-label">Mô tả (nội bộ)</label>
                 <textarea name="description" class="form-control" rows="2">{{ old('description', $placementTest->description ?? '') }}</textarea>
             </div>
+            <div class="form-group mb-0 mt-3">
+                <label class="input-label">
+                    Reading Passage <small class="text-muted">(đoạn văn dùng chung — tối đa 1 đoạn/đề, dùng cho các câu Multiple Choice có tick "Gắn với đoạn văn")</small>
+                </label>
+                <textarea name="reading_passage" id="readingPassageInput" class="form-control" rows="4" placeholder="VD: Ben lives in a small town near the sea...">{{ old('reading_passage', $placementTest->reading_passage ?? '') }}</textarea>
+            </div>
         </div>
 
         <div class="d-flex align-items-center justify-content-between mb-12">
@@ -166,6 +172,20 @@ let uploadSeq = 0;
 const container = document.getElementById('questionsContainer');
 const countLabel = document.getElementById('questionCountLabel');
 
+const TYPE_LABELS = {
+    multiple_choice: 'Multiple Choice',
+    sentence_completion: 'Sentence Completion',
+    error_correction: 'Find & Correct the Mistake',
+    listening_image_choice: 'Listening - Choose the Image',
+};
+
+const QUESTION_TEXT_LABELS = {
+    multiple_choice: 'Nội dung câu hỏi *',
+    sentence_completion: 'Câu có chỗ trống * (dùng ___ cho mỗi chỗ trống)',
+    error_correction: 'Câu có lỗi sai *',
+    listening_image_choice: 'Câu hỏi * (vd: Which one is Laura\'s brother?)',
+};
+
 function countBlanks(text) {
     const matches = String(text || '').match(/_{2,}/g);
     return matches ? matches.length : 0;
@@ -177,22 +197,33 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function blankQuestionTemplate() {
+    return {
+        type: 'multiple_choice',
+        has_audio: false,
+        linked_to_passage: false,
+        question_text: '',
+        options: ['', ''],
+        word_bank: [],
+        blank_hints: [],
+        correct_answer: null,
+        correct_answer_text: '',
+        points: 1,
+        audio_input_name: null,
+        existing_audio_path: null,
+        audio_url: null,
+        option_image_input_names: [null, null, null],
+        existing_option_images: [null, null, null],
+        option_image_urls: [null, null, null],
+    };
+}
+
 function addQuestion() {
     if (questions.length >= MAX_QUESTIONS) {
         alert('Mỗi đề tối đa ' + MAX_QUESTIONS + ' câu hỏi.');
         return;
     }
-    questions.push({
-        type: 'multiple_choice',
-        has_audio: false,
-        question_text: '',
-        options: ['', ''],
-        correct_answer: null,
-        points: 1,
-        audio_input_name: null,
-        existing_audio_path: null,
-        audio_url: null,
-    });
+    questions.push(blankQuestionTemplate());
     render();
 }
 
@@ -207,13 +238,18 @@ function updateField(index, field, value) {
 }
 
 function changeType(index, type) {
-    questions[index].type = type;
-    if (type === 'multiple_choice' && !Array.isArray(questions[index].options)) {
-        questions[index].options = ['', ''];
-    }
-    if (type === 'sentence_completion') {
-        questions[index].options = null;
-    }
+    const fresh = blankQuestionTemplate();
+    // Giữ lại nội dung chung, reset phần dữ liệu riêng theo dạng cũ để tránh lẫn dữ liệu.
+    questions[index] = {
+        ...fresh,
+        type,
+        question_text: questions[index].question_text,
+        points: questions[index].points,
+        has_audio: type === 'listening_image_choice' ? true : questions[index].has_audio,
+        audio_input_name: questions[index].audio_input_name,
+        existing_audio_path: questions[index].existing_audio_path,
+        audio_url: questions[index].audio_url,
+    };
     render();
 }
 
@@ -222,24 +258,46 @@ function toggleAudio(index, checked) {
     render();
 }
 
+function toggleLinkedToPassage(index, checked) {
+    questions[index].linked_to_passage = checked;
+}
+
 function onAudioFileSelected(index, inputEl) {
     if (inputEl.files && inputEl.files[0]) {
         const inputName = 'question_audio_' + (++uploadSeq);
         inputEl.name = inputName;
         questions[index].audio_input_name = inputName;
-        questions[index].audio_url = null; // preview text will show filename via DOM, not re-render needed
-        document.getElementById('audioFilesHolder').appendChild(inputEl.cloneNode(false));
-        // move the real input with the file into holder so it survives form submit
-        document.getElementById('audioFilesHolder').lastChild.remove();
-        document.getElementById('audioFilesHolder').appendChild(inputEl);
+        document.getElementById('mediaFilesHolder').appendChild(inputEl);
         const badge = document.getElementById('audio-filename-' + index);
-        if (badge) badge.textContent = inputEl.files[0].name;
-        // recreate a fresh empty file input in place visually
+        if (badge) { badge.textContent = inputEl.files[0].name; badge.style.display = 'inline-flex'; }
         const placeholder = document.createElement('input');
         placeholder.type = 'file';
         placeholder.accept = 'audio/*';
         placeholder.className = 'form-control';
         placeholder.onchange = function () { onAudioFileSelected(index, this); };
+        inputEl.insertAdjacentElement('afterend', placeholder);
+    }
+}
+
+function onOptionImageSelected(index, optIndex, inputEl) {
+    if (inputEl.files && inputEl.files[0]) {
+        const inputName = 'option_image_' + (++uploadSeq);
+        inputEl.name = inputName;
+        questions[index].option_image_input_names[optIndex] = inputName;
+        document.getElementById('mediaFilesHolder').appendChild(inputEl);
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = document.getElementById('option-img-preview-' + index + '-' + optIndex);
+            if (img) { img.src = e.target.result; img.style.display = 'block'; }
+        };
+        reader.readAsDataURL(inputEl.files[0]);
+
+        const placeholder = document.createElement('input');
+        placeholder.type = 'file';
+        placeholder.accept = 'image/*';
+        placeholder.className = 'form-control form-control-sm mt-2';
+        placeholder.onchange = function () { onOptionImageSelected(index, optIndex, this); };
         inputEl.insertAdjacentElement('afterend', placeholder);
     }
 }
@@ -254,8 +312,9 @@ function removeOption(index, optIndex) {
         alert('Cần tối thiểu 2 lựa chọn.');
         return;
     }
+    const removedValue = questions[index].options[optIndex];
     questions[index].options.splice(optIndex, 1);
-    if (questions[index].correct_answer === questions[index].options[optIndex]) {
+    if (questions[index].correct_answer === removedValue) {
         questions[index].correct_answer = null;
     }
     render();
@@ -273,11 +332,26 @@ function setCorrectOption(index, value) {
     questions[index].correct_answer = value;
 }
 
+function setCorrectImage(index, letter) {
+    questions[index].correct_answer = letter;
+}
+
+function updateWordBank(index, value) {
+    questions[index].word_bank = value.split(',').map(v => v.trim()).filter(Boolean);
+}
+
 function updateBlankAnswer(index, blankIndex, value) {
     if (!Array.isArray(questions[index].correct_answer)) {
         questions[index].correct_answer = [];
     }
     questions[index].correct_answer[blankIndex] = value.split('/').map(v => v.trim()).filter(Boolean);
+}
+
+function updateBlankHint(index, blankIndex, value) {
+    if (!Array.isArray(questions[index].blank_hints)) {
+        questions[index].blank_hints = [];
+    }
+    questions[index].blank_hints[blankIndex] = value;
 }
 
 function render() {
@@ -289,7 +363,7 @@ function renderQuestionCard(q, index) {
     let bodyHtml = '';
 
     if (q.type === 'multiple_choice') {
-        bodyHtml += '<div class="mb-8"><label class="input-label">Lựa chọn (tick vào ô đúng)</label>';
+        bodyHtml += '<div class="mb-2"><label class="input-label">Lựa chọn (tick vào ô đúng)</label>';
         (q.options || []).forEach((opt, optIndex) => {
             bodyHtml += `<div class="pt-option-row">
                 <input type="radio" name="correct_${index}" ${q.correct_answer === opt && opt !== '' ? 'checked' : ''} onchange="setCorrectOption(${index}, '${escapeHtml(opt).replace(/'/g, "&#39;")}')">
@@ -297,58 +371,97 @@ function renderQuestionCard(q, index) {
                 <button type="button" class="pt-remove-btn" onclick="removeOption(${index}, ${optIndex})"><i class="fas fa-times"></i></button>
             </div>`;
         });
-        bodyHtml += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="addOption(${index})"><i class="fas fa-plus mr-4"></i>Thêm lựa chọn</button></div>`;
-    } else {
+        bodyHtml += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="addOption(${index})"><i class="fas fa-plus mr-4"></i>Thêm lựa chọn</button></div>
+        <div class="form-check mt-2">
+            <input type="checkbox" class="form-check-input" id="passage_check_${index}" ${q.linked_to_passage ? 'checked' : ''} onchange="toggleLinkedToPassage(${index}, this.checked)">
+            <label class="form-check-label" for="passage_check_${index}">Gắn với đoạn văn dùng chung (Reading Comprehension) — cần nhập Reading Passage ở trên</label>
+        </div>`;
+
+    } else if (q.type === 'sentence_completion') {
         const blankCount = countBlanks(q.question_text);
-        bodyHtml += `<div class="alert alert-info py-2 px-3 mb-8">Dùng <code>___</code> (ít nhất 2 dấu gạch dưới liền nhau) cho mỗi chỗ trống. Phát hiện <strong>${blankCount}</strong> chỗ trống.</div>`;
+        bodyHtml += `<div class="form-group mb-2">
+            <label class="input-label">Word Bank <small class="text-muted">(tuỳ chọn — cách nhau bởi dấu phẩy, hiển thị như hộp từ gợi ý)</small></label>
+            <input type="text" class="form-control" value="${escapeHtml((q.word_bank || []).join(', '))}" placeholder="go, do, learn, make, take" oninput="updateWordBank(${index}, this.value)">
+        </div>`;
+        bodyHtml += `<div class="alert alert-info py-2 px-3 mb-2">Dùng <code>___</code> (ít nhất 2 dấu gạch dưới liền nhau) cho mỗi chỗ trống. Phát hiện <strong>${blankCount}</strong> chỗ trống.</div>`;
         if (blankCount > 0) {
-            const existing = Array.isArray(q.correct_answer) ? q.correct_answer : [];
-            bodyHtml += '<div class="mb-8">';
+            const existingAnswers = Array.isArray(q.correct_answer) ? q.correct_answer : [];
+            const existingHints = Array.isArray(q.blank_hints) ? q.blank_hints : [];
+            bodyHtml += '<div class="mb-2">';
             for (let b = 0; b < blankCount; b++) {
-                const val = (existing[b] || []).join(' / ');
-                bodyHtml += `<div class="pt-blank-answer-row"><span>Chỗ trống ${b + 1}</span><input type="text" value="${escapeHtml(val)}" placeholder="Đáp án, cách nhau bởi / nếu có nhiều đáp án đúng" oninput="updateBlankAnswer(${index}, ${b}, this.value)"></div>`;
+                const val = (existingAnswers[b] || []).join(' / ');
+                const hint = existingHints[b] || '';
+                bodyHtml += `<div class="pt-blank-answer-row">
+                    <span>Chỗ trống ${b + 1}</span>
+                    <input type="text" value="${escapeHtml(val)}" placeholder="Đáp án đúng, cách nhau bởi / nếu có nhiều đáp án" oninput="updateBlankAnswer(${index}, ${b}, this.value)">
+                    <input type="text" style="max-width:150px;" value="${escapeHtml(hint)}" placeholder="Gợi ý, vd: move" oninput="updateBlankHint(${index}, ${b}, this.value)">
+                </div>`;
             }
             bodyHtml += '</div>';
         }
+
+    } else if (q.type === 'error_correction') {
+        bodyHtml += `<div class="form-group">
+            <label class="input-label">Câu đúng hoàn chỉnh * <small class="text-muted">(so khớp không phân biệt hoa/thường)</small></label>
+            <input type="text" class="form-control" value="${escapeHtml(q.correct_answer_text || '')}" placeholder="VD: She goes to school every day by bus because it is very fast and cheap." oninput="updateField(${index}, 'correct_answer_text', this.value)">
+        </div>`;
+
+    } else if (q.type === 'listening_image_choice') {
+        bodyHtml += '<div class="row">';
+        ['A', 'B', 'C'].forEach((letter, optIndex) => {
+            const previewUrl = (q.option_image_urls || [])[optIndex] || '';
+            bodyHtml += `<div class="col-md-4 mb-2">
+                <label class="input-label">Ảnh ${letter} *</label>
+                <div class="d-flex align-items-center mb-1">
+                    <input type="radio" name="correct_img_${index}" ${q.correct_answer === letter ? 'checked' : ''} onchange="setCorrectImage(${index}, '${letter}')">
+                    <span class="ml-2 small text-muted">Đây là đáp án đúng</span>
+                </div>
+                <img id="option-img-preview-${index}-${optIndex}" src="${previewUrl}" style="width:100%;max-height:110px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;${previewUrl ? '' : 'display:none;'}">
+                <input type="file" accept="image/*" class="form-control form-control-sm mt-2" onchange="onOptionImageSelected(${index}, ${optIndex}, this)">
+            </div>`;
+        });
+        bodyHtml += '</div>';
     }
 
-    const audioBlock = q.has_audio ? `
-        <div class="mb-8">
+    const showAudioToggle = q.type !== 'listening_image_choice';
+    const showAudioBlock = q.has_audio || q.type === 'listening_image_choice';
+
+    const audioBlock = showAudioBlock ? `
+        <div class="mb-2">
             <label class="input-label">File audio (MP3) *</label>
             <input type="file" accept="audio/*" class="form-control" onchange="onAudioFileSelected(${index}, this)">
             ${q.audio_url ? `<div class="pt-file-preview"><i class="fas fa-volume-up"></i> File hiện có (giữ nguyên nếu không chọn file mới)</div>` : ''}
-            <div id="audio-filename-${index}" class="pt-file-preview" style="${q.audio_url ? '' : 'display:none;'}"></div>
+            <div id="audio-filename-${index}" class="pt-file-preview" style="display:none;"></div>
         </div>
     ` : '';
 
     return `<div class="pt-question-card">
-        <span class="pt-q-badge">Câu ${index + 1}</span>
+        <span class="pt-q-badge">Câu ${index + 1} · ${TYPE_LABELS[q.type] || q.type}</span>
         <button type="button" class="pt-remove-btn" style="position:absolute;top:16px;right:16px;font-size:16px;" onclick="removeQuestion(${index})" title="Xoá câu"><i class="fas fa-trash"></i></button>
 
-        <div class="row mb-8">
+        <div class="row mb-2">
             <div class="col-md-4">
                 <label class="input-label">Dạng câu hỏi</label>
                 <select class="form-control" onchange="changeType(${index}, this.value)">
-                    <option value="multiple_choice" ${q.type === 'multiple_choice' ? 'selected' : ''}>Multiple Choice</option>
-                    <option value="sentence_completion" ${q.type === 'sentence_completion' ? 'selected' : ''}>Sentence Completion</option>
+                    ${Object.entries(TYPE_LABELS).map(([val, label]) => `<option value="${val}" ${q.type === val ? 'selected' : ''}>${label}</option>`).join('')}
                 </select>
             </div>
             <div class="col-md-4">
                 <label class="input-label">Điểm</label>
                 <input type="number" class="form-control" min="0" step="0.25" value="${q.points ?? 1}" oninput="updateField(${index}, 'points', parseFloat(this.value) || 0)">
             </div>
-            <div class="col-md-4 d-flex align-items-end">
+            ${showAudioToggle ? `<div class="col-md-4 d-flex align-items-end">
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" id="audio_check_${index}" ${q.has_audio ? 'checked' : ''} onchange="toggleAudio(${index}, this.checked)">
                     <label class="form-check-label" for="audio_check_${index}">Có audio (Listening)</label>
                 </div>
-            </div>
+            </div>` : `<div class="col-md-4 d-flex align-items-end"><span class="badge badge-info">Listening (bắt buộc audio)</span></div>`}
         </div>
 
         ${audioBlock}
 
         <div class="form-group">
-            <label class="input-label">Nội dung câu hỏi *</label>
+            <label class="input-label">${QUESTION_TEXT_LABELS[q.type] || 'Nội dung câu hỏi *'}</label>
             <textarea class="form-control" rows="2" oninput="updateField(${index}, 'question_text', this.value); refreshBlankCount(${index}, this.value)">${escapeHtml(q.question_text)}</textarea>
         </div>
 
@@ -383,20 +496,30 @@ document.getElementById('placementTestForm').addEventListener('submit', function
         alert('Vui lòng thêm ít nhất 1 câu hỏi.');
         return;
     }
+
+    const readingPassage = (document.getElementById('readingPassageInput').value || '').trim();
+
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
-        if (!q.question_text || !q.question_text.trim()) {
+
+        if (q.type !== 'listening_image_choice' && (!q.question_text || !q.question_text.trim())) {
             e.preventDefault();
             alert('Câu ' + (i + 1) + ' chưa có nội dung.');
             return;
         }
+
         if (q.type === 'multiple_choice') {
             if (!q.correct_answer) {
                 e.preventDefault();
                 alert('Câu ' + (i + 1) + ' chưa chọn đáp án đúng.');
                 return;
             }
-        } else {
+            if (q.linked_to_passage && !readingPassage) {
+                e.preventDefault();
+                alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng bạn chưa nhập Reading Passage ở trên.');
+                return;
+            }
+        } else if (q.type === 'sentence_completion') {
             const blanks = countBlanks(q.question_text);
             if (blanks === 0) {
                 e.preventDefault();
@@ -408,10 +531,35 @@ document.getElementById('placementTestForm').addEventListener('submit', function
                 alert('Câu ' + (i + 1) + ' chưa nhập đủ đáp án cho từng chỗ trống.');
                 return;
             }
+        } else if (q.type === 'error_correction') {
+            if (!q.correct_answer_text || !q.correct_answer_text.trim()) {
+                e.preventDefault();
+                alert('Câu ' + (i + 1) + ' (Find & Correct the Mistake) chưa nhập câu đúng.');
+                return;
+            }
+        } else if (q.type === 'listening_image_choice') {
+            if (!q.question_text || !q.question_text.trim()) {
+                e.preventDefault();
+                alert('Câu ' + (i + 1) + ' chưa có nội dung câu hỏi.');
+                return;
+            }
+            for (let opt = 0; opt < 3; opt++) {
+                if (!q.option_image_input_names[opt] && !q.existing_option_images[opt]) {
+                    e.preventDefault();
+                    alert('Câu ' + (i + 1) + ' còn thiếu ảnh cho lựa chọn ' + String.fromCharCode(65 + opt) + '.');
+                    return;
+                }
+            }
+            if (!q.correct_answer) {
+                e.preventDefault();
+                alert('Câu ' + (i + 1) + ' chưa chọn ảnh đáp án đúng.');
+                return;
+            }
         }
-        if (q.has_audio && !q.audio_input_name && !q.existing_audio_path) {
+
+        if ((q.has_audio || q.type === 'listening_image_choice') && !q.audio_input_name && !q.existing_audio_path) {
             e.preventDefault();
-            alert('Câu ' + (i + 1) + ' được đánh dấu có audio nhưng chưa chọn file.');
+            alert('Câu ' + (i + 1) + ' cần file audio nhưng chưa chọn.');
             return;
         }
     }
@@ -422,5 +570,5 @@ document.getElementById('placementTestForm').addEventListener('submit', function
 render();
 </script>
 
-<div id="audioFilesHolder" style="display:none;"></div>
+<div id="mediaFilesHolder" style="display:none;"></div>
 @endsection
