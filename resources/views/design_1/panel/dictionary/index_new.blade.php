@@ -1939,61 +1939,7 @@
                 </div>
             </div>
 
-            <!-- Flashcards Widget -->
-            <div class="stats-widget">
-                <h3 class="widget-title" style="text-align:center;text-transform:uppercase;">{{ trans('panel.flashcards') }}</h3>
-                <div class="sidebar-flashcard-widget" id="sidebarFlashcardWidget">
-
-                    <div style="text-align:center;">
-                        <div id="sidebarSideLabel" style="display:inline-flex;align-items:center;justify-content:center;padding:5px 16px;border-radius:999px;background:#511D99;color:#fff;font-weight:800;font-size:11px;letter-spacing:0.05em;margin-bottom:12px;">MẶT TRƯỚC</div>
-                    </div>
-
-                    <!-- FRONT: word + part of speech badge -->
-                    <div class="sidebar-card-meta" id="sidebarCardFrontMeta" style="margin-bottom:14px;">
-                        <div class="sidebar-card-word" id="sidebarCardWord" style="font-size:22px;font-weight:800;color:#511D99;">-</div>
-                
-                    </div>
-
-                    <!-- FRONT: illustration -->
-                    <div class="sidebar-card-display" id="sidebarCardDisplay" style="border:none;box-shadow:none;background:transparent;">
-                        <div class="sidebar-card-img-placeholder" id="sidebarCardPlaceholder" style="background:transparent;"></div>
-                        <img id="sidebarCardImage" class="sidebar-card-image" src="" alt="" style="display:none;height:120px;object-fit:contain;border-radius:0;">
-                    </div>
-
-                    <!-- BACK: meaning + details -->
-                    <div id="sidebarCardBack" style="display:none;text-align:center;padding:4px 2px 0;">
-                        <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:4px;">
-                            <span id="sidebarBackWord" style="font-size:16px;font-weight:800;color:#511D99;">-</span>
-                            <span id="sidebarBackPos" style="font-size:13px;font-weight:700;color:#511D99;margin-left:4px;"></span>
-                        </div>
-                        <div id="sidebarBackIpa" style="font-size:12px;color:#64748b;margin-bottom:10px;">-</div>
-                        <div id="sidebarBackMeaning" style="font-size:15px;font-weight:800;color:#1e293b;text-transform:uppercase;margin-bottom:12px;">-</div>
-                        <div style="border-top:1px dashed #cbd5e1;width:100%;margin-bottom:12px;"></div>
-                        <div id="sidebarCollocationBlock" style="text-align:left;font-size:12px;margin-bottom:10px;">
-                            <strong style="color:#1e293b;">Collocations:</strong>
-                            <ul id="sidebarCollocationList" style="margin:6px 0 0;padding-left:16px;color:#334155;line-height:1.6;"></ul>
-                        </div>
-                        <div id="sidebarExampleBlock" style="text-align:left;font-size:12px;color:#334155;line-height:1.5;">
-                            <strong style="color:#1e293b;">Example:</strong> <span id="sidebarExample">-</span>
-                        </div>
-                    </div>
-
-                    <!-- Turn Button -->
-                    <div class="text-center" style="margin: 12px 0 10px;">
-                        <button class="btn btn-outline-secondary btn-sm px-4" id="sidebarTurnBtn"
-                                style="border-radius: 20px; min-width: 90px;">
-                            {{ trans('panel.turn') }}
-                        </button>
-                    </div>
-
-                    <!-- Navigation -->
-                    <div class="sidebar-card-nav">
-                        <button class="sidebar-nav-btn" id="sidebarPrevBtn" disabled>&#8249;</button>
-                        <span class="sidebar-card-counter" id="sidebarCardCounter">Card 0 of 0</span>
-                        <button class="sidebar-nav-btn" id="sidebarNextBtn" disabled>&#8250;</button>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- Streak Widget -->
             <div class="stats-widget">
@@ -3266,10 +3212,11 @@
 
         const audio = new Audio(url);
         const button = $(this);
-        button.prop('disabled', true).text('Đang phát...');
+
+        button.prop('disabled', true).addClass('is-playing');
 
         const resetButton = function() {
-            button.prop('disabled', false).text('Nghe phát âm');
+            button.prop('disabled', false).removeClass('is-playing');
         };
 
         audio.onended = resetButton;

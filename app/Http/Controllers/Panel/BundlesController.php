@@ -395,15 +395,21 @@ class BundlesController extends Controller
             ];
         }
 
+        // Sửa 1: bỏ điều kiện thừa/sai, chỉ bắt buộc "rules" đúng lúc submit ở step 6
         $bundleRulesRequired = false;
-        if (($currentStep == 6 and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft)) {
+        if ($currentStep == 6 and !$getNextStep and !$isDraft) {
             $bundleRulesRequired = empty($data['rules']);
         }
 
         $this->validate($request, $rules);
 
+        // Sửa 2: KHÔNG hạ status nếu bundle đang active, trừ khi user chủ động chọn "Lưu nháp"
+        if ($bundle->status === Bundle::$active and !$isDraft) {
+            // Giữ nguyên trạng thái active — không set lại $data['status']
+        } else {
+            $data['status'] = ($isDraft or $bundleRulesRequired) ? Bundle::$isDraft : Bundle::$pending;
+        }
 
-        $data['status'] = ($isDraft or $bundleRulesRequired) ? Bundle::$isDraft : Bundle::$pending;
         $data['updated_at'] = time();
 
         if ($currentStep == 1) {
@@ -511,24 +517,53 @@ class BundlesController extends Controller
         return redirect($url);
     }
 
+    // public function destroy(Request $request, $id)
+    // {
+    //     $this->authorize("panel_bundles_delete");
+
+    //     $user = auth()->user();
+
+    //     if (!$user->isTeacher() and !$user->isAdmin()) {
+    //         abort(404);
+    //     }
+
+    //     $bundle = Bundle::where('id', $id)
+    //         ->where('creator_id', $user->id)
+    //         ->first();
+
+    //     if (!$bundle) {
+    //         abort(404);
+    //     }
+
+    //     // Bundle chưa từng active (đang nháp hoặc chờ duyệt) -> cho phép xóa trực tiếp
+    //     $isNotPublishedYet = in_array($bundle->status, [Bundle::$isDraft, Bundle::$pending]);
+
+    //     if (!$isNotPublishedYet && !canDeleteContentDirectly()) {
+    //         if ($request->ajax()) {
+    //             return response()->json([], 422);
+    //         } else {
+    //             $toastData = [
+    //                 'title' => trans('public.request_failed'),
+    //                 'msg' => trans('update.it_is_not_possible_to_delete_the_content_directly'),
+    //                 'status' => 'error'
+    //             ];
+    //             return redirect()->back()->with(['toast' => $toastData]);
+    //         }
+    //     }
+
+    //     $bundle->delete();
+
+    //     return response()->json([
+    //         'code' => 200,
+    //         'redirect_to' => $request->get('redirect_to')
+    //     ], 200);
+    // }
+
     public function destroy(Request $request, $id)
     {
         $this->authorize("panel_bundles_delete");
 
         $user = auth()->user();
-
-        if (!canDeleteContentDirectly()) {
-            if ($request->ajax()) {
-                return response()->json([], 422);
-            } else {
-                $toastData = [
-                    'title' => trans('public.request_failed'),
-                    'msg' => trans('update.it_is_not_possible_to_delete_the_content_directly'),
-                    'status' => 'error'
-                ];
-                return redirect()->back()->with(['toast' => $toastData]);
-            }
-        }
 
         if (!$user->isTeacher() and !$user->isAdmin()) {
             abort(404);
@@ -540,6 +575,22 @@ class BundlesController extends Controller
 
         if (!$bundle) {
             abort(404);
+        }
+
+        // Bundle chưa từng publish (đang nháp hoặc chờ duyệt) -> cho phép xóa thẳng
+        $isNotPublishedYet = in_array($bundle->status, [Bundle::$isDraft, Bundle::$pending]);
+
+        if (!$isNotPublishedYet && !canDeleteContentDirectly()) {
+            if ($request->ajax()) {
+                return response()->json([], 422);
+            } else {
+                $toastData = [
+                    'title' => trans('public.request_failed'),
+                    'msg' => trans('update.it_is_not_possible_to_delete_the_content_directly'),
+                    'status' => 'error'
+                ];
+                return redirect()->back()->with(['toast' => $toastData]);
+            }
         }
 
         $bundle->delete();

@@ -806,7 +806,7 @@ return [
 
     // Materials Management
     'bundle' => 'Tài liệu',
-    'bundles' => 'Quản lý tài liệu',
+    'bundles' => 'Quản lý khóa học',
     'new_bundle' => 'Tài liệu mới',
     'new_bundle_page_title_step' => 'Tài liệu mới - Bước :step',
     'include_subscribe' => 'Bật đăng ký',

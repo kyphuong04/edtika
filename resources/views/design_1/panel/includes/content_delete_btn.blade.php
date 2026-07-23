@@ -1,10 +1,11 @@
 @php
     $allowInstructorDeleteContent = !!(!empty(getGeneralOptionsSettings('allow_instructor_delete_content')));
     $contentDeleteMethod = (!empty(getGeneralOptionsSettings('content_delete_method'))) ? getGeneralOptionsSettings('content_delete_method') : 'delete_directly';
+    $forceDeleteDirectly = $forceDeleteDirectly ?? false;
 @endphp
 
 @if($allowInstructorDeleteContent)
-    @if($contentDeleteMethod == "delete_directly")
+    @if($contentDeleteMethod == "delete_directly" or $forceDeleteDirectly)
         <a href="{{ $deleteContentUrl }}"
            class="delete-action {{ !empty($deleteContentClassName) ? $deleteContentClassName : '' }}"
         >{{ trans('public.delete') }}</a>

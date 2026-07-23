@@ -180,23 +180,50 @@ class PlacementTestController extends Controller
                 'status'          => $request->input('submit_action') === 'publish' ? 'published' : $placementTest->status,
             ]);
 
-            // Xoá câu hỏi cũ + file audio / ảnh cũ, rồi tạo lại theo dữ liệu mới gửi lên.
-            // (Đơn giản và an toàn hơn so với diff từng câu ở bước đầu tiên này.)
+            // Thu thập toàn bộ path file (audio + ảnh) đang được các câu hỏi CŨ
+            // sử dụng — nhưng CHƯA xoá file vật lý vội. Nếu xoá ngay ở đây, những
+            // câu hỏi mà người dùng không đổi file mới (JS gửi lại qua
+            // existing_audio_path / existing_option_images) sẽ bị mất file dù
+            // path trong DB vẫn còn trỏ tới đó -> 404 khi phát audio/hiển thị ảnh.
+            $oldFilePaths = [];
             foreach ($placementTest->questions as $oldQuestion) {
                 if ($oldQuestion->audio_path) {
-                    Storage::disk('public')->delete($oldQuestion->audio_path);
+                    $oldFilePaths[] = $oldQuestion->audio_path;
                 }
                 if ($oldQuestion->type === 'listening_image_choice') {
                     foreach (($oldQuestion->options ?? []) as $imgPath) {
                         if ($imgPath) {
-                            Storage::disk('public')->delete($imgPath);
+                            $oldFilePaths[] = $imgPath;
                         }
                     }
                 }
             }
+
             $placementTest->questions()->delete();
 
             $this->syncQuestions($placementTest, $request);
+
+            // Sau khi câu hỏi mới đã được ghi xong, lấy danh sách path ĐANG được
+            // dùng bởi câu hỏi mới. Chỉ xoá những file cũ KHÔNG còn xuất hiện
+            // trong danh sách này nữa (tức thực sự đã bị thay thế / không dùng nữa).
+            $newFilePaths = [];
+            foreach ($placementTest->fresh('questions')->questions as $newQuestion) {
+                if ($newQuestion->audio_path) {
+                    $newFilePaths[] = $newQuestion->audio_path;
+                }
+                if ($newQuestion->type === 'listening_image_choice') {
+                    foreach (($newQuestion->options ?? []) as $imgPath) {
+                        if ($imgPath) {
+                            $newFilePaths[] = $imgPath;
+                        }
+                    }
+                }
+            }
+
+            $filesToDelete = array_diff($oldFilePaths, $newFilePaths);
+            foreach ($filesToDelete as $path) {
+                Storage::disk('public')->delete($path);
+            }
 
             DB::commit();
 

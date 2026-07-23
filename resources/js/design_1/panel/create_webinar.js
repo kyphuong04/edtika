@@ -22,20 +22,16 @@
     $('body').on('click', '#getNextStep', function (e) {
         $(this).addClass('loadingbar').prop('disabled', true);
         e.preventDefault();
-        $('#forDraft').val(1);
         $('#getNext').val(1);
         $('#webinarForm').trigger('submit');
     });
 
     $('body').on('click', '.js-get-next-step', function (e) {
         e.preventDefault();
-
         if (!$(this).hasClass('active')) {
             $(this).addClass('loadingbar').prop('disabled', true);
-            const step = $(this).attr('data-step');
-
+            var step = $(this).attr('data-step');
             $('#getStep').val(step);
-            $('#forDraft').val(1);
             $('#getNext').val(1);
             $('#webinarForm').trigger('submit');
         }

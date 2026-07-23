@@ -46,6 +46,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => public_path('store'),
+            'url' => '/store',
             'visibility' => 'public',
             'throw' => false,
         ],

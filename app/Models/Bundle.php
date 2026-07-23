@@ -30,6 +30,7 @@ class Bundle extends Model implements TranslatableContract
     static $pending = 'pending';
     static $isDraft = 'is_draft';
     static $inactive = 'inactive';
+    static $pendingUpdate = 'pending_update';
 
     static $statuses = [
         'active', 'pending', 'is_draft', 'inactive'

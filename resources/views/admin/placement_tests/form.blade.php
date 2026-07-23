@@ -48,6 +48,8 @@
         @csrf
         @if($placementTest) @method('PUT') @endif
 
+        <div id="mediaFilesHolder" style="display:none;"></div>
+
         <div class="test-info-card" style="background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:24px;">
             <div class="row">
                 <div class="col-md-3">
@@ -262,14 +264,48 @@ function toggleLinkedToPassage(index, checked) {
     questions[index].linked_to_passage = checked;
 }
 
+// function onAudioFileSelected(index, inputEl) {
+//     if (inputEl.files && inputEl.files[0]) {
+//         const inputName = 'question_audio_' + (++uploadSeq);
+//         inputEl.name = inputName;
+//         questions[index].audio_input_name = inputName;
+//         document.getElementById('mediaFilesHolder').appendChild(inputEl);
+//         const badge = document.getElementById('audio-filename-' + index);
+//         if (badge) { badge.textContent = inputEl.files[0].name; badge.style.display = 'inline-flex'; }
+//         const placeholder = document.createElement('input');
+//         placeholder.type = 'file';
+//         placeholder.accept = 'audio/*';
+//         placeholder.className = 'form-control';
+//         placeholder.onchange = function () { onAudioFileSelected(index, this); };
+//         inputEl.insertAdjacentElement('afterend', placeholder);
+//     }
+// }
+
 function onAudioFileSelected(index, inputEl) {
     if (inputEl.files && inputEl.files[0]) {
+        const file = inputEl.files[0];
         const inputName = 'question_audio_' + (++uploadSeq);
         inputEl.name = inputName;
         questions[index].audio_input_name = inputName;
         document.getElementById('mediaFilesHolder').appendChild(inputEl);
+
         const badge = document.getElementById('audio-filename-' + index);
-        if (badge) { badge.textContent = inputEl.files[0].name; badge.style.display = 'inline-flex'; }
+        if (badge) { badge.textContent = file.name; badge.style.display = 'inline-flex'; }
+
+        // Tạo URL tạm để nghe thử ngay trên trình duyệt, không cần chờ submit
+        // form/upload lên server. Thu hồi URL cũ (nếu có) để tránh rò rỉ bộ nhớ
+        // khi người dùng đổi qua đổi lại nhiều file audio trước khi lưu.
+        const preview = document.getElementById('audio-preview-' + index);
+        if (preview) {
+            if (preview.dataset.blobUrl) {
+                URL.revokeObjectURL(preview.dataset.blobUrl);
+            }
+            const objectUrl = URL.createObjectURL(file);
+            preview.src = objectUrl;
+            preview.dataset.blobUrl = objectUrl;
+            preview.style.display = 'block';
+        }
+
         const placeholder = document.createElement('input');
         placeholder.type = 'file';
         placeholder.accept = 'audio/*';
@@ -366,8 +402,8 @@ function renderQuestionCard(q, index) {
         bodyHtml += '<div class="mb-2"><label class="input-label">Lựa chọn (tick vào ô đúng)</label>';
         (q.options || []).forEach((opt, optIndex) => {
             bodyHtml += `<div class="pt-option-row">
-                <input type="radio" name="correct_${index}" ${q.correct_answer === opt && opt !== '' ? 'checked' : ''} onchange="setCorrectOption(${index}, '${escapeHtml(opt).replace(/'/g, "&#39;")}')">
-                <input type="text" value="${escapeHtml(opt)}" placeholder="Nội dung lựa chọn" oninput="updateOption(${index}, ${optIndex}, this.value); document.querySelector('input[name=correct_${index}]:checked') && setCorrectOption(${index}, this.value)">
+                <input type="radio" name="correct_${index}" ${q.correct_answer === opt && opt !== '' ? 'checked' : ''} onchange="setCorrectOption(${index}, this.closest('.pt-option-row').querySelector('.pt-option-text').value)">
+                <input type="text" class="pt-option-text" value="${escapeHtml(opt)}" placeholder="Nội dung lựa chọn" oninput="updateOption(${index}, ${optIndex}, this.value)">
                 <button type="button" class="pt-remove-btn" onclick="removeOption(${index}, ${optIndex})"><i class="fas fa-times"></i></button>
             </div>`;
         });
@@ -426,12 +462,22 @@ function renderQuestionCard(q, index) {
     const showAudioToggle = q.type !== 'listening_image_choice';
     const showAudioBlock = q.has_audio || q.type === 'listening_image_choice';
 
+    // const audioBlock = showAudioBlock ? `
+    //     <div class="mb-2">
+    //         <label class="input-label">File audio (MP3) *</label>
+    //         <input type="file" accept="audio/*" class="form-control" onchange="onAudioFileSelected(${index}, this)">
+    //         ${q.audio_url ? `<div class="pt-file-preview"><i class="fas fa-volume-up"></i> File hiện có (giữ nguyên nếu không chọn file mới)</div>` : ''}
+    //         <div id="audio-filename-${index}" class="pt-file-preview" style="display:none;"></div>
+    //     </div>
+    // ` : '';
+
     const audioBlock = showAudioBlock ? `
         <div class="mb-2">
             <label class="input-label">File audio (MP3) *</label>
             <input type="file" accept="audio/*" class="form-control" onchange="onAudioFileSelected(${index}, this)">
             ${q.audio_url ? `<div class="pt-file-preview"><i class="fas fa-volume-up"></i> File hiện có (giữ nguyên nếu không chọn file mới)</div>` : ''}
             <div id="audio-filename-${index}" class="pt-file-preview" style="display:none;"></div>
+            <audio id="audio-preview-${index}" controls style="width:100%;margin-top:8px;${q.audio_url ? '' : 'display:none;'}" src="${q.audio_url || ''}"></audio>
         </div>
     ` : '';
 
@@ -570,5 +616,5 @@ document.getElementById('placementTestForm').addEventListener('submit', function
 render();
 </script>
 
-<div id="mediaFilesHolder" style="display:none;"></div>
+
 @endsection

@@ -49,10 +49,9 @@
 @endphp
 
 <div class="materials-bundle-card" style="cursor:pointer;"
-     onclick="window.location='/panel/bundles/{{ $bundle->id }}/modules'">
+     onclick="if(!event.target.closest('.actions-dropdown')){ window.location='/panel/bundles/{{ $bundle->id }}/modules' }">
 
-    {{-- Actions Dropdown (stop propagation so card click doesn't fire) --}}
-    <div class="materials-bundle-card__actions actions-dropdown" onclick="event.stopPropagation()">
+    <div class="materials-bundle-card__actions actions-dropdown">
         <div class="webinar-card-actions-btn d-flex-center size-36 rounded-8 cursor-pointer"
              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
@@ -90,6 +89,7 @@
                                 'deleteContentClassName' => ' text-danger',
                                 'deleteContentItem'      => $bundle,
                                 'deleteContentItemType'  => 'bundle',
+                                'forceDeleteDirectly'    => in_array($bundle->status, ['is_draft', 'pending']),
                             ])
                         </li>
                     @endcan

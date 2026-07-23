@@ -1,27 +1,26 @@
-
-{{-- TODO: đổi lại @extends cho đúng layout thật của trang chủ (design_1.web...?) --}}
 @extends('design_1.web.layouts.app')
 
 @php
-    // Các cờ này khiến layout ẩn header/footer mặc định (header xanh "Rocket LMS"),
-    // giống cách home/index.blade.php đang làm — để trang tự kiểm soát toàn bộ giao diện.
     $appHeader = true;
     $appFooter = true;
     $floatingBar = null;
     $dontShowCookieSecurity = true;
+
+    $hasSharedPassage = $questions->contains(fn ($q) => $q['linked_to_passage']) && !empty($test->reading_passage);
 @endphp
 
 @push('styles_top')
 <style>
 .pt-mini-header { display:flex; align-items:center; justify-content:space-between; max-width:900px; margin:0 auto 20px; padding:16px 20px 0; }
 .pt-mini-header .pt-brand { font-size:26px; font-weight:900; color:#511D99; text-decoration:none; }
-.pt-mini-header .pt-back-link { font-size:14px; font-weight:600; color:#511D99; text-decoration:none; }
-.pt-play-wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+.pt-play-wrap { max-width: 900px; margin: 0 auto; padding: 0 20px 80px; }
 .pt-play-header { display:flex; align-items:center; justify-content:space-between; background:#511D99; color:#fff; border-radius:16px; padding:20px 24px; margin-bottom:24px; }
 .pt-play-header .pt-step-label { font-size:13px; opacity:.85; margin-bottom:4px; }
 .pt-play-header .pt-level-label { font-size:22px; font-weight:800; }
 .pt-timer { background:rgba(255,255,255,.15); border-radius:12px; padding:10px 18px; font-size:20px; font-weight:700; font-variant-numeric: tabular-nums; }
-.pt-note-banner { background:#fef3c7; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:10px; margin-bottom:24px; font-size:14px; color:#78350f; }
+.pt-timer.is-warning { background:#fbbf24; color:#78350f; }
+.pt-passage-card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:20px; margin-bottom:18px; }
+.pt-passage-card h5 { font-weight:700; margin-bottom:10px; color:#511D99; }
 .pt-q-card { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:20px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
 .pt-q-num { display:inline-block; background:#f3e8ff; color:#511D99; font-weight:700; font-size:13px; padding:3px 10px; border-radius:8px; margin-bottom:10px; }
 .pt-q-text { font-size:16px; font-weight:600; color:#111827; margin-bottom:14px; line-height:1.5; }
@@ -32,119 +31,201 @@
 .pt-word-chip { background:#fff; border:1px solid #ddd6fe; color:#511D99; font-weight:600; font-size:13px; padding:4px 12px; border-radius:20px; }
 .pt-blank-input { border:none; border-bottom:2px solid #a78bfa; padding:2px 6px; min-width:110px; text-align:center; font-weight:600; color:#511D99; background:transparent; }
 .pt-blank-input:focus { outline:none; border-color:#511D99; }
+.pt-blank-hint { font-size:12px; color:#9333ea; font-weight:600; margin-left:4px; }
 .pt-img-options { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
 .pt-img-option { border:2px solid #e5e7eb; border-radius:12px; padding:10px; text-align:center; cursor:pointer; }
 .pt-img-option:hover { border-color:#c4b5fd; }
 .pt-img-option img { width:100%; height:110px; object-fit:cover; border-radius:8px; margin-bottom:8px; background:#f3f4f6; }
 .pt-audio-btn { display:inline-flex; align-items:center; gap:8px; background:#eef2ff; color:#511D99; border:none; border-radius:20px; padding:6px 16px; font-weight:600; font-size:13px; margin-bottom:10px; cursor:pointer; }
-.pt-demo-actions { position:sticky; bottom:16px; display:flex; justify-content:center; margin-top:24px; }
-.pt-demo-btn { background:#511D99; color:#fff; border:none; border-radius:14px; padding:14px 32px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(81,29,153,.3); cursor:pointer; }
+.pt-submit-actions { position:sticky; bottom:16px; display:flex; justify-content:center; margin-top:24px; }
+.pt-submit-btn { background:#511D99; color:#fff; border:none; border-radius:14px; padding:14px 32px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(81,29,153,.3); cursor:pointer; }
+.pt-submit-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+.pt-countdown-overlay {
+    position:fixed; inset:0; z-index:2000; display:none;
+    align-items:center; justify-content:center; flex-direction:column;
+    background:linear-gradient(180deg,#511D99 0%,#7c3aed 100%);
+}
+.pt-countdown-overlay.is-open { display:flex; }
+.pt-countdown-label { color:#fff; font-size:22px; font-weight:700; margin-bottom:24px; opacity:.9; }
+.pt-countdown-number { color:#fff; font-size:140px; font-weight:900; line-height:1; }
+.pt-content-hidden { visibility:hidden; }
 </style>
 @endpush
 
 @section('content')
+<div id="ptPageContent" class="{{ $showCountdown ? 'pt-content-hidden' : '' }}">
 <div class="pt-mini-header">
     <a href="/" class="pt-brand">EDTIKA</a>
-    <a href="/" class="pt-back-link"><i class="fas fa-arrow-left mr-1"></i>Về trang chủ</a>
 </div>
+
 <div class="pt-play-wrap">
-
-    <div class="pt-note-banner">
-        <i class="fas fa-flask mr-1"></i>
-        <strong>Bản xem trước giao diện.</strong> Nội dung câu hỏi bên dưới đang là dữ liệu mẫu (hardcode),
-        chưa lấy đề thật từ hệ thống bạn vừa tạo — sẽ được nối ở bước tiếp theo. Đáp án bấm vào cũng
-        chưa được chấm/lưu.
-    </div>
-
     <div class="pt-play-header">
         <div>
-            <div class="pt-step-label">Đề {{ $attempt->current_step ?? 1 }} / 3 &middot; Đang làm đề Level B1</div>
-            <div class="pt-level-label">Adaptive Placement Test</div>
+            <div class="pt-step-label">Đề {{ $attempt->current_step }} / 3 &middot; Level {{ $test->level }}</div>
+            <div class="pt-level-label">{{ $test->title }}</div>
         </div>
-        <div class="pt-timer" id="ptCountdown">10:00</div>
+        <div class="pt-timer" id="ptCountdown">--:--</div>
     </div>
 
-    {{-- Câu 1: Multiple Choice --}}
-    <div class="pt-q-card">
-        <span class="pt-q-num">Câu 1</span>
-        <div class="pt-q-text">My brother ___ football every Sunday.</div>
-        <label class="pt-option"><input type="radio" name="q1"> A. play</label>
-        <label class="pt-option"><input type="radio" name="q1"> B. plays</label>
-        <label class="pt-option"><input type="radio" name="q1"> C. playing</label>
-        <label class="pt-option"><input type="radio" name="q1"> D. played</label>
-    </div>
-
-    {{-- Câu 2: Sentence Completion có Word Bank --}}
-    <div class="pt-q-card">
-        <span class="pt-q-num">Câu 2</span>
-        <div class="pt-q-text">Complete the conversation with one suitable word from the box.</div>
-        <div class="pt-word-bank">
-            <span class="pt-word-chip">do</span>
-            <span class="pt-word-chip">learn</span>
-            <span class="pt-word-chip">make</span>
-            <span class="pt-word-chip">take</span>
+    @if($hasSharedPassage)
+        <div class="pt-passage-card">
+            <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
+            <div>{!! nl2br(e($test->reading_passage)) !!}</div>
         </div>
-        <div class="pt-q-text" style="font-weight:400;">
-            Anna: What do you usually do after school?<br>
-            Tom: I usually go home and <input type="text" class="pt-blank-input" placeholder="..."> my homework.
-        </div>
-    </div>
+    @endif
 
-    {{-- Câu 3: Error Correction --}}
-    <div class="pt-q-card">
-        <span class="pt-q-num">Câu 3</span>
-        <div class="pt-q-text">Find and correct the mistake in the sentence.</div>
-        <div class="pt-q-text" style="font-weight:400;">She <u>go</u> to school every day by bus because it is very fast and cheap.</div>
-        <input type="text" class="form-control" placeholder="Nhập lại câu đúng hoàn chỉnh...">
-    </div>
+    <form id="placementTakeForm" action="{{ route('placement.submit') }}" method="POST">
+        @csrf
+        <input type="hidden" name="test_id" value="{{ $test->id }}">
 
-    {{-- Câu 4: Listening - chọn ảnh --}}
-    <div class="pt-q-card">
-        <span class="pt-q-num">Câu 4 &middot; Listening</span>
-        <button type="button" class="pt-audio-btn"><i class="fas fa-play"></i> Nghe audio</button>
-        <div class="pt-q-text">Which one is Laura's brother?</div>
-        <div class="pt-img-options">
-            <label class="pt-img-option">
-                <img src="https://placehold.co/200x140?text=A" alt="A">
-                <input type="radio" name="q4"> A
-            </label>
-            <label class="pt-img-option">
-                <img src="https://placehold.co/200x140?text=B" alt="B">
-                <input type="radio" name="q4"> B
-            </label>
-            <label class="pt-img-option">
-                <img src="https://placehold.co/200x140?text=C" alt="C">
-                <input type="radio" name="q4"> C
-            </label>
-        </div>
-    </div>
+        @foreach($questions as $index => $q)
+            <div class="pt-q-card">
+                <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
 
-    <div class="text-center text-muted mb-4" style="font-size:13px;">
-        ... (Đề thật sẽ có đủ 10 câu, đang hiển thị 4 câu mẫu minh hoạ đủ 4 dạng) ...
-    </div>
+                @if($q['has_audio'] && $q['audio_url'])
+                    <div>
+                        <button type="button" class="pt-audio-btn" onclick="document.getElementById('audio-{{ $q['id'] }}').play()">
+                            <i class="fas fa-play"></i> Nghe audio
+                        </button>
+                        <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="none"></audio>
+                    </div>
+                @endif
 
-    <div class="pt-demo-actions">
-        <form action="{{ route('placement.demo_complete') }}" method="POST">
-            @csrf
-            <button type="submit" class="pt-demo-btn">
-                <i class="fas fa-forward mr-2"></i>Hoàn thành bộ 3 đề (demo) &rarr; Xem trang kết quả
+                @if($q['type'] === 'multiple_choice')
+                    <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                    @foreach($q['options'] as $optIndex => $option)
+                        <label class="pt-option">
+                            <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $option }}" required>
+                            {{ chr(65 + $optIndex) }}. {{ $option }}
+                        </label>
+                    @endforeach
+
+                @elseif($q['type'] === 'listening_image_choice')
+                    <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                    <div class="pt-img-options">
+                        @foreach($q['image_options'] as $imgOpt)
+                            <label class="pt-img-option">
+                                <img src="{{ $imgOpt['url'] }}" alt="{{ $imgOpt['label'] }}">
+                                <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $imgOpt['label'] }}" required>
+                                {{ $imgOpt['label'] }}
+                            </label>
+                        @endforeach
+                    </div>
+
+                @elseif($q['type'] === 'error_correction')
+                    <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                    <input type="text" class="form-control" name="answers[{{ $q['id'] }}]" placeholder="Nhập lại câu đúng hoàn chỉnh..." required>
+
+                @elseif($q['type'] === 'sentence_completion')
+                    @if(!empty($q['word_bank']))
+                        <div class="pt-word-bank">
+                            @foreach($q['word_bank'] as $word)
+                                <span class="pt-word-chip">{{ $word }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @php
+                        // Tách question_text theo dấu ___ để chèn input ngay tại vị trí chỗ trống.
+                        $parts = preg_split('/_{2,}/', $q['question_text']);
+                    @endphp
+
+                    <div class="pt-q-text" style="font-weight:400;">
+                        @foreach($parts as $partIndex => $part)
+                            {!! nl2br(e($part)) !!}
+                            @if($partIndex < count($parts) - 1)
+                                <input type="text" class="pt-blank-input" name="answers[{{ $q['id'] }}][]" placeholder="..." required>
+                                @if(!empty($q['blank_hints'][$partIndex]))
+                                    <span class="pt-blank-hint">({{ $q['blank_hints'][$partIndex] }})</span>
+                                @endif
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endforeach
+
+        <div class="pt-submit-actions">
+            <button type="submit" class="pt-submit-btn" id="ptSubmitBtn">
+                <i class="fas fa-check mr-2"></i>Nộp bài đề này
             </button>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
+</div>{{-- /ptPageContent --}}
+
+@if($showCountdown)
+    <div class="pt-countdown-overlay is-open" id="ptCountdownOverlay">
+        <div class="pt-countdown-label">Bài test sẽ bắt đầu trong</div>
+        <div class="pt-countdown-number" id="ptCountdownNumber">5</div>
+    </div>
+@endif
 
 <script>
-    // Demo countdown thuần hiển thị — chưa gắn logic nộp bài tự động khi hết giờ.
-    (function () {
-        let seconds = 10 * 60;
-        const el = document.getElementById('ptCountdown');
-        setInterval(function () {
-            if (seconds <= 0) return;
-            seconds--;
-            const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-            const s = String(seconds % 60).padStart(2, '0');
+    function startExamTimer() {
+        var seconds = {{ (int) $remainingSeconds }};
+        var el = document.getElementById('ptCountdown');
+        var form = document.getElementById('placementTakeForm');
+        var submitBtn = document.getElementById('ptSubmitBtn');
+        var autoSubmitted = false;
+
+        function render() {
+            var m = String(Math.floor(Math.max(seconds, 0) / 60)).padStart(2, '0');
+            var s = String(Math.max(seconds, 0) % 60).padStart(2, '0');
             el.textContent = m + ':' + s;
+            el.classList.toggle('is-warning', seconds <= 60);
+        }
+
+        render();
+
+        var timer = setInterval(function () {
+            seconds--;
+            render();
+
+            if (seconds <= 0 && !autoSubmitted) {
+                autoSubmitted = true;
+                clearInterval(timer);
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-hourglass-end mr-2"></i>Hết giờ, đang tự nộp bài...';
+                // Hết giờ -> tự nộp bài với đáp án hiện có (kể cả còn thiếu),
+                // để server chấm điểm những gì đã trả lời và finalize kết quả.
+                form.submit();
+            }
         }, 1000);
-    })();
+
+        form.addEventListener('submit', function () {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang nộp bài...';
+        });
+    }
+
+    @if($showCountdown)
+        (function () {
+            // Nội dung đề thi ĐÃ có sẵn trong trang (chỉ đang bị ẩn bằng CSS
+            // visibility:hidden) — countdown 5->1 chạy hoàn toàn ở client, không
+            // phụ thuộc mạng. Đồng hồ 10 phút của bài thi chỉ bắt đầu chạy SAU
+            // khi countdown này kết thúc và nội dung được hiện ra.
+            var overlay = document.getElementById('ptCountdownOverlay');
+            var numberEl = document.getElementById('ptCountdownNumber');
+            var pageContent = document.getElementById('ptPageContent');
+            var count = 5;
+            numberEl.textContent = count;
+
+            var timer = setInterval(function () {
+                count--;
+                if (count <= 0) {
+                    clearInterval(timer);
+                    overlay.classList.remove('is-open');
+                    pageContent.classList.remove('pt-content-hidden');
+                    startExamTimer();
+                    return;
+                }
+                numberEl.textContent = count;
+            }, 1000);
+        })();
+    @else
+        startExamTimer();
+    @endif
 </script>
 @endsection

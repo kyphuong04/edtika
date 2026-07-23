@@ -5,15 +5,13 @@ use App\Http\Controllers\PlacementPlayController;
 
 Route::middleware(['web', 'share', 'check_maintenance', 'check_restriction'])->prefix('placement-test')->group(function () {
     Route::get('/', [PlacementPlayController::class, 'entry'])->name('placement.entry');
+    Route::get('/mic-check', [PlacementPlayController::class, 'micCheck'])->name('placement.mic_check');
+    Route::post('/start', [PlacementPlayController::class, 'start'])->name('placement.start');
     Route::get('/take', [PlacementPlayController::class, 'take'])->name('placement.take');
+    Route::post('/submit', [PlacementPlayController::class, 'submitTest'])->name('placement.submit');
     Route::get('/result', [PlacementPlayController::class, 'result'])->name('placement.result');
-
-    // DEMO ONLY — sẽ xoá khi nối engine chấm điểm thật ở bước sau.
-    Route::post('/demo-complete', [PlacementPlayController::class, 'demoComplete'])->name('placement.demo_complete');
 });
  
-
-
 
 // Fast route for question type forms (no heavy middleware)
 Route::get('/api/question-type-form/{type}', function ($type) {
