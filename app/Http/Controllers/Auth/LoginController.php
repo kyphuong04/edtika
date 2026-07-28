@@ -284,8 +284,23 @@ class LoginController extends Controller
         $cartManagerController = new CartManagerController();
         $cartManagerController->storeCookieCartsToDB($request);
 
+        // $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        // $userLoginHistoryMixin->storeUserLoginHistory($user);
+
+        // if ($user->isAdmin()) {
+        //     return redirect(getAdminPanelUrl());
+        // } else {
+        //     return redirect('/panel');
+        // }
         $userLoginHistoryMixin = new UserLoginHistoryMixin();
         $userLoginHistoryMixin->storeUserLoginHistory($user);
+
+        // Nếu có URL được yêu cầu quay lại trước đó (vd: từ Placement Test guest flow
+        // qua PlacementPlayController::requestLogin(), hoặc middleware auth chuẩn của
+        // Laravel) -> ưu tiên quay lại đúng đó thay vì luôn về /panel theo role.
+        if ($request->session()->has('url.intended')) {
+            return redirect()->intended();
+        }
 
         // Redirect based on role
         if ($user->isAdmin()) {

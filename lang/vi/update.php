@@ -5044,5 +5044,22 @@ return [
     'new_live_course_notification_title'  => 'Buổi học trực tiếp mới: :title',
     'new_live_course_notification_body'   => ':teacher vừa lên lịch buổi học trực tiếp ":title" vào lúc :date.',
     'zoom_meeting_will_be_created_automatically' => 'Phòng Zoom sẽ được tạo tự động. Hãy đảm bảo tài khoản Zoom đã được kết nối.',
-    'live_courses' => 'Khóa học trực tiếp'
+    'live_courses' => 'Khóa học trực tiếp',
+
+    /* Duplicate */
+    'duplicate' => 'Sao chép',
+    'confirm_duplicate_bundle' => 'Bạn có chắc muốn sao chép khóa học này? Một bản nháp mới sẽ được tạo với đầy đủ nội dung bên trong.',
+    'bundle_duplicated_successfully' => 'Đã sao chép khóa học thành công. Bản sao đang ở trạng thái nháp.',
+
+    /* Hide / Unhide */
+    'hide_bundle' => 'Ẩn khóa học',
+    'unhide_bundle' => 'Bỏ ẩn',
+    'bundle_hidden_successfully' => 'Đã ẩn khóa học thành công.',
+    'bundle_unhidden_successfully' => 'Đã bỏ ẩn khóa học thành công.',
+    'active_bundles' => 'Đang hoạt động',
+    'hidden_bundles' => 'Đã ẩn',
+    'hidden' => 'Đã ẩn',
+
+    /* Published date */
+    'published_at' => 'Ngày xuất bản',
 ];

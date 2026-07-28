@@ -319,6 +319,13 @@
                 </a>
             @endcan
 
+            <a href="javascript:void(0);"
+                onclick="showPlacementResult({{ $user->id }}, '{{ addslashes($user->full_name) }}')"
+                class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-document-text class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">Xem kết quả đầu vào</span>
+                </a>
+
             @can('admin_users_delete')
                 @include('admin.includes.delete_button',[
                     'url' => getAdminPanelUrl().'/users/'.$user->id.'/delete',
@@ -376,4 +383,40 @@
             </div>
         </div>
     </section>
+    {{-- Modal xem kết quả Placement Test --}}
+<div class="modal fade" id="placementResultModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kết quả Placement Test — <span id="placementResultUserName"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="placementResultModalBody">
+                <div class="text-center py-30">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPlacementResult(userId, userName) {
+    document.getElementById('placementResultUserName').textContent = userName;
+    document.getElementById('placementResultModalBody').innerHTML = '<div class="text-center py-30"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>';
+
+    $('#placementResultModal').modal('show');
+
+    fetch('{{ getAdminPanelUrl() }}/users/' + userId + '/placement-result')
+        .then(function (res) { return res.text(); })
+        .then(function (html) {
+            document.getElementById('placementResultModalBody').innerHTML = html;
+        })
+        .catch(function () {
+            document.getElementById('placementResultModalBody').innerHTML = '<div class="text-danger text-center py-30">Có lỗi khi tải dữ liệu. Vui lòng thử lại.</div>';
+        });
+}
+</script>
 @endsection

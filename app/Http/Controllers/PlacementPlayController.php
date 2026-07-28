@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\IeltsPlacementAttempt;
 use App\Models\IeltsPlacementAttemptAnswer;
+use App\Models\PlacementSpeakingQuestion;
 use App\Models\PlacementTest;
 use App\Models\PlacementQuestion;
 use App\Services\PlacementAdaptiveEngine;
@@ -17,7 +18,12 @@ class PlacementPlayController extends Controller
 
     public function __construct(PlacementAdaptiveEngine $engine)
     {
-        $this->middleware('auth');
+        // Chỉ trang XEM KẾT QUẢ mới bắt buộc đăng nhập. Toàn bộ luồng làm bài
+        // (entry, mic-check, start, take, submit, speaking, finished) cho phép
+        // KHÁCH (guest) truy cập. Laravel's `auth` middleware tự lưu URL hiện
+        // tại (route('placement.result')) và tự redirect ngược lại đó sau khi
+        // đăng nhập thành công — không cần code thêm cho bước quay lại này.
+        $this->middleware('auth')->only(['result']);
         $this->engine = $engine;
     }
 
@@ -25,57 +31,53 @@ class PlacementPlayController extends Controller
     {
         $user = $request->user();
 
-        if ($user->hasPlacementResult()) {
+        if ($user && $user->hasPlacementResult()) {
             return redirect()->route('placement.result');
         }
 
-        $attempt = $this->findInProgressAttempt($user->id);
+        $attempt = $this->findActiveAttempt($request);
 
-        // Luôn hiện Intro + Countdown, kể cả khi học viên đang có phiên làm dở
-        // (thoát ra rồi quay lại) — đây là nghi thức chuẩn bị trước khi vào bài,
-        // không nên bị bỏ qua. $isResuming chỉ để đổi chữ trên nút bấm.
+        if ($attempt && $attempt->status === 'speaking') {
+            return redirect()->route('placement.speaking');
+        }
+
+        if ($attempt && $attempt->status === 'completed' && !$user) {
+            return redirect()->route('placement.finished');
+        }
+
         return view('web.placement.intro', [
             'isResuming' => (bool) $attempt,
         ]);
     }
 
-    /**
-     * Trang kiểm tra mic + loa — hoàn toàn client-side (ghi âm bằng MediaRecorder,
-     * phát lại bằng thẻ <audio>), không tạo attempt, không đụng gì tới đồng hồ 10
-     * phút. Chỉ là bước xác nhận thiết bị trước khi vào bài thi thật.
-     */
     public function micCheck(Request $request)
     {
         $user = $request->user();
 
-        if ($user->hasPlacementResult()) {
+        if ($user && $user->hasPlacementResult()) {
             return redirect()->route('placement.result');
         }
 
-        $attempt = $this->findInProgressAttempt($user->id);
+        $attempt = $this->findActiveAttempt($request);
 
         return view('web.placement.mic_check', [
             'isResuming' => (bool) $attempt,
         ]);
     }
 
-    /**
-     * Được gọi khi học viên bấm "Bắt đầu/Tiếp tục bài test" trên trang Intro.
-     * Tạo attempt nếu chưa có (đồng hồ 10 phút bắt đầu tính từ đây), rồi RENDER
-     * LUÔN nội dung trang làm bài trong CÙNG 1 response — không redirect sang
-     * take() nữa. Countdown 5->1 sẽ chạy như 1 overlay CSS/JS đè lên nội dung
-     * đã có sẵn trong trang, nên không còn phụ thuộc mạng ở khoảnh khắc đếm
-     * về 0 (đây là lý do gộp 2 bước thành 1 request duy nhất).
-     */
     public function start(Request $request)
     {
         $user = $request->user();
 
-        if ($user->hasPlacementResult()) {
+        if ($user && $user->hasPlacementResult()) {
             return redirect()->route('placement.result');
         }
 
-        $attempt = $this->findInProgressAttempt($user->id);
+        $attempt = $this->findActiveAttempt($request);
+
+        if ($attempt && $attempt->status === 'speaking') {
+            return redirect()->route('placement.speaking');
+        }
 
         if (!$attempt) {
             $firstTest = $this->pickTestForLevel(PlacementAdaptiveEngine::FIRST_LEVEL, []);
@@ -89,7 +91,7 @@ class PlacementPlayController extends Controller
             }
 
             $attempt = IeltsPlacementAttempt::create([
-                'user_id'         => $user->id,
+                'user_id'         => $user?->id, // null nếu khách chưa đăng nhập
                 'status'          => 'in_progress',
                 'current_step'    => 1,
                 'current_test_id' => $firstTest->id,
@@ -99,6 +101,11 @@ class PlacementPlayController extends Controller
                 'current_level'   => PlacementAdaptiveEngine::FIRST_LEVEL,
                 'started_at'      => now(),
             ]);
+
+            // Ghi nhớ attempt này trong session để nhận lại được xuyên suốt các
+            // bước sau, kể cả khi người dùng chưa đăng nhập (không có user_id
+            // để tra cứu).
+            $request->session()->put('placement_attempt_id', $attempt->id);
         }
 
         return $this->renderTakePage($attempt, showCountdown: true);
@@ -108,11 +115,15 @@ class PlacementPlayController extends Controller
     {
         $user = $request->user();
 
-        if ($user->hasPlacementResult()) {
+        if ($user && $user->hasPlacementResult()) {
             return redirect()->route('placement.result');
         }
 
-        $attempt = $this->findInProgressAttempt($user->id);
+        $attempt = $this->findActiveAttempt($request);
+
+        if ($attempt && $attempt->status === 'speaking') {
+            return redirect()->route('placement.speaking');
+        }
 
         if (!$attempt || !$attempt->current_test_id) {
             return redirect()->route('placement.entry');
@@ -121,14 +132,8 @@ class PlacementPlayController extends Controller
         return $this->renderTakePage($attempt, showCountdown: false);
     }
 
-    /**
-     * Dùng chung cho cả start() (sau Intro, có countdown overlay) và take()
-     * (vd học viên F5 lại trang giữa bài, không cần countdown lại).
-     */
     private function renderTakePage(IeltsPlacementAttempt $attempt, bool $showCountdown)
     {
-        // Hết giờ mà vẫn còn đang ở trang làm bài (vd load lại trang) -> tự nộp với
-        // đáp án rỗng cho đề hiện tại, rồi để logic finalize xử lý tiếp.
         if ($attempt->isTimeUp()) {
             return $this->finalizeOnTimeout($attempt);
         }
@@ -152,8 +157,7 @@ class PlacementPlayController extends Controller
 
     public function submitTest(Request $request)
     {
-        $user = $request->user();
-        $attempt = $this->findInProgressAttempt($user->id);
+        $attempt = $this->findActiveAttempt($request);
 
         if (!$attempt || !$attempt->current_test_id) {
             return redirect()->route('placement.entry');
@@ -162,7 +166,6 @@ class PlacementPlayController extends Controller
         $submittedTestId = (int) $request->input('test_id');
 
         if ($submittedTestId !== (int) $attempt->current_test_id) {
-            // Đề bị lệch (vd mở 2 tab, hoặc submit lại đề cũ) -> quay lại trang làm bài hiện tại cho an toàn.
             return redirect()->route('placement.take');
         }
 
@@ -178,9 +181,142 @@ class PlacementPlayController extends Controller
         return $this->advanceAttempt($attempt, $test->level, $score);
     }
 
+    /**
+     * Bước Speaking — hiển thị 1 câu hỏi RANDOM (trong các câu đang is_active),
+     * xuất hiện SAU KHI đã làm xong hết các đề trắc nghiệm (status = 'speaking').
+     * Không chấm điểm, chỉ lưu lại file ghi âm cho giáo viên nghe sau. Cho phép
+     * cả khách chưa đăng nhập.
+     */
+    public function speaking(Request $request)
+    {
+        $attempt = $this->findAttemptByStatus($request, 'speaking');
+
+        if (!$attempt) {
+            return redirect()->route('placement.entry');
+        }
+
+        $question = $attempt->speaking_question_id
+            ? PlacementSpeakingQuestion::find($attempt->speaking_question_id)
+            : null;
+
+        return view('web.placement.speaking', [
+            'attempt'  => $attempt,
+            'question' => $question,
+        ]);
+    }
+
+    public function submitSpeaking(Request $request)
+    {
+        $attempt = $this->findAttemptByStatus($request, 'speaking');
+
+        if (!$attempt) {
+            return redirect()->route('placement.entry');
+        }
+
+        // Không bắt buộc ghi âm — phần này không chấm điểm, chặn cứng học viên
+        // chỉ vì thiếu mic sẽ gây trải nghiệm xấu không cần thiết.
+        if ($request->hasFile('recording')) {
+            $path = $request->file('recording')->store('placement-tests/speaking', 'public');
+            $attempt->speaking_recording_path = $path;
+        }
+
+        $attempt->status = 'completed';
+        $attempt->completed_at = now();
+        $attempt->save();
+
+        // Khách chưa đăng nhập -> hiện màn "Đã hoàn thành, đăng nhập để xem kết
+        // quả" thay vì đi thẳng vào /result (route đó sẽ tự bounce sang /login
+        // do middleware, nhưng ta muốn 1 bước thông báo thân thiện trước đã).
+        if (!$request->user()) {
+            return redirect()->route('placement.finished');
+        }
+
+        return redirect()->route('placement.result');
+    }
+
+    /**
+     * Màn hình trung gian dành cho KHÁCH đã làm xong toàn bộ bài test (kể cả
+     * Speaking) nhưng chưa đăng nhập. Không tự lộ kết quả ở đây — chỉ thông
+     * báo đã xong và mời đăng nhập/đăng ký để xem + lưu kết quả.
+     */
+    public function finished(Request $request)
+    {
+        $user = $request->user();
+
+        // Nếu vừa đăng nhập xong thì kết quả đã có thể xem được luôn, không
+        // cần dừng ở màn thông báo này nữa.
+        if ($user) {
+            return redirect()->route('placement.result');
+        }
+
+        $attempt = $this->findAttemptByStatus($request, 'completed');
+
+        if (!$attempt) {
+            return redirect()->route('placement.entry');
+        }
+
+        return view('web.placement.finished');
+    }
+
+    // public function result(Request $request)
+    // {
+    //     $user = $request->user();
+    //     $sessionAttemptId = $request->session()->get('placement_attempt_id');
+
+    //     if ($sessionAttemptId) {
+    //         $pendingAttempt = IeltsPlacementAttempt::where('id', $sessionAttemptId)
+    //             ->whereNull('user_id')
+    //             ->where('status', 'completed')
+    //             ->first();
+
+    //         if ($pendingAttempt) {
+    //             $pendingAttempt->update(['user_id' => $user->id]);
+    //         }
+
+    //         $request->session()->forget('placement_attempt_id');
+    //     }
+    //     $attempt = $user->latestPlacementResult;
+    //     $isDemoData = false;
+    //     if (!$attempt) {
+    //         $isDemoData = true;
+    //         $attempt = new IeltsPlacementAttempt([
+    //             'status'         => 'completed',
+    //             'current_step'   => 3,
+    //             'test_ids_taken' => [1, 2, 3],
+    //             'scores'         => [7, 6, 8],
+    //             'final_level'    => 'B1',
+    //             'started_at'     => now()->subMinutes(12),
+    //             'completed_at'   => now(),
+    //         ]);
+    //     }
+    //     return view('web.placement.result', [
+    //         'attempt'    => $attempt,
+    //         'isDemoData' => $isDemoData,
+    //     ]);
+    // }
     public function result(Request $request)
     {
         $user = $request->user();
+
+        if (!$user) {
+            return redirect()->route('placement.request_login');
+        }
+
+        $sessionAttemptId = $request->session()->get('placement_attempt_id');
+
+        if ($sessionAttemptId) {
+            $pendingAttempt = IeltsPlacementAttempt::where('id', $sessionAttemptId)
+                ->whereNull('user_id')
+                ->where('status', 'completed')
+                ->first();
+
+            if ($pendingAttempt) {
+                $pendingAttempt->update(['user_id' => $user->id]);
+            }
+
+            $request->session()->forget('placement_attempt_id');
+        }
+
         $attempt = $user->latestPlacementResult;
 
         $isDemoData = false;
@@ -205,19 +341,85 @@ class PlacementPlayController extends Controller
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private function findInProgressAttempt(int $userId): ?IeltsPlacementAttempt
+    /**
+     * Tìm attempt đang làm dở (in_progress hoặc speaking), ưu tiên theo
+     * user_id nếu đã đăng nhập, fallback sang attempt_id lưu trong session
+     * cho khách. Nếu tìm thấy qua session mà người dùng NAY đã đăng nhập và
+     * attempt đó chưa có user_id -> gắn luôn vào tài khoản.
+     */
+    private function findActiveAttempt(Request $request): ?IeltsPlacementAttempt
     {
-        return IeltsPlacementAttempt::where('user_id', $userId)
-            ->where('status', 'in_progress')
-            ->latest('started_at')
-            ->first();
+        $user = $request->user();
+
+        if ($user) {
+            $attempt = IeltsPlacementAttempt::where('user_id', $user->id)
+                ->whereIn('status', ['in_progress', 'speaking'])
+                ->latest('started_at')
+                ->first();
+
+            if ($attempt) {
+                return $attempt;
+            }
+        }
+
+        $sessionAttemptId = $request->session()->get('placement_attempt_id');
+
+        if ($sessionAttemptId) {
+            $attempt = IeltsPlacementAttempt::where('id', $sessionAttemptId)
+                ->whereIn('status', ['in_progress', 'speaking', 'completed'])
+                ->first();
+
+            if ($attempt) {
+                if ($user && !$attempt->user_id) {
+                    $attempt->update(['user_id' => $user->id]);
+                }
+
+                return $attempt;
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Chọn 1 đề published của đúng level, ưu tiên đề CHƯA làm trong attempt này.
-     * Nếu pool cạn (không còn đề chưa dùng), fallback cho phép dùng lại đề cũ
-     * để tránh việc học viên bị kẹt không làm được tiếp (tốt hơn là crash).
+     * Giống findActiveAttempt() nhưng lọc đúng 1 status cụ thể — dùng cho các
+     * bước speaking()/submitSpeaking()/finished() để tránh nhầm sang attempt
+     * đang ở trạng thái khác.
      */
+    private function findAttemptByStatus(Request $request, string $status): ?IeltsPlacementAttempt
+    {
+        $user = $request->user();
+
+        if ($user) {
+            $attempt = IeltsPlacementAttempt::where('user_id', $user->id)
+                ->where('status', $status)
+                ->latest('started_at')
+                ->first();
+
+            if ($attempt) {
+                return $attempt;
+            }
+        }
+
+        $sessionAttemptId = $request->session()->get('placement_attempt_id');
+
+        if ($sessionAttemptId) {
+            $attempt = IeltsPlacementAttempt::where('id', $sessionAttemptId)
+                ->where('status', $status)
+                ->first();
+
+            if ($attempt) {
+                if ($user && !$attempt->user_id) {
+                    $attempt->update(['user_id' => $user->id]);
+                }
+
+                return $attempt;
+            }
+        }
+
+        return null;
+    }
+
     private function pickTestForLevel(string $level, array $excludeIds): ?PlacementTest
     {
         $test = PlacementTest::where('level', $level)
@@ -236,10 +438,11 @@ class PlacementPlayController extends Controller
         return $test;
     }
 
-    /**
-     * Chuyển câu hỏi trong DB thành dữ liệu AN TOÀN gửi cho học viên —
-     * KHÔNG bao giờ để lọt trường correct_answer ra view.
-     */
+    private function pickRandomSpeakingQuestion(): ?PlacementSpeakingQuestion
+    {
+        return PlacementSpeakingQuestion::active()->inRandomOrder()->first();
+    }
+
     private function buildPublicQuestion(PlacementQuestion $q): array
     {
         $blankCount = $q->type === 'sentence_completion'
@@ -266,10 +469,6 @@ class PlacementPlayController extends Controller
         ];
     }
 
-    /**
-     * Chấm điểm từng câu, lưu lại đáp án vào ielts_placement_attempt_answers,
-     * trả về tổng số câu đúng (0-10).
-     */
     private function gradeAndPersistAnswers(IeltsPlacementAttempt $attempt, PlacementTest $test, array $rawAnswers): int
     {
         $correctCount = 0;
@@ -353,7 +552,9 @@ class PlacementPlayController extends Controller
     }
 
     /**
-     * Sau khi chấm xong 1 đề: cập nhật attempt, gọi engine để biết dừng hay làm tiếp.
+     * Sau khi chấm xong 1 đề: cập nhật attempt, gọi engine để biết dừng hay
+     * làm tiếp. Khi engine quyết định DỪNG, chuyển sang bước Speaking (nếu có
+     * câu hỏi active) trước khi hoàn tất thật sự.
      */
     private function advanceAttempt(IeltsPlacementAttempt $attempt, string $testLevel, int $score)
     {
@@ -368,48 +569,18 @@ class PlacementPlayController extends Controller
         $decision = $this->engine->decideNext($levelsTaken, $scores);
         $timeUp = $attempt->isTimeUp();
 
-        // Hết giờ ngay sau khi vừa nộp đề này -> dừng lại, dùng ngay kết quả bước
-        // này (dù engine nói "continue" hay "stop") làm level cuối cùng — không có
-        // đủ thời gian để làm đề tiếp theo nữa. Đây là quy tắc bổ sung cho trường
-        // hợp Logic Chart gốc chưa mô tả (hết giờ giữa chừng) — CẦN XÁC NHẬN LẠI
-        // với đội ngũ nếu muốn xử lý khác.
         if ($timeUp || $decision['action'] === 'stop' || count($levelsTaken) >= PlacementAdaptiveEngine::MAX_STEPS) {
             $finalLevel = $decision['action'] === 'stop'
                 ? $decision['final_level']
                 : ($decision['next_level'] ?? $testLevel);
 
-            $attempt->update([
-                'status'          => 'completed',
-                'current_test_id' => null,
-                'test_ids_taken'  => $testIdsTaken,
-                'levels_taken'    => $levelsTaken,
-                'scores'          => $scores,
-                'final_level'     => $finalLevel,
-                'current_level'   => $finalLevel,
-                'completed_at'    => now(),
-            ]);
-
-            return redirect()->route('placement.result');
+            return $this->moveToSpeakingOrFinish($attempt, $finalLevel, $testIdsTaken, $levelsTaken, $scores);
         }
 
-        // Còn làm tiếp — chọn đề mới đúng level engine chỉ định.
         $nextTest = $this->pickTestForLevel($decision['next_level'], $testIdsTaken);
 
         if (!$nextTest) {
-            // Không còn đề nào ở level cần thiết -> đành dừng sớm, lấy level hiện
-            // tại làm kết quả tạm (tốt hơn là chặn học viên lại giữa chừng).
-            $attempt->update([
-                'status'          => 'completed',
-                'current_test_id' => null,
-                'test_ids_taken'  => $testIdsTaken,
-                'levels_taken'    => $levelsTaken,
-                'scores'          => $scores,
-                'final_level'     => $testLevel,
-                'current_level'   => $testLevel,
-                'completed_at'    => now(),
-            ]);
-
-            return redirect()->route('placement.result');
+            return $this->moveToSpeakingOrFinish($attempt, $testLevel, $testIdsTaken, $levelsTaken, $scores);
         }
 
         $attempt->update([
@@ -424,10 +595,45 @@ class PlacementPlayController extends Controller
         return redirect()->route('placement.take');
     }
 
+    private function moveToSpeakingOrFinish(IeltsPlacementAttempt $attempt, string $finalLevel, array $testIdsTaken, array $levelsTaken, array $scores)
+    {
+        $speakingQuestion = $this->pickRandomSpeakingQuestion();
+
+        if ($speakingQuestion) {
+            $attempt->update([
+                'status'               => 'speaking',
+                'current_test_id'      => null,
+                'test_ids_taken'       => $testIdsTaken,
+                'levels_taken'         => $levelsTaken,
+                'scores'               => $scores,
+                'final_level'          => $finalLevel,
+                'current_level'        => $finalLevel,
+                'speaking_question_id' => $speakingQuestion->id,
+            ]);
+
+            return redirect()->route('placement.speaking');
+        }
+
+        $attempt->update([
+            'status'          => 'completed',
+            'current_test_id' => null,
+            'test_ids_taken'  => $testIdsTaken,
+            'levels_taken'    => $levelsTaken,
+            'scores'          => $scores,
+            'final_level'     => $finalLevel,
+            'current_level'   => $finalLevel,
+            'completed_at'    => now(),
+        ]);
+
+        if (!$attempt->user_id) {
+            return redirect()->route('placement.finished');
+        }
+
+        return redirect()->route('placement.result');
+    }
+
     private function finalizeOnTimeout(IeltsPlacementAttempt $attempt)
     {
-        // Hết giờ trong lúc học viên đang xem trang (chưa kịp bấm nộp) -> chấm đề
-        // hiện tại với đáp án hiện có là rỗng (coi như bỏ trống hết), rồi finalize.
         $test = PlacementTest::with('questions')->find($attempt->current_test_id);
 
         if (!$test) {
@@ -438,5 +644,13 @@ class PlacementPlayController extends Controller
         $score = $this->gradeAndPersistAnswers($attempt, $test, []);
 
         return $this->advanceAttempt($attempt, $test->level, $score);
+    }
+    public function requestLogin(Request $request)
+    {
+        $request->session()->put('url.intended', route('placement.result'));
+        $request->session()->flash('open_auth_modal', true);
+        $request->session()->flash('open_auth_tab', $request->query('tab', 'login'));
+
+        return redirect('/');
     }
 }

@@ -535,6 +535,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{bundleId}/module/{courseId}/edit', 'BundlesController@moduleEdit');
             Route::post('/{bundleId}/module/{courseId}/delete', 'BundlesController@moduleDestroy');
             Route::get('/{id}/export-students-list', 'BundlesController@exportStudentsList');
+            Route::post('/{id}/duplicate', 'BundlesController@duplicate');
+            Route::post('/{id}/toggle-hidden', 'BundlesController@toggleHidden');
         });
     });
 

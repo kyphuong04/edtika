@@ -36,7 +36,8 @@ class BundleController extends Controller
 
         removeContentLocale();
 
-        $query = Bundle::query();
+        // $query = Bundle::query();
+        $query = Bundle::query()->whereNull('hidden_at');
 
         $totalBundles = $query->count();
         $totalPendingBundles = deepClone($query)->where('bundles.status', Bundle::$pending)->count();
@@ -523,6 +524,10 @@ class BundleController extends Controller
                 true
             );*/
 
+            if ($publish and empty($bundle->published_at)) {
+                $bundle->update(['published_at' => time()]);
+            }
+
         } elseif ($reject) {
             sendNotification('bundle_rejected', $notifyOptions, $bundle->teacher_id);
         }
@@ -827,15 +832,38 @@ class BundleController extends Controller
     }
 
 
+    // public function approve(Request $request, $id)
+    // {
+    //     $this->authorize('admin_bundles_edit');
+
+    //     $bundle = Bundle::query()->findOrFail($id);
+
+    //     $bundle->update([
+    //         'status' => Bundle::$active
+    //     ]);
+
+    //     $toastData = [
+    //         'title' => trans('public.request_success'),
+    //         'msg' => trans('update.bundle_status_changes_to_approved'),
+    //         'status' => 'success'
+    //     ];
+
+    //     return redirect(getAdminPanelUrl("/bundles"))->with(['toast' => $toastData]);
+    // }
+
     public function approve(Request $request, $id)
     {
         $this->authorize('admin_bundles_edit');
 
         $bundle = Bundle::query()->findOrFail($id);
 
-        $bundle->update([
-            'status' => Bundle::$active
-        ]);
+        $updateData = ['status' => Bundle::$active];
+
+        if (empty($bundle->published_at)) {          // MỚI: chỉ set lần đầu, không đổi khi duyệt lại lần sau
+            $updateData['published_at'] = time();
+        }
+
+        $bundle->update($updateData);
 
         $toastData = [
             'title' => trans('public.request_success'),

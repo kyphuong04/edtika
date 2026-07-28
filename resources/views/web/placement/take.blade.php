@@ -10,6 +10,7 @@
 @endphp
 
 @push('styles_top')
+<link rel="stylesheet" href="/assets/vendors/fontawesome/css/all.min.css">
 <style>
 .pt-mini-header { display:flex; align-items:center; justify-content:space-between; max-width:900px; margin:0 auto 20px; padding:16px 20px 0; }
 .pt-mini-header .pt-brand { font-size:26px; font-weight:900; color:#511D99; text-decoration:none; }
@@ -50,6 +51,13 @@
 .pt-countdown-label { color:#fff; font-size:22px; font-weight:700; margin-bottom:24px; opacity:.9; }
 .pt-countdown-number { color:#fff; font-size:140px; font-weight:900; line-height:1; }
 .pt-content-hidden { visibility:hidden; }
+
+.pt-audio-player { display:flex; align-items:center; gap:10px; background:#eef2ff; border-radius:18px; padding:8px 14px; margin-bottom:12px; max-width:380px; }
+.pt-audio-play-toggle { width:34px; height:34px; border-radius:50%; background:#511D99; color:#fff; border:none; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; font-size:13px; }
+.pt-audio-play-toggle:hover { background:#3f1677; }
+.pt-audio-time, .pt-audio-duration { font-size:12px; font-weight:700; color:#511D99; white-space:nowrap; min-width:34px; }
+.pt-audio-track { flex:1; height:5px; background:#ddd6fe; border-radius:99px; position:relative; cursor:pointer; min-width:70px; }
+.pt-audio-fill { position:absolute; left:0; top:0; height:100%; background:#511D99; border-radius:99px; width:0%; pointer-events:none; }
 </style>
 @endpush
 
@@ -84,11 +92,16 @@
                 <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
 
                 @if($q['has_audio'] && $q['audio_url'])
-                    <div>
-                        <button type="button" class="pt-audio-btn" onclick="document.getElementById('audio-{{ $q['id'] }}').play()">
-                            <i class="fas fa-play"></i> Nghe audio
+                    <div class="pt-audio-player" data-audio-player>
+                        <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="metadata"></audio>
+                        <button type="button" class="pt-audio-play-toggle" data-audio-toggle>
+                            <i class="fas fa-play"></i>
                         </button>
-                        <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="none"></audio>
+                        <span class="pt-audio-time" data-audio-time>00:00</span>
+                        <div class="pt-audio-track" data-audio-track>
+                            <div class="pt-audio-fill" data-audio-fill></div>
+                        </div>
+                        <span class="pt-audio-duration" data-audio-duration>00:00</span>
                     </div>
                 @endif
 
@@ -227,5 +240,64 @@
     @else
         startExamTimer();
     @endif
+
+    (function () {
+    function formatTime(sec) {
+        sec = isFinite(sec) ? sec : 0;
+        var m = String(Math.floor(sec / 60)).padStart(2, '0');
+        var s = String(Math.floor(sec % 60)).padStart(2, '0');
+        return m + ':' + s;
+    }
+
+    document.querySelectorAll('[data-audio-player]').forEach(function (wrapper) {
+        var audio = wrapper.querySelector('audio');
+        var toggleBtn = wrapper.querySelector('[data-audio-toggle]');
+        var timeEl = wrapper.querySelector('[data-audio-time]');
+        var durationEl = wrapper.querySelector('[data-audio-duration]');
+        var track = wrapper.querySelector('[data-audio-track]');
+        var fill = wrapper.querySelector('[data-audio-fill]');
+
+        audio.addEventListener('loadedmetadata', function () {
+            durationEl.textContent = formatTime(audio.duration);
+        });
+
+        toggleBtn.addEventListener('click', function () {
+            if (audio.paused) {
+                // Chỉ cho phát 1 audio tại 1 thời điểm — tự dừng các audio khác
+                // đang phát khi học viên bấm nghe câu khác.
+                document.querySelectorAll('[data-audio-player] audio').forEach(function (a) {
+                    if (a !== audio && !a.paused) {
+                        a.pause();
+                    }
+                });
+                audio.play();
+                toggleBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audio.pause();
+                toggleBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        });
+
+        audio.addEventListener('timeupdate', function () {
+            timeEl.textContent = formatTime(audio.currentTime);
+            var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+            fill.style.width = pct + '%';
+        });
+
+        audio.addEventListener('ended', function () {
+            toggleBtn.innerHTML = '<i class="fas fa-play"></i>';
+            fill.style.width = '0%';
+            timeEl.textContent = '00:00';
+        });
+
+        // Tua bằng cách bấm trực tiếp lên thanh track
+        track.addEventListener('click', function (e) {
+            if (!audio.duration) return;
+            var rect = track.getBoundingClientRect();
+            var pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+            audio.currentTime = pct * audio.duration;
+        });
+    });
+})();
 </script>
 @endsection

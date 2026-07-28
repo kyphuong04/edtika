@@ -2,6 +2,39 @@
 
 @push("styles_top")
 <style>
+
+    /* ─── Visibility Filter ──────────────────────────────── */
+.materials-visibility-filter {
+    display: inline-flex;
+    gap: 4px;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+}
+.materials-visibility-filter .filter-btn {
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #6b7280;
+    transition: background-color .2s, color .2s;
+}
+.materials-visibility-filter .filter-btn:hover {
+    color: #111827;
+    text-decoration: none;
+}
+.materials-visibility-filter .filter-btn.active {
+    background: #ffffff;
+    color: #511D99;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.materials-bundle-card__status--hidden {
+    background: rgba(107, 114, 128, .16);
+    color: #374151;
+}
     /* ─── Tab Navigation ─────────────────────────────────── */
     .materials-tabs {
         display: flex;
@@ -199,7 +232,6 @@
 @endpush
 
 @section('content')
-
     <div class="materials-page-header">
         <div>
             <h3 class="materials-page-header__title">{{ trans('update.my_bundles') }}</h3>
@@ -219,6 +251,16 @@
         <a href="/panel/bundles" class="tab-btn active">Curriculum</a>
         <a href="/panel/courses" class="tab-btn">My Curriculum</a>
         <a href="{{ auth()->check() && auth()->user()->canManageBundleVocabulary() ? '/panel/dictionary/bundle-vocabulary/manage' : '/panel/dictionary' }}" class="tab-btn">Vocab &amp; Dictionary</a>
+    </div>
+
+    {{-- Visibility Filter (MỚI) --}}
+    <div class="materials-visibility-filter">
+        <a href="/panel/bundles" class="filter-btn {{ !$showHidden ? 'active' : '' }}">
+            {{ trans('update.active_bundles') }}
+        </a>
+        <a href="/panel/bundles?hidden=1" class="filter-btn {{ $showHidden ? 'active' : '' }}">
+            {{ trans('update.hidden_bundles') }}
+        </a>
     </div>
 
     {{-- Lists --}}

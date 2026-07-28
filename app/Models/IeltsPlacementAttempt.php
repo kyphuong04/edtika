@@ -22,6 +22,7 @@ class IeltsPlacementAttempt extends Model
         'started_at',
         'completed_at',
         'speaking_recording_path',
+        'speaking_question_id',
     ];
 
     protected $casts = [
@@ -65,5 +66,9 @@ class IeltsPlacementAttempt extends Model
     public function isTimeUp(): bool
     {
         return $this->remainingSeconds() <= 0;
+    }
+    public function speakingQuestion(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\PlacementSpeakingQuestion::class, 'speaking_question_id', 'id');
     }
 }

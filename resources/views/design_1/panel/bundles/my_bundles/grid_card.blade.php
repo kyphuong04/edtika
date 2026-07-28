@@ -71,6 +71,45 @@
                     </li>
                 @endcan
 
+                @can('panel_bundles_create')
+                    <li class="actions-dropdown__dropdown-menu-item">
+                        <!-- Form được ẩn đi bằng class d-none (hoặc style="display: none;") -->
+                        <form id="duplicate-form-{{ $bundle->id }}" method="POST" action="/panel/bundles/{{ $bundle->id }}/duplicate" class="d-none" style="display: none;">
+                            @csrf
+                        </form>
+
+                        <!-- Thẻ a giống hệt 2 nút trên, dùng JS để gọi form -->
+                        <a href="#" onclick="event.preventDefault(); if(confirm('{{ trans('update.confirm_duplicate_bundle') }}')) { document.getElementById('duplicate-form-{{ $bundle->id }}').submit(); }">
+                            {{ trans('update.duplicate') }}
+                        </a>
+                    </li>
+                @endcan
+
+                <!-- @if($bundle->creator_id == $authUser->id or $bundle->teacher_id == $authUser->id)
+                    <li class="actions-dropdown__dropdown-menu-item">
+                        <form method="POST" action="/panel/bundles/{{ $bundle->id }}/toggle-hidden">
+                            @csrf
+                            <button type="submit" class="btn-transparent p-0 text-left w-100">
+                                {{ $bundle->isHidden() ? trans('update.unhide_bundle') : trans('update.hide_bundle') }}
+                            </button>
+                        </form>
+                    </li>
+                @endif -->
+
+                @if($bundle->creator_id == $authUser->id or $bundle->teacher_id == $authUser->id)
+                    <li class="actions-dropdown__dropdown-menu-item">
+                        <!-- Form được ẩn đi bằng class d-none -->
+                        <form id="toggle-hidden-form-{{ $bundle->id }}" method="POST" action="/panel/bundles/{{ $bundle->id }}/toggle-hidden" class="d-none" style="display: none;">
+                            @csrf
+                        </form>
+
+                        <!-- Sử dụng thẻ <a> giống hệt các thẻ trên để giữ nguyên định dạng CSS -->
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('toggle-hidden-form-{{ $bundle->id }}').submit();">
+                            {{ $bundle->isHidden() ? trans('update.unhide_bundle') : trans('update.hide_bundle') }}
+                        </a>
+                    </li>
+                @endif
+
                 @if($authUser->id == $bundle->teacher_id or $authUser->id == $bundle->creator_id)
                     @can('panel_bundles_export_students_list')
                         <li class="actions-dropdown__dropdown-menu-item">
@@ -104,11 +143,13 @@
         <h3 class="materials-bundle-card__title">{{ $bundle->title }}</h3>
     </a>
 
-    {{-- Total lessons subtitle --}}
-    <p class="materials-bundle-card__subtitle">
-        Tổng số lượng bài học:
-        <span class="font-weight-bold text-dark">{{ $totalLessons }} bài</span>
-    </p>
+    {{-- Meta info (Lessons only) --}}
+    <div class="d-flex align-items-center justify-content-center mt-10 mb-15">
+        <span class="materials-bundle-card__subtitle mb-0">
+            Tổng số bài học:
+            <span class="font-weight-bold text-dark">{{ $totalLessons }}</span>
+        </span>
+    </div>
 
     {{-- Stats Grid: 3 rows × 2 cols --}}
     <div class="materials-bundle-card__stats">
@@ -181,7 +222,16 @@
                 <span class="text-success">{{ trans('public.free') }}</span>
             @endif
         </div>
-
     </div>
+
+    {{-- Published Date (Moved to bottom) --}}
+    @if(!empty($bundle->published_at))
+        <div class="d-flex justify-content-center w-100 pt-15" style="margin-top: 24px; border-top: 1px dashed #e2e8f0;">
+            <span class="materials-bundle-card__subtitle mb-0 text-gray-500" style="font-size: 13px; margin-top: 24px;">
+                {{ trans('update.published_at') }}:
+                <span class="font-weight-bold text-dark">{{ \Carbon\Carbon::parse($bundle->published_at)->format('d/m/Y') }}</span>
+            </span>
+        </div>
+    @endif
 
 </div>

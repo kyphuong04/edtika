@@ -5038,4 +5038,22 @@ return [
     'new_live_course_notification_body'   => ':teacher has scheduled a new live session ":title" on :date.',
     'zoom_meeting_will_be_created_automatically' => 'A Zoom meeting will be created automatically. Make sure your Zoom account is connected.',
     'live_courses' => 'Live Courses',
+
+
+    /* Duplicate */
+    'duplicate' => 'Duplicate',
+    'confirm_duplicate_bundle' => 'Are you sure you want to duplicate this course? A new draft copy will be created with all its content.',
+    'bundle_duplicated_successfully' => 'Course duplicated successfully. The copy is now in draft status.',
+
+    /* Hide / Unhide */
+    'hide_bundle' => 'Hide Course',
+    'unhide_bundle' => 'Unhide',
+    'bundle_hidden_successfully' => 'Course hidden successfully.',
+    'bundle_unhidden_successfully' => 'Course unhidden successfully.',
+    'active_bundles' => 'Active',
+    'hidden_bundles' => 'Hidden',
+    'hidden' => 'Hidden',
+
+    /* Published date */
+    'published_at' => 'Published At',
 ];

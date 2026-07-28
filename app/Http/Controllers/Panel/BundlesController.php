@@ -38,6 +38,14 @@ class BundlesController extends Controller
             $query->orWhere('bundles.creator_id', $user->id);
         });
 
+        $showHidden = $request->get('hidden') == 1;
+
+        if ($showHidden) {
+            $query->whereNotNull('hidden_at');
+        } else {
+            $query->whereNull('hidden_at');
+        }
+
         $copyQuery = deepClone($query);
         //$query = $this->handleFilters($request, $query);
         $getListData = $this->getListsData($request, $query, $user);
@@ -65,6 +73,7 @@ class BundlesController extends Controller
             'bundleSalesAmount' => $bundleSales->sum('amount'),
             'bundleSalesCount' => $bundleSales->count(),
             'bundlesHours' => $bundlesHours,
+            'showHidden' => $showHidden,
         ];
         $data = array_merge($data, $getListData);
 
@@ -968,6 +977,260 @@ class BundlesController extends Controller
             'defaultLocale' => getDefaultLocale(),
             'userLanguages' => getUserLanguagesLists(),
         ]);
+    }
+
+    private function chapterItemTypeModelMap()
+    {
+        return [
+            \App\Models\WebinarChapterItem::$chapterFile => \App\Models\File::class,
+            \App\Models\WebinarChapterItem::$chapterSession => \App\Models\Session::class,
+            \App\Models\WebinarChapterItem::$chapterTextLesson => \App\Models\TextLesson::class,
+            \App\Models\WebinarChapterItem::$chapterAssignment => \App\Models\WebinarAssignment::class,
+            \App\Models\WebinarChapterItem::$chapterQuiz => \App\Models\Quiz::class,
+        ];
+    }
+
+    public function duplicate(Request $request, $id)
+    {
+        $this->authorize("panel_bundles_create");
+
+        $user = auth()->user();
+
+        if (!$user->isTeacher() and !$user->isAdmin()) {
+            abort(404);
+        }
+
+        $bundle = Bundle::where('id', $id)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->with(['translations', 'filterOptions', 'tags', 'faqs.translations', 'bundleWebinars'])
+            ->first();
+
+        if (empty($bundle)) {
+            abort(404);
+        }
+
+        $newBundle = $this->replicateWithoutTranslatedAttributes($bundle);
+        $newBundle->slug = Bundle::makeSlug($bundle->title . '-copy-' . time());
+        $newBundle->status = Bundle::$isDraft;
+        $newBundle->duplicated_from_id = $bundle->id;
+        $newBundle->created_at = time();
+        $newBundle->updated_at = null;
+        $newBundle->save();
+
+        foreach ($bundle->translations as $translation) {
+            $newTranslation = $translation->replicate();
+            $newTranslation->bundle_id = $newBundle->id;
+            $newTranslation->title = $this->makeCopyTitle($translation->title);
+            $newTranslation->save();
+        }
+
+        foreach ($bundle->filterOptions as $filterOption) {
+            $newFilterOption = $filterOption->replicate();
+            $newFilterOption->bundle_id = $newBundle->id;
+            $newFilterOption->save();
+        }
+
+        foreach ($bundle->tags as $tag) {
+            $newTag = $tag->replicate();
+            $newTag->bundle_id = $newBundle->id;
+            $newTag->save();
+        }
+
+        foreach ($bundle->faqs as $faq) {
+            $newFaq = $this->replicateWithoutTranslatedAttributes($faq);
+            $newFaq->bundle_id = $newBundle->id;
+            $newFaq->save();
+
+            $faqFk = $faq->getForeignKey(); // 'faq_id'
+            foreach ($faq->translations as $faqTranslation) {
+                $newFaqTranslation = $faqTranslation->replicate();
+                $newFaqTranslation->{$faqFk} = $newFaq->id;
+                $newFaqTranslation->save();
+            }
+        }
+
+        foreach ($bundle->bundleWebinars as $bw) {
+            $originalWebinar = $bw->webinar;
+
+            if (empty($originalWebinar)) {
+                continue;
+            }
+
+            $newWebinar = $this->duplicateWebinar($originalWebinar, $user->id);
+
+            $newBundleWebinar = $bw->replicate();
+            $newBundleWebinar->bundle_id = $newBundle->id;
+            $newBundleWebinar->webinar_id = $newWebinar->id;
+            $newBundleWebinar->save();
+        }
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.bundle_duplicated_successfully'),
+            'status' => 'success'
+        ];
+
+        return redirect("/panel/bundles")->with(['toast' => $toastData]);
+    }
+
+    private function duplicateWebinar($originalWebinar, $creatorId)
+    {
+        $chapterItemTypeModelMap = $this->chapterItemTypeModelMap(); // MỚI: gọi method thay vì đọc property
+
+        $newWebinar = $this->replicateWithoutTranslatedAttributes($originalWebinar);
+        $newWebinar->slug = \App\Models\Webinar::makeSlug($originalWebinar->title . '-copy-' . time());
+        $newWebinar->status = \App\Models\Webinar::$isDraft;
+        $newWebinar->creator_id = $creatorId;
+        $newWebinar->created_at = time();
+        $newWebinar->save();
+
+        $webinarFk = $originalWebinar->getForeignKey();
+        foreach ($originalWebinar->translations as $translation) {
+            $newTranslation = $translation->replicate();
+            $newTranslation->{$webinarFk} = $newWebinar->id;
+            $newTranslation->save();
+        }
+
+        $chapters = \App\Models\WebinarChapter::where('webinar_id', $originalWebinar->id)
+            ->orderBy('order')
+            ->get();
+
+        foreach ($chapters as $chapter) {
+            $newChapter = $this->replicateWithoutTranslatedAttributes($chapter);
+            $newChapter->webinar_id = $newWebinar->id;
+            $newChapter->save();
+
+            $chapterFk = $chapter->getForeignKey();
+            foreach ($chapter->translations as $chapterTranslation) {
+                $newChapterTranslation = $chapterTranslation->replicate();
+                $newChapterTranslation->{$chapterFk} = $newChapter->id;
+                $newChapterTranslation->save();
+            }
+
+            $items = \App\Models\WebinarChapterItem::where('chapter_id', $chapter->id)
+                ->orderBy('order')
+                ->get();
+
+            foreach ($items as $item) {
+                $modelClass = $chapterItemTypeModelMap[$item->type] ?? null;   // ĐỔI: dùng biến local
+
+                if (empty($modelClass)) {
+                    continue;
+                }
+
+                $originalContent = $modelClass::find($item->item_id);
+
+                if (empty($originalContent)) {
+                    continue;
+                }
+
+                $newContent = $originalContent->replicate();
+                if (array_key_exists('webinar_id', $newContent->getAttributes())) {
+                    $newContent->webinar_id = $newWebinar->id;
+                }
+                $newContent->save();
+
+                $contentFk = $originalContent->getForeignKey();
+                foreach ($originalContent->translations as $contentTranslation) {
+                    $newContentTranslation = $contentTranslation->replicate();
+                    $newContentTranslation->{$contentFk} = $newContent->id;
+                    $newContentTranslation->save();
+                }
+
+                if ($item->type === \App\Models\WebinarChapterItem::$chapterQuiz
+                    and method_exists($originalContent, 'quizQuestions')) {
+                    foreach ($originalContent->quizQuestions as $question) {
+                        $newQuestion = $this->replicateWithoutTranslatedAttributes($question);
+                        $newQuestion->quiz_id = $newContent->id;
+                        $newQuestion->save();
+
+                        $questionFk = $question->getForeignKey();
+                        foreach ($question->translations as $questionTranslation) {
+                            $newQuestionTranslation = $questionTranslation->replicate();
+                            $newQuestionTranslation->{$questionFk} = $newQuestion->id;
+                            $newQuestionTranslation->save();
+                        }
+                    }
+                }
+
+                \App\Models\WebinarChapterItem::create([
+                    'chapter_id' => $newChapter->id,
+                    'item_id' => $newContent->id,
+                    'type' => $item->type,
+                    'user_id' => $creatorId,
+                    'order' => $item->order,
+                    'created_at' => time(),
+                ]);
+            }
+        }
+
+        return $newWebinar;
+    }
+
+    private function makeCopyTitle($title)
+    {
+        $baseTitle = preg_replace('/\s*-\s*Copy(\s*\(\d+\))?\s*$/i', '', $title);
+        $candidate = $baseTitle . ' - Copy';
+        $counter = 2;
+
+        while (Bundle::whereTranslationLike('title', $candidate)->exists()) {
+            $candidate = $baseTitle . " - Copy ({$counter})";
+            $counter++;
+        }
+
+        return $candidate;
+    }
+
+    private function replicateWithoutTranslatedAttributes($model)
+    {
+        $newModel = $model->replicate();
+
+        $except = property_exists($model, 'translatedAttributes') ? $model->translatedAttributes : [];
+        $except[] = 'locale';
+
+        foreach ($except as $attribute) {
+            unset($newModel->{$attribute});
+        }
+
+        return $newModel;
+    }
+
+    public function toggleHidden(Request $request, $id)
+    {
+        $this->authorize("panel_bundles_create");
+
+        $user = auth()->user();
+
+        if (!$user->isTeacher() and !$user->isAdmin()) {
+            abort(404);
+        }
+
+        $bundle = Bundle::where('id', $id)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })->first();
+
+        if (empty($bundle)) {
+            abort(404);
+        }
+
+        $bundle->update([
+            'hidden_at' => $bundle->isHidden() ? null : time(),
+        ]);
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => $bundle->isHidden()
+                ? trans('update.bundle_hidden_successfully')
+                : trans('update.bundle_unhidden_successfully'),
+            'status' => 'success'
+        ];
+
+        return back()->with(['toast' => $toastData]);
     }
 }
 

@@ -3,6 +3,111 @@
 @push('styles_top')
 <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
 <style>
+
+    /* --- FIX LỖI HOVER & ACTIVE CHO NÚT CĂN LỀ --- */
+
+/* 1. Sửa lỗi Hover bị trắng: Đổi nền sang tím nhạt, giữ icon màu tím */
+.note-editor .note-toolbar .note-btn:hover {
+    background-color: #e0e7ff !important;
+    border-color: #511D99 !important;
+    color: #511D99 !important;
+}
+.note-editor .note-toolbar .note-btn:hover i {
+    color: #511D99 !important;
+}
+
+/* 2. Trạng thái Active (Đang được chọn): Nền tím, Icon trắng */
+.note-editor .note-toolbar .note-btn.active-align {
+    background-color: #511D99 !important;
+    color: #ffffff !important;
+    border-color: #511D99 !important;
+}
+.note-editor .note-toolbar .note-btn.active-align i {
+    color: #ffffff !important;
+}
+
+/* 2. Ép trình duyệt phải nhận diện và ưu tiên inline style (style="text-align:...") do Summernote sinh ra */
+.note-editor .note-editable [style*="text-align: left"],
+.part-rich-content [style*="text-align: left"],
+.group-rich-content [style*="text-align: left"],
+.question-card-body [style*="text-align: left"] {
+    text-align: left !important;
+}
+
+.note-editor .note-editable [style*="text-align: center"],
+.part-rich-content [style*="text-align: center"],
+.group-rich-content [style*="text-align: center"],
+.question-card-body [style*="text-align: center"] {
+    text-align: center !important;
+}
+
+.note-editor .note-editable [style*="text-align: right"],
+.part-rich-content [style*="text-align: right"],
+.group-rich-content [style*="text-align: right"],
+.question-card-body [style*="text-align: right"] {
+    text-align: right !important;
+}
+
+.note-editor .note-editable [style*="text-align: justify"],
+.part-rich-content [style*="text-align: justify"],
+.group-rich-content [style*="text-align: justify"],
+.question-card-body [style*="text-align: justify"] {
+    text-align: justify !important;
+}
+
+/* 3. Dự phòng trường hợp Summernote sinh ra class thay vì inline style (tùy version Bootstrap) */
+.note-editor .note-editable .text-left, .part-rich-content .text-left, .group-rich-content .text-left { text-align: left !important; }
+.note-editor .note-editable .text-center, .part-rich-content .text-center, .group-rich-content .text-center { text-align: center !important; }
+.note-editor .note-editable .text-right, .part-rich-content .text-right, .group-rich-content .text-right { text-align: right !important; }
+.note-editor .note-editable .text-justify, .part-rich-content .text-justify, .group-rich-content .text-justify { text-align: justify !important; }
+
+.part-rich-content,
+.group-rich-content,
+.question-card-body {
+    white-space: pre-wrap; /* Giúp hiển thị đúng dấu xuống dòng \n nếu text thuần */
+    word-wrap: break-word;
+}
+.part-rich-content p,
+.group-rich-content p,
+.question-card-body p {
+    margin-bottom: 8px !important; /* Bắt buộc có khoảng cách giữa các đoạn văn <p> */
+}
+.part-rich-content p:last-child,
+.group-rich-content p:last-child,
+.question-card-body p:last-child {
+    margin-bottom: 0 !important;
+}
+
+
+.note-editor .note-editable ul {
+    list-style: disc !important;
+    padding-left: 24px !important;
+    margin: 0 0 10px 0 !important;
+}
+.note-editor .note-editable ol {
+    list-style: decimal !important;
+    padding-left: 24px !important;
+    margin: 0 0 10px 0 !important;
+}
+.note-editor .note-editable ul li,
+.note-editor .note-editable ol li {
+    list-style: inherit !important;
+    display: list-item !important;
+}
+
+/* Đồng bộ hiển thị khi render lại nội dung (phần preview part/group instructions, collapsible richtext) */
+.part-rich-content ul,
+.group-rich-content ul,
+.question-card-body ul {
+    list-style: disc !important;
+    padding-left: 24px !important;
+}
+.part-rich-content ol,
+.group-rich-content ol,
+.question-card-body ol {
+    list-style: decimal !important;
+    padding-left: 24px !important;
+}
 .test-creator-enhanced {
     background: #fff;
     border-radius: 12px;
@@ -833,7 +938,8 @@ const ANSWER_HELP_EDITOR_TOOLBAR = [
     ['style', ['style']],
     ['font', ['bold', 'italic', 'underline', 'clear']],
     ['color', ['foreColor', 'backColor']],
-    ['para', ['ul', 'ol', 'paragraph']],
+    ['para', ['ul', 'ol']], // Bỏ 'paragraph' ở đây
+    ['alignment', ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify']], // Thêm nhóm 4 nút căn lề độc lập
     ['view', ['codeview']]
 ];
 
@@ -841,10 +947,79 @@ const CONTENT_EDITOR_TOOLBAR = [
     ['style', ['style']],
     ['font', ['bold', 'italic', 'underline', 'clear']],
     ['color', ['foreColor', 'backColor']],
-    ['para', ['ul', 'ol', 'paragraph']],
+    ['para', ['ul', 'ol']], // Bỏ 'paragraph' ở đây
+    ['alignment', ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify']], // Thêm nhóm 4 nút căn lề độc lập
     ['insert', ['picture', 'link']],
     ['view', ['codeview']]
 ];
+
+// 1. Hàm tự viết để bám sát và căn lề đúng thẻ cha
+function safeAlign(context, alignValue) {
+    var range = context.invoke('editor.createRange');
+    if (!range) return;
+
+    var $node = $(range.sc).closest('p, div, h1, h2, h3, h4, h5, h6, td, li');
+
+    if (!$node.length || $node.hasClass('note-editable')) {
+        context.invoke('editor.formatBlock', 'p');
+        range = context.invoke('editor.createRange');
+        $node = $(range.sc).closest('p, div, h1, h2, h3, h4, h5, h6, td, li');
+    }
+
+    if ($node.length && !$node.hasClass('note-editable')) {
+        // Áp dụng style căn lề
+        $node.css('text-align', alignValue);
+        
+        // CẬP NHẬT GIAO DIỆN NÚT BẤM NGAY LẬP TỨC
+        var $toolbar = context.layoutInfo.toolbar;
+        $toolbar.find('.custom-align-btn').removeClass('active-align');
+        $toolbar.find('.align-btn-' + alignValue).addClass('active-align');
+
+        // Lưu trạng thái
+        context.invoke('editor.saveRange');
+        context.triggerEvent('change', context.invoke('code'));
+    }
+}
+
+// 2. Gắn hàm an toàn vào 4 nút bấm
+const customAlignmentButtons = {
+    alignLeft: function (context) {
+        var ui = $.summernote.ui;
+        return ui.button({
+            className: 'custom-align-btn align-btn-left active-align', // Mặc định sáng nút trái
+            contents: '<i class="fas fa-align-left"></i>',
+            tooltip: 'Căn trái',
+            click: function () { safeAlign(context, 'left'); }
+        }).render();
+    },
+    alignCenter: function (context) {
+        var ui = $.summernote.ui;
+        return ui.button({
+            className: 'custom-align-btn align-btn-center',
+            contents: '<i class="fas fa-align-center"></i>',
+            tooltip: 'Căn giữa',
+            click: function () { safeAlign(context, 'center'); }
+        }).render();
+    },
+    alignRight: function (context) {
+        var ui = $.summernote.ui;
+        return ui.button({
+            className: 'custom-align-btn align-btn-right',
+            contents: '<i class="fas fa-align-right"></i>',
+            tooltip: 'Căn phải',
+            click: function () { safeAlign(context, 'right'); }
+        }).render();
+    },
+    alignJustify: function (context) {
+        var ui = $.summernote.ui;
+        return ui.button({
+            className: 'custom-align-btn align-btn-justify',
+            contents: '<i class="fas fa-align-justify"></i>',
+            tooltip: 'Căn đều hai bên',
+            click: function () { safeAlign(context, 'justify'); }
+        }).render();
+    }
+};
 
 function getEditorHtmlValue(element) {
     if (!element) {
@@ -918,8 +1093,40 @@ function initAnswerHelpEditors(context) {
     }
 
     makeSummernote($editors, 180, undefined, {
-        toolbar: ANSWER_HELP_EDITOR_TOOLBAR
+        toolbar: ANSWER_HELP_EDITOR_TOOLBAR,
+        buttons: customAlignmentButtons
     });
+}
+
+function fixSummernoteDropdowns(context) {
+    const $context = context ? $(context) : $(document);
+
+    $context.find('.note-toolbar .dropdown-toggle').off('click.snfix').on('click.snfix', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $menu = $(this).next('.dropdown-menu');
+
+        // Đóng các dropdown khác đang mở (toàn trang)
+        $('.note-toolbar .dropdown-menu').not($menu).removeClass('show').hide();
+
+        const isOpen = $menu.hasClass('show') || $menu.is(':visible');
+        if (isOpen) {
+            $menu.removeClass('show').hide();
+        } else {
+            $menu.addClass('show').show();
+        }
+    });
+
+    // Click ra ngoài toolbar thì đóng hết dropdown
+    if (!window.__snfixCloseBound) {
+        window.__snfixCloseBound = true;
+        $(document).on('click.snfixclose', function (e) {
+            if (!$(e.target).closest('.note-toolbar .dropdown').length) {
+                $('.note-toolbar .dropdown-menu').removeClass('show').hide();
+            }
+        });
+    }
 }
 
 function initContentEditors(context) {
@@ -942,6 +1149,7 @@ function initContentEditors(context) {
 
         makeSummernote(editor, Number.isFinite(height) ? height : 160, undefined, {
             toolbar: CONTENT_EDITOR_TOOLBAR,
+            buttons: customAlignmentButtons,
             callbacks: {
                 onChange: function () {
                     if (this.classList.contains('question-text-input')) {
@@ -956,6 +1164,7 @@ function initContentEditors(context) {
             }
         });
     });
+    fixSummernoteDropdowns($context);
 }
 
 function updateAutosaveStatus(message, isError = false) {
@@ -1848,9 +2057,9 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
 
     const hasPartRichContent = Boolean(part.instructions || part.passage);
     const partRichContentHTML = hasPartRichContent
-        ? `<div class="part-rich-content collapsible-richtext collapsed mb-8">
-                ${part.instructions ? `<div class="text-muted mb-8"><small>${part.instructions}</small></div>` : ''}
-                ${part.passage ? `<div><small class="text-muted">${part.passage}</small></div>` : ''}
+        ? `<div class="part-rich-content collapsible-richtext collapsed mb-8" style="font-size: 14px;">
+                ${part.instructions ? `<div class="text-muted mb-8">${part.instructions}</div>` : ''}
+                ${part.passage ? `<div class="text-muted">${part.passage}</div>` : ''}
            </div>
            <div class="content-toggle-wrap">
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleRichContent(this)" title="Expand content">
@@ -2024,7 +2233,7 @@ function displayQuestionGroup(partItem, part, group) {
 
     const hasGroupRichContent = Boolean(group.passage);
     const groupRichContentHTML = hasGroupRichContent
-        ? `<div class="group-rich-content collapsible-richtext collapsed mb-8 text-muted"><small>${group.passage}</small></div>
+        ? `<div class="group-rich-content collapsible-richtext collapsed mb-8 text-muted" style="font-size: 14px;">${group.passage}</div>
            <div class="content-toggle-wrap">
                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleRichContent(this)" title="Expand content">
                     <i class="fas fa-chevron-down"></i>
@@ -4823,6 +5032,49 @@ function clearFormStateLocalStorage() {
             });
         }
     });
+
+// --- AUTO UPDATE TRẠNG THÁI NÚT CĂN LỀ KHI DI CHUYỂN CON TRỎ ---
+$(document).on('click keyup', '.note-editable', function() {
+    var $editable = $(this);
+    var $toolbar = $editable.siblings('.note-toolbar');
+
+    var selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    var node = selection.getRangeAt(0).startContainer;
+    
+    var $block = $(node).closest('p, div, h1, h2, h3, h4, h5, h6, td, li');
+
+    var currentAlign = 'left'; 
+    if ($block.length && !$block.hasClass('note-editable')) {
+        // Lấy giá trị CSS
+        currentAlign = $block.css('text-align') || 'left';
+        
+        // Quét thêm trực tiếp vào HTML style để chống lỗi trình duyệt
+        var styleAttr = $block.attr('style') || '';
+        if (styleAttr.indexOf('text-align: center') !== -1) currentAlign = 'center';
+        else if (styleAttr.indexOf('text-align: right') !== -1) currentAlign = 'right';
+        else if (styleAttr.indexOf('text-align: justify') !== -1) currentAlign = 'justify';
+        else if (styleAttr.indexOf('text-align: left') !== -1) currentAlign = 'left';
+    }
+    
+    // Xử lý các từ khóa lạ của trình duyệt (Chrome/Safari)
+    if (currentAlign === 'start') currentAlign = 'left';
+    if (currentAlign === 'end') currentAlign = 'right';
+    if (currentAlign === '-webkit-center') currentAlign = 'center';
+
+    // Đổi màu nút
+    $toolbar.find('.custom-align-btn').removeClass('active-align');
+
+    if (currentAlign === 'center') {
+        $toolbar.find('.align-btn-center').addClass('active-align');
+    } else if (currentAlign === 'right') {
+        $toolbar.find('.align-btn-right').addClass('active-align');
+    } else if (currentAlign === 'justify') {
+        $toolbar.find('.align-btn-justify').addClass('active-align');
+    } else {
+        $toolbar.find('.align-btn-left').addClass('active-align');
+    }
+});
 </script>
 @endpush
 

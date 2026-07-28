@@ -245,6 +245,7 @@
                                         <th>{{trans('admin/main.course_count')}}</th>
                                         <th>{{trans('admin/main.created_at')}}</th>
                                         <th>{{trans('admin/main.updated_at')}}</th>
+                                        <th>{{ trans('update.published_at') }}</th>
                                         <th>{{trans('admin/main.status')}}</th>
                                         <th width="80">{{trans('admin/main.actions')}}</th>
                                     </tr>
@@ -252,6 +253,7 @@
                                     @foreach($bundles as $bundle)
                                         <tr class="text-center">
 
+                                            <td>{{ !empty($bundle->published_at) ? dateTimeFormat($bundle->published_at, 'Y M j | H:i') : '—' }}</td>
                                             <td>{{ $bundle->id }}</td>
 
                                             <td width="12%" class="text-left">

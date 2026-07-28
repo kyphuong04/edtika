@@ -1804,7 +1804,7 @@
             <div class="practice-mode-container hidden" id="flashcardPracticeContainer" style="text-align:center;">
                 <div style="max-width:760px;margin:0 auto;padding:20px;">
 
-                    <div id="flashcardCard" style="position:relative;background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:30px 26px;min-height:420px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;">
+                    <div id="flashcardCard" style="position:relative;background:#fff;border:1px solid rgba(81,29,153,0.08);border-radius:18px;padding:30px 26px;min-height:420px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center; cursor: pointer;">
 
                         {{-- ── FRONT SIDE LABEL ───────────────────────── --}}
                         <div id="flashcardFrontLabel" style="display:inline-flex;align-items:center;justify-content:center;padding:7px 22px;border-radius:999px;background:#511D99;color:#fff;font-weight:800;font-size:13px;letter-spacing:0.06em;margin-bottom:18px;">MẶT TRƯỚC</div>
@@ -1857,7 +1857,6 @@
                     <div style="display:flex;justify-content:center;gap:20px;margin-top:18px;flex-wrap:wrap;">
                         <button class="practice-btn btn-exit" id="flashcardExitBtn">{{ trans('panel.exit') }}</button>
                         <button class="practice-btn btn-next" id="flashcardPrevBtn" disabled>‹ Trước đó</button>
-                        <button class="practice-btn btn-next" id="flashcardTurnBtn">Lật thẻ</button>
                         <button class="practice-btn btn-next" id="flashcardNextBtn" disabled>Tiếp theo ›</button>
                     </div>
                 </div>
@@ -3181,22 +3180,27 @@
         $('#flashcardTurnBtn').text('Lật thẻ');
     }
 
-    $('#flashcardTurnBtn').on('click', function() {
+    $('#flashcardCard').on('click', function(e) {
+        // Bỏ qua (không lật thẻ) nếu người dùng click vào nút Audio phát âm
+        if ($(e.target).closest('#flashcardAudioBtn').length) {
+            return;
+        }
+
         if (!flashcardCards.length) return;
+        
         flashcardFlipped = !flashcardFlipped;
+        
         if (flashcardFlipped) {
-            $('#flashcardCard').css('justify-content', 'flex-start');
+            // Lật ra mặt sau
             $('#flashcardFrontGroup, #flashcardFrontLabel').hide();
             $('#flashcardBackLabel').css('display', 'inline-flex');
             $('#flashcardBack').css('display', 'block');
-            $('#flashcardTurnBtn').text('Ẩn');
         } else {
-            $('#flashcardCard').css('justify-content', 'flex-start');
+            // Lật về mặt trước
             $('#flashcardBack').hide();
             $('#flashcardBackLabel').hide();
             $('#flashcardFrontLabel').show();
             $('#flashcardFrontGroup').show();
-            $('#flashcardTurnBtn').text('Lật thẻ');
         }
     });
 

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\PlacementTestController;
+use App\Http\Controllers\Admin\PlacementSpeakingQuestionController;
+use App\Http\Controllers\Admin\PlacementResultController;
 
 $prefix = getAdminPanelUrlPrefix();
 
@@ -53,6 +55,14 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::patch('/{placementTest}/toggle-status', [PlacementTestController::class, 'toggleStatus'])->name('admin.placement_tests.toggle_status');
         });
 
+        Route::prefix('placement-speaking-questions')->name('admin.placement_speaking.')->group(function () {
+            Route::get('/', [PlacementSpeakingQuestionController::class, 'index'])->name('index');
+            Route::post('/', [PlacementSpeakingQuestionController::class, 'store'])->name('store');
+            Route::put('/{placementSpeakingQuestion}', [PlacementSpeakingQuestionController::class, 'update'])->name('update');
+            Route::patch('/{placementSpeakingQuestion}/toggle-status', [PlacementSpeakingQuestionController::class, 'toggleStatus'])->name('toggle_status');
+            Route::delete('/{placementSpeakingQuestion}', [PlacementSpeakingQuestionController::class, 'destroy'])->name('destroy');
+        });
+
 
         Route::group(['prefix' => 'dashboard'], function () {
             Route::post('/getSaleStatisticsData', 'DashboardController@getSaleStatisticsData');
@@ -99,6 +109,9 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/', 'UserController@organizations');
             Route::get('/excel', 'UserController@exportExcelOrganizations');
         });
+
+        Route::get('/users/{user}/placement-result', [PlacementResultController::class, 'show'])
+            ->name('admin.users.placement_result');
 
         Route::group(['prefix' => 'users'], function () {
             Route::get('/create', 'UserController@create');

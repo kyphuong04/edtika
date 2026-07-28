@@ -39,6 +39,11 @@
                 <i class="fas fa-list mr-5"></i>Danh sách đề đã tạo <span class="badge badge-secondary ml-4">{{ $existingTests->count() }}</span>
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" id="pt-tab-speaking" data-toggle="tab" href="#pt-pane-speaking" role="tab" style="font-weight:600;">
+                <i class="fas fa-microphone mr-5"></i>Câu hỏi Speaking <span class="badge badge-secondary ml-4">{{ $speakingQuestions->count() }}</span>
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content" id="ptTabsContent">
@@ -161,6 +166,72 @@
             </div>
         </div>
     </div>{{-- /pt-pane-list --}}
+
+    <div class="tab-pane fade" id="pt-pane-speaking" role="tabpanel">
+        <div class="card mb-20">
+            <div class="card-header"><h4 class="mb-0">Thêm câu hỏi Speaking mới</h4></div>
+            <div class="card-body">
+                <form action="{{ route('admin.placement_speaking.store') }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <textarea name="question_text" class="form-control" rows="2" required placeholder="VD: Describe a memorable trip you have taken. Why was it memorable?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-12"><i class="fas fa-plus mr-5"></i>Thêm câu hỏi</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:55%;">Câu hỏi</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-right">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($speakingQuestions as $q)
+                            <tr>
+                                <td>
+                                    <form action="{{ route('admin.placement_speaking.update', $q) }}" method="POST" class="d-flex align-items-center gap-8">
+                                        @csrf @method('PUT')
+                                        <input type="text" name="question_text" value="{{ $q->question_text }}" class="form-control form-control-sm">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-12">Lưu</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    @if($q->is_active)
+                                        <span class="badge badge-success">Đang dùng</span>
+                                    @else
+                                        <span class="badge badge-secondary">Đã tắt</span>
+                                    @endif
+                                </td>
+                                <td>{{ $q->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="text-right">
+                                    <form action="{{ route('admin.placement_speaking.toggle_status', $q) }}" method="POST" class="d-inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-outline-{{ $q->is_active ? 'secondary' : 'success' }} rounded-12">
+                                            {{ $q->is_active ? 'Tắt' : 'Bật' }}
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('admin.placement_speaking.destroy', $q) }}" method="POST" class="d-inline" onsubmit="return confirm('Xoá câu hỏi này?');">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-12"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-muted py-30">Chưa có câu hỏi Speaking nào.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>{{-- /pt-pane-speaking --}}
+
     </div>{{-- /ptTabsContent --}}
 
     </div>{{-- /section-body --}}
@@ -435,6 +506,10 @@ function renderQuestionCard(q, index) {
             }
             bodyHtml += '</div>';
         }
+        bodyHtml += `<div class="form-check mt-2">
+            <input type="checkbox" class="form-check-input" id="passage_check_${index}" ${q.linked_to_passage ? 'checked' : ''} onchange="toggleLinkedToPassage(${index}, this.checked)">
+            <label class="form-check-label" for="passage_check_${index}">Gắn với đoạn văn dùng chung (Reading Comprehension) — cần nhập Reading Passage ở trên</label>
+        </div>`;
 
     } else if (q.type === 'error_correction') {
         bodyHtml += `<div class="form-group">
@@ -575,6 +650,11 @@ document.getElementById('placementTestForm').addEventListener('submit', function
             if (!Array.isArray(q.correct_answer) || q.correct_answer.length !== blanks || q.correct_answer.some(a => !a || !a.length)) {
                 e.preventDefault();
                 alert('Câu ' + (i + 1) + ' chưa nhập đủ đáp án cho từng chỗ trống.');
+                return;
+            }
+            if (q.linked_to_passage && !readingPassage) {
+                e.preventDefault();
+                alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng bạn chưa nhập Reading Passage ở trên.');
                 return;
             }
         } else if (q.type === 'error_correction') {

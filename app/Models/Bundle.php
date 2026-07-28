@@ -77,6 +77,16 @@ class Bundle extends Model implements TranslatableContract
         return $this->belongsTo('App\User', 'teacher_id', 'id');
     }
 
+    public function duplicateSource()
+    {
+        return $this->belongsTo('App\Models\Bundle', 'duplicated_from_id', 'id');
+    }
+
+    public function isCopy(): bool
+    {
+        return !empty($this->duplicated_from_id);
+    }
+
     public function category()
     {
         return $this->belongsTo('App\Models\Category', 'category_id', 'id');
@@ -699,6 +709,10 @@ class Bundle extends Model implements TranslatableContract
         }
 
         return $count;
+    }
+    public function isHidden(): bool
+    {
+        return !empty($this->hidden_at);
     }
 }
 

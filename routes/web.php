@@ -9,6 +9,10 @@ Route::middleware(['web', 'share', 'check_maintenance', 'check_restriction'])->p
     Route::post('/start', [PlacementPlayController::class, 'start'])->name('placement.start');
     Route::get('/take', [PlacementPlayController::class, 'take'])->name('placement.take');
     Route::post('/submit', [PlacementPlayController::class, 'submitTest'])->name('placement.submit');
+    Route::get('/speaking', [PlacementPlayController::class, 'speaking'])->name('placement.speaking');
+    Route::post('/speaking/submit', [PlacementPlayController::class, 'submitSpeaking'])->name('placement.submit_speaking');
+    Route::get('/finished', [PlacementPlayController::class, 'finished'])->name('placement.finished');
+    Route::get('/request-login', [PlacementPlayController::class, 'requestLogin'])->name('placement.request_login');   // ← dòng mới
     Route::get('/result', [PlacementPlayController::class, 'result'])->name('placement.result');
 });
  
@@ -442,6 +446,8 @@ Route::group(['prefix' => 'manager', 'namespace' => 'Admin', 'middleware' => ['w
     Route::get('login', 'LoginController@showLoginForm');
     Route::post('login', 'LoginController@login');
     Route::get('logout', 'LoginController@logout');
+    Route::post('/panel/bundles/{id}/resubmit', [BundlesController::class, 'resubmitForReview']);
+    Route::post('/panel/bundles/{id}/resubmit-review', [\App\Http\Controllers\Panel\BundlesController::class, 'resubmitForReview']);
     
     // Dashboard
     Route::group(['middleware' => 'admin'], function () {

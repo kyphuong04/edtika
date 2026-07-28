@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\PlacementSpeakingQuestion; 
 
 class PlacementTestController extends Controller
 {
@@ -65,9 +66,10 @@ class PlacementTestController extends Controller
         $placementTest = null;
         $questionsData = [];
         [$existingTests, $poolProgress] = $this->getTestsListWithProgress();
+        $speakingQuestions = PlacementSpeakingQuestion::orderByDesc('created_at')->get();
 
         return view('admin.placement_tests.form', compact(
-            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress'
+            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress', 'speakingQuestions'
         ));
     }
 
@@ -80,12 +82,6 @@ class PlacementTestController extends Controller
 
         $questionsData = $placementTest->questions->map(function (PlacementQuestion $q) {
             $rawCorrect = $q->correct_answer;
-
-            // DB luôn lưu correct_answer dạng mảng (chuẩn hoá ở syncQuestions).
-            // Ở đây "giải nén" lại về đúng định dạng JS phía client đang thao tác:
-            //  - multiple_choice / listening_image_choice: chuỗi phẳng (vd "Option A" / "A")
-            //  - error_correction: đưa vào field correct_answer_text riêng
-            //  - sentence_completion: giữ nguyên mảng lồng theo từng chỗ trống
             $correctAnswerFlat = null;
             $correctAnswerText = '';
             $correctAnswerNested = null;
@@ -127,9 +123,10 @@ class PlacementTestController extends Controller
         })->values();
 
         [$existingTests, $poolProgress] = $this->getTestsListWithProgress();
+        $speakingQuestions = PlacementSpeakingQuestion::orderByDesc('created_at')->get();
 
         return view('admin.placement_tests.form', compact(
-            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress'
+            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress', 'speakingQuestions'
         ));
     }
 
@@ -365,6 +362,11 @@ class PlacementTestController extends Controller
                     throw new \RuntimeException('Câu ' . ($index + 1) . ' chưa nhập đủ đáp án cho các chỗ trống.');
                 }
                 $correctAnswer = $q['correct_answer'];
+
+                $linkedToPassage = !empty($q['linked_to_passage']);
+                if ($linkedToPassage) {
+                    $passageLinkedCount++;
+                }
             } elseif ($type === 'error_correction') {
                 $answerText = trim((string) ($q['correct_answer_text'] ?? ''));
                 if ($answerText === '') {

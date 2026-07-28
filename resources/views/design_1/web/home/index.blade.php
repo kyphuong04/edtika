@@ -3702,21 +3702,17 @@
                 <nav class="edtika-homepage__nav" aria-label="{{ $t['header']['mainNavAria'] }}">
                     <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $t['nav']['home'] }}</a>
                     <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $t['nav']['classes'] }}</a>
-                    @if(auth()->check())
-                        <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
-                    @else
-                        <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['placementTest'] }}</a>
-                    @endif
+
+                    <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
+
                     @if(auth()->check())
                         <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $t['nav']['mockTest'] }}</a>
                     @else
                         <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['mockTest'] }}</a>
                     @endif
-                    @if(auth()->check())
-                        <a href="/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
-                    @else
-                        <a href="/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
-                    @endif
+
+                    <a href="/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
+
                     <a href="/blog" class="edtika-homepage__nav-link {{ $isNewsActive ? 'is-active' : '' }}">{{ $t['nav']['knowledge&news'] }}</a>
                 </nav>
 
@@ -4352,6 +4348,24 @@
         </div>
     </div>
 @endsection
+
+@if(session('open_auth_modal'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var trigger = document.querySelector('[data-open-auth-modal]');
+    if (trigger) {
+        trigger.click();
+    }
+
+    @if(session('open_auth_tab') === 'register')
+    var registerTabBtn = document.querySelector('[data-auth-tab="register"]');
+    if (registerTabBtn) {
+        registerTabBtn.click();
+    }
+    @endif
+});
+</script>
+@endif
 
 @push('scripts_bottom')
     <script>
