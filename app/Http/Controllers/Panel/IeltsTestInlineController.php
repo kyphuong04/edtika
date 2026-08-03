@@ -112,6 +112,23 @@ class IeltsTestInlineController extends Controller
         ]);
     }
 
+    public function previewInline($id)
+    {
+        $this->authorizeCreatorAccess();
+
+        $test = $this->findOwnedInlineTestOrFail($id);
+
+        return view('design_1.panel.ielts_tests_manage.preview.index', [
+            'pageTitle' => 'Xem trước: ' . $test->title,
+            'test' => $test,
+            'previewData' => $this->buildInlineTestData($test),
+            'backUrl' => route('panel.my_ielts_tests.edit_inline', [
+                'id' => $test->id,
+                'restore_state' => 1,
+            ]),
+        ]);
+    }
+
     public function getAutosaveDraft(Request $request)
     {
         $this->authorizeCreatorAccess();
