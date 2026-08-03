@@ -196,6 +196,10 @@ class LoginController extends Controller
             'status' => 'error'
         ];
 
+        if (request()->wantsJson()) {
+            return response()->json(['message' => $toastData['msg']], 403);
+        }
+
         return redirect('/login')->with(['toast' => $toastData]);
     }
 
@@ -206,6 +210,10 @@ class LoginController extends Controller
             'msg' => trans('update.device_limit_reached_please_try_again'),
             'status' => 'error'
         ];
+
+        if (request()->wantsJson()) {
+            return response()->json(['message' => $toastData['msg']], 403);
+        }
 
         return redirect('/')->with(['login_failed_active_session' => $toastData]);
     }
@@ -241,10 +249,16 @@ class LoginController extends Controller
             $checkConfirmed = $verificationController->checkConfirmed($user, $this->getUsername($request), $this->getUsernameValue($request));
 
             if ($checkConfirmed['status'] == 'send') {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status'        => 'verification_required',
+                        'username'      => $this->getUsername($request),
+                        'usernameValue' => $this->getUsernameValue($request),
+                    ]);
+                }
                 return redirect('/verification');
             } elseif ($checkConfirmed['status'] == 'verified') {
                 Auth::login($user);
-
                 $user->update([
                     'status' => User::$active,
                 ]);
@@ -284,32 +298,30 @@ class LoginController extends Controller
         $cartManagerController = new CartManagerController();
         $cartManagerController->storeCookieCartsToDB($request);
 
-        // $userLoginHistoryMixin = new UserLoginHistoryMixin();
-        // $userLoginHistoryMixin->storeUserLoginHistory($user);
-
-        // if ($user->isAdmin()) {
-        //     return redirect(getAdminPanelUrl());
-        // } else {
-        //     return redirect('/panel');
-        // }
         $userLoginHistoryMixin = new UserLoginHistoryMixin();
         $userLoginHistoryMixin->storeUserLoginHistory($user);
 
-        // Nếu có URL được yêu cầu quay lại trước đó (vd: từ Placement Test guest flow
-        // qua PlacementPlayController::requestLogin(), hoặc middleware auth chuẩn của
-        // Laravel) -> ưu tiên quay lại đúng đó thay vì luôn về /panel theo role.
         if ($request->session()->has('url.intended')) {
-            return redirect()->intended();
+            $response = redirect()->intended();
+
+            if ($request->wantsJson()) {
+                return response()->json(['status' => 'ok', 'redirect' => $response->getTargetUrl()]);
+            }
+
+            return $response;
         }
 
-        // Redirect based on role
         if ($user->isAdmin()) {
-            // Admin, Manager, CEO → Admin Panel
-            return redirect(getAdminPanelUrl());
+            $redirectUrl = getAdminPanelUrl();
         } else {
-            // User (lead), Student, Teacher → User Panel
-            return redirect('/panel');
+            $redirectUrl = '/panel';
         }
+
+        if ($request->wantsJson()) {
+            return response()->json(['status' => 'ok', 'redirect' => $redirectUrl]);
+        }
+
+        return redirect($redirectUrl);
     }
 
     private function checkLoginDeviceLimit($user)

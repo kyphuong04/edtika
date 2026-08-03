@@ -112,6 +112,8 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
 
         Route::get('/users/{user}/placement-result', [PlacementResultController::class, 'show'])
             ->name('admin.users.placement_result');
+        Route::get('/users/{user}/placement-result/detail', [PlacementResultController::class, 'detail'])
+            ->name('admin.users.placement_result_detail');
 
         Route::group(['prefix' => 'users'], function () {
             Route::get('/create', 'UserController@create');

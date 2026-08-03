@@ -281,6 +281,7 @@ function blankQuestionTemplate() {
         blank_hints: [],
         correct_answer: null,
         correct_answer_text: '',
+        answer_help: '',
         points: 1,
         audio_input_name: null,
         existing_audio_path: null,
@@ -318,6 +319,7 @@ function changeType(index, type) {
         type,
         question_text: questions[index].question_text,
         points: questions[index].points,
+        answer_help: questions[index].answer_help,
         has_audio: type === 'listening_image_choice' ? true : questions[index].has_audio,
         audio_input_name: questions[index].audio_input_name,
         existing_audio_path: questions[index].existing_audio_path,
@@ -556,6 +558,13 @@ function renderQuestionCard(q, index) {
         </div>
     ` : '';
 
+    const answerHelpBlock = `
+        <div class="form-group mt-2">
+            <label class="input-label">Giải thích đáp án <small class="text-muted">(chỉ Manager/CEO thấy khi xem chi tiết bài làm học viên — học viên không bao giờ thấy)</small></label>
+            <textarea class="form-control" rows="2" placeholder="VD: Dùng 'have been' vì đây là thì hiện tại hoàn thành tiếp diễn, diễn tả hành động bắt đầu trong quá khứ và vẫn tiếp diễn." oninput="updateField(${index}, 'answer_help', this.value)">${escapeHtml(q.answer_help || '')}</textarea>
+        </div>
+    `;
+
     return `<div class="pt-question-card">
         <span class="pt-q-badge">Câu ${index + 1} · ${TYPE_LABELS[q.type] || q.type}</span>
         <button type="button" class="pt-remove-btn" style="position:absolute;top:16px;right:16px;font-size:16px;" onclick="removeQuestion(${index})" title="Xoá câu"><i class="fas fa-trash"></i></button>
@@ -587,6 +596,7 @@ function renderQuestionCard(q, index) {
         </div>
 
         ${bodyHtml}
+        ${answerHelpBlock}
     </div>`;
 }
 

@@ -49,8 +49,19 @@
             </button>
 
             <div class="dropdown-menu dropdown-menu-right shadow rounded-12 border-0 mt-8" style="min-width:220px;">
-                @forelse($enrolledCourses as $course)
+                <!-- @forelse($enrolledCourses as $course)
                     <a class="dropdown-item d-flex align-items-center gap-8 py-8 px-12" href="{{ $course->getLearningPageUrl() }}">
+                        <div class="size-32 rounded-8 bg-gray-100 flex-shrink-0">
+                            <img src="{{ $course->getIcon() }}" alt="" class="img-cover rounded-8">
+                        </div>
+                        <span class="font-12 text-dark">{{ truncate($course->title, 28) }}</span>
+                    </a>
+                @empty
+                    <span class="dropdown-item font-12 text-gray-500">No courses enrolled</span>
+                @endforelse -->
+                @forelse($enrolledCourses as $course)
+                    <a class="dropdown-item d-flex align-items-center gap-8 py-8 px-12"
+                    href="{{ url('/panel/courses/purchases/' . $course->slug) }}">
                         <div class="size-32 rounded-8 bg-gray-100 flex-shrink-0">
                             <img src="{{ $course->getIcon() }}" alt="" class="img-cover rounded-8">
                         </div>

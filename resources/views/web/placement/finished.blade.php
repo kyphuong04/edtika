@@ -39,13 +39,37 @@
         CEFR của bạn và lưu lại kết quả này vào hồ sơ học tập.
     </p>
 
-    <a href="{{ route('placement.request_login') }}" class="pt-finished-btn">
+    <!-- <a href="{{ route('placement.request_login') }}" class="pt-finished-btn">
         <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập để xem kết quả
     </a>
 
     <span class="pt-finished-secondary">
         Chưa có tài khoản?
         <a href="{{ route('placement.request_login', ['tab' => 'register']) }}">Đăng ký ngay</a>
+    </span> -->
+
+    <a href="#" class="pt-finished-btn" data-open-auth-modal="true">
+        <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập để xem kết quả
+    </a>
+
+    <span class="pt-finished-secondary">
+        Chưa có tài khoản?
+        <a href="#" id="ptRegisterTrigger">Đăng ký ngay</a>
     </span>
 </div>
+<script>
+document.getElementById('ptRegisterTrigger').addEventListener('click', function (e) {
+    e.preventDefault();
+
+    var loginTrigger = document.querySelector('[data-open-auth-modal="true"]');
+    if (loginTrigger) {
+        loginTrigger.click(); // mở modal (layout tự set tab login)
+    }
+
+    var registerTabBtn = document.querySelector('[data-auth-tab="register"]');
+    if (registerTabBtn) {
+        registerTabBtn.click(); // chuyển sang tab đăng ký
+    }
+});
+</script>
 @endsection

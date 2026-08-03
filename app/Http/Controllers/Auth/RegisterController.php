@@ -274,11 +274,16 @@ class RegisterController extends Controller
         $referralCode = $request->get('referral_code', null);
 
         if ($checkConfirmed['status'] == 'send') {
-
             if (!empty($referralCode)) {
                 session()->put('referralCode', $referralCode);
             }
-
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status'        => 'verification_required',
+                    'username'      => $registerMethod,
+                    'usernameValue' => $value,
+                ]);
+            }
             return redirect('/verification');
         } elseif ($checkConfirmed['status'] == 'verified') {
             $this->guard()->login($user);
@@ -312,11 +317,14 @@ class RegisterController extends Controller
                 return $response;
             }
 
-            return $request->wantsJson()
-                ? new JsonResponse([], 201)
-                : redirect($this->redirectPath());
+            if ($request->wantsJson()) {
+                return new JsonResponse([
+                    'status'   => 'registered',
+                    'redirect' => $this->redirectPath(),
+                ], 201);
+            }
+            return redirect($this->redirectPath());
         }
     }
-
 }
 

@@ -3,6 +3,11 @@
         <i class="fas fa-info-circle mr-2"></i>Học viên này chưa hoàn thành bài Placement Test.
     </div>
 @else
+    <div class="mb-16">
+        <a href="{{ route('admin.users.placement_result_detail', $user) }}" class="btn btn-primary btn-sm" target="_blank">
+            <i class="fas fa-file-alt mr-2"></i>Xem chi tiết bài làm
+        </a>
+    </div>
     <div class="row mb-20">
         <div class="col-md-6">
             <div style="border:2px solid #511D99;border-radius:12px;padding:16px;text-align:center;">
@@ -33,7 +38,12 @@
             @forelse(($attempt->levels_taken ?? []) as $i => $level)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td><span class="badge badge-primary">{{ $level }}</span></td>
+                    <td>
+                        <span class="badge badge-primary">{{ $level }}</span>
+                        @if(!$attempt->isStepScored($i))
+                            <span class="badge badge-secondary ml-1">Tham khảo — không tính điểm</span>
+                        @endif
+                    </td>
                     <td>{{ ($attempt->scores[$i] ?? '—') }} / 10</td>
                 </tr>
             @empty

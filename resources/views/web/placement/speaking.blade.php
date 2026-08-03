@@ -40,6 +40,9 @@
 .pt-mic-divider { border:none; border-top:1px solid #e5e7eb; margin:28px 0 20px; }
 .pt-mic-continue-btn { width:100%; padding:14px; border-radius:14px; border:none; font-weight:700; font-size:16px; cursor:pointer; background:#511D99; color:#fff; box-shadow:0 8px 20px rgba(81,29,153,.3); }
 .pt-mic-skip-link { display:block; margin-top:14px; font-size:13px; color:#9ca3af; text-decoration:underline; cursor:pointer; }
+.pt-mic-timer { display:inline-block; background:#f5f3ff; color:#511D99; font-weight:700; font-size:18px; font-variant-numeric: tabular-nums; padding:6px 16px; border-radius:12px; margin-bottom:20px; }
+.pt-mic-timer.is-warning { background:#fbbf24; color:#78350f; }
+
 </style>
 @endpush
 
@@ -51,6 +54,7 @@
 <div class="pt-mic-wrap">
     <div class="pt-mic-card">
         <h2 class="pt-mic-title">Phần thi Nói (Speaking)</h2>
+        <div class="pt-mic-timer" id="ptSpeakingTimer">--:--</div>
 
         @if($question)
             <div class="pt-mic-question">{{ $question->question_text }}</div>
@@ -230,6 +234,34 @@
         recordingInput.value = '';
         document.getElementById('ptSpeakingForm').submit();
     });
+})();
+(function () {
+    var seconds = {{ (int) $remainingSeconds }};
+    var el = document.getElementById('ptSpeakingTimer');
+    var form = document.getElementById('ptSpeakingForm');
+    var autoSubmitted = false;
+
+    function render() {
+        var m = String(Math.floor(Math.max(seconds, 0) / 60)).padStart(2, '0');
+        var s = String(Math.max(seconds, 0) % 60).padStart(2, '0');
+        el.textContent = m + ':' + s;
+        el.classList.toggle('is-warning', seconds <= 60);
+    }
+
+    render();
+
+    var timer = setInterval(function () {
+        seconds--;
+        render();
+
+        if (seconds <= 0 && !autoSubmitted) {
+            autoSubmitted = true;
+            clearInterval(timer);
+            // Hết giờ -> tự nộp form Speaking với bất kỳ ghi âm nào đã có
+            // (kể cả chưa ghi âm gì), server sẽ tự xử lý như 1 lần nộp bình thường.
+            form.submit();
+        }
+    }, 1000);
 })();
 </script>
 @endsection

@@ -23,20 +23,45 @@ class Verification extends Model
         return $this->belongsTo('App\User');
     }
 
+    // public function sendEmailCode()
+    // {
+    //     if (app()->environment('production')) {
+    //         $this->notify(new SendVerificationEmailCode($this));
+    //     }
+
+    //     return true;
+    // }
+
+    // public function sendSMSCode()
+    // {
+    //     if (app()->environment('production')) {
+    //         $this->notify(new SendVerificationSMSCode($this));
+    //     }
+    // }
+
+    // public function sendEmailCode()
+    // {
+    //     if (config('services.verification.enabled', true)) {
+    //         $this->notify( new SendVerificationEmailCode($this));
+    //     }
+    //     return true;
+    // }
+
+    // public function sendSMSCode()
+    // {
+    //     $this->notify(new SendVerificationSMSCode($this));
+    // }
+
     public function sendEmailCode()
     {
-        if (app()->environment('production')) {
-            $this->notify(new SendVerificationEmailCode($this));
-        }
+        $this->notify(new SendVerificationEmailCode($this));
 
         return true;
     }
 
     public function sendSMSCode()
     {
-        if (app()->environment('production')) {
-            $this->notify(new SendVerificationSMSCode($this));
-        }
+        $this->notify(new SendVerificationSMSCode($this));
     }
 }
 

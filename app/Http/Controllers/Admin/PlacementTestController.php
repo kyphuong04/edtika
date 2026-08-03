@@ -100,6 +100,7 @@ class PlacementTestController extends Controller
                 'type'                    => $q->type,
                 'has_audio'               => $q->has_audio,
                 'linked_to_passage'       => $q->linked_to_passage,
+                'answer_help'             => $q->answer_help,
                 'audio_url'               => $q->audio_path ? Storage::url($q->audio_path) : null,
                 'existing_audio_path'     => $q->audio_path,
                 'audio_input_name'        => null,
@@ -408,6 +409,7 @@ class PlacementTestController extends Controller
                 'word_bank'         => $wordBank,
                 'blank_hints'       => $blankHints,
                 'correct_answer'    => $correctAnswer,
+                'answer_help'       => trim((string) ($q['answer_help'] ?? '')) ?: null,
                 'points'            => $q['points'] ?? 1,
             ]);
         }

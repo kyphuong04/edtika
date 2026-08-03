@@ -142,6 +142,90 @@ class VerificationController extends Controller
         abort(404);
     }
 
+    // public function confirmCode(Request $request)
+    // {
+    //     $username = $request->get('username');
+    //     $usernameValue = $request->get('usernameValue');
+    //     $time = time();
+
+    //     $code = $request->get('code');
+
+    //     if (is_array($code)) {
+    //         $code = array_filter($code, function ($value) {
+    //             return $value !== null;
+    //         });
+    //     }
+
+    //     if (empty($code) or count($code) != 5) {
+    //         return back()->withErrors([
+    //             'code' => trans('update.verification_code_required'),
+    //         ]);
+    //     }
+
+    //     $code = implode('', $code);
+
+    //     $verification = Verification::where($username, $usernameValue)
+    //         ->whereNull('verified_at')
+    //         ->where('code', $code)
+    //         ->first();
+
+    //     if (empty($verification)) {
+    //         return back()->withErrors([
+    //             'code' => trans('update.verification_code_is_invalid'),
+    //         ]);
+    //     }
+
+    //     if ($verification->expired_at < time()) {
+    //         return back()->withErrors([
+    //             'code' => trans('update.verification_code_is_expired'),
+    //         ]);
+    //     }
+
+    //     $verification->update([
+    //         'verified_at' => $time,
+    //         'expired_at' => $time + 50,
+    //     ]);
+
+    //     $authUser = auth()->check() ? auth()->user() : null;
+    //     $referralCode = session()->get('referralCode', null);
+
+    //     if (empty($authUser)) {
+    //         $authUser = User::where($username, $usernameValue)
+    //             ->first();
+
+    //         $loginController = new LoginController();
+
+    //         if (!empty($authUser)) {
+    //             if (\Auth::loginUsingId($authUser->id)) {
+
+    //                 if (!empty($referralCode)) {
+    //                     Affiliate::storeReferral($authUser, $referralCode);
+    //                 }
+
+    //                 $enableRegistrationBonus = false;
+    //                 $registrationBonusAmount = null;
+    //                 $registrationBonusSettings = getRegistrationBonusSettings();
+    //                 if (!empty($registrationBonusSettings['status']) and !empty($registrationBonusSettings['registration_bonus_amount'])) {
+    //                     $enableRegistrationBonus = true;
+    //                     $registrationBonusAmount = $registrationBonusSettings['registration_bonus_amount'];
+    //                 }
+
+    //                 $authUser->update([
+    //                     'enable_registration_bonus' => $enableRegistrationBonus,
+    //                     'registration_bonus_amount' => $registrationBonusAmount,
+    //                 ]);
+
+    //                 $registrationBonusAccounting = new RegistrationBonusAccounting();
+    //                 $registrationBonusAccounting->storeRegistrationBonusInstantly($authUser);
+
+    //                 return $loginController->afterLogged($request, true);
+    //             }
+    //         }
+
+    //         return $loginController->sendFailedLoginResponse($request);
+    //     }
+    // }
+
     public function confirmCode(Request $request)
     {
         $username = $request->get('username');
@@ -157,9 +241,10 @@ class VerificationController extends Controller
         }
 
         if (empty($code) or count($code) != 5) {
-            return back()->withErrors([
-                'code' => trans('update.verification_code_required'),
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json(['errors' => ['code' => [trans('update.verification_code_required')]]], 422);
+            }
+            return back()->withErrors(['code' => trans('update.verification_code_required')]);
         }
 
         $code = implode('', $code);
@@ -170,15 +255,17 @@ class VerificationController extends Controller
             ->first();
 
         if (empty($verification)) {
-            return back()->withErrors([
-                'code' => trans('update.verification_code_is_invalid'),
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json(['errors' => ['code' => [trans('update.verification_code_is_invalid')]]], 422);
+            }
+            return back()->withErrors(['code' => trans('update.verification_code_is_invalid')]);
         }
 
         if ($verification->expired_at < time()) {
-            return back()->withErrors([
-                'code' => trans('update.verification_code_is_expired'),
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json(['errors' => ['code' => [trans('update.verification_code_is_expired')]]], 422);
+            }
+            return back()->withErrors(['code' => trans('update.verification_code_is_expired')]);
         }
 
         $verification->update([
@@ -190,14 +277,11 @@ class VerificationController extends Controller
         $referralCode = session()->get('referralCode', null);
 
         if (empty($authUser)) {
-            $authUser = User::where($username, $usernameValue)
-                ->first();
-
+            $authUser = User::where($username, $usernameValue)->first();
             $loginController = new LoginController();
 
             if (!empty($authUser)) {
                 if (\Auth::loginUsingId($authUser->id)) {
-
                     if (!empty($referralCode)) {
                         Affiliate::storeReferral($authUser, $referralCode);
                     }
@@ -218,7 +302,14 @@ class VerificationController extends Controller
                     $registrationBonusAccounting = new RegistrationBonusAccounting();
                     $registrationBonusAccounting->storeRegistrationBonusInstantly($authUser);
 
-                    return $loginController->afterLogged($request, true);
+                    $response = $loginController->afterLogged($request, true);
+
+                    if ($request->wantsJson()) {
+                        $redirectUrl = method_exists($response, 'getTargetUrl') ? $response->getTargetUrl() : url('/panel');
+                        return response()->json(['status' => 'ok', 'redirect' => $redirectUrl]);
+                    }
+
+                    return $response;
                 }
             }
 

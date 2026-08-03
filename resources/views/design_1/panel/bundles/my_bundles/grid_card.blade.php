@@ -59,11 +59,11 @@
 
         <div class="actions-dropdown__dropdown-menu dropdown-menu-width-200 dropdown-menu-top-28">
             <ul class="my-8">
-                @can('panel_bundles_create')
+                <!-- @can('panel_bundles_create')
                     <li class="actions-dropdown__dropdown-menu-item">
                         <a href="/panel/bundles/{{ $bundle->id }}/edit">{{ trans('public.edit') }}</a>
                     </li>
-                @endcan
+                @endcan -->
 
                 @can('panel_bundles_courses')
                     <li class="actions-dropdown__dropdown-menu-item">

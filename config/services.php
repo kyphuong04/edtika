@@ -57,4 +57,8 @@ return [
         'otp_message' => "your verification code: ##OTP##",
         'otp_length' => 5,
     ],
+
+    'verification' => [
+        'enabled' => env('VERIFICATION_EMAIL_ENABLED', true),
+    ],
 ];

@@ -91,15 +91,16 @@ class PlacementPlayController extends Controller
             }
 
             $attempt = IeltsPlacementAttempt::create([
-                'user_id'         => $user?->id, // null nếu khách chưa đăng nhập
-                'status'          => 'in_progress',
-                'current_step'    => 1,
-                'current_test_id' => $firstTest->id,
-                'test_ids_taken'  => [],
-                'levels_taken'    => [],
-                'scores'          => [],
-                'current_level'   => PlacementAdaptiveEngine::FIRST_LEVEL,
-                'started_at'      => now(),
+                'user_id'                  => $user?->id,
+                'status'                   => 'in_progress',
+                'current_step'             => 1,
+                'current_test_id'          => $firstTest->id,
+                'test_ids_taken'           => [],
+                'levels_taken'             => [],
+                'scores'                   => [],
+                'current_level'            => PlacementAdaptiveEngine::FIRST_LEVEL,
+                'started_at'               => now(),
+                'current_step_started_at'  => now(),
             ]);
 
             // Ghi nhớ attempt này trong session để nhận lại được xuyên suốt các
@@ -195,14 +196,37 @@ class PlacementPlayController extends Controller
             return redirect()->route('placement.entry');
         }
 
+        if ($attempt->isTimeUp()) {
+            return $this->finalizeSpeakingOnTimeout($attempt, $request);
+        }
+
         $question = $attempt->speaking_question_id
             ? PlacementSpeakingQuestion::find($attempt->speaking_question_id)
             : null;
 
         return view('web.placement.speaking', [
-            'attempt'  => $attempt,
-            'question' => $question,
+            'attempt'          => $attempt,
+            'question'         => $question,
+            'remainingSeconds' => $attempt->remainingSeconds(),
         ]);
+    }
+
+    /**
+     * Hết 7 phút mà học viên chưa nộp Speaking -> tự hoàn tất attempt, không có
+     * ghi âm (giống hành vi "Bỏ qua"), không chấm điểm phần này (vốn dĩ không
+     * chấm điểm) nên không cần grade gì thêm.
+     */
+    private function finalizeSpeakingOnTimeout(IeltsPlacementAttempt $attempt, Request $request)
+    {
+        $attempt->status = 'completed';
+        $attempt->completed_at = now();
+        $attempt->save();
+
+        if (!$request->user()) {
+            return redirect()->route('placement.finished');
+        }
+
+        return redirect()->route('placement.result');
     }
 
     public function submitSpeaking(Request $request)
@@ -254,6 +278,8 @@ class PlacementPlayController extends Controller
         if (!$attempt) {
             return redirect()->route('placement.entry');
         }
+
+        $request->session()->put('url.intended', route('placement.result'));
 
         return view('web.placement.finished');
     }
@@ -566,8 +592,38 @@ class PlacementPlayController extends Controller
         $testIdsTaken[] = $attempt->current_test_id;
         $scores[] = $score;
 
+        // Nếu final_level đã bị KHOÁ từ vòng trước (rơi vào 1 trong 4 trường hợp
+        // đặc biệt), đề vừa nộp chính là đề tham khảo (đề 3) -> không gọi lại
+        // engine nữa, đi thẳng sang Speaking/hoàn tất với final_level đã chốt.
+        if ($attempt->final_level) {
+            return $this->moveToSpeakingOrFinish($attempt, $attempt->final_level, $testIdsTaken, $levelsTaken, $scores);
+        }
+
         $decision = $this->engine->decideNext($levelsTaken, $scores);
         $timeUp = $attempt->isTimeUp();
+
+        if ($decision['action'] === 'continue_locked') {
+            $nextTest = $this->pickTestForLevel($decision['next_level'], $testIdsTaken);
+
+            if (!$nextTest) {
+                // Không có đề tham khảo để giao -> coi như hoàn tất luôn, final_level vẫn chốt đúng.
+                return $this->moveToSpeakingOrFinish($attempt, $decision['final_level'], $testIdsTaken, $levelsTaken, $scores);
+            }
+
+            $attempt->update([
+                'current_step'            => count($levelsTaken) + 1,
+                'current_test_id'         => $nextTest->id,
+                'test_ids_taken'          => $testIdsTaken,
+                'levels_taken'            => $levelsTaken,
+                'scores'                  => $scores,
+                'current_level'           => $decision['next_level'],
+                'final_level'             => $decision['final_level'],
+                'scored_steps'            => count($levelsTaken), // chỉ 2 đề đầu được tính
+                'current_step_started_at' => now(),
+            ]);
+
+            return redirect()->route('placement.take');
+        }
 
         if ($timeUp || $decision['action'] === 'stop' || count($levelsTaken) >= PlacementAdaptiveEngine::MAX_STEPS) {
             $finalLevel = $decision['action'] === 'stop'
@@ -584,12 +640,13 @@ class PlacementPlayController extends Controller
         }
 
         $attempt->update([
-            'current_step'    => count($levelsTaken) + 1,
-            'current_test_id' => $nextTest->id,
-            'test_ids_taken'  => $testIdsTaken,
-            'levels_taken'    => $levelsTaken,
-            'scores'          => $scores,
-            'current_level'   => $decision['next_level'],
+            'current_step'            => count($levelsTaken) + 1,
+            'current_test_id'         => $nextTest->id,
+            'test_ids_taken'          => $testIdsTaken,
+            'levels_taken'            => $levelsTaken,
+            'scores'                  => $scores,
+            'current_level'           => $decision['next_level'],
+            'current_step_started_at' => now(),
         ]);
 
         return redirect()->route('placement.take');
@@ -601,14 +658,15 @@ class PlacementPlayController extends Controller
 
         if ($speakingQuestion) {
             $attempt->update([
-                'status'               => 'speaking',
-                'current_test_id'      => null,
-                'test_ids_taken'       => $testIdsTaken,
-                'levels_taken'         => $levelsTaken,
-                'scores'               => $scores,
-                'final_level'          => $finalLevel,
-                'current_level'        => $finalLevel,
-                'speaking_question_id' => $speakingQuestion->id,
+                'status'                   => 'speaking',
+                'current_test_id'          => null,
+                'test_ids_taken'           => $testIdsTaken,
+                'levels_taken'             => $levelsTaken,
+                'scores'                   => $scores,
+                'final_level'              => $finalLevel,
+                'current_level'            => $finalLevel,
+                'speaking_question_id'     => $speakingQuestion->id,
+                'current_step_started_at'  => now(),
             ]);
 
             return redirect()->route('placement.speaking');

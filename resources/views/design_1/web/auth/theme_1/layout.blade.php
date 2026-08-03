@@ -3,6 +3,53 @@
 @push("styles_top")
     <link rel="stylesheet" href="/assets/default/vendors/swiper/swiper-bundle.min.css">
     <link rel="stylesheet" href="{{ getDesign1StylePath("auth/theme_1") }}">
+    @push("styles_top")
+    <link rel="stylesheet" href="/assets/default/vendors/swiper/swiper-bundle.min.css">
+    <link rel="stylesheet" href="{{ getDesign1StylePath("auth/theme_1") }}">
+
+    <style>
+        .auth-page-card .btn-primary,
+        .auth-page-card .js-submit-form-btn {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+        }
+        .auth-page-card .btn-primary:hover,
+        .auth-page-card .js-submit-form-btn:hover {
+            background-color: #3f1677 !important;
+            border-color: #3f1677 !important;
+        }
+        .auth-page-card .form-control:focus {
+            border-color: #511D99 !important;
+            box-shadow: 0 0 0 0.2rem rgba(81, 29, 153, 0.15) !important;
+        }
+        .auth-page-card a,
+        .auth-page-card .text-dark {
+            color: #15151d;
+        }
+        .auth-page-card .font-weight-bold.text-dark:hover,
+        .auth-page-card a.font-weight-bold {
+            color: #511D99 !important;
+        }
+        .auth-page-card .custom-control-input:checked ~ .custom-control__label::before,
+        .auth-page-card .custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+        }
+        .auth-page-card .auth-register-method-item input:checked + label {
+            background-color: #511D99 !important;
+            border-color: #511D99 !important;
+            color: #fff !important;
+        }
+        .auth-slider-container .swiper-pagination-bullet-active {
+            background: #511D99 !important;
+        }
+        .password-input-visibility svg,
+        .password-input-visibility .icons-eye,
+        .password-input-visibility .icons-eye-slash {
+            color: #511D99 !important;
+        }
+    </style>
+@endpush
 @endpush
 
 @section("content")
