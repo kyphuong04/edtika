@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Panel;
 
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use App\Models\IeltsQuestionGroup;
 use App\Models\IeltsTest;
@@ -19,6 +20,43 @@ use Illuminate\Support\Str;
 
 class IeltsTestInlineController extends Controller
 {
+    /**
+     * Thứ tự skill CỐ ĐỊNH, quyết định cách question_number được đánh liên
+     * tục qua các skill. PHẢI khớp với SKILL_ORDER trong state.js (preview)
+     * — nếu khác, số thứ tự câu hỏi ở preview sẽ lệch so với số thật lưu DB.
+     */
+    private const SKILL_ORDER = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
+
+    /**
+     * Sắp lại thứ tự key của $groupsData['sections'] theo SKILL_ORDER,
+     * không phụ thuộc thứ tự key trong JSON client gửi lên (JS object order
+     * thường ổn định nhưng không nên là điểm tựa duy nhất cho 1 giá trị
+     * quan trọng như question_number).
+     */
+    private function reorderSectionsBySkill(array $groupsData): array
+    {
+        if (empty($groupsData['sections']) || !is_array($groupsData['sections'])) {
+            return $groupsData;
+        }
+
+        $ordered = [];
+        foreach (self::SKILL_ORDER as $skill) {
+            if (array_key_exists($skill, $groupsData['sections'])) {
+                $ordered[$skill] = $groupsData['sections'][$skill];
+            }
+        }
+
+        // Giữ lại skill lạ (nếu phát sinh sau này) ở cuối, không mất dữ liệu.
+        foreach ($groupsData['sections'] as $skill => $sectionData) {
+            if (!array_key_exists($skill, $ordered)) {
+                $ordered[$skill] = $sectionData;
+            }
+        }
+
+        $groupsData['sections'] = $ordered;
+
+        return $groupsData;
+    }
     public function chooseMethod()
     {
         $this->authorizeCreatorAccess();
@@ -117,11 +155,13 @@ class IeltsTestInlineController extends Controller
         $this->authorizeCreatorAccess();
 
         $test = $this->findOwnedInlineTestOrFail($id);
+        $previewData = $this->resolvePreviewMediaUrls($this->buildInlineTestData($test));
 
         return view('design_1.panel.ielts_tests_manage.preview.index', [
             'pageTitle' => 'Xem trước: ' . $test->title,
             'test' => $test,
-            'previewData' => $this->buildInlineTestData($test),
+            'previewData' => $previewData,
+            'skillOrder' => self::SKILL_ORDER,
             'backUrl' => route('panel.my_ielts_tests.edit_inline', [
                 'id' => $test->id,
                 'restore_state' => 1,
@@ -472,6 +512,7 @@ class IeltsTestInlineController extends Controller
         }
 
         $groupsData = $this->sanitizeInlineGroupsPayload($groupsData);
+        $groupsData = $this->reorderSectionsBySkill($groupsData);
 
         if ($previewMode) {
             $hasAnyPart = false;
@@ -759,6 +800,7 @@ class IeltsTestInlineController extends Controller
         }
 
         $groupsData = $this->sanitizeInlineGroupsPayload($groupsData);
+        $groupsData = $this->reorderSectionsBySkill($groupsData);
 
         if ($previewMode) {
             $hasAnyPart = false;
@@ -1178,6 +1220,81 @@ class IeltsTestInlineController extends Controller
         return $data;
     }
 
+    private function resolvePreviewMediaUrls(array $data): array
+    {
+        foreach ($data['sections'] as $skill => &$sectionData) {
+            if (!empty($sectionData['files']) && is_array($sectionData['files'])) {
+                $sectionData['files'] = $this->resolvePreviewFileGroup($sectionData['files']);
+            }
+
+            // QUAN TRỌNG: không dùng `($sectionData['parts'] ?? [])` ở đây —
+            // toán tử `??` sẽ phá chuỗi tham chiếu khi kết hợp với `as &$part`.
+            if (empty($sectionData['parts']) || !is_array($sectionData['parts'])) {
+                continue;
+            }
+
+            foreach ($sectionData['parts'] as &$part) {
+                if (!empty($part['files']) && is_array($part['files'])) {
+                    $part['files'] = $this->resolvePreviewFileGroup($part['files']);
+                }
+
+                if (empty($part['groups']) || !is_array($part['groups'])) {
+                    continue;
+                }
+
+                foreach ($part['groups'] as &$group) {
+                    if (!empty($group['files']) && is_array($group['files'])) {
+                        $group['files'] = $this->resolvePreviewFileGroup($group['files']);
+                    }
+
+                    if (!empty($group['task_image'])) {
+                        $group['task_image'] = $this->resolvePreviewSingleUrl($group['task_image']);
+                    }
+
+                    if (empty($group['questions']) || !is_array($group['questions'])) {
+                        continue;
+                    }
+
+                    foreach ($group['questions'] as &$question) {
+                        if (!empty($question['question_data']['task_image'])) {
+                            $question['question_data']['task_image'] = $this->resolvePreviewSingleUrl(
+                                $question['question_data']['task_image']
+                            );
+                        }
+                    }
+                    unset($question);
+                }
+                unset($group);
+            }
+            unset($part);
+        }
+        unset($sectionData);
+
+        return $data;
+    }
+
+    private function resolvePreviewFileGroup(array $files): array
+    {
+        foreach ($files as $key => $value) {
+            $files[$key] = $this->resolvePreviewSingleUrl($value);
+        }
+
+        return $files;
+    }
+
+    private function resolvePreviewSingleUrl($path): ?string
+    {
+        if (empty($path)) {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $path) || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
     private function buildInlineQuestionData(IeltsTestQuestion $question): array
     {
         $questionType = $this->normalizeInlineQuestionType($question->question_type ?? 'short_answer');
@@ -1261,6 +1378,13 @@ class IeltsTestInlineController extends Controller
 
         if ($correctAnswerGroups !== null) {
             $payload['correctAnswerGroups'] = $correctAnswerGroups;
+        }
+
+        if ($questionType === 'table_completion' && is_array($tableStructure)) {
+            $tableAnswerCount = count($tableStructure['answers'] ?? []);
+            if ($tableAnswerCount > 0) {
+                $payload['slotCount'] = $tableAnswerCount;
+            }
         }
 
         return $payload;

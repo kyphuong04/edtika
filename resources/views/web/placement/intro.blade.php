@@ -95,7 +95,7 @@ html, body {
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
     gap: 16px; 
-    margin: 24px 0;
+    margin-bottom: 24px;
 }
 .pt-feature-card {
     background: #FFFFFF; border: 1px solid #E2E8F0;
@@ -159,7 +159,7 @@ html, body {
 /* Robot Image */
 .pt-robot-img {
     position: relative; z-index: 5; 
-    width: 100%; max-width: 900px;
+    width: 100%; max-width: 800px;
     object-fit: contain; 
     transform: translateY(20px);
 }
@@ -182,6 +182,54 @@ html, body {
 .pt-badge-time span { font-size: 13px; } 
 
 .pt-star { position: absolute; z-index: 2; animation: twinkle 3s infinite ease-in-out; }
+/* Tăng không gian cột trái (từ 1.1:0.9 thành 1.2:0.8) để chữ đủ chỗ nằm 1 hàng */
+.pt-intro-layout {
+    display: grid; 
+    grid-template-columns: 1.25fr 0.75fr; 
+    gap: 40px; /* Giảm gap một chút để tối ưu diện tích */
+    width: 100%; 
+}
+
+/* Dùng clamp() để chữ to tối đa 40px, tự động nhỏ lại nếu màn hình hẹp, ép nằm 1 dòng trên PC */
+.pt-title-main {
+    font-size: clamp(30px, 2.8vw, 40px); 
+    line-height: 1.2; 
+    font-weight: 900; 
+    color: #0F172A;
+    margin: 0 0 6px 0; 
+    letter-spacing: -0.5px;
+    white-space: nowrap; /* Bắt buộc không rớt dòng trên Desktop */
+}
+
+.pt-title-sub {
+    font-size: clamp(18px, 1.8vw, 24px); 
+    line-height: 1.3;
+    font-weight: 800;
+    color: #5B21B6; 
+    margin: 0 0 20px 0;
+    white-space: nowrap; /* Bắt buộc không rớt dòng trên Desktop */
+}
+.pt-title-sub span {
+    color: #6D28D9;
+}
+
+/* ── RESPONSIVE (Xử lý cho Mobile & Tablet) ── */
+@media (max-width: 1024px) {
+    .pt-intro-layout {
+        grid-template-columns: 1fr; /* Tràn xuống 1 cột */
+        gap: 32px;
+    }
+    .pt-intro-right {
+        order: -1;
+        min-height: 450px;
+    }
+    /* Trên điện thoại/tablet thì BẮT BUỘC phải bỏ white-space để chữ tự động rớt dòng, nếu không sẽ bị tràn màn hình */
+    .pt-title-main, .pt-title-sub { 
+        white-space: normal; 
+    }
+    .pt-title-main { font-size: 34px; }
+    .pt-title-sub { font-size: 20px; }
+}   
 @keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
 
 /* ── RESPONSIVE (Cho màn hình nhỏ) ── */
@@ -219,8 +267,8 @@ html, body {
                 ADAPTIVE PLACEMENT TEST
             </div>
 
-            <h1 class="pt-title-main">Kiểm tra trình độ<br>tiếng Anh của bạn</h1>
-            <h2 class="pt-title-sub">với <span>Adaptive Placement Test</span><br>cùng EDTIKA</h2>
+            <h1 class="pt-title-main">Kiểm tra trình độ tiếng Anh của bạn</h1>
+            <h2 class="pt-title-sub">với <span>Adaptive Placement Test</span> cùng EDTIKA</h2>
 
             <div class="pt-meta-row">
                 <div class="pt-meta-item">
