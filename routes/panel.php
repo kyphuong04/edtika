@@ -636,6 +636,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/create-inline', 'IeltsTestInlineController@createInlineComplete')->name('panel.my_ielts_tests.create_inline');
         Route::get('/autosave-inline', 'IeltsTestInlineController@getAutosaveDraft')->name('panel.my_ielts_tests.autosave_inline.get');
         Route::post('/autosave-inline', 'IeltsTestInlineController@saveAutosaveDraft')->name('panel.my_ielts_tests.autosave_inline.save');
+        Route::post('/richtext-image-upload', 'IeltsTestInlineController@uploadRichTextImage')->name('panel.my_ielts_tests.richtext_image_upload');
+        
         Route::post('/store-inline-complete', 'IeltsTestInlineController@storeInlineComplete')->name('panel.my_ielts_tests.store_inline_complete');
         Route::post('/store-with-groups', 'IeltsTestInlineController@storeWithQuestionGroups')->name('panel.my_ielts_tests.store_with_groups');
         // Route::get('/{id}/preview-student', 'IeltsTestInlineController@previewAsStudent')->name('panel.my_ielts_tests.preview_student');

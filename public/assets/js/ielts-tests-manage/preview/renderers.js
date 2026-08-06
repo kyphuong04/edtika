@@ -45,6 +45,13 @@ function appendTextBlock(card, html, className) {
     div.innerHTML = html;
     card.appendChild(div);
 }
+function appendAnswerNote(card, html) {
+    if (!html) return;
+    const note = document.createElement('div');
+    note.className = 'exam-answer-note';
+    note.innerHTML = html;
+    card.appendChild(note);
+}
 
 /**
  * Chèn <input> vào mọi vị trí ___ trong 1 đoạn HTML. Trả về HTML mới +
@@ -417,10 +424,67 @@ const ExamRenderers = {
             return card;
         },
 
+        // essay(entry) {
+        //     const q = entry.question;
+        //     const card = makeCard(entry);
+        //     appendTextBlock(card, q.text);
+
+        //     const taskImage = q.question_data && q.question_data.task_image;
+        //     if (taskImage) {
+        //         const img = document.createElement('img');
+        //         img.src = taskImage;
+        //         img.alt = '';
+        //         img.style.maxWidth = '100%';
+        //         img.style.borderRadius = '8px';
+        //         img.style.marginBottom = '12px';
+        //         card.appendChild(img);
+        //     }
+
+        //     const textarea = document.createElement('textarea');
+        //     textarea.className = 'exam-essay-textarea';
+        //     textarea.value = PreviewState.getAnswer(q.id) || '';
+        //     textarea.placeholder = 'Nhập bài làm của bạn...';
+
+        //     const counter = document.createElement('div');
+        //     counter.className = 'exam-word-count';
+
+        //     const updateCount = () => {
+        //         const words = textarea.value.trim() ? textarea.value.trim().split(/\s+/).length : 0;
+        //         counter.textContent = words + ' từ';
+        //     };
+        //     updateCount();
+
+        //     textarea.addEventListener('input', () => {
+        //         PreviewState.setAnswer(q.id, textarea.value);
+        //         updateCount();
+        //     });
+
+        //     card.appendChild(textarea);
+        //     card.appendChild(counter);
+        //     return card;
+        // },
+        // SAU
         essay(entry) {
+            // "essay" dùng chung cho cả Writing lẫn Speaking. Speaking cần
+            // ghi âm thay vì gõ chữ nên tách nhánh riêng ngay từ đây.
+            if (entry.skill === 'speaking') {
+                return ExamRenderers.byType._speakingRecorder(entry);
+            }
+
             const q = entry.question;
             const card = makeCard(entry);
             appendTextBlock(card, q.text);
+
+            const taskImage = q.question_data && q.question_data.task_image;
+            if (taskImage) {
+                const img = document.createElement('img');
+                img.src = taskImage;
+                img.alt = '';
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '8px';
+                img.style.marginBottom = '12px';
+                card.appendChild(img);
+            }
 
             const textarea = document.createElement('textarea');
             textarea.className = 'exam-essay-textarea';
@@ -445,33 +509,290 @@ const ExamRenderers = {
             card.appendChild(counter);
             return card;
         },
+
+        /**
+         * Giao diện ghi âm cho Speaking — thay thế textarea vì nói khác bản
+         * chất với viết. Đáp án lưu dạng blob URL (chuỗi) vào PreviewState,
+         * tương thích sẵn với isAnswered()/navigator "đã làm" mà không cần
+         * sửa state.js. Không submit lên server — preview chỉ chạy trong
+         * bộ nhớ trình duyệt của giáo viên.
+         */
+        _speakingRecorder(entry) {
+            const q = entry.question;
+            const card = makeCard(entry);
+            appendTextBlock(card, q.text);
+
+            const taskImage = q.question_data && q.question_data.task_image;
+            if (taskImage) {
+                const img = document.createElement('img');
+                img.src = taskImage;
+                img.alt = '';
+                img.style.maxWidth = '100%';
+                img.style.borderRadius = '8px';
+                img.style.marginBottom = '12px';
+                card.appendChild(img);
+            }
+
+            const wrap = document.createElement('div');
+            wrap.className = 'exam-speaking-wrap';
+
+            const micBtn = document.createElement('button');
+            micBtn.type = 'button';
+            micBtn.className = 'exam-mic-btn';
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+
+            const status = document.createElement('div');
+            status.className = 'exam-mic-status';
+            status.textContent = 'Nhấn để ghi âm câu trả lời của bạn';
+
+            const errorEl = document.createElement('div');
+            errorEl.className = 'exam-mic-error';
+            errorEl.style.display = 'none';
+            errorEl.textContent = 'Không truy cập được microphone. Hãy cho phép trình duyệt sử dụng mic rồi thử lại.';
+
+            const player = document.createElement('div');
+            player.className = 'exam-player';
+
+            const playToggle = document.createElement('button');
+            playToggle.type = 'button';
+            playToggle.className = 'exam-play-toggle';
+            playToggle.innerHTML = '<i class="fas fa-play"></i>';
+
+            const timeLabel = document.createElement('span');
+            timeLabel.className = 'exam-time-label';
+            timeLabel.textContent = '00:00';
+
+            const progressTrack = document.createElement('div');
+            progressTrack.className = 'exam-progress-track';
+            const progressFill = document.createElement('div');
+            progressFill.className = 'exam-progress-fill';
+            progressTrack.appendChild(progressFill);
+
+            player.appendChild(playToggle);
+            player.appendChild(timeLabel);
+            player.appendChild(progressTrack);
+
+            const rerecordLink = document.createElement('span');
+            rerecordLink.className = 'exam-rerecord-link';
+            rerecordLink.textContent = 'Ghi âm lại';
+
+            const audioEl = document.createElement('audio');
+            audioEl.style.display = 'none';
+
+            wrap.appendChild(micBtn);
+            wrap.appendChild(status);
+            wrap.appendChild(errorEl);
+            wrap.appendChild(player);
+            wrap.appendChild(rerecordLink);
+            wrap.appendChild(audioEl);
+            card.appendChild(wrap);
+
+            if (typeof MediaRecorder === 'undefined') {
+                micBtn.disabled = true;
+                status.textContent = 'Trình duyệt này không hỗ trợ ghi âm.';
+                return card;
+            }
+
+            let mediaRecorder = null;
+            let audioChunks = [];
+            let isRecording = false;
+            // Đáp án của Speaking lưu dạng blob URL (string) — khôi phục lại
+            // nếu câu này đã được ghi âm từ trước (chuyển part rồi quay lại).
+            let recordedBlobUrl = PreviewState.getAnswer(q.id) || null;
+
+            function formatTime(sec) {
+                sec = isFinite(sec) ? sec : 0;
+                const m = String(Math.floor(sec / 60)).padStart(2, '0');
+                const s = String(Math.floor(sec % 60)).padStart(2, '0');
+                return m + ':' + s;
+            }
+
+            function setIdle() {
+                isRecording = false;
+                micBtn.classList.remove('is-recording');
+                micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            }
+
+            function setRecordingUI() {
+                isRecording = true;
+                micBtn.classList.add('is-recording');
+                micBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                status.textContent = 'Đang ghi âm... nhấn lại để dừng';
+            }
+
+            function showRecordedState() {
+                setIdle();
+                status.textContent = 'Đã ghi âm xong — nghe lại bên dưới';
+                player.classList.add('is-visible');
+                rerecordLink.style.display = 'inline-block';
+            }
+
+            if (recordedBlobUrl) {
+                audioEl.src = recordedBlobUrl;
+                showRecordedState();
+            }
+
+            async function startRecording() {
+                errorEl.style.display = 'none';
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioChunks = [];
+                    mediaRecorder = new MediaRecorder(stream);
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+                        recordedBlobUrl = URL.createObjectURL(blob);
+                        audioEl.src = recordedBlobUrl;
+                        stream.getTracks().forEach((t) => t.stop());
+
+                        PreviewState.setAnswer(q.id, recordedBlobUrl);
+                        showRecordedState();
+                    };
+
+                    mediaRecorder.start();
+                    setRecordingUI();
+                } catch (err) {
+                    errorEl.style.display = 'block';
+                    status.textContent = 'Nhấn để ghi âm';
+                }
+            }
+
+            function stopRecording() {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+            }
+
+            micBtn.addEventListener('click', () => {
+                if (isRecording) stopRecording();
+                else startRecording();
+            });
+
+            rerecordLink.addEventListener('click', () => {
+                player.classList.remove('is-visible');
+                rerecordLink.style.display = 'none';
+                status.textContent = 'Nhấn để ghi âm câu trả lời của bạn';
+                audioEl.pause();
+                playToggle.innerHTML = '<i class="fas fa-play"></i>';
+                timeLabel.textContent = '00:00';
+                progressFill.style.width = '0%';
+
+                if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+                recordedBlobUrl = null;
+                PreviewState.setAnswer(q.id, '');
+            });
+
+            playToggle.addEventListener('click', () => {
+                if (audioEl.paused) {
+                    audioEl.play();
+                    playToggle.innerHTML = '<i class="fas fa-pause"></i>';
+                } else {
+                    audioEl.pause();
+                    playToggle.innerHTML = '<i class="fas fa-play"></i>';
+                }
+            });
+
+            audioEl.addEventListener('ended', () => {
+                playToggle.innerHTML = '<i class="fas fa-play"></i>';
+            });
+
+            audioEl.addEventListener('timeupdate', () => {
+                timeLabel.textContent = formatTime(audioEl.currentTime);
+                const pct = audioEl.duration ? (audioEl.currentTime / audioEl.duration) * 100 : 0;
+                progressFill.style.width = pct + '%';
+            });
+
+            progressTrack.addEventListener('click', (e) => {
+                if (!audioEl.duration) return;
+                const rect = progressTrack.getBoundingClientRect();
+                const pct = (e.clientX - rect.left) / rect.width;
+                audioEl.currentTime = pct * audioEl.duration;
+            });
+
+            // Đã nộp bài -> khoá ghi âm/ghi âm lại, giữ nguyên phần nghe lại
+            // (nhất quán với các loại câu hỏi khác bị input.disabled=true khi
+            // chấm trong gradeByType).
+            if (PreviewState.submitted) {
+                micBtn.disabled = true;
+                rerecordLink.style.display = 'none';
+                status.textContent = recordedBlobUrl ? 'Đã nộp bài' : 'Chưa ghi âm — đã nộp bài';
+            }
+
+            return card;
+        },
     },
 
     gradeByType: {
 
+        // _optionBased(entry, correctSet) {
+        //     const q = entry.question;
+        //     const card = document.getElementById('exam-q-' + q.id);
+        //     if (!card) return null;
+        //     const normalizedCorrectSet = new Set(
+        //         Array.from(correctSet).map(normalizeCompareText)
+        //     );
+
+        //     const saved = PreviewState.getAnswer(q.id);
+        //     const savedArr = Array.isArray(saved) ? saved : (saved ? [saved] : []);
+        //     const normalizedSavedArr = savedArr.map(normalizeCompareText);
+
+        //     const isCorrect = normalizedSavedArr.length === normalizedCorrectSet.size
+        //         && normalizedSavedArr.every((v) => normalizedCorrectSet.has(v));
+
+        //     card.querySelectorAll('.exam-option-row').forEach((row) => {
+        //         const normalizedVal = normalizeCompareText(row.dataset.value);
+        //         if (normalizedCorrectSet.has(normalizedVal)) {
+        //             row.classList.add('correct-highlight');
+        //         } else if (normalizedSavedArr.includes(normalizedVal)) {
+        //             row.classList.add('incorrect-highlight');
+        //         }
+        //     });
+
+        //     card.classList.add(isCorrect ? 'graded-correct' : 'graded-incorrect');
+        //     return isCorrect;
+        // },
+
+        // SAU
         _optionBased(entry, correctSet) {
             const q = entry.question;
             const card = document.getElementById('exam-q-' + q.id);
             if (!card) return null;
 
+            const normalizedCorrectSet = new Set(
+                Array.from(correctSet).map(normalizeCompareText)
+            );
+
             const saved = PreviewState.getAnswer(q.id);
             const savedArr = Array.isArray(saved) ? saved : (saved ? [saved] : []);
-            const isCorrect = savedArr.length === correctSet.size
-                && savedArr.every((v) => correctSet.has(v));
+            const normalizedSavedArr = savedArr.map(normalizeCompareText);
+
+            const isCorrect = normalizedSavedArr.length === normalizedCorrectSet.size
+                && normalizedSavedArr.every((v) => normalizedCorrectSet.has(v));
 
             card.querySelectorAll('.exam-option-row').forEach((row) => {
-                const val = row.dataset.value;
-                if (correctSet.has(val)) {
+                const normalizedVal = normalizeCompareText(row.dataset.value);
+                if (normalizedCorrectSet.has(normalizedVal)) {
                     row.classList.add('correct-highlight');
-                } else if (savedArr.includes(val)) {
+                } else if (normalizedSavedArr.includes(normalizedVal)) {
                     row.classList.add('incorrect-highlight');
                 }
             });
 
             card.classList.add(isCorrect ? 'graded-correct' : 'graded-incorrect');
+
+            if (!isCorrect) {
+                const correctText = Array.from(correctSet).filter(Boolean).join(', ');
+                appendAnswerNote(card, `<strong>Đáp án đúng:</strong> ${escapeAttr(correctText)}`);
+            }
+
             return isCorrect;
         },
-
         multiple_choice_single(entry) {
             return this._optionBased(entry, new Set([entry.question.correctAnswer]));
         },
@@ -489,6 +810,18 @@ const ExamRenderers = {
             return this._optionBased(entry, new Set([entry.question.correctAnswer]));
         },
 
+        // _matchingGrade(entry) {
+        //     const q = entry.question;
+        //     const card = document.getElementById('exam-q-' + q.id);
+        //     if (!card) return null;
+
+        //     const saved = PreviewState.getAnswer(q.id);
+        //     const isCorrect = normalizeCompareText(saved) === normalizeCompareText(q.correctAnswer);
+        //     card.classList.add(isCorrect ? 'graded-correct' : 'graded-incorrect');
+        //     return isCorrect;
+        // },
+
+        // SAU
         _matchingGrade(entry) {
             const q = entry.question;
             const card = document.getElementById('exam-q-' + q.id);
@@ -497,6 +830,11 @@ const ExamRenderers = {
             const saved = PreviewState.getAnswer(q.id);
             const isCorrect = normalizeCompareText(saved) === normalizeCompareText(q.correctAnswer);
             card.classList.add(isCorrect ? 'graded-correct' : 'graded-incorrect');
+
+            if (!isCorrect) {
+                appendAnswerNote(card, `<strong>Đáp án đúng:</strong> ${escapeAttr(q.correctAnswer || '')}`);
+            }
+
             return isCorrect;
         },
 
@@ -505,6 +843,42 @@ const ExamRenderers = {
         matching_features(entry) { return this._matchingGrade(entry); },
         matching_sentence_endings(entry) { return this._matchingGrade(entry); },
 
+        // _completionGrade(entry) {
+        //     const q = entry.question;
+        //     const card = document.getElementById('exam-q-' + q.id);
+        //     if (!card) return null;
+
+        //     const groups = q.correctAnswerGroups || [];
+        //     const saved = PreviewState.getAnswer(q.id) || [];
+        //     let allCorrect = groups.length > 0;
+        //     const wrongBlanks = [];
+
+        //     card.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
+        //         const accepted = (groups[idx] || []).map(normalizeCompareText);
+        //         const userVal = normalizeCompareText(saved[idx]);
+        //         const ok = accepted.includes(userVal);
+        //         input.classList.add(ok ? 'graded-correct' : 'graded-incorrect');
+        //         input.disabled = true;
+        //         if (!ok) {
+        //             allCorrect = false;
+        //             wrongBlanks.push({ index: idx, accepted: groups[idx] || [] });
+        //         }
+        //     });
+
+        //     card.classList.add(allCorrect ? 'graded-correct' : 'graded-incorrect');
+
+        //     if (wrongBlanks.length) {
+        //         const lines = wrongBlanks.map((b) => {
+        //             const variants = b.accepted.filter(Boolean).join(' / ');
+        //             return `Chỗ trống ${b.index + 1}: ${escapeAttr(variants || '(chưa có đáp án)')}`;
+        //         });
+        //         appendAnswerNote(card, `<strong>Đáp án đúng:</strong><br>${lines.join('<br>')}`);
+        //     }
+
+        //     return allCorrect;
+        // },
+        
+        // SAU
         _completionGrade(entry) {
             const q = entry.question;
             const card = document.getElementById('exam-q-' + q.id);
@@ -513,6 +887,7 @@ const ExamRenderers = {
             const groups = q.correctAnswerGroups || [];
             const saved = PreviewState.getAnswer(q.id) || [];
             let allCorrect = groups.length > 0;
+            const wrongBlanks = [];
 
             card.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
                 const accepted = (groups[idx] || []).map(normalizeCompareText);
@@ -520,18 +895,108 @@ const ExamRenderers = {
                 const ok = accepted.includes(userVal);
                 input.classList.add(ok ? 'graded-correct' : 'graded-incorrect');
                 input.disabled = true;
-                if (!ok) allCorrect = false;
+                if (!ok) {
+                    allCorrect = false;
+                    wrongBlanks.push({ index: idx, accepted: groups[idx] || [] });
+                }
             });
 
             card.classList.add(allCorrect ? 'graded-correct' : 'graded-incorrect');
+
+            if (wrongBlanks.length) {
+                const lines = wrongBlanks.map((b) => {
+                    const variants = b.accepted.filter(Boolean).join(' / ');
+                    return `(${b.index + 1}) ${escapeAttr(variants || 'chưa có đáp án')}`;
+                });
+                appendAnswerNote(card, `<strong>Đáp án đúng:</strong><br>${lines.join('<br>')}`);
+            }
+
             return allCorrect;
         },
-
+        
         sentence_completion(entry) { return this._completionGrade(entry); },
         summary_completion(entry) { return this._completionGrade(entry); },
         note_completion(entry) { return this._completionGrade(entry); },
         diagram_labeling(entry) { return this._completionGrade(entry); },
 
+        // table_completion(entry) {
+        //     const q = entry.question;
+        //     const card = document.getElementById('exam-q-' + q.id);
+        //     if (!card) return null;
+
+        //     const structure = q.table_structure || { answers: [] };
+        //     const answerMap = {};
+        //     (structure.answers || []).forEach((a) => {
+        //         answerMap[a.row + '-' + a.col] = (a.answers || []).map(splitAnswerVariants);
+        //     });
+
+        //     const saved = PreviewState.getAnswer(q.id) || {};
+        //     let allCorrect = true;
+        //     let hasBlank = false;
+        //     const wrongCells = [];
+
+        //     const rows = structure.rows || [];
+        //     const tds = card.querySelectorAll('tbody td');
+        //     let tdCursor = 0;
+        //     rows.forEach((row, rIdx) => {
+        //         const cells = Array.isArray(row) ? row : (row.cells || []);
+        //         cells.forEach((cellText, cIdx) => {
+        //             const td = tds[tdCursor++];
+        //             if (!td) return;
+        //             const cellKey = rIdx + '-' + cIdx;
+        //             const acceptedPerBlank = answerMap[cellKey] || [];
+        //             const savedForCell = saved[cellKey] || [];
+
+        //             td.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
+        //                 hasBlank = true;
+        //                 const acceptedVariants = acceptedPerBlank[idx] || [];
+        //                 const ok = acceptedVariants.includes(normalizeCompareText(savedForCell[idx]));
+        //                 input.classList.add(ok ? 'graded-correct' : 'graded-incorrect');
+        //                 input.disabled = true;
+        //                 if (!ok) {
+        //                     allCorrect = false;
+        //                     wrongCells.push({ row: rIdx + 1, col: cIdx + 1, accepted: acceptedVariants });
+        //                 }
+        //             });
+        //         });
+        //     });
+
+        //     allCorrect = hasBlank && allCorrect;
+        //     card.classList.add(allCorrect ? 'graded-correct' : 'graded-incorrect');
+
+        //     if (wrongCells.length) {
+        //         const lines = wrongCells.map((c) => {
+        //             const variants = c.accepted.filter(Boolean).join(' / ');
+        //             return `Hàng ${c.row}, cột ${c.col}: ${escapeAttr(variants || '(chưa có đáp án)')}`;
+        //         });
+        //         appendAnswerNote(card, `<strong>Đáp án đúng:</strong><br>${lines.join('<br>')}`);
+        //     }
+
+        //     return allCorrect;
+        // },
+        
+        // _dragDropGrade(entry) {
+        //     const q = entry.question;
+        //     const card = document.getElementById('exam-q-' + q.id);
+        //     if (!card) return null;
+
+        //     const correct = q.correctAnswers || [];
+        //     const saved = PreviewState.getAnswer(q.id) || [];
+        //     let allCorrect = correct.length > 0;
+
+        //     card.querySelectorAll('.exam-blank-slot').forEach((slot, idx) => {
+        //         const ok = normalizeCompareText(saved[idx]) === normalizeCompareText(correct[idx]);
+        //         slot.style.borderColor = ok ? '#22c55e' : '#ef4444';
+        //         slot.style.background = ok ? '#dcfce7' : '#fee2e2';
+        //         if (!ok) allCorrect = false;
+        //     });
+
+        //     card.classList.add(allCorrect ? 'graded-correct' : 'graded-incorrect');
+        //     return allCorrect;
+        // },
+
+        // SAU
+        // SAU
         table_completion(entry) {
             const q = entry.question;
             const card = document.getElementById('exam-q-' + q.id);
@@ -540,19 +1005,18 @@ const ExamRenderers = {
             const structure = q.table_structure || { answers: [] };
             const answerMap = {};
             (structure.answers || []).forEach((a) => {
-                answerMap[a.row + '-' + a.col] = a.answers || [];
+                answerMap[a.row + '-' + a.col] = (a.answers || []).map(splitAnswerVariants);
             });
 
             const saved = PreviewState.getAnswer(q.id) || {};
             let allCorrect = true;
             let hasBlank = false;
+            const wrongCells = [];
+            // Đánh số blank tuần tự theo đúng thứ tự duyệt bảng (trái->phải,
+            // trên->dưới) — khớp với thứ tự Q{n} mà navigator/badge câu hỏi
+            // đang hiển thị cho slotCount > 1 của table_completion.
+            let blankOrdinal = 0;
 
-            card.querySelectorAll('td').forEach((td) => {
-                const inputs = td.querySelectorAll('.exam-blank-input');
-                if (!inputs.length) return;
-            });
-
-            // Duyệt lại theo cấu trúc bảng để biết chính xác row/col của từng ô.
             const rows = structure.rows || [];
             const tds = card.querySelectorAll('tbody td');
             let tdCursor = 0;
@@ -562,24 +1026,38 @@ const ExamRenderers = {
                     const td = tds[tdCursor++];
                     if (!td) return;
                     const cellKey = rIdx + '-' + cIdx;
-                    const accepted = (answerMap[cellKey] || []).map(normalizeCompareText);
+                    const acceptedPerBlank = answerMap[cellKey] || [];
                     const savedForCell = saved[cellKey] || [];
 
                     td.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
                         hasBlank = true;
-                        const ok = accepted.includes(normalizeCompareText(savedForCell[idx]));
+                        blankOrdinal++;
+                        const acceptedVariants = acceptedPerBlank[idx] || [];
+                        const ok = acceptedVariants.includes(normalizeCompareText(savedForCell[idx]));
                         input.classList.add(ok ? 'graded-correct' : 'graded-incorrect');
                         input.disabled = true;
-                        if (!ok) allCorrect = false;
+                        if (!ok) {
+                            allCorrect = false;
+                            wrongCells.push({ ordinal: blankOrdinal, accepted: acceptedVariants });
+                        }
                     });
                 });
             });
 
             allCorrect = hasBlank && allCorrect;
             card.classList.add(allCorrect ? 'graded-correct' : 'graded-incorrect');
+
+            if (wrongCells.length) {
+                const lines = wrongCells.map((c) => {
+                    const variants = c.accepted.filter(Boolean).join(' / ');
+                    return `(${c.ordinal}) ${escapeAttr(variants || 'chưa có đáp án')}`;
+                });
+                appendAnswerNote(card, `<strong>Đáp án đúng:</strong><br>${lines.join('<br>')}`);
+            }
+
             return allCorrect;
         },
-
+        
         _dragDropGrade(entry) {
             const q = entry.question;
             const card = document.getElementById('exam-q-' + q.id);
@@ -588,18 +1066,27 @@ const ExamRenderers = {
             const correct = q.correctAnswers || [];
             const saved = PreviewState.getAnswer(q.id) || [];
             let allCorrect = correct.length > 0;
+            const wrongBlanks = [];
 
             card.querySelectorAll('.exam-blank-slot').forEach((slot, idx) => {
                 const ok = normalizeCompareText(saved[idx]) === normalizeCompareText(correct[idx]);
                 slot.style.borderColor = ok ? '#22c55e' : '#ef4444';
                 slot.style.background = ok ? '#dcfce7' : '#fee2e2';
-                if (!ok) allCorrect = false;
+                if (!ok) {
+                    allCorrect = false;
+                    wrongBlanks.push({ index: idx, answer: correct[idx] });
+                }
             });
 
             card.classList.add(allCorrect ? 'graded-correct' : 'graded-incorrect');
+
+            if (wrongBlanks.length) {
+                const lines = wrongBlanks.map((b) => `Chỗ trống ${b.index + 1}: ${escapeAttr(b.answer || '(chưa có đáp án)')}`);
+                appendAnswerNote(card, `<strong>Đáp án đúng:</strong><br>${lines.join('<br>')}`);
+            }
+
             return allCorrect;
         },
-
         drag_drop_disappear(entry) { return this._dragDropGrade(entry); },
         drag_drop_reuse(entry) { return this._dragDropGrade(entry); },
 
@@ -616,9 +1103,18 @@ const ExamRenderers = {
 
             const isCorrect = acceptedVariants.includes(normalizeCompareText(saved));
             card.classList.add(isCorrect ? 'graded-correct' : 'graded-incorrect');
+
+            if (!isCorrect) {
+                const displayVariants = String(q.correctAnswer || '')
+                    .split('/')
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                    .join(' / ');
+                appendAnswerNote(card, `<strong>Đáp án đúng:</strong> ${escapeAttr(displayVariants)}`);
+            }
+
             return isCorrect;
         },
-
         essay() {
             // Tự luận không tự chấm được -> không tô đúng/sai, chỉ tính là "đã nộp".
             return null;

@@ -162,6 +162,7 @@ class IeltsTestInlineController extends Controller
             'test' => $test,
             'previewData' => $previewData,
             'skillOrder' => self::SKILL_ORDER,
+            'justContent' => true,
             'backUrl' => route('panel.my_ielts_tests.edit_inline', [
                 'id' => $test->id,
                 'restore_state' => 1,
@@ -224,6 +225,42 @@ class IeltsTestInlineController extends Controller
         return response()->json([
             'success' => true,
             'savedAt' => (int) ($payload['savedAt'] ?? 0),
+        ]);
+    }
+
+    // public function uploadRichTextImage(Request $request)
+    // {
+    //     $this->authorizeCreatorAccess();
+
+    //     $request->validate([
+    //         'file' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:5120', // 5MB
+    //     ]);
+
+    //     $path = $request->file('file')->store('ielts/richtext_images', 'public');
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'url' => Storage::disk('public')->url($path),
+    //     ]);
+    // }
+
+    public function uploadRichTextImage(Request $request)
+    {
+        $this->authorizeCreatorAccess();
+
+        // Dùng mimetypes (kiểm tra nội dung file thật qua Fileinfo) thay vì mimes
+        // (chỉ kiểm tra đuôi file). Ảnh dán từ clipboard (Ctrl+V) hoặc kéo-thả từ
+        // trình duyệt khác thường không có tên/đuôi file rõ ràng — mimes sẽ từ
+        // chối các trường hợp này dù nội dung file hoàn toàn hợp lệ.
+        $validated = $request->validate([
+            'file' => 'required|image|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
+        ]);
+
+        $path = $request->file('file')->store('ielts/richtext_images', 'public');
+
+        return response()->json([
+            'success' => true,
+            'url' => Storage::disk('public')->url($path),
         ]);
     }
 

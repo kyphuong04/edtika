@@ -12,7 +12,13 @@
  *    toàn bài test).
  */
 
-const SKILL_ORDER = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
+// const SKILL_ORDER = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
+// SAU
+const SKILL_ORDER = (typeof window !== 'undefined'
+    && Array.isArray(window.PREVIEW_SKILL_ORDER)
+    && window.PREVIEW_SKILL_ORDER.length)
+    ? window.PREVIEW_SKILL_ORDER
+    : ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
 
 const SKILL_LABELS = {
     listening: 'Listening',
@@ -23,6 +29,14 @@ const SKILL_LABELS = {
     vocabulary: 'Vocabulary',
 };
 
+const MOCK_SKILL_DURATIONS_SECONDS = {
+    listening: 32 * 60,
+    reading: 60 * 60,
+    writing: 60 * 60,
+};
+
+const MOCK_SPEAKING_PART_DURATION_SECONDS = 5 * 60;
+
 const PreviewState = {
     skills: [],          // danh sách skill có dữ liệu, theo đúng thứ tự chuẩn
     bySkill: {},          // skill -> { parts: [...], entries: [...] }
@@ -30,6 +44,7 @@ const PreviewState = {
     answers: {},           // questionId -> giá trị đáp án (kiểu tuỳ loại câu hỏi)
     current: { skill: null, partIndex: 0 },
     submitted: false,
+    scoreResult: null,
     listeners: [],
 
     onChange(fn) {
@@ -57,22 +72,82 @@ const PreviewState = {
     },
 };
 
-/**
- * So sánh 2 đáp án dạng text, không phân biệt hoa/thường và khoảng trắng
- * thừa. Dùng chung bởi renderers.js (tô màu DOM) và grading.js (tính điểm
- * thuần) — đặt ở đây (file nạp đầu tiên) để cả 2 nơi đều chắc chắn có sẵn,
- * không phụ thuộc vào thứ tự nạp <script> giữa chúng.
- */
 function normalizeCompareText(value) {
     return String(value == null ? '' : value).trim().toLowerCase();
 }
 
-/**
- * Xây dựng model phẳng từ window.PREVIEW_DATA.
- */
+function splitAnswerVariants(rawValue) {
+    return String(rawValue == null ? '' : rawValue)
+        .split('/')
+        .map(normalizeCompareText)
+        .filter(Boolean);
+}
+
+
+// function buildPreviewModel(previewData) {
+//     const sections = (previewData && previewData.sections) || {};
+//     let globalNumber = 1;
+
+//     SKILL_ORDER.forEach((skill) => {
+//         const sectionData = sections[skill];
+//         const parts = (sectionData && Array.isArray(sectionData.parts)) ? sectionData.parts : [];
+//         if (!parts.length) return;
+
+//         const entries = [];
+
+//         parts.forEach((part, partIndex) => {
+//             const groups = Array.isArray(part.groups) ? part.groups : [];
+
+//             groups.forEach((group) => {
+//                 const questions = Array.isArray(group.questions) ? group.questions : [];
+
+//                 questions.forEach((question) => {
+//                     const slotCount = Math.max(1, parseInt(question.slotCount, 10) || 1);
+//                     const startNumber = globalNumber;
+//                     const endNumber = globalNumber + slotCount - 1;
+//                     globalNumber += slotCount;
+
+//                     entries.push({
+//                         skill,
+//                         partIndex,
+//                         part,
+//                         group,
+//                         question,
+//                         startNumber,
+//                         endNumber,
+//                         slotCount,
+//                     });
+//                 });
+//             });
+//         });
+
+//         // if (entries.length) {
+//         //     PreviewState.skills.push(skill);
+//         //     PreviewState.bySkill[skill] = { parts, entries };
+//         //     PreviewState.allEntries.push(...entries);
+//         // }
+//         // SAU
+//         if (entries.length) {
+//             PreviewState.skills.push(skill);
+//             PreviewState.bySkill[skill] = {
+//                 parts,
+//                 entries,
+//                 // audio dùng chung cho toàn bộ section (hiện chỉ có ở Listening) —
+//                 // khác với part.files.audio là audio RIÊNG cho từng part.
+//                 sectionFiles: (sectionData && sectionData.files) || {},
+//             };
+//             PreviewState.allEntries.push(...entries);
+//         }
+//     });
+
+//     if (PreviewState.skills.length) {
+//         PreviewState.current.skill = PreviewState.skills[0];
+//         PreviewState.current.partIndex = 0;
+//     }
+// }
+// SAU
 function buildPreviewModel(previewData) {
     const sections = (previewData && previewData.sections) || {};
-    let globalNumber = 1;
 
     SKILL_ORDER.forEach((skill) => {
         const sectionData = sections[skill];
@@ -80,6 +155,14 @@ function buildPreviewModel(previewData) {
         if (!parts.length) return;
 
         const entries = [];
+        // Số thứ tự câu hỏi RESET về 1 ở đầu mỗi skill — khác với
+        // question_number thật lưu trong DB (chạy liên tục xuyên suốt cả
+        // bài, xem buildInlineQuestionData()/createQuestionInPart() ở
+        // backend). Đây là lựa chọn hiển thị riêng cho Preview để giáo viên
+        // dễ đối chiếu theo từng kỹ năng (Câu 1-40 Listening, rồi lại Câu
+        // 1-40 Reading...), không phản ánh số thứ tự học viên thật sẽ thấy
+        // khi làm bài live.
+        let skillNumber = 1;
 
         parts.forEach((part, partIndex) => {
             const groups = Array.isArray(part.groups) ? part.groups : [];
@@ -89,9 +172,9 @@ function buildPreviewModel(previewData) {
 
                 questions.forEach((question) => {
                     const slotCount = Math.max(1, parseInt(question.slotCount, 10) || 1);
-                    const startNumber = globalNumber;
-                    const endNumber = globalNumber + slotCount - 1;
-                    globalNumber += slotCount;
+                    const startNumber = skillNumber;
+                    const endNumber = skillNumber + slotCount - 1;
+                    skillNumber += slotCount;
 
                     entries.push({
                         skill,
@@ -109,7 +192,11 @@ function buildPreviewModel(previewData) {
 
         if (entries.length) {
             PreviewState.skills.push(skill);
-            PreviewState.bySkill[skill] = { parts, entries };
+            PreviewState.bySkill[skill] = {
+                parts,
+                entries,
+                sectionFiles: (sectionData && sectionData.files) || {},
+            };
             PreviewState.allEntries.push(...entries);
         }
     });

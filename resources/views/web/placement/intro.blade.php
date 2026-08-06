@@ -9,9 +9,9 @@
 
 @push('styles_top')
 <style>
-/* Reset Trang (Bỏ overflow: hidden để trang tự do cuộn) */
+/* Reset Trang */
 html, body {
-    background-color: #F8FAFC;
+    background-color: #F8FAFC; /* Chuyển nền tổng thể về màu xám trắng để dễ đọc chữ */
     margin: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -33,19 +33,19 @@ html, body {
     align-items: stretch; 
 }
 
-/* Chuyển từ dạng Card sang Layout Split Screen */
+/* ── LAYOUT CHÍNH ── */
 .pt-intro-layout {
     display: grid; 
-    grid-template-columns: 1.1fr 0.9fr; /* Tỉ lệ 55:45 */
-    gap: 60px;
+    grid-template-columns: 1.25fr 0.75fr; /* Tỉ lệ đã nới rộng cho cột trái */
+    gap: 40px; 
     width: 100%; 
 }
 
-/* ── LEFT COLUMN (Nội dung tràn tự nhiên, không cần scrollbar riêng) ── */
+/* ── CỘT TRÁI (Nội dung) ── */
 .pt-intro-left {
     display: flex; 
     flex-direction: column; 
-    justify-content: center; /* Căn giữa nội dung theo chiều dọc */
+    justify-content: center; 
     padding-bottom: 40px;
 }
 
@@ -57,20 +57,24 @@ html, body {
     width: fit-content;
 }
 
+/* Dùng clamp() để chữ ép nằm 1 dòng trên PC */
 .pt-title-main {
-    font-size: 46px; 
-    line-height: 1.15; 
+    font-size: clamp(30px, 2.8vw, 40px); 
+    line-height: 1.2; 
     font-weight: 900; 
     color: #0F172A;
     margin: 0 0 6px 0; 
     letter-spacing: -0.5px;
+    white-space: nowrap; 
 }
+
 .pt-title-sub {
-    font-size: 26px; 
+    font-size: clamp(18px, 1.8vw, 24px); 
     line-height: 1.3;
     font-weight: 800;
     color: #5B21B6; 
-    margin: 0 0 16px 0;
+    margin: 0 0 20px 0;
+    white-space: nowrap; 
 }
 .pt-title-sub span {
     color: #6D28D9;
@@ -90,7 +94,6 @@ html, body {
 }
 .pt-intro-desc strong { color: #5B21B6; font-weight: 800; } 
 
-/* Chuyển grid thành tự động co giãn để đẹp hơn trên trang rộng */
 .pt-feature-grid {
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
@@ -130,13 +133,18 @@ html, body {
 }
 .pt-start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(79, 70, 229, 0.8); color: #FFF; }
 
-/* ── RIGHT COLUMN (Mascot & Background) ── */
+
+/* ── CỘT PHẢI (Mascot & Background) ── */
 .pt-intro-right {
     position: relative; 
-    background: radial-gradient(circle at 50% 40%, #B490FF 0%, #8B5CF6 40%, #5B21B6 100%);
-    border-radius: 32px; /* Thêm bo góc vì đã bỏ Card Wrapper */
+    border-radius: 32px; 
+    
+    /* === ÁP DỤNG MÀU NỀN MỚI Ở ĐÂY === */
+    /* Màu tím nhạt bên phải và trong suốt lan dần sang trái */
+    background: linear-gradient(270deg, #8B5CF6, transparent);
+    
     display: flex; align-items: center; justify-content: center; overflow: hidden;
-    min-height: 600px; /* Chiều cao tối thiểu để hiện đẹp con robot */
+    min-height: 600px;
 }
 
 .pt-chat-bubble {
@@ -159,7 +167,7 @@ html, body {
 /* Robot Image */
 .pt-robot-img {
     position: relative; z-index: 5; 
-    width: 100%; max-width: 800px;
+    width: 100%; max-width: 950px;
     object-fit: contain; 
     transform: translateY(20px);
 }
@@ -167,7 +175,7 @@ html, body {
 /* Glass Badges */
 .pt-glass-badge {
     position: absolute; z-index: 10;
-    background: rgba(255, 255, 255, 0.1); 
+    background: rgba(255, 255, 255, 0.15); 
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border: 1.5px solid rgba(255, 255, 255, 0.6); 
     border-radius: 50%; 
@@ -182,38 +190,11 @@ html, body {
 .pt-badge-time span { font-size: 13px; } 
 
 .pt-star { position: absolute; z-index: 2; animation: twinkle 3s infinite ease-in-out; }
-/* Tăng không gian cột trái (từ 1.1:0.9 thành 1.2:0.8) để chữ đủ chỗ nằm 1 hàng */
-.pt-intro-layout {
-    display: grid; 
-    grid-template-columns: 1.25fr 0.75fr; 
-    gap: 40px; /* Giảm gap một chút để tối ưu diện tích */
-    width: 100%; 
-}
 
-/* Dùng clamp() để chữ to tối đa 40px, tự động nhỏ lại nếu màn hình hẹp, ép nằm 1 dòng trên PC */
-.pt-title-main {
-    font-size: clamp(30px, 2.8vw, 40px); 
-    line-height: 1.2; 
-    font-weight: 900; 
-    color: #0F172A;
-    margin: 0 0 6px 0; 
-    letter-spacing: -0.5px;
-    white-space: nowrap; /* Bắt buộc không rớt dòng trên Desktop */
-}
+/* ── ANIMATIONS ── */
+@keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
 
-.pt-title-sub {
-    font-size: clamp(18px, 1.8vw, 24px); 
-    line-height: 1.3;
-    font-weight: 800;
-    color: #5B21B6; 
-    margin: 0 0 20px 0;
-    white-space: nowrap; /* Bắt buộc không rớt dòng trên Desktop */
-}
-.pt-title-sub span {
-    color: #6D28D9;
-}
-
-/* ── RESPONSIVE (Xử lý cho Mobile & Tablet) ── */
+/* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
     .pt-intro-layout {
         grid-template-columns: 1fr; /* Tràn xuống 1 cột */
@@ -223,30 +204,14 @@ html, body {
         order: -1;
         min-height: 450px;
     }
-    /* Trên điện thoại/tablet thì BẮT BUỘC phải bỏ white-space để chữ tự động rớt dòng, nếu không sẽ bị tràn màn hình */
     .pt-title-main, .pt-title-sub { 
         white-space: normal; 
     }
     .pt-title-main { font-size: 34px; }
     .pt-title-sub { font-size: 20px; }
 }   
-@keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
-
-/* ── RESPONSIVE (Cho màn hình nhỏ) ── */
-@media (max-width: 1024px) {
-    .pt-intro-layout {
-        grid-template-columns: 1fr; /* Tràn xuống 1 cột */
-        gap: 32px;
-    }
-    .pt-intro-right {
-        order: -1; /* Đưa hình robot lên trên nội dung text ở Mobile */
-        min-height: 450px;
-    }
-    .pt-title-main { font-size: 36px; }
-    .pt-title-sub { font-size: 22px; }
-}
 @media (max-width: 640px) {
-    .pt-feature-grid { grid-template-columns: 1fr 1fr; } /* 2 cột trên điện thoại */
+    .pt-feature-grid { grid-template-columns: 1fr 1fr; } 
 }
 </style>
 @endpush

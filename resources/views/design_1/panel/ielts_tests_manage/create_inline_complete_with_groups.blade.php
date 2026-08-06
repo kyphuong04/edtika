@@ -1129,6 +1129,51 @@ function fixSummernoteDropdowns(context) {
     }
 }
 
+const RICHTEXT_IMAGE_UPLOAD_URL = @json(route('panel.my_ielts_tests.richtext_image_upload'));
+const RICHTEXT_IMAGE_CSRF_TOKEN = @json(csrf_token());
+
+function uploadRichTextImageFile(file, editorEl) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch(RICHTEXT_IMAGE_UPLOAD_URL, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'X-CSRF-TOKEN': RICHTEXT_IMAGE_CSRF_TOKEN,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+        .then(function (response) {
+            if (!response.ok) {
+                // Đọc body lỗi (thường là JSON validation errors từ Laravel)
+                // để biết chính xác lý do fail thay vì throw chung chung.
+                return response.json().then(function (errorBody) {
+                    const message = errorBody && errorBody.errors && errorBody.errors.file
+                        ? errorBody.errors.file.join(' ')
+                        : (errorBody && errorBody.message) || ('HTTP ' + response.status);
+                    throw new Error(message);
+                });
+            }
+            return response.json();
+        })
+        .then(function (result) {
+            if (result && result.success && result.url) {
+                $(editorEl).summernote('insertImage', result.url, function ($image) {
+                    $image.css('max-width', '100%');
+                });
+            } else {
+                console.error('Upload response không hợp lệ:', result);
+                alert('Tải ảnh lên thất bại. Vui lòng thử lại.');
+            }
+        })
+        .catch(function (error) {
+            console.error('Lỗi upload ảnh rich-text:', error);
+            alert('Tải ảnh lên thất bại: ' + error.message);
+        });
+}
+
 function initContentEditors(context) {
     if (!jQuery().summernote) {
         return;
@@ -1160,12 +1205,21 @@ function initContentEditors(context) {
                     }
 
                     this.dispatchEvent(new Event('input', { bubbles: true }));
+                },
+                // Chặn hành vi mặc định (base64) — thay bằng upload thật lên server.
+                // Ảnh dán/kéo-thả trực tiếp cũng đi qua callback này.
+                onImageUpload: function (files) {
+                    for (let i = 0; i < files.length; i++) {
+                        uploadRichTextImageFile(files[i], this);
+                    }
                 }
             }
         });
     });
     fixSummernoteDropdowns($context);
 }
+
+
 
 function updateAutosaveStatus(message, isError = false) {
     const statusEl = document.getElementById('autosaveStatus');

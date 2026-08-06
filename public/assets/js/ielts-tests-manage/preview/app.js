@@ -4,6 +4,40 @@
  * gắn sự kiện điều hướng + nộp bài.
  */
 
+// document.addEventListener('DOMContentLoaded', function () {
+//     const root = document.getElementById('examRoot');
+//     if (!root) return;
+
+//     buildPreviewModel(window.PREVIEW_DATA || {});
+
+//     if (!PreviewState.skills.length) {
+//         root.innerHTML = '<div class="exam-loading">Đề thi chưa có nội dung nào để xem trước. '
+//             + 'Quay lại trang chỉnh sửa để thêm Part và câu hỏi.</div>';
+//         return;
+//     }
+
+//     ExamLayout.mount(root);
+
+//     function currentPart() {
+//         const skillModel = PreviewState.bySkill[PreviewState.current.skill];
+//         return skillModel ? skillModel.parts[PreviewState.current.partIndex] : null;
+//     }
+
+//     function refreshView() {
+//         ExamLayout.renderSkillTabs(switchSkill);
+//         ExamLayout.renderPartTabs(switchPart);
+
+//         const part = currentPart();
+//         if (part) {
+//             const skillModel = PreviewState.bySkill[PreviewState.current.skill];
+//             ExamLayout.renderContext(part, skillModel ? skillModel.sectionFiles : null);
+//             ExamLayout.renderQuestions(part);
+//         }
+
+//         ExamLayout.renderNavigator(jumpToEntry);
+//     }
+
+// SAU
 document.addEventListener('DOMContentLoaded', function () {
     const root = document.getElementById('examRoot');
     if (!root) return;
@@ -15,6 +49,8 @@ document.addEventListener('DOMContentLoaded', function () {
             + 'Quay lại trang chỉnh sửa để thêm Part và câu hỏi.</div>';
         return;
     }
+
+    const previewTestType = (window.PREVIEW_TEST_META && window.PREVIEW_TEST_META.type) || 'practice';
 
     ExamLayout.mount(root);
 
@@ -29,9 +65,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const part = currentPart();
         if (part) {
-            ExamLayout.renderContext(part);
+            const skillModel = PreviewState.bySkill[PreviewState.current.skill];
+            ExamLayout.renderContext(part, skillModel ? skillModel.sectionFiles : null);
             ExamLayout.renderQuestions(part);
         }
+
+        ExamLayout.syncTimerForContext(
+            PreviewState.current.skill,
+            PreviewState.current.partIndex,
+            previewTestType
+        );
 
         ExamLayout.renderNavigator(jumpToEntry);
     }
@@ -63,14 +106,13 @@ document.addEventListener('DOMContentLoaded', function () {
         window.setTimeout(() => ExamLayout.scrollToQuestion(entry.question.id), 30);
     }
 
-    // Mỗi khi người dùng nhập/chọn đáp án -> cập nhật lại navigator (trạng
-    // thái "đã làm") mà không cần render lại toàn bộ câu hỏi.
     PreviewState.onChange(() => {
         if (!PreviewState.submitted) {
             ExamLayout.renderNavigator(jumpToEntry);
         }
     });
 
+   
     ExamLayout.els.submitBtn.addEventListener('click', () => {
         if (PreviewState.submitted) return;
 
@@ -85,6 +127,9 @@ document.addEventListener('DOMContentLoaded', function () {
         PreviewState.submitted = true;
 
         const score = ExamGrading.computeScore();
+        // Lưu lại để renderNavigator() tái sử dụng thay vì tính lại mỗi lần
+        // render (mỗi lần chuyển part/skill sau khi đã nộp bài).
+        PreviewState.scoreResult = score;
         ExamLayout.showResultBanner(score);
         ExamLayout.els.submitBtn.disabled = true;
         ExamLayout.els.submitBtn.textContent = 'Đã nộp bài';
