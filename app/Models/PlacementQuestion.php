@@ -13,7 +13,7 @@ class PlacementQuestion extends Model
         'type',
         'has_audio',
         'audio_path',
-        'linked_to_passage',
+        'linked_passage_id',
         'question_text',
         'options',
         'word_bank',
@@ -25,7 +25,6 @@ class PlacementQuestion extends Model
 
     protected $casts = [
         'has_audio'          => 'boolean',
-        'linked_to_passage'  => 'boolean',
         'options'            => 'array',
         'word_bank'          => 'array',
         'blank_hints'        => 'array',
@@ -50,22 +49,22 @@ class PlacementQuestion extends Model
             : 0;
 
         return [
-            'id'                => $this->id,
-            'type'              => $this->type,
-            'question_text'     => $this->question_text,
-            'blank_count'       => $blankCount,
-            'options'           => $this->type === 'multiple_choice' ? ($this->options ?? []) : [],
-            'image_options'     => $this->type === 'listening_image_choice'
+            'id'                 => $this->id,
+            'type'               => $this->type,
+            'question_text'      => $this->question_text,
+            'blank_count'        => $blankCount,
+            'options'            => $this->type === 'multiple_choice' ? ($this->options ?? []) : [],
+            'image_options'      => $this->type === 'listening_image_choice'
                 ? collect($this->options ?? [])->map(fn ($path, $i) => [
                     'label' => chr(65 + $i),
                     'url'   => $path ? \Illuminate\Support\Facades\Storage::url($path) : null,
                 ])->values()->all()
                 : [],
-            'has_audio'         => (bool) $this->has_audio,
-            'audio_url'         => $this->audio_path ? \Illuminate\Support\Facades\Storage::url($this->audio_path) : null,
-            'word_bank'         => $this->word_bank ?? [],
-            'blank_hints'       => $this->blank_hints ?? [],
-            'linked_to_passage' => (bool) $this->linked_to_passage,
+            'has_audio'          => (bool) $this->has_audio,
+            'audio_url'          => $this->audio_path ? \Illuminate\Support\Facades\Storage::url($this->audio_path) : null,
+            'word_bank'          => $this->word_bank ?? [],
+            'blank_hints'        => $this->blank_hints ?? [],
+            'linked_passage_id'  => $this->linked_passage_id,
         ];
     }
 

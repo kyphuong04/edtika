@@ -6,7 +6,6 @@
     $floatingBar = null;
     $dontShowCookieSecurity = true;
 
-    $hasSharedPassage = $questions->contains(fn ($q) => $q['linked_to_passage']) && !empty($test->reading_passage);
 @endphp
 
 @push('styles_top')
@@ -76,18 +75,23 @@
         <div class="pt-timer" id="ptCountdown">--:--</div>
     </div>
 
-    @if($hasSharedPassage)
-        <div class="pt-passage-card">
-            <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
-            <div>{!! nl2br(e($test->reading_passage)) !!}</div>
-        </div>
-    @endif
+    @php
+        $passages = collect($test->reading_passages ?? [])->keyBy('position');
+    @endphp
 
     <form id="placementTakeForm" action="{{ route('placement.submit') }}" method="POST">
         @csrf
         <input type="hidden" name="test_id" value="{{ $test->id }}">
 
         @foreach($questions as $index => $q)
+
+            @if($passages->has($index + 1))
+                <div class="pt-passage-card">
+                    <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
+                    <div>{!! nl2br(e($passages[$index + 1]['content'])) !!}</div>
+                </div>
+            @endif
+
             <div class="pt-q-card">
                 <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
 
@@ -159,6 +163,12 @@
             </div>
         @endforeach
 
+        @if($passages->has(count($questions) + 1))
+            <div class="pt-passage-card">
+                <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
+                <div>{!! nl2br(e($passages[count($questions) + 1]['content'])) !!}</div>
+            </div>
+        @endif
         <div class="pt-submit-actions">
             <button type="submit" class="pt-submit-btn" id="ptSubmitBtn">
                 <i class="fas fa-check mr-2"></i>Nộp bài đề này

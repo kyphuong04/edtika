@@ -31,9 +31,13 @@ class PlacementTest extends Model
         'level',
         'title',
         'description',
-        'reading_passage',
+        'reading_passages',
         'status',
         'created_by',
+    ];
+
+    protected $casts = [
+        'reading_passages' => 'array',
     ];
 
     public function questions(): HasMany

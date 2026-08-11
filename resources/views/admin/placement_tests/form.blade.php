@@ -77,13 +77,15 @@
             </div>
             <div class="form-group mb-0">
                 <label class="input-label">Mô tả (nội bộ)</label>
-                <textarea name="description" class="form-control" rows="2">{{ old('description', $placementTest->description ?? '') }}</textarea>
+                <textarea name="description" class="form-control" rows="4">{{ old('description', $placementTest->description ?? '') }}</textarea>
             </div>
-            <div class="form-group mb-0 mt-3">
-                <label class="input-label">
-                    Reading Passage <small class="text-muted">(đoạn văn dùng chung — tối đa 1 đoạn/đề, dùng cho các câu Multiple Choice có tick "Gắn với đoạn văn")</small>
-                </label>
-                <textarea name="reading_passage" id="readingPassageInput" class="form-control" rows="4" placeholder="VD: Ben lives in a small town near the sea...">{{ old('reading_passage', $placementTest->reading_passage ?? '') }}</textarea>
+            <div class="mt-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="input-label mb-0">Đoạn văn đọc <small class="text-muted">(có thể thêm nhiều đoạn, mỗi đoạn hiển thị tại 1 vị trí trong bài)</small></label>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddPassage"><i class="fas fa-plus mr-4"></i>Thêm đoạn văn</button>
+                </div>
+                <div id="passagesContainer"></div>
+                <input type="hidden" name="reading_passages" id="passagesDataInput" value="">
             </div>
         </div>
 
@@ -174,7 +176,7 @@
                 <form action="{{ route('admin.placement_speaking.store') }}" method="POST">
                     @csrf
                     <div class="form-group">
-                        <textarea name="question_text" class="form-control" rows="2" required placeholder="VD: Describe a memorable trip you have taken. Why was it memorable?"></textarea>
+                        <textarea name="question_text" class="form-control" rows="4" required placeholder="VD: Describe a memorable trip you have taken. Why was it memorable?"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary rounded-12"><i class="fas fa-plus mr-5"></i>Thêm câu hỏi</button>
                 </form>
@@ -241,6 +243,8 @@
 const MAX_QUESTIONS = {{ \App\Models\PlacementTest::MAX_QUESTIONS }};
 let questions = @json($questionsData ?? []);
 let uploadSeq = 0;
+let passages = @json($passagesData ?? []);
+let passageSeq = passages.length ? Math.max(...passages.map(p => parseInt(p.id.replace('p','')) || 0)) : 0;
 
 const container = document.getElementById('questionsContainer');
 const countLabel = document.getElementById('questionCountLabel');
@@ -274,7 +278,7 @@ function blankQuestionTemplate() {
     return {
         type: 'multiple_choice',
         has_audio: false,
-        linked_to_passage: false,
+        linked_passage_id: null,
         question_text: '',
         options: ['', ''],
         word_bank: [],
@@ -462,10 +466,73 @@ function updateBlankHint(index, blankIndex, value) {
     }
     questions[index].blank_hints[blankIndex] = value;
 }
+function addPassage() {
+    passageSeq++;
+    passages.push({ id: 'p' + passageSeq, content: '', position: 1 });
+    renderPassages();
+}
+
+function removePassage(id) {
+    if (!confirm('Xoá đoạn văn này? Các câu hỏi đang gắn với đoạn này sẽ bị bỏ liên kết.')) return;
+    passages = passages.filter(p => p.id !== id);
+    questions.forEach(q => { if (q.linked_passage_id === id) q.linked_passage_id = null; });
+    renderPassages();
+    render();
+}
+
+function updatePassageContent(id, value) {
+    const p = passages.find(p => p.id === id);
+    if (p) p.content = value;
+}
+function passageSelectHtml(index, q) {
+    const options = passages.map(p =>
+        `<option value="${p.id}" ${q.linked_passage_id === p.id ? 'selected' : ''}>${escapeHtml((p.content || '').slice(0, 40))}...</option>`
+    ).join('');
+    return `<div class="form-group mt-2 mb-0">
+        <label class="input-label">Gắn với đoạn văn</label>
+        <select class="form-control" onchange="updateField(${index}, 'linked_passage_id', this.value || null)">
+            <option value="">— Không gắn —</option>
+            ${options}
+        </select>
+    </div>`;
+}
+function updatePassagePosition(id, value) {
+    const p = passages.find(p => p.id === id);
+    if (p) p.position = parseInt(value, 10) || 1;
+}
+
+function renderPassages() {
+    const container = document.getElementById('passagesContainer');
+    const totalQ = questions.length;
+
+    container.innerHTML = passages.map((p, idx) => {
+        let posOpts = '';
+        for (let i = 1; i <= Math.max(totalQ, 1); i++) {
+            posOpts += `<option value="${i}" ${p.position === i ? 'selected' : ''}>Trước câu ${i}</option>`;
+        }
+        posOpts += `<option value="${totalQ + 1}" ${p.position === totalQ + 1 ? 'selected' : ''}>Cuối bài</option>`;
+
+        return `<div class="pt-question-card" style="background:#faf5ff;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="pt-q-badge">Đoạn văn ${idx + 1}</span>
+                <button type="button" class="pt-remove-btn" onclick="removePassage('${p.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="form-group mb-2">
+                <label class="input-label">Nội dung</label>
+                <textarea class="form-control" rows="4" oninput="updatePassageContent('${p.id}', this.value)">${escapeHtml(p.content)}</textarea>
+            </div>
+            <div class="form-group mb-0" style="max-width:240px;">
+                <label class="input-label">Vị trí hiển thị</label>
+                <select class="form-control" onchange="updatePassagePosition('${p.id}', this.value); renderPassages();">${posOpts}</select>
+            </div>
+        </div>`;
+    }).join('') || '<div class="text-muted mb-2">Chưa có đoạn văn nào.</div>';
+}
 
 function render() {
     countLabel.textContent = questions.length;
     container.innerHTML = questions.map((q, index) => renderQuestionCard(q, index)).join('');
+    renderPassages();
 }
 
 function renderQuestionCard(q, index) {
@@ -481,10 +548,7 @@ function renderQuestionCard(q, index) {
             </div>`;
         });
         bodyHtml += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="addOption(${index})"><i class="fas fa-plus mr-4"></i>Thêm lựa chọn</button></div>
-        <div class="form-check mt-2">
-            <input type="checkbox" class="form-check-input" id="passage_check_${index}" ${q.linked_to_passage ? 'checked' : ''} onchange="toggleLinkedToPassage(${index}, this.checked)">
-            <label class="form-check-label" for="passage_check_${index}">Gắn với đoạn văn dùng chung (Reading Comprehension) — cần nhập Reading Passage ở trên</label>
-        </div>`;
+        ${passageSelectHtml(index, q)}`;
 
     } else if (q.type === 'sentence_completion') {
         const blankCount = countBlanks(q.question_text);
@@ -508,10 +572,7 @@ function renderQuestionCard(q, index) {
             }
             bodyHtml += '</div>';
         }
-        bodyHtml += `<div class="form-check mt-2">
-            <input type="checkbox" class="form-check-input" id="passage_check_${index}" ${q.linked_to_passage ? 'checked' : ''} onchange="toggleLinkedToPassage(${index}, this.checked)">
-            <label class="form-check-label" for="passage_check_${index}">Gắn với đoạn văn dùng chung (Reading Comprehension) — cần nhập Reading Passage ở trên</label>
-        </div>`;
+        bodyHtml += passageSelectHtml(index, q);
 
     } else if (q.type === 'error_correction') {
         bodyHtml += `<div class="form-group">
@@ -561,7 +622,7 @@ function renderQuestionCard(q, index) {
     const answerHelpBlock = `
         <div class="form-group mt-2">
             <label class="input-label">Giải thích đáp án <small class="text-muted">(chỉ Manager/CEO thấy khi xem chi tiết bài làm học viên — học viên không bao giờ thấy)</small></label>
-            <textarea class="form-control" rows="2" placeholder="VD: Dùng 'have been' vì đây là thì hiện tại hoàn thành tiếp diễn, diễn tả hành động bắt đầu trong quá khứ và vẫn tiếp diễn." oninput="updateField(${index}, 'answer_help', this.value)">${escapeHtml(q.answer_help || '')}</textarea>
+            <textarea class="form-control" rows="4" placeholder="VD: Dùng 'have been' vì đây là thì hiện tại hoàn thành tiếp diễn, diễn tả hành động bắt đầu trong quá khứ và vẫn tiếp diễn." oninput="updateField(${index}, 'answer_help', this.value)">${escapeHtml(q.answer_help || '')}</textarea>
         </div>
     `;
 
@@ -592,7 +653,7 @@ function renderQuestionCard(q, index) {
 
         <div class="form-group">
             <label class="input-label">${QUESTION_TEXT_LABELS[q.type] || 'Nội dung câu hỏi *'}</label>
-            <textarea class="form-control" rows="2" oninput="updateField(${index}, 'question_text', this.value); refreshBlankCount(${index}, this.value)">${escapeHtml(q.question_text)}</textarea>
+            <textarea class="form-control" rows="4" oninput="updateField(${index}, 'question_text', this.value); refreshBlankCount(${index}, this.value)">${escapeHtml(q.question_text)}</textarea>
         </div>
 
         ${bodyHtml}
@@ -620,6 +681,7 @@ function refreshBlankCount(index, text) {
 }
 
 document.getElementById('btnAddQuestion').addEventListener('click', addQuestion);
+document.getElementById('btnAddPassage').addEventListener('click', addPassage);
 
 document.getElementById('placementTestForm').addEventListener('submit', function (e) {
     if (questions.length === 0) {
@@ -628,7 +690,6 @@ document.getElementById('placementTestForm').addEventListener('submit', function
         return;
     }
 
-    const readingPassage = (document.getElementById('readingPassageInput').value || '').trim();
 
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
@@ -645,10 +706,13 @@ document.getElementById('placementTestForm').addEventListener('submit', function
                 alert('Câu ' + (i + 1) + ' chưa chọn đáp án đúng.');
                 return;
             }
-            if (q.linked_to_passage && !readingPassage) {
-                e.preventDefault();
-                alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng bạn chưa nhập Reading Passage ở trên.');
-                return;
+            if (q.linked_passage_id) {
+                const p = passages.find(p => p.id === q.linked_passage_id);
+                if (!p || !p.content.trim()) {
+                    e.preventDefault();
+                    alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng đoạn văn đó chưa có nội dung.');
+                    return;
+                }
             }
         } else if (q.type === 'sentence_completion') {
             const blanks = countBlanks(q.question_text);
@@ -662,10 +726,13 @@ document.getElementById('placementTestForm').addEventListener('submit', function
                 alert('Câu ' + (i + 1) + ' chưa nhập đủ đáp án cho từng chỗ trống.');
                 return;
             }
-            if (q.linked_to_passage && !readingPassage) {
-                e.preventDefault();
-                alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng bạn chưa nhập Reading Passage ở trên.');
-                return;
+            if (q.linked_passage_id) {
+                const p = passages.find(p => p.id === q.linked_passage_id);
+                if (!p || !p.content.trim()) {
+                    e.preventDefault();
+                    alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng đoạn văn đó chưa có nội dung.');
+                    return;
+                }
             }
         } else if (q.type === 'error_correction') {
             if (!q.correct_answer_text || !q.correct_answer_text.trim()) {
@@ -701,8 +768,8 @@ document.getElementById('placementTestForm').addEventListener('submit', function
     }
 
     document.getElementById('questionsDataInput').value = JSON.stringify(questions);
+    document.getElementById('passagesDataInput').value = JSON.stringify(passages);
 });
-
 render();
 </script>
 

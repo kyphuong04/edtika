@@ -491,7 +491,6 @@ class PlacementPlayController extends Controller
             'audio_url'         => $q->audio_path ? Storage::url($q->audio_path) : null,
             'word_bank'         => $q->word_bank ?? [],
             'blank_hints'       => $q->blank_hints ?? [],
-            'linked_to_passage' => (bool) $q->linked_to_passage,
         ];
     }
 

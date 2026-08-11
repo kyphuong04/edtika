@@ -34,14 +34,18 @@
                 @endif
             </div>
 
-            @if($block['test']->reading_passage)
-                <div class="pt-q-card" style="background:#faf5ff;">
-                    <strong>Đoạn văn đọc:</strong>
-                    <div class="mt-2">{!! nl2br(e($block['test']->reading_passage)) !!}</div>
-                </div>
-            @endif
+            @php
+                $blockPassages = collect($block['test']->reading_passages ?? [])->keyBy('position');
+            @endphp
 
             @foreach($block['questions'] as $idx => $item)
+
+                @if($blockPassages->has($idx + 1))
+                    <div class="pt-q-card" style="background:#faf5ff;">
+                        <strong>Đoạn văn đọc:</strong>
+                        <div class="mt-2">{!! nl2br(e($blockPassages[$idx + 1]['content'])) !!}</div>
+                    </div>
+                @endif
                 @php $q = $item['question']; $isCorrect = $item['is_correct']; @endphp
                 <div class="pt-q-card" style="border-left:5px solid {{ $isCorrect ? '#22c55e' : '#ef4444' }};">
                     <span class="pt-q-num">Câu {{ $idx + 1 }}</span>
@@ -102,6 +106,13 @@
                     @endif
                 </div>
             @endforeach
+
+            @if($blockPassages->has(count($block['questions']) + 1))
+                <div class="pt-q-card" style="background:#faf5ff;">
+                    <strong>Đoạn văn đọc:</strong>
+                    <div class="mt-2">{!! nl2br(e($blockPassages[count($block['questions']) + 1]['content'])) !!}</div>
+                </div>
+            @endif
         @endforeach
 
         <div class="pt-q-card">

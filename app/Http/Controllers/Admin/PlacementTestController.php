@@ -65,6 +65,7 @@ class PlacementTestController extends Controller
         $formAction = route('admin.placement_tests.store');
         $placementTest = null;
         $questionsData = [];
+        $passagesData = [];
         [$existingTests, $poolProgress] = $this->getTestsListWithProgress();
         $speakingQuestions = PlacementSpeakingQuestion::orderByDesc('created_at')->get();
 
@@ -99,7 +100,7 @@ class PlacementTestController extends Controller
                 'id'                      => $q->id,
                 'type'                    => $q->type,
                 'has_audio'               => $q->has_audio,
-                'linked_to_passage'       => $q->linked_to_passage,
+                'linked_passage_id'       => $q->linked_passage_id,
                 'answer_help'             => $q->answer_help,
                 'audio_url'               => $q->audio_path ? Storage::url($q->audio_path) : null,
                 'existing_audio_path'     => $q->audio_path,
@@ -122,12 +123,18 @@ class PlacementTestController extends Controller
                 'points'                  => $q->points,
             ];
         })->values();
+        $passagesData = $placementTest->reading_passages ?? [];
+
+        // dd($passagesData);
 
         [$existingTests, $poolProgress] = $this->getTestsListWithProgress();
         $speakingQuestions = PlacementSpeakingQuestion::orderByDesc('created_at')->get();
 
+        // return view('admin.placement_tests.form', compact(
+        //     'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress', 'speakingQuestions'
+        // ));
         return view('admin.placement_tests.form', compact(
-            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress', 'speakingQuestions'
+            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'passagesData', 'existingTests', 'poolProgress', 'speakingQuestions'
         ));
     }
 
@@ -141,7 +148,7 @@ class PlacementTestController extends Controller
                 'level'            => $validated['level'],
                 'title'            => $validated['title'],
                 'description'      => $validated['description'] ?? null,
-                'reading_passage'  => $validated['reading_passage'] ?? null,
+                'reading_passages'  => json_decode($validated['reading_passages'] ?? '[]', true) ?: [],
                 'status'           => $request->input('submit_action') === 'publish' ? 'published' : 'draft',
                 'created_by'       => auth()->id(),
             ]);
@@ -174,7 +181,7 @@ class PlacementTestController extends Controller
                 'level'           => $validated['level'],
                 'title'           => $validated['title'],
                 'description'     => $validated['description'] ?? null,
-                'reading_passage' => $validated['reading_passage'] ?? null,
+                'reading_passages'  => json_decode($validated['reading_passages'] ?? '[]', true) ?: [],
                 'status'          => $request->input('submit_action') === 'publish' ? 'published' : $placementTest->status,
             ]);
 
@@ -283,7 +290,7 @@ class PlacementTestController extends Controller
             'level'           => 'required|in:A1,A2,B1,B2,B2+',
             'title'           => 'required|string|max:255',
             'description'     => 'nullable|string',
-            'reading_passage' => 'nullable|string',
+            'reading_passages'  => 'nullable|json',
             'questions_data'  => 'required|string',
         ]);
     }
@@ -301,6 +308,7 @@ class PlacementTestController extends Controller
     private function syncQuestions(PlacementTest $test, Request $request): void
     {
         $questions = json_decode($request->input('questions_data'), true) ?: [];
+        $passages = collect($test->reading_passages ?? []);
 
         if (count($questions) === 0) {
             throw new \RuntimeException('Đề phải có ít nhất 1 câu hỏi.');
@@ -309,8 +317,6 @@ class PlacementTestController extends Controller
         if (count($questions) > PlacementTest::MAX_QUESTIONS) {
             throw new \RuntimeException('Mỗi đề tối đa ' . PlacementTest::MAX_QUESTIONS . ' câu hỏi.');
         }
-
-        $passageLinkedCount = 0;
 
         foreach ($questions as $index => $q) {
             $type = $q['type'] ?? 'multiple_choice';
@@ -339,7 +345,7 @@ class PlacementTestController extends Controller
             $options = null;
             $wordBank = null;
             $blankHints = null;
-            $linkedToPassage = false;
+            $linkedPassageId = null;
             $correctAnswer = null;
 
             if ($type === 'multiple_choice') {
@@ -352,21 +358,28 @@ class PlacementTestController extends Controller
                 }
                 $correctAnswer = [$q['correct_answer']];
 
-                $linkedToPassage = !empty($q['linked_to_passage']);
-                if ($linkedToPassage) {
-                    $passageLinkedCount++;
+                $linkedPassageId = $q['linked_passage_id'] ?? null;
+                if ($linkedPassageId && !$passages->firstWhere('id', $linkedPassageId)) {
+                    throw new \RuntimeException(
+                        'Câu ' . ($index + 1) . ' gắn với đoạn văn "' . $linkedPassageId . '" không tồn tại. '
+                        . 'Các đoạn văn hiện có trong $test->reading_passages: [' . $passages->pluck('id')->implode(', ') . ']'
+                    );
                 }
+                
             } elseif ($type === 'sentence_completion') {
                 $wordBank = !empty($q['word_bank']) ? array_values(array_filter($q['word_bank'])) : null;
                 $blankHints = $q['blank_hints'] ?? null;
                 if (!is_array($q['correct_answer'] ?? null) || count($q['correct_answer']) === 0) {
-                    throw new \RuntimeException('Câu ' . ($index + 1) . ' chưa nhập đủ đáp án cho các chỗ trống.');
+                    throw new \RuntimeException(
+                        'Câu ' . ($index + 1) . ' gắn với đoạn văn "' . $linkedPassageId . '" không tồn tại. '
+                        . 'Các đoạn văn hiện có trong $test->reading_passages: [' . $passages->pluck('id')->implode(', ') . ']'
+                    );
                 }
                 $correctAnswer = $q['correct_answer'];
 
-                $linkedToPassage = !empty($q['linked_to_passage']);
-                if ($linkedToPassage) {
-                    $passageLinkedCount++;
+                $linkedPassageId = $q['linked_passage_id'] ?? null;
+                if ($linkedPassageId && !$passages->firstWhere('id', $linkedPassageId)) {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' gắn với đoạn văn không tồn tại.');
                 }
             } elseif ($type === 'error_correction') {
                 $answerText = trim((string) ($q['correct_answer_text'] ?? ''));
@@ -402,7 +415,7 @@ class PlacementTestController extends Controller
                 'order_index'       => $index,
                 'type'              => $type,
                 'has_audio'         => $hasAudio,
-                'linked_to_passage' => $linkedToPassage,
+                'linked_passage_id'   => $linkedPassageId,
                 'audio_path'        => $audioPath,
                 'question_text'     => $q['question_text'] ?? '',
                 'options'           => $options,
@@ -412,10 +425,6 @@ class PlacementTestController extends Controller
                 'answer_help'       => trim((string) ($q['answer_help'] ?? '')) ?: null,
                 'points'            => $q['points'] ?? 1,
             ]);
-        }
-
-        if ($passageLinkedCount > 0 && empty($test->reading_passage)) {
-            throw new \RuntimeException('Có câu hỏi Reading Comprehension nhưng đề chưa nhập đoạn văn (Reading Passage).');
         }
     }
 }
