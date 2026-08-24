@@ -20,8 +20,8 @@ function escapeAttr(value) {
 
 function questionLabel(entry) {
     return entry.slotCount > 1
-        ? `Câu ${entry.startNumber}–${entry.endNumber}`
-        : `Câu ${entry.startNumber}`;
+        ? `Question ${entry.startNumber}–${entry.endNumber}`
+        : `Question ${entry.startNumber}`;
 }
 
 function makeCard(entry) {
@@ -85,10 +85,19 @@ function wireBlankInputs(container, question) {
 
 const ExamRenderers = {
 
+    // Do app.js gán cho luồng Speaking tuần tự ("xong câu này mới mở câu sau").
+    speakingNav: null,
+
     render(entry) {
         const q = entry.question;
         const handler = this.byType[q.type] || this.byType.short_answer;
         return handler.call(this.byType, entry);
+    },
+
+    // Dừng mọi bản thu đang chạy trước khi rời câu/Part để MediaRecorder
+    // không tiếp tục chiếm micro.
+    stopAnyActiveRecording() {
+        if (window.IeltsSpeakingStage) window.IeltsSpeakingStage.stopActiveRecording();
     },
 
     grade(entry) {
@@ -489,14 +498,14 @@ const ExamRenderers = {
             const textarea = document.createElement('textarea');
             textarea.className = 'exam-essay-textarea';
             textarea.value = PreviewState.getAnswer(q.id) || '';
-            textarea.placeholder = 'Nhập bài làm của bạn...';
+            textarea.placeholder = 'Type your answer here...';
 
             const counter = document.createElement('div');
             counter.className = 'exam-word-count';
 
             const updateCount = () => {
                 const words = textarea.value.trim() ? textarea.value.trim().split(/\s+/).length : 0;
-                counter.textContent = words + ' từ';
+                counter.textContent = words + ' words';
             };
             updateCount();
 
@@ -511,220 +520,58 @@ const ExamRenderers = {
         },
 
         /**
-         * Giao diện ghi âm cho Speaking — thay thế textarea vì nói khác bản
-         * chất với viết. Đáp án lưu dạng blob URL (chuỗi) vào PreviewState,
-         * tương thích sẵn với isAnswered()/navigator "đã làm" mà không cần
-         * sửa state.js. Không submit lên server — preview chỉ chạy trong
-         * bộ nhớ trình duyệt của giáo viên.
+         * Giao diện Speaking 2 cột — dùng CHUNG với trang làm bài của học viên
+         * qua assets/js/ielts-shared/speaking-stage.js. Ở preview đáp án chỉ
+         * là blob URL trong bộ nhớ trình duyệt (không upload server), nhưng
+         * vẫn ghi vào PreviewState để navigator "đã làm"/isAnswered() hoạt
+         * động như cũ.
          */
         _speakingRecorder(entry) {
             const q = entry.question;
-            const card = makeCard(entry);
-            appendTextBlock(card, q.text);
 
-            const taskImage = q.question_data && q.question_data.task_image;
-            if (taskImage) {
-                const img = document.createElement('img');
-                img.src = taskImage;
-                img.alt = '';
-                img.style.maxWidth = '100%';
-                img.style.borderRadius = '8px';
-                img.style.marginBottom = '12px';
-                card.appendChild(img);
+            if (!window.IeltsSpeakingStage) {
+                const fallback = makeCard(entry);
+                appendTextBlock(fallback, q.text);
+                return fallback;
             }
 
-            const wrap = document.createElement('div');
-            wrap.className = 'exam-speaking-wrap';
+            const meta = window.PREVIEW_TEST_META || {};
+            const isMock = meta.type === 'mock';
+            const skillModel = PreviewState.bySkill[entry.skill] || { entries: [] };
+            const partEntries = (skillModel.entries || []).filter((e) => e.partIndex === entry.partIndex);
+            const position = partEntries.findIndex((e) => e.question.id === q.id);
+            const part = entry.part || {};
 
-            const micBtn = document.createElement('button');
-            micBtn.type = 'button';
-            micBtn.className = 'exam-mic-btn';
-            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-
-            const status = document.createElement('div');
-            status.className = 'exam-mic-status';
-            status.textContent = 'Nhấn để ghi âm câu trả lời của bạn';
-
-            const errorEl = document.createElement('div');
-            errorEl.className = 'exam-mic-error';
-            errorEl.style.display = 'none';
-            errorEl.textContent = 'Không truy cập được microphone. Hãy cho phép trình duyệt sử dụng mic rồi thử lại.';
-
-            const player = document.createElement('div');
-            player.className = 'exam-player';
-
-            const playToggle = document.createElement('button');
-            playToggle.type = 'button';
-            playToggle.className = 'exam-play-toggle';
-            playToggle.innerHTML = '<i class="fas fa-play"></i>';
-
-            const timeLabel = document.createElement('span');
-            timeLabel.className = 'exam-time-label';
-            timeLabel.textContent = '00:00';
-
-            const progressTrack = document.createElement('div');
-            progressTrack.className = 'exam-progress-track';
-            const progressFill = document.createElement('div');
-            progressFill.className = 'exam-progress-fill';
-            progressTrack.appendChild(progressFill);
-
-            player.appendChild(playToggle);
-            player.appendChild(timeLabel);
-            player.appendChild(progressTrack);
-
-            const rerecordLink = document.createElement('span');
-            rerecordLink.className = 'exam-rerecord-link';
-            rerecordLink.textContent = 'Ghi âm lại';
-
-            const audioEl = document.createElement('audio');
-            audioEl.style.display = 'none';
-
-            wrap.appendChild(micBtn);
-            wrap.appendChild(status);
-            wrap.appendChild(errorEl);
-            wrap.appendChild(player);
-            wrap.appendChild(rerecordLink);
-            wrap.appendChild(audioEl);
-            card.appendChild(wrap);
-
-            if (typeof MediaRecorder === 'undefined') {
-                micBtn.disabled = true;
-                status.textContent = 'Trình duyệt này không hỗ trợ ghi âm.';
-                return card;
-            }
-
-            let mediaRecorder = null;
-            let audioChunks = [];
-            let isRecording = false;
-            // Đáp án của Speaking lưu dạng blob URL (string) — khôi phục lại
-            // nếu câu này đã được ghi âm từ trước (chuyển part rồi quay lại).
-            let recordedBlobUrl = PreviewState.getAnswer(q.id) || null;
-
-            function formatTime(sec) {
-                sec = isFinite(sec) ? sec : 0;
-                const m = String(Math.floor(sec / 60)).padStart(2, '0');
-                const s = String(Math.floor(sec % 60)).padStart(2, '0');
-                return m + ':' + s;
-            }
-
-            function setIdle() {
-                isRecording = false;
-                micBtn.classList.remove('is-recording');
-                micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-            }
-
-            function setRecordingUI() {
-                isRecording = true;
-                micBtn.classList.add('is-recording');
-                micBtn.innerHTML = '<i class="fas fa-stop"></i>';
-                status.textContent = 'Đang ghi âm... nhấn lại để dừng';
-            }
-
-            function showRecordedState() {
-                setIdle();
-                status.textContent = 'Đã ghi âm xong — nghe lại bên dưới';
-                player.classList.add('is-visible');
-                rerecordLink.style.display = 'inline-block';
-            }
-
-            if (recordedBlobUrl) {
-                audioEl.src = recordedBlobUrl;
-                showRecordedState();
-            }
-
-            async function startRecording() {
-                errorEl.style.display = 'none';
-
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    audioChunks = [];
-                    mediaRecorder = new MediaRecorder(stream);
-
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) audioChunks.push(e.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                        if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
-                        recordedBlobUrl = URL.createObjectURL(blob);
-                        audioEl.src = recordedBlobUrl;
-                        stream.getTracks().forEach((t) => t.stop());
-
-                        PreviewState.setAnswer(q.id, recordedBlobUrl);
-                        showRecordedState();
-                    };
-
-                    mediaRecorder.start();
-                    setRecordingUI();
-                } catch (err) {
-                    errorEl.style.display = 'block';
-                    status.textContent = 'Nhấn để ghi âm';
-                }
-            }
-
-            function stopRecording() {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-            }
-
-            micBtn.addEventListener('click', () => {
-                if (isRecording) stopRecording();
-                else startRecording();
+            return window.IeltsSpeakingStage.render(entry, {
+                isMock,
+                partNumber: part.part_number || (entry.partIndex + 1),
+                questionLabel: 'Question ' + entry.startNumber,
+                stepLabel: partEntries.length > 1
+                    ? (part.title || 'Part ' + (entry.partIndex + 1)) + ' — question ' + (position + 1) + ' of ' + partEntries.length
+                    : (part.title || ''),
+                storageKey: 'preview-test-' + (meta.id || 0),
+                locked: !!PreviewState.submitted,
+                hasNext: position >= 0 && position < partEntries.length - 1,
+                getRecordingUrl: (questionId) => PreviewState.getAnswer(questionId) || null,
+                saveRecording: (questionId, blob) => {
+                    // Preview không gọi server — giữ blob URL trong bộ nhớ.
+                    PreviewState.setAnswer(questionId, URL.createObjectURL(blob));
+                    return Promise.resolve(null);
+                },
+                // Preview luôn có model_answer inline (không strip) nên không
+                // cần endpoint mở khoá như bên attempt.
+                fetchModelAnswer: null,
+                onDone: () => {
+                    if (ExamRenderers.speakingNav && ExamRenderers.speakingNav.onQuestionDone) {
+                        ExamRenderers.speakingNav.onQuestionDone();
+                    }
+                },
+                onNext: () => {
+                    if (ExamRenderers.speakingNav && ExamRenderers.speakingNav.next) {
+                        ExamRenderers.speakingNav.next();
+                    }
+                },
             });
-
-            rerecordLink.addEventListener('click', () => {
-                player.classList.remove('is-visible');
-                rerecordLink.style.display = 'none';
-                status.textContent = 'Nhấn để ghi âm câu trả lời của bạn';
-                audioEl.pause();
-                playToggle.innerHTML = '<i class="fas fa-play"></i>';
-                timeLabel.textContent = '00:00';
-                progressFill.style.width = '0%';
-
-                if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
-                recordedBlobUrl = null;
-                PreviewState.setAnswer(q.id, '');
-            });
-
-            playToggle.addEventListener('click', () => {
-                if (audioEl.paused) {
-                    audioEl.play();
-                    playToggle.innerHTML = '<i class="fas fa-pause"></i>';
-                } else {
-                    audioEl.pause();
-                    playToggle.innerHTML = '<i class="fas fa-play"></i>';
-                }
-            });
-
-            audioEl.addEventListener('ended', () => {
-                playToggle.innerHTML = '<i class="fas fa-play"></i>';
-            });
-
-            audioEl.addEventListener('timeupdate', () => {
-                timeLabel.textContent = formatTime(audioEl.currentTime);
-                const pct = audioEl.duration ? (audioEl.currentTime / audioEl.duration) * 100 : 0;
-                progressFill.style.width = pct + '%';
-            });
-
-            progressTrack.addEventListener('click', (e) => {
-                if (!audioEl.duration) return;
-                const rect = progressTrack.getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / rect.width;
-                audioEl.currentTime = pct * audioEl.duration;
-            });
-
-            // Đã nộp bài -> khoá ghi âm/ghi âm lại, giữ nguyên phần nghe lại
-            // (nhất quán với các loại câu hỏi khác bị input.disabled=true khi
-            // chấm trong gradeByType).
-            if (PreviewState.submitted) {
-                micBtn.disabled = true;
-                rerecordLink.style.display = 'none';
-                status.textContent = recordedBlobUrl ? 'Đã nộp bài' : 'Chưa ghi âm — đã nộp bài';
-            }
-
-            return card;
         },
     },
 

@@ -32,6 +32,37 @@
 .pt-cta-btn { border-radius:14px; padding:12px 26px; font-weight:700; font-size:14px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
 .pt-cta-primary { background:#511D99; color:#fff; }
 .pt-cta-secondary { background:#fff; color:#511D99; border:2px solid #511D99; }
+
+.pt-answer-q-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+}
+.pt-answer-passage-card {
+    background: #faf5ff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+}
+.pt-answer-q-card .badge {
+    margin-bottom: 10px;
+}
+
+#studentAnswerKeyModal-0 .modal-dialog,
+.modal[id^="studentAnswerKeyModal-"] .modal-dialog {
+    max-width: 95vw;
+}
+.modal[id^="studentAnswerKeyModal-"] .modal-body {
+    padding: 24px 28px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+.modal[id^="studentAnswerKeyModal-"] .modal-body > div {
+    margin-bottom: 18px !important;
+}
 </style>
 @endpush
 
@@ -59,7 +90,7 @@
         </div>
     </div>
 
-    <div class="pt-breakdown-card">
+    <!-- <div class="pt-breakdown-card">
         <h4><i class="fas fa-list-ol mr-2"></i>Chi tiết từng đề</h4>
         @foreach(($attempt->test_ids_taken ?? []) as $i => $testId)
             <div class="pt-breakdown-row">
@@ -69,7 +100,128 @@
                 </span>
             </div>
         @endforeach
+    </div> -->
+
+    <div class="pt-breakdown-card">
+        <h4><i class="fas fa-list-ol mr-2"></i>Chi tiết từng đề</h4>
+        @foreach(($attempt->test_ids_taken ?? []) as $i => $testId)
+            <div class="pt-breakdown-row">
+                <span>Đề {{ $i + 1 }}</span>
+                <span class="d-flex align-items-center gap-8">
+                    <span class="pt-breakdown-level">{{ ($attempt->scores[$i] ?? '—') }}/10 câu đúng</span>
+                    @if(!$isDemoData && isset($testBlocks[$i]))
+                        <button type="button" class="btn btn-sm" style="border:1px solid #511D99;color:#511D99;border-radius:8px;" data-toggle="modal" data-target="#studentAnswerKeyModal-{{ $i }}">
+                            <i class="fas fa-key mr-1"></i>Xem đáp án
+                        </button>
+                    @endif
+                </span>
+            </div>
+        @endforeach
     </div>
+
+    @if(!$isDemoData)
+        @foreach($testBlocks as $block)
+            @php
+                $blockPassages = collect($block['test']->reading_passages ?? [])->keyBy('position');
+            @endphp
+            <div class="modal fade" id="studentAnswerKeyModal-{{ $block['index'] }}" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background:#511D99;color:#fff;">
+                            <h5 class="modal-title">
+                                Chi tiết bài làm — Đề {{ $block['index'] + 1 }} (Level {{ $block['test']->level }})
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+  
+                            @foreach($block['questions'] as $idx => $item)
+
+                                @if($blockPassages->has($idx + 1))
+                                    <div class="pt-answer-passage-card">
+                                        <strong>Đoạn văn đọc:</strong>
+                                        <div class="mt-2">{!! nl2br(e($blockPassages[$idx + 1]['content'])) !!}</div>
+                                    </div>
+                                @endif
+
+                                @php $q = $item['question']; $isCorrect = $item['is_correct']; @endphp
+                                <div class="pt-answer-q-card" style="border-left:5px solid {{ $isCorrect ? '#22c55e' : '#ef4444' }};">
+                                    <span style="display:inline-block;background:#f3e8ff;color:#511D99;font-weight:700;font-size:13px;padding:3px 10px;border-radius:8px;">Câu {{ $idx + 1 }}</span>
+                                    <span class="float-right badge {{ $isCorrect ? 'badge-success' : 'badge-danger' }}">
+                                        {{ $isCorrect ? 'Đúng' : 'Sai' }}
+                                    </span>
+
+                                    @if($q['has_audio'] && $q['audio_url'])
+                                        <audio controls style="width:100%;max-width:380px;margin:10px 0;display:block;" src="{{ $q['audio_url'] }}"></audio>
+                                    @endif
+
+                                    @if($q['type'] === 'multiple_choice')
+                                        <div style="font-size:15px;font-weight:600;color:#111827;margin:10px 0;">{!! $q['question_text'] !!}</div>
+                                        @foreach($q['options'] as $option)
+                                            @php $isGiven = $item['given'] === $option; @endphp
+                                            <div class="p-2 mb-1" style="border:2px solid {{ $isGiven ? ($isCorrect ? '#22c55e' : '#ef4444') : '#e5e7eb' }};background:{{ $isGiven ? ($isCorrect ? '#f0fdf4' : '#fef2f2') : '#fff' }};border-radius:8px;">
+                                                {{ $option }} @if($isGiven)<strong class="ml-2">(bạn đã chọn)</strong>@endif
+                                            </div>
+                                        @endforeach
+
+                                    @elseif($q['type'] === 'listening_image_choice')
+                                        <div style="font-size:15px;font-weight:600;color:#111827;margin:10px 0;">{!! $q['question_text'] !!}</div>
+                                        <div class="row">
+                                            @foreach($q['image_options'] as $imgOpt)
+                                                @php $isGiven = $item['given'] === $imgOpt['label']; @endphp
+                                                <div class="col-4">
+                                                    <div class="p-2 text-center mb-2" style="border:2px solid {{ $isGiven ? ($isCorrect ? '#22c55e' : '#ef4444') : '#e5e7eb' }};border-radius:10px;">
+                                                        <img src="{{ $imgOpt['url'] }}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;margin-bottom:6px;">
+                                                        {{ $imgOpt['label'] }} @if($isGiven)(đã chọn)@endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                    @elseif($q['type'] === 'error_correction')
+                                        <div style="font-size:15px;font-weight:600;color:#111827;margin:10px 0;">{!! $q['question_text'] !!}</div>
+                                        <div class="p-2" style="background:{{ $isCorrect ? '#f0fdf4' : '#fef2f2' }};border-radius:8px;">
+                                            Bạn trả lời: {{ $item['given'] ?: '(bỏ trống)' }}
+                                        </div>
+
+                                    @elseif($q['type'] === 'sentence_completion')
+                                        @php $parts = preg_split('/_{2,}/', $q['question_text']); @endphp
+                                        <div style="font-size:15px;color:#111827;margin:10px 0;line-height:1.5;">
+                                            @foreach($parts as $pIdx => $part)
+                                                {!! nl2br(e($part)) !!}
+                                                @if($pIdx < count($parts) - 1)
+                                                    <strong style="color:{{ $isCorrect ? '#16a34a' : '#dc2626' }};">
+                                                        [{{ $item['given'][$pIdx] ?? '(bỏ trống)' }}]
+                                                    </strong>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    <div style="margin-top:10px;font-size:13px;font-weight:700;color:#16a34a;">
+                                        Đáp án đúng: {{ $item['correct_display'] }}
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            @if($blockPassages->has(count($block['questions']) + 1))
+                                <div class="pt-answer-passage-card">
+                                    <strong>Đoạn văn đọc:</strong>
+                                    <div class="mt-2">{!! nl2br(e($blockPassages[count($block['questions']) + 1]['content'])) !!}</div>
+                                </div>
+                            @endif
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endif
 
     <div class="pt-speaking-card">
         <i class="fas fa-microphone-alt"></i>

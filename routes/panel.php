@@ -605,15 +605,42 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/attempt/{attemptId}/submit', 'IeltsTestController@submitTest')->name('panel.ielts_tests.submit');
         Route::get('/attempt/{attemptId}/results', 'IeltsTestController@results')->name('panel.ielts_tests.results');
         Route::get('/attempt/{attemptId}/review', 'IeltsTestController@reviewAnswers')->name('panel.ielts_tests.review');
+        Route::get('/attempt/{attemptId}/section-data', 'IeltsTestController@attemptSectionData')->name('panel.ielts_tests.attempt_section_data');
+        Route::get('/attempt/{attemptId}/scope-status', 'IeltsTestController@scopeStatus')->name('panel.ielts_tests.scope_status');
+        Route::post('/attempt/{attemptId}/speaking-part/{partId}/start', 'IeltsTestController@speakingStartPart')->name('panel.ielts_tests.speaking_start_part');
+        Route::get('/attempt/{attemptId}/speaking-model-answer/{questionId}', 'IeltsTestController@speakingModelAnswer')->name('panel.ielts_tests.speaking_model_answer');
     });
 
     // IELTS Grading (Teachers/Admins - grade speaking and writing answers)
+    // Route::group(['prefix' => 'ielts-grading'], function () {
+    //     Route::get('/', 'IeltsGradingController@index')->name('panel.ielts_grading.index');
+    //     Route::get('/graded', 'IeltsGradingController@graded')->name('panel.ielts_grading.graded');
+    //     Route::get('/{attemptId}/grade/{skill?}', 'IeltsGradingController@grade')->name('panel.ielts_grading.grade');
+    //     Route::post('/{attemptId}/submit', 'IeltsGradingController@submitGrade')->name('panel.ielts_grading.submit');
+    //     Route::get('/answer/{answerId}', 'IeltsGradingController@viewAnswer')->name('panel.ielts_grading.view_answer');
+    //     Route::post('/rate', 'IeltsGradingController@submitRating')->name('panel.ielts_grading.rate');
+    //     Route::get('/', 'IeltsTestGradingController@queue')->name('panel.ielts_grading.queue');
+    //     Route::get('/{attemptId}/writing', 'IeltsTestGradingController@showWriting')->name('panel.ielts_grading.writing.show');
+    //     Route::post('/{attemptId}/writing', 'IeltsTestGradingController@saveWriting')->name('panel.ielts_grading.writing.save');
+    //     Route::get('/{attemptId}/speaking', 'IeltsTestGradingController@showSpeaking')->name('panel.ielts_grading.speaking.show');
+    //     Route::post('/{attemptId}/speaking', 'IeltsTestGradingController@saveSpeaking')->name('panel.ielts_grading.speaking.save');
+    // });
+
     Route::group(['prefix' => 'ielts-grading'], function () {
-        Route::get('/', 'IeltsGradingController@index')->name('panel.ielts_grading.index');
-        Route::get('/graded', 'IeltsGradingController@graded')->name('panel.ielts_grading.graded');
-        Route::get('/{attemptId}/grade/{skill?}', 'IeltsGradingController@grade')->name('panel.ielts_grading.grade');
-        Route::post('/{attemptId}/submit', 'IeltsGradingController@submitGrade')->name('panel.ielts_grading.submit');
-        Route::get('/answer/{answerId}', 'IeltsGradingController@viewAnswer')->name('panel.ielts_grading.view_answer');
+        // Flow MỚI (IeltsTestGradingController) — thay thế hoàn toàn
+        // IeltsGradingController cũ (gắn với giao diện take_idp cũ đã bỏ).
+        // Giữ NGUYÊN TÊN 'panel.ielts_grading.index' vì
+        // dashboard/instructor/includes/speaking_queue.blade.php đã tham
+        // chiếu đúng tên này — chỉ đổi controller đứng sau.
+        Route::get('/', 'IeltsTestGradingController@queue')->name('panel.ielts_grading.index');
+        Route::get('/{attemptId}/writing', 'IeltsTestGradingController@showWriting')->name('panel.ielts_grading.writing.show');
+        Route::post('/{attemptId}/writing', 'IeltsTestGradingController@saveWriting')->name('panel.ielts_grading.writing.save');
+        Route::get('/{attemptId}/speaking', 'IeltsTestGradingController@showSpeaking')->name('panel.ielts_grading.speaking.show');
+        Route::post('/{attemptId}/speaking', 'IeltsTestGradingController@saveSpeaking')->name('panel.ielts_grading.speaking.save');
+
+        // Giữ lại — KHÔNG liên quan đến việc chấm bài. review.blade.php (trang
+        // xem lại kết quả, dùng chung cho cả flow mới) gọi route này để học
+        // viên đánh giá sao cho giáo viên vừa chấm bài mình.
         Route::post('/rate', 'IeltsGradingController@submitRating')->name('panel.ielts_grading.rate');
     });
 

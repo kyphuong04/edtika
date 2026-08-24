@@ -287,6 +287,11 @@ class PlacementPlayController extends Controller
     // public function result(Request $request)
     // {
     //     $user = $request->user();
+
+    //     if (!$user) {
+    //         return redirect()->route('placement.request_login');
+    //     }
+
     //     $sessionAttemptId = $request->session()->get('placement_attempt_id');
 
     //     if ($sessionAttemptId) {
@@ -301,7 +306,9 @@ class PlacementPlayController extends Controller
 
     //         $request->session()->forget('placement_attempt_id');
     //     }
+
     //     $attempt = $user->latestPlacementResult;
+
     //     $isDemoData = false;
     //     if (!$attempt) {
     //         $isDemoData = true;
@@ -315,11 +322,13 @@ class PlacementPlayController extends Controller
     //             'completed_at'   => now(),
     //         ]);
     //     }
+
     //     return view('web.placement.result', [
     //         'attempt'    => $attempt,
     //         'isDemoData' => $isDemoData,
     //     ]);
     // }
+
     public function result(Request $request)
     {
         $user = $request->user();
@@ -359,20 +368,56 @@ class PlacementPlayController extends Controller
             ]);
         }
 
+        $testBlocks = $isDemoData ? collect() : $this->buildTestBlocksForAttempt($attempt);
+
         return view('web.placement.result', [
             'attempt'    => $attempt,
             'isDemoData' => $isDemoData,
+            'testBlocks' => $testBlocks,
         ]);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
     /**
-     * Tìm attempt đang làm dở (in_progress hoặc speaking), ưu tiên theo
-     * user_id nếu đã đăng nhập, fallback sang attempt_id lưu trong session
-     * cho khách. Nếu tìm thấy qua session mà người dùng NAY đã đăng nhập và
-     * attempt đó chưa có user_id -> gắn luôn vào tài khoản.
+     * Build chi tiết từng đề (câu hỏi + đáp án đúng) cho attempt đã hoàn thành,
+     * dùng để hiển thị modal "Xem đáp án" ở trang kết quả phía học viên.
+     * Logic giống PlacementResultController::detail() bên admin.
      */
+    private function buildTestBlocksForAttempt(IeltsPlacementAttempt $attempt)
+    {
+        $testIds = $attempt->test_ids_taken ?? [];
+        $tests = PlacementTest::with('questions')->whereIn('id', $testIds)->get()->keyBy('id');
+
+        $answersByQuestion = IeltsPlacementAttemptAnswer::where('attempt_id', $attempt->id)
+            ->get()
+            ->keyBy('placement_question_id');
+
+        return collect($testIds)->values()->map(function ($testId, $i) use ($tests, $answersByQuestion, $attempt) {
+            $test = $tests->get($testId);
+
+            if (!$test) {
+                return null;
+            }
+
+            $questions = $test->questions->map(function (PlacementQuestion $q) use ($answersByQuestion) {
+                $record = $answersByQuestion->get($q->id);
+
+                return [
+                    'question'        => $q->toPublicArray(),
+                    'given'           => $record->answer_given ?? null,
+                    'is_correct'      => $record->is_correct ?? false,
+                    'correct_display' => $q->correctAnswerDisplay(),
+                ];
+            });
+
+            return [
+                'test'      => $test,
+                'index'     => $i,
+                'is_scored' => $attempt->isStepScored($i),
+                'questions' => $questions,
+            ];
+        })->filter()->values();
+    }
+    
     private function findActiveAttempt(Request $request): ?IeltsPlacementAttempt
     {
         $user = $request->user();

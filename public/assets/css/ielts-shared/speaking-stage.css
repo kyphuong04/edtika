@@ -1,0 +1,521 @@
+/**
+ * speaking-stage.css — giao diện Speaking 2 cột (1 câu / 1 màn hình).
+ *
+ * DÙNG CHUNG cho cả 2 trang:
+ *  - Preview của giáo viên (ielts-tests-manage/preview)
+ *  - Bài thi thật của học viên (ielts-tests/attempt)
+ * Sửa ở đây là sửa cho cả hai — đừng copy sang preview.css/attempt.css.
+ *
+ * Bố cục: cột trái = Question + nghe câu hỏi + mic/đếm giờ + Show question,
+ * cột phải = Note + Hint + Model Answer (accordion).
+ */
+
+.speaking-stage {
+    border: 1.5px solid #7c3aed;
+    border-radius: 16px;
+    background: #fff;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 22px 26px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 10px rgba(81, 29, 153, .06);
+}
+
+.speaking-stage-left {
+    flex: 1 1 52%;
+    min-width: 0;
+    padding-right: 26px;
+    display: flex;
+    flex-direction: column;
+}
+
+.speaking-stage-right {
+    flex: 1 1 48%;
+    min-width: 0;
+    padding-left: 26px;
+    border-left: 1px solid #e9e5f5;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* ── Cột trái ─────────────────────────────────────────────────────────── */
+
+.speaking-stage-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #5b21b6;
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.speaking-stage-step {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b7fa8;
+    margin-bottom: 14px;
+}
+
+.speaking-controls {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0 4px;
+}
+
+.speaking-control {
+    flex: 1 1 50%;
+    min-width: 0;
+    text-align: center;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.speaking-control + .speaking-control {
+    border-left: 1px solid #e9e5f5;
+}
+
+.speaking-control-caption {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #3f3d56;
+    margin-top: 12px;
+    line-height: 1.45;
+}
+
+.speaking-control-sub {
+    font-size: 11.5px;
+    color: #8b7fa8;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Nút nghe câu hỏi */
+.speaking-listen-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: #6d28d9;
+    color: #fff;
+    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s, transform .12s;
+}
+.speaking-listen-btn:hover:not(:disabled) { background: #5b21b6; transform: scale(1.04); }
+.speaking-listen-btn:disabled { opacity: .45; cursor: not-allowed; }
+.speaking-listen-btn.is-playing { background: #5b21b6; }
+
+/* Đồng hồ đếm giờ riêng của từng câu (P1 45s, P2 1p chuẩn bị + 2p nói, P3 75s) */
+.speaking-timer {
+    font-size: 26px;
+    font-weight: 800;
+    color: #6d28d9;
+    letter-spacing: .5px;
+    line-height: 1;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+}
+.speaking-timer.is-prepare { color: #b45309; }
+.speaking-timer.is-recording { color: #dc2626; }
+.speaking-timer.is-low { color: #dc2626; }
+
+.speaking-timer-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: #8b7fa8;
+    margin-bottom: 4px;
+}
+
+/* Mic + vòng progress */
+.speaking-mic-wrap {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speaking-mic-ring {
+    position: absolute;
+    inset: 0;
+    width: 68px;
+    height: 68px;
+    transform: rotate(-90deg);
+    pointer-events: none;
+}
+.speaking-mic-ring-bg { fill: none; stroke: #ede9fe; stroke-width: 4; }
+.speaking-mic-ring-progress {
+    fill: none;
+    stroke: #6d28d9;
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .2s linear;
+}
+.speaking-mic-wrap.is-recording .speaking-mic-ring-progress { stroke: #dc2626; }
+
+.speaking-mic-btn {
+    position: relative;
+    z-index: 1;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: #6d28d9;
+    color: #fff;
+    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(109, 40, 217, .28);
+    transition: background .15s, transform .12s;
+}
+.speaking-mic-btn:hover:not(:disabled) { background: #5b21b6; transform: scale(1.04); }
+.speaking-mic-btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.speaking-mic-btn.is-recording {
+    background: #dc2626;
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, .5);
+    animation: speaking-mic-pulse 1.3s infinite;
+}
+
+@keyframes speaking-mic-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, .45); }
+    70%  { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+.speaking-mic-error {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #dc2626;
+    margin-top: 8px;
+    line-height: 1.45;
+}
+
+/* Khối "Show question" + nội dung câu hỏi */
+.speaking-reveal {
+    margin-top: 20px;
+    border: 1.5px solid #a78bfa;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.speaking-reveal-btn {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #6d28d9;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 16px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+}
+.speaking-reveal-btn:hover { background: #faf5ff; }
+.speaking-reveal-btn i { font-size: 16px; }
+
+.speaking-reveal-body {
+    display: none;
+    padding: 16px 18px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #1f2937;
+    font-weight: 600;
+}
+.speaking-reveal.is-open .speaking-reveal-body { display: block; }
+.speaking-reveal.is-open .speaking-reveal-btn { display: none; }
+
+.speaking-reveal-body ul,
+.speaking-reveal-body ol { margin: 8px 0 0 18px; }
+.speaking-reveal-body li { margin-bottom: 4px; }
+
+.speaking-reveal-hide {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Player nghe lại bản thu */
+.speaking-playback {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 10px 12px;
+    background: #f5f3ff;
+    border-radius: 10px;
+}
+.speaking-playback.is-visible { display: flex; }
+
+.speaking-playback-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #6d28d9;
+    color: #fff;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.speaking-playback-time {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #374151;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.speaking-playback-track {
+    flex: 1;
+    height: 5px;
+    background: #ddd6fe;
+    border-radius: 99px;
+    position: relative;
+    cursor: pointer;
+    min-width: 50px;
+}
+
+.speaking-playback-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    background: #6d28d9;
+    border-radius: 99px;
+}
+
+.speaking-rerecord {
+    display: none;
+    margin-top: 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.speaking-rerecord.is-visible { display: inline-block; }
+
+.speaking-status {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6d28d9;
+    margin-top: 12px;
+    min-height: 16px;
+}
+.speaking-status.is-error { color: #dc2626; }
+
+/* Nút sang câu kế tiếp — chỉ hiện khi câu hiện tại đã xong */
+.speaking-next {
+    display: none;
+    margin-top: 18px;
+    align-self: flex-start;
+    border: none;
+    border-radius: 10px;
+    background: #6d28d9;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 11px 20px;
+    cursor: pointer;
+    align-items: center;
+    gap: 8px;
+}
+.speaking-next.is-visible { display: inline-flex; }
+.speaking-next:hover { background: #5b21b6; }
+
+/* ── Cột phải: Note / Hint / Model Answer ─────────────────────────────── */
+
+.speaking-panel-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #5b21b6;
+    margin: 0 0 10px;
+}
+
+.speaking-note textarea {
+    width: 100%;
+    min-height: 175px;
+    border: 1.5px solid #a78bfa;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #1f2937;
+    resize: vertical;
+    outline: none;
+    background: #fff;
+}
+.speaking-note textarea:focus { border-color: #6d28d9; }
+.speaking-note textarea::placeholder { color: #b6afc7; }
+
+/* Accordion Hint / Model Answer: mặc định ẩn, bấm vào nhãn để xổ xuống */
+.speaking-accordion {
+    border-top: 1px solid #e9e5f5;
+    padding-top: 14px;
+}
+.speaking-stage-right > .speaking-accordion:first-child { border-top: none; padding-top: 0; }
+
+.speaking-accordion-head {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    text-align: left;
+}
+.speaking-accordion-head:disabled { cursor: not-allowed; }
+
+.speaking-accordion-label {
+    font-size: 15px;
+    font-weight: 800;
+    color: #5b21b6;
+}
+
+.speaking-accordion-icon {
+    font-size: 15px;
+    color: #6d28d9;
+    flex-shrink: 0;
+}
+.speaking-accordion.is-locked .speaking-accordion-label,
+.speaking-accordion.is-locked .speaking-accordion-icon { color: #a29bb5; }
+
+.speaking-accordion-rule {
+    border-bottom: 1.5px dashed #c4b5fd;
+    margin-bottom: 2px;
+}
+
+.speaking-accordion-body {
+    display: none;
+    padding: 10px 0 2px;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #3f3d56;
+}
+.speaking-accordion.is-open .speaking-accordion-body { display: block; }
+.speaking-accordion-body p { margin: 0 0 8px; }
+.speaking-accordion-body p:last-child { margin-bottom: 0; }
+.speaking-accordion-body ul,
+.speaking-accordion-body ol { margin: 0 0 8px; padding-left: 20px; }
+
+.speaking-accordion-empty {
+    font-size: 14px;
+    font-style: italic;
+    color: #8b87a0;
+}
+
+/* Trạng thái khoá (mock test): "Submit your answer to see this" */
+.speaking-accordion-locked {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1.5px dashed #d6d1e6;
+    border-radius: 10px;
+    background: #faf9fd;
+    font-size: 14px;
+    color: #8b87a0;
+}
+.speaking-accordion-locked i { font-size: 14px; }
+
+.speaking-accordion-loading {
+    font-size: 14px;
+    color: #6d28d9;
+}
+
+/* Biến thể mock test: bỏ khung note, Hint + Model Answer đẩy lên trên.
+   Thứ tự DOM do JS quyết định; các rule dưới chỉ tinh chỉnh khoảng cách. */
+.speaking-stage.is-mock .speaking-stage-right { justify-content: flex-start; }
+.speaking-stage-right.has-no-note { gap: 16px; }
+
+/* Nhúng vào shell bài thi hiện có (.exam-questions.full-width khi is-speaking) */
+.exam-questions .speaking-stage { margin: 0 0 18px; }
+.exam-speaking-part-note {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-left: 3px solid #a78bfa;
+    background: #f7f5ff;
+    border-radius: 0 10px 10px 0;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #3f3d56;
+}
+.exam-speaking-progress {
+    margin: 0 0 12px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #6d28d9;
+}
+
+/* Khoá toàn bộ stage khi hết thời gian / đã submit */
+.exam-questions.is-locked .speaking-stage button,
+.exam-questions.is-locked .speaking-stage textarea {
+    pointer-events: none;
+    opacity: .65;
+}
+.exam-questions.is-locked .speaking-stage .speaking-accordion-head {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+/* Responsive: dưới 900px xếp dọc, bỏ đường kẻ dọc giữa 2 cột */
+@media (max-width: 900px) {
+    .speaking-stage {
+        flex-direction: column;
+        padding: 18px;
+    }
+    .speaking-stage-left {
+        flex: 1 1 auto;
+        padding-right: 0;
+        padding-bottom: 18px;
+    }
+    .speaking-stage-right {
+        flex: 1 1 auto;
+        padding-left: 0;
+        padding-top: 18px;
+        border-left: none;
+        border-top: 1px solid #e9e5f5;
+    }
+    .speaking-stage-title { font-size: 19px; }
+    .speaking-timer { font-size: 23px; }
+}
+
+@media (max-width: 560px) {
+    .speaking-controls { flex-direction: column; gap: 16px; }
+    .speaking-control { flex: 1 1 auto; }
+    .speaking-control + .speaking-control {
+        border-left: none;
+        border-top: 1px solid #e9e5f5;
+        padding-top: 16px;
+    }
+}
+

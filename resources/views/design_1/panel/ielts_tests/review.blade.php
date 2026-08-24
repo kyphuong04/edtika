@@ -1574,6 +1574,7 @@ function togglePrompt(idx) {
                             $tableAnswersMap = [];
                             $savedMap = [];
 
+                            // SAU
                             if ($question->question_type === 'table_completion') {
                                 $tableStructure = $question->table_structure ?? null;
 
@@ -1584,7 +1585,9 @@ function togglePrompt(idx) {
                                 $tableHeaders = is_array($tableStructure) ? ($tableStructure['headers'] ?? []) : [];
                                 $tableRows = is_array($tableStructure) ? ($tableStructure['rows'] ?? []) : [];
 
-                                $savedAnswerData = $answer ? ($answer->answer_options ?? $answer->answer_text ?? null) : null;
+                                // answers.js (Lớp 4) lưu: { answers: [{ row, col, answers: [v0, v1, ...] }] }
+                                // answers[i] = mảng THEO THỨ TỰ BLANK trong cell đó (hỗ trợ nhiều blank/ô).
+                                $savedAnswerData = $answer ? $answer->answer_text : null;
                                 if (is_string($savedAnswerData)) {
                                     $savedAnswerData = json_decode($savedAnswerData, true);
                                 }
@@ -1592,11 +1595,15 @@ function togglePrompt(idx) {
                                 if (is_array($savedAnswerData) && !empty($savedAnswerData['answers']) && is_array($savedAnswerData['answers'])) {
                                     foreach ($savedAnswerData['answers'] as $savedAnswerItem) {
                                         if (isset($savedAnswerItem['row'], $savedAnswerItem['col'])) {
-                                            $savedMap[$savedAnswerItem['row'] . '-' . $savedAnswerItem['col']] = $savedAnswerItem['answer'] ?? '';
+                                            $blanks = $savedAnswerItem['answers'] ?? [];
+                                            $savedMap[$savedAnswerItem['row'] . '-' . $savedAnswerItem['col']] = is_array($blanks) ? $blanks : [];
                                         }
                                     }
                                 }
 
+                                // table_completion_answers_array (đã patch Lớp 2b): mỗi phần tử ['answers']
+                                // giờ là mảng THEO THỨ TỰ BLANK, mỗi phần tử con là mảng biến thể chấp
+                                // nhận được cho ĐÚNG blank đó.
                                 foreach ($question->table_completion_answers_array as $answerItem) {
                                     $tableAnswersMap[$answerItem['row'] . '-' . $answerItem['col']] = $answerItem['answers'] ?? [];
                                 }
@@ -1610,11 +1617,33 @@ function togglePrompt(idx) {
                                 if (is_array($raw)) $options = $raw;
                             }
 
-                            $qType      = $question->question_type ?? 'fill_blank';
-                            $isMCQ      = in_array($qType, ['multiple_choice','multiple_choice_single','true_false_not_given','true_false','yes_no_not_given']);
-                            $isMatching = str_contains($qType, 'matching');
-                            $isFill     = !$isMCQ && !$isMatching;
-                            $multiBlankTypes = ['note_completion', 'form_completion', 'sentence_completion', 'summary_completion', 'short_answer'];
+                            // SAU
+                            $qType        = $question->question_type ?? 'fill_blank';
+                            $isMCQSingle  = in_array($qType, ['multiple_choice','multiple_choice_single','true_false_not_given','true_false','yes_no_not_given']);
+                            $isMCQMultiple = $qType === 'multiple_choice_multiple';
+                            $isMCQ        = $isMCQSingle; // giữ biến cũ cho các nơi khác trong file đang dùng $isMCQ
+                            $isMatching   = str_contains($qType, 'matching');
+                            $isFill       = !$isMCQ && !$isMCQMultiple && !$isMatching;
+
+                            if ($isMCQMultiple) {
+                                $selectedOptions = [];
+                                $rawSelected = $answer->answer_options ?? null;
+                                $decodedSelected = is_string($rawSelected) ? json_decode($rawSelected, true) : $rawSelected;
+                                if (is_array($decodedSelected)) {
+                                    $selectedOptions = array_map(fn($v) => strtolower(trim((string) $v)), $decodedSelected);
+                                }
+
+                                $correctOptions = [];
+                                $rawCorrectMulti = $question->correct_answer_array;
+                                if (is_array($rawCorrectMulti)) {
+                                    $correctOptions = array_map(fn($v) => strtolower(trim((string) $v)), $rawCorrectMulti);
+                                }
+                            }
+                            // SAU
+                            $multiBlankTypes = [
+                                'note_completion', 'form_completion', 'sentence_completion', 'summary_completion',
+                                'short_answer', 'drag_drop_disappear', 'drag_drop_reuse',
+                            ];
                             $isMultiBlank = $isFill
                                 && in_array($qType, $multiBlankTypes)
                                 && preg_match('/_{2,}|\[\s*\d*\s*\]|____/', (string) ($question->question_text ?? '')) === 1;
@@ -1645,30 +1674,37 @@ function togglePrompt(idx) {
                                                 </thead>
                                             @endif
                                             <tbody>
+                                                // SAU
                                                 @foreach($tableRows as $rowIndex => $row)
                                                     <tr>
                                                         @foreach($row as $colIndex => $cellContent)
                                                             @php
                                                                 $cellText = is_string($cellContent) ? $cellContent : (string) $cellContent;
                                                                 $cellKey = $rowIndex . '-' . $colIndex;
-                                                                $savedValue = $savedMap[$cellKey] ?? '';
-                                                                $cellAnswers = $tableAnswersMap[$cellKey] ?? [];
-                                                                $normalizedStudent = strtolower(trim((string) $savedValue));
-                                                                $isMatch = false;
-                                                                foreach ($cellAnswers as $candidateAnswer) {
-                                                                    if ($normalizedStudent !== '' && $normalizedStudent === strtolower(trim((string) $candidateAnswer))) {
-                                                                        $isMatch = true;
-                                                                        break;
-                                                                    }
-                                                                }
-                                                                $correctLabel = !empty($cellAnswers) ? implode(' / ', $cellAnswers) : '';
+                                                                $savedBlanks = $savedMap[$cellKey] ?? [];       // mảng theo thứ tự blank
+                                                                $acceptedPerBlank = $tableAnswersMap[$cellKey] ?? []; // mảng-của-mảng theo thứ tự blank
                                                                 $parts = preg_split('/(___)/', $cellText, -1, PREG_SPLIT_DELIM_CAPTURE);
                                                                 $hasBlank = is_array($parts) && count($parts) > 1;
+                                                                $cellBlankIdx = -1; // reset mỗi ô — đếm riêng cho từng ô, không cộng dồn toàn bảng
                                                             @endphp
                                                             <td>
                                                                 @if($hasBlank)
                                                                     @foreach($parts as $part)
                                                                         @if($part === '___')
+                                                                            @php
+                                                                                $cellBlankIdx++;
+                                                                                $savedValue = $savedBlanks[$cellBlankIdx] ?? '';
+                                                                                $blankAccepted = $acceptedPerBlank[$cellBlankIdx] ?? [];
+                                                                                $normalizedStudent = strtolower(trim((string) $savedValue));
+                                                                                $isMatch = false;
+                                                                                foreach ($blankAccepted as $candidateAnswer) {
+                                                                                    if ($normalizedStudent !== '' && $normalizedStudent === strtolower(trim((string) $candidateAnswer))) {
+                                                                                        $isMatch = true;
+                                                                                        break;
+                                                                                    }
+                                                                                }
+                                                                                $correctLabel = !empty($blankAccepted) ? implode(' / ', $blankAccepted) : '';
+                                                                            @endphp
                                                                             <div class="rv-fill-row">
                                                                                 <span class="rv-fill-label">{{ $isOwner ? 'Your Answer' : "Student's Answer" }}</span>
                                                                                 @if($savedValue !== '')
@@ -1703,13 +1739,22 @@ function togglePrompt(idx) {
                                 @endif
                             @elseif($isMultiBlank)
                                 @php
+                                    // SAU
                                     $rawCorrect = $question->correct_answer ?? '';
                                     $correctDecoded = is_string($rawCorrect) ? json_decode($rawCorrect, true) : $rawCorrect;
 
+                                    // answers.js (Lớp 4) lưu completion/drag&drop dạng MẢNG PHẲNG theo thứ tự
+                                    // blank: ["Kaeden","locker",...] — không còn bọc trong {answers:[...]}. Giữ
+                                    // 2 nhánh cũ (| và chuỗi đơn) để tương thích dữ liệu cũ lưu trước Lớp 4.
                                     $rawSaved = $answer->answer_text ?? '';
                                     $decodedSaved = is_string($rawSaved) ? json_decode($rawSaved, true) : $rawSaved;
+
                                     if (is_array($decodedSaved) && isset($decodedSaved['answers']) && is_array($decodedSaved['answers'])) {
+                                        // Format cũ (trước Lớp 4): {answers:[{answer:'...'}]}
                                         $savedParts = array_values(array_map(fn($it) => is_array($it) ? ($it['answer'] ?? '') : (string) $it, $decodedSaved['answers']));
+                                    } elseif (is_array($decodedSaved)) {
+                                        // Format mới (Lớp 4): mảng phẳng ["Kaeden","locker",...]
+                                        $savedParts = array_values(array_map(fn($it) => is_array($it) ? ($it['answer'] ?? '') : (string) $it, $decodedSaved));
                                     } elseif (is_string($rawSaved) && str_contains($rawSaved, '|')) {
                                         $savedParts = array_map('trim', explode('|', $rawSaved));
                                     } elseif (!empty($rawSaved)) {
@@ -1781,7 +1826,29 @@ function togglePrompt(idx) {
                                         </div>
                                     @endforeach
                                 </div>
+                            @elseif($isMCQMultiple && count($options))
+                                <div class="rv-options">
+                                    @foreach($options as $optIdx => $opt)
+                                        @php
+                                            $optKey = is_array($opt) ? ($opt['key'] ?? chr(65+(int)$optIdx)) : chr(65+(int)$optIdx);
+                                            $optText = is_array($opt) ? ($opt['text'] ?? $opt['label'] ?? $opt) : $opt;
+                                            $normOptText = strtolower(trim((string) $optText));
 
+                                            $sPicked = in_array($normOptText, $selectedOptions, true);
+                                            $isCorrectOpt = in_array($normOptText, $correctOptions, true);
+
+                                            if      ($sPicked && $isCorrectOpt)             { $cls = 'selected-correct'; $icon = '&#10003;'; }
+                                            elseif  ($sPicked && !$isCorrectOpt)            { $cls = 'selected-wrong';    $icon = '&#10007;'; }
+                                            elseif  (!$sPicked && $isCorrectOpt)            { $cls = 'correct-highlight'; $icon = '&#10003;'; }
+                                            else                                             { $cls = 'neutral';           $icon = ''; }
+                                        @endphp
+                                        <div class="rv-option {{ $cls }}">
+                                            <span class="rv-radio-circle"></span>
+                                            <span class="rv-option-text">{{ $optText }}</span>
+                                            <span class="rv-result-icon">{!! $icon !!}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
                             @elseif($isFill)
                                 <div class="rv-fill-row">
                                     <span class="rv-fill-label">{{ $isOwner ? 'Your Answer' : "Student's Answer" }}</span>

@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\Panel;
 
+
+use App\Support\Ielts\BuildsIeltsQuestionPayload;
+use App\Support\Ielts\GradesIeltsAttempts;
+
 use App\Http\Controllers\Controller;
 use App\Models\IeltsTest;
 use App\Models\IeltsTestAttempt;
 use App\Models\IeltsTestAnswer;
 use App\Models\IeltsTestSection;
+use App\Models\IeltsTestQuestion;
 use App\Models\AcademicWordListWord;
 use App\Models\Sale;
 use App\QuizzesResult;
@@ -17,6 +22,8 @@ class IeltsTestController extends Controller
     /**
      * Display tests for students
      */
+    use BuildsIeltsQuestionPayload, GradesIeltsAttempts;
+
     public function index()
     {
         $authUser = auth()->user();
@@ -71,93 +78,108 @@ class IeltsTestController extends Controller
     }
     
     /**
-     * Display only mock tests
+     * Display the unified "Mock Test" page.
+     *
+     * GỘP (2026-08): Trang này giờ hiển thị CẢ Mock Test ("Full Test" tab)
+     * và Practice Test ("Practice by Skill" tab) trên cùng 1 view, chuyển
+     * tab bằng JS (không reload). Sidebar bên phải đổi từ "thông tin cá
+     * nhân" sang bộ lọc (skill / bài lẻ-full đề / trạng thái).
+     *
+     * Lưu ý: bộ lọc "Level 1/2/3" (độ khó) đang bị ẩn trên UI vì hiện chưa
+     * có cột dữ liệu tương ứng trên ielts_tests — khi có, bổ sung lại tại
+     * đây (đính kèm 1 trường difficulty_level hoặc quy đổi từ
+     * target_band_min/target_band_max) và bỏ ẩn phần filter trong view.
      */
     public function indexMock()
     {
         $authUser = auth()->user();
-        
+
+        // ----- Full Test (Mock) -----
         $mockTests = IeltsTest::with('sections')
             ->mockTests()
             ->published()
             ->active()
             ->get();
-        
+
         foreach ($mockTests as $test) {
             $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
             $test->best_attempt = $test->getUserBestAttempt($authUser->id);
-            $test->last_attempt = \App\Models\IeltsTestAttempt::where('test_id', $test->id)
+            $test->last_attempt = IeltsTestAttempt::where('test_id', $test->id)
                 ->where('user_id', $authUser->id)
                 ->where('status', 'completed')
                 ->orderBy('id', 'desc')
                 ->first();
             $test->can_take = $test->canUserTake($authUser->id);
         }
-        
-        // Mock test daily limit info
+
+        // ----- Practice by Skill -----
+        // Note: Practice tests may have status 'approved' instead of 'published'.
+        $practiceTests = IeltsTest::with('sections', 'practiceCategory')
+            ->practiceTests()
+            ->where(function ($q) {
+                $q->where('status', 'published')
+                  ->orWhere('status', 'approved');
+            })
+            ->get();
+
+        foreach ($practiceTests as $test) {
+            $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
+            $test->best_attempt = $test->getUserBestAttempt($authUser->id);
+            $test->last_attempt = IeltsTestAttempt::where('test_id', $test->id)
+                ->where('user_id', $authUser->id)
+                ->where('status', 'completed')
+                ->orderBy('id', 'desc')
+                ->first();
+            $test->can_take = $test->canUserTake($authUser->id);
+
+            // Kỹ năng chính của bài practice (dùng để hiển thị icon/badge và
+            // để lọc theo skill ở sidebar bộ lọc).
+            $test->primary_skill = $test->getPrimarySkill();
+
+            // Bài "Full đề" (nhiều section cùng 1 skill, VD 3 Reading passage
+            // gộp trong 1 test) khác với "Bài lẻ" (chỉ 1 section/skill đó).
+            // Dùng để phân biệt 2 checkbox filter "Bài lẻ" / "Full đề".
+            $test->is_full_test = $test->primary_skill
+                ? $test->sections->where('skill', $test->primary_skill)->count() > 1
+                : false;
+
+            // Section đại diện để hiển thị trên card (Passage/Part label +
+            // tiêu đề nội dung). Với "Full đề" card chưa có thiết kế riêng
+            // theo section cụ thể nên tạm lấy section đầu tiên của skill đó.
+            $test->display_section = $test->primary_skill
+                ? $test->sections->firstWhere('skill', $test->primary_skill)
+                : $test->sections->first();
+        }
+
+        // Mock test daily limit info (hiển thị badge; giới hạn thật sự đang
+        // tắt trong IeltsTest::canUserTake() — không đụng ở đây, xem ghi chú
+        // trong Model).
         $dailyLimit = getIeltsSettings('mock_tests_per_day') ?? 2;
         $remainingToday = IeltsTest::getRemainingMockTestsToday($authUser->id);
-        
+
         $sidebarData = $this->getSidebarData($authUser);
 
         $data = [
-            'pageTitle' => 'Mock Tests',
+            'pageTitle' => 'IELTS Mock & Practice Tests',
             'mockTests' => $mockTests,
+            'practiceTests' => $practiceTests,
             'dailyLimit' => $dailyLimit,
             'remainingToday' => $remainingToday,
             'authUser' => $authUser,
         ] + $sidebarData;
-        
+
         return view('design_1.panel.ielts_tests.mock', $data);
     }
-    
+
     /**
-     * Display only practice tests
+     * @deprecated Practice Tests đã được gộp vào trang Mock Test (tab
+     * "Practice by Skill") — xem indexMock(). Giữ route/method này lại
+     * (thay vì xoá) để các link cũ (bookmark, thông báo cũ, v.v.) trỏ tới
+     * route này không bị 404, mà tự chuyển hướng sang trang gộp.
      */
     public function indexPractice(Request $request)
     {
-        $authUser = auth()->user();
-        
-        // Note: Practice tests may have status 'approved' instead of 'published'
-        $query = IeltsTest::with('sections', 'practiceCategory')
-            ->practiceTests()
-            ->where(function($q) {
-                $q->where('status', 'published')
-                  ->orWhere('status', 'approved');
-            });
-        
-        // Filter by band score if provided
-        $band = $request->get('band');
-        if ($band) {
-            list($min, $max) = explode('-', $band);
-            $query->where(function($q) use ($min, $max) {
-                $q->whereBetween('target_band_min', [(float)$min, (float)$max])
-                  ->orWhereBetween('target_band_max', [(float)$min, (float)$max]);
-            });
-        }
-        
-        $practiceTests = $query->get();
-        
-        foreach ($practiceTests as $test) {
-            $test->user_attempts = $test->getUserAttemptsCount($authUser->id);
-            $test->best_attempt = $test->getUserBestAttempt($authUser->id);
-            $test->last_attempt = \App\Models\IeltsTestAttempt::where('test_id', $test->id)
-                ->where('user_id', $authUser->id)
-                ->where('status', 'completed')
-                ->orderBy('id', 'desc')
-                ->first();
-            $test->can_take = $test->canUserTake($authUser->id);
-        }
-        
-        $sidebarData = $this->getSidebarData($authUser);
-
-        $data = [
-            'pageTitle' => 'Practice Tests',
-            'practiceTests' => $practiceTests,
-            'authUser' => $authUser,
-        ] + $sidebarData;
-        
-        return view('design_1.panel.ielts_tests.practice', $data);
+        return redirect()->route('panel.ielts_tests.mock');
     }
 
     /**
@@ -394,134 +416,99 @@ class IeltsTestController extends Controller
      */
     public function takeTest(Request $request, $attemptId)
     {
-        $attempt = IeltsTestAttempt::with(['test.sections.questions', 'answers', 'currentSection.questionGroup'])
-            ->findOrFail($attemptId);
-        
+        $attempt = IeltsTestAttempt::with([
+            'test',
+            'currentSection.parts.questionGroups',
+            'currentSection.questions',
+            'answers',
+        ])->findOrFail($attemptId);
+
         $authUser = auth()->user();
-        
-        // Check ownership
+
         if ($attempt->user_id !== $authUser->id) {
             abort(403);
         }
-        
-        // Check if already completed
+
         if ($attempt->status === 'completed') {
             return redirect()->route('panel.ielts_tests.results', $attemptId);
         }
-        
-        // Check time expiry
-        if ($attempt->hasExpired()) {
-            $this->autoSubmitTest($attempt);
-            return redirect()->route('panel.ielts_tests.results', $attemptId);
-        }
-        
+
         $currentSection = $attempt->currentSection;
-        
-        // If no current section, get first section
+
         if (!$currentSection) {
             $currentSection = $attempt->test->sections()->orderBy('sort_order')->first();
+
             if ($currentSection) {
                 $attempt->current_section_id = $currentSection->id;
                 $attempt->current_skill = $currentSection->skill;
                 $attempt->save();
             } else {
-                // No sections available
                 return back()->with(['toast' => [
                     'title' => 'Error',
                     'msg' => 'This test has no sections configured.',
-                    'status' => 'error'
+                    'status' => 'error',
                 ]]);
             }
         }
-        
-        // Load all section questions with their groups for IDP-style grouping
-        $sectionQuestions = $currentSection->questions()
-            ->with('questionGroup')
-            ->orderBy('question_number')
-            ->orderBy('id')
-            ->get();
 
-        // If no direct questions found, try to populate from question bank
-        // This handles the newer bank-based workflow where questions are stored in IeltsMockQuestionBank
-        if ($sectionQuestions->isEmpty() && $currentSection->question_group_id) {
-            $this->populateQuestionsFromBank($currentSection);
+        $skill = $currentSection->skill;
 
-            // Reload questions after population
-            $sectionQuestions = $currentSection->questions()
-                ->with('questionGroup')
-                ->orderBy('question_number')
-                ->orderBy('id')
-                ->get();
-        }
+        // Kích hoạt ngân sách thời gian. Speaking dùng scope riêng theo Part,
+        // client gọi speakingStartPart() khi xem từng câu -> bỏ qua ở đây.
+        if ($skill !== 'speaking') {
+            $scopeKey = $attempt->resolveScopeKey($skill);
 
-        $sectionParts = $currentSection->parts()->get();
-        $requestedPartId = (int) $request->query('part_id', 0);
-        $activePartId = null;
-
-        if ($sectionParts->isNotEmpty()) {
-            if ($requestedPartId > 0 && $sectionParts->contains('id', $requestedPartId)) {
-                $activePartId = $requestedPartId;
-            } else {
-                $partIdsInQuestions = $sectionQuestions
-                    ->map(function ($question) {
-                        if (!empty($question->part_id)) {
-                            return (int) $question->part_id;
-                        }
-
-                        return (int) optional($question->questionGroup)->part_id;
-                    })
-                    ->filter()
-                    ->unique()
-                    ->values();
-
-                $activePartId = $sectionParts
-                    ->first(function ($part) use ($partIdsInQuestions) {
-                        return $partIdsInQuestions->contains((int) $part->id);
-                    })
-                    ->id ?? $sectionParts->first()->id;
+            if ($attempt->hasScopeExpired($scopeKey)) {
+                $this->autoSubmitSkill($attempt, $skill);
+                return redirect()->route('panel.ielts_tests.take', $attempt->id);
             }
+
+            $attempt->activateScope($scopeKey);
         }
 
-        $questions = $sectionQuestions;
+        $isMockTest = $attempt->test->isMockTest();
 
-        // Writing should keep all task questions (Task 1 + Task 2) in one screen flow.
-        if (!empty($activePartId) && ($currentSection->skill ?? null) !== 'writing') {
-            $questions = $sectionQuestions
-                ->filter(function ($question) use ($activePartId) {
-                    $questionPartId = !empty($question->part_id)
-                        ? (int) $question->part_id
-                        : (int) optional($question->questionGroup)->part_id;
+        $sectionData = $this->buildSectionData($currentSection);
+        // Speaking cần Hint khi làm bài; Model Answer chỉ mở sẵn ở practice
+        // test — mock test phải lấy qua speakingModelAnswer() sau khi trả lời.
+        $sectionData = $this->stripSectionAnswers($sectionData, [
+            'keep_hint' => $skill === 'speaking',
+            'keep_model_answer' => $skill === 'speaking' && !$isMockTest,
+        ]);
+        $sectionData = $this->resolveSectionMediaUrls($sectionData);
 
-                    return $questionPartId === (int) $activePartId;
-                })
-                ->values();
-
-            if ($questions->isEmpty()) {
-                $questions = $sectionQuestions;
-            }
-        }
-        
-        // Get existing answers
-        $userAnswers = $attempt->answers()->pluck('answer_text', 'question_id')->toArray();
+        $savedAnswers = $attempt->answers->mapWithKeys(function ($answer) {
+            return [
+                $answer->question_id => [
+                    'answer_text' => $answer->answer_text,
+                    'answer_options' => $answer->answer_options_array,
+                    'file_url' => $answer->audio_url,
+                ],
+            ];
+        });
 
         $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
             && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
-        
-        $data = [
+
+        $scopeKeyForInitialTimer = $skill !== 'speaking' ? $attempt->resolveScopeKey($skill) : null;
+
+        return view('design_1.panel.ielts_tests.attempt.index', [
             'pageTitle' => 'Taking: ' . $attempt->test->title,
+            'justContent' => true,
             'attempt' => $attempt,
             'test' => $attempt->test,
             'currentSection' => $currentSection,
-            'questions' => $questions,
-            'sectionParts' => $sectionParts,
-            'activePartId' => $activePartId,
-            'userAnswers' => $userAnswers,
+            'sectionData' => $sectionData,
+            'savedAnswers' => $savedAnswers,
             'isMentorPreview' => $isMentorPreview,
-            'mentorPreviewExitUrl' => $isMentorPreview ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id) : null,
-        ];
-        
-        // Use IDP-style interface for all tests
-        return view('design_1.panel.ielts_tests.take_idp', $data);
+            'mentorPreviewExitUrl' => $isMentorPreview
+                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
+                : null,
+            'initialRemainingSeconds' => $scopeKeyForInitialTimer
+                ? $attempt->getScopeTimeRemaining($scopeKeyForInitialTimer)
+                : null,
+            'testType' => $attempt->test->type,
+        ]);
     }
     
     /**
@@ -590,6 +577,16 @@ class IeltsTestController extends Controller
         }
         
         $currentSkill = $attempt->current_skill;
+        if ($currentSkill && $currentSkill !== 'speaking') {
+            $attempt->settleScope($attempt->resolveScopeKey($currentSkill));
+        } elseif ($currentSkill === 'speaking') {
+            // Đóng bất kỳ scope Part nào của Speaking còn đang active.
+            foreach (array_keys($attempt->skill_time_budget ?? []) as $scopeKey) {
+                if (str_starts_with($scopeKey, 'speaking-part-')) {
+                    $attempt->settleScope($scopeKey);
+                }
+            }
+        }
         
         // Mark current skill as completed
         $attempt->completeSection($currentSkill);
@@ -636,21 +633,15 @@ class IeltsTestController extends Controller
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
         }
-        
-        // Auto-grade Listening & Reading
         $this->autoGradeListening($attempt);
         $this->autoGradeReading($attempt);
-        
-        // Calculate overall band (for L & R only, W & S need manual grading)
         $this->calculateBandScores($attempt);
         
-        // Mark as completed
         $attempt->update([
             'status' => 'completed',
             'completed_at' => time(),
             'updated_at' => time(),
         ]);
-        
         return redirect()->route('panel.ielts_tests.results', $attempt->id);
     }
     
@@ -934,5 +925,200 @@ class IeltsTestController extends Controller
         ];
         
         return view('design_1.panel.ielts_tests.review', $data);
+    }
+
+    public function attemptSectionData($attemptId)
+    {
+        $attempt = IeltsTestAttempt::with([
+            'test',
+            'currentSection.parts.questionGroups',
+            'currentSection.questions',
+        ])->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($attempt->status === 'completed') {
+            return response()->json(['error' => 'attempt_completed'], 409);
+        }
+
+        if ($attempt->hasExpired()) {
+            return response()->json(['error' => 'attempt_expired'], 409);
+        }
+
+        $section = $attempt->currentSection;
+
+        if (!$section) {
+            return response()->json(['error' => 'no_active_section'], 404);
+        }
+
+        $sectionData = $this->buildSectionData($section);
+        $sectionData = $this->stripSectionAnswers($sectionData);
+        $sectionData = $this->resolveSectionMediaUrls($sectionData);
+
+        // Đáp án học viên đã lưu từ trước (resume sau khi reload/mất mạng)
+        // — trả kèm để client hydrate lại state mà không cần thêm request.
+        $savedAnswers = $attempt->answers()
+            ->get(['question_id', 'answer_text', 'answer_options', 'file_url'])
+            ->mapWithKeys(function ($answer) {
+                return [
+                    $answer->question_id => [
+                        'answer_text' => $answer->answer_text,
+                        'answer_options' => $answer->answer_options_array,
+                        'file_url' => $answer->audio_url,
+                    ],
+                ];
+            });
+
+        return response()->json([
+            'attempt_id' => $attempt->id,
+            'section_id' => $section->id,
+            'skill' => $section->skill,
+            'test_type' => $attempt->test->type,
+            'remaining_time_seconds' => $attempt->getTimeRemaining(),
+            'section' => $sectionData,
+            'saved_answers' => $savedAnswers,
+        ]);
+    }
+    // Thêm cạnh autoSubmitTest() hiện có
+
+    /**
+     * Hết giờ 1 skill (Mock Test) -> tự động coi như học viên đã "Finish
+     * Section" cho skill đó, chuyển sang section tiếp theo (hoặc nộp cả bài
+     * nếu đây là section cuối). Không hỏi xác nhận — đúng chuẩn thi thật:
+     * hết giờ là dừng bút.
+     */
+    private function autoSubmitSkill(IeltsTestAttempt $attempt, string $skill): void
+    {
+        $attempt->settleScope($attempt->resolveScopeKey($skill));
+        $attempt->completeSection($skill);
+
+        $nextSection = $attempt->getNextSection();
+
+        if ($nextSection) {
+            $attempt->current_skill = $nextSection->skill;
+            $attempt->current_section_id = $nextSection->id;
+            $attempt->save();
+            return;
+        }
+
+        $this->autoGradeListening($attempt);
+        $this->autoGradeReading($attempt);
+        $this->calculateBandScores($attempt);
+
+        $attempt->update([
+            'status' => 'completed',
+            'completed_at' => time(),
+            'updated_at' => time(),
+        ]);
+    }
+
+    /**
+     * Học viên chuyển sang Part khác của Speaking (JS ẩn/hiện panel, không
+     * reload). Kích hoạt scope thời gian riêng cho Part đó — nếu Part trước
+     * đang active, tự động chốt lại (xử lý trong activateScope()).
+     */
+    public function speakingStartPart(Request $request, $attemptId, $partId)
+    {
+        $attempt = IeltsTestAttempt::with('test')->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $scopeKey = $attempt->resolveScopeKey('speaking', (int) $partId);
+
+        if ($attempt->hasScopeExpired($scopeKey)) {
+            // Part này đã hết 5 phút từ trước (VD học viên quay lại sau khi bỏ
+            // dở) -> không cho ghi âm tiếp, coi như đã xong Part này.
+            return response()->json([
+                'status' => 'expired',
+                'remaining_seconds' => 0,
+            ]);
+        }
+
+        $attempt->activateScope($scopeKey);
+
+        return response()->json([
+            'status' => 'ok',
+            'remaining_seconds' => $attempt->getScopeTimeRemaining($scopeKey),
+        ]);
+    }
+
+    /**
+     * Polling endpoint — client gọi định kỳ để đồng bộ lại timer (chống lệch
+     * do throttle tab nền) và phát hiện hết giờ ngay cả khi học viên không
+     * tương tác gì (không có request saveAnswer nào để server "tình cờ" biết).
+     */
+    public function scopeStatus(Request $request, $attemptId)
+    {
+        $attempt = IeltsTestAttempt::with('test')->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $skill = $request->query('skill', $attempt->current_skill);
+        $partId = $request->query('part_id') ? (int) $request->query('part_id') : null;
+        $scopeKey = $attempt->resolveScopeKey($skill, $partId);
+
+        return response()->json([
+            'scope_key' => $scopeKey,
+            'remaining_seconds' => $attempt->getScopeTimeRemaining($scopeKey),
+            'expired' => $attempt->hasScopeExpired($scopeKey),
+        ]);
+    }
+
+    /**
+     * Model Answer của 1 câu Speaking trong mock test. Không gửi kèm payload
+     * lúc load trang (sẽ lộ bài mẫu trước khi thí sinh nói) — chỉ trả về sau
+     * khi câu đó đã có bản thu, hoặc khi attempt đã nộp.
+     */
+    public function speakingModelAnswer(Request $request, $attemptId, $questionId)
+    {
+        $attempt = IeltsTestAttempt::with('test')->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $question = IeltsTestQuestion::whereKey($questionId)->first();
+
+        if (!$question) {
+            abort(404);
+        }
+
+        // Câu hỏi phải thuộc đúng bài thi của attempt này.
+        $belongsToTest = IeltsTestSection::where('test_id', $attempt->test_id)
+            ->where('id', $question->section_id)
+            ->exists();
+
+        if (!$belongsToTest) {
+            abort(404);
+        }
+
+        $hasAnswered = $attempt->answers()
+            ->where('question_id', $question->id)
+            ->whereNotNull('answer_file')
+            ->exists();
+
+        if (!$hasAnswered && $attempt->status !== 'completed') {
+            return response()->json([
+                'status' => 'locked',
+                'model_answer' => null,
+            ], 403);
+        }
+
+        $questionData = $question->question_data;
+        if (is_string($questionData)) {
+            $decoded = json_decode($questionData, true);
+            $questionData = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'model_answer' => $this->resolveModelAnswer($question, $questionData),
+        ]);
     }
 }

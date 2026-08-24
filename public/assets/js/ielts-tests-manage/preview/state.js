@@ -42,9 +42,11 @@ const PreviewState = {
     bySkill: {},          // skill -> { parts: [...], entries: [...] }
     allEntries: [],        // toàn bộ entries, theo thứ tự đánh số global
     answers: {},           // questionId -> giá trị đáp án (kiểu tuỳ loại câu hỏi)
-    current: { skill: null, partIndex: 0 },
+    // current: { skill: null, partIndex: 0 },
+    current: { skill: null, partIndex: 0, questionId: null },
     submitted: false,
     scoreResult: null,
+    lockedSkills: {},
     listeners: [],
 
     onChange(fn) {
@@ -83,69 +85,6 @@ function splitAnswerVariants(rawValue) {
         .filter(Boolean);
 }
 
-
-// function buildPreviewModel(previewData) {
-//     const sections = (previewData && previewData.sections) || {};
-//     let globalNumber = 1;
-
-//     SKILL_ORDER.forEach((skill) => {
-//         const sectionData = sections[skill];
-//         const parts = (sectionData && Array.isArray(sectionData.parts)) ? sectionData.parts : [];
-//         if (!parts.length) return;
-
-//         const entries = [];
-
-//         parts.forEach((part, partIndex) => {
-//             const groups = Array.isArray(part.groups) ? part.groups : [];
-
-//             groups.forEach((group) => {
-//                 const questions = Array.isArray(group.questions) ? group.questions : [];
-
-//                 questions.forEach((question) => {
-//                     const slotCount = Math.max(1, parseInt(question.slotCount, 10) || 1);
-//                     const startNumber = globalNumber;
-//                     const endNumber = globalNumber + slotCount - 1;
-//                     globalNumber += slotCount;
-
-//                     entries.push({
-//                         skill,
-//                         partIndex,
-//                         part,
-//                         group,
-//                         question,
-//                         startNumber,
-//                         endNumber,
-//                         slotCount,
-//                     });
-//                 });
-//             });
-//         });
-
-//         // if (entries.length) {
-//         //     PreviewState.skills.push(skill);
-//         //     PreviewState.bySkill[skill] = { parts, entries };
-//         //     PreviewState.allEntries.push(...entries);
-//         // }
-//         // SAU
-//         if (entries.length) {
-//             PreviewState.skills.push(skill);
-//             PreviewState.bySkill[skill] = {
-//                 parts,
-//                 entries,
-//                 // audio dùng chung cho toàn bộ section (hiện chỉ có ở Listening) —
-//                 // khác với part.files.audio là audio RIÊNG cho từng part.
-//                 sectionFiles: (sectionData && sectionData.files) || {},
-//             };
-//             PreviewState.allEntries.push(...entries);
-//         }
-//     });
-
-//     if (PreviewState.skills.length) {
-//         PreviewState.current.skill = PreviewState.skills[0];
-//         PreviewState.current.partIndex = 0;
-//     }
-// }
-// SAU
 function buildPreviewModel(previewData) {
     const sections = (previewData && previewData.sections) || {};
 
@@ -201,8 +140,15 @@ function buildPreviewModel(previewData) {
         }
     });
 
+    // if (PreviewState.skills.length) {
+    //     PreviewState.current.skill = PreviewState.skills[0];
+    //     PreviewState.current.partIndex = 0;
+    // }
     if (PreviewState.skills.length) {
         PreviewState.current.skill = PreviewState.skills[0];
         PreviewState.current.partIndex = 0;
+
+        const firstEntries = PreviewState.bySkill[PreviewState.current.skill].entries;
+        PreviewState.current.questionId = firstEntries.length ? firstEntries[0].question.id : null;
     }
 }

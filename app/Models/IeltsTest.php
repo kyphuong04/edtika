@@ -275,20 +275,20 @@ class IeltsTest extends Model
         
         // For mock tests, enforce daily limit and per-test attempt limit
         if ($this->isMockTest()) {
-            $dailyLimit = (int) (getIeltsSettings('mock_tests_per_day') ?? 2);
-            $todayAttempts = self::getUserMockAttemptsToday($userId);
+            // $dailyLimit = (int) (getIeltsSettings('mock_tests_per_day') ?? 2);
+            // $todayAttempts = self::getUserMockAttemptsToday($userId);
             
-            if ($todayAttempts >= $dailyLimit) {
-                return 'daily_limit';
-            }
+            // if ($todayAttempts >= $dailyLimit) {
+            //     return 'daily_limit';
+            // }
             
-            // Also check the max attempts per individual test (default 3)
-            if (!$this->allow_retake) {
-                $attemptsCount = $this->getUserAttemptsCount($userId);
-                if ($attemptsCount >= 3) {
-                    return 'max_attempts';
-                }
-            }
+            // // Also check the max attempts per individual test (default 3)
+            // if (!$this->allow_retake) {
+            //     $attemptsCount = $this->getUserAttemptsCount($userId);
+            //     if ($attemptsCount >= 3) {
+            //         return 'max_attempts';
+            //     }
+            // }
         }
 
         // Diagnostic tests: intended as a one-time placement test by default.

@@ -19,6 +19,7 @@ class IeltsTestAttempt extends Model
     
     protected $guarded = ['id'];
     
+    // SAU
     protected $casts = [
         'started_at' => 'integer',
         'paused_at' => 'integer',
@@ -46,7 +47,23 @@ class IeltsTestAttempt extends Model
         'speaking_criteria' => 'array',
         'writing_graded_at' => 'integer',
         'speaking_graded_at' => 'integer',
+        'skill_time_budget' => 'array',
     ];
+
+    /**
+     * Thời lượng CỐ ĐỊNH cho Mock Test theo từng skill (giây). Practice Test
+     * không dùng map này — đếm lên không giới hạn. PHẢI khớp với
+     * MOCK_SKILL_DURATIONS_SECONDS trong state.js (preview) để 2 nơi không
+     * lệch nhau; nếu đổi số phút, sửa cả 2 chỗ.
+     */
+    public const MOCK_SKILL_DURATIONS_SECONDS = [
+        'listening' => 32 * 60,
+        'reading' => 60 * 60,
+        'writing' => 60 * 60,
+    ];
+
+    /** Mock Test — mỗi Part của Speaking có ngân sách riêng 5 phút. */
+    public const MOCK_SPEAKING_PART_DURATION_SECONDS = 5 * 60;
 
     /*
     |--------------------------------------------------------------------------
@@ -214,16 +231,18 @@ class IeltsTestAttempt extends Model
         $this->save();
     }
     
+    // SAU
     /*
     |--------------------------------------------------------------------------
-    | Time Management
+    | Time Management (legacy — tổng thời lượng cả bài, giữ để không phá vỡ
+    | code cũ còn gọi tới, nhưng KHÔNG dùng cho luồng attempt mới)
     |--------------------------------------------------------------------------
     */
 
     /**
-     * Calculate how much time is left for this attempt.
-     *
-     * @return int Seconds remaining
+     * @deprecated Dùng getScopeTimeRemaining()/hasScopeExpired() thay thế —
+     * hàm này tính theo total_duration CẢ BÀI, không còn đúng với mô hình
+     * thời lượng riêng từng skill.
      */
     public function getTimeRemaining()
     {
@@ -238,9 +257,7 @@ class IeltsTestAttempt extends Model
     }
 
     /**
-     * Check whether time has run out.
-     *
-     * @return bool
+     * @deprecated Dùng hasScopeExpired() thay thế.
      */
     public function hasExpired()
     {
@@ -251,5 +268,161 @@ class IeltsTestAttempt extends Model
         }
 
         return $this->getTimeRemaining() <= 0;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Time Budget theo từng "scope" (skill, hoặc từng Part của Speaking)
+    |--------------------------------------------------------------------------
+    |
+    | scope_key:
+    |   - "listening" / "reading" / "writing" cho 3 skill tính theo cả section
+    |   - "speaking-part-{partId}" cho từng Part của Speaking (Mock only)
+    |
+    | Server là nguồn sự thật duy nhất cho thời gian còn lại — client chỉ
+    | hiển thị, không được tự báo cáo số giây, tránh gian lận đổi giờ máy.
+    */
+
+    /**
+     * Xác định scope_key hiện tại dựa theo section/part đang active.
+     * $activePartId chỉ có ý nghĩa khi skill là 'speaking'.
+     */
+    public function resolveScopeKey(string $skill, ?int $activePartId = null): string
+    {
+        if ($skill === 'speaking' && $this->test->isMockTest() && $activePartId) {
+            return 'speaking-part-' . $activePartId;
+        }
+
+        return $skill;
+    }
+
+    /**
+     * Ngân sách thời gian (giây) cho 1 scope — null nghĩa là KHÔNG giới hạn
+     * (Practice Test, hoặc skill không nằm trong MOCK_SKILL_DURATIONS_SECONDS
+     * như Grammar/Vocabulary).
+     */
+    public function getScopeBudgetSeconds(string $scopeKey): ?int
+    {
+        if (!$this->test->isMockTest()) {
+            return null;
+        }
+
+        if (str_starts_with($scopeKey, 'speaking-part-')) {
+            return self::MOCK_SPEAKING_PART_DURATION_SECONDS;
+        }
+
+        return self::MOCK_SKILL_DURATIONS_SECONDS[$scopeKey] ?? null;
+    }
+
+    /**
+     * Kích hoạt 1 scope: nếu scope này đang active rồi (started_at đã có)
+     * thì KHÔNG làm gì (đồng hồ tiếp tục chạy, không reset) — đây là yêu
+     * cầu "chuyển Part cùng skill không reset giờ". Nếu scope trước đó
+     * (khác scope này) đang active, tự động chốt nó lại (cộng dồn used_seconds)
+     * trước khi mở scope mới.
+     *
+     * Gọi hàm này ở: lúc vào takeTest() lần đầu cho 1 section, trong
+     * finishSection() khi chuyển sang section kế tiếp, và ở endpoint mới
+     * cho việc chuyển Part của Speaking.
+     */
+    public function activateScope(string $scopeKey): void
+    {
+        $budget = $this->skill_time_budget ?? [];
+
+        // Nếu scope này đã đang active (started_at != null và chưa bị chốt)
+        // thì không đụng gì — giữ nguyên đồng hồ đang chạy.
+        if (!empty($budget[$scopeKey]['started_at'])) {
+            return;
+        }
+
+        // Chốt mọi scope khác đang active (phòng trường hợp có scope cũ
+        // chưa kịp chốt do lỗi mạng/crash trước đó).
+        foreach ($budget as $key => $entry) {
+            if ($key !== $scopeKey && !empty($entry['started_at'])) {
+                $budget[$key] = $this->settleScopeEntry($entry);
+            }
+        }
+
+        if (!isset($budget[$scopeKey])) {
+            $budget[$scopeKey] = [
+                'budget_seconds' => $this->getScopeBudgetSeconds($scopeKey),
+                'used_seconds' => 0,
+                'started_at' => null,
+            ];
+        }
+
+        $budget[$scopeKey]['started_at'] = time();
+
+        $this->skill_time_budget = $budget;
+        $this->updated_at = time();
+        $this->save();
+    }
+
+    /**
+     * Chốt 1 scope: cộng dồn thời gian đã trôi qua vào used_seconds, xoá
+     * started_at (đánh dấu không còn active). Gọi khi rời khỏi scope này
+     * (chuyển section/part khác) hoặc khi hết giờ tự động nộp.
+     */
+    public function settleScope(string $scopeKey): void
+    {
+        $budget = $this->skill_time_budget ?? [];
+
+        if (empty($budget[$scopeKey])) {
+            return;
+        }
+
+        $budget[$scopeKey] = $this->settleScopeEntry($budget[$scopeKey]);
+
+        $this->skill_time_budget = $budget;
+        $this->updated_at = time();
+        $this->save();
+    }
+
+    private function settleScopeEntry(array $entry): array
+    {
+        if (!empty($entry['started_at'])) {
+            $entry['used_seconds'] = (int) ($entry['used_seconds'] ?? 0) + (time() - (int) $entry['started_at']);
+            $entry['started_at'] = null;
+        }
+
+        return $entry;
+    }
+
+    /**
+     * Số giây còn lại của 1 scope. null = không giới hạn (Practice Test).
+     * Luôn tính "live" dựa trên started_at hiện tại nếu scope đang active,
+     * không cần client tự báo cáo.
+     */
+    public function getScopeTimeRemaining(string $scopeKey): ?int
+    {
+        $budgetSeconds = $this->getScopeBudgetSeconds($scopeKey);
+
+        if ($budgetSeconds === null) {
+            return null;
+        }
+
+        $entry = ($this->skill_time_budget ?? [])[$scopeKey] ?? [
+            'used_seconds' => 0,
+            'started_at' => null,
+        ];
+
+        $usedSeconds = (int) ($entry['used_seconds'] ?? 0);
+
+        if (!empty($entry['started_at'])) {
+            $usedSeconds += time() - (int) $entry['started_at'];
+        }
+
+        return max(0, $budgetSeconds - $usedSeconds);
+    }
+
+    /**
+     * Scope đã hết giờ chưa. Practice Test (budget null) không bao giờ hết
+     * giờ theo scope — chỉ có Mock Test mới bị chặn ở đây.
+     */
+    public function hasScopeExpired(string $scopeKey): bool
+    {
+        $remaining = $this->getScopeTimeRemaining($scopeKey);
+
+        return $remaining !== null && $remaining <= 0;
     }
 }

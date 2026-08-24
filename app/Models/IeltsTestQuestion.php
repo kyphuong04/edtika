@@ -91,6 +91,7 @@ class IeltsTestQuestion extends Model
         return $this->answer_options_array;
     }
 
+    // SAU
     public function getTableCompletionAnswersArrayAttribute()
     {
         $table = is_array($this->table_structure)
@@ -108,18 +109,31 @@ class IeltsTestQuestion extends Model
                 continue;
             }
 
-            $variants = $this->normalizeTableAnswerVariants(
-                $answerItem['answers'] ?? $answerItem['answer'] ?? []
-            );
+            $rawBlanks = $answerItem['answers'] ?? $answerItem['answer'] ?? [];
+            if (!is_array($rawBlanks)) {
+                $rawBlanks = [$rawBlanks];
+            }
 
-            if (empty($variants)) {
+            // Mỗi phần tử trong $rawBlanks ứng với 1 BLANK RIÊNG trong cell này
+            // (không gộp phẳng như trước) — value có thể chứa nhiều biến thể
+            // phân tách bằng "/", VD "yellow / Yellow".
+            $perBlankVariants = [];
+            foreach ($rawBlanks as $blankValue) {
+                $perBlankVariants[] = $this->normalizeTableAnswerVariants($blankValue);
+            }
+
+            if (empty($perBlankVariants)) {
                 continue;
             }
 
             $answers[] = [
                 'row' => (int) $answerItem['row'],
                 'col' => (int) $answerItem['col'],
-                'answers' => $variants,
+                // MẢNG THEO THỨ TỰ BLANK — mỗi phần tử là mảng biến thể chấp
+                // nhận được cho ĐÚNG blank ở vị trí đó. Khác bản cũ (gộp phẳng
+                // toàn bộ variants của cả cell thành 1 danh sách, làm mất vị
+                // trí blank khi cell có >1 blank).
+                'answers' => $perBlankVariants,
             ];
         }
 
@@ -147,6 +161,21 @@ class IeltsTestQuestion extends Model
     {
         return $this->question_type === 'essay';
     }
+
+    public function isMatchingType()
+    {
+        return in_array($this->question_type, [
+            'matching_headings',
+            'matching_information',
+            'matching_features',
+            'matching_sentence_endings',
+        ], true);
+    }
+
+    public function isDragDropType()
+    {
+        return in_array($this->question_type, ['drag_drop_disappear', 'drag_drop_reuse'], true);
+    }
     
     /**
      * Check if answer is correct
@@ -169,6 +198,7 @@ class IeltsTestQuestion extends Model
             $correctAnswers = [$correctAnswers];
         }
 
+        // SAU
         if ($this->usesCompletionAnswerGroups()) {
             $expectedGroups = $this->normalizeCompletionAnswerGroups($correctAnswers);
             $submittedGroups = $this->normalizeSubmittedCompletionAnswers($userAnswer);
@@ -198,6 +228,25 @@ class IeltsTestQuestion extends Model
 
             return true;
         }
+
+        // Matching (headings/information/features/sentence_endings): mỗi
+        // dòng IeltsTestQuestion ứng với 1 statement, đáp án đúng là 1 giá
+        // trị đơn (key cột, VD "A"). Trước patch này nó rơi vào nhánh so
+        // sánh chung ở cuối hàm và TÌNH CỜ vẫn đúng (vì đáp án chỉ có 1
+        // giá trị) — tách riêng để không phụ thuộc ngầm vào hành vi đó.
+        if ($this->isMatchingType()) {
+            return $this->checkMatchingAnswer($userAnswer, $correctAnswers);
+        }
+
+        // Drag & drop (disappear/reuse): nhiều blank trong 1 câu, đáp án
+        // đúng lưu MẢNG CÓ THỨ TỰ (correct_answer_array[idx] = đáp án của
+        // blank thứ idx). Trước patch này nó cũng rơi vào nhánh so sánh
+        // chung — nhưng nhánh đó dùng logic "khớp BẤT KỲ phần tử nào"
+        // (đúng cho multiple choice) chứ không phải "khớp ĐÚNG VỊ TRÍ"
+        // (cần cho drag&drop) -> gần như luôn chấm sai. Đây là bug thật.
+        if ($this->isDragDropType()) {
+            return $this->checkDragDropAnswer($userAnswer, $correctAnswers);
+        }
         
         // Normalize answer
         $userAnswer = $this->normalizeAnswer($userAnswer);
@@ -221,56 +270,65 @@ class IeltsTestQuestion extends Model
             }
         }
 
-        // Special handling for table completion
         if ($this->question_type === 'table_completion') {
             $expected = [];
             foreach ($this->table_completion_answers_array as $a) {
+                // $a['answers'] giờ là mảng THEO THỨ TỰ BLANK, mỗi phần tử
+                // là mảng biến thể chấp nhận được cho blank đó.
                 $expected["{$a['row']}-{$a['col']}"] = $a['answers'];
-            }
-
-            // Parse userAnswer: accept JSON string or array with answers
-            $userMap = [];
-            if (is_string($userAnswer)) {
-                $decoded = json_decode($userAnswer, true);
-                if (is_array($decoded)) {
-                    if (!empty($decoded['answers']) && is_array($decoded['answers'])) {
-                        foreach ($decoded['answers'] as $a) {
-                            if (isset($a['row']) && isset($a['col']) && isset($a['answer'])) {
-                                $userMap["{$a['row']}-{$a['col']}"] = $a['answer'];
-                            }
-                        }
-                    }
-                }
-            } elseif (is_array($userAnswer)) {
-                if (!empty($userAnswer['answers']) && is_array($userAnswer['answers'])) {
-                    foreach ($userAnswer['answers'] as $a) {
-                        if (isset($a['row']) && isset($a['col']) && isset($a['answer'])) {
-                            $userMap["{$a['row']}-{$a['col']}"] = $a['answer'];
-                        }
-                    }
-                }
             }
 
             if (empty($expected)) {
                 return false;
             }
 
-            foreach ($expected as $key => $correctAnswers) {
-                $userAns = $userMap[$key] ?? null;
-                if ($userAns === null) {
-                    return false;
-                }
+            // userAnswer kỳ vọng: JSON { answers: [{ row, col, answers: [v0, v1, ...] }] }
+            // answers[i] = mảng theo thứ tự blank trong cell. Vẫn chấp nhận
+            // dạng cũ { answer: "..." } (1 blank) để tương thích ngược.
+            $decoded = is_string($userAnswer) ? json_decode($userAnswer, true) : $userAnswer;
+            $userMap = [];
 
-                $matched = false;
-                foreach ((array) $correctAnswers as $correctAnswer) {
-                    if ($this->normalizeAnswer($userAns) === $this->normalizeAnswer($correctAnswer)) {
-                        $matched = true;
-                        break;
+            if (is_array($decoded) && !empty($decoded['answers']) && is_array($decoded['answers'])) {
+                foreach ($decoded['answers'] as $a) {
+                    if (!isset($a['row']) || !isset($a['col'])) {
+                        continue;
+                    }
+
+                    $key = "{$a['row']}-{$a['col']}";
+
+                    if (isset($a['answers']) && is_array($a['answers'])) {
+                        $userMap[$key] = $a['answers'];
+                    } elseif (isset($a['answer'])) {
+                        $userMap[$key] = [$a['answer']];
                     }
                 }
+            }
 
-                if (!$matched) {
+            foreach ($expected as $key => $expectedPerBlank) {
+                $submittedPerBlank = $userMap[$key] ?? null;
+
+                if ($submittedPerBlank === null || count($submittedPerBlank) !== count($expectedPerBlank)) {
                     return false;
+                }
+
+                foreach ($expectedPerBlank as $blankIndex => $acceptedVariants) {
+                    $submittedValue = $submittedPerBlank[$blankIndex] ?? null;
+
+                    if ($submittedValue === null) {
+                        return false;
+                    }
+
+                    $matched = false;
+                    foreach ((array) $acceptedVariants as $variant) {
+                        if ($this->normalizeAnswer($submittedValue) === $this->normalizeAnswer($variant)) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+
+                    if (!$matched) {
+                        return false;
+                    }
                 }
             }
 
@@ -299,6 +357,101 @@ class IeltsTestQuestion extends Model
         $answer = preg_replace('/\s+/', ' ', $answer);
         
         return $answer;
+    }
+
+    /**
+     * Matching — so sánh không phân biệt hoa/thường + khoảng trắng thừa
+     * (qua normalizeAnswer), khớp đúng cách grading.js xử lý ở client preview.
+     */
+    private function checkMatchingAnswer($userAnswer, array $correctAnswers): bool
+    {
+        if (empty($correctAnswers)) {
+            return false;
+        }
+
+        $normalizedUser = $this->normalizeAnswer(
+            is_array($userAnswer) ? ($userAnswer[0] ?? null) : $userAnswer
+        );
+
+        foreach ($correctAnswers as $correctAnswer) {
+            if ($normalizedUser === $this->normalizeAnswer($correctAnswer)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Drag & drop — so khớp THEO TỪNG VỊ TRÍ (blank thứ idx phải khớp đáp án
+     * thứ idx), khác với multiple choice (khớp "có mặt trong tập" không quan
+     * tâm vị trí). $userAnswer kỳ vọng là mảng CÓ THỨ TỰ hoặc JSON mảng —
+     * xem parseSubmittedOrderedAnswers().
+     */
+    private function checkDragDropAnswer($userAnswer, array $correctAnswers): bool
+    {
+        if (empty($correctAnswers)) {
+            return false;
+        }
+
+        $submitted = $this->parseSubmittedOrderedAnswers($userAnswer);
+
+        if (count($submitted) !== count($correctAnswers)) {
+            return false;
+        }
+
+        foreach ($correctAnswers as $index => $correctAnswer) {
+            $submittedValue = $submitted[$index] ?? null;
+
+            if ($submittedValue === null) {
+                return false;
+            }
+
+            if ($this->normalizeAnswer($submittedValue) !== $this->normalizeAnswer($correctAnswer)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Chuẩn hoá answer_text của học viên thành mảng CÓ THỨ TỰ theo từng
+     * blank. Chấp nhận: mảng PHP sẵn có, chuỗi JSON mảng, chuỗi phân tách
+     * bằng "|", hoặc 1 giá trị đơn (coi là mảng 1 phần tử). Đây là HỢP ĐỒNG
+     * (wire format) mà phía client (Lớp 4/5) phải tuân theo khi gửi answer_text
+     * cho câu hỏi drag&drop: JSON.stringify(mảng string theo đúng thứ tự blank).
+     */
+    private function parseSubmittedOrderedAnswers($value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_map(
+                static fn ($item) => is_array($item) ? ($item[0] ?? '') : (string) $item,
+                $value
+            ));
+        }
+
+        if ($value === null) {
+            return [];
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return [];
+        }
+
+        if (str_starts_with($text, '[') || str_starts_with($text, '{')) {
+            $decoded = json_decode($text, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $this->parseSubmittedOrderedAnswers($decoded);
+            }
+        }
+
+        if (str_contains($text, '|')) {
+            return array_values(array_map('trim', explode('|', $text)));
+        }
+
+        return [$text];
     }
 
     private function normalizeTableAnswerVariants($answer)

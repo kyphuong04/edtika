@@ -17,9 +17,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Support\Ielts\BuildsIeltsQuestionPayload;
 
 class IeltsTestInlineController extends Controller
 {
+    use BuildsIeltsQuestionPayload;
     /**
      * Thứ tự skill CỐ ĐỊNH, quyết định cách question_number được đánh liên
      * tục qua các skill. PHẢI khớp với SKILL_ORDER trong state.js (preview)
@@ -1170,6 +1172,94 @@ class IeltsTestInlineController extends Controller
         }
     }
 
+    // private function buildInlineTestData(IeltsTest $test): array
+    // {
+    //     $data = [
+    //         'sections' => [
+    //             'listening' => ['parts' => []],
+    //             'reading' => ['parts' => []],
+    //             'writing' => ['parts' => []],
+    //             'speaking' => ['parts' => []],
+    //             'grammar' => ['parts' => []],
+    //             'vocabulary' => ['parts' => []],
+    //         ],
+    //     ];
+
+    //     foreach ($test->sections as $section) {
+    //         $skill = $section->skill;
+    //         if (!isset($data['sections'][$skill])) {
+    //             $data['sections'][$skill] = ['parts' => []];
+    //         }
+
+    //         $questionsByPart = $section->questions->groupBy('part_id');
+
+    //         foreach ($section->parts as $part) {
+    //             $partQuestions = $questionsByPart->get($part->id, collect());
+    //             $partEntry = [
+    //                 'id' => $part->id,
+    //                 'upload_id' => 'existing_part_' . $part->id,
+    //                 'title' => $part->title ?: ('Part ' . $part->sort_order),
+    //                 'instructions' => $part->instructions,
+    //                 'passage' => $part->passage,
+    //                 'transcript' => $part->transcript,
+    //                 'files' => [
+    //                     'audio' => $part->audio_file ?: null,
+    //                     'image' => $part->task_image ?: null,
+    //                     'video' => $part->video_file ?: null,
+    //                 ],
+    //                 'groups' => [],
+    //             ];
+
+    //             $groups = $part->questionGroups;
+    //             if ($groups->isEmpty() && $partQuestions->isNotEmpty()) {
+    //                 $groups = collect([(object) [
+    //                     'id' => null,
+    //                     'title' => $part->title ?: ('Part ' . $part->sort_order),
+    //                     'question_type' => $partQuestions->first()->question_type ?? 'short_answer',
+    //                     'max_words' => null,
+    //                     'target_band' => null,
+    //                     'passage' => $part->passage,
+    //                     'task_image' => $part->task_image,
+    //                 ]]);
+    //             }
+
+    //             foreach ($groups as $group) {
+    //                 $groupQuestions = $group->id ? $partQuestions->where('question_group_id', $group->id) : $partQuestions;
+
+    //                 $partEntry['groups'][] = [
+    //                     'id' => $group->id,
+    //                     'upload_id' => 'existing_group_' . $group->id,
+    //                     'title' => $group->title ?: $partEntry['title'],
+    //                     'question_type' => $this->normalizeInlineQuestionType($group->question_type ?? ($groupQuestions->first()->question_type ?? 'short_answer')),
+    //                     'max_words' => $group->max_words,
+    //                     'target_band' => $group->target_band,
+    //                     'passage' => $group->passage ?: $part->passage,
+    //                     'task_image' => $group->task_image ?: $part->task_image,
+    //                     'files' => [
+    //                         'audio' => $group->audio_path ?? $group->audio_file ?? null,
+    //                         'image' => $group->task_image ?? null,
+    //                         'video' => $group->video_file ?? null,
+    //                     ],
+    //                     'questions' => $groupQuestions->sortBy('question_number')->map(function (IeltsTestQuestion $question) {
+    //                         return $this->buildInlineQuestionData($question);
+    //                     })->values()->all(),
+    //                 ];
+    //             }
+
+    //             $data['sections'][$skill]['files'] = [
+    //                 'audio' => $section->audio_file ?? null,
+    //                 'image' => $section->image_file ?? null,
+    //                 'video' => $section->video_file ?? null,
+    //             ];
+
+    //             $data['sections'][$skill]['parts'][] = $partEntry;
+    //         }
+    //     }
+
+    //     return $data;
+    // }
+
+    // SAU
     private function buildInlineTestData(IeltsTest $test): array
     {
         $data = [
@@ -1185,152 +1275,95 @@ class IeltsTestInlineController extends Controller
 
         foreach ($test->sections as $section) {
             $skill = $section->skill;
-            if (!isset($data['sections'][$skill])) {
-                $data['sections'][$skill] = ['parts' => []];
-            }
-
-            $questionsByPart = $section->questions->groupBy('part_id');
-
-            foreach ($section->parts as $part) {
-                $partQuestions = $questionsByPart->get($part->id, collect());
-                $partEntry = [
-                    'id' => $part->id,
-                    'upload_id' => 'existing_part_' . $part->id,
-                    'title' => $part->title ?: ('Part ' . $part->sort_order),
-                    'instructions' => $part->instructions,
-                    'passage' => $part->passage,
-                    'transcript' => $part->transcript,
-                    'files' => [
-                        'audio' => $part->audio_file ?: null,
-                        'image' => $part->task_image ?: null,
-                        'video' => $part->video_file ?: null,
-                    ],
-                    'groups' => [],
-                ];
-
-                $groups = $part->questionGroups;
-                if ($groups->isEmpty() && $partQuestions->isNotEmpty()) {
-                    $groups = collect([(object) [
-                        'id' => null,
-                        'title' => $part->title ?: ('Part ' . $part->sort_order),
-                        'question_type' => $partQuestions->first()->question_type ?? 'short_answer',
-                        'max_words' => null,
-                        'target_band' => null,
-                        'passage' => $part->passage,
-                        'task_image' => $part->task_image,
-                    ]]);
-                }
-
-                foreach ($groups as $group) {
-                    $groupQuestions = $group->id ? $partQuestions->where('question_group_id', $group->id) : $partQuestions;
-
-                    $partEntry['groups'][] = [
-                        'id' => $group->id,
-                        'upload_id' => 'existing_group_' . $group->id,
-                        'title' => $group->title ?: $partEntry['title'],
-                        'question_type' => $this->normalizeInlineQuestionType($group->question_type ?? ($groupQuestions->first()->question_type ?? 'short_answer')),
-                        'max_words' => $group->max_words,
-                        'target_band' => $group->target_band,
-                        'passage' => $group->passage ?: $part->passage,
-                        'task_image' => $group->task_image ?: $part->task_image,
-                        'files' => [
-                            'audio' => $group->audio_path ?? $group->audio_file ?? null,
-                            'image' => $group->task_image ?? null,
-                            'video' => $group->video_file ?? null,
-                        ],
-                        'questions' => $groupQuestions->sortBy('question_number')->map(function (IeltsTestQuestion $question) {
-                            return $this->buildInlineQuestionData($question);
-                        })->values()->all(),
-                    ];
-                }
-
-                $data['sections'][$skill]['files'] = [
-                    'audio' => $section->audio_file ?? null,
-                    'image' => $section->image_file ?? null,
-                    'video' => $section->video_file ?? null,
-                ];
-
-                $data['sections'][$skill]['parts'][] = $partEntry;
-            }
+            $data['sections'][$skill] = $this->buildSectionData($section);
         }
 
         return $data;
     }
+
+    // private function resolvePreviewMediaUrls(array $data): array
+    // {
+    //     foreach ($data['sections'] as $skill => &$sectionData) {
+    //         if (!empty($sectionData['files']) && is_array($sectionData['files'])) {
+    //             $sectionData['files'] = $this->resolvePreviewFileGroup($sectionData['files']);
+    //         }
+
+    //         if (empty($sectionData['parts']) || !is_array($sectionData['parts'])) {
+    //             continue;
+    //         }
+
+    //         foreach ($sectionData['parts'] as &$part) {
+    //             if (!empty($part['files']) && is_array($part['files'])) {
+    //                 $part['files'] = $this->resolvePreviewFileGroup($part['files']);
+    //             }
+
+    //             if (empty($part['groups']) || !is_array($part['groups'])) {
+    //                 continue;
+    //             }
+
+    //             foreach ($part['groups'] as &$group) {
+    //                 if (!empty($group['files']) && is_array($group['files'])) {
+    //                     $group['files'] = $this->resolvePreviewFileGroup($group['files']);
+    //                 }
+
+    //                 if (!empty($group['task_image'])) {
+    //                     $group['task_image'] = $this->resolvePreviewSingleUrl($group['task_image']);
+    //                 }
+
+    //                 if (empty($group['questions']) || !is_array($group['questions'])) {
+    //                     continue;
+    //                 }
+
+    //                 foreach ($group['questions'] as &$question) {
+    //                     if (!empty($question['question_data']['task_image'])) {
+    //                         $question['question_data']['task_image'] = $this->resolvePreviewSingleUrl(
+    //                             $question['question_data']['task_image']
+    //                         );
+    //                     }
+    //                 }
+    //                 unset($question);
+    //             }
+    //             unset($group);
+    //         }
+    //         unset($part);
+    //     }
+    //     unset($sectionData);
+
+    //     return $data;
+    // }
+
+    // private function resolvePreviewFileGroup(array $files): array
+    // {
+    //     foreach ($files as $key => $value) {
+    //         $files[$key] = $this->resolvePreviewSingleUrl($value);
+    //     }
+
+    //     return $files;
+    // }
+
+    // private function resolvePreviewSingleUrl($path): ?string
+    // {
+    //     if (empty($path)) {
+    //         return null;
+    //     }
+
+    //     if (preg_match('#^https?://#i', $path) || str_starts_with($path, '/')) {
+    //         return $path;
+    //     }
+
+    //     return Storage::disk('public')->url($path);
+    // }
 
     private function resolvePreviewMediaUrls(array $data): array
     {
-        foreach ($data['sections'] as $skill => &$sectionData) {
-            if (!empty($sectionData['files']) && is_array($sectionData['files'])) {
-                $sectionData['files'] = $this->resolvePreviewFileGroup($sectionData['files']);
-            }
-
-            // QUAN TRỌNG: không dùng `($sectionData['parts'] ?? [])` ở đây —
-            // toán tử `??` sẽ phá chuỗi tham chiếu khi kết hợp với `as &$part`.
-            if (empty($sectionData['parts']) || !is_array($sectionData['parts'])) {
-                continue;
-            }
-
-            foreach ($sectionData['parts'] as &$part) {
-                if (!empty($part['files']) && is_array($part['files'])) {
-                    $part['files'] = $this->resolvePreviewFileGroup($part['files']);
-                }
-
-                if (empty($part['groups']) || !is_array($part['groups'])) {
-                    continue;
-                }
-
-                foreach ($part['groups'] as &$group) {
-                    if (!empty($group['files']) && is_array($group['files'])) {
-                        $group['files'] = $this->resolvePreviewFileGroup($group['files']);
-                    }
-
-                    if (!empty($group['task_image'])) {
-                        $group['task_image'] = $this->resolvePreviewSingleUrl($group['task_image']);
-                    }
-
-                    if (empty($group['questions']) || !is_array($group['questions'])) {
-                        continue;
-                    }
-
-                    foreach ($group['questions'] as &$question) {
-                        if (!empty($question['question_data']['task_image'])) {
-                            $question['question_data']['task_image'] = $this->resolvePreviewSingleUrl(
-                                $question['question_data']['task_image']
-                            );
-                        }
-                    }
-                    unset($question);
-                }
-                unset($group);
-            }
-            unset($part);
+        foreach ($data['sections'] as $skill => $sectionData) {
+            $data['sections'][$skill] = $this->resolveSectionMediaUrls($sectionData);
         }
-        unset($sectionData);
-
+        
         return $data;
     }
 
-    private function resolvePreviewFileGroup(array $files): array
-    {
-        foreach ($files as $key => $value) {
-            $files[$key] = $this->resolvePreviewSingleUrl($value);
-        }
 
-        return $files;
-    }
-
-    private function resolvePreviewSingleUrl($path): ?string
-    {
-        if (empty($path)) {
-            return null;
-        }
-
-        if (preg_match('#^https?://#i', $path) || str_starts_with($path, '/')) {
-            return $path;
-        }
-
-        return Storage::disk('public')->url($path);
-    }
 
     private function buildInlineQuestionData(IeltsTestQuestion $question): array
     {

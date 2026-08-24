@@ -4,8 +4,14 @@
 @php
     $previewCssPath = 'assets/css/ielts-tests-manage/preview.css';
     $previewCssVersion = is_file(public_path($previewCssPath)) ? filemtime(public_path($previewCssPath)) : time();
+    // CSS dùng chung với trang làm bài của học viên — xem header của file.
+    $speakingStageCssPath = 'assets/css/ielts-shared/speaking-stage.css';
+    $speakingStageCssVersion = is_file(public_path($speakingStageCssPath))
+        ? filemtime(public_path($speakingStageCssPath))
+        : time();
 @endphp
 <link rel="stylesheet" href="{{ asset($previewCssPath) }}?v={{ $previewCssVersion }}">
+<link rel="stylesheet" href="{{ asset($speakingStageCssPath) }}?v={{ $speakingStageCssVersion }}">
 @endpush
 
 @section('content')
@@ -36,7 +42,15 @@
         $version = is_file($fullPath) ? filemtime($fullPath) : time();
         return asset($previewJsBase . $filename) . '?v=' . $version;
     };
+    $sharedJsBase = 'assets/js/ielts-shared/';
+    $sharedJsVersion = function (string $filename) use ($sharedJsBase) {
+        $fullPath = public_path($sharedJsBase . $filename);
+        $version = is_file($fullPath) ? filemtime($fullPath) : time();
+        return asset($sharedJsBase . $filename) . '?v=' . $version;
+    };
 @endphp
+{{-- Màn hình Speaking 2 cột — dùng chung với attempt, phải load trước renderers.js --}}
+<script src="{{ $sharedJsVersion('speaking-stage.js') }}"></script>
 <script src="{{ $previewJsVersion('state.js') }}"></script>
 <script src="{{ $previewJsVersion('renderers.js') }}"></script>
 <script src="{{ $previewJsVersion('grading.js') }}"></script>

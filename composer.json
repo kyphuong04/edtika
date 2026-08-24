@@ -53,7 +53,7 @@
         "lyracom/rest-php-sdk": "^4.0",
         "maatwebsite/excel": "^3.1",
         "mews/captcha": "^3.3",
-        "mews/purifier": "^3.4",
+        "mews/purifier": "*",
         "midtrans/midtrans-php": "^2.5",
         "moemengaballah/msegat": "^1.0",
         "myonlinestore/omnipay-klarna-checkout": "^5.0",

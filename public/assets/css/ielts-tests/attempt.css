@@ -878,3 +878,184 @@ body.is-resizing-exam .exam-questions {
 .exam-listening-block .exam-part-instructions {
     margin: 12px 0 0;
 }
+/* ── attempt extras (giữ lại từ bản cũ, không có trong preview.css) ───── */
+.attempt-mentor-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #9a3412;
+    flex-shrink: 0;
+}
+.attempt-mentor-banner a { color: #511D99; font-weight: 700; text-decoration: none; }
+.attempt-save-indicator {
+    font-size: 11px;
+    margin-left: 8px;
+    font-weight: 600;
+    color: #9ca3af;
+}
+.attempt-save-indicator.status-pending { color: #f59e0b; }
+.attempt-save-indicator.status-saved { color: #16a34a; }
+.attempt-save-indicator.status-error { color: #dc2626; }
+.attempt-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    padding: 16px 24px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+/* When rendered inside panel justContent, the html/body overflow hidden from
+   preview.css still applies. Ensure exam-root inside attempt-page fills. */
+.attempt-page .exam-root { flex: 1; min-height: 0; }
+
+/* ── Listening mock gate (hiện 1 lần khi vào Listening mock) ─────────── */
+.exam-listening-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px;
+    gap: 14px;
+}
+.exam-listening-gate.hidden { display: none; }
+.exam-listening-gate .elg-icon { font-size: 56px; line-height: 1; }
+.exam-listening-gate .elg-text { max-width: 560px; font-size: 14px; line-height: 1.7; color: #374151; }
+.exam-listening-gate .elg-hint { font-size: 14px; color: #111827; font-weight: 600; }
+.exam-listening-gate .elg-play {
+    margin-top: 8px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: #511D99;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+.exam-listening-gate .elg-play:hover { background: #3f1677; }
+.exam-listening-block.is-mock audio { width: 100%; }
+
+/* ── Device check overlay (mic + loa) — hiện trước khi vào bài ───────── */
+.exam-device-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #f9fafb;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 20px;
+}
+.exam-device-overlay.hidden { display: none; }
+.exam-device-card {
+    width: 100%;
+    max-width: 700px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    padding: 40px;
+    text-align: center;
+}
+.exam-device-title { font-size: 26px; font-weight: 900; color: #111827; margin-bottom: 6px; }
+.exam-device-sub { font-size: 13px; color: #6b7280; margin-bottom: 22px; }
+.exam-device-mic-btn {
+    width: 80px; height: 80px; border-radius: 50%; border: none;
+    background: #511D99; color: #fff; font-size: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 8px 18px rgba(81,29,153,.3); transition: .15s;
+}
+.exam-device-mic-btn:hover { background: #3f1677; }
+.exam-device-mic-btn.is-recording { background: #dc2626; animation: exam-mic-pulse 1.2s infinite; }
+.exam-device-status { margin-top: 14px; font-size: 15px; color: #4b5563; font-weight: 600; }
+.exam-device-error { margin-top: 14px; font-size: 13px; color: #dc2626; font-weight: 600; display: none; }
+.exam-device-player {
+    display: none; align-items: center; gap: 10px;
+    margin-top: 20px; padding: 12px 14px; background: #f5f3ff; border-radius: 12px;
+}
+.exam-device-player.is-visible { display: flex; }
+.exam-device-player button {
+    width: 32px; height: 32px; border-radius: 50%; background: #fff;
+    border: 1px solid #ddd6fe; display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #511D99; flex-shrink: 0;
+}
+.exam-device-player button.ed-play { width: 36px; height: 36px; background: #511D99; color: #fff; border: none; }
+.exam-device-time { font-size: 13px; font-weight: 600; color: #374151; white-space: nowrap; }
+.exam-device-track { flex: 1; height: 5px; background: #ddd6fe; border-radius: 99px; position: relative; cursor: pointer; min-width: 60px; }
+.exam-device-fill { position: absolute; left: 0; top: 0; height: 100%; background: #511D99; border-radius: 99px; width: 0%; }
+.exam-device-vol-track { width: 60px; height: 4px; background: #ddd6fe; border-radius: 99px; position: relative; cursor: pointer; }
+.exam-device-vol-fill { position: absolute; left: 0; top: 0; height: 100%; background: #511D99; border-radius: 99px; width: 100%; }
+.exam-device-speed { font-size: 12px; font-weight: 600; color: #511D99; background: #fff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 6px 10px; white-space: nowrap; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.exam-device-rerecord { display: block; margin-top: 10px; font-size: 13px; color: #9ca3af; text-decoration: underline; cursor: pointer; }
+.exam-device-divider { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 20px; }
+.exam-device-continue {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    font-weight: 700; font-size: 16px; cursor: pointer; background: #e5e7eb; color: #9ca3af; transition: .15s;
+}
+.exam-device-continue.is-ready { background: #511D99; color: #fff; box-shadow: 0 8px 20px rgba(81,29,153,.3); }
+.exam-device-continue:disabled { cursor: not-allowed; }
+.exam-device-skip { margin-top: 10px; background: transparent; border: none; color: #9ca3af; font-size: 13px; cursor: pointer; text-decoration: underline; }
+
+/* ── Listening gate — overlay toàn màn hình, tách khỏi khu vực câu hỏi ── */
+.exam-listening-gate-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: rgba(15, 23, 42, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.exam-listening-gate-overlay.hidden { display: none; }
+
+.exam-listening-gate-card {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 480px;
+    width: 100%;
+    padding: 36px 32px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.exam-listening-gate-card .elg-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.exam-listening-gate-card .elg-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.exam-listening-gate-card .elg-hint {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.exam-listening-gate-card .elg-play {
+    padding: 12px 32px;
+    background: #511D99;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.exam-listening-gate-card .elg-play:hover { background: #3f1777; }

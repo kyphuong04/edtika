@@ -59,11 +59,14 @@
 
         <div class="actions-dropdown__dropdown-menu dropdown-menu-width-200 dropdown-menu-top-28">
             <ul class="my-8">
-                <!-- @can('panel_bundles_create')
-                    <li class="actions-dropdown__dropdown-menu-item">
-                        <a href="/panel/bundles/{{ $bundle->id }}/edit">{{ trans('public.edit') }}</a>
-                    </li>
-                @endcan -->
+                {{-- Chỉ hiển thị nút Chỉnh sửa khi KHÔNG PHẢI trạng thái đã xuất bản (active) --}}
+                @can('panel_bundles_create')
+                    @if($bundle->status != 'active')
+                        <li class="actions-dropdown__dropdown-menu-item">
+                            <a href="/panel/bundles/{{ $bundle->id }}/edit">{{ trans('public.edit') }}</a>
+                        </li>
+                    @endif
+                @endcan
 
                 @can('panel_bundles_courses')
                     <li class="actions-dropdown__dropdown-menu-item">
@@ -95,6 +98,7 @@
                         </form>
                     </li>
                 @endif -->
+
 
                 @if($bundle->creator_id == $authUser->id or $bundle->teacher_id == $authUser->id)
                     <li class="actions-dropdown__dropdown-menu-item">
