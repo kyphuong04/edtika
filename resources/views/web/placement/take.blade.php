@@ -57,6 +57,16 @@
 .pt-audio-time, .pt-audio-duration { font-size:12px; font-weight:700; color:#511D99; white-space:nowrap; min-width:34px; }
 .pt-audio-track { flex:1; height:5px; background:#ddd6fe; border-radius:99px; position:relative; cursor:pointer; min-width:70px; }
 .pt-audio-fill { position:absolute; left:0; top:0; height:100%; background:#511D99; border-radius:99px; width:0%; pointer-events:none; }
+/* ── Nhóm audio dùng chung cho nhiều câu (VD: câu 9–10) ── */
+.pt-audio-group {
+    background:#eef2ff; border:1px solid #c7d2fe; border-radius:14px;
+    padding:12px 16px; margin-bottom:16px;
+}
+.pt-audio-group-label {
+    font-size:12px; font-weight:700; color:#4338CA;
+    text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;
+}
+.pt-audio-group .pt-audio-player { margin-bottom:0; background:#fff; }
 </style>
 @endpush
 
@@ -92,10 +102,11 @@
                 </div>
             @endif
 
-            <div class="pt-q-card">
-                <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
-
-                @if($q['has_audio'] && $q['audio_url'])
+            @if($q['audio_group_start'] && $q['audio_url'])
+                <div class="pt-audio-group">
+                    <div class="pt-audio-group-label">
+                        <i class="fas fa-headphones mr-1"></i>Audio cho câu {{ $q['audio_group_range'] }}
+                    </div>
                     <div class="pt-audio-player" data-audio-player>
                         <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="metadata"></audio>
                         <button type="button" class="pt-audio-play-toggle" data-audio-toggle>
@@ -107,7 +118,13 @@
                         </div>
                         <span class="pt-audio-duration" data-audio-duration>00:00</span>
                     </div>
-                @endif
+                </div>
+            @endif
+            
+            <div class="pt-q-card">
+                <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
+
+                
 
                 @if($q['type'] === 'multiple_choice')
                     <div class="pt-q-text">{!! $q['question_text'] !!}</div>

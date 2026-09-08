@@ -11,6 +11,17 @@
 .pt-blank-answer-row input { flex:1; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; }
 .pt-file-preview { display:inline-flex; align-items:center; gap:8px; background:#e0e7ff; color:#511D99; padding:6px 10px; border-radius:6px; font-size:12px; margin-top:6px; }
 .pt-remove-btn { border:none; background:transparent; color:#ef4444; cursor:pointer; }
+
+/* ── Khối file audio dùng chung ── */
+.pt-clip-card { background:#eef2ff; border:2px solid #c7d2fe; border-radius:10px; padding:16px; margin-bottom:12px; }
+.pt-clip-card .pt-q-badge { background:#4338CA; }
+.pt-audio-note { font-size:12.5px; border-radius:8px; padding:8px 12px; margin-bottom:10px; line-height:1.5; }
+.pt-audio-note--ok { background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; }
+.pt-audio-note--warn { background:#fef3c7; border:1px solid #fcd34d; color:#78350f; }
+.pt-audio-note--error { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; }
+.pt-move-btns { position:absolute; top:16px; right:44px; display:flex; gap:4px; }
+.pt-move-btns button { border:1px solid #d1d5db; background:#fff; color:#6b7280; border-radius:6px; width:26px; height:26px; line-height:1; cursor:pointer; font-size:11px; }
+.pt-move-btns button:disabled { opacity:.35; cursor:not-allowed; }
 </style>
 @endpush
 
@@ -79,6 +90,7 @@
                 <label class="input-label">Mô tả (nội bộ)</label>
                 <textarea name="description" class="form-control" rows="4">{{ old('description', $placementTest->description ?? '') }}</textarea>
             </div>
+
             <div class="mt-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <label class="input-label mb-0">Đoạn văn đọc <small class="text-muted">(có thể thêm nhiều đoạn, mỗi đoạn hiển thị tại 1 vị trí trong bài)</small></label>
@@ -86,6 +98,19 @@
                 </div>
                 <div id="passagesContainer"></div>
                 <input type="hidden" name="reading_passages" id="passagesDataInput" value="">
+            </div>
+
+            {{-- File audio dùng chung: 1 file có thể gán cho nhiều câu liền nhau --}}
+            <div class="mt-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="input-label mb-0">
+                        File audio
+                        <small class="text-muted">(một file có thể dùng cho nhiều câu liền nhau, VD: câu 9–10 nghe chung 1 file)</small>
+                    </label>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAudioClip"><i class="fas fa-plus mr-4"></i>Thêm file audio</button>
+                </div>
+                <div id="audioClipsContainer"></div>
+                <input type="hidden" name="audio_clips_data" id="audioClipsDataInput" value="">
             </div>
         </div>
 
@@ -244,7 +269,17 @@ const MAX_QUESTIONS = {{ \App\Models\PlacementTest::MAX_QUESTIONS }};
 let questions = @json($questionsData ?? []);
 let uploadSeq = 0;
 let passages = @json($passagesData ?? []);
-let passageSeq = passages.length ? Math.max(...passages.map(p => parseInt(p.id.replace('p','')) || 0)) : 0;
+let passageSeq = passages.length ? Math.max(...passages.map(p => parseInt(String(p.id).replace('p','')) || 0)) : 0;
+
+/* ── File audio ở cấp ĐỀ ────────────────────────────────────────────────
+   Mỗi clip: { id, label, path, input_name, url }
+     - path: đường dẫn file đã lưu trên server (khi sửa đề)
+     - input_name: tên input file gửi kèm request (khi vừa chọn file mới)
+     - url: link nghe thử (URL server hoặc blob URL của file vừa chọn)
+   Câu hỏi chỉ giữ audio_clip_id trỏ tới clip. Các câu LIỀN NHAU cùng
+   audio_clip_id sẽ được gộp thành 1 nhóm, học viên chỉ thấy 1 trình phát. */
+let audioClips = @json($audioClipsData ?? []);
+let clipSeq = audioClips.length ? Math.max(...audioClips.map(c => parseInt(String(c.id).replace('a','')) || 0)) : 0;
 
 const container = document.getElementById('questionsContainer');
 const countLabel = document.getElementById('questionCountLabel');
@@ -278,6 +313,7 @@ function blankQuestionTemplate() {
     return {
         type: 'multiple_choice',
         has_audio: false,
+        audio_clip_id: null,
         linked_passage_id: null,
         question_text: '',
         options: ['', ''],
@@ -287,9 +323,6 @@ function blankQuestionTemplate() {
         correct_answer_text: '',
         answer_help: '',
         points: 1,
-        audio_input_name: null,
-        existing_audio_path: null,
-        audio_url: null,
         option_image_input_names: [null, null, null],
         existing_option_images: [null, null, null],
         option_image_urls: [null, null, null],
@@ -311,6 +344,16 @@ function removeQuestion(index) {
     render();
 }
 
+/* Đổi vị trí câu hỏi. Cần thiết cho nhóm audio: các câu dùng chung 1 file
+   phải nằm liền nhau thì mới gộp được thành 1 trình phát. */
+function moveQuestion(index, delta) {
+    const target = index + delta;
+    if (target < 0 || target >= questions.length) return;
+    const [item] = questions.splice(index, 1);
+    questions.splice(target, 0, item);
+    render();
+}
+
 function updateField(index, field, value) {
     questions[index][field] = value;
 }
@@ -324,72 +367,20 @@ function changeType(index, type) {
         question_text: questions[index].question_text,
         points: questions[index].points,
         answer_help: questions[index].answer_help,
-        has_audio: type === 'listening_image_choice' ? true : questions[index].has_audio,
-        audio_input_name: questions[index].audio_input_name,
-        existing_audio_path: questions[index].existing_audio_path,
-        audio_url: questions[index].audio_url,
+        audio_clip_id: questions[index].audio_clip_id,
+        has_audio: !!questions[index].audio_clip_id,
     };
     render();
 }
 
-function toggleAudio(index, checked) {
-    questions[index].has_audio = checked;
+function setQuestionClip(index, clipId) {
+    questions[index].audio_clip_id = clipId || null;
+    questions[index].has_audio = !!clipId;
     render();
 }
 
 function toggleLinkedToPassage(index, checked) {
     questions[index].linked_to_passage = checked;
-}
-
-// function onAudioFileSelected(index, inputEl) {
-//     if (inputEl.files && inputEl.files[0]) {
-//         const inputName = 'question_audio_' + (++uploadSeq);
-//         inputEl.name = inputName;
-//         questions[index].audio_input_name = inputName;
-//         document.getElementById('mediaFilesHolder').appendChild(inputEl);
-//         const badge = document.getElementById('audio-filename-' + index);
-//         if (badge) { badge.textContent = inputEl.files[0].name; badge.style.display = 'inline-flex'; }
-//         const placeholder = document.createElement('input');
-//         placeholder.type = 'file';
-//         placeholder.accept = 'audio/*';
-//         placeholder.className = 'form-control';
-//         placeholder.onchange = function () { onAudioFileSelected(index, this); };
-//         inputEl.insertAdjacentElement('afterend', placeholder);
-//     }
-// }
-
-function onAudioFileSelected(index, inputEl) {
-    if (inputEl.files && inputEl.files[0]) {
-        const file = inputEl.files[0];
-        const inputName = 'question_audio_' + (++uploadSeq);
-        inputEl.name = inputName;
-        questions[index].audio_input_name = inputName;
-        document.getElementById('mediaFilesHolder').appendChild(inputEl);
-
-        const badge = document.getElementById('audio-filename-' + index);
-        if (badge) { badge.textContent = file.name; badge.style.display = 'inline-flex'; }
-
-        // Tạo URL tạm để nghe thử ngay trên trình duyệt, không cần chờ submit
-        // form/upload lên server. Thu hồi URL cũ (nếu có) để tránh rò rỉ bộ nhớ
-        // khi người dùng đổi qua đổi lại nhiều file audio trước khi lưu.
-        const preview = document.getElementById('audio-preview-' + index);
-        if (preview) {
-            if (preview.dataset.blobUrl) {
-                URL.revokeObjectURL(preview.dataset.blobUrl);
-            }
-            const objectUrl = URL.createObjectURL(file);
-            preview.src = objectUrl;
-            preview.dataset.blobUrl = objectUrl;
-            preview.style.display = 'block';
-        }
-
-        const placeholder = document.createElement('input');
-        placeholder.type = 'file';
-        placeholder.accept = 'audio/*';
-        placeholder.className = 'form-control';
-        placeholder.onchange = function () { onAudioFileSelected(index, this); };
-        inputEl.insertAdjacentElement('afterend', placeholder);
-    }
 }
 
 function onOptionImageSelected(index, optIndex, inputEl) {
@@ -466,6 +457,9 @@ function updateBlankHint(index, blankIndex, value) {
     }
     questions[index].blank_hints[blankIndex] = value;
 }
+
+/* ── Đoạn văn đọc ──────────────────────────────────────────────────────── */
+
 function addPassage() {
     passageSeq++;
     passages.push({ id: 'p' + passageSeq, content: '', position: 1 });
@@ -484,6 +478,7 @@ function updatePassageContent(id, value) {
     const p = passages.find(p => p.id === id);
     if (p) p.content = value;
 }
+
 function passageSelectHtml(index, q) {
     const options = passages.map(p =>
         `<option value="${p.id}" ${q.linked_passage_id === p.id ? 'selected' : ''}>${escapeHtml((p.content || '').slice(0, 40))}...</option>`
@@ -496,16 +491,17 @@ function passageSelectHtml(index, q) {
         </select>
     </div>`;
 }
+
 function updatePassagePosition(id, value) {
     const p = passages.find(p => p.id === id);
     if (p) p.position = parseInt(value, 10) || 1;
 }
 
 function renderPassages() {
-    const container = document.getElementById('passagesContainer');
+    const passagesContainer = document.getElementById('passagesContainer');
     const totalQ = questions.length;
 
-    container.innerHTML = passages.map((p, idx) => {
+    passagesContainer.innerHTML = passages.map((p, idx) => {
         let posOpts = '';
         for (let i = 1; i <= Math.max(totalQ, 1); i++) {
             posOpts += `<option value="${i}" ${p.position === i ? 'selected' : ''}>Trước câu ${i}</option>`;
@@ -529,10 +525,195 @@ function renderPassages() {
     }).join('') || '<div class="text-muted mb-2">Chưa có đoạn văn nào.</div>';
 }
 
+/* ── File audio dùng chung ─────────────────────────────────────────────── */
+
+function clipUsageIndexes(clipId) {
+    const result = [];
+    questions.forEach((q, i) => { if (q.audio_clip_id === clipId) result.push(i); });
+    return result;
+}
+
+function isContiguous(indexes) {
+    for (let i = 1; i < indexes.length; i++) {
+        if (indexes[i] !== indexes[i - 1] + 1) return false;
+    }
+    return true;
+}
+
+function clipDisplayName(clip) {
+    return clip.label || (clip.path ? clip.path.split('/').pop() : clip.id);
+}
+
+function addAudioClip() {
+    clipSeq++;
+    audioClips.push({ id: 'a' + clipSeq, label: '', path: null, input_name: null, url: null });
+    renderAudioClips();
+}
+
+function removeAudioClip(id) {
+    const used = clipUsageIndexes(id);
+    if (used.length) {
+        const nums = used.map(i => i + 1).join(', ');
+        if (!confirm(`File này đang được dùng ở câu ${nums}. Xoá sẽ bỏ audio của các câu đó. Tiếp tục?`)) return;
+    }
+
+    const clip = audioClips.find(c => c.id === id);
+    if (clip) {
+        if (clip.input_name) {
+            const held = document.querySelector('#mediaFilesHolder input[name="' + clip.input_name + '"]');
+            if (held) held.remove();
+        }
+        if (clip.url && String(clip.url).startsWith('blob:')) URL.revokeObjectURL(clip.url);
+    }
+
+    audioClips = audioClips.filter(c => c.id !== id);
+    questions.forEach(q => {
+        if (q.audio_clip_id === id) { q.audio_clip_id = null; q.has_audio = false; }
+    });
+
+    renderAudioClips();
+    render();
+}
+
+function updateClipLabel(id, value) {
+    const clip = audioClips.find(c => c.id === id);
+    if (clip) clip.label = value;
+    // Không render lại ở đây để không mất con trỏ khi đang gõ.
+}
+
+function onClipFileSelected(clipId, inputEl) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+
+    const clip = audioClips.find(c => c.id === clipId);
+    if (!clip) return;
+
+    // Gỡ input của lần chọn trước để không upload thừa file đã bị thay thế.
+    if (clip.input_name) {
+        const previous = document.querySelector('#mediaFilesHolder input[name="' + clip.input_name + '"]');
+        if (previous) previous.remove();
+    }
+    if (clip.url && String(clip.url).startsWith('blob:')) URL.revokeObjectURL(clip.url);
+
+    const inputName = 'clip_audio_' + (++uploadSeq);
+    inputEl.name = inputName;
+    document.getElementById('mediaFilesHolder').appendChild(inputEl);
+
+    clip.input_name = inputName;
+    clip.url = URL.createObjectURL(file);
+    if (!clip.label) clip.label = file.name;
+
+    renderAudioClips();
+    render(); // cập nhật tên file hiển thị trong select của từng câu
+}
+
+function renderAudioClips() {
+    const wrap = document.getElementById('audioClipsContainer');
+
+    if (!audioClips.length) {
+        wrap.innerHTML = '<div class="text-muted mb-2">Chưa có file audio nào. Bấm "Thêm file audio" nếu đề có phần Listening.</div>';
+        return;
+    }
+
+    wrap.innerHTML = audioClips.map((clip, idx) => {
+        const used = clipUsageIndexes(clip.id);
+        let usageBadge;
+
+        if (!used.length) {
+            usageBadge = '<span class="badge badge-secondary">Chưa gán cho câu nào</span>';
+        } else {
+            const nums = used.map(i => i + 1).join(', ');
+            usageBadge = `<span class="badge badge-info">Dùng cho câu ${nums}</span>`;
+            if (used.length > 1 && !isContiguous(used)) {
+                usageBadge += ' <span class="badge badge-warning">Các câu không liền nhau</span>';
+            }
+        }
+
+        const fileLabel = clip.path && !clip.input_name
+            ? 'File (MP3) <small class="text-muted">— giữ file hiện có nếu không chọn file mới</small>'
+            : 'File (MP3) *';
+
+        return `<div class="pt-clip-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="pt-q-badge"><i class="fas fa-headphones mr-4"></i>File audio ${idx + 1}</span>
+                <button type="button" class="pt-remove-btn" onclick="removeAudioClip('${clip.id}')" title="Xoá file"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="row">
+                <div class="col-md-5">
+                    <label class="input-label">Tên gợi nhớ</label>
+                    <input type="text" class="form-control" value="${escapeHtml(clip.label || '')}" placeholder="VD: Audio câu 9-10" oninput="updateClipLabel('${clip.id}', this.value)">
+                </div>
+                <div class="col-md-7">
+                    <label class="input-label">${fileLabel}</label>
+                    <input type="file" accept="audio/*" class="form-control" onchange="onClipFileSelected('${clip.id}', this)">
+                </div>
+            </div>
+            <audio controls style="width:100%;margin-top:10px;${clip.url ? '' : 'display:none;'}" src="${clip.url || ''}"></audio>
+            <div class="mt-2">${usageBadge}</div>
+        </div>`;
+    }).join('');
+}
+
+function audioClipSelectHtml(index, q) {
+    const requiresAudio = q.type === 'listening_image_choice';
+
+    if (!audioClips.length) {
+        return `<label class="input-label">File audio${requiresAudio ? ' *' : ''}</label>
+            <div class="form-control-plaintext text-muted" style="font-size:13px;">
+                Chưa có file audio. Thêm ở khối <strong>File audio</strong> phía trên.
+            </div>`;
+    }
+
+    const emptyLabel = requiresAudio ? '— Chưa chọn —' : '— Không có audio —';
+    const options = audioClips.map(clip =>
+        `<option value="${clip.id}" ${q.audio_clip_id === clip.id ? 'selected' : ''}>${escapeHtml(clipDisplayName(clip))}</option>`
+    ).join('');
+
+    return `<label class="input-label">File audio${requiresAudio ? ' *' : ''}</label>
+        <select class="form-control" onchange="setQuestionClip(${index}, this.value || null)">
+            <option value="" ${!q.audio_clip_id ? 'selected' : ''}>${emptyLabel}</option>
+            ${options}
+        </select>`;
+}
+
+/* Thông báo ngay dưới câu hỏi: nhóm đang gộp mấy câu, hoặc cảnh báo khi
+   các câu dùng chung file lại không nằm liền nhau (sẽ vỡ thành nhiều player). */
+function audioGroupNoticeHtml(index, q) {
+    if (!q.audio_clip_id) {
+        return q.type === 'listening_image_choice'
+            ? '<div class="pt-audio-note pt-audio-note--warn">Dạng Listening bắt buộc phải chọn file audio.</div>'
+            : '';
+    }
+
+    const clip = audioClips.find(c => c.id === q.audio_clip_id);
+    if (!clip) {
+        return '<div class="pt-audio-note pt-audio-note--error">File audio đã bị xoá. Hãy chọn lại file khác.</div>';
+    }
+
+    const used = clipUsageIndexes(q.audio_clip_id);
+    if (used.length <= 1) return '';
+
+    const nums = used.map(i => i + 1).join(', ');
+
+    if (isContiguous(used)) {
+        return `<div class="pt-audio-note pt-audio-note--ok">
+            <i class="fas fa-link mr-4"></i>Dùng chung với câu ${nums} — học viên chỉ thấy <strong>1 trình phát</strong> cho cả nhóm.
+        </div>`;
+    }
+
+    return `<div class="pt-audio-note pt-audio-note--warn">
+        <i class="fas fa-exclamation-triangle mr-4"></i>File này dùng ở câu ${nums} nhưng các câu <strong>không liền nhau</strong>,
+        nên sẽ hiện thành nhiều trình phát riêng. Dùng nút <i class="fas fa-arrow-up"></i> <i class="fas fa-arrow-down"></i> để xếp các câu này cạnh nhau.
+    </div>`;
+}
+
+/* ── Render ────────────────────────────────────────────────────────────── */
+
 function render() {
     countLabel.textContent = questions.length;
     container.innerHTML = questions.map((q, index) => renderQuestionCard(q, index)).join('');
     renderPassages();
+    renderAudioClips();
 }
 
 function renderQuestionCard(q, index) {
@@ -597,28 +778,6 @@ function renderQuestionCard(q, index) {
         bodyHtml += '</div>';
     }
 
-    const showAudioToggle = q.type !== 'listening_image_choice';
-    const showAudioBlock = q.has_audio || q.type === 'listening_image_choice';
-
-    // const audioBlock = showAudioBlock ? `
-    //     <div class="mb-2">
-    //         <label class="input-label">File audio (MP3) *</label>
-    //         <input type="file" accept="audio/*" class="form-control" onchange="onAudioFileSelected(${index}, this)">
-    //         ${q.audio_url ? `<div class="pt-file-preview"><i class="fas fa-volume-up"></i> File hiện có (giữ nguyên nếu không chọn file mới)</div>` : ''}
-    //         <div id="audio-filename-${index}" class="pt-file-preview" style="display:none;"></div>
-    //     </div>
-    // ` : '';
-
-    const audioBlock = showAudioBlock ? `
-        <div class="mb-2">
-            <label class="input-label">File audio (MP3) *</label>
-            <input type="file" accept="audio/*" class="form-control" onchange="onAudioFileSelected(${index}, this)">
-            ${q.audio_url ? `<div class="pt-file-preview"><i class="fas fa-volume-up"></i> File hiện có (giữ nguyên nếu không chọn file mới)</div>` : ''}
-            <div id="audio-filename-${index}" class="pt-file-preview" style="display:none;"></div>
-            <audio id="audio-preview-${index}" controls style="width:100%;margin-top:8px;${q.audio_url ? '' : 'display:none;'}" src="${q.audio_url || ''}"></audio>
-        </div>
-    ` : '';
-
     const answerHelpBlock = `
         <div class="form-group mt-2">
             <label class="input-label">Giải thích đáp án <small class="text-muted">(chỉ Manager/CEO thấy khi xem chi tiết bài làm học viên — học viên không bao giờ thấy)</small></label>
@@ -628,6 +787,11 @@ function renderQuestionCard(q, index) {
 
     return `<div class="pt-question-card">
         <span class="pt-q-badge">Câu ${index + 1} · ${TYPE_LABELS[q.type] || q.type}</span>
+
+        <div class="pt-move-btns">
+            <button type="button" onclick="moveQuestion(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="Chuyển lên trên"><i class="fas fa-arrow-up"></i></button>
+            <button type="button" onclick="moveQuestion(${index}, 1)" ${index === questions.length - 1 ? 'disabled' : ''} title="Chuyển xuống dưới"><i class="fas fa-arrow-down"></i></button>
+        </div>
         <button type="button" class="pt-remove-btn" style="position:absolute;top:16px;right:16px;font-size:16px;" onclick="removeQuestion(${index})" title="Xoá câu"><i class="fas fa-trash"></i></button>
 
         <div class="row mb-2">
@@ -641,15 +805,12 @@ function renderQuestionCard(q, index) {
                 <label class="input-label">Điểm</label>
                 <input type="number" class="form-control" min="0" step="0.25" value="${q.points ?? 1}" oninput="updateField(${index}, 'points', parseFloat(this.value) || 0)">
             </div>
-            ${showAudioToggle ? `<div class="col-md-4 d-flex align-items-end">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="audio_check_${index}" ${q.has_audio ? 'checked' : ''} onchange="toggleAudio(${index}, this.checked)">
-                    <label class="form-check-label" for="audio_check_${index}">Có audio (Listening)</label>
-                </div>
-            </div>` : `<div class="col-md-4 d-flex align-items-end"><span class="badge badge-info">Listening (bắt buộc audio)</span></div>`}
+            <div class="col-md-4">
+                ${audioClipSelectHtml(index, q)}
+            </div>
         </div>
 
-        ${audioBlock}
+        ${audioGroupNoticeHtml(index, q)}
 
         <div class="form-group">
             <label class="input-label">${QUESTION_TEXT_LABELS[q.type] || 'Nội dung câu hỏi *'}</label>
@@ -682,6 +843,7 @@ function refreshBlankCount(index, text) {
 
 document.getElementById('btnAddQuestion').addEventListener('click', addQuestion);
 document.getElementById('btnAddPassage').addEventListener('click', addPassage);
+document.getElementById('btnAddAudioClip').addEventListener('click', addAudioClip);
 
 document.getElementById('placementTestForm').addEventListener('submit', function (e) {
     if (questions.length === 0) {
@@ -690,13 +852,53 @@ document.getElementById('placementTestForm').addEventListener('submit', function
         return;
     }
 
+    // ── Kiểm tra các file audio ──
+    for (let i = 0; i < audioClips.length; i++) {
+        const clip = audioClips[i];
+        if (!clip.path && !clip.input_name) {
+            e.preventDefault();
+            alert('File audio ' + (i + 1) + ' (' + (clip.label || clip.id) + ') chưa chọn file.');
+            return;
+        }
+    }
 
+    const unusedClips = audioClips.filter(c => clipUsageIndexes(c.id).length === 0);
+    if (unusedClips.length) {
+        const names = unusedClips.map(c => clipDisplayName(c)).join(', ');
+        if (!confirm('Các file audio sau chưa được gán cho câu nào: ' + names + '.\n\nVẫn lưu?')) {
+            e.preventDefault();
+            return;
+        }
+    }
+
+    const brokenGroups = audioClips.filter(c => {
+        const used = clipUsageIndexes(c.id);
+        return used.length > 1 && !isContiguous(used);
+    });
+    if (brokenGroups.length) {
+        const detail = brokenGroups
+            .map(c => clipDisplayName(c) + ' → câu ' + clipUsageIndexes(c.id).map(i => i + 1).join(', '))
+            .join('\n');
+        if (!confirm('Các file audio sau đang dùng cho những câu KHÔNG liền nhau:\n\n' + detail
+            + '\n\nHọc viên sẽ thấy nhiều trình phát riêng thay vì 1. Vẫn lưu?')) {
+            e.preventDefault();
+            return;
+        }
+    }
+
+    // ── Kiểm tra từng câu hỏi ──
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
 
         if (q.type !== 'listening_image_choice' && (!q.question_text || !q.question_text.trim())) {
             e.preventDefault();
             alert('Câu ' + (i + 1) + ' chưa có nội dung.');
+            return;
+        }
+
+        if (q.audio_clip_id && !audioClips.some(c => c.id === q.audio_clip_id)) {
+            e.preventDefault();
+            alert('Câu ' + (i + 1) + ' đang trỏ tới file audio đã bị xoá. Hãy chọn lại.');
             return;
         }
 
@@ -758,18 +960,27 @@ document.getElementById('placementTestForm').addEventListener('submit', function
                 alert('Câu ' + (i + 1) + ' chưa chọn ảnh đáp án đúng.');
                 return;
             }
-        }
-
-        if ((q.has_audio || q.type === 'listening_image_choice') && !q.audio_input_name && !q.existing_audio_path) {
-            e.preventDefault();
-            alert('Câu ' + (i + 1) + ' cần file audio nhưng chưa chọn.');
-            return;
+            if (!q.audio_clip_id) {
+                e.preventDefault();
+                alert('Câu ' + (i + 1) + ' (Listening - Choose the Image) cần chọn file audio.');
+                return;
+            }
         }
     }
 
+    // Chỉ gửi các trường server cần; bỏ `url` vì đó là blob URL tạm của trình duyệt.
+    const clipsPayload = audioClips.map(c => ({
+        id: c.id,
+        label: c.label || '',
+        path: c.path || null,
+        input_name: c.input_name || null,
+    }));
+
     document.getElementById('questionsDataInput').value = JSON.stringify(questions);
     document.getElementById('passagesDataInput').value = JSON.stringify(passages);
+    document.getElementById('audioClipsDataInput').value = JSON.stringify(clipsPayload);
 });
+
 render();
 </script>
 

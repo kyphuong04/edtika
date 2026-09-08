@@ -548,4 +548,5 @@ return [
     'bundle_vocabulary_preview_next' => 'Next',
     'bundle_vocabulary_preview_speak' => 'Listen',
     'bundle_vocabulary_preview_first_5' => 'First 5 words',
+    'bundle_vocabulary_skipped_duplicates' => 'Skipped :count duplicate rows.',
 ];

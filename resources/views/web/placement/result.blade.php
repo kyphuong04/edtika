@@ -63,6 +63,16 @@
 .modal[id^="studentAnswerKeyModal-"] .modal-body > div {
     margin-bottom: 18px !important;
 }
+
+/* ── Nhóm audio dùng chung cho nhiều câu (VD: câu 9–10) ── */
+.pt-audio-group {
+    background:#eef2ff; border:1px solid #c7d2fe; border-radius:14px;
+    padding:12px 16px; margin-bottom:16px;
+}
+.pt-audio-group-label {
+    font-size:12px; font-weight:700; color:#4338CA;
+    text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;
+}
 </style>
 @endpush
 
@@ -153,9 +163,9 @@
                                         {{ $isCorrect ? 'Đúng' : 'Sai' }}
                                     </span>
 
-                                    @if($q['has_audio'] && $q['audio_url'])
+                                    <!-- @if($q['has_audio'] && $q['audio_url'])
                                         <audio controls style="width:100%;max-width:380px;margin:10px 0;display:block;" src="{{ $q['audio_url'] }}"></audio>
-                                    @endif
+                                    @endif -->
 
                                     @if($q['type'] === 'multiple_choice')
                                         <div style="font-size:15px;font-weight:600;color:#111827;margin:10px 0;">{!! $q['question_text'] !!}</div>
@@ -193,7 +203,8 @@
                                                 {!! nl2br(e($part)) !!}
                                                 @if($pIdx < count($parts) - 1)
                                                     <strong style="color:{{ $isCorrect ? '#16a34a' : '#dc2626' }};">
-                                                        [{{ $item['given'][$pIdx] ?? '(bỏ trống)' }}]
+                                                        @php $givenArr = is_array($item['given']) ? $item['given'] : []; @endphp
+                                                        [{{ $givenArr[$pIdx] ?? '(bỏ trống)' }}]
                                                     </strong>
                                                 @endif
                                             @endforeach

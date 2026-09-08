@@ -9,12 +9,31 @@
 
 @push('styles_top')
 <style>
-/* Reset Trang */
+/* ── RESET TRANG: KHÓA SCROLL ── */
 html, body {
-    background-color: #F8FAFC; /* Chuyển nền tổng thể về màu xám trắng để dễ đọc chữ */
+    background-color: #F8FAFC;
     margin: 0;
+    height: 100%;
+    overflow: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Nền tím phủ TOÀN TRANG, mờ dần từ phải sang trái */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(270deg,
+        #8B5CF6 0%,
+        rgba(139, 92, 246, 0.55) 30%,
+        rgba(248, 250, 252, 0) 62%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Đẩy nội dung lên trên lớp nền */
+.pt-mini-header,
+.pt-intro-wrap { position: relative; z-index: 1; }
 
 .pt-mini-header {
     max-width: 1400px; margin: 0 auto; padding: 16px 24px 0; height: 56px;
@@ -24,29 +43,32 @@ html, body {
     font-size: 22px; font-weight: 900; color: #1E1B4B; text-decoration: none;
 }
 
+/* Ép toàn bộ nội dung vừa đúng 1 màn hình */
 .pt-intro-wrap {
     max-width: 1400px;
-    min-height: calc(100vh - 72px);
-    margin: 0 auto; 
-    padding: 24px;
-    display: flex; 
-    align-items: stretch; 
+    height: calc(100vh - 72px);
+    margin: 0 auto;
+    padding: 8px 24px 16px;
+    display: flex;
+    align-items: center;
+    overflow: visible;
 }
 
 /* ── LAYOUT CHÍNH ── */
 .pt-intro-layout {
-    display: grid; 
-    grid-template-columns: 1.25fr 0.75fr; /* Tỉ lệ đã nới rộng cho cột trái */
-    gap: 40px; 
-    width: 100%; 
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    width: 100%;
+    height: 100%;
 }
 
 /* ── CỘT TRÁI (Nội dung) ── */
 .pt-intro-left {
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: 0;
 }
 
 .pt-eyebrow {
@@ -59,25 +81,25 @@ html, body {
 
 /* Dùng clamp() để chữ ép nằm 1 dòng trên PC */
 .pt-title-main {
-    font-size: clamp(30px, 2.8vw, 40px); 
-    line-height: 1.2; 
-    font-weight: 900; 
+    font-size: clamp(30px, 2.8vw, 40px);
+    line-height: 1.2;
+    font-weight: 900;
     color: #0F172A;
-    margin: 0 0 6px 0; 
+    margin: 0 0 6px 0;
     letter-spacing: -0.5px;
-    white-space: nowrap; 
+    white-space: nowrap;
 }
 
 .pt-title-sub {
-    font-size: clamp(18px, 1.8vw, 24px); 
+    font-size: clamp(18px, 1.8vw, 24px);
     line-height: 1.3;
     font-weight: 800;
-    color: #5B21B6; 
+    color: #5B21B6;
     margin: 0 0 20px 0;
-    white-space: nowrap; 
+    white-space: nowrap;
 }
 .pt-title-sub span {
-    color: #6D28D9;
+    color: #5B21B6;
 }
 
 .pt-meta-row {
@@ -92,12 +114,12 @@ html, body {
 .pt-intro-desc {
     font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;
 }
-.pt-intro-desc strong { color: #5B21B6; font-weight: 800; } 
+.pt-intro-desc strong { color: #5B21B6; font-weight: 800; }
 
 .pt-feature-grid {
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
-    gap: 16px; 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 16px;
     margin-bottom: 24px;
 }
 .pt-feature-card {
@@ -124,7 +146,7 @@ html, body {
 
 .pt-start-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    background: linear-gradient(90deg, #6D28D9 0%, #4338CA 100%);
+    background: linear-gradient(90deg, #5B21B6 0%, #4338CA 100%);
     color: #FFF; border: none; border-radius: 12px;
     padding: 16px 40px; font-weight: 700; font-size: 16px;
     text-decoration: none; cursor: pointer; width: fit-content;
@@ -133,18 +155,15 @@ html, body {
 }
 .pt-start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(79, 70, 229, 0.8); color: #FFF; }
 
-
-/* ── CỘT PHẢI (Mascot & Background) ── */
+/* ── CỘT PHẢI (Mascot) ── */
 .pt-intro-right {
-    position: relative; 
-    border-radius: 32px; 
-    
-    /* === ÁP DỤNG MÀU NỀN MỚI Ở ĐÂY === */
-    /* Màu tím nhạt bên phải và trong suốt lan dần sang trái */
-    background: linear-gradient(270deg, #8B5CF6, transparent);
-    
-    display: flex; align-items: center; justify-content: center; overflow: hidden;
-    min-height: 600px;
+    position: relative;
+    background: transparent;     /* nền tím đã chuyển ra toàn trang */
+    border-radius: 0;
+    display: flex; align-items: center; justify-content: center;
+    overflow: visible;           /* cho robot tràn ra ngoài cột */
+    min-height: 0;
+    height: 100%;
 }
 
 .pt-chat-bubble {
@@ -154,64 +173,91 @@ html, body {
 }
 .pt-chat-bubble::after {
     content: ''; position: absolute;
-    bottom: -10px; right: 40px; 
+    bottom: -10px; right: 40px;
     border-width: 12px 12px 0 0;
     border-style: solid;
     border-color: #FFF transparent transparent transparent;
 }
 .pt-chat-bubble h4 { margin: 0 0 6px 0; font-size: 13px; color: #0F172A; font-weight: 800; }
-.pt-chat-bubble h4 span { color: #6D28D9; }
+.pt-chat-bubble h4 span { color: #5B21B6; }
 .pt-chat-bubble p { margin: 0; font-size: 12px; line-height: 1.5; color: #334155; }
-.pt-chat-bubble strong { color: #6D28D9; }
+.pt-chat-bubble strong { color: #5B21B6; }
 
-/* Robot Image */
+/* Robot Image — phóng to, bám theo chiều cao màn hình */
 .pt-robot-img {
-    position: relative; z-index: 5; 
-    width: 100%; max-width: 950px;
-    object-fit: contain; 
-    transform: translateY(20px);
+    position: absolute;
+    bottom: 0;
+    /* right: 0;                   neo phải → chỉ tràn sang trái */
+    height: 100%;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    transform: none;            /* bỏ scale, dùng height để chỉnh kích thước */
+    z-index: 5;
 }
 
 /* Glass Badges */
 .pt-glass-badge {
     position: absolute; z-index: 10;
-    background: rgba(255, 255, 255, 0.15); 
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255, 255, 255, 0.6); 
-    border-radius: 50%; 
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
     color: #FFF; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     box-shadow: 0 0 20px rgba(255,255,255,0.3), inset 0 0 15px rgba(255,255,255,0.2);
 }
-.pt-badge-free { top: 15%; right: 8%; width: 95px; height: 95px; }
-.pt-badge-time { bottom: 35%; left: 6%; width: 85px; height: 85px; }
-.pt-badge-tag { bottom: 18%; right: 5%; width: 110px; height: 110px; }
+.pt-badge-free { top: 12%;    right: 12%; width: 95px;  height: 95px; }
+.pt-badge-time { bottom: 35%; left: 2%;   width: 85px;  height: 85px; }
+.pt-badge-tag  { bottom: 16%; right: 8%;  width: 110px; height: 110px; }
 
 .pt-glass-badge span { font-weight: 800; font-size: 10.5px; line-height: 1.25; margin-top: 4px; }
-.pt-badge-time span { font-size: 13px; } 
+.pt-badge-time span { font-size: 13px; }
 
 .pt-star { position: absolute; z-index: 2; animation: twinkle 3s infinite ease-in-out; }
 
 /* ── ANIMATIONS ── */
 @keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
 
-/* ── RESPONSIVE ── */
+@media (prefers-reduced-motion: reduce) {
+    .pt-star { animation: none; opacity: 0.7; }
+    .pt-start-btn { transition: none; }
+}
+
+/* ── RESPONSIVE: mở lại scroll trên màn hình nhỏ ── */
 @media (max-width: 1024px) {
+    html, body { overflow: auto; height: auto; }
+
+    .pt-intro-wrap {
+        height: auto;
+        min-height: calc(100vh - 72px);
+        overflow: visible;
+        padding: 24px;
+        align-items: stretch;
+    }
     .pt-intro-layout {
-        grid-template-columns: 1fr; /* Tràn xuống 1 cột */
+        grid-template-columns: 1fr;
         gap: 32px;
+        height: auto;
     }
     .pt-intro-right {
         order: -1;
-        min-height: 450px;
+        min-height: 420px;
+        height: auto;
     }
-    .pt-title-main, .pt-title-sub { 
-        white-space: normal; 
+    .pt-robot-img {
+        height: auto;
+        width: 100%;
+        max-width: 520px;
+        transform: none;
+    }
+    .pt-title-main, .pt-title-sub {
+        white-space: normal;
     }
     .pt-title-main { font-size: 34px; }
     .pt-title-sub { font-size: 20px; }
-}   
+}
 @media (max-width: 640px) {
-    .pt-feature-grid { grid-template-columns: 1fr 1fr; } 
+    .pt-feature-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
 @endpush
@@ -226,7 +272,7 @@ html, body {
 
         {{-- ── TRÁI: Nội dung mô tả ── --}}
         <div class="pt-intro-left">
-            
+
             <div class="pt-eyebrow">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                 ADAPTIVE PLACEMENT TEST
@@ -248,7 +294,7 @@ html, body {
             </div>
 
             <p class="pt-intro-desc">Khám phá năng lực tiếng Anh của bạn cùng bài Kiểm tra Đánh giá Adaptive Placement Test được phát triển bởi đội ngũ học thuật của <strong>EDTIKA.</strong></p>
-            
+
             <p class="pt-intro-desc">Bài kiểm tra thông minh tự động điều chỉnh độ khó theo năng lực của bạn. Sau khi hoàn thành, hệ thống sẽ xác định chính xác năng lực hiện tại, phân tích điểm mạnh và điểm cần cải thiện, đồng thời đề xuất lộ trình học phù hợp với mục tiêu của bạn.</p>
 
             <div class="pt-feature-grid">
@@ -267,7 +313,7 @@ html, body {
                     <h5>Adaptive</h5>
                     <p>Độ khó tự động điều chỉnh theo năng lực</p>
                 </div>
-                
+
                 <!-- Box 2: Chuẩn CEFR -->
                 <div class="pt-feature-card">
                     <div class="pt-feature-icon">
@@ -279,7 +325,7 @@ html, body {
                     <h5>Chuẩn CEFR</h5>
                     <p>Đánh giá theo khung tham chiếu Cambridge</p>
                 </div>
-                
+
                 <!-- Box 3: Kết quả chính xác -->
                 <div class="pt-feature-card">
                     <div class="pt-feature-icon">
@@ -292,7 +338,7 @@ html, body {
                     <h5>Kết quả chính xác</h5>
                     <p>Ước lượng trình độ hiện tại nhanh chóng</p>
                 </div>
-                
+
                 <!-- Box 4: Báo cáo chi tiết -->
                 <div class="pt-feature-card">
                     <div class="pt-feature-icon">
@@ -311,14 +357,14 @@ html, body {
             </div>
 
             <a href="{{ route('placement.mic_check') }}" class="pt-start-btn">
-                Bắt đầu 
+                Bắt đầu
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </a>
         </div>
 
-        {{-- ── PHẢI: Hình ảnh Robot & Background ── --}}
+        {{-- ── PHẢI: Hình ảnh Robot ── --}}
         <div class="pt-intro-right">
-            
+
             <svg class="pt-star" style="top:15%; right:15%" width="18" height="18" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
             <svg class="pt-star" style="top:40%; right:5%" width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
             <svg class="pt-star" style="bottom:25%; left:20%" width="14" height="14" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
@@ -344,7 +390,7 @@ html, body {
             </div>
 
             <img src="https://res.cloudinary.com/dozs7ggs4/image/upload/v1785208045/EDTI-ROBOT-SAYHI_ai08gx.png" alt="Robot" class="pt-robot-img">
-            
+
         </div>
     </div>
 </div>

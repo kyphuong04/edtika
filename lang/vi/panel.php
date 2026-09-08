@@ -527,4 +527,5 @@ return [
     'bundle_vocabulary_preview_next' => 'Tiếp',
     'bundle_vocabulary_preview_speak' => 'Nghe phát âm',
     'bundle_vocabulary_preview_first_5' => '5 từ đầu tiên',
+    'bundle_vocabulary_skipped_duplicates' => 'Đã bỏ qua :count dòng trùng lặp.',
 ];

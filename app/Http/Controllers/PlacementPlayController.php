@@ -145,12 +145,10 @@ class PlacementPlayController extends Controller
             return redirect()->route('placement.entry');
         }
 
-        $questions = $test->questions->map(fn (PlacementQuestion $q) => $this->buildPublicQuestion($q));
-
         return view('web.placement.take', [
             'attempt'          => $attempt,
             'test'             => $test,
-            'questions'        => $questions,
+            'questions'        => $test->questionsWithAudioGroups(),
             'remainingSeconds' => $attempt->remainingSeconds(),
             'showCountdown'    => $showCountdown,
         ]);
@@ -398,14 +396,19 @@ class PlacementPlayController extends Controller
                 return null;
             }
 
-            $questions = $test->questions->map(function (PlacementQuestion $q) use ($answersByQuestion) {
-                $record = $answersByQuestion->get($q->id);
+            // keyBy trước để tránh N+1: questionsWithAudioGroups() trả về array thuần,
+            // nhưng vẫn cần model gốc để gọi correctAnswerDisplay().
+            $models = $test->questions->keyBy('id');
+
+            $questions = $test->questionsWithAudioGroups()->map(function (array $public) use ($answersByQuestion, $models) {
+                $record = $answersByQuestion->get($public['id']);
+                $model = $models->get($public['id']);
 
                 return [
-                    'question'        => $q->toPublicArray(),
+                    'question'        => $public,
                     'given'           => $record->answer_given ?? null,
                     'is_correct'      => $record->is_correct ?? false,
-                    'correct_display' => $q->correctAnswerDisplay(),
+                    'correct_display' => $model ? $model->correctAnswerDisplay() : '—',
                 ];
             });
 
@@ -514,30 +517,30 @@ class PlacementPlayController extends Controller
         return PlacementSpeakingQuestion::active()->inRandomOrder()->first();
     }
 
-    private function buildPublicQuestion(PlacementQuestion $q): array
-    {
-        $blankCount = $q->type === 'sentence_completion'
-            ? preg_match_all('/_{2,}/', $q->question_text)
-            : 0;
+    // private function buildPublicQuestion(PlacementQuestion $q): array
+    // {
+    //     $blankCount = $q->type === 'sentence_completion'
+    //         ? preg_match_all('/_{2,}/', $q->question_text)
+    //         : 0;
 
-        return [
-            'id'                => $q->id,
-            'type'              => $q->type,
-            'question_text'     => $q->question_text,
-            'blank_count'       => $blankCount,
-            'options'           => $q->type === 'multiple_choice' ? ($q->options ?? []) : [],
-            'image_options'     => $q->type === 'listening_image_choice'
-                ? collect($q->options ?? [])->map(fn ($path, $i) => [
-                    'label' => chr(65 + $i),
-                    'url'   => $path ? Storage::url($path) : null,
-                ])->values()->all()
-                : [],
-            'has_audio'         => (bool) $q->has_audio,
-            'audio_url'         => $q->audio_path ? Storage::url($q->audio_path) : null,
-            'word_bank'         => $q->word_bank ?? [],
-            'blank_hints'       => $q->blank_hints ?? [],
-        ];
-    }
+    //     return [
+    //         'id'                => $q->id,
+    //         'type'              => $q->type,
+    //         'question_text'     => $q->question_text,
+    //         'blank_count'       => $blankCount,
+    //         'options'           => $q->type === 'multiple_choice' ? ($q->options ?? []) : [],
+    //         'image_options'     => $q->type === 'listening_image_choice'
+    //             ? collect($q->options ?? [])->map(fn ($path, $i) => [
+    //                 'label' => chr(65 + $i),
+    //                 'url'   => $path ? Storage::url($path) : null,
+    //             ])->values()->all()
+    //             : [],
+    //         'has_audio'         => (bool) $q->has_audio,
+    //         'audio_url'         => $q->audio_path ? Storage::url($q->audio_path) : null,
+    //         'word_bank'         => $q->word_bank ?? [],
+    //         'blank_hints'       => $q->blank_hints ?? [],
+    //     ];
+    // }
 
     private function gradeAndPersistAnswers(IeltsPlacementAttempt $attempt, PlacementTest $test, array $rawAnswers): int
     {

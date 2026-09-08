@@ -12,6 +12,7 @@ class PlacementQuestion extends Model
         'order_index',
         'type',
         'has_audio',
+        'audio_clip_id',
         'audio_path',
         'linked_passage_id',
         'question_text',
@@ -49,22 +50,25 @@ class PlacementQuestion extends Model
             : 0;
 
         return [
-            'id'                 => $this->id,
-            'type'               => $this->type,
-            'question_text'      => $this->question_text,
-            'blank_count'        => $blankCount,
-            'options'            => $this->type === 'multiple_choice' ? ($this->options ?? []) : [],
-            'image_options'      => $this->type === 'listening_image_choice'
-                ? collect($this->options ?? [])->map(fn ($path, $i) => [
+            'id'                => $this->id,
+            'type'              => $this->type,
+            'question_text'     => $this->question_text,
+            'blank_count'       => $blankCount,
+            'options'           => $this->type === 'multiple_choice' ? ($this->options ?? []) : [],
+            'image_options'     => $this->type === 'listening_image_choice'
+                ? collect($this->options ?? [])->values()->map(fn ($path, $i) => [
                     'label' => chr(65 + $i),
                     'url'   => $path ? \Illuminate\Support\Facades\Storage::url($path) : null,
-                ])->values()->all()
+                ])->all()
                 : [],
-            'has_audio'          => (bool) $this->has_audio,
-            'audio_url'          => $this->audio_path ? \Illuminate\Support\Facades\Storage::url($this->audio_path) : null,
-            'word_bank'          => $this->word_bank ?? [],
-            'blank_hints'        => $this->blank_hints ?? [],
-            'linked_passage_id'  => $this->linked_passage_id,
+            'has_audio'         => (bool) $this->has_audio,
+            'audio_clip_id'     => $this->audio_clip_id,
+            // audio_url KHÔNG set ở đây — nhóm audio do PlacementTest
+            // ::questionsWithAudioGroups() quyết định câu nào được render player.
+            'audio_url'         => null,
+            'word_bank'         => $this->word_bank ?? [],
+            'blank_hints'       => $this->blank_hints ?? [],
+            'linked_passage_id' => $this->linked_passage_id,
         ];
     }
 
