@@ -79,6 +79,26 @@
     border-left: 1px solid #e9e5f5;
 }
 
+/* Khối trống ở cột "nghe câu hỏi": chiếm đúng chỗ của nhãn + đồng hồ bên cột
+   mic (JS chèn 2 phần tử cùng class vào đây) để nút tròn và caption của 2 cột
+   thẳng hàng. Không dùng display:none — cần giữ chiều cao. */
+.speaking-control-spacer {
+    visibility: hidden;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Khung 68x68 bằng đúng .speaking-mic-wrap để tâm 2 vòng tròn cùng độ cao
+   (nút 56px, còn mic có thêm vòng progress 68px bọc ngoài). */
+.speaking-listen-wrap {
+    width: 68px;
+    height: 68px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 .speaking-control-caption {
     font-size: 12.5px;
     font-weight: 600;
@@ -517,5 +537,7 @@
         border-top: 1px solid #e9e5f5;
         padding-top: 16px;
     }
+    /* Xếp dọc thì không còn gì để canh hàng -> bỏ chỗ trống cho gọn. */
+    .speaking-control-spacer { display: none; }
 }
 

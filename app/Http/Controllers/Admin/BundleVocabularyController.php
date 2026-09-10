@@ -20,6 +20,7 @@ use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class BundleVocabularyController extends Controller
 {
+    private int $lastSkippedDuplicates = 0;
     public function index(Request $request)
     {
         $authUser = Auth::user();
@@ -167,13 +168,15 @@ class BundleVocabularyController extends Controller
             ]);
 
             return back()->withErrors([
-                'source_file' => trans('panel.bundle_vocabulary_update_failed'),
+                'source_file' => app()->environment('local')
+                    ? $e->getMessage()
+                    : trans('panel.bundle_vocabulary_update_failed'),
             ])->withInput();
         }
 
         return back()->with('toast', [
             'title' => trans('public.request_success'),
-            'msg' => trans('panel.bundle_vocabulary_updated'),
+            'msg' => $this->appendSkippedDuplicatesNote(trans('panel.bundle_vocabulary_updated')),
             'status' => 'success',
         ]);
     }
@@ -268,6 +271,8 @@ class BundleVocabularyController extends Controller
 
         $parsed = [];
         $sortOrder = 1;
+        $seen = [];
+        $this->lastSkippedDuplicates = 0;
 
         for ($index = $startIndex; $index < count($rows); $index++) {
             $row = $rows[$index];
@@ -276,11 +281,21 @@ class BundleVocabularyController extends Controller
                 continue;
             }
 
-            $word = $this->cleanCellValue($row[$columnMap['word']] ?? null);
+                        $word = $this->cleanCellValue($row[$columnMap['word']] ?? null);
 
             if (empty($word)) {
                 continue;
             }
+
+            $partOfSpeech = $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null);
+            $dedupeKey = $this->buildVocabularyDedupeKey($word, $partOfSpeech);
+
+            if (isset($seen[$dedupeKey])) {
+                $this->lastSkippedDuplicates++;
+                continue;
+            }
+
+            $seen[$dedupeKey] = true;
 
             $definition = $this->cleanCellValue($row[$columnMap['definition']] ?? null);
             $translation = $this->cleanCellValue($row[$columnMap['translation']] ?? null);
@@ -304,7 +319,7 @@ class BundleVocabularyController extends Controller
 
             $parsed[] = [
                 'word' => $word,
-                'part_of_speech' => $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null),
+                'part_of_speech' => $partOfSpeech,
                 'pronunciation' => $this->cleanCellValue($row[$columnMap['pronunciation']] ?? null),
                 'definition' => $definition,
                 'translation_vi' => $translation,
@@ -319,6 +334,17 @@ class BundleVocabularyController extends Controller
         }
 
         return $parsed;
+    }
+
+    private function buildVocabularyDedupeKey(string $word, ?string $partOfSpeech): string
+    {
+        $normalize = function (?string $value): string {
+            $value = trim((string) $value);
+            $value = preg_replace('/\s+/u', ' ', $value); // gộp khoảng trắng thừa
+            return mb_strtolower($value);
+        };
+
+        return $normalize($word) . '|' . $normalize($partOfSpeech);
     }
 
     private function resolveVocabularyColumnMap(array $rows): array
@@ -619,5 +645,14 @@ class BundleVocabularyController extends Controller
 
         $set->words_count = count($rows);
         $set->save();
+    }
+
+    private function appendSkippedDuplicatesNote(string $message): string
+    {
+        if ($this->lastSkippedDuplicates < 1) {
+            return $message;
+        }
+
+        return $message . ' (Đã bỏ qua ' . $this->lastSkippedDuplicates . ' dòng trùng lặp.)';
     }
 }

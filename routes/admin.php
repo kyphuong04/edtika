@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\PlacementTestController;
 use App\Http\Controllers\Admin\PlacementSpeakingQuestionController;
 use App\Http\Controllers\Admin\PlacementResultController;
+use App\Http\Controllers\Admin\PlacementResultManagerController;
 
 $prefix = getAdminPanelUrlPrefix();
 
@@ -53,6 +54,24 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::put('/{placementTest}', [PlacementTestController::class, 'update'])->name('admin.placement_tests.update');
             Route::delete('/{placementTest}', [PlacementTestController::class, 'destroy'])->name('admin.placement_tests.destroy');
             Route::patch('/{placementTest}/toggle-status', [PlacementTestController::class, 'toggleStatus'])->name('admin.placement_tests.toggle_status');
+        });
+        Route::group(['prefix' => 'placement-results'], function () {
+            Route::get('/', [PlacementResultManagerController::class, 'index'])
+                ->name('admin.placement_results.index');
+
+            // Đặt bulk-reset TRƯỚC các route có {attempt} để tránh Laravel
+            // hiểu nhầm "bulk-reset" là một id.
+            Route::post('/bulk-reset', [PlacementResultManagerController::class, 'bulkReset'])
+                ->name('admin.placement_results.bulk_reset');
+
+            Route::patch('/{attempt}/reset', [PlacementResultManagerController::class, 'reset'])
+                ->name('admin.placement_results.reset');
+
+            Route::patch('/{attempt}/restore', [PlacementResultManagerController::class, 'restore'])
+                ->name('admin.placement_results.restore');
+
+            Route::delete('/{attempt}', [PlacementResultManagerController::class, 'destroy'])
+                ->name('admin.placement_results.destroy');
         });
 
         Route::prefix('placement-speaking-questions')->name('admin.placement_speaking.')->group(function () {

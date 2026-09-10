@@ -33,6 +33,7 @@
 .pt-cta-primary { background:#511D99; color:#fff; }
 .pt-cta-secondary { background:#fff; color:#511D99; border:2px solid #511D99; }
 
+
 .pt-answer-q-card {
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -73,6 +74,16 @@
     font-size:12px; font-weight:700; color:#4338CA;
     text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;
 }
+.pt-rich ul,
+.pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
+.pt-rich ul { list-style: disc !important; }
+.pt-rich ol { list-style: decimal !important; }
+.pt-rich li { display: list-item !important; list-style: inherit !important; }
+.pt-rich p  { margin-bottom: 8px; }
+.pt-rich p:last-child { margin-bottom: 0; }
+.pt-rich [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich [style*="text-align: justify"] { text-align: justify !important; }
 </style>
 @endpush
 

@@ -526,8 +526,18 @@ class IeltsTestInlineController extends Controller
             'type' => 'required|in:mock,practice,diagnostic',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
+            'practice_scope' => 'nullable|in:' . implode(',', IeltsTest::PRACTICE_SCOPES),
+            'practice_part_number' => [
+                // Bắt buộc khi chọn "Đề lẻ" — trừ lúc lưu nháp / xem trước.
+                $saveAsDraft ? 'nullable' : 'required_if:practice_scope,' . IeltsTest::PRACTICE_SCOPE_PARTIAL,
+                'nullable',
+                'integer',
+                'between:1,' . IeltsTest::PART_NUMBER_MAX,
+            ],
             'target_band_min' => 'nullable|numeric|min:0|max:9',
             'target_band_max' => 'nullable|numeric|min:0|max:9',
+            // JSON array hashtag từ hidden input #hashtagsInput (chỉ practice).
+            'hashtags' => 'nullable|string|max:2000',
             'question_groups_data' => ($saveAsDraft ? 'nullable' : 'required') . '|json',
             'section_media' => 'nullable|array',
             'section_media.*.audio' => 'nullable|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg|max:51200',
@@ -552,6 +562,13 @@ class IeltsTestInlineController extends Controller
 
         $groupsData = $this->sanitizeInlineGroupsPayload($groupsData);
         $groupsData = $this->reorderSectionsBySkill($groupsData);
+        $practiceSkill = null;
+        foreach (self::SKILL_ORDER as $skillKey) {
+            if (!empty($groupsData['sections'][$skillKey]['parts'] ?? [])) {
+                $practiceSkill = $skillKey;
+                break;
+            }
+        }
 
         if ($previewMode) {
             $hasAnyPart = false;
@@ -648,7 +665,7 @@ class IeltsTestInlineController extends Controller
 
         $createdTestId = null;
         try {
-            DB::transaction(function () use ($validated, $groupsData, $slug, $user, $testType, $request, $saveAsDraft, &$createdTestId) {
+            DB::transaction(function () use ($validated, $groupsData, $slug, $user, $testType, $request, $saveAsDraft, $practiceSkill, &$createdTestId) {
                 $sectionAudioPaths = [];
                 foreach ($groupsData['sections'] as $skill => $sectionData) {
                     if ($skill === 'listening') {
@@ -669,6 +686,18 @@ class IeltsTestInlineController extends Controller
                     'difficulty_level' => $validated['difficulty_level'] ?? 'intermediate',
                     'target_band_min' => $validated['target_band_min'] ?? null,
                     'target_band_max' => $validated['target_band_max'] ?? null,
+                    'practice_scope' => IeltsTest::normalizePracticeScope(
+                        $validated['practice_scope'] ?? null,
+                        $testType
+                    ),
+                    'practice_part_number' => IeltsTest::normalizePracticePartNumber(
+                        $validated['practice_part_number'] ?? null,
+                        IeltsTest::normalizePracticeScope($validated['practice_scope'] ?? null, $testType),
+                        $practiceSkill
+                    ),
+                    'hashtags' => $testType === 'practice'
+                        ? IeltsTest::normalizeHashtags($validated['hashtags'] ?? null)
+                        : null,
                     'is_active' => true,
                     'is_free' => true,
                     'created_by' => $user->id,
@@ -814,8 +843,18 @@ class IeltsTestInlineController extends Controller
             'type' => 'required|in:mock,practice,diagnostic',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
+            'practice_scope' => 'nullable|in:' . implode(',', IeltsTest::PRACTICE_SCOPES),
+            'practice_part_number' => [
+                // Bắt buộc khi chọn "Đề lẻ" — trừ lúc lưu nháp / xem trước.
+                $saveAsDraft ? 'nullable' : 'required_if:practice_scope,' . IeltsTest::PRACTICE_SCOPE_PARTIAL,
+                'nullable',
+                'integer',
+                'between:1,' . IeltsTest::PART_NUMBER_MAX,
+            ],
             'target_band_min' => 'nullable|numeric|min:0|max:9',
             'target_band_max' => 'nullable|numeric|min:0|max:9',
+            // JSON array hashtag từ hidden input #hashtagsInput (chỉ practice).
+            'hashtags' => 'nullable|string|max:2000',
             'question_groups_data' => ($saveAsDraft ? 'nullable' : 'required') . '|json',
             'section_media' => 'nullable|array',
             'section_media.*.audio' => 'nullable|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg|max:51200',
@@ -840,6 +879,13 @@ class IeltsTestInlineController extends Controller
 
         $groupsData = $this->sanitizeInlineGroupsPayload($groupsData);
         $groupsData = $this->reorderSectionsBySkill($groupsData);
+        $practiceSkill = null;
+        foreach (self::SKILL_ORDER as $skillKey) {
+            if (!empty($groupsData['sections'][$skillKey]['parts'] ?? [])) {
+                $practiceSkill = $skillKey;
+                break;
+            }
+        }
 
         if ($previewMode) {
             $hasAnyPart = false;
@@ -925,7 +971,7 @@ class IeltsTestInlineController extends Controller
         $user = auth()->user();
 
         try {
-            DB::transaction(function () use ($validated, $groupsData, $slug, $user, $testType, $request, $test, $saveAsDraft) {
+            DB::transaction(function () use ($validated, $groupsData, $slug, $user, $testType, $request, $test, $saveAsDraft, $practiceSkill) {
                 $test->update([
                     'title' => $validated['title'],
                     'slug' => $slug,
@@ -935,6 +981,20 @@ class IeltsTestInlineController extends Controller
                     'difficulty_level' => $validated['difficulty_level'] ?? 'intermediate',
                     'target_band_min' => $validated['target_band_min'] ?? null,
                     'target_band_max' => $validated['target_band_max'] ?? null,
+                    'practice_scope' => IeltsTest::normalizePracticeScope(
+                        $validated['practice_scope'] ?? null,
+                        $testType
+                    ),
+                    'practice_part_number' => IeltsTest::normalizePracticePartNumber(
+                        $validated['practice_part_number'] ?? null,
+                        IeltsTest::normalizePracticeScope($validated['practice_scope'] ?? null, $testType),
+                        $practiceSkill
+                    ),
+                    // Hashtag chỉ có nghĩa với Practice test (card ở tab
+                    // "Practice by Skill"); loại khác luôn lưu null.
+                    'hashtags' => $testType === 'practice'
+                        ? IeltsTest::normalizeHashtags($validated['hashtags'] ?? null)
+                        : null,
                     'is_active' => true,
                     'is_free' => true,
                     'status' => $saveAsDraft ? 'draft' : 'pending_approval',
@@ -2173,6 +2233,17 @@ class IeltsTestInlineController extends Controller
                 'difficulty_level' => $this->sanitizeInlineText((string) ($form['difficulty_level'] ?? ''), 40) ?? '',
                 'target_band_min' => $this->sanitizeInlineText((string) ($form['target_band_min'] ?? ''), 20) ?? '',
                 'target_band_max' => $this->sanitizeInlineText((string) ($form['target_band_max'] ?? ''), 20) ?? '',
+                'practice_scope' => in_array($form['practice_scope'] ?? null, IeltsTest::PRACTICE_SCOPES, true)
+                    ? $form['practice_scope']
+                    : '',
+                'practice_part_number' => (function ($value) {
+                    $number = (int) $value;
+                    return ($number >= 1 && $number <= IeltsTest::PART_NUMBER_MAX) ? (string) $number : '';
+                })($form['practice_part_number'] ?? null),
+                'hashtags' => json_encode(
+                    IeltsTest::normalizeHashtags($form['hashtags'] ?? null),
+                    JSON_UNESCAPED_UNICODE
+                ),
             ],
             'testData' => $testData,
         ];

@@ -29,6 +29,7 @@ class DictionaryController extends Controller
 {
     // Using Free Dictionary API - free, no key required, has UK + US pronunciation audio
     private $freeDictBaseUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en';
+    private int $lastSkippedDuplicates = 0;
 
     public function publicIndex()
     {
@@ -687,9 +688,18 @@ class DictionaryController extends Controller
                 $flashcards = $bundleWords->map(function ($word) use ($user) {
                     $flashcard = Flashcard::query()->updateOrCreate(
                         [
-                            'user_id' => $user->id,
-                            'word' => $word->word,
-                            'part_of_speech' => $word->part_of_speech,
+                            'user_id'                   => $user->id,
+                            'source'                    => 'bundle',
+                            'bundle_vocabulary_word_id' => $word->id,
+                        ],
+                        [
+                            'vocabulary_set_id' => $word->vocabulary_set_id,
+                            'word'              => $word->word,
+                            'part_of_speech'    => $word->part_of_speech,
+                            'pronunciation'     => $word->pronunciation,
+                            'definition'        => $word->definition ?: ($word->translation_vi ?: $word->word),
+                            'example'           => $word->example,
+                            'translation'       => $word->translation_vi,
                         ],
                         [
                             'pronunciation' => $word->pronunciation,
@@ -783,6 +793,7 @@ class DictionaryController extends Controller
         $flashcard = Flashcard::updateOrCreate(
             [
                 'user_id' => $user->id,
+                'source'         => 'user',
                 'word' => $request->word,
                 'part_of_speech' => $request->part_of_speech
             ],
@@ -977,6 +988,7 @@ class DictionaryController extends Controller
         $flashcard = Flashcard::updateOrCreate(
             [
                 'user_id'        => $user->id,
+                'source'         => 'user',
                 'word'           => $request->word,
                 'part_of_speech' => $request->part_of_speech,
             ],
@@ -1328,6 +1340,8 @@ class DictionaryController extends Controller
                 'example' => $word->example,
                 'translation' => $word->translation,
                 'is_learned' => $progress ? $progress->is_learned : false,
+                'needs_review' => $progress ? (bool) $progress->needs_review : false,
+                'is_starred'   => $progress ? (bool) $progress->is_starred : false,
                 'practice_count' => $progress ? $progress->practice_count : 0,
                 'correct_count' => $progress ? $progress->correct_count : 0,
                 'word_source' => 'academic',
@@ -1679,16 +1693,21 @@ class DictionaryController extends Controller
             );
 
             $progress->increment('practice_count');
+
             if ($isCorrect) {
                 $progress->increment('correct_count');
-
-                // Persist learned state immediately after first correct answer.
-                if (!$progress->is_learned) {
-                    $progress->update([
-                        'is_learned' => true,
-                        'learned_at' => now(),
-                    ]);
-                }
+                $progress->update([
+                    'is_learned'      => true,
+                    'learned_at'      => $progress->learned_at ?: now(),
+                    'needs_review'    => false,
+                    'needs_review_at' => null,
+                ]);
+            } else {
+                $progress->update([
+                    'is_learned'      => false,
+                    'needs_review'    => true,
+                    'needs_review_at' => now(),
+                ]);
             }
         } elseif ($request->flashcard_id) {
             // My Word List flashcard
@@ -1730,52 +1749,158 @@ class DictionaryController extends Controller
     public function getMyWordList()
     {
         $user = Auth::user();
-
         $myWordList = $this->getOrCreatePersonalWordList($user);
 
         if (!$myWordList) {
-            return response()->json([
-                'success' => false,
-                'message' => 'My Word List not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'My Word List not found'], 404);
         }
 
-        $myWordList->load('flashcards');
+        $myWordList->load(['flashcards.bundleWord']);
 
-        // Get user progress for each flashcard
-        $flashcards = $myWordList->flashcards->map(function($flashcard) use ($user) {
-            $progress = UserWordProgress::where('user_id', $user->id)
-                ->where('flashcard_id', $flashcard->id)
-                ->first();
+        $progressByFlashcard = UserWordProgress::where('user_id', $user->id)
+            ->whereIn('flashcard_id', $myWordList->flashcards->pluck('id'))
+            ->get()
+            ->keyBy('flashcard_id');
+
+        $flashcards = $myWordList->flashcards->map(function ($flashcard) use ($progressByFlashcard) {
+            $progress = $progressByFlashcard->get($flashcard->id);
+            $bw       = $flashcard->bundleWord;   // null nếu là từ tự lưu
 
             return [
-                'id' => $flashcard->id,
-                'word' => $flashcard->word,
-                'part_of_speech' => $flashcard->part_of_speech,
-                'pronunciation' => $flashcard->pronunciation,
-                'definition' => $flashcard->definition,
-                'example' => $flashcard->example,
-                'translation' => $flashcard->translation,
-                'audio_url' => null,
-                'collocation' => null,
-                'image_url' => null,
-                'is_learned' => $progress ? $progress->is_learned : false,
-                'practice_count' => $progress ? $progress->practice_count : 0,
-                'correct_count' => $progress ? $progress->correct_count : 0,
+                'id'                => $flashcard->id,
+                'word_source'       => $flashcard->source ?: 'user',
+                'bundle_word_id'    => $flashcard->bundle_vocabulary_word_id,
+                'vocabulary_set_id' => $flashcard->vocabulary_set_id,
+                'word'              => $flashcard->word,
+                'part_of_speech'    => $flashcard->part_of_speech,
+                'pronunciation'     => $bw->pronunciation ?? $flashcard->pronunciation,
+                'definition'        => $bw->definition    ?? $flashcard->definition,
+                'translation'       => $bw->translation_vi ?? $flashcard->translation,
+                'example'           => $bw->example       ?? $flashcard->example,
+                'audio_url'         => $bw->audio_url     ?? null,
+                'collocation'       => $bw->collocation   ?? null,
+                'image_url'         => $bw->image_url     ?? null,
+                'is_learned'        => $progress ? (bool) $progress->is_learned : false,
+                'needs_review'      => $progress ? (bool) $progress->needs_review : false,
+                'is_starred'        => $progress ? (bool) $progress->is_starred : false,
+                'practice_count'    => $progress ? $progress->practice_count : 0,
+                'correct_count'     => $progress ? $progress->correct_count : 0,
             ];
         });
 
         return response()->json([
             'success' => true,
             'data' => [
-                'id' => $myWordList->id,
-                'name' => $myWordList->name,
+                'id'          => $myWordList->id,
+                'name'        => $myWordList->name,
                 'description' => $myWordList->description,
-                'word_count' => $myWordList->word_count,
-                'source' => 'my',
-                'bundle_vocabulary_set_ids' => [],
-                'flashcards' => $flashcards,
-            ]
+                'word_count'  => $myWordList->word_count,
+                'source'      => 'my',
+                'flashcards'  => $flashcards,
+            ],
+        ]);
+    }
+
+    /**
+     * Bật/tắt "cần ôn tập" hoặc "gắn sao" cho một từ.
+     */
+    public function toggleWordStatus(Request $request)
+    {
+        $request->validate([
+            'word_id'      => 'nullable|integer|exists:academic_word_list_words,id',
+            'flashcard_id' => 'nullable|integer|exists:user_flashcards,id',
+            'field'        => 'required|in:needs_review,is_starred',
+            'value'        => 'required|boolean',
+        ]);
+
+        if (!$request->word_id && !$request->flashcard_id) {
+            return response()->json(['success' => false, 'message' => 'Missing word reference'], 400);
+        }
+
+        $user  = Auth::user();
+        $field = $request->field;
+        $value = (bool) $request->value;
+
+        $key = $request->word_id
+            ? ['user_id' => $user->id, 'academic_word_list_word_id' => $request->word_id]
+            : ['user_id' => $user->id, 'flashcard_id' => $request->flashcard_id];
+
+        $progress = UserWordProgress::firstOrNew($key);
+
+        if ($field === 'needs_review') {
+            $progress->needs_review    = $value;
+            $progress->needs_review_at = $value ? now() : null;
+
+            if ($value) {
+                $progress->is_learned = false;
+            }
+        } else {
+            $progress->is_starred = $value;
+            $progress->starred_at = $value ? now() : null;
+        }
+
+        if (empty($progress->word)) {
+            $progress->word = $request->word_id
+                ? optional(AcademicWordListWord::find($request->word_id))->word
+                : optional(Flashcard::find($request->flashcard_id))->word;
+        }
+
+        $progress->save();
+
+        return response()->json([
+            'success'      => true,
+            'is_learned'   => (bool) $progress->is_learned,
+            'needs_review' => (bool) $progress->needs_review,
+            'is_starred'   => (bool) $progress->is_starred,
+        ]);
+    }
+
+    public function getFlashcardDetail($id)
+    {
+        $user = Auth::user();
+
+        $flashcard = Flashcard::with('bundleWord')
+            ->where('user_id', $user->id)
+            ->find($id);
+
+        if (!$flashcard) {
+            return response()->json(['success' => false, 'message' => 'Word not found'], 404);
+        }
+
+        // Từ do teacher upload → trả nội dung gốc, không đụng tới API từ điển
+        if ($flashcard->isTeacherWord() && $flashcard->bundleWord) {
+            $bw = $flashcard->bundleWord;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'word_source'    => 'bundle',
+                    'id'             => $flashcard->id,
+                    'word'           => $bw->word,
+                    'part_of_speech' => $bw->part_of_speech,
+                    'pronunciation'  => $bw->pronunciation,
+                    'definition'     => $bw->definition,
+                    'translation_vi' => $bw->translation_vi,
+                    'example'        => $bw->example,
+                    'collocation'    => $bw->collocation,
+                    'audio_url'      => $bw->audio_url,
+                    'image_url'      => $bw->image_url,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'word_source'    => 'user',
+                'id'             => $flashcard->id,
+                'word'           => $flashcard->word,
+                'part_of_speech' => $flashcard->part_of_speech,
+                'pronunciation'  => $flashcard->pronunciation,
+                'definition'     => $flashcard->definition,
+                'translation_vi' => $flashcard->translation,
+                'example'        => $flashcard->example,
+            ],
         ]);
     }
 
@@ -1816,42 +1941,58 @@ class DictionaryController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return $words->map(function ($word) use ($user) {
-            $flashcard = Flashcard::query()->updateOrCreate(
+        $progressByFlashcard = collect();
+
+        $flashcards = $words->map(function ($word) use ($user) {
+            return Flashcard::query()->updateOrCreate(
                 [
-                    'user_id' => $user->id,
-                    'word' => $word->word,
-                    'part_of_speech' => $word->part_of_speech,
+                    'user_id'                   => $user->id,
+                    'source'                    => 'bundle',
+                    'bundle_vocabulary_word_id' => $word->id,
                 ],
                 [
-                    'pronunciation' => $word->pronunciation,
-                    'definition' => $word->definition ?: ($word->translation_vi ?: $word->word),
-                    'example' => $word->example,
-                    'translation' => $word->translation_vi,
+                    'vocabulary_set_id' => $word->vocabulary_set_id,
+                    'word'              => $word->word,
+                    'part_of_speech'    => $word->part_of_speech,
+                    'pronunciation'     => $word->pronunciation,
+                    'definition'        => $word->definition ?: ($word->translation_vi ?: $word->word),
+                    'example'           => $word->example,
+                    'translation'       => $word->translation_vi,
                 ]
             );
+        });
 
-            $progress = UserWordProgress::where('user_id', $user->id)
-                ->where('flashcard_id', $flashcard->id)
-                ->first();
+        // Lấy progress 1 lần thay vì query trong vòng lặp
+        $progressByFlashcard = UserWordProgress::where('user_id', $user->id)
+            ->whereIn('flashcard_id', $flashcards->pluck('id'))
+            ->get()
+            ->keyBy('flashcard_id');
+
+        return $words->map(function ($word, $i) use ($flashcards, $progressByFlashcard) {
+            $flashcard = $flashcards[$i];
+            $progress  = $progressByFlashcard->get($flashcard->id);
 
             return [
-                'id' => $flashcard->id,
-                'word' => $flashcard->word,
-                'part_of_speech' => $flashcard->part_of_speech,
-                'pronunciation' => $flashcard->pronunciation,
-                'definition' => $flashcard->definition,
-                'example' => $flashcard->example,
-                'translation' => $flashcard->translation,
-                'audio_url' => $word->audio_url,
-                'collocation' => $word->collocation,
-                'is_learned' => $progress ? $progress->is_learned : false,
-                'practice_count' => $progress ? $progress->practice_count : 0,
-                'correct_count' => $progress ? $progress->correct_count : 0,
-                'word_source' => 'bundle',
-                'image_url' => $word->image_url,
+                'id'                => $flashcard->id,
+                'bundle_word_id'    => $word->id,
+                'vocabulary_set_id' => $word->vocabulary_set_id,
+                'word_source'       => 'bundle',
+                'word'              => $flashcard->word,
+                'part_of_speech'    => $flashcard->part_of_speech,
+                'pronunciation'     => $flashcard->pronunciation,
+                'definition'        => $flashcard->definition,
+                'translation'       => $flashcard->translation,
+                'example'           => $flashcard->example,
+                'audio_url'         => $word->audio_url,
+                'collocation'       => $word->collocation,
+                'image_url'         => $word->image_url,
+                'is_learned'        => $progress ? (bool) $progress->is_learned : false,
+                'needs_review'      => $progress ? (bool) $progress->needs_review : false,
+                'is_starred'        => $progress ? (bool) $progress->is_starred : false,
+                'practice_count'    => $progress ? $progress->practice_count : 0,
+                'correct_count'     => $progress ? $progress->correct_count : 0,
             ];
-        });
+        })->values();
     }
 
     /**
@@ -1955,12 +2096,16 @@ class DictionaryController extends Controller
             ]);
 
             return back()->withErrors([
-                'source_file' => trans('panel.bundle_vocabulary_upload_failed'),
+                'source_file' => app()->environment('local')
+                    ? $e->getMessage()
+                    : trans('panel.bundle_vocabulary_upload_failed'),
             ])->withInput();
         }
 
         return redirect('/panel/dictionary/bundle-vocabulary/manage')
-            ->with('success', trans('panel.bundle_vocabulary_draft_created'));
+            ->with('success', $this->appendSkippedDuplicatesNote(
+                trans('panel.bundle_vocabulary_draft_created')
+            ));
     }
 
     public function showBundleVocabularySet($id)
@@ -2065,11 +2210,15 @@ class DictionaryController extends Controller
             ]);
 
             return back()->withErrors([
-                'source_file' => trans('panel.bundle_vocabulary_update_failed'),
+                'source_file' => app()->environment('local')
+                    ? $e->getMessage()
+                    : trans('panel.bundle_vocabulary_update_failed'),
             ])->withInput();
         }
 
-        return back()->with('success', trans('panel.bundle_vocabulary_updated'));
+        return back()->with('success', $this->appendSkippedDuplicatesNote(
+            trans('panel.bundle_vocabulary_updated')
+        ));
     }
 
     public function submitBundleVocabularySet($id)
@@ -2219,6 +2368,8 @@ class DictionaryController extends Controller
 
         $parsed = [];
         $sortOrder = 1;
+        $seen = [];
+        $this->lastSkippedDuplicates = 0;
 
         for ($i = $startIndex; $i < count($rows); $i++) {
             $row = $rows[$i];
@@ -2232,6 +2383,17 @@ class DictionaryController extends Controller
             if (empty($word)) {
                 continue;
             }
+
+            $partOfSpeech = $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null);
+            $dedupeKey = $this->buildVocabularyDedupeKey($word, $partOfSpeech);
+
+            if (isset($seen[$dedupeKey])) {
+                $this->lastSkippedDuplicates++;
+                continue;
+            }
+
+            $seen[$dedupeKey] = true;
+
 
             $definition = $this->cleanCellValue($row[$columnMap['definition']] ?? null);
             $translation = $this->cleanCellValue($row[$columnMap['translation']] ?? null);
@@ -2259,7 +2421,7 @@ class DictionaryController extends Controller
 
             $parsed[] = [
                 'word' => $word,
-                'part_of_speech' => $this->cleanCellValue($row[$columnMap['part_of_speech']] ?? null),
+                'part_of_speech' => $partOfSpeech,
                 'pronunciation' => $this->cleanCellValue($row[$columnMap['pronunciation']] ?? null),
                 'definition' => $definition,
                 'translation_vi' => $translation,
@@ -2274,6 +2436,17 @@ class DictionaryController extends Controller
         }
 
         return $parsed;
+    }
+
+    private function buildVocabularyDedupeKey(string $word, ?string $partOfSpeech): string
+    {
+        $normalize = function (?string $value): string {
+            $value = trim((string) $value);
+            $value = preg_replace('/\s+/u', ' ', $value);
+            return mb_strtolower($value);
+        };
+
+        return $normalize($word) . '|' . $normalize($partOfSpeech);
     }
 
     private function resolveVocabularyColumnMap(array $rows): array
@@ -2797,9 +2970,18 @@ class DictionaryController extends Controller
         foreach ($words as $word) {
             $flashcard = Flashcard::query()->updateOrCreate(
                 [
-                    'user_id' => $user->id,
-                    'word' => $word->word,
-                    'part_of_speech' => $word->part_of_speech,
+                    'user_id'                   => $user->id,
+                    'source'                    => 'bundle',
+                    'bundle_vocabulary_word_id' => $word->id,
+                ],
+                [
+                    'vocabulary_set_id' => $word->vocabulary_set_id,
+                    'word'              => $word->word,
+                    'part_of_speech'    => $word->part_of_speech,
+                    'pronunciation'     => $word->pronunciation,
+                    'definition'        => $word->definition ?: ($word->translation_vi ?: $word->word),
+                    'example'           => $word->example,
+                    'translation'       => $word->translation_vi,
                 ],
                 [
                     'pronunciation' => $word->pronunciation,
@@ -2818,5 +3000,14 @@ class DictionaryController extends Controller
         $bundleWordList->save();
 
         return $bundleWordList->load('flashcards');
+    }
+
+    private function appendSkippedDuplicatesNote(string $message): string
+    {
+        if ($this->lastSkippedDuplicates < 1) {
+            return $message;
+        }
+
+        return $message . ' (Đã bỏ qua ' . $this->lastSkippedDuplicates . ' dòng trùng lặp.)';
     }
 }

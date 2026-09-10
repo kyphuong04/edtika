@@ -12,6 +12,7 @@ class IeltsPlacementAttempt extends Model
     // cả 3 đề như trước) — xem currentStepTimeLimit()/remainingSeconds().
     public const TEST_TIME_SECONDS = 10 * 60;
     public const SPEAKING_TIME_SECONDS = 7 * 60;
+    public const STATUS_ARCHIVED = 'archived';
 
     protected $fillable = [
         'user_id',
@@ -29,6 +30,9 @@ class IeltsPlacementAttempt extends Model
         'completed_at',
         'speaking_recording_path',
         'speaking_question_id',
+        'archived_at',        // ← thêm
+        'archived_by',        // ← thêm
+        'archive_reason',     // ← thêm
     ];
 
     protected $casts = [
@@ -38,6 +42,8 @@ class IeltsPlacementAttempt extends Model
         'started_at'              => 'datetime',
         'current_step_started_at' => 'datetime',
         'completed_at'            => 'datetime',
+        'archived_at'             => 'datetime',   
+        'scored_steps'            => 'integer',    
     ];
 
     public function user(): BelongsTo
@@ -102,5 +108,15 @@ class IeltsPlacementAttempt extends Model
     public function speakingQuestion(): BelongsTo
     {
         return $this->belongsTo(\App\Models\PlacementSpeakingQuestion::class, 'speaking_question_id', 'id');
+    }
+    
+    public function isArchived(): bool
+    {
+        return $this->status === self::STATUS_ARCHIVED;
+    }
+
+    public function archivedBy()
+    {
+        return $this->belongsTo(\App\User::class, 'archived_by', 'id');
     }
 }

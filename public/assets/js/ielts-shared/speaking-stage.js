@@ -180,11 +180,25 @@
         var controls = el('div', 'speaking-controls');
 
         var listenCol = el('div', 'speaking-control');
+        // Cột mic có nhãn + đồng hồ phía trên nút; cột nghe thì không, nên phải
+        // chèn một khối trống CAO BẰNG ĐÚNG nhãn + đồng hồ (dùng lại chính 2
+        // class đó) để 2 nút tròn và 2 dòng caption thẳng hàng nhau.
+        var listenSpacer = el('div', 'speaking-control-spacer');
+        listenSpacer.setAttribute('aria-hidden', 'true');
+        // nbsp để dòng nhãn rỗng vẫn có line box -> giữ đúng chiều cao.
+        listenSpacer.appendChild(el('span', 'speaking-timer-label', String.fromCharCode(160)));
+        listenSpacer.appendChild(el('div', 'speaking-timer', '00:00'));
+        listenCol.appendChild(listenSpacer);
+
         var listenBtn = el('button', 'speaking-listen-btn');
         listenBtn.type = 'button';
         listenBtn.setAttribute('aria-label', 'Listen to the question');
         listenBtn.appendChild(icon('fas fa-volume-up'));
-        listenCol.appendChild(listenBtn);
+        // Bọc trong khung 68x68 giống .speaking-mic-wrap để tâm 2 vòng tròn
+        // nằm trên cùng một đường ngang (nút 56px, vòng ring của mic 68px).
+        var listenWrap = el('div', 'speaking-listen-wrap');
+        listenWrap.appendChild(listenBtn);
+        listenCol.appendChild(listenWrap);
         listenCol.appendChild(el('div', 'speaking-control-caption', 'Click to listen to the question'));
         controls.appendChild(listenCol);
         inst.els.listenBtn = listenBtn;

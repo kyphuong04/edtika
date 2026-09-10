@@ -22,14 +22,22 @@ class UserWordProgress extends Model
         'last_practiced_at',
         'is_learned',
         'learned_at',
+        'needs_review',
+        'needs_review_at',
+        'is_starred',
+        'starred_at',
     ];
 
     protected $casts = [
-        'practice_count' => 'integer',
-        'correct_count' => 'integer',
-        'is_learned' => 'boolean',
+        'practice_count'    => 'integer',
+        'correct_count'     => 'integer',
+        'is_learned'        => 'boolean',
+        'needs_review'      => 'boolean',
+        'is_starred'        => 'boolean',
         'last_practiced_at' => 'datetime',
-        'learned_at' => 'datetime',
+        'learned_at'        => 'datetime',
+        'needs_review_at'   => 'datetime',
+        'starred_at'        => 'datetime',
     ];
 
     /*
@@ -71,5 +79,27 @@ class UserWordProgress extends Model
     public function scopeRecentPractices($query, $days = 30)
     {
         return $query->where('last_practiced_at', '>=', now()->subDays($days));
+    }
+        /**
+     * Đánh dấu một từ là đã học.
+     */
+    public static function markAsLearned($userId, $flashcardId, $wordListId = null)
+    {
+        $progress = static::firstOrNew([
+            'user_id'      => $userId,
+            'flashcard_id' => $flashcardId,
+        ]);
+
+        if ($wordListId && empty($progress->word_list_id)) {
+            $progress->word_list_id = $wordListId;
+        }
+
+        $progress->is_learned      = true;
+        $progress->learned_at      = $progress->learned_at ?: now();
+        $progress->needs_review    = false;
+        $progress->needs_review_at = null;
+        $progress->save();
+
+        return $progress;
     }
 }

@@ -35,8 +35,133 @@ class IeltsTest extends Model
         'allow_retake' => 'boolean',
         'target_band_min' => 'float',
         'target_band_max' => 'float',
+        'hashtags' => 'array',
+        'practice_part_number' => 'integer',
     ];
-    
+
+    /**
+     * Số hashtag tối đa và độ dài tối đa mỗi hashtag cho 1 bài practice.
+     * Dùng chung cho cả validate phía server và giới hạn ở form nhập.
+     */
+    public const HASHTAGS_MAX = 12;
+    public const HASHTAG_MAX_LENGTH = 60;
+
+    /**
+     * Chuẩn hoá giá trị hashtag về array string sạch để lưu/hiển thị.
+     *
+     * Nhận: array, JSON string (từ hidden input của form tạo đề), hoặc chuỗi
+     * phân tách bằng dấu phẩy/xuống dòng (dữ liệu nhập tay trực tiếp vào DB).
+     * Trả về: array đã trim, bỏ dấu '#' đầu, bỏ rỗng, bỏ trùng (không phân
+     * biệt hoa/thường), cắt theo HASHTAGS_MAX / HASHTAG_MAX_LENGTH.
+     */
+
+    public const DIFFICULTY_LEVELS = ['beginner', 'intermediate', 'advanced', 'mixed'];
+
+    public const DIFFICULTY_LEVEL_LABELS = [
+        'beginner'     => 'Beginner',
+        'intermediate' => 'Intermediate',
+        'advanced'     => 'Advanced',
+        'mixed'        => 'Mixed',
+    ];
+
+    public const PRACTICE_SCOPE_FULL    = 'full';
+    public const PRACTICE_SCOPE_PARTIAL = 'partial';
+
+    public const PRACTICE_SCOPES = [
+        self::PRACTICE_SCOPE_FULL,
+        self::PRACTICE_SCOPE_PARTIAL,
+    ];
+
+    public const PRACTICE_SCOPE_LABELS = [
+        self::PRACTICE_SCOPE_FULL    => 'Full đề',
+        self::PRACTICE_SCOPE_PARTIAL => 'Đề lẻ',
+    ];
+
+        /** Số phần chuẩn IELTS của từng skill. Skill không có mặt = không chia phần. */
+    public const SKILL_PART_COUNTS = [
+        'listening' => 4,
+        'reading'   => 3,
+        'writing'   => 2,
+        'speaking'  => 3,
+    ];
+
+    /** Nhãn hiển thị của "phần" theo skill. */
+    public const SKILL_PART_LABELS = [
+        'listening' => 'Part',
+        'reading'   => 'Passage',
+        'writing'   => 'Task',
+        'speaking'  => 'Part',
+    ];
+
+    public const PART_NUMBER_MAX = 4;
+    public static function normalizeHashtags($value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            $decoded = json_decode($trimmed, true);
+            $value = (json_last_error() === JSON_ERROR_NONE && is_array($decoded))
+                ? $decoded
+                : preg_split('/[,\r\n]+/u', $trimmed);
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $tags = [];
+
+        foreach ($value as $tag) {
+            if (!is_scalar($tag)) {
+                continue;
+            }
+
+            $tag = preg_replace('/\s+/u', ' ', trim((string) $tag));
+            $tag = trim(ltrim($tag, '#'));
+
+            if ($tag === '') {
+                continue;
+            }
+
+            if (mb_strlen($tag) > self::HASHTAG_MAX_LENGTH) {
+                $tag = trim(mb_substr($tag, 0, self::HASHTAG_MAX_LENGTH));
+            }
+
+            $key = mb_strtolower($tag);
+            if (isset($tags[$key])) {
+                continue;
+            }
+
+            $tags[$key] = $tag;
+
+            if (count($tags) >= self::HASHTAGS_MAX) {
+                break;
+            }
+        }
+
+        return array_values($tags);
+    }
+
+    /**
+     * Danh sách hashtag để render trên card học viên.
+     *
+     * Cast 'array' trả null nếu cột chứa chuỗi không phải JSON hợp lệ, nên
+     * fallback đọc giá trị thô để dữ liệu nhập tay dạng "a, b" vẫn dùng được.
+     */
+    public function getHashtagsList(): array
+    {
+        $value = $this->hashtags;
+
+        if ($value === null) {
+            $value = $this->attributes['hashtags'] ?? null;
+        }
+
+        return self::normalizeHashtags($value);
+    }
+
     // Relationships
 
     public function scopeDiagnosticTests($query)
@@ -416,6 +541,64 @@ class IeltsTest extends Model
             'valid' => empty($errors),
             'errors' => $errors
         ];
+    }
+
+    /** Nhãn độ khó để hiển thị trên card học viên. */
+    public function getDifficultyLabelAttribute(): ?string
+    {
+        return self::DIFFICULTY_LEVEL_LABELS[$this->difficulty_level] ?? null;
+    }
+
+    public function getPracticeScopeLabelAttribute(): ?string
+    {
+        return self::PRACTICE_SCOPE_LABELS[$this->practice_scope] ?? null;
+    }
+
+    /** practice_scope chỉ có ý nghĩa với Practice test. */
+    public static function normalizePracticeScope(?string $scope, ?string $type): ?string
+    {
+        if ($type !== 'practice') {
+            return null;
+        }
+
+        return in_array($scope, self::PRACTICE_SCOPES, true) ? $scope : null;
+    }
+
+
+        /**
+     * Chuẩn hoá số phần của đề lẻ.
+     * Chỉ có nghĩa khi practice_scope = partial VÀ skill có chia phần
+     * (grammar/vocabulary không nằm trong SKILL_PART_COUNTS -> luôn null).
+     */
+    public static function normalizePracticePartNumber($number, ?string $scope, ?string $skill = null): ?int
+    {
+        if ($scope !== self::PRACTICE_SCOPE_PARTIAL) {
+            return null;
+        }
+
+        $number = (int) $number;
+        if ($number < 1) {
+            return null;
+        }
+
+        $max = $skill !== null
+            ? (self::SKILL_PART_COUNTS[$skill] ?? 0)
+            : self::PART_NUMBER_MAX;
+
+        return ($max > 0 && $number <= $max) ? $number : null;
+    }
+
+    /** Nhãn phần: "Passage 2", "Task 1", "Part 3"... hoặc null. */
+    public function getPracticePartLabelAttribute(): ?string
+    {
+        if (!$this->practice_part_number) {
+            return null;
+        }
+
+        $skill = $this->getPrimarySkill();
+        $prefix = self::SKILL_PART_LABELS[$skill] ?? 'Part';
+
+        return $prefix . ' ' . $this->practice_part_number;
     }
     
 }

@@ -531,6 +531,80 @@
     .learned-badge.show { display: block; }
     .learned-badge:hover { opacity: 0.7; }
 
+        /* ── Word status badges ───────────────────────────────── */
+    .word-badges {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        line-height: 1;
+    }
+
+    .word-badge {
+        font-size: 15px;
+        cursor: pointer;
+        opacity: 0.22;
+        transition: opacity 0.2s, transform 0.15s;
+        user-select: none;
+    }
+    .word-badge:hover { transform: scale(1.2); opacity: 0.8; }
+    .word-badge.on { opacity: 1; }
+
+    .badge-learned { color: #16a34a; cursor: default; }
+    .badge-learned:hover { transform: none; }
+    .badge-review  { color: #dc2626; }
+    .badge-star    { color: #f59e0b; }
+
+    /* ── Filter chips ─────────────────────────────────────── */
+    .status-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    .status-chip {
+        padding: 8px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 50px;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .status-chip:hover { border-color: #511D99; color: #511D99; }
+    .status-chip.active {
+        background: rgba(81, 29, 153, 0.10);
+        border-color: #511D99;
+        color: #511D99;
+    }
+    .dark-mode .status-chip { border-color: #334155; color: #94a3b8; }
+
+    /* ── Nút trạng thái trong flashcard ───────────────────── */
+    .flashcard-status-btns {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 14px;
+    }
+    .flashcard-status-btn {
+        padding: 7px 18px;
+        border-radius: 50px;
+        border: 1.5px solid #d1d5db;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    #fcReviewBtn.on { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+    #fcStarBtn.on   { border-color: #f59e0b; color: #b45309; background: #fffbeb; }
+
     .action-bar {
         display: flex;
         gap: 10px;
@@ -1490,7 +1564,7 @@
         position: fixed;
         inset: 0;
         display: none;
-        z-index: 1400;
+        z-index: 99999;
     }
     .word-detail-modal.is-open { display: block; }
 
@@ -1648,6 +1722,71 @@
         color: #94a3b8;
         padding: 30px 0;
     }
+
+        /* ── Tab bar cho 2 word list ───────────────────────────── */
+    .wordlist-tabs {
+        display: flex;
+        gap: 6px;
+        background: #f1f5f9;
+        border-radius: 999px;
+        padding: 5px;
+        margin-bottom: 18px;
+        width: fit-content;
+    }
+    .dark-mode .wordlist-tabs { background: #0f172a; }
+
+    .wordlist-tab {
+        border: none;
+        background: transparent;
+        padding: 9px 22px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .wordlist-tab:hover { color: #511D99; }
+
+    .wordlist-tab.active {
+        background: #ffffff;
+        color: #511D99;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .dark-mode .wordlist-tab { color: #94a3b8; }
+    .dark-mode .wordlist-tab.active {
+        background: #1e293b;
+        color: #c4b5fd;
+    }
+
+    .wordlist-tab__count {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: rgba(81, 29, 153, 0.10);
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .wordlist-tab.active .wordlist-tab__count {
+        background: rgba(81, 29, 153, 0.16);
+    }
+
+    @media (max-width: 575px) {
+        .wordlist-tabs { width: 100%; }
+        .wordlist-tab { flex: 1; padding: 9px 10px; font-size: 13px; }
+    }
+
+    .flashcard-counter {
+        font-size: 15px;
+        font-weight: 700;
+        color: #511D99;
+        min-width: 70px;
+        text-align: center;
+        user-select: none;
+    }
+    .dark-mode .flashcard-counter { color: #c4b5fd; }
     
 </style>
 @endpush
@@ -1683,13 +1822,20 @@
                 <!-- Search results will be displayed here -->
             </div>
 
+            <!-- Tab bar -->
+            <div class="wordlist-tabs" id="wordlistTabs">
+                <button class="wordlist-tab active" data-tab="my">
+                    My Word List
+                    <span class="wordlist-tab__count" id="tabCountMy">{{ $myWordList->word_count }}</span>
+                </button>
+                <button class="wordlist-tab" data-tab="academic">
+                    Academic Word List
+                    <span class="wordlist-tab__count">{{ count($academicWordLists) }}</span>
+                </button>
+            </div>
+
             <!-- Academic Word Lists Section -->
             <div class="word-lists-section hidden" id="academicWordListsSection">
-                <div class="section-header">
-                    <h2 class="section-title">{{ trans('panel.essential_ielts_academic_word_list') }}</h2>
-                    <button class="toggle-btn" id="toggleMyWordListBtn">{{ trans('panel.my_word_list') }}</button>
-                </div>
-                
                 @foreach($academicWordLists as $wordList)
                 <div class="word-list-card {{ $wordList['is_locked'] ? 'locked' : '' }}" 
                      data-list-id="{{ $wordList['id'] }}"
@@ -1717,11 +1863,13 @@
                     <div class="word-list-expanded" id="expanded-{{ $wordList['id'] }}">
                         <div class="filter-bar">
                             <input type="text" class="filter-input" placeholder="{{ trans('panel.search_the_word') }}">
-                            <select class="filter-select" data-list-id="{{ $wordList['id'] }}" data-list-type="academic">
-                                <option value="">Filter</option>
-                                <option value="alphabet">A-Z</option>
-                                <option value="learned">Đã học</option>
-                            </select>
+                            <button class="status-chip" data-sort="alphabet">A-Z</button>
+                        </div>
+                        <div class="status-filters">
+                            <button class="status-chip" data-status="new">Chưa học</button>
+                            <button class="status-chip" data-status="learned">✔ Đã học</button>
+                            <button class="status-chip" data-status="review">❗ Cần ôn tập</button>
+                            <button class="status-chip" data-status="star">⭐ Gắn sao</button>
                         </div>
                         
                         <div class="words-container" id="words-{{ $wordList['id'] }}">
@@ -1743,23 +1891,22 @@
             <div class="word-lists-section" id="myWordListSection">
                 <div class="word-list-card" data-list-id="{{ $myWordList->id }}" data-list-type="my">
                     <div class="word-list-header">
-                        <h3 class="word-list-name">{{ $myWordList->name }}</h3>
-                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                            <span class="word-count-badge">Tổng số từ: {{ $myWordList->word_count }} từ</span>
-                            <button class="toggle-btn active" id="toggleAcademicListBtn">Academic Word List</button>
-                        </div>
+                        <h3 class="word-list-name" id="myWordListName">{{ $myWordList->name }}</h3>
+                        <span class="word-count-badge" id="myWordListCount">Tổng số từ: {{ $myWordList->word_count }} từ</span>
                     </div>
-                    <p class="word-list-description">{{ $myWordList->description }}</p>
+                    <p class="word-list-description" id="myWordListDesc">{{ $myWordList->description }}</p>
                     
                     <!-- Expanded Content (shown by default) -->
                     <div class="word-list-expanded show" id="expanded-my-{{ $myWordList->id }}">
                         <div class="filter-bar">
                             <input type="text" class="filter-input" placeholder="{{ trans('panel.search_the_word') }}">
-                            <select class="filter-select" data-list-id="{{ $myWordList->id }}" data-list-type="my">
-                                <option value="">Filter</option>
-                                <option value="alphabet">A-Z</option>
-                                <option value="learned">Đã học</option>
-                            </select>
+                            <button class="status-chip" data-sort="alphabet">A-Z</button>
+                        </div>
+                        <div class="status-filters">
+                            <button class="status-chip" data-status="new">Chưa học</button>
+                            <button class="status-chip" data-status="learned">✔ Đã học</button>
+                            <button class="status-chip" data-status="review">❗ Cần ôn tập</button>
+                            <button class="status-chip" data-status="star">⭐ Gắn sao</button>
                         </div>
                         
                         <div class="words-container" id="words-my-{{ $myWordList->id }}">
@@ -1854,9 +2001,15 @@
                         </div>
                     </div>
 
-                    <div style="display:flex;justify-content:center;gap:20px;margin-top:18px;flex-wrap:wrap;">
+                    <div class="flashcard-status-btns">
+                        <button type="button" class="flashcard-status-btn" id="fcReviewBtn">❗ Cần ôn tập</button>
+                        <button type="button" class="flashcard-status-btn" id="fcStarBtn">⭐ Gắn sao</button>
+                    </div>
+
+                    <div style="display:flex;justify-content:center;align-items:center;gap:20px;margin-top:18px;flex-wrap:wrap;">
                         <button class="practice-btn btn-exit" id="flashcardExitBtn">{{ trans('panel.exit') }}</button>
                         <button class="practice-btn btn-next" id="flashcardPrevBtn" disabled>‹ Trước đó</button>
+                        <span class="flashcard-counter" id="flashcardCounter">0 / 0</span>
                         <button class="practice-btn btn-next" id="flashcardNextBtn" disabled>Tiếp theo ›</button>
                     </div>
                 </div>
@@ -1979,6 +2132,8 @@
 (function($) {
     "use strict";
 
+    $('#wordDetailModal').appendTo('body');
+
     let currentWordListId = null;
     let currentWordListType = null;
     let currentWordListSourceType = null;
@@ -1990,6 +2145,7 @@
     let incorrectAnswers = 0;
     let selectedAnswer = null;
     let practicedCorrectIds = new Set(); // word/flashcard IDs answered correctly in normal practice
+    let lastSelectedIds = [];
 
     // ── Profile card: hover (CSS handles it) + click toggle (JS) ──────
     $('#dictProfileTrigger').on('click', function(e) {
@@ -2483,27 +2639,30 @@
         });
     });
 
-    // Toggle between Academic and My Word List
-    $('#toggleMyWordListBtn').on('click', function() {
-        $('#academicWordListsSection').addClass('hidden');
-        $('#myWordListSection').removeClass('hidden');
-        $(this).removeClass('active');
-        $('#toggleAcademicListBtn').addClass('active');
+        // ── Tab switching ────────────────────────────────────────────────
+    $(document).on('click', '.wordlist-tab', function() {
+        const tab = $(this).data('tab');
+        lastSelectedIds = []; 
 
-        // Auto-expand My Word List
-        const $myCard = $('#myWordListSection .word-list-card');
-        const $expanded = $myCard.find('.word-list-expanded');
-        if (!$expanded.hasClass('show')) {
-            $expanded.addClass('show');
+        $('.wordlist-tab').removeClass('active');
+        $(this).addClass('active');
+
+        // Đang trong chế độ luyện tập thì thoát trước
+        $('#practiceModeContainer, #flashcardPracticeContainer').addClass('hidden');
+
+        if (tab === 'my') {
+            $('#academicWordListsSection').addClass('hidden');
+            $('#myWordListSection').removeClass('hidden');
+
+            const $expanded = $('#myWordListSection .word-list-expanded');
+            if (!$expanded.hasClass('show')) {
+                $expanded.addClass('show');
+            }
             loadMyWordList();
+        } else {
+            $('#myWordListSection').addClass('hidden');
+            $('#academicWordListsSection').removeClass('hidden');
         }
-    });
-
-    $('#toggleAcademicListBtn').on('click', function() {
-        $('#myWordListSection').addClass('hidden');
-        $('#academicWordListsSection').removeClass('hidden');
-        $(this).removeClass('active');
-        $('#toggleMyWordListBtn').addClass('active');
     });
 
     // Click on word list HEADER to expand/collapse (not the whole card)
@@ -2524,6 +2683,7 @@
         if (expandedSection.hasClass('show')) {
             expandedSection.removeClass('show');
         } else {
+            lastSelectedIds = [];
             $('.word-list-expanded').removeClass('show');
             expandedSection.addClass('show');
             if (listType === 'academic') {
@@ -2588,10 +2748,18 @@
 
         words.forEach(function(word) {
             let pronunciation = word.pronunciation ? `<span class="word-pronunciation">/${word.pronunciation}/</span>` : '';
-            let showTick = word.is_learned || practicedCorrectIds.has(word.id);
             let wordSource = word.word_source || sourceType || listType;
+
+            let needsReview = !!word.needs_review;
+            let isStarred   = !!word.is_starred;
+            let isLearned   = (!!word.is_learned || practicedCorrectIds.has(word.id)) && !needsReview;
+
             let wordHtml = `
-                <div class="word-item" data-word-id="${word.id}" data-word="${word.word}" data-word-source="${wordSource}">
+                <div class="word-item" data-word-id="${word.id}" data-word="${word.word}"
+                     data-word-source="${wordSource}"
+                     data-learned="${isLearned ? 1 : 0}"
+                     data-review="${needsReview ? 1 : 0}"
+                     data-star="${isStarred ? 1 : 0}">
                     <input type="checkbox" class="word-checkbox" data-word-id="${word.id}">
                     <div class="word-content">
                         <div class="word-title-row">
@@ -2600,9 +2768,14 @@
                         </div>
                         <div class="word-definition">${word.definition}</div>
                     </div>
-                    <span class="learned-badge ${showTick ? 'show' : ''}"
-                          data-word-id="${word.id}"
-                          title="{{ trans('panel.mark_as_learned') }}">&#10003;</span>
+                    <div class="word-badges">
+                        <span class="word-badge badge-learned ${isLearned ? 'on' : ''}"
+                              title="Đã học" style="${isLearned ? '' : 'display:none;'}">&#10004;</span>
+                        <span class="word-badge badge-review ${needsReview ? 'on' : ''}"
+                              data-field="needs_review" title="Cần ôn tập">&#10071;</span>
+                        <span class="word-badge badge-star ${isStarred ? 'on' : ''}"
+                              data-field="is_starred" title="Gắn sao">&#9733;</span>
+                    </div>
                 </div>
             `;
             container.append(wordHtml);
@@ -2613,50 +2786,65 @@
         currentWordListSourceType = sourceType || listType;
         currentWordListSourceId = sourceId || listId;
 
+        restoreSelection();
+
         // Sidebar widget must follow the currently opened vocabulary set.
         setSidebarCardsFromWords(words);
+    }
+
+    function restoreSelection() {
+        if (!lastSelectedIds.length) return;
+
+        lastSelectedIds.forEach(function(id) {
+            $('.word-checkbox[data-word-id="' + id + '"]').prop('checked', true);
+        });
     }
 
     function updateMyWordListMeta(data) {
         if (!data) return;
 
-        const section = $('#myWordListSection');
-        const card = section.find('.word-list-card').first();
-
-        card.attr('data-list-id', data.id || card.data('list-id'));
-
-        section.find('.word-list-name').first().text(data.name || '{{ trans('panel.my_word_list') }}');
-        section.find('.word-list-description').first().text(data.description || '');
-
         const totalWords = Number(data.word_count || 0);
-        section.find('.word-count-badge').first().text('Tổng số từ: ' + totalWords + ' từ');
 
-        $('#toggleMyWordListBtn').text('{{ trans('panel.my_word_list') }}');
+        $('#myWordListSection .word-list-card[data-list-type="my"]')
+            .attr('data-list-id', data.id);
+
+        $('#myWordListName').text(data.name || 'My Word List');
+        $('#myWordListDesc').text(data.description || '');
+        $('#myWordListCount').text('Tổng số từ: ' + totalWords + ' từ');
+        $('#tabCountMy').text(totalWords);
     }
 
-    // Mark word as learned
-    $(document).on('click', '.learned-badge', function(e) {
+        // Bật/tắt "cần ôn tập" và "gắn sao"
+    $(document).on('click', '.word-badge[data-field]', function(e) {
         e.stopPropagation();
 
-        const wordSource = $(this).closest('.word-item').data('word-source');
-        if (wordSource !== 'academic') {
-            $(this).toggleClass('show');
-            return;
-        }
-        
-        let wordId = $(this).data('word-id');
-        
-        $.ajax({
-            url: '/panel/dictionary/academic-word-lists/mark-learned',
-            method: 'POST',
-            data: {
-                word_id: wordId,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    $(`.learned-badge[data-word-id="${wordId}"]`).addClass('show');
-                }
+        const $badge = $(this);
+        const $item  = $badge.closest('.word-item');
+        const field  = $badge.data('field');
+        const value  = $badge.hasClass('on') ? 0 : 1;
+        const source = $item.data('word-source');
+        const id     = $item.data('word-id');
+
+        const data = {
+            field: field,
+            value: value,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        };
+        if (source === 'academic') { data.word_id = id; } else { data.flashcard_id = id; }
+
+        $.post('/panel/dictionary/word-status/toggle', data, function(res) {
+            if (!res.success) return;
+
+            $badge.toggleClass('on', !!value);
+
+            if (field === 'needs_review') {
+                $item.attr('data-review', res.needs_review ? 1 : 0);
+                $item.attr('data-learned', res.is_learned ? 1 : 0);
+                $item.find('.badge-learned')
+                     .toggleClass('on', !!res.is_learned)
+                     .toggle(!!res.is_learned);
+            } else {
+                $item.attr('data-star', res.is_starred ? 1 : 0);
             }
         });
     });
@@ -2670,6 +2858,7 @@
     // Deselect All
     $(document).on('click', '.btn-deselect-all', function(e) {
         e.stopPropagation();
+        lastSelectedIds = []; 
         $(this).closest('.word-list-expanded').find('.word-checkbox').prop('checked', false);
     });
 
@@ -2703,6 +2892,9 @@
             },
             success: function(response) {
                 if (response.success) {
+                    lastSelectedIds = lastSelectedIds.filter(function(id) {   // ← THÊM
+                        return selectedIds.indexOf(id) === -1;                 // ← THÊM
+                    });      
                     // Remove deleted word items from DOM immediately
                     selectedIds.forEach(function(id) {
                         $(`.word-item[data-word-id="${id}"]`).fadeOut(200, function() { $(this).remove(); });
@@ -2739,6 +2931,7 @@
             return;
         }
 
+        lastSelectedIds = selectedIds.slice();
         startPractice(selectedIds);
     });
 
@@ -2909,26 +3102,46 @@
         }
     }
 
-    // Filter select handler (replaces old .filter-btn click)
-    $(document).on('change', '.filter-select', function(e) {
+        // Lọc theo nhiều trạng thái + sắp xếp A-Z
+    $(document).on('click', '.status-chip', function(e) {
         e.stopPropagation();
-        const filter = $(this).val();
-        const container = $(this).closest('.word-list-expanded').find('.words-container');
-        const words = container.find('.word-item');
+        $(this).toggleClass('active');
 
-        // Reset visibility first
-        words.show();
+        const $expanded  = $(this).closest('.word-list-expanded');
+        const $container = $expanded.find('.words-container');
+        const $words     = $container.find('.word-item');
 
-        if (filter === 'alphabet') {
-            const sorted = words.get().sort(function(a, b) {
-                return $(a).data('word').localeCompare($(b).data('word'));
+        if ($expanded.find('.status-chip[data-sort="alphabet"]').hasClass('active')) {
+            const sorted = $words.get().sort(function(a, b) {
+                return String($(a).data('word')).localeCompare(String($(b).data('word')));
             });
-            container.append(sorted);
-        } else if (filter === 'learned') {
-            words.each(function() {
-                if (!$(this).find('.learned-badge').hasClass('show')) $(this).hide();
-            });
+            $container.append(sorted);
         }
+
+        const active = [];
+        $expanded.find('.status-chip[data-status].active').each(function() {
+            active.push($(this).data('status'));
+        });
+
+        if (active.length === 0) {
+            $words.show();
+            return;
+        }
+
+        $words.each(function() {
+            const $w      = $(this);
+            const learned = $w.attr('data-learned') === '1';
+            const review  = $w.attr('data-review')  === '1';
+            const star    = $w.attr('data-star')    === '1';
+
+            let match = false;
+            if (active.indexOf('new')     !== -1 && !learned && !review) match = true;
+            if (active.indexOf('learned') !== -1 && learned)             match = true;
+            if (active.indexOf('review')  !== -1 && review)              match = true;
+            if (active.indexOf('star')    !== -1 && star)                match = true;
+
+            $w.toggle(match);
+        });
     });
 
     // Filter functionality (old .filter-btn — kept for backward compat)
@@ -2981,6 +3194,7 @@
             return;
         }
 
+        lastSelectedIds = selectedIds.slice();
         startFlashcardPractice(selectedIds);
     });
 
@@ -3032,7 +3246,9 @@
                         image_url: item.image_url || '',
                         audio_url: item.audio_url || '',
                         collocation: item.collocation || '',
-                        example: item.example || ''
+                        example: item.example || '',
+                        needs_review: !!item.needs_review,     
+                        is_starred: !!item.is_starred     
                     };
                 });
 
@@ -3121,7 +3337,9 @@
             $('#flashcardFrontGroup, #flashcardFrontLabel').show();
             $('#flashcardBackLabel').hide();
             $('#flashcardBack').hide();
+            $('#flashcardCounter').text('0 / 0');
             $('#flashcardPrevBtn, #flashcardNextBtn').prop('disabled', true);
+            $('#fcReviewBtn, #fcStarBtn').removeClass('on');
             return;
         }
 
@@ -3175,9 +3393,12 @@
         }
 
         flashcardFlipped = false;
+        $('#flashcardCounter').text((flashcardIndex + 1) + ' / ' + flashcardCards.length);
         $('#flashcardPrevBtn').prop('disabled', flashcardIndex === 0);
         $('#flashcardNextBtn').prop('disabled', flashcardIndex === flashcardCards.length - 1);
         $('#flashcardTurnBtn').text('Lật thẻ');
+        $('#fcReviewBtn').toggleClass('on', !!card.needs_review);
+        $('#fcStarBtn').toggleClass('on', !!card.is_starred);
     }
 
     $('#flashcardCard').on('click', function(e) {
@@ -3233,6 +3454,33 @@
                 window.open(url, '_blank', 'noopener,noreferrer');
             });
         }
+    });
+
+    $('#fcReviewBtn, #fcStarBtn').on('click', function() {
+        if (!flashcardCards.length) return;
+
+        const $btn  = $(this);
+        const field = $btn.attr('id') === 'fcReviewBtn' ? 'needs_review' : 'is_starred';
+        const value = $btn.hasClass('on') ? 0 : 1;
+        const card  = flashcardCards[flashcardIndex];
+
+        const data = {
+            field: field,
+            value: value,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        };
+        if (currentWordListSourceType === 'academic') {
+            data.word_id = card.id;
+        } else {
+            data.flashcard_id = card.id;
+        }
+
+        $.post('/panel/dictionary/word-status/toggle', data, function(res) {
+            if (!res.success) return;
+            $btn.toggleClass('on', !!value);
+            card.needs_review = res.needs_review;
+            card.is_starred   = res.is_starred;
+        });
     });
 
     $('#flashcardNextBtn').on('click', function() {
@@ -3367,20 +3615,94 @@
         $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>');
     }
 
+        // Render nội dung từ do teacher upload (bundle) — KHÔNG gọi API từ điển
+    function renderTeacherWordBody(d) {
+        if (!d) return '<div class="wdm-empty">Không tìm thấy dữ liệu.</div>';
+
+        let html = `<div class="wdm-word">${d.word || ''}</div>`;
+
+        if (d.pronunciation || d.audio_url) {
+            let audio = d.audio_url || '';
+            if (audio && audio.startsWith('//')) audio = 'https:' + audio;
+
+            html += '<div class="wdm-pron-row"><div class="wdm-pron-item">';
+            if (d.pronunciation) html += `<span class="wdm-pron-ipa">/${d.pronunciation}/</span>`;
+            html += `<button type="button" class="wdm-pron-audio-btn" data-audio="${audio}" data-word="${d.word || ''}" onclick="playWordDetailAudio(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+            </button>`;
+            html += '</div></div>';
+        }
+
+        if (d.image_url) {
+            html += `<img src="${d.image_url}" alt="" style="max-width:100%;border-radius:12px;margin-bottom:16px;">`;
+        }
+        if (d.part_of_speech) {
+            html += `<div class="wdm-pos">${d.part_of_speech}</div>`;
+        }
+        if (d.definition) {
+            html += `<div class="wdm-def">${d.definition}</div>`;
+        }
+        if (d.translation_vi) {
+            html += `<div class="wdm-def"><strong>Nghĩa tiếng Việt:</strong> ${d.translation_vi}</div>`;
+        }
+        if (d.collocation) {
+            html += `<div class="wdm-syn"><strong>Collocation:</strong> ${d.collocation}</div>`;
+        }
+        if (d.example) {
+            html += `<div class="wdm-example">"${d.example}"</div>`;
+        }
+
+        return html;
+    }
+
     $(document).on('click', '.word-item', function (e) {
         // Không mở dialog nếu click vào checkbox hoặc dấu tick "đã học"
         if ($(e.target).is('.word-checkbox, .learned-badge') || $(e.target).closest('.learned-badge').length) {
             return;
         }
 
-        const wordText = $(this).data('word');
+        const $item      = $(this);
+        const wordText   = $item.data('word');
+        const wordSource = $item.data('word-source');
+        const wordId     = $item.data('word-id');
+
         if (!wordText) return;
 
         openWordDetailModal();
         $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>');
 
-        if (wordDetailCache[wordText]) {
-            $wordDetailModalBody.html(renderWordDetailBody(wordDetailCache[wordText]));
+        // ── Từ do teacher upload: lấy nội dung gốc từ bundle_vocabulary_words ──
+        if (wordSource === 'bundle') {
+            const cacheKey = 'bundle:' + wordId;
+
+            if (wordDetailCache[cacheKey]) {
+                $wordDetailModalBody.html(renderTeacherWordBody(wordDetailCache[cacheKey]));
+                return;
+            }
+
+            $.get('/panel/dictionary/flashcards/' + wordId + '/detail', function (res) {
+                if (res.success && res.data) {
+                    wordDetailCache[cacheKey] = res.data;
+                    $wordDetailModalBody.html(renderTeacherWordBody(res.data));
+                } else {
+                    $wordDetailModalBody.html('<div class="wdm-empty">Không tìm thấy dữ liệu.</div>');
+                }
+            }).fail(function () {
+                $wordDetailModalBody.html('<div class="wdm-empty">Lỗi khi tải dữ liệu.</div>');
+            });
+
+            return;
+        }
+
+        // ── Academic / từ học viên tự lưu: tra từ điển ngoài như cũ ──
+        const cacheKey = 'dict:' + wordText;
+
+        if (wordDetailCache[cacheKey]) {
+            $wordDetailModalBody.html(renderWordDetailBody(wordDetailCache[cacheKey]));
             return;
         }
 
@@ -3393,7 +3715,7 @@
             },
             success: function (response) {
                 if (response.success && response.data) {
-                    wordDetailCache[wordText] = response.data;
+                    wordDetailCache[cacheKey] = response.data;
                     $wordDetailModalBody.html(renderWordDetailBody(response.data));
                 } else {
                     $wordDetailModalBody.html('<div class="wdm-empty">Không tìm thấy dữ liệu.</div>');
@@ -3404,7 +3726,6 @@
             }
         });
     });
-
     $(document).on('click', '.js-word-detail-close', closeWordDetailModal);
 
     $(document).on('keydown', function (e) {

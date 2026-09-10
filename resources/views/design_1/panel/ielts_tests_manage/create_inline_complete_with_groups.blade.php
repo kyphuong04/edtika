@@ -634,6 +634,86 @@
     color: #511D99;
     border-color: #511D99;
 }
+
+/* ── Hashtag input (chỉ hiện khi Test Type = Practice) ─────────────────
+   Ô nhập dạng chip: gõ text rồi Enter/dấu phẩy để thêm, click × để bỏ.
+   Giá trị thật nằm ở hidden input name="hashtags" (JSON array). */
+.hashtag-field.hidden { display: none; }
+/* Label mặc định không có margin-bottom -> chữ "Hashtags" dính sát ô nhập.
+   Đặt tường minh khoảng cách label -> ô, và giãn cả nhóm với hàng
+   Difficulty / Target Band ở trên. */
+.hashtag-field { margin-top: 18px; }
+.hashtag-field > .input-label {
+    display: block;
+    margin-bottom: 8px;
+    line-height: 1.45;
+}
+.hashtag-field > .input-label .font-12 { font-weight: 400; }
+.hashtag-field > small { margin-top: 6px; }
+.hashtag-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    background: #fff;
+    cursor: text;
+}
+.hashtag-box.is-focused {
+    border-color: #511D99;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.10);
+}
+.hashtag-box.is-invalid { border-color: #dc3545; }
+.hashtag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 9px;
+    background: rgba(81, 29, 153, 0.08);
+    color: #511D99;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    max-width: 100%;
+}
+.hashtag-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.hashtag-chip button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.65;
+}
+.hashtag-chip button:hover { opacity: 1; }
+.hashtag-box input.hashtag-entry {
+    flex: 1 1 180px;
+    min-width: 160px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    padding: 4px 2px;
+}
+.test-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 16px;
+}
+.test-meta-row > .form-group {
+    flex: 1 1 180px;
+    min-width: 180px;
+}
 </style>
 @endpush
 
@@ -710,30 +790,88 @@
                 <textarea name="description" class="form-control js-richtext-editor" data-height="150" rows="2" placeholder="Brief description...">{{ old('description', $test->description ?? '') }}</textarea>
             </div>
 
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="input-label">Difficulty Level</label>
-                        <select name="difficulty_level" class="form-control">
-                            <option value="intermediate" {{ old('difficulty_level', $test->difficulty_level ?? 'intermediate') === 'intermediate' ? 'selected' : '' }}>Intermediate</option>
-                            <option value="beginner" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'beginner' ? 'selected' : '' }}>Beginner</option>
-                            <option value="advanced" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'advanced' ? 'selected' : '' }}>Advanced</option>
-                            <option value="mixed" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'mixed' ? 'selected' : '' }}>Mixed</option>
-                        </select>
-                    </div>
+            <div class="test-meta-row">
+                <div class="form-group">
+                    <label class="input-label">Difficulty Level</label>
+                    <select name="difficulty_level" class="form-control">
+                        <option value="intermediate" {{ old('difficulty_level', $test->difficulty_level ?? 'intermediate') === 'intermediate' ? 'selected' : '' }}>Intermediate</option>
+                        <option value="beginner" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'beginner' ? 'selected' : '' }}>Beginner</option>
+                        <option value="advanced" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'advanced' ? 'selected' : '' }}>Advanced</option>
+                        <option value="mixed" {{ old('difficulty_level', $test->difficulty_level ?? '') === 'mixed' ? 'selected' : '' }}>Mixed</option>
+                    </select>
                 </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="input-label">Target Band Min</label>
-                        <input type="number" name="target_band_min" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_min', $test->target_band_min ?? 5.0) }}">
-                    </div>
+
+                <div class="form-group">
+                    <label class="input-label">Target Band Min</label>
+                    <input type="number" name="target_band_min" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_min', $test->target_band_min ?? 5.0) }}">
                 </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="input-label">Target Band Max</label>
-                        <input type="number" name="target_band_max" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_max', $test->target_band_max ?? 8.0) }}">
-                    </div>
+
+                <div class="form-group">
+                    <label class="input-label">Target Band Max</label>
+                    <input type="number" name="target_band_max" class="form-control" min="0" max="9" step="0.5" value="{{ old('target_band_max', $test->target_band_max ?? 8.0) }}">
                 </div>
+
+                
+
+                {{-- Phạm vi đề — CHỈ dành cho Practice Test, ẩn/hiện trong updatePracticeOnlyFields() --}}
+                @php $selectedScope = (string) old('practice_scope', $test->practice_scope ?? ''); @endphp
+                <div class="form-group hidden" id="practiceScopeField">
+                    <label class="input-label">Phạm vi đề</label>
+                    <select id="practiceScopeSelect" name="practice_scope" class="form-control @error('practice_scope') is-invalid @enderror">
+                        <option value="">-- Chọn phạm vi --</option>
+                        <option value="full" {{ $selectedScope === 'full' ? 'selected' : '' }}>Full đề (đủ các phần của skill)</option>
+                        <option value="partial" {{ $selectedScope === 'partial' ? 'selected' : '' }}>Đề lẻ (chỉ 1 phần của skill)</option>
+                    </select>
+                    @error('practice_scope')
+                        <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                {{-- Phần số — chỉ hiện khi Practice + Đề lẻ. Danh sách option
+                đổi theo skill đang có part (updatePartNumberField()). --}}
+                @php $selectedPartNumber = (string) old('practice_part_number', $test->practice_part_number ?? ''); @endphp
+                <div class="form-group hidden" id="practicePartNumberField">
+                    <label class="input-label">Phần số</label>
+                    <select id="practicePartNumberSelect" name="practice_part_number"
+                            class="form-control @error('practice_part_number') is-invalid @enderror"
+                            data-initial="{{ $selectedPartNumber }}">
+                        <option value="">-- Chọn phần --</option>
+                    </select>
+                    <small class="text-muted d-block mt-5" id="practicePartNumberHint"></small>
+                    @error('practice_part_number')
+                        <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
+                    @enderror
+                </div>
+
+            </div>
+
+            {{-- Hashtag — CHỈ dành cho Practice Test. Hiển thị thành chip trên
+                 card của học viên ở /panel/ielts-tests/mock (tab "Practice by
+                 Skill"). Ẩn/hiện theo Test Type trong updateTestRequirements().
+                 Lưu dưới dạng JSON array trong ielts_tests.hashtags. --}}
+            @php
+                $existingHashtags = isset($test) ? $test->getHashtagsList() : [];
+                $hashtagsFieldValue = old('hashtags', json_encode($existingHashtags, JSON_UNESCAPED_UNICODE));
+            @endphp
+            <div class="form-group hashtag-field hidden" id="hashtagsField">
+                <label class="input-label" for="hashtagEntry">
+                    Hashtags(chỉ dùng cho Practice Test)
+                </label>
+                <div class="hashtag-box @error('hashtags') is-invalid @enderror" id="hashtagBox">
+                    {{-- Chip được render bằng JS từ hidden input bên dưới --}}
+                    <input type="text" id="hashtagEntry" class="hashtag-entry" autocomplete="off"
+                           placeholder="Nhập hashtag rồi Enter, VD: [Reading] T/F/NG">
+                </div>
+                <input type="hidden" name="hashtags" id="hashtagsInput" value="{{ $hashtagsFieldValue }}">
+                <small class="text-muted font-14 d-block mt-5">
+                    Nhấn Enter hoặc dấu phẩy để thêm; Backspace ở ô trống để xoá chip cuối.
+                    Không cần gõ dấu <strong>#</strong> — hệ thống tự thêm khi hiển thị.
+                    Tối đa {{ \App\Models\IeltsTest::HASHTAGS_MAX }} hashtag,
+                    mỗi hashtag ≤ {{ \App\Models\IeltsTest::HASHTAG_MAX_LENGTH }} ký tự.
+                </small>
+                @error('hashtags')
+                    <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
+                @enderror
             </div>
         </div>
 
@@ -899,6 +1037,11 @@ const SECTIONS_CONFIG = {
     grammar: { skill: 'grammar', title: 'Grammar', icon: '🧩', mockParts: 0, mockQuestions: 0 },
     vocabulary: { skill: 'vocabulary', title: 'Vocabulary', icon: '📚', mockParts: 0, mockQuestions: 0 }
 };
+
+// Số phần chuẩn của từng skill + nhãn hiển thị. PHẢI khớp với
+// IeltsTest::SKILL_PART_COUNTS / SKILL_PART_LABELS ở server.
+const SKILL_PART_COUNTS = { listening: 4, reading: 3, writing: 2, speaking: 3 };
+const SKILL_PART_LABELS = { listening: 'Part', reading: 'Passage', writing: 'Task', speaking: 'Part' };
 
 let currentTestType = @json($currentTestType ?? null);
 let uploadSequence = 0;
@@ -1240,6 +1383,8 @@ function buildAutosavePayload() {
     const difficultyEl = document.querySelector('select[name="difficulty_level"]');
     const bandMinEl = document.querySelector('input[name="target_band_min"]');
     const bandMaxEl = document.querySelector('input[name="target_band_max"]');
+    const scopeEl = document.querySelector('select[name="practice_scope"]');
+    const partNumberEl = document.querySelector('select[name="practice_part_number"]');
 
     return {
         version: 1,
@@ -1252,7 +1397,11 @@ function buildAutosavePayload() {
             description: descEl ? getEditorHtmlValue(descEl) : '',
             difficulty_level: difficultyEl ? difficultyEl.value : '',
             target_band_min: bandMinEl ? bandMinEl.value : '',
-            target_band_max: bandMaxEl ? bandMaxEl.value : ''
+            target_band_max: bandMaxEl ? bandMaxEl.value : '',
+            practice_scope: scopeEl ? scopeEl.value : '',
+            practice_part_number: partNumberEl ? partNumberEl.value : '',
+            hashtags: JSON.stringify(hashtagList),
+            
         },
         testData: testData
     };
@@ -1472,7 +1621,19 @@ function applyAutosaveSnapshot(payload) {
     if (bandMaxEl) bandMaxEl.value = payload.form.target_band_max || '';
     if (descEl) setEditorHtmlValue(descEl, payload.form.description || '');
 
+    const scopeEl = document.querySelector('select[name="practice_scope"]');
+    if (scopeEl) scopeEl.value = payload.form.practice_scope || '';
+
+    setHashtagsFieldValue(payload.form.hashtags || '');
+
     currentTestType = payload.form.type || currentTestType;
+    const partNumberEl = document.querySelector('select[name="practice_part_number"]');
+    if (partNumberEl) {
+        // Gán vào data-initial vì lúc này option chưa được dựng;
+        // updatePracticeOnlyFields() bên dưới sẽ dựng option rồi khôi phục.
+        partNumberEl.setAttribute('data-initial', payload.form.practice_part_number || '');
+    }
+    updatePracticeOnlyFields();;
     testData = {
         sections: normalizeSections(payload.testData.sections)
     };
@@ -1544,7 +1705,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFilePreviews();
     initAnswerHelpEditors(document);
     initContentEditors(document);
-    
+    initHashtagField();
+
+    const practiceScopeSelectEl = document.getElementById('practiceScopeSelect');
+    if (practiceScopeSelectEl) {
+        practiceScopeSelectEl.addEventListener('change', function () {
+            updatePracticeOnlyFields();
+        });
+    }
+
     if (currentTestType) {
         const typeSelect = document.getElementById('testTypeSelect');
         if (typeSelect) {
@@ -1630,6 +1799,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (autosaveObservedRoot && typeof MutationObserver !== 'undefined') {
         const autosaveMutationObserver = new MutationObserver(function () {
             queueAutosaveSnapshot(false);
+            updatePartNumberField(document.getElementById('testTypeSelect')?.value === 'practice');
         });
 
         autosaveMutationObserver.observe(autosaveObservedRoot, {
@@ -1637,6 +1807,8 @@ document.addEventListener('DOMContentLoaded', function() {
             subtree: true
         });
     }
+
+    
 });
 
 function setupFilePreviews() {
@@ -1708,8 +1880,293 @@ function removeSelectedFile(button) {
     preview.style.display = 'none';
 }
 
+/* ── Hashtag field (Practice test) ────────────────────────────────────
+   Chỉ Practice test có hashtag. Chip UI ở đây chỉ là lớp hiển thị; giá trị
+   gửi lên server luôn là JSON array trong hidden input #hashtagsInput, và
+   được chuẩn hoá lại lần nữa ở IeltsTest::normalizeHashtags(). */
+const HASHTAG_LIMIT = {{ \App\Models\IeltsTest::HASHTAGS_MAX }};
+const HASHTAG_MAX_LEN = {{ \App\Models\IeltsTest::HASHTAG_MAX_LENGTH }};
+
+let hashtagList = [];
+
+function parseHashtagsValue(raw) {
+    if (!raw) {
+        return [];
+    }
+
+    let items = [];
+    try {
+        const decoded = JSON.parse(raw);
+        items = Array.isArray(decoded) ? decoded : [];
+    } catch (e) {
+        items = String(raw).split(/[,\r\n]+/);
+    }
+
+    const seen = new Set();
+    const result = [];
+
+    items.forEach(function (item) {
+        const tag = normalizeHashtagText(item);
+        if (!tag) {
+            return;
+        }
+        const key = tag.toLowerCase();
+        if (seen.has(key) || result.length >= HASHTAG_LIMIT) {
+            return;
+        }
+        seen.add(key);
+        result.push(tag);
+    });
+
+    return result;
+}
+
+function normalizeHashtagText(value) {
+    let tag = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    tag = tag.replace(/^#+/, '').trim();
+    if (tag.length > HASHTAG_MAX_LEN) {
+        tag = tag.slice(0, HASHTAG_MAX_LEN).trim();
+    }
+    return tag;
+}
+
+function syncHashtagsInput() {
+    const input = document.getElementById('hashtagsInput');
+    if (input) {
+        input.value = JSON.stringify(hashtagList);
+    }
+}
+
+function renderHashtagChips() {
+    const box = document.getElementById('hashtagBox');
+    const entry = document.getElementById('hashtagEntry');
+    if (!box || !entry) {
+        return;
+    }
+
+    box.querySelectorAll('.hashtag-chip').forEach(function (chip) { chip.remove(); });
+
+    hashtagList.forEach(function (tag, index) {
+        const chip = document.createElement('span');
+        chip.className = 'hashtag-chip';
+
+        const label = document.createElement('span');
+        label.textContent = '#' + tag;
+        chip.appendChild(label);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', 'Xoá hashtag ' + tag);
+        remove.textContent = '×';
+        remove.addEventListener('click', function () {
+            hashtagList.splice(index, 1);
+            renderHashtagChips();
+            syncHashtagsInput();
+            queueAutosaveSnapshot(false);
+        });
+        chip.appendChild(remove);
+
+        box.insertBefore(chip, entry);
+    });
+
+    entry.disabled = hashtagList.length >= HASHTAG_LIMIT;
+    entry.placeholder = entry.disabled
+        ? 'Đã đạt tối đa ' + HASHTAG_LIMIT + ' hashtag'
+        : 'Nhập hashtag rồi Enter, VD: [Reading] T/F/NG';
+}
+
+function addHashtagFromEntry() {
+    const entry = document.getElementById('hashtagEntry');
+    if (!entry) {
+        return;
+    }
+
+    // Cho phép dán nhiều hashtag cùng lúc bằng dấu phẩy / xuống dòng.
+    const candidates = entry.value.split(/[,\r\n]+/);
+    let added = false;
+
+    candidates.forEach(function (candidate) {
+        const tag = normalizeHashtagText(candidate);
+        if (!tag || hashtagList.length >= HASHTAG_LIMIT) {
+            return;
+        }
+        if (hashtagList.some(function (existing) { return existing.toLowerCase() === tag.toLowerCase(); })) {
+            return;
+        }
+        hashtagList.push(tag);
+        added = true;
+    });
+
+    entry.value = '';
+
+    if (added) {
+        renderHashtagChips();
+        syncHashtagsInput();
+        queueAutosaveSnapshot(false);
+    }
+}
+
+function setHashtagsFieldValue(raw) {
+    hashtagList = parseHashtagsValue(raw);
+    renderHashtagChips();
+    syncHashtagsInput();
+}
+
+/**
+ * Suy ra skill của bài practice từ section nào đang có part.
+ * Trả null nếu chưa có part nào, hoặc có part ở nhiều skill (không xác định).
+ */
+function getPracticePrimarySkill() {
+    const used = Object.keys(SECTIONS_CONFIG).filter(function (skill) {
+        return ((testData.sections[skill] || {}).parts || []).length > 0;
+    });
+
+    return used.length === 1 ? used[0] : null;
+}
+
+/**
+ * Ẩn/hiện ô "Phần số" và dựng lại danh sách option theo skill hiện tại.
+ * Giữ nguyên lựa chọn cũ nếu vẫn hợp lệ với skill mới.
+ */
+function updatePartNumberField(isPractice) {
+    const field = document.getElementById('practicePartNumberField');
+    const select = document.getElementById('practicePartNumberSelect');
+    const hint = document.getElementById('practicePartNumberHint');
+    const scopeSelect = document.getElementById('practiceScopeSelect');
+    if (!field || !select) {
+        return;
+    }
+
+    const isPartial = isPractice && scopeSelect && scopeSelect.value === 'partial';
+    field.classList.toggle('hidden', !isPartial);
+
+    if (!isPartial) {
+        select.value = '';
+        select.innerHTML = '<option value="">-- Chọn phần --</option>';
+        if (hint) hint.textContent = '';
+        return;
+    }
+
+    const skill = getPracticePrimarySkill();
+    const max = SKILL_PART_COUNTS[skill] || 0;
+    // Ưu tiên giá trị đang chọn; lần đầu render thì lấy từ data-initial (old()/DB).
+    const previous = select.value || select.getAttribute('data-initial') || '';
+
+    if (!max) {
+        select.innerHTML = '<option value="">-- Chọn phần --</option>';
+        select.disabled = true;
+        if (hint) {
+            hint.textContent = skill
+                ? 'Skill này không chia phần.'
+                : 'Thêm part vào đúng 1 skill để chọn phần số.';
+        }
+        return;
+    }
+
+    select.disabled = false;
+    const label = SKILL_PART_LABELS[skill] || 'Part';
+    let html = '<option value="">-- Chọn phần --</option>';
+    for (let i = 1; i <= max; i++) {
+        html += '<option value="' + i + '">' + label + ' ' + i + '</option>';
+    }
+    select.innerHTML = html;
+
+    // Chỉ khôi phục khi giá trị cũ còn nằm trong khoảng của skill mới.
+    const previousNumber = parseInt(previous, 10);
+    if (Number.isFinite(previousNumber) && previousNumber >= 1 && previousNumber <= max) {
+        select.value = String(previousNumber);
+    }
+
+    if (hint) {
+        hint.textContent = SKILL_PART_LABELS[skill] + ' 1–' + max + ' (' + skill + ')';
+    }
+}
+function updatePracticeOnlyFields() {
+    // Đọc trực tiếp từ <select> thay vì biến currentTestType: sau khi
+    // validate lỗi, Blade vẽ lại select bằng old('type') nhưng biến JS vẫn là
+    // null -> nếu tin vào biến sẽ xoá oan dữ liệu vừa nhập.
+    const typeSelect = document.getElementById('testTypeSelect');
+    const testType = typeSelect ? typeSelect.value : currentTestType;
+    const isPractice = testType === 'practice';
+
+    const hashtagField = document.getElementById('hashtagsField');
+    if (hashtagField) {
+        hashtagField.classList.toggle('hidden', !isPractice);
+
+        // Đổi sang loại đề khác thì bỏ luôn hashtag đã nhập để không lưu dữ liệu
+        // "mồ côi" (server cũng chỉ lưu hashtag khi type = practice).
+        if (!isPractice && hashtagList.length) {
+            hashtagList = [];
+            renderHashtagChips();
+            syncHashtagsInput();
+        }
+    }
+
+    const scopeField = document.getElementById('practiceScopeField');
+    const scopeSelect = document.getElementById('practiceScopeSelect');
+    if (scopeField) {
+        scopeField.classList.toggle('hidden', !isPractice);
+
+        // Cùng lý do như hashtag: server cũng normalize về null khi không phải practice.
+        if (!isPractice && scopeSelect) {
+            scopeSelect.value = '';
+        }
+    }
+    updatePartNumberField(isPractice);
+}
+
+function initHashtagField() {
+    const box = document.getElementById('hashtagBox');
+    const entry = document.getElementById('hashtagEntry');
+    const input = document.getElementById('hashtagsInput');
+    if (!box || !entry || !input) {
+        return;
+    }
+
+    setHashtagsFieldValue(input.value);
+
+    box.addEventListener('click', function (event) {
+        if (event.target === box) {
+            entry.focus();
+        }
+    });
+
+    entry.addEventListener('focus', function () { box.classList.add('is-focused'); });
+    entry.addEventListener('blur', function () {
+        box.classList.remove('is-focused');
+        addHashtagFromEntry();
+    });
+
+    entry.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault();
+            addHashtagFromEntry();
+            return;
+        }
+
+        if (event.key === 'Backspace' && entry.value === '' && hashtagList.length) {
+            event.preventDefault();
+            hashtagList.pop();
+            renderHashtagChips();
+            syncHashtagsInput();
+            queueAutosaveSnapshot(false);
+        }
+    });
+
+    // Dán 1 danh sách có dấu phẩy -> tách thành nhiều chip ngay.
+    entry.addEventListener('paste', function () {
+        setTimeout(addHashtagFromEntry, 0);
+    });
+
+    updatePracticeOnlyFields();;
+}
+
 function updateTestRequirements() {
     currentTestType = document.getElementById('testTypeSelect').value;
+
+    // Ô hashtag chỉ áp dụng cho Practice test -> đặt trước early-return bên
+    // dưới để đổi về "-- Select Type --" cũng ẩn được ô này.
+    updatePracticeOnlyFields();;
 
     if (!currentTestType) {
         return;

@@ -1,6 +1,7 @@
 @extends('admin.layouts.app')
 
 @push('styles_top')
+<link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
 <style>
 .pt-question-card { background:#f9fafb; border:2px solid #e5e7eb; border-radius:10px; padding:16px; margin-bottom:16px; position:relative; }
 .pt-question-card .pt-q-badge { display:inline-block; background:#511D99; color:#fff; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:600; margin-bottom:10px; }
@@ -22,6 +23,85 @@
 .pt-move-btns { position:absolute; top:16px; right:44px; display:flex; gap:4px; }
 .pt-move-btns button { border:1px solid #d1d5db; background:#fff; color:#6b7280; border-radius:6px; width:26px; height:26px; line-height:1; cursor:pointer; font-size:11px; }
 .pt-move-btns button:disabled { opacity:.35; cursor:not-allowed; }
+
+/* ── Đè lớp glass của admin layout lên Summernote ──────────────────────
+   Layout có rule .main-content .card { background: var(--glass-surface-bg) }
+   mà Summernote BS4 render khung editor bằng chính class .card + .card-header,
+   nên nếu không đè lại, editor sẽ bị phủ nền tím mờ + blur, chữ gần như
+   không đọc được. */
+.main-content .note-editor.card,
+.main-content .note-editor .card-header,
+.main-content .note-editor .note-toolbar,
+.main-content .note-editor .note-editing-area,
+.main-content .note-editor .note-editable,
+.main-content .note-editor .note-statusbar,
+.note-modal .modal-content,
+.note-popover .popover-content {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+.main-content .note-editor.card {
+    border: 1px solid #ced4da !important;
+    border-radius: 8px !important;
+}
+.main-content .note-editor .note-editable {
+    color: #1f2937 !important;
+}
+
+/* Hộp thoại con của Summernote (chèn link…) phải nổi trên modal soạn thảo */
+.note-modal { z-index: 1080 !important; }
+.note-modal-backdrop { z-index: 1075 !important; }
+.note-popover { z-index: 1080 !important; }
+
+/* ── Nút căn lề tự viết (bê từ panel IELTS) ── */
+.note-editor .note-toolbar .note-btn:hover {
+    background-color: #e0e7ff !important;
+    border-color: #511D99 !important;
+    color: #511D99 !important;
+}
+.note-editor .note-toolbar .note-btn:hover i { color: #511D99 !important; }
+.note-editor .note-toolbar .note-btn.active-align {
+    background-color: #511D99 !important;
+    color: #fff !important;
+    border-color: #511D99 !important;
+}
+.note-editor .note-toolbar .note-btn.active-align i { color: #fff !important; }
+
+/* Summernote hay sinh inline style text-align — ép trình duyệt tôn trọng nó */
+.note-editor .note-editable [style*="text-align: left"]    { text-align: left !important; }
+.note-editor .note-editable [style*="text-align: center"]  { text-align: center !important; }
+.note-editor .note-editable [style*="text-align: right"]   { text-align: right !important; }
+.note-editor .note-editable [style*="text-align: justify"] { text-align: justify !important; }
+.note-editor .note-editable ul { list-style: disc !important; padding-left: 24px !important; }
+.note-editor .note-editable ol { list-style: decimal !important; padding-left: 24px !important; }
+.note-editor .note-editable li { display: list-item !important; }
+
+/* ── Vùng xem trước nội dung rich text trong card câu hỏi ──────────────
+   Dùng class chứ KHÔNG dùng inline style="background:#fff" — layout có
+   selector [style*="background:#fff"] sẽ bắt và phủ nền tím lên. */
+.pt-rich-preview {
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-height: 60px;
+    max-height: 220px;
+    overflow: auto;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #1f2937;
+}
+.pt-rich-preview p { margin-bottom: 8px; }
+.pt-rich-preview p:last-child { margin-bottom: 0; }
+.pt-rich-preview ul { list-style: disc; padding-left: 24px; }
+.pt-rich-preview ol { list-style: decimal; padding-left: 24px; }
+.pt-rich-preview [style*="text-align: center"]  { text-align: center; }
+.pt-rich-preview [style*="text-align: right"]   { text-align: right; }
+.pt-rich-preview [style*="text-align: justify"] { text-align: justify; }
+.pt-rich-empty { color: #9ca3af; font-style: italic; }
 </style>
 @endpush
 
@@ -264,6 +344,36 @@
     </div>{{-- /section-body --}}
 </section>
 
+{{-- Modal soạn thảo dùng chung cho mọi ô rich text.
+     Đặt NGOÀI thẻ <form> để tránh lồng form. Editor được khởi tạo khi mở và
+     huỷ khi đóng — nhờ vậy hàm render() (vốn ghi đè innerHTML cả container)
+     không bao giờ giết editor đang sống. --}}
+<div class="modal fade" id="ptEditorModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#511D99;color:#fff;">
+                <h5 class="modal-title" id="ptEditorModalTitle">Soạn thảo nội dung</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Đóng">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <textarea id="ptEditorArea"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-primary" id="ptEditorSaveBtn">
+                    <i class="fas fa-check mr-4"></i>Xong
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
+
+@push('scripts_bottom')
+<script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
 <script>
 const MAX_QUESTIONS = {{ \App\Models\PlacementTest::MAX_QUESTIONS }};
 let questions = @json($questionsData ?? []);
@@ -297,6 +407,237 @@ const QUESTION_TEXT_LABELS = {
     error_correction: 'Câu có lỗi sai *',
     listening_image_choice: 'Câu hỏi * (vd: Which one is Laura\'s brother?)',
 };
+
+/* ══════════════════════════════════════════════════════════════════════
+   RICH TEXT EDITOR
+   safeAlign và fixSummernoteDropdowns bê nguyên từ panel IELTS — đó là các
+   bản vá đã kiểm chứng: nút căn lề mặc định của Summernote bám sai thẻ cha,
+   còn dropdown của nó xung đột với Bootstrap 4 + stisla.js của layout admin.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const PT_TOOLBAR = [
+    ['style', ['style']],
+    ['font', ['bold', 'italic', 'underline', 'clear']],
+    ['color', ['foreColor', 'backColor']],
+    ['para', ['ul', 'ol']],
+    ['alignment', ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify']],
+    ['view', ['codeview']]
+];
+
+function safeAlign(context, alignValue) {
+    var range = context.invoke('editor.createRange');
+    if (!range) return;
+
+    var $node = $(range.sc).closest('p, div, h1, h2, h3, h4, h5, h6, td, li');
+
+    if (!$node.length || $node.hasClass('note-editable')) {
+        context.invoke('editor.formatBlock', 'p');
+        range = context.invoke('editor.createRange');
+        $node = $(range.sc).closest('p, div, h1, h2, h3, h4, h5, h6, td, li');
+    }
+
+    if ($node.length && !$node.hasClass('note-editable')) {
+        $node.css('text-align', alignValue);
+
+        var $toolbar = context.layoutInfo.toolbar;
+        $toolbar.find('.custom-align-btn').removeClass('active-align');
+        $toolbar.find('.align-btn-' + alignValue).addClass('active-align');
+
+        context.invoke('editor.saveRange');
+        context.triggerEvent('change', context.invoke('code'));
+    }
+}
+
+function makeAlignButton(context, align, iconClass, tooltip, isDefault) {
+    var ui = $.summernote.ui;
+    return ui.button({
+        className: 'custom-align-btn align-btn-' + align + (isDefault ? ' active-align' : ''),
+        contents: '<i class="' + iconClass + '"></i>',
+        tooltip: tooltip,
+        click: function () { safeAlign(context, align); }
+    }).render();
+}
+
+const customAlignmentButtons = {
+    alignLeft:    function (c) { return makeAlignButton(c, 'left',    'fas fa-align-left',    'Căn trái', true); },
+    alignCenter:  function (c) { return makeAlignButton(c, 'center',  'fas fa-align-center',  'Căn giữa', false); },
+    alignRight:   function (c) { return makeAlignButton(c, 'right',   'fas fa-align-right',   'Căn phải', false); },
+    alignJustify: function (c) { return makeAlignButton(c, 'justify', 'fas fa-align-justify', 'Căn đều hai bên', false); }
+};
+
+function fixSummernoteDropdowns($context) {
+    $context.find('.note-toolbar .dropdown-toggle').off('click.snfix').on('click.snfix', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $menu = $(this).next('.dropdown-menu');
+        $('.note-toolbar .dropdown-menu').not($menu).removeClass('show').hide();
+
+        if ($menu.hasClass('show') || $menu.is(':visible')) {
+            $menu.removeClass('show').hide();
+        } else {
+            $menu.addClass('show').show();
+        }
+    });
+
+    if (!window.__ptSnfixCloseBound) {
+        window.__ptSnfixCloseBound = true;
+        $(document).on('click.ptsnfixclose', function (e) {
+            if (!$(e.target).closest('.note-toolbar .dropdown').length) {
+                $('.note-toolbar .dropdown-menu').removeClass('show').hide();
+            }
+        });
+    }
+}
+
+// Ô đang được soạn thảo: { kind: 'question'|'passage'|'help', index?, id? }
+let ptEditorTarget = null;
+
+function openRichEditor(target, title, initialHtml) {
+    if (!window.jQuery || !jQuery.fn.summernote) {
+        alert('Chưa tải được trình soạn thảo. Kiểm tra file /assets/vendors/summernote/summernote-bs4.min.js');
+        return;
+    }
+
+    ptEditorTarget = target;
+    document.getElementById('ptEditorModalTitle').textContent = title;
+
+    $('#ptEditorArea').summernote({
+        height: 340,
+        toolbar: PT_TOOLBAR,
+        buttons: customAlignmentButtons,
+        disableDragAndDrop: true,
+        dialogsInBody: true,
+        callbacks: {
+            // Placement Test không dùng ảnh trong nội dung chữ (đã có dạng
+            // listening_image_choice riêng). Chặn cả upload lẫn dán ảnh để
+            // không có base64 nào lọt vào cột question_text.
+            onImageUpload: function () {
+                alert('Ô này không hỗ trợ chèn ảnh.');
+            },
+            onPaste: function (e) {
+                const clipboard = (e.originalEvent || e).clipboardData;
+                if (!clipboard || !clipboard.items) return;
+                for (let i = 0; i < clipboard.items.length; i++) {
+                    if (clipboard.items[i].type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        alert('Ô này không hỗ trợ dán ảnh.');
+                        return;
+                    }
+                }
+            }
+        }
+    });
+
+    $('#ptEditorArea').summernote('code', initialHtml || '');
+    fixSummernoteDropdowns($('#ptEditorModal'));
+    $('#ptEditorModal').modal('show');
+}
+
+function applyRichEditorValue(target, html) {
+    if (!target) return;
+
+    if (target.kind === 'passage') {
+        const passage = passages.find(item => item.id === target.id);
+        if (passage) passage.content = html;
+    } else if (target.kind === 'question') {
+        if (questions[target.index]) questions[target.index].question_text = html;
+    } else if (target.kind === 'help') {
+        if (questions[target.index]) questions[target.index].answer_help = html;
+    }
+
+    render();
+}
+
+function openQuestionEditor(index) {
+    if (!questions[index]) return;
+    openRichEditor(
+        { kind: 'question', index: index },
+        'Câu ' + (index + 1) + ' — nội dung',
+        questions[index].question_text
+    );
+}
+
+function openHelpEditor(index) {
+    if (!questions[index]) return;
+    openRichEditor(
+        { kind: 'help', index: index },
+        'Câu ' + (index + 1) + ' — giải thích đáp án',
+        questions[index].answer_help
+    );
+}
+
+function openPassageEditor(id) {
+    const passage = passages.find(item => item.id === id);
+    if (!passage) return;
+    openRichEditor(
+        { kind: 'passage', id: id },
+        'Đoạn văn ' + (passages.indexOf(passage) + 1),
+        passage.content
+    );
+}
+
+// Editor rỗng vẫn trả về '<p><br></p>' -> cần kiểm tra theo text thuần.
+function isRichEmpty(html) {
+    return !String(html || '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, '')
+        .trim();
+}
+
+function richPlainText(html) {
+    return String(html || '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/* Vùng rich text trong card: preview tĩnh + nút mở modal.
+   Không nhúng editor trực tiếp vào card vì render() ghi đè innerHTML của cả
+   container, sẽ giết editor giữa chừng và làm mất nội dung đang gõ. */
+function richFieldHtml(label, html, onClickExpr, hint) {
+    const preview = isRichEmpty(html)
+        ? '<span class="pt-rich-empty">Chưa có nội dung — bấm "Soạn thảo" để nhập.</span>'
+        : html;
+
+    return `<div class="form-group">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="input-label mb-0">${label}</label>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="${onClickExpr}">
+                <i class="fas fa-pen mr-4"></i>Soạn thảo
+            </button>
+        </div>
+        <div class="pt-rich-preview">${preview}</div>
+        ${hint ? `<small class="text-muted d-block mt-1">${hint}</small>` : ''}
+    </div>`;
+}
+
+$(function () {
+    // Bootstrap giữ focus trong modal khiến không gõ được vào hộp thoại con
+    // của Summernote (chèn link). Tắt cơ chế đó đi.
+    if ($.fn.modal && $.fn.modal.Constructor) {
+        $.fn.modal.Constructor.prototype._enforceFocus = function () {};
+    }
+
+    $('#ptEditorSaveBtn').on('click', function () {
+        applyRichEditorValue(ptEditorTarget, $('#ptEditorArea').summernote('code'));
+        $('#ptEditorModal').modal('hide');
+    });
+
+    // Huỷ editor mỗi lần đóng (kể cả đóng bằng nút X, phím Esc hay click
+    // backdrop) — nếu không, lần mở sau sẽ init chồng lên instance cũ.
+    $('#ptEditorModal').on('hidden.bs.modal', function () {
+        if ($('#ptEditorArea').next('.note-editor').length) {
+            $('#ptEditorArea').summernote('destroy');
+        }
+        ptEditorTarget = null;
+    });
+});
+
+/* ══════════════════════════════════════════════════════════════════════
+   CÂU HỎI
+   ══════════════════════════════════════════════════════════════════════ */
 
 function countBlanks(text) {
     const matches = String(text || '').match(/_{2,}/g);
@@ -377,10 +718,6 @@ function setQuestionClip(index, clipId) {
     questions[index].audio_clip_id = clipId || null;
     questions[index].has_audio = !!clipId;
     render();
-}
-
-function toggleLinkedToPassage(index, checked) {
-    questions[index].linked_to_passage = checked;
 }
 
 function onOptionImageSelected(index, optIndex, inputEl) {
@@ -474,14 +811,17 @@ function removePassage(id) {
     render();
 }
 
-function updatePassageContent(id, value) {
-    const p = passages.find(p => p.id === id);
-    if (p) p.content = value;
+// Nội dung đoạn văn giờ là HTML -> nhãn trong select phải lấy text thuần,
+// nếu không sẽ hiện ra "<p>The Sheepmarket...".
+function passageLabel(passage) {
+    const plain = richPlainText(passage.content);
+    if (!plain) return '(đoạn văn trống)';
+    return plain.length > 40 ? plain.slice(0, 40) + '…' : plain;
 }
 
 function passageSelectHtml(index, q) {
     const options = passages.map(p =>
-        `<option value="${p.id}" ${q.linked_passage_id === p.id ? 'selected' : ''}>${escapeHtml((p.content || '').slice(0, 40))}...</option>`
+        `<option value="${p.id}" ${q.linked_passage_id === p.id ? 'selected' : ''}>${escapeHtml(passageLabel(p))}</option>`
     ).join('');
     return `<div class="form-group mt-2 mb-0">
         <label class="input-label">Gắn với đoạn văn</label>
@@ -513,10 +853,7 @@ function renderPassages() {
                 <span class="pt-q-badge">Đoạn văn ${idx + 1}</span>
                 <button type="button" class="pt-remove-btn" onclick="removePassage('${p.id}')"><i class="fas fa-trash"></i></button>
             </div>
-            <div class="form-group mb-2">
-                <label class="input-label">Nội dung</label>
-                <textarea class="form-control" rows="4" oninput="updatePassageContent('${p.id}', this.value)">${escapeHtml(p.content)}</textarea>
-            </div>
+            ${richFieldHtml('Nội dung', p.content, `openPassageEditor('${p.id}')`)}
             <div class="form-group mb-0" style="max-width:240px;">
                 <label class="input-label">Vị trí hiển thị</label>
                 <select class="form-control" onchange="updatePassagePosition('${p.id}', this.value); renderPassages();">${posOpts}</select>
@@ -707,7 +1044,9 @@ function audioGroupNoticeHtml(index, q) {
     </div>`;
 }
 
-/* ── Render ────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════════════════════════════ */
 
 function render() {
     countLabel.textContent = questions.length;
@@ -757,7 +1096,7 @@ function renderQuestionCard(q, index) {
 
     } else if (q.type === 'error_correction') {
         bodyHtml += `<div class="form-group">
-            <label class="input-label">Câu đúng hoàn chỉnh * <small class="text-muted">(so khớp không phân biệt hoa/thường)</small></label>
+            <label class="input-label">Câu đúng hoàn chỉnh * <small class="text-muted">(so khớp không phân biệt hoa/thường — ô này là text thuần, không định dạng)</small></label>
             <input type="text" class="form-control" value="${escapeHtml(q.correct_answer_text || '')}" placeholder="VD: She goes to school every day by bus because it is very fast and cheap." oninput="updateField(${index}, 'correct_answer_text', this.value)">
         </div>`;
 
@@ -778,12 +1117,31 @@ function renderQuestionCard(q, index) {
         bodyHtml += '</div>';
     }
 
-    const answerHelpBlock = `
-        <div class="form-group mt-2">
-            <label class="input-label">Giải thích đáp án <small class="text-muted">(chỉ Manager/CEO thấy khi xem chi tiết bài làm học viên — học viên không bao giờ thấy)</small></label>
-            <textarea class="form-control" rows="4" placeholder="VD: Dùng 'have been' vì đây là thì hiện tại hoàn thành tiếp diễn, diễn tả hành động bắt đầu trong quá khứ và vẫn tiếp diễn." oninput="updateField(${index}, 'answer_help', this.value)">${escapeHtml(q.answer_help || '')}</textarea>
-        </div>
-    `;
+    /* sentence_completion GIỮ textarea thuần: logic đếm chỗ trống dùng regex
+       /_{2,}/ trên text, còn isAnswerCorrect() phía server yêu cầu số đáp án
+       khớp đúng số chỗ trống. Thẻ HTML do editor sinh ra (span, &nbsp;, hoặc
+       thẻ bọc quanh dấu gạch dưới) sẽ làm đếm sai -> mọi học viên đều sai câu
+       đó mà không có cảnh báo nào. */
+    const questionTextBlock = q.type === 'sentence_completion'
+        ? `<div class="form-group">
+               <label class="input-label">${QUESTION_TEXT_LABELS[q.type]}</label>
+               <textarea class="form-control" rows="4" oninput="updateField(${index}, 'question_text', this.value); refreshBlankCount(${index}, this.value)">${escapeHtml(q.question_text)}</textarea>
+               <small class="text-muted d-block mt-1">
+                   Ô này không có định dạng chữ, vì hệ thống cần đếm chính xác số chỗ trống <code>___</code>.
+               </small>
+           </div>`
+        : richFieldHtml(
+              QUESTION_TEXT_LABELS[q.type] || 'Nội dung câu hỏi *',
+              q.question_text,
+              `openQuestionEditor(${index})`
+          );
+
+    const answerHelpBlock = richFieldHtml(
+        'Giải thích đáp án',
+        q.answer_help,
+        `openHelpEditor(${index})`,
+        'Chỉ Manager/CEO thấy khi xem chi tiết bài làm — học viên không bao giờ thấy.'
+    );
 
     return `<div class="pt-question-card">
         <span class="pt-q-badge">Câu ${index + 1} · ${TYPE_LABELS[q.type] || q.type}</span>
@@ -812,10 +1170,7 @@ function renderQuestionCard(q, index) {
 
         ${audioGroupNoticeHtml(index, q)}
 
-        <div class="form-group">
-            <label class="input-label">${QUESTION_TEXT_LABELS[q.type] || 'Nội dung câu hỏi *'}</label>
-            <textarea class="form-control" rows="4" oninput="updateField(${index}, 'question_text', this.value); refreshBlankCount(${index}, this.value)">${escapeHtml(q.question_text)}</textarea>
-        </div>
+        ${questionTextBlock}
 
         ${bodyHtml}
         ${answerHelpBlock}
@@ -890,7 +1245,13 @@ document.getElementById('placementTestForm').addEventListener('submit', function
     for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
 
-        if (q.type !== 'listening_image_choice' && (!q.question_text || !q.question_text.trim())) {
+        // sentence_completion là text thuần -> kiểm tra trực tiếp;
+        // các dạng còn lại là HTML -> phải bóc thẻ trước khi kiểm rỗng.
+        const emptyText = q.type === 'sentence_completion'
+            ? !String(q.question_text || '').trim()
+            : isRichEmpty(q.question_text);
+
+        if (emptyText) {
             e.preventDefault();
             alert('Câu ' + (i + 1) + ' chưa có nội dung.');
             return;
@@ -910,7 +1271,7 @@ document.getElementById('placementTestForm').addEventListener('submit', function
             }
             if (q.linked_passage_id) {
                 const p = passages.find(p => p.id === q.linked_passage_id);
-                if (!p || !p.content.trim()) {
+                if (!p || isRichEmpty(p.content)) {
                     e.preventDefault();
                     alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng đoạn văn đó chưa có nội dung.');
                     return;
@@ -930,7 +1291,7 @@ document.getElementById('placementTestForm').addEventListener('submit', function
             }
             if (q.linked_passage_id) {
                 const p = passages.find(p => p.id === q.linked_passage_id);
-                if (!p || !p.content.trim()) {
+                if (!p || isRichEmpty(p.content)) {
                     e.preventDefault();
                     alert('Câu ' + (i + 1) + ' gắn với đoạn văn nhưng đoạn văn đó chưa có nội dung.');
                     return;
@@ -943,11 +1304,6 @@ document.getElementById('placementTestForm').addEventListener('submit', function
                 return;
             }
         } else if (q.type === 'listening_image_choice') {
-            if (!q.question_text || !q.question_text.trim()) {
-                e.preventDefault();
-                alert('Câu ' + (i + 1) + ' chưa có nội dung câu hỏi.');
-                return;
-            }
             for (let opt = 0; opt < 3; opt++) {
                 if (!q.option_image_input_names[opt] && !q.existing_option_images[opt]) {
                     e.preventDefault();
@@ -983,6 +1339,4 @@ document.getElementById('placementTestForm').addEventListener('submit', function
 
 render();
 </script>
-
-
-@endsection
+@endpush

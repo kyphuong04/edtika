@@ -1047,6 +1047,10 @@
     .hidden {
         display: none !important;
     }
+
+    .word-item { cursor: pointer; }
+    .word-item:hover { background: rgba(81, 29, 153, 0.04); }
+    .dark-mode .word-item:hover { background: #0f172a; }
 </style>
 @endpush
 
@@ -1135,9 +1139,9 @@
                 </div>
                 
                 @foreach($academicWordLists as $wordList)
-                <div class="word-list-card {{ $wordList['is_locked'] ? 'locked' : '' }}" 
-                     data-list-id="{{ $wordList['id'] }}"
-                     data-list-type="academic">
+                <div class="word-list-card {{ $wordList['is_locked'] ? 'locked' : '' }}"
+                    data-list-id="{{ $wordList['source_id'] }}"
+                    data-list-type="{{ $wordList['source_type'] }}">
                     @if($wordList['is_locked'])
                         <i class="iconsax lock-icon" data-icon="lock-1"></i>
                     @endif
@@ -1267,18 +1271,49 @@
 (function($) {
     "use strict";
 
-    let currentWordListId = null;
-    let currentWordListType = null;
-    let currentQuestions = [];
+    /* =========================================================
+     * State
+     * ======================================================= */
+    let currentWordListId    = null;   // id so cua list dang mo
+    let currentWordListType  = null;   // 'academic' | 'bundle' | 'my'
+    let currentQuestions     = [];
     let currentQuestionIndex = 0;
-    let correctAnswers = 0;
-    let incorrectAnswers = 0;
-    let selectedAnswer = null;
-    let currentAudioUK = null;
-    let currentAudioUS = null;
-    let currentSearchedWord = null;
+    let correctAnswers       = 0;
+    let incorrectAnswers     = 0;
+    let selectedAnswer       = null;
+    let currentAudioUK       = null;
+    let currentAudioUS       = null;
+    let currentSearchedWord  = null;
+    let lastSectionSelector  = '#academicWordListsSection';  // de nut Back quay dung cho
 
-    // Toggle between Academic and My Word List
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+
+    /* =========================================================
+     * Helpers
+     * ======================================================= */
+
+    // Escape HTML — noi dung tu file Excel cua teacher khong duoc tin tuyet doi
+    function esc(s) {
+        return $('<div>').text(s == null ? '' : s).html();
+    }
+
+    // Container .words-container cua list dang mo
+    function containerOf($card) {
+        return $card.find('.words-container');
+    }
+
+    // Cac checkbox dang tick — CHI trong list dang mo, khong quet toan trang
+    function checkedIdsIn($scope) {
+        let ids = [];
+        $scope.find('.word-checkbox:checked').each(function() {
+            ids.push($(this).data('word-id'));
+        });
+        return ids;
+    }
+
+    /* =========================================================
+     * Toggle Academic <-> My Word List
+     * ======================================================= */
     $('#toggleMyWordListBtn').on('click', function() {
         $('#academicWordListsSection').addClass('hidden');
         $('#myWordListSection').removeClass('hidden');
@@ -1293,314 +1328,393 @@
         $('#toggleMyWordListBtn').addClass('active');
     });
 
-    // Click on word list card to expand/collapse
-    $('.word-list-card').on('click', function(e) {
-        if ($(this).hasClass('locked')) {
-            alert('This word list is locked. Please purchase the corresponding IELTS course to unlock it.');
+    /* =========================================================
+     * Mo / dong danh sach tu
+     * ======================================================= */
+    $(document).on('click', '.word-list-card', function() {
+        let $card = $(this);
+
+        if ($card.hasClass('locked')) {
+            alert('Danh sách này đang khoá. Vui lòng mua khoá học tương ứng để mở.');
             return;
         }
 
-        let listId = $(this).data('list-id');
-        let listType = $(this).data('list-type');
-        let expandedSection = $(this).find('.word-list-expanded');
+        let listId    = $card.data('list-id');
+        let listType  = $card.data('list-type');
+        let $expanded = $card.find('.word-list-expanded');
 
-        if (expandedSection.hasClass('show')) {
-            expandedSection.removeClass('show');
+        if ($expanded.hasClass('show')) {
+            $expanded.removeClass('show');
+            return;
+        }
+
+        $('.word-list-expanded').removeClass('show');
+        $expanded.addClass('show');
+
+        if (listType === 'my') {
+            loadMyWordList();
         } else {
-            // Collapse other expanded sections
-            $('.word-list-expanded').removeClass('show');
-            expandedSection.addClass('show');
-            
-            // Load words if not already loaded
-            if (listType === 'academic') {
-                loadAcademicWordList(listId);
-            } else {
-                loadMyWordList();
-            }
+            loadWordList(listId, listType, containerOf($card));
         }
     });
 
-    // Load Academic Word List
-    function loadAcademicWordList(listId) {
-        $.ajax({
-            url: '/panel/dictionary/academic-word-lists/' + listId,
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    renderWords(response.data.words, listId, 'academic');
-                }
-            },
-            error: function(error) {
-                console.error('Error loading word list:', error);
+    // Academic hoac Bundle
+    function loadWordList(listId, listType, $container) {
+        let url = listType === 'bundle'
+            ? '/panel/dictionary/bundle-word-lists/' + listId
+            : '/panel/dictionary/academic-word-lists/' + listId;
+
+        $container.html('<p>Đang tải...</p>');
+
+        $.get(url, function(response) {
+            if (response.success) {
+                renderWords(response.data.words, listId, listType, $container);
+            } else {
+                $container.html('<p>' + esc(response.message || 'Không tải được danh sách.') + '</p>');
             }
+        }).fail(function() {
+            $container.html('<p>Không tải được danh sách từ.</p>');
         });
     }
 
-    // Load My Word List
+    // My Word List
     function loadMyWordList() {
-        $.ajax({
-            url: '/panel/dictionary/my-word-list',
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    renderWords(response.data.flashcards, response.data.id, 'my');
-                }
-            },
-            error: function(error) {
-                console.error('Error loading my word list:', error);
-            }
+        $.get('/panel/dictionary/my-word-list', function(response) {
+            if (!response.success) return;
+
+            let $card = $('.word-list-card[data-list-type="my"]');
+            renderWords(response.data.flashcards, response.data.id, 'my', containerOf($card));
         });
     }
 
-    // Render words in the list
-    function renderWords(words, listId, listType) {
-        let container = listType === 'academic' ? 
-            $('#words-' + listId) : 
-            $('#words-my-' + listId);
-        
-        container.empty();
+    /* =========================================================
+     * Render danh sach tu
+     * ======================================================= */
+    function renderWords(words, listId, listType, $container) {
+        $container.empty();
 
-        words.forEach(function(word) {
-            let wordHtml = `
-                <div class="word-item" data-word-id="${word.id}" data-word="${word.word}">
-                    <input type="checkbox" class="word-checkbox" data-word-id="${word.id}">
-                    <div class="word-content">
-                        <div class="word-text">${word.word}</div>
-                        ${word.pronunciation ? `<div class="word-pronunciation">${word.pronunciation}</div>` : ''}
-                        <div class="word-definition">${word.definition}</div>
-                    </div>
-                    <div class="learned-badge ${word.is_learned ? 'show' : ''}" 
-                         data-word-id="${word.id}" 
-                         title="Đánh dấu đã học">
-                        <i class="iconsax" data-icon="tick-circle"></i>
-                    </div>
-                </div>
-            `;
-            container.append(wordHtml);
+        if (!words || words.length === 0) {
+            $container.html('<p>Chưa có từ nào.</p>');
+        }
+
+        (words || []).forEach(function(word) {
+            let source = word.word_source || 'user';
+
+            $container.append(
+                '<div class="word-item" data-word-id="' + word.id + '" data-word-source="' + esc(source) + '">' +
+                    '<input type="checkbox" class="word-checkbox" data-word-id="' + word.id + '">' +
+                    '<div class="word-content">' +
+                        '<div class="word-text">' + esc(word.word) + '</div>' +
+                        (word.pronunciation ? '<div class="word-pronunciation">' + esc(word.pronunciation) + '</div>' : '') +
+                        '<div class="word-definition">' + esc(word.definition) + '</div>' +
+                    '</div>' +
+                    '<div class="learned-badge ' + (word.is_learned ? 'show' : '') + '" ' +
+                         'data-word-id="' + word.id + '" ' +
+                         'data-word-source="' + esc(source) + '" ' +
+                         'title="Đánh dấu đã học">' +
+                        '<i class="iconsax" data-icon="tick-circle"></i>' +
+                    '</div>' +
+                '</div>'
+            );
         });
 
-        currentWordListId = listId;
+        currentWordListId   = listId;
         currentWordListType = listType;
     }
 
-    // Mark word as learned
+    $(document).on('click', '.word-item', function(e) {
+        if ($(e.target).is('.word-checkbox') || $(e.target).closest('.learned-badge').length) return;
+        e.stopPropagation();
+
+        let $item  = $(this);
+        let source = $item.data('word-source');
+
+        lastSectionSelector = $('#myWordListSection').hasClass('hidden')
+            ? '#academicWordListsSection'
+            : '#myWordListSection';
+
+        // Academic: id thuoc bang academic_word_list_words, khong phai flashcard
+        if (source === 'academic') {
+            searchDictionary($item.find('.word-text').text());
+            return;
+        }
+
+        $.get('/panel/dictionary/flashcards/' + $item.data('word-id') + '/detail', function(res) {
+            if (!res.success) return;
+            res.data.word_source === 'bundle'
+                ? renderTeacherWordDetail(res.data)
+                : searchDictionary(res.data.word);
+        }).fail(function() {
+            alert('Không tải được chi tiết từ.');
+        });
+    });
+
+    // Ve chi tiet tu noi dung teacher upload
+    function renderTeacherWordDetail(w) {
+        $('#academicWordListsSection, #myWordListSection, #practiceModeContainer').addClass('hidden');
+        $('#dictionaryResult').removeClass('hidden');
+
+        $('#resultWord').text(w.word || '');
+        $('#pronunciationUK').text(w.pronunciation || '/--/');
+        $('#pronunciationUS').text(w.pronunciation || '/--/');
+
+        currentAudioUK = w.audio_url ? new Audio(w.audio_url) : null;
+        currentAudioUS = currentAudioUK;
+        $('#audioUKBtn, #audioUSBtn').prop('disabled', !currentAudioUK);
+
+        let html = '<div class="part-of-speech-section">';
+
+        if (w.image_url) {
+            html += '<img src="' + esc(w.image_url) + '" alt="" ' +
+                    'style="max-width:320px;border-radius:12px;margin-bottom:16px;">';
+        }
+        if (w.part_of_speech) {
+            html += '<div class="pos-header"><span class="pos-title">' + esc(w.part_of_speech) + '</span></div>';
+        }
+        if (w.definition) {
+            html += '<div class="definition-item"><div class="definition-text">' + esc(w.definition) + '</div></div>';
+        }
+        if (w.translation_vi) {
+            html += '<div class="definition-item"><div class="definition-text">' +
+                    '<strong>Nghĩa tiếng Việt:</strong> ' + esc(w.translation_vi) + '</div></div>';
+        }
+        if (w.collocation) {
+            html += '<div class="definition-item"><div class="definition-text">' +
+                    '<strong>Collocation:</strong> ' + esc(w.collocation) + '</div></div>';
+        }
+        if (w.example) {
+            html += '<div class="definition-item"><div class="example-text">• ' + esc(w.example) + '</div></div>';
+        }
+
+        html += '</div>';
+        $('#definitionsSection').html(html);
+    }
+
+    /* =========================================================
+     * Danh dau da hoc
+     * ======================================================= */
     $(document).on('click', '.learned-badge', function(e) {
         e.stopPropagation();
-        
-        let wordId = $(this).data('word-id');
-        
-        $.ajax({
-            url: '/panel/dictionary/academic-word-lists/mark-learned',
-            method: 'POST',
-            data: {
-                word_id: wordId,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    $(`.learned-badge[data-word-id="${wordId}"]`).addClass('show');
-                }
+
+        let $badge = $(this);
+        let wordId = $badge.data('word-id');
+
+        // Chi academic word list moi co endpoint mark-learned theo word_id.
+        // Tu bundle / my word list duoc danh dau tu dong sau khi tra loi dung khi luyen tap.
+        if (currentWordListType !== 'academic') {
+            return;
+        }
+
+        $.post('/panel/dictionary/academic-word-lists/mark-learned', {
+            word_id: wordId,
+            _token: CSRF
+        }, function(response) {
+            if (response.success) {
+                $badge.addClass('show');
             }
         });
     });
 
-    // Select All
+    /* =========================================================
+     * Select / Deselect / Delete
+     * ======================================================= */
     $(document).on('click', '.btn-select-all', function(e) {
         e.stopPropagation();
         $(this).closest('.word-list-expanded').find('.word-checkbox').prop('checked', true);
     });
 
-    // Deselect All
     $(document).on('click', '.btn-deselect-all', function(e) {
         e.stopPropagation();
         $(this).closest('.word-list-expanded').find('.word-checkbox').prop('checked', false);
     });
 
-    // Delete words from My Word List
     $(document).on('click', '.btn-delete', function(e) {
         e.stopPropagation();
-        
-        let selectedIds = [];
-        $('.word-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('word-id'));
-        });
+
+        let $expanded   = $(this).closest('.word-list-expanded');
+        let selectedIds = checkedIdsIn($expanded);
 
         if (selectedIds.length === 0) {
-            alert('Please select words to delete');
+            alert('Vui lòng chọn từ cần xoá.');
             return;
         }
 
-        if (!confirm('Are you sure you want to delete these words?')) {
+        if (!confirm('Bạn chắc chắn muốn xoá ' + selectedIds.length + ' từ khỏi danh sách?')) {
             return;
         }
 
-        // TODO: Implement bulk delete API
-        console.log('Deleting words:', selectedIds);
+        $.post('/panel/dictionary/my-word-list/bulk-delete', {
+            flashcard_ids: selectedIds,
+            _token: CSRF
+        }, function(response) {
+            if (response.success) {
+                alert(response.message);
+                loadMyWordList();
+            }
+        }).fail(function() {
+            alert('Xoá thất bại. Vui lòng thử lại.');
+        });
     });
 
-    // Start Practice
+    /* =========================================================
+     * Luyen tap
+     * ======================================================= */
     $(document).on('click', '.btn-practice', function(e) {
         e.stopPropagation();
-        
-        let selectedIds = [];
-        $('.word-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('word-id'));
-        });
+
+        let $expanded   = $(this).closest('.word-list-expanded');
+        let selectedIds = checkedIdsIn($expanded);
 
         if (selectedIds.length === 0) {
-            alert('Please select words to practice');
+            alert('Vui lòng chọn từ để luyện tập.');
             return;
         }
 
         startPractice(selectedIds);
     });
 
-    // Start Practice Session
     function startPractice(wordIds) {
-        let url = currentWordListType === 'academic' ? 
-            '/panel/dictionary/practice/start' : 
-            '/panel/dictionary/practice/start-my-word-list';
-        
-        let data = {
-            _token: $('meta[name="csrf-token"]').attr('content')
-        };
+        let url  = '/panel/dictionary/practice/start-my-word-list';
+        let data = { _token: CSRF };
 
         if (currentWordListType === 'academic') {
+            url = '/panel/dictionary/practice/start';
             data.word_list_id = currentWordListId;
-            data.word_ids = wordIds;
+            data.word_ids     = wordIds;
+        } else if (currentWordListType === 'bundle') {
+            url = '/panel/dictionary/practice/start-bundle-word-list';
+            data.vocabulary_set_id = currentWordListId;
+            data.flashcard_ids     = wordIds;
         } else {
             data.flashcard_ids = wordIds;
         }
 
-        $.ajax({
-            url: url,
-            method: 'POST',
-            data: data,
-            success: function(response) {
-                if (response.success) {
-                    currentQuestions = response.data.questions;
-                    currentQuestionIndex = 0;
-                    correctAnswers = 0;
-                    incorrectAnswers = 0;
-                    
-                    // Hide word lists and show practice mode
-                    $('#academicWordListsSection, #myWordListSection').addClass('hidden');
-                    $('#practiceModeContainer').removeClass('hidden');
-                    
-                    showQuestion();
-                }
-            },
-            error: function(error) {
-                console.error('Error starting practice:', error);
-                alert('Failed to start practice session');
+        $.post(url, data, function(response) {
+            if (!response.success) {
+                alert(response.message || 'Không bắt đầu được phiên luyện tập.');
+                return;
             }
+
+            currentQuestions     = response.data.questions;
+            currentQuestionIndex = 0;
+            correctAnswers       = 0;
+            incorrectAnswers     = 0;
+
+            $('#academicWordListsSection, #myWordListSection').addClass('hidden');
+            $('#practiceModeContainer').removeClass('hidden');
+
+            showQuestion();
+        }).fail(function() {
+            alert('Không bắt đầu được phiên luyện tập.');
         });
     }
 
-    // Show Question
+    // API tra ve 2 dinh dang khac nhau:
+    //   academic       -> answers: ["word", "word", ...]
+    //   my / bundle    -> answers: [{word, pronunciation}, ...]
+    // Chuan hoa ve cung 1 dang de tranh loi [object Object]
+    function normalizeAnswers(answers) {
+        return (answers || []).map(function(a) {
+            if (typeof a === 'string') {
+                return { word: a, pronunciation: '' };
+            }
+            return { word: a.word || '', pronunciation: a.pronunciation || '' };
+        });
+    }
+
     function showQuestion() {
         if (currentQuestionIndex >= currentQuestions.length) {
-            // Practice finished
+            alert('Hoàn thành! Đúng: ' + correctAnswers + ' / Sai: ' + incorrectAnswers);
             exitPractice();
             return;
         }
 
         let question = currentQuestions[currentQuestionIndex];
         selectedAnswer = null;
-        
+
         $('#questionText').text(question.question);
         $('#correctCount').text(correctAnswers);
         $('#incorrectCount').text(incorrectAnswers);
         $('#nextQuestionBtn').prop('disabled', true);
-        
-        let answersHtml = '';
-        question.answers.forEach(function(answer) {
-            answersHtml += `
-                <div class="answer-card" data-answer="${answer}">
-                    <div class="answer-word">${answer}</div>
-                    <div class="answer-pronunciation">${question.correct_answer === answer ? '' : ''}</div>
-                </div>
-            `;
+
+        let html = '';
+        normalizeAnswers(question.answers).forEach(function(a) {
+            html += '<div class="answer-card" data-answer="' + esc(a.word) + '">' +
+                        '<div class="answer-word">' + esc(a.word) + '</div>' +
+                        (a.pronunciation ? '<div class="answer-pronunciation">' + esc(a.pronunciation) + '</div>' : '') +
+                    '</div>';
         });
-        
-        $('#answersGrid').html(answersHtml);
+
+        $('#answersGrid').html(html);
     }
 
-    // Select Answer
     $(document).on('click', '.answer-card', function() {
-        if (selectedAnswer !== null) return; // Already answered
-        
-        selectedAnswer = $(this).data('answer');
-        let question = currentQuestions[currentQuestionIndex];
+        if (selectedAnswer !== null) return;   // da tra loi roi
+
+        selectedAnswer = String($(this).data('answer'));
+
+        let question  = currentQuestions[currentQuestionIndex];
         let isCorrect = selectedAnswer === question.correct_answer;
-        
+
         $(this).addClass(isCorrect ? 'correct' : 'incorrect');
-        
-        // Show correct answer if wrong
+
         if (!isCorrect) {
-            $(`.answer-card[data-answer="${question.correct_answer}"]`).addClass('correct');
+            $('.answer-card').filter(function() {
+                return String($(this).data('answer')) === question.correct_answer;
+            }).addClass('correct');
         }
-        
-        // Update scores
-        if (isCorrect) {
-            correctAnswers++;
-        } else {
-            incorrectAnswers++;
-        }
-        
+
+        isCorrect ? correctAnswers++ : incorrectAnswers++;
+
         $('#correctCount').text(correctAnswers);
         $('#incorrectCount').text(incorrectAnswers);
         $('#nextQuestionBtn').prop('disabled', false);
-        
-        // Submit answer to server
-        let wordKey = currentWordListType === 'academic' ? 'word_id' : 'flashcard_id';
+
         let submitData = {
-            [wordKey]: question[wordKey],
             selected_answer: selectedAnswer,
-            correct_answer: question.correct_answer,
-            _token: $('meta[name="csrf-token"]').attr('content')
+            correct_answer:  question.correct_answer,
+            _token: CSRF
         };
-        
-        $.ajax({
-            url: '/panel/dictionary/practice/submit-answer',
-            method: 'POST',
-            data: submitData
-        });
+
+        if (currentWordListType === 'academic') {
+            submitData.word_id = question.word_id;
+        } else {
+            submitData.flashcard_id = question.flashcard_id;
+        }
+
+        $.post('/panel/dictionary/practice/submit-answer', submitData);
     });
 
-    // Next Question
     $('#nextQuestionBtn').on('click', function() {
         currentQuestionIndex++;
         showQuestion();
     });
 
-    // Exit Practice
     $('#exitPracticeBtn').on('click', function() {
         exitPractice();
     });
 
     function exitPractice() {
         $('#practiceModeContainer').addClass('hidden');
-        
-        if (currentWordListType === 'academic') {
-            $('#academicWordListsSection').removeClass('hidden');
-        } else {
+
+        if (currentWordListType === 'my') {
             $('#myWordListSection').removeClass('hidden');
-        }
-        
-        // Reload the word list to show updated learned status
-        if (currentWordListType === 'academic') {
-            loadAcademicWordList(currentWordListId);
-        } else {
             loadMyWordList();
+        } else {
+            $('#academicWordListsSection').removeClass('hidden');
+            let $expanded = $('.word-list-expanded.show');
+            loadWordList(currentWordListId, currentWordListType, $expanded.find('.words-container'));
         }
     }
 
-    // Search functionality
+    /* =========================================================
+     * Tra tu dien (API ngoai)
+     * ======================================================= */
     $('#searchBtn').on('click', function() {
-        let searchTerm = $('#searchInput').val().trim();
-        if (searchTerm) {
-            searchDictionary(searchTerm);
+        let term = $('#searchInput').val().trim();
+        if (term) {
+            lastSectionSelector = '#academicWordListsSection';
+            searchDictionary(term);
         }
     });
 
@@ -1609,135 +1723,114 @@
             $('#searchBtn').click();
         }
     });
-    
-    // Search Dictionary
+
     function searchDictionary(word) {
         $.ajax({
             url: '/panel/dictionary/search-first',
             method: 'POST',
-            data: {
-                word: word,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
+            data: { word: word, _token: CSRF },
             beforeSend: function() {
-                $('#searchBtn').prop('disabled', true).text('Searching...');
+                $('#searchBtn').prop('disabled', true).text('Đang tìm...');
             },
             success: function(response) {
                 if (response.success && response.data) {
                     displayDictionaryResult(response.data);
                     currentSearchedWord = word;
                 } else {
-                    alert('Word not found. Please try another word.');
+                    alert(response.message || 'Không tìm thấy từ này.');
                 }
             },
-            error: function(error) {
-                console.error('Error searching dictionary:', error);
-                alert('Failed to search. Please try again.');
+            error: function() {
+                alert('Tìm kiếm thất bại. Vui lòng thử lại.');
             },
             complete: function() {
                 $('#searchBtn').prop('disabled', false).text('Search');
             }
         });
     }
-    
-    // Display Dictionary Result
+
     function displayDictionaryResult(data) {
-        // Hide word lists and show dictionary result
         $('#academicWordListsSection, #myWordListSection, #practiceModeContainer').addClass('hidden');
         $('#dictionaryResult').removeClass('hidden');
 
-        // The controller's transformDictionaryData returns:
-        //   data.headword           — the word string
-        //   data.pronunciations[]   — [{label:'UK'|'US', ipa:'...', audio:'...'}]
-        //   data.meanings[]         — [{partOfSpeech, definitions:[{definition, example}]}]
         let wordText = data.headword || data.word || '';
         $('#resultWord').text(wordText);
 
-        // Pronunciations
         let ukPhonetic = '/--/', usPhonetic = '/--/';
         let ukAudio = '', usAudio = '';
 
-        if (data.pronunciations && data.pronunciations.length > 0) {
-            data.pronunciations.forEach(function(p) {
-                let lbl = (p.label || '').toUpperCase();
-                if (lbl === 'UK') {
-                    ukPhonetic = p.ipa || '/--/';
-                    ukAudio    = p.audio || '';
-                } else if (lbl === 'US') {
-                    usPhonetic = p.ipa || '/--/';
-                    usAudio    = p.audio || '';
-                } else if (ukPhonetic === '/--/') {
-                    ukPhonetic = p.ipa || '/--/';
-                    ukAudio    = p.audio || '';
-                }
-            });
-        }
+        (data.pronunciations || []).forEach(function(p) {
+            let lbl = (p.label || '').toUpperCase();
+            if (lbl === 'UK') {
+                ukPhonetic = p.ipa || '/--/';
+                ukAudio    = p.audio || '';
+            } else if (lbl === 'US') {
+                usPhonetic = p.ipa || '/--/';
+                usAudio    = p.audio || '';
+            } else if (ukPhonetic === '/--/') {
+                ukPhonetic = p.ipa || '/--/';
+                ukAudio    = p.audio || '';
+            }
+        });
 
         $('#pronunciationUK').text(ukPhonetic);
         $('#pronunciationUS').text(usPhonetic);
 
-        // Store audio URLs
         currentAudioUK = ukAudio ? new Audio(ukAudio) : null;
         currentAudioUS = usAudio ? new Audio(usAudio) : null;
 
-        // Enable/disable audio buttons
         $('#audioUKBtn').prop('disabled', !currentAudioUK);
         $('#audioUSBtn').prop('disabled', !currentAudioUS);
 
-        // Display definitions grouped by part of speech
-        let definitionsHtml = '';
+        let html = '';
         if (data.meanings && data.meanings.length > 0) {
-            data.meanings.forEach(function(meaning, index) {
-                definitionsHtml += '<div class="part-of-speech-section">';
-                definitionsHtml += '<div class="pos-header">';
-                definitionsHtml += '<span class="pos-title">' + meaning.partOfSpeech + '</span>';
-                definitionsHtml += '<button class="btn-save-pos" data-pos="' + meaning.partOfSpeech + '" data-word="' + wordText + '">';
-                definitionsHtml += 'Save</button>';
-                definitionsHtml += '</div>';
+            data.meanings.forEach(function(meaning) {
+                html += '<div class="part-of-speech-section">';
+                html += '<div class="pos-header">';
+                html += '<span class="pos-title">' + esc(meaning.partOfSpeech) + '</span>';
+                html += '<button class="btn-save-pos" data-pos="' + esc(meaning.partOfSpeech) + '" ' +
+                        'data-word="' + esc(wordText) + '">Save</button>';
+                html += '</div>';
 
-                if (meaning.definitions && meaning.definitions.length > 0) {
-                    meaning.definitions.forEach(function(def, defIndex) {
-                        definitionsHtml += '<div class="definition-item">';
-                        definitionsHtml += '<div class="definition-text">' + (defIndex + 1) + '. ' + def.definition + '</div>';
+                (meaning.definitions || []).forEach(function(def, i) {
+                    html += '<div class="definition-item">';
+                    html += '<div class="definition-text">' + (i + 1) + '. ' + esc(def.definition) + '</div>';
+                    if (def.example) {
+                        html += '<div class="example-text">• ' + esc(def.example) + '</div>';
+                    }
+                    html += '</div>';
+                });
 
-                        if (def.example) {
-                            definitionsHtml += '<div class="example-text">• ' + def.example + '</div>';
-                        }
-
-                        definitionsHtml += '</div>';
-                    });
-                }
-
-                definitionsHtml += '</div>';
+                html += '</div>';
             });
         } else {
-            definitionsHtml = '<p>No definitions found.</p>';
+            html = '<p>Không có định nghĩa.</p>';
         }
 
-        $('#definitionsSection').html(definitionsHtml);
+        $('#definitionsSection').html(html);
 
-        // Bind save buttons
-        $('.btn-save-pos').on('click', function(e) {
-            e.stopPropagation();
-            let btn = $(this);
-            let word = btn.data('word');
-            let partOfSpeech = btn.data('pos');
-
-            let meaning = data.meanings.find(m => m.partOfSpeech === partOfSpeech);
-            let definition = '';
-            let example = '';
-
-            if (meaning && meaning.definitions && meaning.definitions.length > 0) {
-                definition = meaning.definitions[0].definition;
-                example = meaning.definitions[0].example || '';
-            }
-
-            saveWordToFlashcard(word, partOfSpeech, definition, example, btn);
-        });
+        // Luu lai de nut Save doc duoc
+        $('#definitionsSection').data('meanings', data.meanings || []);
     }
-    
-    // Save word to flashcard with part of speech
-    function saveWordToFlashcard(word, partOfSpeech, definition, example, btn) {
+
+    // Nut Save theo tung tu loai (delegated — tranh bind chong nhieu lan)
+    $(document).on('click', '.btn-save-pos', function(e) {
+        e.stopPropagation();
+
+        let $btn         = $(this);
+        let word         = $btn.data('word');
+        let partOfSpeech = $btn.data('pos');
+        let meanings     = $('#definitionsSection').data('meanings') || [];
+
+        let meaning    = meanings.find(function(m) { return m.partOfSpeech === partOfSpeech; });
+        let definition = '';
+        let example    = '';
+
+        if (meaning && meaning.definitions && meaning.definitions.length > 0) {
+            definition = meaning.definitions[0].definition;
+            example    = meaning.definitions[0].example || '';
+        }
+
         $.ajax({
             url: '/panel/dictionary/save-flashcard',
             method: 'POST',
@@ -1746,148 +1839,87 @@
                 part_of_speech: partOfSpeech,
                 definition: definition,
                 example: example,
-                _token: $('meta[name="csrf-token"]').attr('content')
+                _token: CSRF
             },
             beforeSend: function() {
-                btn.prop('disabled', true).text('Saving...');
+                $btn.prop('disabled', true).text('Đang lưu...');
             },
             success: function(response) {
                 if (response.success) {
-                    btn.removeClass('saved').addClass('saved').text('Saved');
-                    setTimeout(function() {
-                        btn.prop('disabled', false);
-                    }, 1000);
+                    $btn.addClass('saved').text('Đã lưu');
+                    setTimeout(function() { $btn.prop('disabled', false); }, 1000);
                 } else {
-                    alert('Failed to save word');
-                    btn.prop('disabled', false).text('Save');
+                    alert(response.message || 'Lưu thất bại.');
+                    $btn.prop('disabled', false).text('Save');
                 }
             },
-            error: function(error) {
-                console.error('Error saving flashcard:', error);
-                alert('Failed to save word');
-                btn.prop('disabled', false).text('Save');
-            }
-        });
-    }
-    
-    // Back button
-    $('#backBtn').on('click', function() {
-        $('#dictionaryResult').addClass('hidden');
-        $('#academicWordListsSection').removeClass('hidden');
-        
-        // Clear audio
-        if (currentAudioUK) {
-            currentAudioUK.pause();
-            currentAudioUK = null;
-        }
-        if (currentAudioUS) {
-            currentAudioUS.pause();
-            currentAudioUS = null;
-        }
-    });
-    
-    // Play UK Audio
-    $('#audioUKBtn').on('click', function() {
-        if (currentAudioUK) {
-            currentAudioUK.play();
-        }
-    });
-    
-    // Play US Audio
-    $('#audioUSBtn').on('click', function() {
-        if (currentAudioUS) {
-            currentAudioUS.play();
-        }
-    });
-    
-    // Save Word to My Word List
-    $('#saveWordBtn').on('click', function() {
-        if (!currentSearchedWord) return;
-        
-        let word = $('#resultWord').text();
-        let definition = '';
-        let pronunciation = $('#pronunciationUS').text();
-        
-        // Get first definition
-        let firstDef = $('#definitionsSection .definition-text').first().text();
-        if (firstDef) {
-            definition = firstDef.replace(/^\d+\.\s*/, ''); // Remove number prefix
-        }
-        
-        $.ajax({
-            url: '/panel/dictionary/save-flashcard',
-            method: 'POST',
-            data: {
-                word: word,
-                pronunciation: pronunciation,
-                definition: definition,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            beforeSend: function() {
-                $('#saveWordBtn').prop('disabled', true).text('Saving...');
-            },
-            success: function(response) {
-                if (response.success) {
-                    alert('Word saved to My Word List successfully!');
-                    $('#saveWordBtn').text('Saved ✓');
-                } else {
-                    alert(response.message || 'Failed to save word');
-                    $('#saveWordBtn').prop('disabled', false).text('Save');
-                }
-            },
-            error: function(error) {
-                console.error('Error saving word:', error);
-                alert('Failed to save word. Please try again.');
-                $('#saveWordBtn').prop('disabled', false).text('Save');
+            error: function() {
+                alert('Lưu thất bại.');
+                $btn.prop('disabled', false).text('Save');
             }
         });
     });
 
-    // Filter functionality
+    /* =========================================================
+     * Back + Audio
+     * ======================================================= */
+    $('#backBtn').on('click', function() {
+        $('#dictionaryResult').addClass('hidden');
+        $(lastSectionSelector).removeClass('hidden');
+
+        if (currentAudioUK) { currentAudioUK.pause(); currentAudioUK = null; }
+        if (currentAudioUS) { currentAudioUS.pause(); currentAudioUS = null; }
+    });
+
+    $('#audioUKBtn').on('click', function() {
+        if (currentAudioUK) currentAudioUK.play();
+    });
+
+    $('#audioUSBtn').on('click', function() {
+        if (currentAudioUS) currentAudioUS.play();
+    });
+
+    /* =========================================================
+     * Loc / tim trong danh sach
+     * ======================================================= */
     $(document).on('click', '.filter-btn', function(e) {
         e.stopPropagation();
-        
-        let filter = $(this).data('filter');
-        let container = $(this).closest('.word-list-expanded').find('.words-container');
-        let words = container.find('.word-item');
-        
+
+        let filter     = $(this).data('filter');
+        let $container = $(this).closest('.word-list-expanded').find('.words-container');
+        let $words     = $container.find('.word-item');
+
         if (filter === 'alphabet') {
-            // Sort alphabetically
-            words.sort(function(a, b) {
-                let aText = $(a).find('.word-text').text();
-                let bText = $(b).find('.word-text').text();
-                return aText.localeCompare(bText);
+            let sorted = $words.sort(function(a, b) {
+                return $(a).find('.word-text').text().localeCompare($(b).find('.word-text').text());
             });
-            container.html(words);
+            $container.html(sorted);
         } else if (filter === 'learned') {
-            // Show only learned words
-            words.each(function() {
-                if ($(this).find('.learned-badge').hasClass('show')) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
+            let showOnlyLearned = !$(this).hasClass('active');
+            $words.each(function() {
+                let learned = $(this).find('.learned-badge').hasClass('show');
+                $(this).toggle(showOnlyLearned ? learned : true);
             });
         }
-        
+
         $(this).toggleClass('active');
     });
 
-    // Search within word list
     $(document).on('keyup', '.filter-input', function(e) {
         e.stopPropagation();
-        
-        let searchTerm = $(this).val().toLowerCase();
-        let container = $(this).closest('.word-list-expanded').find('.words-container');
-        
-        container.find('.word-item').each(function() {
+
+        let term       = $(this).val().toLowerCase();
+        let $container = $(this).closest('.word-list-expanded').find('.words-container');
+
+        $container.find('.word-item').each(function() {
             let word = $(this).find('.word-text').text().toLowerCase();
-            if (word.includes(searchTerm)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
+            $(this).toggle(word.indexOf(term) !== -1);
         });
+    });
+
+    // Chan click ben trong vung mo rong lam sap danh sach
+    $(document).on('click', '.word-list-expanded', function(e) {
+        e.stopPropagation();
     });
 
 })(jQuery);

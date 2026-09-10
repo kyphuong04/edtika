@@ -139,9 +139,11 @@ class IeltsTestController extends Controller
             // Bài "Full đề" (nhiều section cùng 1 skill, VD 3 Reading passage
             // gộp trong 1 test) khác với "Bài lẻ" (chỉ 1 section/skill đó).
             // Dùng để phân biệt 2 checkbox filter "Bài lẻ" / "Full đề".
-            $test->is_full_test = $test->primary_skill
-                ? $test->sections->where('skill', $test->primary_skill)->count() > 1
-                : false;
+            $test->is_full_test = $test->practice_scope
+                ? $test->practice_scope === IeltsTest::PRACTICE_SCOPE_FULL
+                : ($test->primary_skill
+                    ? $test->sections->where('skill', $test->primary_skill)->count() > 1
+                    : false);
 
             // Section đại diện để hiển thị trên card (Passage/Part label +
             // tiêu đề nội dung). Với "Full đề" card chưa có thiết kế riêng

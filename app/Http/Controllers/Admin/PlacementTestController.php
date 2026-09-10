@@ -102,9 +102,8 @@ class PlacementTestController extends Controller
                 'has_audio'               => $q->has_audio,
                 'linked_passage_id'       => $q->linked_passage_id,
                 'answer_help'             => $q->answer_help,
-                'audio_url'               => $q->audio_path ? Storage::url($q->audio_path) : null,
-                'existing_audio_path'     => $q->audio_path,
-                'audio_input_name'        => null,
+                'has_audio'               => (bool) $q->audio_clip_id,
+                'audio_clip_id'           => $q->audio_clip_id,
                 'question_text'           => $q->question_text,
                 'options'                 => $q->type === 'multiple_choice' ? ($q->options ?? []) : [],
                 // listening_image_choice: options là mảng đường dẫn ảnh -> kèm URL để preview
@@ -130,11 +129,15 @@ class PlacementTestController extends Controller
         [$existingTests, $poolProgress] = $this->getTestsListWithProgress();
         $speakingQuestions = PlacementSpeakingQuestion::orderByDesc('created_at')->get();
 
-        // return view('admin.placement_tests.form', compact(
-        //     'pageTitle', 'formAction', 'placementTest', 'questionsData', 'existingTests', 'poolProgress', 'speakingQuestions'
-        // ));
+        $audioClipsData = collect($placementTest->audio_clips ?? [])->map(fn ($clip) => [
+            'id'         => $clip['id'],
+            'label'      => $clip['label'] ?? '',
+            'path'       => $clip['path'] ?? null,
+            'input_name' => null,
+            'url'        => !empty($clip['path']) ? Storage::url($clip['path']) : null,
+        ])->values()->all();
         return view('admin.placement_tests.form', compact(
-            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'passagesData', 'existingTests', 'poolProgress', 'speakingQuestions'
+            'pageTitle', 'formAction', 'placementTest', 'questionsData', 'passagesData', 'existingTests', 'poolProgress', 'speakingQuestions', 'audioClipsData'
         ));
     }
 
@@ -153,7 +156,8 @@ class PlacementTestController extends Controller
                 'created_by'       => auth()->id(),
             ]);
 
-            $this->syncQuestions($test, $request);
+            $clipMap = $this->syncAudioClips($test, $request);
+            $this->syncQuestions($test, $request, $clipMap);
 
             DB::commit();
 
@@ -185,20 +189,17 @@ class PlacementTestController extends Controller
                 'status'          => $request->input('submit_action') === 'publish' ? 'published' : $placementTest->status,
             ]);
 
-            // Thu thập toàn bộ path file (audio + ảnh) đang được các câu hỏi CŨ
-            // sử dụng — nhưng CHƯA xoá file vật lý vội. Nếu xoá ngay ở đây, những
-            // câu hỏi mà người dùng không đổi file mới (JS gửi lại qua
-            // existing_audio_path / existing_option_images) sẽ bị mất file dù
-            // path trong DB vẫn còn trỏ tới đó -> 404 khi phát audio/hiển thị ảnh.
-            $oldFilePaths = [];
+            $clipMap = $this->syncAudioClips($placementTest, $request);
+
+            // Ảnh của listening_image_choice vẫn gắn 1-1 với câu hỏi nên vẫn cần
+            // diff thủ công quanh chu trình xoá-tạo-lại câu hỏi. Audio đã do
+            // syncAudioClips() lo, không cần gom ở đây nữa.
+            $oldImagePaths = [];
             foreach ($placementTest->questions as $oldQuestion) {
-                if ($oldQuestion->audio_path) {
-                    $oldFilePaths[] = $oldQuestion->audio_path;
-                }
                 if ($oldQuestion->type === 'listening_image_choice') {
                     foreach (($oldQuestion->options ?? []) as $imgPath) {
                         if ($imgPath) {
-                            $oldFilePaths[] = $imgPath;
+                            $oldImagePaths[] = $imgPath;
                         }
                     }
                 }
@@ -206,27 +207,20 @@ class PlacementTestController extends Controller
 
             $placementTest->questions()->delete();
 
-            $this->syncQuestions($placementTest, $request);
+            $this->syncQuestions($placementTest, $request, $clipMap);
 
-            // Sau khi câu hỏi mới đã được ghi xong, lấy danh sách path ĐANG được
-            // dùng bởi câu hỏi mới. Chỉ xoá những file cũ KHÔNG còn xuất hiện
-            // trong danh sách này nữa (tức thực sự đã bị thay thế / không dùng nữa).
-            $newFilePaths = [];
+            $newImagePaths = [];
             foreach ($placementTest->fresh('questions')->questions as $newQuestion) {
-                if ($newQuestion->audio_path) {
-                    $newFilePaths[] = $newQuestion->audio_path;
-                }
                 if ($newQuestion->type === 'listening_image_choice') {
                     foreach (($newQuestion->options ?? []) as $imgPath) {
                         if ($imgPath) {
-                            $newFilePaths[] = $imgPath;
+                            $newImagePaths[] = $imgPath;
                         }
                     }
                 }
             }
 
-            $filesToDelete = array_diff($oldFilePaths, $newFilePaths);
-            foreach ($filesToDelete as $path) {
+            foreach (array_diff($oldImagePaths, $newImagePaths) as $path) {
                 Storage::disk('public')->delete($path);
             }
 
@@ -248,8 +242,14 @@ class PlacementTestController extends Controller
 
     public function destroy(PlacementTest $placementTest)
     {
+        foreach (($placementTest->audio_clips ?? []) as $clip) {
+            if (!empty($clip['path'])) {
+                Storage::disk('public')->delete($clip['path']);
+            }
+        }
+
         foreach ($placementTest->questions as $question) {
-            if ($question->audio_path) {
+            if ($question->audio_path) {   // dữ liệu cũ trước migration
                 Storage::disk('public')->delete($question->audio_path);
             }
             if ($question->type === 'listening_image_choice') {
@@ -291,8 +291,91 @@ class PlacementTestController extends Controller
             'title'           => 'required|string|max:255',
             'description'     => 'nullable|string',
             'reading_passages'  => 'nullable|json',
+            'audio_clips_data' => 'nullable|json',
             'questions_data'  => 'required|string',
         ]);
+    }
+
+    /**
+     * Ghi mảng audio_clips vào đề.
+     *
+     * Với mỗi clip: nếu người dùng chọn file mới (input_name có file kèm request)
+     * thì upload; nếu không thì giữ nguyên path cũ mà JS gửi lại. Sau khi ghi
+     * xong, xoá file vật lý của những clip đã bị gỡ khỏi đề.
+     *
+     * So với cách cũ (audio gắn 1-1 câu hỏi), cleanup file ở đây gọn và an toàn
+     * hơn hẳn: không còn phụ thuộc vào chu trình questions()->delete() rồi tạo lại
+     * trong update().
+     *
+     * @return array map [clip_id => path], dùng để validate audio_clip_id của câu hỏi
+     */
+    private function syncAudioClips(PlacementTest $test, Request $request): array
+    {
+        $raw = $request->input('audio_clips_data');
+        $oldClips = $test->audio_clips ?? [];
+
+        // Form không gửi trường này -> GIỮ NGUYÊN, không coi là "đã xoá hết".
+        if ($raw === null) {
+            return array_column($oldClips, 'path', 'id');
+        }
+
+        $incoming = json_decode($raw, true) ?: [];
+
+        // Đề đang có audio mà payload rỗng -> gần như chắc chắn form chưa nạp được
+        // dữ liệu, không phải chủ ý người dùng. Dừng lại thay vì xoá file.
+        if (empty($incoming) && !empty($oldClips)
+            && $test->questions()->whereNotNull('audio_clip_id')->exists()) {
+            throw new \RuntimeException(
+                'Form không gửi lên danh sách file audio trong khi đề đang có audio. '
+                . 'Đã huỷ thao tác để tránh mất file. Hãy tải lại trang rồi thử lại.'
+            );
+        }
+        $incoming = json_decode($request->input('audio_clips_data', '[]'), true) ?: [];
+        $oldPaths = collect($test->audio_clips ?? [])->pluck('path')->filter()->values()->all();
+
+        $clips = [];
+        $seenIds = [];
+
+        foreach ($incoming as $i => $clip) {
+            $id = trim((string) ($clip['id'] ?? ''));
+
+            if ($id === '') {
+                throw new \RuntimeException('File audio #' . ($i + 1) . ' thiếu mã định danh.');
+            }
+
+            if (in_array($id, $seenIds, true)) {
+                throw new \RuntimeException('Mã file audio bị trùng: ' . $id);
+            }
+            $seenIds[] = $id;
+
+            $inputName = $clip['input_name'] ?? null;
+
+            if ($inputName && $request->hasFile($inputName)) {
+                $path = $request->file($inputName)->store('placement-tests/audio', 'public');
+            } elseif (!empty($clip['path'])) {
+                $path = $clip['path'];
+            } else {
+                throw new \RuntimeException(
+                    'File audio #' . ($i + 1) . ' (' . ($clip['label'] ?: $id) . ') chưa được chọn.'
+                );
+            }
+
+            $clips[] = [
+                'id'    => $id,
+                'label' => trim((string) ($clip['label'] ?? '')) ?: basename($path),
+                'path'  => $path,
+            ];
+        }
+
+        $test->update(['audio_clips' => $clips]);
+
+        // Chỉ xoá file KHÔNG còn được clip nào dùng nữa.
+        $newPaths = array_column($clips, 'path');
+        foreach (array_diff($oldPaths, $newPaths) as $stalePath) {
+            Storage::disk('public')->delete($stalePath);
+        }
+
+        return array_column($clips, 'path', 'id');
     }
 
     /**
@@ -305,7 +388,7 @@ class PlacementTestController extends Controller
      *  - error_correction:       ["câu đúng hoàn chỉnh"]      (so khớp không phân biệt hoa/thường)
      *  - listening_image_choice: ["A"] / ["B"] / ["C"]
      */
-    private function syncQuestions(PlacementTest $test, Request $request): void
+    private function syncQuestions(PlacementTest $test, Request $request, array $clipMap = []): void
     {
         $questions = json_decode($request->input('questions_data'), true) ?: [];
         $passages = collect($test->reading_passages ?? []);
@@ -325,20 +408,18 @@ class PlacementTestController extends Controller
                 throw new \RuntimeException('Câu ' . ($index + 1) . ' có dạng câu hỏi không hợp lệ.');
             }
 
-            // ── Audio (áp dụng cho mọi dạng, kể cả listening_image_choice) ──
-            $audioPath = null;
-            $hasAudio = !empty($q['has_audio']) || $type === 'listening_image_choice';
+            $clipId = trim((string) ($q['audio_clip_id'] ?? ''));
+            $hasAudio = $clipId !== '';
 
-            if ($hasAudio) {
-                $inputName = $q['audio_input_name'] ?? null;
+            if ($hasAudio && !isset($clipMap[$clipId])) {
+                throw new \RuntimeException(
+                    'Câu ' . ($index + 1) . ' gắn với file audio "' . $clipId . '" không tồn tại. '
+                    . 'Các file audio hiện có: [' . implode(', ', array_keys($clipMap)) . ']'
+                );
+            }
 
-                if ($inputName && $request->hasFile($inputName)) {
-                    $audioPath = $request->file($inputName)->store('placement-tests/audio', 'public');
-                } elseif (!empty($q['existing_audio_path'])) {
-                    $audioPath = $q['existing_audio_path'];
-                } else {
-                    throw new \RuntimeException('Câu ' . ($index + 1) . ' cần file audio nhưng chưa có.');
-                }
+            if ($type === 'listening_image_choice' && !$hasAudio) {
+                throw new \RuntimeException('Câu ' . ($index + 1) . ' (Listening - Image) cần chọn file audio.');
             }
 
             // ── Dữ liệu riêng theo từng dạng ──
@@ -370,9 +451,16 @@ class PlacementTestController extends Controller
                 $wordBank = !empty($q['word_bank']) ? array_values(array_filter($q['word_bank'])) : null;
                 $blankHints = $q['blank_hints'] ?? null;
                 if (!is_array($q['correct_answer'] ?? null) || count($q['correct_answer']) === 0) {
+                    throw new \RuntimeException('Câu ' . ($index + 1) . ' (Sentence Completion) chưa nhập đáp án cho các chỗ trống.');
+                }
+
+                // Số đáp án phải khớp số chỗ trống ___, nếu không MỌI học viên đều sai
+                // câu này mà không có cảnh báo nào (isAnswerCorrect yêu cầu count khớp).
+                $blankCount = preg_match_all('/_{2,}/', $q['question_text'] ?? '');
+                if ($blankCount !== count($q['correct_answer'])) {
                     throw new \RuntimeException(
-                        'Câu ' . ($index + 1) . ' gắn với đoạn văn "' . $linkedPassageId . '" không tồn tại. '
-                        . 'Các đoạn văn hiện có trong $test->reading_passages: [' . $passages->pluck('id')->implode(', ') . ']'
+                        'Câu ' . ($index + 1) . ' có ' . $blankCount . ' chỗ trống nhưng nhập '
+                        . count($q['correct_answer']) . ' đáp án.'
                     );
                 }
                 $correctAnswer = $q['correct_answer'];
@@ -416,7 +504,8 @@ class PlacementTestController extends Controller
                 'type'              => $type,
                 'has_audio'         => $hasAudio,
                 'linked_passage_id'   => $linkedPassageId,
-                'audio_path'        => $audioPath,
+                'audio_clip_id'     => $hasAudio ? $clipId : null,
+                'audio_path'        => null,
                 'question_text'     => $q['question_text'] ?? '',
                 'options'           => $options,
                 'word_bank'         => $wordBank,

@@ -793,6 +793,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/did-you-mean', 'DictionaryController@didYouMean');
         Route::get('/nearby-entries', 'DictionaryController@getNearbyEntries');
         Route::get('/entry', 'DictionaryController@getEntry');
+
+        Route::get('/flashcards/{id}/detail', 'DictionaryController@getFlashcardDetail');
+        Route::get('/bundle-word-lists/{id}', 'DictionaryController@getBundleWordList');
+        Route::post('/word-status/toggle', 'DictionaryController@toggleWordStatus');
         
         // Flashcard Management
         Route::get('/flashcards-preview', 'DictionaryController@flashcardsPreview');

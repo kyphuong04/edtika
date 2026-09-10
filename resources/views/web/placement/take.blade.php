@@ -67,6 +67,16 @@
     text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;
 }
 .pt-audio-group .pt-audio-player { margin-bottom:0; background:#fff; }
+.pt-rich ul,
+.pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
+.pt-rich ul { list-style: disc !important; }
+.pt-rich ol { list-style: decimal !important; }
+.pt-rich li { display: list-item !important; list-style: inherit !important; }
+.pt-rich p  { margin-bottom: 8px; }
+.pt-rich p:last-child { margin-bottom: 0; }
+.pt-rich [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich [style*="text-align: justify"] { text-align: justify !important; }
 </style>
 @endpush
 
