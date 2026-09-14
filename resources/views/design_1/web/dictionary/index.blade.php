@@ -10,7 +10,7 @@
     $langSwitchClass = $nextLocale === 'en' ? 'is-next-eng' : 'is-next-vie';
     $isHomeActive = request()->path() === '/';
     $isClassesActive = request()->is('classes') || request()->is('classes/*');
-    $isPlacementActive = request()->is('panel/ielts-tests/diagnostic') || request()->is('panel/ielts-tests/diagnostic/*');
+    $isPlacementActive = request()->is('placement-test') || request()->is('placement-test/*');
     $isMockActive = request()->is('panel/ielts-tests/mock') || request()->is('panel/ielts-tests/mock/*');
     $isDictionaryActive = request()->is('dictionary') || request()->is('dictionary/*') || request()->is('panel/dictionary') || request()->is('panel/dictionary/*');
     $isNewsActive = request()->is('blog') || request()->is('blog/*');
@@ -1034,11 +1034,7 @@
             <nav class="edtika-homepage__nav" aria-label="{{ $isEnglish ? 'Main Navigation' : 'Điều hướng chính' }}">
                 <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Home' : 'Trang chủ' }}</a>
                 <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Courses' : 'Khóa học' }}</a>
-                @if(auth()->check())
-                    <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
-                @else
-                    <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
-                @endif
+                <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
                 @if(auth()->check())
                     <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Mock Tests' : 'Luyện đề' }}</a>
                 @else

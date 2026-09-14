@@ -6,7 +6,7 @@
     $nextLocaleLabel = $isEnglish ? 'VI' : 'ENG';
     $isHomeActive = request()->path() === '/';
     $isClassesActive = request()->is('classes') || request()->is('classes/*');
-    $isPlacementActive = request()->is('panel/ielts-tests/practice') || request()->is('panel/ielts-tests/practice/*');
+    $isPlacementActive = request()->is('placement-test') || request()->is('placement-test/*');
     $isMockActive = request()->is('panel/ielts-tests/mock') || request()->is('panel/ielts-tests/mock/*');
     $isDictionaryActive = request()->is('panel/dictionary') || request()->is('panel/dictionary/*');
     $isNewsActive = request()->is('blog') || request()->is('blog/*');
@@ -14,7 +14,7 @@
     $headerLinks = [
         ['label' => $isEnglish ? 'Home' : 'Trang chủ', 'url' => '/', 'active' => $isHomeActive],
         ['label' => $isEnglish ? 'Courses' : 'Khóa học', 'url' => '/classes', 'active' => $isClassesActive],
-        ['label' => $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào', 'url' => '/panel/ielts-tests/practice', 'requiresAuth' => true, 'active' => $isPlacementActive],
+        ['label' => $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào', 'url' => '/placement-test', 'active' => $isPlacementActive],
         ['label' => $isEnglish ? 'Mock Tests' : 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => $isEnglish ? 'Dictionary & Flashcards' : 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
         ['label' => $isEnglish ? 'Knowledge & News' : 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
@@ -883,7 +883,7 @@
                     <div>
                         <h4 class="edtika-footer__column-title">{{ $isEnglish ? 'Support' : 'Hỗ trợ' }}<span class="edtika-footer__title-mark" aria-hidden="true"></span></h4>
                         <ul class="edtika-footer__list">
-                            <li><a href="/panel/ielts-tests/practice" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a></li>
+                            <li><a href="/placement-test">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a></li>
                             <li><a href="/panel/ielts-tests/mock" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $isEnglish ? 'Mock Tests' : 'Luyện đề' }}</a></li>
                             <li><a href="/panel/dictionary" @if(auth()->guest()) data-open-auth-modal="true" @endif>{{ $isEnglish ? 'Dictionary & Flashcards' : 'Từ điển & Flashcard' }}</a></li>
                         </ul>

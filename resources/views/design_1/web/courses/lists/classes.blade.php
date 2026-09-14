@@ -6,7 +6,7 @@
     $nextLocaleLabel = $isEnglish ? 'VI' : 'ENG';
     $isHomeActive = request()->path() === '/';
     $isClassesActive = request()->is('classes') || request()->is('classes/*');
-    $isPlacementActive = request()->is('panel/ielts-tests/practice') || request()->is('panel/ielts-tests/practice/*');
+    $isPlacementActive = request()->is('placement-test') || request()->is('placement-test/*');
     $isMockActive = request()->is('panel/ielts-tests/mock') || request()->is('panel/ielts-tests/mock/*');
     $isDictionaryActive = request()->is('panel/dictionary') || request()->is('panel/dictionary/*');
     $isNewsActive = request()->is('blog') || request()->is('blog/*');
@@ -14,7 +14,7 @@
     $headerLinks = [
         ['label' => 'Trang chủ', 'url' => '/', 'active' => $isHomeActive],
         ['label' => 'Khóa học', 'url' => '/classes', 'active' => $isClassesActive],
-        ['label' => 'Kiểm tra đầu vào', 'url' => '/panel/ielts-tests/practice', 'requiresAuth' => true, 'active' => $isPlacementActive],
+        ['label' => 'Kiểm tra đầu vào', 'url' => '/placement-test', 'active' => $isPlacementActive],
         ['label' => 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
         ['label' => 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
@@ -1590,7 +1590,7 @@
                     <div>
                         <h4 class="edtika-footer__column-title">Hỗ trợ<span class="edtika-footer__title-mark" aria-hidden="true"></span></h4>
                         <ul class="edtika-footer__list">
-                            <li><a href="/panel/ielts-tests/practice">Kiểm tra đầu vào</a></li>
+                            <li><a href="/placement-test">Kiểm tra đầu vào</a></li>
                             <li><a href="/panel/ielts-tests/mock">Luyện đề</a></li>
                             <li><a href="/panel/dictionary">Từ điển &amp; Flashcard</a></li>
                         </ul>

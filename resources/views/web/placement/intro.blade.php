@@ -9,41 +9,37 @@
 
 @push('styles_top')
 <style>
-/* ── RESET TRANG: KHÓA SCROLL ── */
+/* ── RESET TRANG: khóa scroll, không tràn ngang ── */
 html, body {
-    background-color: #F8FAFC;
+    background-color: #F7F5FF;
     margin: 0;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Nền tím phủ TOÀN TRANG, mờ dần từ phải sang trái */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(270deg,
-        #8B5CF6 0%,
-        rgba(139, 92, 246, 0.55) 30%,
-        rgba(248, 250, 252, 0) 62%);
-    z-index: 0;
-    pointer-events: none;
+/* Ép box-sizing cho các khối của trang này (layout cha có thể không set) */
+.pt-mini-header, .pt-intro-wrap, .pt-intro-layout,
+.pt-intro-left, .pt-intro-right,
+.pt-feature-grid, .pt-feature-card, .pt-tip-banner,
+.pt-chat-bubble, .pt-start-btn, .pt-glass-badge {
+    box-sizing: border-box;
 }
 
-/* Đẩy nội dung lên trên lớp nền */
 .pt-mini-header,
 .pt-intro-wrap { position: relative; z-index: 1; }
 
+/* height 72px đã bao gồm padding → khớp đúng với calc(100vh - 72px) bên dưới */
 .pt-mini-header {
-    max-width: 1400px; margin: 0 auto; padding: 16px 24px 0; height: 56px;
+    max-width: 1400px; margin: 0 auto;
+    height: 72px; padding: 16px 24px 0;
     display: flex; align-items: center;
 }
 .pt-mini-header .pt-brand {
     font-size: 22px; font-weight: 900; color: #1E1B4B; text-decoration: none;
 }
 
-/* Ép toàn bộ nội dung vừa đúng 1 màn hình */
 .pt-intro-wrap {
     max-width: 1400px;
     height: calc(100vh - 72px);
@@ -51,7 +47,7 @@ body::before {
     padding: 8px 24px 16px;
     display: flex;
     align-items: center;
-    overflow: visible;
+    overflow: hidden;
 }
 
 /* ── LAYOUT CHÍNH ── */
@@ -61,6 +57,7 @@ body::before {
     gap: 40px;
     width: 100%;
     height: 100%;
+    min-width: 0;
 }
 
 /* ── CỘT TRÁI (Nội dung) ── */
@@ -68,20 +65,22 @@ body::before {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding-bottom: 0;
+    min-width: 0;
 }
 
 .pt-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     background: #EEF2FF; color: #4338CA;
     font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
-    padding: 6px 14px; border-radius: 99px; margin-bottom: 16px; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 99px;
+    margin-bottom: clamp(8px, 1.4vh, 16px);
+    text-transform: uppercase;
     width: fit-content;
 }
 
-/* Dùng clamp() để chữ ép nằm 1 dòng trên PC */
+/* Cỡ chữ vừa theo cả chiều rộng lẫn chiều cao màn hình */
 .pt-title-main {
-    font-size: clamp(30px, 2.8vw, 40px);
+    font-size: clamp(26px, min(2.8vw, 4.4vh), 40px);
     line-height: 1.2;
     font-weight: 900;
     color: #0F172A;
@@ -91,19 +90,19 @@ body::before {
 }
 
 .pt-title-sub {
-    font-size: clamp(18px, 1.8vw, 24px);
+    font-size: clamp(17px, min(1.8vw, 2.8vh), 24px);
     line-height: 1.3;
     font-weight: 800;
     color: #5B21B6;
-    margin: 0 0 20px 0;
+    margin: 0 0 clamp(12px, 2.2vh, 20px) 0;
     white-space: nowrap;
 }
-.pt-title-sub span {
-    color: #5B21B6;
-}
+.pt-title-sub span { color: #5B21B6; }
 
 .pt-meta-row {
-    display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: clamp(12px, 2.2vh, 24px);
+    flex-wrap: wrap;
 }
 .pt-meta-item {
     display: flex; align-items: center; gap: 6px;
@@ -112,33 +111,51 @@ body::before {
 .pt-meta-divider { color: #CBD5E1; }
 
 .pt-intro-desc {
-    font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;
+    font-size: 15px; line-height: 1.6; color: #334155;
+    margin: 0 0 clamp(8px, 1.4vh, 16px) 0;
 }
 .pt-intro-desc strong { color: #5B21B6; font-weight: 800; }
 
 .pt-feature-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: clamp(10px, 1.4vh, 16px);
+    margin-bottom: clamp(12px, 2.2vh, 24px);
 }
+
+/* Card trắng nổi trên nền sáng bằng bóng đổ tông tím */
 .pt-feature-card {
-    background: #FFFFFF; border: 1px solid #E2E8F0;
-    border-radius: 16px; padding: 16px 12px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    background: #FFFFFF;
+    border: 1px solid #EDE9FE;
+    border-radius: 16px;
+    padding: clamp(10px, 1.6vh, 16px) 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 8px 24px -8px rgba(91, 33, 182, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pt-feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 14px 32px -10px rgba(91, 33, 182, 0.28);
 }
 .pt-feature-icon {
     width: 32px; height: 32px; border-radius: 8px; background: #EEF2FF; color: #4338CA;
-    display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: clamp(6px, 1.1vh, 12px);
 }
 .pt-feature-card h5 { font-size: 14px; font-weight: 800; color: #0F172A; margin: 0 0 6px 0; }
 .pt-feature-card p { font-size: 12.5px; line-height: 1.45; color: #475569; margin: 0; }
 
 .pt-tip-banner {
     display: flex; gap: 12px; align-items: flex-start;
-    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px;
-    padding: 16px 20px; margin-bottom: 32px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    background: #FFFFFF;
+    border: 1px solid #EDE9FE;
+    border-left: 4px solid #7C3AED;
+    border-radius: 16px;
+    padding: clamp(10px, 1.6vh, 16px) 20px;
+    margin-bottom: clamp(14px, 2.6vh, 32px);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
+                0 10px 28px -10px rgba(91, 33, 182, 0.22);
 }
 .pt-tip-banner svg { width: 24px; height: 24px; flex-shrink: 0; margin-top: 2px; }
 .pt-tip-banner p { font-size: 13.5px; line-height: 1.55; color: #1E293B; margin: 0; }
@@ -148,28 +165,49 @@ body::before {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     background: linear-gradient(90deg, #5B21B6 0%, #4338CA 100%);
     color: #FFF; border: none; border-radius: 12px;
-    padding: 16px 40px; font-weight: 700; font-size: 16px;
+    padding: clamp(11px, 1.6vh, 16px) 40px;
+    font-weight: 700; font-size: 16px;
     text-decoration: none; cursor: pointer; width: fit-content;
     box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.6);
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .pt-start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(79, 70, 229, 0.8); color: #FFF; }
+.pt-start-btn:focus-visible { outline: 3px solid #A78BFA; outline-offset: 3px; }
 
 /* ── CỘT PHẢI (Mascot) ── */
 .pt-intro-right {
     position: relative;
-    background: transparent;     /* nền tím đã chuyển ra toàn trang */
-    border-radius: 0;
+    background: transparent;
     display: flex; align-items: center; justify-content: center;
-    overflow: visible;           /* cho robot tràn ra ngoài cột */
+    overflow: visible;
+    min-width: 0;
     min-height: 0;
     height: 100%;
 }
 
+/* Vầng sáng tím mềm phía sau robot, thay cho nền tím cũ */
+.pt-intro-right::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle,
+        rgba(167, 139, 250, 0.38) 0%,
+        rgba(167, 139, 250, 0.12) 45%,
+        rgba(167, 139, 250, 0) 70%);
+    z-index: 0;
+    pointer-events: none;
+}
+
 .pt-chat-bubble {
-    position: absolute; top: 10%; left: 8%; z-index: 10;
-    background: #FFF; border-radius: 16px; padding: 14px 16px;
-    width: 210px; box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    position: absolute; top: 8%; left: 4%; z-index: 10;
+    background: #FFF;
+    border: 1px solid #EDE9FE;
+    border-radius: 16px; padding: 14px 16px;
+    width: min(210px, 46%);
+    box-shadow: 0 18px 40px -12px rgba(91, 33, 182, 0.35);
 }
 .pt-chat-bubble::after {
     content: ''; position: absolute;
@@ -183,32 +221,36 @@ body::before {
 .pt-chat-bubble p { margin: 0; font-size: 12px; line-height: 1.5; color: #334155; }
 .pt-chat-bubble strong { color: #5B21B6; }
 
-/* Robot Image — phóng to, bám theo chiều cao màn hình */
+/* Robot: neo giữa cột, cho phép tràn ngang (đã bị wrap cắt nên không sinh scroll)
+   Chỉnh --robot-scale để phóng to / thu nhỏ robot */
+.pt-intro-right { --robot-scale: 1.18; }
+
 .pt-robot-img {
     position: absolute;
     bottom: 0;
-    /* right: 0;                   neo phải → chỉ tràn sang trái */
-    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    height: calc(100% * var(--robot-scale));
     width: auto;
     max-width: none;
     object-fit: contain;
-    transform: none;            /* bỏ scale, dùng height để chỉnh kích thước */
+    object-position: bottom center;
     z-index: 5;
 }
 
-/* Glass Badges */
+/* ── BADGE TÍM quanh robot ── */
 .pt-glass-badge {
     position: absolute; z-index: 10;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    background: linear-gradient(145deg, #7C3AED 0%, #5B21B6 100%);
+    border: 2px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
-    color: #FFF; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    box-shadow: 0 0 20px rgba(255,255,255,0.3), inset 0 0 15px rgba(255,255,255,0.2);
+    color: #FFF;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    box-shadow: 0 12px 28px -8px rgba(91, 33, 182, 0.55);
 }
-.pt-badge-free { top: 12%;    right: 12%; width: 95px;  height: 95px; }
-.pt-badge-time { bottom: 35%; left: 2%;   width: 85px;  height: 85px; }
-.pt-badge-tag  { bottom: 16%; right: 8%;  width: 110px; height: 110px; }
+.pt-badge-free { top: 10%;    right: 6%; width: 95px;  height: 95px; }
+.pt-badge-time { bottom: 35%; left: 2%;  width: 85px;  height: 85px; }
+.pt-badge-tag  { bottom: 14%; right: 2%; width: 110px; height: 110px; }
 
 .pt-glass-badge span { font-weight: 800; font-size: 10.5px; line-height: 1.25; margin-top: 4px; }
 .pt-badge-time span { font-size: 13px; }
@@ -220,12 +262,25 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
     .pt-star { animation: none; opacity: 0.7; }
-    .pt-start-btn { transition: none; }
+    .pt-start-btn, .pt-feature-card { transition: none; }
+    .pt-feature-card:hover, .pt-start-btn:hover { transform: none; }
 }
 
-/* ── RESPONSIVE: mở lại scroll trên màn hình nhỏ ── */
+/* ── Từ 1400px trở xuống: cho tiêu đề xuống dòng, tránh tràn ngang ── */
+@media (max-width: 1400px) {
+    .pt-title-main, .pt-title-sub { white-space: normal; }
+}
+
+/* ── Màn hình quá thấp: mở scroll dọc để không cắt mất nút Bắt đầu ── */
+@media (max-height: 620px) {
+    html, body { overflow-y: auto; height: auto; }
+    .pt-intro-wrap { height: auto; min-height: calc(100vh - 72px); padding-bottom: 32px; }
+    .pt-intro-right { min-height: 440px; }
+}
+
+/* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
-    html, body { overflow: auto; height: auto; }
+    html, body { overflow-y: auto; height: auto; }
 
     .pt-intro-wrap {
         height: auto;
@@ -245,19 +300,26 @@ body::before {
         height: auto;
     }
     .pt-robot-img {
+        position: relative;
+        left: auto;
+        bottom: auto;
+        transform: none;
         height: auto;
         width: 100%;
-        max-width: 520px;
-        transform: none;
-    }
-    .pt-title-main, .pt-title-sub {
-        white-space: normal;
+        max-width: 460px;
     }
     .pt-title-main { font-size: 34px; }
     .pt-title-sub { font-size: 20px; }
 }
+
 @media (max-width: 640px) {
     .pt-feature-grid { grid-template-columns: 1fr 1fr; }
+    .pt-chat-bubble { width: 175px; top: 0; left: 0; padding: 12px 14px; }
+    .pt-badge-free { width: 76px; height: 76px; top: 6%; right: 2%; }
+    .pt-badge-time { width: 70px; height: 70px; }
+    .pt-badge-tag  { width: 88px; height: 88px; right: 0; }
+    .pt-glass-badge span { font-size: 9px; }
+    .pt-badge-time span { font-size: 11px; }
 }
 </style>
 @endpush
@@ -365,9 +427,9 @@ body::before {
         {{-- ── PHẢI: Hình ảnh Robot ── --}}
         <div class="pt-intro-right">
 
-            <svg class="pt-star" style="top:15%; right:15%" width="18" height="18" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
-            <svg class="pt-star" style="top:40%; right:5%" width="12" height="12" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
-            <svg class="pt-star" style="bottom:25%; left:20%" width="14" height="14" viewBox="0 0 24 24" fill="#FFF"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            <svg class="pt-star" style="top:15%; right:15%" width="18" height="18" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            <svg class="pt-star" style="top:40%; right:5%" width="12" height="12" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            <svg class="pt-star" style="bottom:25%; left:20%" width="14" height="14" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
 
             <div class="pt-chat-bubble">
                 <h4>Xin chào! Mình là <span>Edti</span> 👋</h4>
@@ -389,7 +451,10 @@ body::before {
                 <span>ADAPTIVE<br>PLACEMENT<br>TEST</span>
             </div>
 
-            <img src="https://res.cloudinary.com/dozs7ggs4/image/upload/v1785208045/EDTI-ROBOT-SAYHI_ai08gx.png" alt="Robot" class="pt-robot-img">
+            <img src="https://res.cloudinary.com/dozs7ggs4/image/upload/f_auto,q_auto/v1785208045/EDTI-ROBOT-SAYHI_ai08gx.png"
+                 alt=""
+                 fetchpriority="high"
+                 class="pt-robot-img">
 
         </div>
     </div>
