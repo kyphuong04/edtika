@@ -96,12 +96,32 @@
 }
 .pt-rich-preview p { margin-bottom: 8px; }
 .pt-rich-preview p:last-child { margin-bottom: 0; }
-.pt-rich-preview ul { list-style: disc; padding-left: 24px; }
-.pt-rich-preview ol { list-style: decimal; padding-left: 24px; }
+/* .pt-rich-preview ul { list-style: disc; padding-left: 24px; }
+.pt-rich-preview ol { list-style: decimal; padding-left: 24px; } */
+
+/* Theme admin reset ul/ol về list-style:none cho menu sidebar -> phải đè
+   bằng !important, nếu không số/gạch đầu dòng sẽ biến mất ở vùng preview
+   dù trong editor vẫn hiện bình thường. */
+.pt-rich-preview ul,
+.pt-rich-preview ol {
+    padding-left: 24px !important;
+    margin-bottom: 10px !important;
+}
+.pt-rich-preview ul { list-style: disc !important; }
+.pt-rich-preview ol { list-style: decimal !important; }
+.pt-rich-preview li {
+    display: list-item !important;
+    list-style: inherit !important;
+}
 .pt-rich-preview [style*="text-align: center"]  { text-align: center; }
 .pt-rich-preview [style*="text-align: right"]   { text-align: right; }
 .pt-rich-preview [style*="text-align: justify"] { text-align: justify; }
 .pt-rich-empty { color: #9ca3af; font-style: italic; }
+.main-content .pt-question-card img[id^="option-img-preview"] {
+    background: #f8fafc !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
 </style>
 @endpush
 
@@ -720,27 +740,132 @@ function setQuestionClip(index, clipId) {
     render();
 }
 
+/* ── Xử lý ảnh trước khi upload ────────────────────────────────────────
+   Thu nhỏ về tối đa 1200px chiều rộng và chuyển sang JPEG. Ảnh 4MB từ
+   điện thoại thường xuống còn ~200KB, trang làm bài của học viên tải
+   nhanh hơn nhiều. Không crop — ảnh giữ nguyên tỉ lệ gốc, phần hiển thị
+   do CSS aspect-ratio 3/2 + object-fit:contain lo. */
+const PT_IMAGE_MAX_WIDTH = 1200;
+const PT_IMAGE_JPEG_QUALITY = 0.85;
+
+function resizeImageFile(file) {
+    return new Promise(function (resolve, reject) {
+        if (!file.type || file.type.indexOf('image/') !== 0) {
+            reject(new Error('Không phải file ảnh'));
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = function () {
+            URL.revokeObjectURL(objectUrl);
+
+            let width = img.naturalWidth;
+            let height = img.naturalHeight;
+
+            if (!width || !height) {
+                reject(new Error('Không đọc được kích thước ảnh'));
+                return;
+            }
+
+            if (width > PT_IMAGE_MAX_WIDTH) {
+                height = Math.round(height * (PT_IMAGE_MAX_WIDTH / width));
+                width = PT_IMAGE_MAX_WIDTH;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+
+            // PNG có nền trong suốt -> JPEG sẽ ra nền ĐEN nếu không tô trắng trước.
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(function (blob) {
+                if (!blob) {
+                    reject(new Error('Không tạo được ảnh sau khi nén'));
+                    return;
+                }
+
+                const baseName = file.name.replace(/\.[^.]+$/, '') || 'image';
+                resolve(new File([blob], baseName + '.jpg', {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                }));
+            }, 'image/jpeg', PT_IMAGE_JPEG_QUALITY);
+        };
+
+        img.onerror = function () {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Không mở được file ảnh'));
+        };
+
+        img.src = objectUrl;
+    });
+}
+
 function onOptionImageSelected(index, optIndex, inputEl) {
-    if (inputEl.files && inputEl.files[0]) {
+    const originalFile = inputEl.files && inputEl.files[0];
+    if (!originalFile) {
+        return;
+    }
+
+    const previewImg = document.getElementById('option-img-preview-' + index + '-' + optIndex);
+
+    // Hiện ảnh gốc ngay để không phải chờ, sau đó thay bằng bản đã nén.
+    const tempUrl = URL.createObjectURL(originalFile);
+    if (previewImg) {
+        if (previewImg.dataset.blobUrl) {
+            URL.revokeObjectURL(previewImg.dataset.blobUrl);
+        }
+        previewImg.src = tempUrl;
+        previewImg.dataset.blobUrl = tempUrl;
+        previewImg.style.display = 'block';
+    }
+
+    const attachFile = function (fileToSend) {
+        // Gán file (đã nén hoặc bản gốc nếu nén lỗi) vào input để form gửi đi.
+        // Cùng kỹ thuật DataTransfer đang dùng ở trang ghi âm Speaking.
+        if (fileToSend !== originalFile && typeof DataTransfer !== 'undefined') {
+            try {
+                const dt = new DataTransfer();
+                dt.items.add(fileToSend);
+                inputEl.files = dt.files;
+            } catch (e) {
+                console.warn('Không gán được file đã nén, dùng file gốc:', e);
+            }
+        }
+
         const inputName = 'option_image_' + (++uploadSeq);
         inputEl.name = inputName;
         questions[index].option_image_input_names[optIndex] = inputName;
         document.getElementById('mediaFilesHolder').appendChild(inputEl);
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const img = document.getElementById('option-img-preview-' + index + '-' + optIndex);
-            if (img) { img.src = e.target.result; img.style.display = 'block'; }
-        };
-        reader.readAsDataURL(inputEl.files[0]);
-
+        // Input đã bị chuyển đi nơi khác -> tạo input mới thay thế vào chỗ cũ.
         const placeholder = document.createElement('input');
         placeholder.type = 'file';
         placeholder.accept = 'image/*';
         placeholder.className = 'form-control form-control-sm mt-2';
         placeholder.onchange = function () { onOptionImageSelected(index, optIndex, this); };
-        inputEl.insertAdjacentElement('afterend', placeholder);
-    }
+
+        if (previewImg && previewImg.parentNode) {
+            previewImg.parentNode.appendChild(placeholder);
+        }
+    };
+
+    resizeImageFile(originalFile)
+        .then(function (resizedFile) {
+            // Chỉ dùng bản nén nếu thực sự nhẹ hơn.
+            attachFile(resizedFile.size < originalFile.size ? resizedFile : originalFile);
+        })
+        .catch(function (error) {
+            console.warn('Không nén được ảnh, dùng file gốc:', error);
+            attachFile(originalFile);
+        });
 }
 
 function addOption(index) {
@@ -1110,7 +1235,7 @@ function renderQuestionCard(q, index) {
                     <input type="radio" name="correct_img_${index}" ${q.correct_answer === letter ? 'checked' : ''} onchange="setCorrectImage(${index}, '${letter}')">
                     <span class="ml-2 small text-muted">Đây là đáp án đúng</span>
                 </div>
-                <img id="option-img-preview-${index}-${optIndex}" src="${previewUrl}" style="width:100%;max-height:110px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;${previewUrl ? '' : 'display:none;'}">
+                <img id="option-img-preview-${index}-${optIndex}" src="${previewUrl}" style="width:100%;aspect-ratio:3/2;object-fit:contain;background:#f8fafc;border-radius:8px;border:1px solid #e5e7eb;${previewUrl ? '' : 'display:none;'}">
                 <input type="file" accept="image/*" class="form-control form-control-sm mt-2" onchange="onOptionImageSelected(${index}, ${optIndex}, this)">
             </div>`;
         });

@@ -101,6 +101,13 @@ return [
         'custom_elements' => [
             ['u', 'Inline', 'Inline', 'Common'],
         ],
+        'placement' => [
+            'HTML.Allowed' => 'p,br,strong,b,em,i,u,s,ul,ol,li,span[style],div[style],h3,h4,a[href|target]',
+            'CSS.AllowedProperties' => 'text-align,color,background-color,font-weight,font-style,text-decoration',
+            'AutoFormat.AutoParagraph' => false,
+            'AutoFormat.RemoveEmpty' => true,
+            'Attr.AllowedFrameTargets' => ['_blank'],
+        ],
     ],
 
 ];

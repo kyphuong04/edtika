@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Represents a single test attempt by a student.
@@ -48,13 +51,47 @@ class IeltsTestAttempt extends Model
         'writing_graded_at' => 'integer',
         'speaking_graded_at' => 'integer',
         'skill_time_budget' => 'array',
+        'is_preview' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        // Attempt của giáo viên "xem trước như học viên" bị loại khỏi mọi truy
+        // vấn mặc định (thống kê, hàng đợi chấm, lịch sử thi). Code cần thao
+        // tác trực tiếp preview phải gọi withoutGlobalScope('not_preview').
+        static::addGlobalScope('not_preview', function (Builder $builder) {
+            $builder->where('is_preview', false);
+        });
+
+        static::saving(function ($attempt) {
+            if ($attempt->is_preview === null) {
+                $attempt->is_preview = false;
+            }
+        });
+    }
+
+    /**
+     * Xóa attempt kèm toàn bộ answer và file audio Speaking đã upload.
+     * Phải gọi từ query đã bypass global scope not_preview nếu đây là preview.
+     *
+     * @return void
+     */
+    public function deleteWithRelatedData()
+    {
+        foreach ($this->answers as $answer) {
+            $url = $answer->audio_url;
+            if (is_string($url) && Str::contains($url, '/storage/')) {
+                Storage::disk('public')->delete(Str::after($url, '/storage/'));
+            }
+        }
+
+        $this->answers()->delete();
+        $this->delete();
+    }
 
     /**
      * Thời lượng CỐ ĐỊNH cho Mock Test theo từng skill (giây). Practice Test
-     * không dùng map này — đếm lên không giới hạn. PHẢI khớp với
-     * MOCK_SKILL_DURATIONS_SECONDS trong state.js (preview) để 2 nơi không
-     * lệch nhau; nếu đổi số phút, sửa cả 2 chỗ.
+     * không dùng map này — đếm lên không giới hạn.
      */
     public const MOCK_SKILL_DURATIONS_SECONDS = [
         'listening' => 32 * 60,

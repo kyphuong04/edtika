@@ -35,7 +35,17 @@
 .pt-img-options { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
 .pt-img-option { border:2px solid #e5e7eb; border-radius:12px; padding:10px; text-align:center; cursor:pointer; }
 .pt-img-option:hover { border-color:#c4b5fd; }
-.pt-img-option img { width:100%; height:110px; object-fit:cover; border-radius:8px; margin-bottom:8px; background:#f3f4f6; }
+.pt-img-option img {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    height: auto;
+    object-fit: contain;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+}
+
 .pt-audio-btn { display:inline-flex; align-items:center; gap:8px; background:#eef2ff; color:#511D99; border:none; border-radius:20px; padding:6px 16px; font-weight:600; font-size:13px; margin-bottom:10px; cursor:pointer; }
 .pt-submit-actions { position:sticky; bottom:16px; display:flex; justify-content:center; margin-top:24px; }
 .pt-submit-btn { background:#511D99; color:#fff; border:none; border-radius:14px; padding:14px 32px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(81,29,153,.3); cursor:pointer; }
@@ -77,6 +87,16 @@
 .pt-rich [style*="text-align: center"]  { text-align: center !important; }
 .pt-rich [style*="text-align: right"]   { text-align: right !important; }
 .pt-rich [style*="text-align: justify"] { text-align: justify !important; }
+.pt-rich ul,
+.pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
+.pt-rich ul { list-style: disc !important; }
+.pt-rich ol { list-style: decimal !important; }
+.pt-rich li { display: list-item !important; list-style: inherit !important; }
+.pt-rich p  { margin-bottom: 8px; }
+.pt-rich p:last-child { margin-bottom: 0; }
+.pt-rich [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich [style*="text-align: justify"] { text-align: justify !important; }
 </style>
 @endpush
 
@@ -108,7 +128,7 @@
             @if($passages->has($index + 1))
                 <div class="pt-passage-card">
                     <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
-                    <div>{!! nl2br(e($passages[$index + 1]['content'])) !!}</div>
+                    <div class="pt-rich">{!! ptRichText($passages[$index + 1]['content']) !!}</div>
                 </div>
             @endif
 
@@ -137,7 +157,7 @@
                 
 
                 @if($q['type'] === 'multiple_choice')
-                    <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                     @foreach($q['options'] as $optIndex => $option)
                         <label class="pt-option">
                             <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $option }}" required>
@@ -146,7 +166,7 @@
                     @endforeach
 
                 @elseif($q['type'] === 'listening_image_choice')
-                    <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                     <div class="pt-img-options">
                         @foreach($q['image_options'] as $imgOpt)
                             <label class="pt-img-option">
@@ -158,7 +178,7 @@
                     </div>
 
                 @elseif($q['type'] === 'error_correction')
-                    <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                     <input type="text" class="form-control" name="answers[{{ $q['id'] }}]" placeholder="Nhập lại câu đúng hoàn chỉnh..." required>
 
                 @elseif($q['type'] === 'sentence_completion')
@@ -193,7 +213,7 @@
         @if($passages->has(count($questions) + 1))
             <div class="pt-passage-card">
                 <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
-                <div>{!! nl2br(e($passages[count($questions) + 1]['content'])) !!}</div>
+                <div class="pt-rich">{!! ptRichText($passages[count($questions) + 1]['content']) !!}</div>
             </div>
         @endif
         <div class="pt-submit-actions">

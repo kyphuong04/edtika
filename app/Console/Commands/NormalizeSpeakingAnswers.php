@@ -8,17 +8,17 @@ use Illuminate\Console\Command;
 class NormalizeSpeakingAnswers extends Command
 {
     protected $signature = 'ielts:normalize-speaking-answers';
-    protected $description = 'Normalize speaking answers - move audio URLs from answer_text to file_url column';
+    protected $description = 'Normalize speaking answers - move audio URLs from answer_text to answer_file column';
 
     public function handle()
     {
         $this->info('Starting normalization of speaking answers...');
         
-        // Find all speaking answers where answer_text contains audio URL but file_url is empty
+        // Find all speaking answers where answer_text contains audio URL but answer_file is empty
         $answers = IeltsTestAnswer::whereHas('question.section', function ($query) {
                 $query->where('skill', 'speaking');
             })
-            ->whereNull('file_url')
+            ->whereNull('answer_file')
             ->where(function ($query) {
                 $query->where('answer_text', 'like', '/storage/speaking_answers/%')
                       ->orWhere('answer_text', 'like', '%.webm%')
@@ -39,8 +39,8 @@ class NormalizeSpeakingAnswers extends Command
         
         $updated = 0;
         foreach ($answers as $answer) {
-            // Move audio URL from answer_text to file_url
-            $answer->file_url = $answer->answer_text;
+            // Move audio URL from answer_text to answer_file
+            $answer->answer_file = $answer->answer_text;
             $answer->answer_text = null; // Clear answer_text since it was storing audio URL
             $answer->save();
             

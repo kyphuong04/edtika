@@ -21,6 +21,7 @@
         "craftsys/msg91-laravel": "^0.15.1",
         "cviebrock/eloquent-sluggable": "*",
         "doctrine/dbal": "*",
+        "ezyang/htmlpurifier": "^4.19",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^3.0",
         "gizemsever/laravel-paytr": "^2.1",

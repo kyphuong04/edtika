@@ -24,7 +24,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Preview "như học viên" của giáo viên tự xóa sau 48h không hoạt động.
+        $schedule->command('ielts:cleanup-preview-attempts')->daily();
     }
 
     /**

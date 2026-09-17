@@ -8,9 +8,35 @@
 .pt-option { padding:8px 12px; border:2px solid #e5e7eb; border-radius:8px; margin-bottom:6px; }
 .pt-img-options { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:8px; }
 .pt-img-option { border:2px solid #e5e7eb; border-radius:10px; padding:8px; text-align:center; }
-.pt-img-option img { width:100%; height:100px; object-fit:cover; border-radius:6px; margin-bottom:6px; }
+.pt-img-option img {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    height: auto;
+    object-fit: contain;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Layout admin phủ nền tím lên mọi phần tử trong .main-content -> đè lại */
+.main-content .pt-img-option img {
+    background: #f8fafc !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
 .pt-correct-line { margin-top:10px; font-size:13px; font-weight:700; color:#16a34a; }
 .pt-test-header { background:#511D99; color:#fff; border-radius:12px; padding:14px 20px; margin:26px 0 14px; }
+.pt-rich ul,
+.pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
+.pt-rich ul { list-style: disc !important; }
+.pt-rich ol { list-style: decimal !important; }
+.pt-rich li { display: list-item !important; list-style: inherit !important; }
+.pt-rich p  { margin-bottom: 8px; }
+.pt-rich p:last-child { margin-bottom: 0; }
+.pt-rich [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich [style*="text-align: justify"] { text-align: justify !important; }
 </style>
 @endpush
 
@@ -43,7 +69,7 @@
                 @if($blockPassages->has($idx + 1))
                     <div class="pt-q-card" style="background:#faf5ff;">
                         <strong>Đoạn văn đọc:</strong>
-                        <div class="mt-2">{!! nl2br(e($blockPassages[$idx + 1]['content'])) !!}</div>
+                        <div class="mt-2 pt-rich">{!! ptRichText($blockPassages[$idx + 1]['content']) !!}</div>
                     </div>
                 @endif
                 @php $q = $item['question']; $isCorrect = $item['is_correct']; @endphp
@@ -58,19 +84,25 @@
                     @endif
 
                     @if($q['type'] === 'multiple_choice')
-                        <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                        <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                         @foreach($q['options'] as $option)
-                            @php $isGiven = $item['given'] === $option; @endphp
+                            @php
+                                $givenValue = is_scalar($item['given']) ? trim((string) $item['given']) : null;
+                                $isGiven = $givenValue !== null && $givenValue !== '' && $givenValue === trim((string) $option);
+                            @endphp
                             <div class="pt-option" style="{{ $isGiven ? ($isCorrect ? 'border-color:#22c55e;background:#f0fdf4;' : 'border-color:#ef4444;background:#fef2f2;') : '' }}">
                                 {{ $option }} @if($isGiven)<strong class="ml-2">(học viên chọn)</strong>@endif
                             </div>
                         @endforeach
 
                     @elseif($q['type'] === 'listening_image_choice')
-                        <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                        <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                         <div class="pt-img-options">
                             @foreach($q['image_options'] as $imgOpt)
-                                @php $isGiven = $item['given'] === $imgOpt['label']; @endphp
+                                @php
+                                    $givenValue = is_scalar($item['given']) ? trim((string) $item['given']) : null;
+                                    $isGiven = $givenValue !== null && $givenValue === trim((string) $imgOpt['label']);
+                                @endphp
                                 <div class="pt-img-option" style="{{ $isGiven ? ($isCorrect ? 'border-color:#22c55e;' : 'border-color:#ef4444;') : '' }}">
                                     <img src="{{ $imgOpt['url'] }}">
                                     {{ $imgOpt['label'] }} @if($isGiven)(đã chọn)@endif
@@ -79,19 +111,23 @@
                         </div>
 
                     @elseif($q['type'] === 'error_correction')
-                        <div class="pt-q-text">{!! $q['question_text'] !!}</div>
+                        <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                         <div class="p-2" style="background:{{ $isCorrect ? '#f0fdf4' : '#fef2f2' }};border-radius:8px;">
                             Học viên trả lời: {{ $item['given'] ?: '(bỏ trống)' }}
                         </div>
 
                     @elseif($q['type'] === 'sentence_completion')
                         @php $parts = preg_split('/_{2,}/', $q['question_text']); @endphp
+                        @php
+                            $parts = preg_split('/_{2,}/', $q['question_text']);
+                            $givenArr = is_array($item['given']) ? $item['given'] : [];
+                        @endphp
                         <div class="pt-q-text" style="font-weight:400;">
                             @foreach($parts as $pIdx => $part)
                                 {!! nl2br(e($part)) !!}
                                 @if($pIdx < count($parts) - 1)
                                     <strong style="color:{{ $isCorrect ? '#16a34a' : '#dc2626' }};">
-                                        [{{ $item['given'][$pIdx] ?? '(bỏ trống)' }}]
+                                        [{{ $givenArr[$pIdx] ?? '(bỏ trống)' }}]
                                     </strong>
                                 @endif
                             @endforeach
@@ -101,7 +137,8 @@
                     <div class="pt-correct-line">Đáp án đúng: {{ $item['correct_display'] }}</div>
                     @if($item['answer_help'])
                         <div class="mt-2 p-2" style="background:#eff6ff;border-left:3px solid #3b82f6;border-radius:6px;font-size:13px;color:#1e40af;">
-                            <i class="fas fa-lightbulb mr-1"></i><strong>Giải thích:</strong> {{ $item['answer_help'] }}
+                            <i class="fas fa-lightbulb mr-1"></i><strong>Giải thích:</strong>
+                            <span class="pt-rich">{!! ptRichText($item['answer_help']) !!}</span>
                         </div>
                     @endif
                 </div>
@@ -110,7 +147,7 @@
             @if($blockPassages->has(count($block['questions']) + 1))
                 <div class="pt-q-card" style="background:#faf5ff;">
                     <strong>Đoạn văn đọc:</strong>
-                    <div class="mt-2">{!! nl2br(e($blockPassages[count($block['questions']) + 1]['content'])) !!}</div>
+                    <div class="mt-2 pt-rich">{!! ptRichText($blockPassages[$idx + 1]['content']) !!}</div>
                 </div>
             @endif
         @endforeach

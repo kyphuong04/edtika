@@ -151,7 +151,7 @@ class PlacementTestController extends Controller
                 'level'            => $validated['level'],
                 'title'            => $validated['title'],
                 'description'      => $validated['description'] ?? null,
-                'reading_passages'  => json_decode($validated['reading_passages'] ?? '[]', true) ?: [],
+                'reading_passages' => $this->sanitizePassages($validated['reading_passages'] ?? '[]'),
                 'status'           => $request->input('submit_action') === 'publish' ? 'published' : 'draft',
                 'created_by'       => auth()->id(),
             ]);
@@ -185,7 +185,7 @@ class PlacementTestController extends Controller
                 'level'           => $validated['level'],
                 'title'           => $validated['title'],
                 'description'     => $validated['description'] ?? null,
-                'reading_passages'  => json_decode($validated['reading_passages'] ?? '[]', true) ?: [],
+                'reading_passages' => $this->sanitizePassages($validated['reading_passages'] ?? '[]'),
                 'status'          => $request->input('submit_action') === 'publish' ? 'published' : $placementTest->status,
             ]);
 
@@ -376,6 +376,36 @@ class PlacementTestController extends Controller
         }
 
         return array_column($clips, 'path', 'id');
+    }
+
+
+    /**
+     * Lọc HTML từ Summernote trước khi lưu. Nội dung này được in raw bằng
+     * ptRichText() ở trang học viên nên đây là tầng chặn duy nhất.
+     * Profile 'placement' khai báo trong config/purifier.php.
+     */
+    private function sanitizeRichText(?string $html): string
+    {
+        $html = trim((string) $html);
+
+        if ($html === '') {
+            return '';
+        }
+
+        $clean = \Purifier::clean($html, 'placement');
+
+        // Editor rỗng vẫn trả '<p><br></p>' -> quy về chuỗi rỗng cho gọn DB.
+        return trim(strip_tags($clean)) === '' ? '' : $clean;
+    }
+
+    private function sanitizePassages(?string $json): array
+    {
+        $passages = json_decode($json ?? '[]', true) ?: [];
+
+        return collect($passages)->map(function ($passage) {
+            $passage['content'] = $this->sanitizeRichText($passage['content'] ?? '');
+            return $passage;
+        })->values()->all();
     }
 
     /**

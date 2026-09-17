@@ -61,15 +61,15 @@ class IeltsTestAnswer extends Model
     
     /**
      * Get the audio recording URL for speaking answers.
-     * 
-     * Checks both file_url and answer_text for backward compatibility.
-     * 
+     *
+     * Cột DB là answer_file; answer_text vẫn được kiểm tra cho dữ liệu cũ.
+     *
      * @return string|null
      */
     public function getAudioUrlAttribute()
     {
-        if (!empty($this->file_url)) {
-            return $this->file_url;
+        if (!empty($this->answer_file)) {
+            return $this->answer_file;
         }
         
         // For older records, the URL might be stored in answer_text

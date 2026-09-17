@@ -418,7 +418,7 @@ class IeltsTestController extends Controller
      */
     public function takeTest(Request $request, $attemptId)
     {
-        $attempt = IeltsTestAttempt::with([
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with([
             'test',
             'currentSection.parts.questionGroups',
             'currentSection.questions',
@@ -518,7 +518,7 @@ class IeltsTestController extends Controller
      */
     public function saveAnswer(Request $request, $attemptId)
     {
-        $attempt = IeltsTestAttempt::findOrFail($attemptId);
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->findOrFail($attemptId);
         
         if ($attempt->user_id !== auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -544,9 +544,9 @@ class IeltsTestController extends Controller
             'modified_at' => time(),
         ];
         
-        // Store audio URL in file_url column for Speaking section
+        // Cột thật trong DB là answer_file (không có cột file_url).
         if (!empty($audioUrl)) {
-            $updateData['file_url'] = $audioUrl;
+            $updateData['answer_file'] = $audioUrl;
         }
         
         IeltsTestAnswer::updateOrCreate(
@@ -572,7 +572,7 @@ class IeltsTestController extends Controller
      */
     public function finishSection(Request $request, $attemptId)
     {
-        $attempt = IeltsTestAttempt::with('test.sections')->findOrFail($attemptId);
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with('test.sections')->findOrFail($attemptId);
         
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
@@ -630,7 +630,7 @@ class IeltsTestController extends Controller
      */
     public function submitTest($attemptId)
     {
-        $attempt = IeltsTestAttempt::with(['test', 'answers.question'])->findOrFail($attemptId);
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with(['test', 'answers.question'])->findOrFail($attemptId);
         
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
@@ -883,17 +883,24 @@ class IeltsTestController extends Controller
      */
     public function results($attemptId)
     {
-        $attempt = IeltsTestAttempt::with(['test', 'answers.question.section'])
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with(['test', 'answers.question.section'])
             ->findOrFail($attemptId);
         
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
         }
         
+        $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
+            && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
+
         $data = [
             'pageTitle' => 'Test Results',
             'attempt' => $attempt,
             'test' => $attempt->test,
+            'isMentorPreview' => $isMentorPreview,
+            'mentorPreviewExitUrl' => $isMentorPreview
+                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
+                : null,
         ];
         
         return view('design_1.panel.ielts_tests.results', $data);
@@ -904,7 +911,7 @@ class IeltsTestController extends Controller
      */
     public function reviewAnswers($attemptId)
     {
-        $attempt = IeltsTestAttempt::with(['test.sections.questions.questionGroup', 'answers', 'writingGrader'])
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with(['test.sections.questions.questionGroup', 'answers', 'writingGrader'])
             ->findOrFail($attemptId);
         
         $authUser = auth()->user();
@@ -920,10 +927,17 @@ class IeltsTestController extends Controller
             abort(403);
         }
         
+        $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
+            && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
+
         $data = [
             'pageTitle' => trans('update.review_answers'),
             'attempt' => $attempt,
             'test' => $attempt->test,
+            'isMentorPreview' => $isMentorPreview,
+            'mentorPreviewExitUrl' => $isMentorPreview
+                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
+                : null,
         ];
         
         return view('design_1.panel.ielts_tests.review', $data);
@@ -931,7 +945,7 @@ class IeltsTestController extends Controller
 
     public function attemptSectionData($attemptId)
     {
-        $attempt = IeltsTestAttempt::with([
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with([
             'test',
             'currentSection.parts.questionGroups',
             'currentSection.questions',
@@ -962,7 +976,7 @@ class IeltsTestController extends Controller
         // Đáp án học viên đã lưu từ trước (resume sau khi reload/mất mạng)
         // — trả kèm để client hydrate lại state mà không cần thêm request.
         $savedAnswers = $attempt->answers()
-            ->get(['question_id', 'answer_text', 'answer_options', 'file_url'])
+            ->get(['question_id', 'answer_text', 'answer_options', 'answer_file'])
             ->mapWithKeys(function ($answer) {
                 return [
                     $answer->question_id => [
@@ -1023,7 +1037,7 @@ class IeltsTestController extends Controller
      */
     public function speakingStartPart(Request $request, $attemptId, $partId)
     {
-        $attempt = IeltsTestAttempt::with('test')->findOrFail($attemptId);
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with('test')->findOrFail($attemptId);
 
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
@@ -1055,7 +1069,7 @@ class IeltsTestController extends Controller
      */
     public function scopeStatus(Request $request, $attemptId)
     {
-        $attempt = IeltsTestAttempt::with('test')->findOrFail($attemptId);
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with('test')->findOrFail($attemptId);
 
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
@@ -1079,7 +1093,7 @@ class IeltsTestController extends Controller
      */
     public function speakingModelAnswer(Request $request, $attemptId, $questionId)
     {
-        $attempt = IeltsTestAttempt::with('test')->findOrFail($attemptId);
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with('test')->findOrFail($attemptId);
 
         if ($attempt->user_id !== auth()->id()) {
             abort(403);

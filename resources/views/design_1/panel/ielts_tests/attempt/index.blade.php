@@ -19,7 +19,7 @@
 <div class="attempt-page">
     @if(!empty($isMentorPreview) && !empty($mentorPreviewExitUrl))
     <div class="attempt-mentor-banner">
-        <span>Đang xem trước với vai trò giáo viên (mentor preview) — đáp án không được lưu thật.</span>
+        <span>Đang xem trước với vai trò học viên — bài làm và bản ghi âm sẽ bị xóa khi thoát xem trước.</span>
         <a href="{{ $mentorPreviewExitUrl }}" onclick="return confirm('Thoát chế độ xem trước?');">Thoát preview</a>
     </div>
     @endif

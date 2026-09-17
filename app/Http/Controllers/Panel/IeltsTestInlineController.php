@@ -24,8 +24,7 @@ class IeltsTestInlineController extends Controller
     use BuildsIeltsQuestionPayload;
     /**
      * Thứ tự skill CỐ ĐỊNH, quyết định cách question_number được đánh liên
-     * tục qua các skill. PHẢI khớp với SKILL_ORDER trong state.js (preview)
-     * — nếu khác, số thứ tự câu hỏi ở preview sẽ lệch so với số thật lưu DB.
+     * tục qua các skill.
      */
     private const SKILL_ORDER = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
 
@@ -149,26 +148,6 @@ class IeltsTestInlineController extends Controller
             'autosavePayload' => $autosavePayload,
             'autosaveRestoreEnabled' => true,
             'testData' => $this->buildInlineTestData($test),
-        ]);
-    }
-
-    public function previewInline($id)
-    {
-        $this->authorizeCreatorAccess();
-
-        $test = $this->findOwnedInlineTestOrFail($id);
-        $previewData = $this->resolvePreviewMediaUrls($this->buildInlineTestData($test));
-
-        return view('design_1.panel.ielts_tests_manage.preview.index', [
-            'pageTitle' => 'Xem trước: ' . $test->title,
-            'test' => $test,
-            'previewData' => $previewData,
-            'skillOrder' => self::SKILL_ORDER,
-            'justContent' => true,
-            'backUrl' => route('panel.my_ielts_tests.edit_inline', [
-                'id' => $test->id,
-                'restore_state' => 1,
-            ]),
         ]);
     }
 
@@ -1057,10 +1036,16 @@ class IeltsTestInlineController extends Controller
             ]]);
         }
 
-        IeltsTestAttempt::where('test_id', $test->id)
+        // Dọn preview cũ của chính test này (kèm answer + file audio) để mỗi
+        // lần "xem trước như học viên" bắt đầu từ trạng thái sạch.
+        IeltsTestAttempt::withoutGlobalScope('not_preview')
+            ->where('test_id', $test->id)
             ->where('user_id', $user->id)
-            ->where('status', 'in_progress')
-            ->delete();
+            ->where('is_preview', true)
+            ->get()
+            ->each(function ($oldPreview) {
+                $oldPreview->deleteWithRelatedData();
+            });
 
         $totalQuestions = (int) $sections->sum(function ($section) {
             if (!empty($section->question_start) && !empty($section->question_end) && $section->question_end >= $section->question_start) {
@@ -1081,6 +1066,7 @@ class IeltsTestInlineController extends Controller
             'user_id' => $user->id,
             'attempt_number' => $attemptNumber,
             'status' => 'in_progress',
+            'is_preview' => true,
             'current_skill' => $startingSection->skill,
             'current_section_id' => $startingSection->id,
             'started_at' => time(),
@@ -1104,12 +1090,18 @@ class IeltsTestInlineController extends Controller
 
         $previewAttemptId = (int) session('mentor_preview_attempt_id', 0);
         if ($previewAttemptId > 0) {
-            IeltsTestAttempt::query()
+            // Xóa cả preview đã submit (status completed) kèm answer + audio,
+            // nhưng chỉ khi nó thực sự là preview của đúng test và đúng người này.
+            $previewAttempt = IeltsTestAttempt::withoutGlobalScope('not_preview')
                 ->where('id', $previewAttemptId)
                 ->where('test_id', $test->id)
                 ->where('user_id', $userId)
-                ->where('status', 'in_progress')
-                ->delete();
+                ->where('is_preview', true)
+                ->first();
+
+            if ($previewAttempt) {
+                $previewAttempt->deleteWithRelatedData();
+            }
         }
 
         session()->forget('mentor_preview_attempt_id');
@@ -1340,89 +1332,6 @@ class IeltsTestInlineController extends Controller
 
         return $data;
     }
-
-    // private function resolvePreviewMediaUrls(array $data): array
-    // {
-    //     foreach ($data['sections'] as $skill => &$sectionData) {
-    //         if (!empty($sectionData['files']) && is_array($sectionData['files'])) {
-    //             $sectionData['files'] = $this->resolvePreviewFileGroup($sectionData['files']);
-    //         }
-
-    //         if (empty($sectionData['parts']) || !is_array($sectionData['parts'])) {
-    //             continue;
-    //         }
-
-    //         foreach ($sectionData['parts'] as &$part) {
-    //             if (!empty($part['files']) && is_array($part['files'])) {
-    //                 $part['files'] = $this->resolvePreviewFileGroup($part['files']);
-    //             }
-
-    //             if (empty($part['groups']) || !is_array($part['groups'])) {
-    //                 continue;
-    //             }
-
-    //             foreach ($part['groups'] as &$group) {
-    //                 if (!empty($group['files']) && is_array($group['files'])) {
-    //                     $group['files'] = $this->resolvePreviewFileGroup($group['files']);
-    //                 }
-
-    //                 if (!empty($group['task_image'])) {
-    //                     $group['task_image'] = $this->resolvePreviewSingleUrl($group['task_image']);
-    //                 }
-
-    //                 if (empty($group['questions']) || !is_array($group['questions'])) {
-    //                     continue;
-    //                 }
-
-    //                 foreach ($group['questions'] as &$question) {
-    //                     if (!empty($question['question_data']['task_image'])) {
-    //                         $question['question_data']['task_image'] = $this->resolvePreviewSingleUrl(
-    //                             $question['question_data']['task_image']
-    //                         );
-    //                     }
-    //                 }
-    //                 unset($question);
-    //             }
-    //             unset($group);
-    //         }
-    //         unset($part);
-    //     }
-    //     unset($sectionData);
-
-    //     return $data;
-    // }
-
-    // private function resolvePreviewFileGroup(array $files): array
-    // {
-    //     foreach ($files as $key => $value) {
-    //         $files[$key] = $this->resolvePreviewSingleUrl($value);
-    //     }
-
-    //     return $files;
-    // }
-
-    // private function resolvePreviewSingleUrl($path): ?string
-    // {
-    //     if (empty($path)) {
-    //         return null;
-    //     }
-
-    //     if (preg_match('#^https?://#i', $path) || str_starts_with($path, '/')) {
-    //         return $path;
-    //     }
-
-    //     return Storage::disk('public')->url($path);
-    // }
-
-    private function resolvePreviewMediaUrls(array $data): array
-    {
-        foreach ($data['sections'] as $skill => $sectionData) {
-            $data['sections'][$skill] = $this->resolveSectionMediaUrls($sectionData);
-        }
-        
-        return $data;
-    }
-
 
 
     private function buildInlineQuestionData(IeltsTestQuestion $question): array
