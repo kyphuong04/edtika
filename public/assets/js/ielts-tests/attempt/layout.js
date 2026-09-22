@@ -883,24 +883,94 @@ const ExamLayout = {
             return;
         }
 
+
+        const TEXT_INPUT_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling', 'short_answer'];
+        const MATCHING_TYPES = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'];
         const groups = Array.isArray(part.groups) ? part.groups : [];
 
-        groups.forEach((group) => {
-            if (group.title || group.passage) {
+        groups.forEach((group, gIdx) => {
+            const maxWords = parseInt(group.max_words, 10);
+            const showMaxWords = maxWords > 0 && TEXT_INPUT_TYPES.includes(group.question_type);
+
+            if (group.title || group.passage || showMaxWords) {
                 const groupBox = document.createElement('div');
                 groupBox.className = 'exam-part-instructions';
                 groupBox.innerHTML = (group.title ? '<strong>' + group.title + '</strong><br>' : '')
                     + (group.passage || '');
+
+                if (showMaxWords) {
+                    const limit = document.createElement('div');
+                    limit.className = 'exam-max-words';
+                    limit.textContent = 'Write NO MORE THAN ' + maxWords + ' WORD' + (maxWords > 1 ? 'S' : '')
+                        + ' AND/OR A NUMBER for each answer.';
+                    groupBox.appendChild(limit);
+                }
+
                 el.appendChild(groupBox);
             }
 
             this.appendMediaBlock(el, group.files || {});
 
+            // Matching Information / Features: làm bài trên ma trận.
+            // const MATRIX_TYPES = ['matching_information', 'matching_features'];
+            const MATRIX_TYPES = ['matching_information'];
+            if (MATRIX_TYPES.includes(group.question_type)) {
+                (group.questions || []).forEach((q) => {
+                    const prompt = q.question_data && q.question_data.prompt;
+                    if (prompt) {
+                        const promptBox = document.createElement('div');
+                        promptBox.className = 'exam-part-instructions';
+                        promptBox.innerHTML = prompt;
+                        el.appendChild(promptBox);
+                    }
+                });
+
+                const matrix = ExamRenderers.buildMatchingMatrix(group);
+                if (matrix) {
+                    el.appendChild(matrix);
+                    return; // bỏ qua render từng thẻ, sang group tiếp theo
+                }
+                // Không có lựa chọn nào -> rơi xuống cách render thường bên dưới
+            }
+
+            // Matching Headings / Sentence Endings: kéo thả với kho lựa chọn dùng chung.
+            const isMatching = MATCHING_TYPES.includes(group.question_type);
+            const matchGroupId = isMatching ? ('mg-' + (group.id || (AttemptState.part.index + '-' + gIdx))) : null;
+
+            if (isMatching) {
+                const pool = ExamRenderers.buildMatchingPool(group, matchGroupId);
+                if (pool) el.appendChild(pool);
+            }
+
+            let lastTitle = '';
+
             (group.questions || []).forEach((question) => {
                 const entry = AttemptState.entries.find((e) => e.question.id === question.id);
                 if (!entry) return;
-                el.appendChild(ExamRenderers.render(entry));
+
+                const questionData = question.question_data || {};
+                if (questionData.prompt) {
+                    const promptBox = document.createElement('div');
+                    promptBox.className = 'exam-part-instructions';
+                    promptBox.innerHTML = questionData.prompt;
+                    el.appendChild(promptBox);
+                }
+
+                const title = String(question.title || '').trim();
+                if (title && title !== lastTitle) {
+                    const titleEl = document.createElement('div');
+                    titleEl.className = 'exam-question-title';
+                    titleEl.textContent = title;
+                    el.appendChild(titleEl);
+                }
+                lastTitle = title;
+
+                const cardEl = ExamRenderers.render(entry);
+                if (matchGroupId) ExamRenderers.tagMatchingCard(cardEl, matchGroupId);
+                el.appendChild(cardEl);
             });
+
+            if (matchGroupId) ExamMatchingDnD.syncChips(matchGroupId);
         });
     },
 

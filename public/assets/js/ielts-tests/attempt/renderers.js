@@ -46,14 +46,7 @@ function appendTextBlock(card, html, className) {
 }
 
 function renderTextWithBlanks(html, savedValues, disabled) {
-    let blankIndex = 0;
-    const out = (html || '').replace(/(?:_\s*){2,}/g, () => {
-        const idx = blankIndex++;
-        const val = (savedValues && savedValues[idx]) || '';
-        const disabledAttr = disabled ? 'disabled' : '';
-        return `<input type="text" class="exam-blank-input" data-blank-index="${idx}" value="${escapeAttr(val)}" ${disabledAttr}>`;
-    });
-    return { html: out, blankCount: blankIndex };
+    return window.IeltsBlanks.render(html, savedValues, disabled);
 }
 
 /** Trạng thái lưu (pending/saved/error) hiển thị nhỏ cạnh mỗi câu hỏi. */
@@ -70,20 +63,242 @@ function appendSaveIndicator(card, questionId) {
     });
 }
 
+/** A, B ... Z, AA, AB — sắp theo độ dài trước, tránh A, AA, AB, B. */
+function matchingKeyCompare(a, b) {
+    return a.length === b.length ? a.localeCompare(b) : a.length - b.length;
+}
+
+/** Nhãn hiển thị: "B – Julie Mattison", hoặc chỉ "B" nếu chưa nhập nội dung. */
+function matchingOptionLabel(options, key) {
+    const text = options && options[key];
+    return (text && String(text) !== key) ? (key + ' – ' + text) : key;
+}
+
 function wireBlankInputs(container, question) {
     const inputs = container.querySelectorAll('.exam-blank-input');
-    const existing = AttemptState.getAnswer(question.id) || [];
+
+    // Đáp án cũ có thể là chuỗi (Short Answer trước khi đổi) -> ép về mảng.
+    const toList = (value) => Array.isArray(value)
+        ? value.slice()
+        : (value ? [String(value)] : []);
+
+    const existing = toList(AttemptState.getAnswer(question.id));
 
     inputs.forEach((input, idx) => {
         if (existing[idx]) input.value = existing[idx];
 
         input.addEventListener('input', () => {
-            const current = AttemptState.getAnswer(question.id) || [];
+            const current = toList(AttemptState.getAnswer(question.id));
             current[idx] = input.value;
+
+            // Giữ đủ độ dài để không lệch vị trí khi chấm.
+            for (let i = 0; i < inputs.length; i++) {
+                if (current[i] == null) current[i] = '';
+            }
+
             AttemptAnswers.queueSave(question, current);
         });
     });
 }
+
+/**
+ * Gắn số câu ngay trước mỗi ô trống (kiểu IELTS trên máy).
+ * entry.startNumber là số câu đầu tiên của question này.
+ */
+function decorateBlankNumbers(container, entry) {
+    container.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
+        const badge = document.createElement('span');
+        badge.className = 'exam-blank-number';
+        badge.textContent = entry.startNumber + idx;
+        input.parentNode.insertBefore(badge, input);
+    });
+}
+
+function decorateBlankNumbers(container, entry) {
+    container.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
+        const badge = document.createElement('span');
+        badge.className = 'exam-blank-number';
+        badge.textContent = entry.startNumber + idx;
+        input.parentNode.insertBefore(badge, input);
+    });
+}
+
+/**
+ * Kéo thả cho Matching. Kho lựa chọn nằm ở cấp GROUP, ô thả nằm trong từng
+ * thẻ câu hỏi, nên phải điều phối ở cấp document thay vì trong 1 thẻ.
+ * Giá trị lưu là key đáp án ("A", "ii"...) — giống hệt bản dropdown cũ.
+ */
+const ExamMatchingDnD = {
+    bound: false,
+    picked: null,
+
+    ensureBound() {
+        if (this.bound) return;
+        this.bound = true;
+        document.addEventListener('pointerdown', (ev) => this.onPointerDown(ev));
+    },
+
+    chips(groupId) {
+        return Array.from(document.querySelectorAll('.exam-match-chip[data-group-id="' + groupId + '"]'));
+    },
+
+    slots(groupId) {
+        return Array.from(document.querySelectorAll('.exam-match-slot[data-group-id="' + groupId + '"]'));
+    },
+
+    isSingleUse(groupId) {
+        const pool = document.querySelector('.exam-match-pool[data-group-id="' + groupId + '"]');
+        return !!pool && pool.dataset.singleUse === '1';
+    },
+
+    syncChips(groupId) {
+        if (!this.isSingleUse(groupId)) return;
+        const used = this.slots(groupId).map((s) => s.dataset.value || '').filter(Boolean);
+        this.chips(groupId).forEach((chip) => {
+            chip.classList.toggle('used', used.includes(chip.dataset.value));
+        });
+    },
+
+    fill(slot, value, label) {
+        const question = slot.__question;
+        const groupId = slot.dataset.groupId;
+        if (!question) return;
+
+        // Matching Headings: mỗi lựa chọn chỉ dùng 1 lần -> gỡ khỏi ô cũ.
+        if (value && this.isSingleUse(groupId)) {
+            this.slots(groupId).forEach((other) => {
+                if (other !== slot && other.dataset.value === value) this.clear(other, true);
+            });
+        }
+
+        slot.dataset.value = value || '';
+        slot.textContent = value ? (label || value) : '–';
+        slot.classList.toggle('filled', !!value);
+        AttemptAnswers.queueSave(question, value || '');
+        this.syncChips(groupId);
+    },
+
+    clear(slot, skipSync) {
+        slot.dataset.value = '';
+        slot.textContent = '–';
+        slot.classList.remove('filled');
+        if (slot.__question) AttemptAnswers.queueSave(slot.__question, '');
+        if (!skipSync) this.syncChips(slot.dataset.groupId);
+    },
+
+    clearPick() {
+        document.querySelectorAll('.exam-match-chip.picked').forEach((c) => c.classList.remove('picked'));
+        this.picked = null;
+    },
+
+    slotFromPoint(x, y, groupId) {
+        const el = document.elementFromPoint(x, y);
+        const slot = el ? el.closest('.exam-match-slot') : null;
+        return slot && slot.dataset.groupId === groupId ? slot : null;
+    },
+
+    overPool(x, y, groupId) {
+        const el = document.elementFromPoint(x, y);
+        const pool = el ? el.closest('.exam-match-pool') : null;
+        return !!pool && pool.dataset.groupId === groupId;
+    },
+
+    onPointerDown(ev) {
+        const chip = ev.target.closest('.exam-match-chip');
+        const slot = ev.target.closest('.exam-match-slot');
+        if (!chip && !slot) return;
+
+        const el = chip || slot;
+        if (el.closest('.is-locked')) return;
+        if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+
+        if (chip) {
+            if (chip.classList.contains('used')) return;
+            this.startDrag(ev, chip, chip.dataset.groupId, chip.dataset.value, chip.dataset.label, null);
+            return;
+        }
+
+        if (slot.classList.contains('filled')) {
+            this.startDrag(ev, slot, slot.dataset.groupId, slot.dataset.value, slot.textContent, slot);
+            return;
+        }
+
+        // Ô trống: đặt lựa chọn đang chọn sẵn (cách bấm 2 lần).
+        ev.preventDefault();
+        if (this.picked && this.picked.groupId === slot.dataset.groupId) {
+            this.fill(slot, this.picked.value, this.picked.label);
+            this.clearPick();
+        }
+    },
+
+    startDrag(ev, el, groupId, value, label, sourceSlot) {
+        ev.preventDefault();
+
+        const self = this;
+        const start = { x: ev.clientX, y: ev.clientY };
+        let ghost = null;
+        let moved = false;
+        let hovered = null;
+
+        const onMove = (e) => {
+            if (!moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5) return;
+
+            if (!moved) {
+                moved = true;
+                el.classList.add('is-dragging');
+                ghost = document.createElement('div');
+                ghost.className = 'exam-match-ghost';
+                ghost.textContent = label || value;
+                document.body.appendChild(ghost);
+            }
+
+            ghost.style.left = e.clientX + 'px';
+            ghost.style.top = e.clientY + 'px';
+
+            const under = self.slotFromPoint(e.clientX, e.clientY, groupId);
+            if (hovered && hovered !== under) hovered.classList.remove('drag-over');
+            if (under) under.classList.add('drag-over');
+            hovered = under;
+        };
+
+        const onUp = (e) => {
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onUp);
+            document.removeEventListener('pointercancel', onUp);
+
+            el.classList.remove('is-dragging');
+            if (ghost) ghost.remove();
+            if (hovered) hovered.classList.remove('drag-over');
+
+            if (!moved) {
+                if (sourceSlot) {
+                    self.clear(sourceSlot);
+                } else {
+                    const wasPicked = el.classList.contains('picked');
+                    self.clearPick();
+                    if (!wasPicked) {
+                        el.classList.add('picked');
+                        self.picked = { groupId: groupId, value: value, label: label };
+                    }
+                }
+                return;
+            }
+
+            const target = self.slotFromPoint(e.clientX, e.clientY, groupId);
+            if (target) {
+                if (sourceSlot && target !== sourceSlot) self.clear(sourceSlot, true);
+                self.fill(target, value, label);
+                self.clearPick();
+            } else if (sourceSlot && self.overPool(e.clientX, e.clientY, groupId)) {
+                self.clear(sourceSlot);
+            }
+        };
+
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+    },
+};
 
 const ExamRenderers = {
     activeRecorder: null, // { stop: fn } — cho phép app.js ép dừng khi chuyển part
@@ -96,6 +311,200 @@ const ExamRenderers = {
         return card;
     },
 
+        /** Kho lựa chọn dùng chung cho cả group Matching. layout.js gọi hàm này. */
+    buildMatchingPool(group, groupId) {
+        const first = (group.questions || [])[0];
+        const options = (first && first.options) || {};
+        const keys = Object.keys(options).sort(matchingKeyCompare);
+        if (!keys.length) return null;
+
+        const pool = document.createElement('div');
+        pool.className = 'exam-match-pool';
+        pool.dataset.groupId = groupId;
+        // Headings: mỗi heading chỉ dùng cho 1 đoạn (theo chuẩn IELTS).
+        pool.dataset.singleUse = group.question_type === 'matching_headings' ? '1' : '0';
+
+        const label = document.createElement('div');
+        label.className = 'exam-match-pool-label';
+        label.textContent = pool.dataset.singleUse === '1'
+            ? 'Kéo mỗi lựa chọn vào một câu — mỗi lựa chọn chỉ dùng một lần'
+            : 'Kéo lựa chọn vào ô trống — có thể dùng lại nhiều lần';
+        pool.appendChild(label);
+
+        const chips = document.createElement('div');
+        chips.className = 'exam-match-chips';
+
+        keys.forEach((key) => {
+            const chip = document.createElement('span');
+            chip.className = 'exam-match-chip';
+            chip.dataset.groupId = groupId;
+            chip.dataset.value = key;
+            chip.dataset.label = matchingOptionLabel(options, key);
+            chip.textContent = chip.dataset.label;
+            chips.appendChild(chip);
+        });
+
+        pool.appendChild(chips);
+        ExamMatchingDnD.ensureBound();
+        return pool;
+    },
+
+
+    buildMatchingMatrix(group) {
+        // Chỉ lấy câu Matching (phòng dữ liệu cũ lẫn loại khác trong group).
+        const entries = (group.questions || [])
+            .map((q) => AttemptState.entries.find((e) => e.question.id === q.id))
+            .filter((e) => e && String(e.question.type || '').indexOf('matching_') === 0);
+        if (!entries.length) return null;
+
+        // Gộp cột của MỌI statement — giáo viên có thể thêm statement nhiều lần
+        // với số cột khác nhau.
+        const options = {};
+        entries.forEach((e) => Object.assign(options, e.question.options || {}));
+        const keys = Object.keys(options).sort(matchingKeyCompare);
+        if (!keys.length) return null;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'exam-matrix-wrap';
+
+        // Chú thích nội dung từng lựa chọn, nếu giáo viên có nhập (khác chữ cái).
+        const described = keys.filter((k) => options[k] && String(options[k]) !== k);
+        if (described.length) {
+            const legend = document.createElement('div');
+            legend.className = 'exam-matrix-legend';
+            described.forEach((k) => {
+                const item = document.createElement('div');
+                const strong = document.createElement('strong');
+                strong.textContent = k;
+                item.appendChild(strong);
+                item.appendChild(document.createTextNode(' ' + options[k]));
+                legend.appendChild(item);
+            });
+            wrap.appendChild(legend);
+        }
+
+        const scroller = document.createElement('div');
+        scroller.className = 'exam-matrix-scroll';
+
+        const table = document.createElement('table');
+        table.className = 'exam-matrix';
+
+        // Header
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        const headStatement = document.createElement('th');
+        headStatement.className = 'exam-matrix-statement-head';
+        headStatement.textContent = 'Statements';
+        headRow.appendChild(headStatement);
+
+        keys.forEach((k) => {
+            const th = document.createElement('th');
+            th.className = 'exam-matrix-col';
+            th.textContent = k;
+            if (options[k] && String(options[k]) !== k) th.title = options[k];
+            headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        // Body
+        const tbody = document.createElement('tbody');
+
+        entries.forEach((entry) => {
+            const q = entry.question;
+            const saved = String(AttemptState.getAnswer(q.id) || '').trim().toUpperCase();
+
+            const tr = document.createElement('tr');
+            tr.className = 'exam-matrix-row' + (saved ? ' answered' : '');
+            tr.id = 'exam-q-' + q.id;   // để thanh điều hướng cuộn tới đúng hàng
+
+            // Cột statement
+            const tdStatement = document.createElement('td');
+            tdStatement.className = 'exam-matrix-statement';
+
+            const inner = document.createElement('div');
+            inner.className = 'exam-matrix-statement-inner';
+
+            const num = document.createElement('span');
+            num.className = 'exam-matrix-num';
+            num.textContent = entry.startNumber;
+
+            const text = document.createElement('div');
+            text.className = 'exam-matrix-text';
+            text.innerHTML = q.text || '';
+
+            const indicator = document.createElement('span');
+            indicator.className = 'attempt-save-indicator';
+            AttemptAnswers.onStatusChange((qId, status) => {
+                if (String(qId) !== String(q.id)) return;
+                indicator.className = 'attempt-save-indicator status-' + status;
+                indicator.textContent = status === 'pending' ? 'Đang lưu...' : status === 'saved' ? 'Đã lưu' : 'Lỗi lưu';
+            });
+            text.appendChild(indicator);
+
+            inner.appendChild(num);
+            inner.appendChild(text);
+            tdStatement.appendChild(inner);
+            tr.appendChild(tdStatement);
+
+            // Các ô chọn
+            keys.forEach((k) => {
+                const td = document.createElement('td');
+                td.className = 'exam-matrix-cell';
+
+                const label = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'exam-mx-' + q.id;
+                radio.value = k;
+                radio.checked = saved === k.toUpperCase();
+                radio.setAttribute('aria-label', 'Câu ' + entry.startNumber + ' – ' + k);
+
+                if (radio.checked) td.classList.add('selected');
+
+                // Bấm lại ô đang chọn -> bỏ chọn (radio mặc định không bỏ được).
+                let wasChecked = false;
+                label.addEventListener('pointerdown', () => { wasChecked = radio.checked; });
+
+                radio.addEventListener('click', () => {
+                    if (wasChecked) {
+                        radio.checked = false;
+                        wasChecked = false;
+                        td.classList.remove('selected');
+                        tr.classList.remove('answered');
+                        AttemptAnswers.queueSave(q, '');
+                    }
+                });
+
+                radio.addEventListener('change', () => {
+                    if (!radio.checked) return;
+                    tr.querySelectorAll('.exam-matrix-cell').forEach((c) => c.classList.remove('selected'));
+                    td.classList.add('selected');
+                    tr.classList.add('answered');
+                    AttemptAnswers.queueSave(q, k);
+                });
+
+                label.appendChild(radio);
+                td.appendChild(label);
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        scroller.appendChild(table);
+        wrap.appendChild(scroller);
+        return wrap;
+    },
+
+    /** Gắn group id cho ô thả trong thẻ câu hỏi vừa render. */
+    tagMatchingCard(card, groupId) {
+        card.querySelectorAll('.exam-match-slot').forEach((slot) => {
+            slot.dataset.groupId = groupId;
+        });
+    },
+
     byType: {
 
         multiple_choice_single(entry) {
@@ -106,20 +515,42 @@ const ExamRenderers = {
             const wrap = document.createElement('div');
             wrap.className = 'exam-options';
 
-            (q.options || []).forEach((opt) => {
-                const row = document.createElement('div');
-                row.className = 'exam-option-row';
+            // name chung trong 1 câu -> trình duyệt tự bỏ chọn lựa chọn cũ.
+            const groupName = 'exam-q-' + q.id;
+            const saved = AttemptState.getAnswer(q.id);
+
+            (q.options || []).forEach((opt, index) => {
+                const row = document.createElement('label');
+                row.className = 'exam-option-row exam-option-check';
                 row.dataset.value = opt;
-                row.textContent = opt;
 
-                if (AttemptState.getAnswer(q.id) === opt) row.classList.add('selected');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.className = 'exam-option-checkbox';
+                radio.name = groupName;
+                radio.checked = saved === opt;
 
-                row.addEventListener('click', () => {
+                const letter = document.createElement('span');
+                letter.className = 'exam-option-letter';
+                letter.textContent = String.fromCharCode(65 + index);
+
+                const text = document.createElement('span');
+                text.className = 'exam-option-text';
+                text.textContent = opt;
+
+                if (radio.checked) row.classList.add('selected');
+
+                radio.addEventListener('change', () => {
+                    if (!radio.checked) return;
+
                     wrap.querySelectorAll('.exam-option-row').forEach((r) => r.classList.remove('selected'));
                     row.classList.add('selected');
                     AttemptAnswers.queueSave(q, opt);
                 });
 
+                row.appendChild(radio);
+                row.appendChild(letter);
+                row.appendChild(text);
                 wrap.appendChild(row);
             });
 
@@ -134,29 +565,48 @@ const ExamRenderers = {
 
             const wrap = document.createElement('div');
             wrap.className = 'exam-options';
-            const saved = AttemptState.getAnswer(q.id) || [];
 
-            (q.options || []).forEach((opt) => {
-                const row = document.createElement('div');
-                row.className = 'exam-option-row';
+            // Đáp án cũ có thể là string (dữ liệu trước khi đổi loại câu hỏi).
+            const savedRaw = AttemptState.getAnswer(q.id);
+            const saved = Array.isArray(savedRaw) ? savedRaw : (savedRaw ? [savedRaw] : []);
+
+            (q.options || []).forEach((opt, index) => {
+                // <label> để bấm vào cả dòng đều tick được; input thật để
+                // lockAllInputs() khoá được khi hết giờ.
+                const row = document.createElement('label');
+                row.className = 'exam-option-row exam-option-check';
                 row.dataset.value = opt;
-                row.textContent = opt;
 
-                if (saved.includes(opt)) row.classList.add('selected');
+                const box = document.createElement('input');
+                box.type = 'checkbox';
+                box.className = 'exam-option-checkbox';
+                box.checked = saved.includes(opt);
 
-                row.addEventListener('click', () => {
-                    const current = AttemptState.getAnswer(q.id) || [];
+                const letter = document.createElement('span');
+                letter.className = 'exam-option-letter';
+                letter.textContent = String.fromCharCode(65 + index);
+
+                const text = document.createElement('span');
+                text.className = 'exam-option-text';
+                text.textContent = opt;
+
+                if (box.checked) row.classList.add('selected');
+
+                box.addEventListener('change', () => {
+                    const prev = AttemptState.getAnswer(q.id);
+                    const current = Array.isArray(prev) ? prev.slice() : (prev ? [prev] : []);
                     const idx = current.indexOf(opt);
-                    if (idx >= 0) {
-                        current.splice(idx, 1);
-                        row.classList.remove('selected');
-                    } else {
-                        current.push(opt);
-                        row.classList.add('selected');
-                    }
+
+                    if (box.checked && idx < 0) current.push(opt);
+                    if (!box.checked && idx >= 0) current.splice(idx, 1);
+
+                    row.classList.toggle('selected', box.checked);
                     AttemptAnswers.queueSave(q, current);
                 });
 
+                row.appendChild(box);
+                row.appendChild(letter);
+                row.appendChild(text);
                 wrap.appendChild(row);
             });
 
@@ -173,63 +623,85 @@ const ExamRenderers = {
         _tfngLike(entry, choices) {
             const q = entry.question;
             const card = makeCard(entry);
-            appendTextBlock(card, q.text);
 
-            const wrap = document.createElement('div');
-            wrap.className = 'exam-options';
+            // Dropdown và đề bài nằm chung một hàng, dropdown đứng trước.
+            const row = document.createElement('div');
+            row.className = 'exam-inline-row';
 
-            choices.forEach((opt) => {
-                const row = document.createElement('div');
-                row.className = 'exam-option-row';
-                row.dataset.value = opt;
-                row.textContent = opt;
+            const select = document.createElement('select');
+            select.className = 'form-control exam-tfng-select';
 
-                if (AttemptState.getAnswer(q.id) === opt) row.classList.add('selected');
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = '-- Chọn --';
+            select.appendChild(placeholder);
 
-                row.addEventListener('click', () => {
-                    wrap.querySelectorAll('.exam-option-row').forEach((r) => r.classList.remove('selected'));
-                    row.classList.add('selected');
-                    AttemptAnswers.queueSave(q, opt);
-                });
-
-                wrap.appendChild(row);
+            choices.forEach((choice) => {
+                const option = document.createElement('option');
+                option.value = choice;                     // 'True' / 'Not Given' — khớp đáp án editor lưu
+                option.textContent = choice.toUpperCase(); // hiển thị TRUE / NOT GIVEN
+                select.appendChild(option);
             });
 
-            card.appendChild(wrap);
+            // Đáp án đã lưu có thể khác hoa/thường (dữ liệu cũ) -> so không phân biệt.
+            const saved = AttemptState.getAnswer(q.id);
+            if (saved) {
+                const matched = choices.find((c) => c.toLowerCase() === String(saved).trim().toLowerCase());
+                select.value = matched || '';
+            }
+
+            select.addEventListener('change', () => {
+                AttemptAnswers.queueSave(q, select.value);
+            });
+
+            const text = document.createElement('div');
+            text.className = 'exam-question-text';
+            text.innerHTML = q.text || '';
+
+            row.appendChild(select);
+            row.appendChild(text);
+            card.appendChild(row);
+
             return card;
         },
 
         _matchingLike(entry) {
             const q = entry.question;
             const card = makeCard(entry);
-            appendTextBlock(card, q.text);
+            const options = q.options || {};
 
-            const select = document.createElement('select');
-            select.className = 'form-control';
-            select.style.maxWidth = '160px';
+            const row = document.createElement('div');
+            row.className = 'exam-match-row';
 
-            const blank = document.createElement('option');
-            blank.value = '';
-            blank.textContent = '-- Chọn --';
-            select.appendChild(blank);
+            const text = document.createElement('div');
+            text.className = 'exam-question-text';
+            text.innerHTML = q.text || '';
 
-            Object.keys(q.options || {}).sort().forEach((key) => {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = key;
-                select.appendChild(option);
-            });
+            const slot = document.createElement('div');
+            slot.className = 'exam-match-slot';
+            slot.dataset.questionId = q.id;
+            slot.__question = q;   // để module kéo thả biết lưu vào câu nào
 
             const saved = AttemptState.getAnswer(q.id);
-            if (saved) select.value = saved;
+            const savedKey = saved ? String(saved).trim() : '';
 
-            select.addEventListener('change', () => {
-                AttemptAnswers.queueSave(q, select.value);
-            });
+            if (savedKey) {
+                slot.dataset.value = savedKey;
+                slot.textContent = matchingOptionLabel(options, savedKey);
+                slot.classList.add('filled');
+            } else {
+                slot.dataset.value = '';
+                slot.textContent = '–';
+            }
 
-            card.appendChild(select);
+            row.appendChild(text);
+            row.appendChild(slot);
+            card.appendChild(row);
+
+            ExamMatchingDnD.ensureBound();
             return card;
         },
+        
         matching_headings(entry) { return ExamRenderers.byType._matchingLike(entry); },
         matching_information(entry) { return ExamRenderers.byType._matchingLike(entry); },
         matching_features(entry) { return ExamRenderers.byType._matchingLike(entry); },
@@ -242,6 +714,8 @@ const ExamRenderers = {
             const saved = AttemptState.getAnswer(q.id) || [];
             const { html } = renderTextWithBlanks(q.text, saved, false);
             appendTextBlock(card, html);
+            decorateBlankNumbers(card, entry);
+            card.classList.add('has-inline-blanks');
             wireBlankInputs(card, q);
 
             return card;
@@ -256,6 +730,9 @@ const ExamRenderers = {
             const card = makeCard(entry);
             appendTextBlock(card, q.text);
 
+            // Số câu đã hiện ngay trong bảng -> ẩn badge "Câu N–M" trên đầu thẻ.
+            card.classList.add('has-inline-blanks');
+
             const structure = q.table_structure || { headers: [], rows: [] };
             const headers = structure.headers || [];
             const rows = structure.rows || [];
@@ -264,18 +741,25 @@ const ExamRenderers = {
             wrap.className = 'exam-table-wrap';
 
             const table = document.createElement('table');
-            const thead = document.createElement('thead');
-            const headRow = document.createElement('tr');
-            headers.forEach((h) => {
-                const th = document.createElement('th');
-                th.textContent = h || '';
-                headRow.appendChild(th);
-            });
-            thead.appendChild(headRow);
-            table.appendChild(thead);
+
+            if (headers.some((h) => String(h || '').trim() !== '')) {
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                headers.forEach((h) => {
+                    const th = document.createElement('th');
+                    th.textContent = h || '';
+                    headRow.appendChild(th);
+                });
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+            }
 
             const tbody = document.createElement('tbody');
             const savedByCell = AttemptState.getAnswer(q.id) || {};
+
+            // Mỗi cell có blank = 1 câu, đếm từ trái sang phải, trên xuống dưới —
+            // khớp slotCount của editor/payload và cách checkAnswer() chấm theo cell.
+            let cellNumber = entry.startNumber;
 
             rows.forEach((row, rIdx) => {
                 const cells = Array.isArray(row) ? row : (row.cells || []);
@@ -286,10 +770,23 @@ const ExamRenderers = {
                     const cellKey = rIdx + '-' + cIdx;
                     const savedForCell = savedByCell[cellKey] || [];
                     const { html, blankCount } = renderTextWithBlanks(cellText, savedForCell, false);
-                    td.innerHTML = html;
+
+                    const inner = document.createElement('div');
+                    inner.className = 'exam-table-cell';
+                    inner.innerHTML = html;
+                    td.appendChild(inner);
 
                     if (blankCount > 0) {
-                        td.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
+                        td.classList.add('has-blank');
+
+                        const firstInput = inner.querySelector('.exam-blank-input');
+                        const badge = document.createElement('span');
+                        badge.className = 'exam-table-number';
+                        badge.textContent = cellNumber++;
+                        firstInput.parentNode.insertBefore(badge, firstInput);
+
+                        inner.querySelectorAll('.exam-blank-input').forEach((input, idx) => {
+                            input.setAttribute('aria-label', 'Câu ' + badge.textContent);
                             input.addEventListener('input', () => {
                                 const current = AttemptState.getAnswer(q.id) || {};
                                 current[cellKey] = current[cellKey] || [];
@@ -314,94 +811,235 @@ const ExamRenderers = {
         _dragDropLike(entry) {
             const q = entry.question;
             const card = makeCard(entry);
+            const isReuse = q.type === 'drag_drop_reuse';
 
-            const saved = AttemptState.getAnswer(q.id) || [];
+            const savedInit = AttemptState.getAnswer(q.id) || [];
             const { html } = renderTextWithBlanks(q.text, [], false);
 
+            // Đổi <input> của blank-utils thành ô thả.
             let slotIndex = 0;
             const slotHtml = html.replace(/<input[^>]*class="exam-blank-input"[^>]*>/g, () => {
                 const idx = slotIndex++;
-                const val = saved[idx] || '';
-                return `<span class="exam-blank-slot ${val ? 'filled' : ''}" data-blank-index="${idx}">${escapeAttr(val) || '&hellip;'}</span>`;
+                const val = savedInit[idx] || '';
+                return `<span class="exam-dd-slot${val ? ' filled' : ''}" data-blank-index="${idx}">${val ? escapeAttr(val) : '–'}</span>`;
             });
 
             appendTextBlock(card, slotHtml);
 
+            // ── Kho đáp án ────────────────────────────────────────────────
+            const bankWrap = document.createElement('div');
+            bankWrap.className = 'exam-dd-bank-wrap';
+
+            const bankLabel = document.createElement('div');
+            bankLabel.className = 'exam-dd-bank-label';
+            // bankLabel.textContent = 'Kéo đáp án vào ô trống';
+
             const bank = document.createElement('div');
             bank.className = 'exam-dd-bank';
 
-            let activeChip = null;
+            bankWrap.appendChild(bankLabel);
+            bankWrap.appendChild(bank);
+            card.appendChild(bankWrap);
+
+            // ── Helpers ───────────────────────────────────────────────────
+            const slots = () => Array.from(card.querySelectorAll('.exam-dd-slot'));
+            const isLocked = () => !!card.closest('.is-locked');
+
+            const getAnswers = () => {
+                const current = AttemptState.getAnswer(q.id);
+                return Array.isArray(current) ? current.slice() : [];
+            };
+
+            function syncChips() {
+                if (isReuse) return; // kiểu "reuse": chip luôn dùng lại được
+                const used = getAnswers().filter(Boolean);
+                bank.querySelectorAll('.exam-dd-chip').forEach((chip) => {
+                    chip.classList.toggle('used', used.includes(chip.dataset.word));
+                });
+            }
+
+            function applyAnswers(answers) {
+                const list = slots();
+                const normalized = list.map((_, i) => answers[i] || '');
+
+                list.forEach((slot, i) => {
+                    slot.textContent = normalized[i] || '–';
+                    slot.classList.toggle('filled', !!normalized[i]);
+                });
+
+                AttemptAnswers.queueSave(q, normalized);
+                syncChips();
+            }
+
+            function placeWord(word, slot) {
+                const answers = getAnswers();
+                const idx = parseInt(slot.dataset.blankIndex, 10);
+
+                // Kiểu "disappear": mỗi đáp án chỉ nằm ở 1 ô -> gỡ khỏi ô cũ.
+                if (!isReuse) {
+                    answers.forEach((value, i) => {
+                        if (value === word && i !== idx) answers[i] = '';
+                    });
+                }
+
+                answers[idx] = word;
+                applyAnswers(answers);
+            }
+
+            function clearSlot(slot) {
+                const answers = getAnswers();
+                answers[parseInt(slot.dataset.blankIndex, 10)] = '';
+                applyAnswers(answers);
+            }
+
+            function slotFromPoint(x, y) {
+                const el = document.elementFromPoint(x, y);
+                const slot = el ? el.closest('.exam-dd-slot') : null;
+                return slot && card.contains(slot) ? slot : null;
+            }
+
+            function overBank(x, y) {
+                const el = document.elementFromPoint(x, y);
+                return !!(el && el.closest('.exam-dd-bank-wrap') && card.contains(el));
+            }
+
+            // ── Kéo thả bằng Pointer Events (chạy cả chuột lẫn cảm ứng) ────
+            let pickedWord = null; // dự phòng: chạm chip rồi chạm ô trống
+
+            function clearPick() {
+                pickedWord = null;
+                bank.querySelectorAll('.exam-dd-chip').forEach((c) => c.classList.remove('active-pick'));
+            }
+
+            function beginDrag(ev, word, sourceSlot, el) {
+                if (isLocked()) return;
+                if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+                if (!isReuse && !sourceSlot && el.classList.contains('used')) return;
+
+                ev.preventDefault();
+
+                const start = { x: ev.clientX, y: ev.clientY };
+                let ghost = null;
+                let moved = false;
+                let hovered = null;
+
+                const onMove = (e) => {
+                    if (!moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5) return;
+
+                    if (!moved) {
+                        moved = true;
+                        el.classList.add('is-dragging');
+                        ghost = document.createElement('div');
+                        ghost.className = 'exam-dd-ghost';
+                        ghost.textContent = word;
+                        document.body.appendChild(ghost);
+                    }
+
+                    ghost.style.left = e.clientX + 'px';
+                    ghost.style.top = e.clientY + 'px';
+
+                    const under = slotFromPoint(e.clientX, e.clientY);
+                    if (hovered && hovered !== under) hovered.classList.remove('drag-over');
+                    if (under) under.classList.add('drag-over');
+                    hovered = under;
+                };
+
+                const onUp = (e) => {
+                    document.removeEventListener('pointermove', onMove);
+                    document.removeEventListener('pointerup', onUp);
+                    document.removeEventListener('pointercancel', onUp);
+
+                    el.classList.remove('is-dragging');
+                    if (ghost) ghost.remove();
+                    if (hovered) hovered.classList.remove('drag-over');
+
+                    // Không di chuyển -> coi như bấm chọn.
+                    if (!moved) {
+                        if (sourceSlot) {
+                            clearSlot(sourceSlot);
+                        } else {
+                            const wasActive = el.classList.contains('active-pick');
+                            clearPick();
+                            if (!wasActive) {
+                                pickedWord = word;
+                                el.classList.add('active-pick');
+                            }
+                        }
+                        return;
+                    }
+
+                    const target = slotFromPoint(e.clientX, e.clientY);
+                    if (target) {
+                        placeWord(word, target);
+                        clearPick();
+                    } else if (sourceSlot && overBank(e.clientX, e.clientY)) {
+                        clearSlot(sourceSlot); // kéo ngược về kho = gỡ đáp án
+                    }
+                };
+
+                document.addEventListener('pointermove', onMove);
+                document.addEventListener('pointerup', onUp);
+                document.addEventListener('pointercancel', onUp);
+            }
 
             (q.options || []).forEach((word) => {
                 const chip = document.createElement('span');
                 chip.className = 'exam-dd-chip';
                 chip.textContent = word;
                 chip.dataset.word = word;
-
-                chip.addEventListener('click', () => {
-                    if (chip.classList.contains('used') && q.type === 'drag_drop_disappear') return;
-                    bank.querySelectorAll('.exam-dd-chip').forEach((c) => c.classList.remove('active-pick'));
-                    chip.classList.add('active-pick');
-                    activeChip = word;
-                });
-
+                chip.addEventListener('pointerdown', (ev) => beginDrag(ev, word, null, chip));
                 bank.appendChild(chip);
             });
 
-            card.insertBefore(bank, card.querySelector('.exam-question-text').nextSibling);
+            slots().forEach((slot) => {
+                slot.addEventListener('pointerdown', (ev) => {
+                    if (isLocked()) return;
 
-            card.querySelectorAll('.exam-blank-slot').forEach((slot) => {
-                slot.addEventListener('click', () => {
-                    const idx = parseInt(slot.dataset.blankIndex, 10);
-                    const current = AttemptState.getAnswer(q.id) || [];
-
+                    // Ô đã điền: kéo sang ô khác, hoặc kéo về kho để gỡ.
                     if (slot.classList.contains('filled')) {
-                        current[idx] = '';
-                        slot.textContent = '\u2026';
-                        slot.classList.remove('filled');
-                        if (q.type === 'drag_drop_disappear') {
-                            bank.querySelectorAll('.exam-dd-chip').forEach((c) => {
-                                if (c.textContent === slot.dataset.filledWord) c.classList.remove('used');
-                            });
-                        }
-                        AttemptAnswers.queueSave(q, current);
+                        beginDrag(ev, slot.textContent, slot, slot);
                         return;
                     }
 
-                    if (!activeChip) return;
-
-                    current[idx] = activeChip;
-                    slot.textContent = activeChip;
-                    slot.classList.add('filled');
-                    slot.dataset.filledWord = activeChip;
-                    AttemptAnswers.queueSave(q, current);
-
-                    if (q.type === 'drag_drop_disappear') {
-                        bank.querySelectorAll('.exam-dd-chip').forEach((c) => {
-                            if (c.dataset.word === activeChip) c.classList.add('used');
-                        });
+                    ev.preventDefault();
+                    if (pickedWord) {
+                        placeWord(pickedWord, slot);
+                        clearPick();
                     }
-
-                    bank.querySelectorAll('.exam-dd-chip').forEach((c) => c.classList.remove('active-pick'));
-                    activeChip = null;
                 });
             });
 
+            syncChips();
             return card;
         },
+
         drag_drop_disappear(entry) { return ExamRenderers.byType._dragDropLike(entry); },
         drag_drop_reuse(entry) { return ExamRenderers.byType._dragDropLike(entry); },
 
         short_answer(entry) {
             const q = entry.question;
             const card = makeCard(entry);
+
+            const saved = AttemptState.getAnswer(q.id);
+            const savedList = Array.isArray(saved) ? saved : (saved ? [String(saved)] : []);
+            const { html, blankCount } = renderTextWithBlanks(q.text, savedList, false);
+
+            // Đề có ___ -> ô nhập nằm ngay tại chỗ trống.
+            if (blankCount > 0) {
+                appendTextBlock(card, html);
+                decorateBlankNumbers(card, entry);
+                wireBlankInputs(card, q);
+                card.classList.add('has-inline-blanks');
+                return card;
+            }
+
+            // Đề không có ___ -> ô nhập đặt bên dưới, như cũ.
             appendTextBlock(card, q.text);
 
             const input = document.createElement('input');
             input.type = 'text';
-            input.className = 'form-control';
-            input.style.maxWidth = '320px';
-            input.value = AttemptState.getAnswer(q.id) || '';
+            input.className = 'form-control exam-short-input';
+            input.value = typeof saved === 'string' ? saved : (savedList[0] || '');
 
             input.addEventListener('input', () => {
                 AttemptAnswers.queueSave(q, input.value);
@@ -480,7 +1118,7 @@ const ExamRenderers = {
             return window.IeltsSpeakingStage.render(entry, {
                 isMock,
                 partNumber: part.part_number || (entry.partIndex + 1),
-                questionLabel: 'Question ' + entry.startNumber,
+                questionLabel: (q.title && String(q.title).trim()) || ('Question ' + entry.startNumber),
                 stepLabel: partEntries.length > 1
                     ? `${part.title || 'Part ' + (entry.partIndex + 1)} — question ${position + 1} of ${partEntries.length}`
                     : (part.title || ''),

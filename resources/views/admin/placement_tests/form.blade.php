@@ -562,6 +562,8 @@ function applyRichEditorValue(target, html) {
         if (passage) passage.content = html;
     } else if (target.kind === 'question') {
         if (questions[target.index]) questions[target.index].question_text = html;
+    } else if (target.kind === 'instruction') {          
+        if (questions[target.index]) questions[target.index].instruction = html;
     } else if (target.kind === 'help') {
         if (questions[target.index]) questions[target.index].answer_help = html;
     }
@@ -575,6 +577,15 @@ function openQuestionEditor(index) {
         { kind: 'question', index: index },
         'Câu ' + (index + 1) + ' — nội dung',
         questions[index].question_text
+    );
+}
+
+function openInstructionEditor(index) {
+    if (!questions[index]) return;
+    openRichEditor(
+        { kind: 'instruction', index: index },
+        'Câu ' + (index + 1) + ' — đề bài / hướng dẫn',
+        questions[index].instruction
     );
 }
 
@@ -677,6 +688,7 @@ function blankQuestionTemplate() {
         audio_clip_id: null,
         linked_passage_id: null,
         question_text: '',
+        instruction: '',
         options: ['', ''],
         word_bank: [],
         blank_hints: [],
@@ -726,6 +738,7 @@ function changeType(index, type) {
         ...fresh,
         type,
         question_text: questions[index].question_text,
+        instruction: questions[index].instruction,
         points: questions[index].points,
         answer_help: questions[index].answer_help,
         audio_clip_id: questions[index].audio_clip_id,
@@ -1242,6 +1255,15 @@ function renderQuestionCard(q, index) {
         bodyHtml += '</div>';
     }
 
+    /* Đề bài / hướng dẫn: dòng dẫn đứng TRÊN nội dung câu hỏi, VD
+   "Choose the correct letter, A, B or C." Không bắt buộc. */
+    const instructionBlock = richFieldHtml(
+        'Đề bài / Hướng dẫn <small class="text-muted">(không bắt buộc)</small>',
+        q.instruction,
+        `openInstructionEditor(${index})`,
+        'Hiện phía trên nội dung câu hỏi, VD: "Choose the correct letter, A, B or C."'
+    );
+
     /* sentence_completion GIỮ textarea thuần: logic đếm chỗ trống dùng regex
        /_{2,}/ trên text, còn isAnswerCorrect() phía server yêu cầu số đáp án
        khớp đúng số chỗ trống. Thẻ HTML do editor sinh ra (span, &nbsp;, hoặc
@@ -1295,6 +1317,7 @@ function renderQuestionCard(q, index) {
 
         ${audioGroupNoticeHtml(index, q)}
 
+        ${instructionBlock}
         ${questionTextBlock}
 
         ${bodyHtml}

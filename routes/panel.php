@@ -838,6 +838,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/bundle-vocabulary/{id}/submit', 'DictionaryController@submitBundleVocabularySet');
         Route::post('/bundle-vocabulary/{id}/approve', 'DictionaryController@approveBundleVocabularySet');
         Route::post('/bundle-vocabulary/{id}/reject', 'DictionaryController@rejectBundleVocabularySet');
+
+        Route::post('/bundle-vocabulary/{id}/words/store', 'DictionaryController@storeBundleVocabularyWord');
+        Route::post('/bundle-vocabulary/{id}/words/{wordId}/update', 'DictionaryController@updateBundleVocabularyWord');
+        Route::post('/bundle-vocabulary/{id}/words/{wordId}/delete', 'DictionaryController@deleteBundleVocabularyWord');
     });
 
 });

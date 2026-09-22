@@ -555,6 +555,54 @@ body.is-resizing-exam .exam-questions {
     background: #f5f3ff;
 }
 
+/* ── Multiple choice – nhiều đáp án (checkbox) ───────────────────────── */
+
+.exam-option-row.exam-option-check {
+    gap: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s, background .15s;
+}
+
+.exam-option-checkbox {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #511D99;   /* dấu tích màu tím */
+}
+
+.exam-option-letter {
+    flex: 0 0 auto;
+    min-width: 18px;
+    font-weight: 700;
+    color: #6b7280;
+}
+
+.exam-option-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.exam-option-row.exam-option-check.selected {
+    border-color: #511D99;
+    background: #f5f3ff;
+    box-shadow: 0 2px 10px rgba(81, 29, 153, 0.20);
+}
+
+.exam-option-row.exam-option-check.selected .exam-option-letter,
+.exam-option-row.exam-option-check.selected .exam-option-text {
+    color: #3c1275;
+    font-weight: 600;
+}
+
+/* Hết giờ: input bị disable -> bỏ con trỏ bấm được */
+.exam-option-row.exam-option-check:has(.exam-option-checkbox:disabled) {
+    cursor: default;
+    opacity: 0.75;
+}
+
 .exam-option-row.correct-highlight {
     border-color: #22c55e;
     background: #f0fdf4;
@@ -567,13 +615,52 @@ body.is-resizing-exam .exam-questions {
 
 .exam-blank-input {
     display: inline-block;
-    width: 130px;
-    padding: 3px 8px;
-    border: none;
+    width: 170px;
+    padding: 8px 12px;
+    border: 1.5px solid #a78bfa;
     border-bottom: 2px solid #511D99;
-    background: #f5f3ff;
+    border-radius: 8px;
+    background: #faf8ff;
     font-size: 14px;
-    margin: 0 2px;
+    margin: 0 4px;
+    vertical-align: middle;
+}
+
+.exam-blank-input:focus {
+    outline: none;
+    border-color: #511D99;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.12);
+}
+
+.exam-blank-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    margin: 0 6px 0 2px;
+    border-radius: 6px;
+    background: #511D99;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.exam-short-input {
+    max-width: 360px;
+    margin-top: 8px;
+}
+
+/* Đã có số ngay tại ô trống -> ẩn badge "Câu N" trên đầu thẻ */
+.exam-question-card.has-inline-blanks .exam-question-number {
+    display: none;
+}
+
+.exam-question-card.has-inline-blanks .exam-question-text {
+    line-height: 2.6;
 }
 
 .exam-blank-input.graded-correct {
@@ -586,20 +673,81 @@ body.is-resizing-exam .exam-questions {
     background: #fee2e2;
 }
 
+/* ── Table completion ─────────────────────────────────────────────── */
+
+.exam-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #ede9fe;
+    border-radius: 12px;
+    background: #fff;
+}
+
 .exam-table-wrap table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
-}
-
-.exam-table-wrap th, .exam-table-wrap td {
-    border: 1px solid #d1d5db;
-    padding: 8px;
-    text-align: left;
+    border-style: hidden;   /* ẩn viền ngoài của cell, dùng viền bo góc của wrap */
+    font-size: 14px;
 }
 
 .exam-table-wrap th {
-    background: #f3e8ff;
+    padding: 18px 20px;
+    background: #f5f3ff;
+    border: 1px solid #ede9fe;
+    color: #1f2937;
+    font-weight: 700;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.exam-table-wrap td {
+    padding: 16px 20px;
+    border: 1px solid #f1f0f7;
+    color: #1f2937;
+    vertical-align: middle;
+}
+    
+.exam-table-cell {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    line-height: 1.5;
+}
+
+/* Số câu: vòng tròn tím */
+.exam-table-number {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #5b21b6;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* Ô nhập trong bảng: chỉ gạch chân, không dùng kiểu hộp */
+.exam-table-wrap .exam-blank-input {
+    flex: 1 1 120px;
+    min-width: 100px;
+    width: auto;
+    margin: 0;
+    padding: 6px 2px;
+    border: none;
+    border-bottom: 2px solid #7c3aed;
+    border-radius: 0;
+    background: transparent;
+    font-size: 14px;
+}
+
+.exam-table-wrap .exam-blank-input:focus {
+    outline: none;
+    box-shadow: none;
+    border-bottom-color: #511D99;
+    background: #faf8ff;
 }
 
 .exam-essay-textarea {
@@ -619,55 +767,10 @@ body.is-resizing-exam .exam-questions {
     margin-top: 6px;
 }
 
-.exam-dd-bank {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
-    padding: 10px;
-    background: #f3e8ff;
-    border-radius: 8px;
-}
 
-.exam-dd-chip {
-    padding: 6px 12px;
-    background: #fff;
-    border: 1px solid #a78bfa;
-    border-radius: 20px;
-    font-size: 13px;
-    cursor: pointer;
-    color: #511D99;
-    font-weight: 600;
-}
 
-.exam-dd-chip.used {
-    opacity: 0.35;
-    cursor: default;
-}
 
-.exam-dd-chip.active-pick {
-    background: #511D99;
-    color: #fff;
-}
 
-.exam-blank-slot {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 90px;
-    padding: 3px 10px;
-    border: 2px dashed #a78bfa;
-    border-radius: 6px;
-    background: #faf5ff;
-    font-size: 13px;
-    cursor: pointer;
-    margin: 0 2px;
-}
-
-.exam-blank-slot.filled {
-    border-style: solid;
-    background: #f5f3ff;
-}
 
 .exam-explanation-box {
     margin-top: 12px;
@@ -1059,3 +1162,499 @@ body.is-resizing-exam .exam-questions {
     cursor: pointer;
 }
 .exam-listening-gate-card .elg-play:hover { background: #3f1777; }
+
+.exam-question-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1f2937;
+    margin: 16px 0 6px;
+}
+
+.exam-max-words {
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.exam-tfng-select {
+    max-width: 180px;
+    margin-top: 8px;
+}
+
+.exam-inline-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.exam-inline-row .exam-tfng-select {
+    flex: 0 0 auto;
+    width: 150px;
+    margin-top: 0;
+}
+
+.exam-inline-row .exam-question-text {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+    padding-top: 7px;   /* canh chữ ngang giữa dropdown */
+}
+
+@media (max-width: 640px) {
+    .exam-inline-row {
+        flex-direction: column;
+    }
+    .exam-inline-row .exam-tfng-select {
+        width: 100%;
+        max-width: 220px;
+    }
+}
+
+/* Radio (single answer) dùng chung style với checkbox, chỉ khác hình tròn */
+.exam-option-checkbox[type="radio"] {
+    border-radius: 50%;
+}
+
+
+
+/* ── Drag & drop ──────────────────────────────────────────────────── */
+
+.exam-dd-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    margin: 0 4px;
+    padding: 7px 14px;
+    border: 2px dashed #a78bfa;
+    border-radius: 8px;
+    background: #faf8ff;
+    color: #6d28d9;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+}
+
+.exam-dd-slot.filled {
+    border-style: solid;
+    border-color: #8b5cf6;
+    background: #ede9fe;
+    color: #4c1d95;
+    cursor: grab;
+}
+
+.exam-dd-slot.drag-over {
+    border-color: #511D99;
+    background: #ddd6fe;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.15);
+}
+
+.exam-dd-bank-wrap {
+    margin-top: 18px;
+}
+
+.exam-dd-bank-label {
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #6d28d9;
+}
+
+.exam-dd-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 24px;
+    background: #f5f3ff;
+    border-radius: 14px;
+}
+
+.exam-dd-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border: 1.5px solid #c4b5fd;
+    border-radius: 999px;
+    background: #fff;
+    color: #4c1d95;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s;
+}
+
+.exam-dd-chip:hover {
+    border-color: #511D99;
+    box-shadow: 0 2px 8px rgba(81, 29, 153, 0.18);
+}
+
+.exam-dd-chip.active-pick {
+    border-color: #511D99;
+    background: #ede9fe;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.15);
+}
+
+.exam-dd-chip.is-dragging {
+    opacity: .35;
+}
+
+.exam-dd-chip.used {
+    opacity: .3;
+    pointer-events: none;
+}
+
+
+
+/* Bản sao bay theo con trỏ khi kéo */
+.exam-dd-ghost {
+    position: fixed;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    padding: 8px 16px;
+    border: 1.5px solid #511D99;
+    border-radius: 999px;
+    background: #fff;
+    color: #4c1d95;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    box-shadow: 0 6px 18px rgba(81, 29, 153, 0.25);
+    pointer-events: none;
+}
+
+.exam-questions.is-locked .exam-dd-chip,
+.exam-questions.is-locked .exam-dd-slot {
+    cursor: default;
+}  
+
+
+/* Ô trống nhập trực tiếp trên đề */
+.exam-blank-input {
+    display: inline-block;
+    width: 170px;
+    padding: 8px 12px;
+    border: 1.5px solid #a78bfa;
+    border-bottom: 2px solid #511D99;   /* giữ gạch chân đậm ở đáy */
+    border-radius: 8px;
+    background: #faf8ff;
+    font-size: 14px;
+    margin: 0 4px;
+    vertical-align: middle;
+}
+
+.exam-blank-input:focus {
+    outline: none;
+    border-color: #511D99;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.12);
+}
+
+.exam-blank-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    margin: 0 6px 0 2px;
+    border-radius: 6px;
+    background: #511D99;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+/* Đã có số ngay tại ô trống -> ẩn badge "Câu N" trên đầu thẻ */
+.exam-question-card.has-inline-blanks .exam-question-number {
+    display: none;
+}
+
+/* Dãn dòng cho dễ đọc khi có ô nhập xen giữa chữ */
+.exam-question-card.has-inline-blanks .exam-question-text {
+    line-height: 2.6;
+}
+
+/* ── Matching (kéo thả) ───────────────────────────────────────────── */
+
+.exam-match-pool {
+    margin-bottom: 16px;
+    padding: 18px 20px;
+    background: #f5f3ff;
+    border-radius: 14px;
+}
+
+.exam-match-pool-label {
+    margin-bottom: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #6d28d9;
+}
+
+.exam-match-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.exam-match-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 9px 16px;
+    border: 1.5px solid #c4b5fd;
+    border-radius: 999px;
+    background: #fff;
+    color: #4c1d95;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: border-color .15s, box-shadow .15s, background .15s, opacity .15s;
+}
+
+.exam-match-chip:hover {
+    border-color: #511D99;
+    box-shadow: 0 2px 8px rgba(81, 29, 153, 0.18);
+}
+
+.exam-match-chip.picked {
+    border-color: #511D99;
+    background: #ede9fe;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.15);
+}
+
+.exam-match-chip.is-dragging { opacity: .35; }
+.exam-match-chip.used { opacity: .3; pointer-events: none; }
+
+.exam-match-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.exam-match-row .exam-question-text {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+    padding-top: 8px;
+}
+
+.exam-match-slot {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 190px;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 2px dashed #a78bfa;
+    border-radius: 8px;
+    background: #faf8ff;
+    color: #6d28d9;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+}
+
+.exam-match-slot.filled {
+    border-style: solid;
+    border-color: #8b5cf6;
+    background: #ede9fe;
+    color: #4c1d95;
+    cursor: grab;
+}
+
+.exam-match-slot.drag-over {
+    border-color: #511D99;
+    background: #ddd6fe;
+    box-shadow: 0 0 0 3px rgba(81, 29, 153, 0.15);
+}
+
+.exam-match-ghost {
+    position: fixed;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    padding: 9px 16px;
+    border: 1.5px solid #511D99;
+    border-radius: 999px;
+    background: #fff;
+    color: #4c1d95;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 6px 18px rgba(81, 29, 153, 0.25);
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .exam-match-row { flex-direction: column; }
+    .exam-match-slot { width: 100%; }
+}
+
+/* ── Matching – ma trận (Information / Features) ───────────────────── */
+
+.exam-matrix-wrap {
+    margin-bottom: 18px;
+}
+
+.exam-matrix-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    background: #f5f3ff;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.exam-matrix-legend strong {
+    display: inline-block;
+    min-width: 22px;
+    color: #511D99;
+}
+
+.exam-matrix-scroll {
+    overflow-x: auto;
+    border: 1px solid #ede9fe;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.exam-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.exam-matrix th {
+    padding: 12px 8px;
+    background: #f5f3ff;
+    border-bottom: 1px solid #ede9fe;
+    color: #4c1d95;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.exam-matrix th.exam-matrix-statement-head {
+    padding-left: 16px;
+    text-align: left;
+}
+
+.exam-matrix th.exam-matrix-col {
+    min-width: 44px;
+}
+
+.exam-matrix td {
+    padding: 6px;
+    border-bottom: 1px solid #f1f0f7;
+    border-left: 1px solid #f1f0f7;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.exam-matrix tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.exam-matrix td.exam-matrix-statement {
+    min-width: 260px;
+    padding: 12px 16px;
+    border-left: none;
+    text-align: left;
+}
+
+/* Cột statement dính bên trái khi cuộn ngang (nhiều cột lựa chọn) */
+.exam-matrix .exam-matrix-statement,
+.exam-matrix .exam-matrix-statement-head {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+.exam-matrix .exam-matrix-statement { background: #fff; }
+
+.exam-matrix-statement-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.exam-matrix-num {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 28px;
+    border: 1.5px solid transparent;
+    border-radius: 6px;
+    background: #f5f3ff;
+    color: #511D99;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.exam-matrix-row.answered .exam-matrix-num {
+    border-color: #511D99;
+    background: #fff;
+}
+
+.exam-matrix-text {
+    flex: 1;
+    min-width: 0;
+    padding-top: 4px;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+.exam-matrix-cell label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin: 0 auto;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.exam-matrix-cell label:hover {
+    background: #faf8ff;
+}
+
+.exam-matrix-cell.selected label {
+    background: #ede9fe;
+}
+
+.exam-matrix-cell input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #511D99;
+    cursor: pointer;
+}
+
+.exam-questions.is-locked .exam-matrix-cell label {
+    cursor: default;
+}

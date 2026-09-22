@@ -2305,6 +2305,8 @@ class DictionaryController extends Controller
         return back()->with('success', trans('panel.bundle_vocabulary_rejected'));
     }
 
+
+
     private function getAvailableBundlesForVocabulary($user)
     {
         $query = Bundle::query()->select('id', 'slug', 'creator_id', 'teacher_id');
@@ -3009,5 +3011,307 @@ class DictionaryController extends Controller
         }
 
         return $message . ' (Đã bỏ qua ' . $this->lastSkippedDuplicates . ' dòng trùng lặp.)';
+    }
+
+    private const BUNDLE_WORDS_PER_PAGE = 100;
+ 
+    /**
+     * Thêm 1 từ mới vào bộ từ vựng (AJAX).
+     * Không thay đổi trạng thái duyệt của bộ.
+     */
+    public function storeBundleVocabularyWord(Request $request, $id)
+    {
+        $user = Auth::user();
+        $set  = $this->findEditableBundleVocabularySet($user, $id);
+ 
+        $payload = $this->buildBundleVocabularyWordPayload($request);
+        $this->assertBundleWordNotDuplicated($set, $payload);
+ 
+        $word = DB::transaction(function () use ($set, $payload) {
+            $maxOrder = (int) BundleVocabularyWord::query()
+                ->where('vocabulary_set_id', $set->id)
+                ->max('sort_order');
+ 
+            $word = new BundleVocabularyWord();
+            $word->forceFill(array_merge($payload, [
+                'vocabulary_set_id' => $set->id,
+                'sort_order'        => $maxOrder + 1,
+            ]))->save();
+ 
+            return $word;
+        });
+ 
+        $wordsCount = $this->refreshBundleVocabularySetWordCount($set);
+ 
+        // Flashcard của học viên cho từ mới sẽ tự được tạo khi học viên mở bộ
+        // (buildBundleVocabularyFlashcardsForSet / syncBundleVocabularyFlashcardsForUser).
+ 
+        return response()->json([
+            'success'     => true,
+            'message'     => 'Đã thêm từ "' . $word->word . '".',
+            'data'        => $this->formatBundleVocabularyWord($word),
+            'words_count' => $wordsCount,
+            'last_page'   => max(1, (int) ceil($wordsCount / self::BUNDLE_WORDS_PER_PAGE)),
+        ]);
+    }
+ 
+    /**
+     * Sửa nội dung 1 từ trong bộ (AJAX).
+     * Cập nhật tại chỗ (giữ nguyên ID) nên tiến độ học của học viên được giữ lại.
+     */
+    public function updateBundleVocabularyWord(Request $request, $id, $wordId)
+    {
+        $user = Auth::user();
+        $set  = $this->findEditableBundleVocabularySet($user, $id);
+        $word = $this->findBundleVocabularyWordInSet($set, $wordId);
+ 
+        $payload = $this->buildBundleVocabularyWordPayload($request);
+        $this->assertBundleWordNotDuplicated($set, $payload, $word->id);
+ 
+        DB::transaction(function () use ($word, $payload) {
+            $word->forceFill($payload)->save();
+            $this->syncStudentFlashcardsForBundleWord($word);
+        });
+ 
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã lưu thay đổi cho từ "' . $word->word . '".',
+            'data'    => $this->formatBundleVocabularyWord($word->fresh()),
+        ]);
+    }
+ 
+    /**
+     * Xoá 1 từ khỏi bộ (AJAX).
+     * Đồng thời dọn flashcard + tiến độ học của học viên gắn với từ đó.
+     */
+    public function deleteBundleVocabularyWord($id, $wordId)
+    {
+        $user = Auth::user();
+        $set  = $this->findEditableBundleVocabularySet($user, $id);
+        $word = $this->findBundleVocabularyWordInSet($set, $wordId);
+ 
+        $currentCount = BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $set->id)
+            ->count();
+ 
+        if ($currentCount <= 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bộ từ vựng phải còn ít nhất 1 từ. Hãy thêm từ khác trước khi xoá từ này.',
+            ], 422);
+        }
+ 
+        $deletedWord = $word->word;
+ 
+        DB::transaction(function () use ($word) {
+            $flashcardIds = Flashcard::query()
+                ->where('source', 'bundle')
+                ->where('bundle_vocabulary_word_id', $word->id)
+                ->pluck('id');
+ 
+            if ($flashcardIds->isNotEmpty()) {
+                $affectedWordListIds = DB::table('flashcard_word_list')
+                    ->whereIn('flashcard_id', $flashcardIds)
+                    ->pluck('word_list_id')
+                    ->unique()
+                    ->values();
+ 
+                DB::table('flashcard_word_list')->whereIn('flashcard_id', $flashcardIds)->delete();
+                UserWordProgress::query()->whereIn('flashcard_id', $flashcardIds)->delete();
+                Flashcard::query()->whereIn('id', $flashcardIds)->delete();
+ 
+                if ($affectedWordListIds->isNotEmpty()) {
+                    WordList::query()->whereIn('id', $affectedWordListIds)->get()->each->updateWordCount();
+                }
+            }
+ 
+            $word->delete();
+        });
+ 
+        $wordsCount = $this->refreshBundleVocabularySetWordCount($set);
+ 
+        return response()->json([
+            'success'     => true,
+            'message'     => 'Đã xoá từ "' . $deletedWord . '".',
+            'words_count' => $wordsCount,
+        ]);
+    }
+ 
+    /* ─────────────────────────── Helpers ─────────────────────────── */
+ 
+    /**
+     * Bộ từ vựng mà user được phép sửa: người tạo bộ, hoặc người có quyền duyệt.
+     */
+    private function findEditableBundleVocabularySet($user, $setId): BundleVocabularySet
+    {
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+ 
+        $set = BundleVocabularySet::query()->findOrFail($setId);
+ 
+        if (!$user->canApproveBundleVocabulary() && (int) $set->created_by !== (int) $user->id) {
+            abort(403);
+        }
+ 
+        return $set;
+    }
+ 
+    private function findBundleVocabularyWordInSet(BundleVocabularySet $set, $wordId): BundleVocabularyWord
+    {
+        return BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $set->id)
+            ->findOrFail($wordId);
+    }
+ 
+    /**
+     * Validate + chuẩn hoá dữ liệu 1 từ, dùng chung quy tắc với lúc upload file.
+     */
+    private function buildBundleVocabularyWordPayload(Request $request): array
+    {
+        $data = $request->validate([
+            'word'           => 'required|string|max:255',
+            'part_of_speech' => 'nullable|string|max:50',
+            'pronunciation'  => 'nullable|string|max:255',
+            'definition'     => 'nullable|string|max:5000',
+            'translation_vi' => 'nullable|string|max:5000',
+            'collocation'    => 'nullable|string|max:5000',
+            'example'        => 'nullable|string|max:5000',
+            'audio_url'      => 'nullable|url|max:2048',
+            'image_url'      => 'nullable|url|max:2048',
+        ], [], [
+            'word'           => 'Từ vựng',
+            'part_of_speech' => 'Loại từ',
+            'pronunciation'  => 'Phiên âm',
+            'definition'     => 'Định nghĩa',
+            'translation_vi' => 'Nghĩa tiếng Việt',
+            'collocation'    => 'Collocation',
+            'example'        => 'Ví dụ',
+            'audio_url'      => 'Link audio',
+            'image_url'      => 'Link hình ảnh',
+        ]);
+ 
+        $word = $this->cleanCellValue($data['word']);
+ 
+        if (empty($word)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'word' => 'Từ vựng không hợp lệ.',
+            ]);
+        }
+ 
+        $definition  = $this->cleanCellValue($data['definition'] ?? null);
+        $translation = $this->cleanCellValue($data['translation_vi'] ?? null);
+ 
+        // Giống logic upload: thiếu cái nào thì lấy cái còn lại, thiếu cả hai thì tự dịch
+        if (empty($definition)) {
+            $definition = $translation;
+        }
+        if (empty($translation)) {
+            $translation = $definition;
+        }
+        if (empty($translation)) {
+            $translation = $this->translateToVietnamese($word);
+        }
+ 
+        $urlErrors = [];
+        $audioUrl  = $this->normalizeBundleWordUrl($data['audio_url'] ?? null, 'audio', 'audio_url', $urlErrors);
+        $imageUrl  = $this->normalizeBundleWordUrl($data['image_url'] ?? null, 'view', 'image_url', $urlErrors);
+ 
+        if (!empty($urlErrors)) {
+            throw \Illuminate\Validation\ValidationException::withMessages($urlErrors);
+        }
+ 
+        return [
+            'word'           => $word,
+            'part_of_speech' => $this->cleanCellValue($data['part_of_speech'] ?? null),
+            'pronunciation'  => $this->cleanCellValue($data['pronunciation'] ?? null),
+            'definition'     => $definition,
+            'translation_vi' => $translation,
+            'collocation'    => $this->cleanCellValue($data['collocation'] ?? null),
+            'example'        => $this->cleanCellValue($data['example'] ?? null),
+            'audio_url'      => $audioUrl,
+            'image_url'      => $imageUrl,
+        ];
+    }
+ 
+    private function normalizeBundleWordUrl(?string $raw, string $driveType, string $field, array &$errors): ?string
+    {
+        if ($raw === null || trim($raw) === '') {
+            return null;
+        }
+ 
+        $url = $this->sanitizeExternalUrl($raw);
+ 
+        if (empty($url)) {
+            $errors[$field] = 'Link phải bắt đầu bằng http:// hoặc https://';
+            return null;
+        }
+ 
+        return $this->convertGoogleDriveUrl($url, $driveType);
+    }
+ 
+    /**
+     * Không cho trùng cặp (word + part_of_speech) trong cùng một bộ,
+     * dùng cùng key chuẩn hoá với lúc upload file.
+     */
+    private function assertBundleWordNotDuplicated(BundleVocabularySet $set, array $payload, ?int $ignoreWordId = null): void
+    {
+        $key = $this->buildVocabularyDedupeKey($payload['word'], $payload['part_of_speech']);
+ 
+        $isDuplicated = BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $set->id)
+            ->when($ignoreWordId, fn ($query) => $query->where('id', '!=', $ignoreWordId))
+            ->get(['word', 'part_of_speech'])
+            ->contains(fn ($existing) => $this->buildVocabularyDedupeKey($existing->word, $existing->part_of_speech) === $key);
+ 
+        if ($isDuplicated) {
+            $label = $payload['word'] . (!empty($payload['part_of_speech']) ? ' (' . $payload['part_of_speech'] . ')' : '');
+ 
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'word' => 'Từ "' . $label . '" đã có trong bộ này.',
+            ]);
+        }
+    }
+ 
+    /**
+     * Cập nhật ngay flashcard của mọi học viên đang học từ này,
+     * để nội dung mới hiển thị tức thì ở My Word List, luyện tập, sidebar...
+     */
+    private function syncStudentFlashcardsForBundleWord(BundleVocabularyWord $word): void
+    {
+        Flashcard::query()
+            ->where('source', 'bundle')
+            ->where('bundle_vocabulary_word_id', $word->id)
+            ->update([
+                'word'           => $word->word,
+                'part_of_speech' => $word->part_of_speech,
+                'pronunciation'  => $word->pronunciation,
+                'definition'     => $word->definition ?: ($word->translation_vi ?: $word->word),
+                'example'        => $word->example,
+                'translation'    => $word->translation_vi,
+                'updated_at'     => now(),
+            ]);
+    }
+ 
+    private function refreshBundleVocabularySetWordCount(BundleVocabularySet $set): int
+    {
+        $count = BundleVocabularyWord::query()
+            ->where('vocabulary_set_id', $set->id)
+            ->count();
+ 
+        // Chỉ cập nhật số từ, KHÔNG động vào status / approved_at
+        $set->words_count = $count;
+        $set->save();
+ 
+        return $count;
+    }
+ 
+    private function formatBundleVocabularyWord(BundleVocabularyWord $word): array
+    {
+        return $word->only([
+            'id', 'sort_order', 'word', 'part_of_speech', 'pronunciation',
+            'definition', 'translation_vi', 'collocation', 'example',
+            'audio_url', 'image_url',
+        ]);
     }
 }

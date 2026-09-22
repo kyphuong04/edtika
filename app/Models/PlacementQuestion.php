@@ -16,6 +16,7 @@ class PlacementQuestion extends Model
         'audio_path',
         'linked_passage_id',
         'question_text',
+        'instruction', 
         'options',
         'word_bank',
         'blank_hints',
@@ -53,6 +54,7 @@ class PlacementQuestion extends Model
             'id'                => $this->id,
             'type'              => $this->type,
             'question_text'     => $this->question_text,
+            'instruction'       => $this->instruction,
             'blank_count'       => $blankCount,
             'options'           => $this->type === 'multiple_choice' ? ($this->options ?? []) : [],
             'image_options'     => $this->type === 'listening_image_choice'

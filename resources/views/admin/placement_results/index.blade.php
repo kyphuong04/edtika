@@ -16,6 +16,25 @@
 .pr-filter-bar { background:#f8f9fa; border-radius:12px; padding:16px; margin-bottom:20px; }
 .pr-bulk-bar { display:none; background:#eef2ff; border:1px solid #c7d2fe; border-radius:10px; padding:10px 14px; margin-bottom:12px; align-items:center; justify-content:space-between; }
 .pr-bulk-bar.is-visible { display:flex; }
+.pt-instruction {
+    background: #f5f3ff;
+    border-left: 4px solid #a78bfa;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.5;
+}
+
+/* Layout admin có rule phủ nền tím mờ lên mọi phần tử trong .main-content;
+   không đè lại thì khung hướng dẫn sẽ bị ám màu và khó đọc. */
+.main-content .pt-instruction {
+    background: #f5f3ff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
 </style>
 @endpush
 

@@ -43,6 +43,7 @@
     );
 @endphp
 {{-- Màn hình Speaking 2 cột — dùng chung với preview, phải load trước renderers.js --}}
+<script src="{{ $sharedJsVersion('blank-utils.js') }}"></script>
 <script src="{{ $sharedJsVersion('speaking-stage.js') }}"></script>
 <script src="{{ $attemptJsVersion('state.js') }}"></script>
 <script src="{{ $attemptJsVersion('answers.js') }}"></script>

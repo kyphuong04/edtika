@@ -68,8 +68,10 @@ trait BuildsIeltsQuestionPayload
                     'question_type' => $partQuestions->first()->question_type ?? 'short_answer',
                     'max_words' => null,
                     'target_band' => null,
-                    'passage' => $part->passage,
-                    'task_image' => $part->task_image,
+                    // 'passage' => $part->passage,
+                    // 'task_image' => $part->task_image,
+                    'passage' => null,     
+                    'task_image' => null,  
                 ]]);
             }
 
@@ -86,8 +88,12 @@ trait BuildsIeltsQuestionPayload
                     ),
                     'max_words' => $group->max_words,
                     'target_band' => $group->target_band,
-                    'passage' => $group->passage ?: $part->passage,
-                    'task_image' => $group->task_image ?: $part->task_image,
+                    // KHÔNG fallback sang Part: layout.js in group.passage phía trên câu hỏi
+                    // của từng group -> nếu lấy passage của Part sẽ lặp passage (Reading) và
+                    // lộ transcript (Listening). Editor cũng đọc hàm này, fallback sẽ bị ghi
+                    // ngược vào DB mỗi lần sửa đề.
+                    'passage' => $group->passage ?: null,
+                    'task_image' => $group->task_image ?: null,
                     'files' => [
                         'audio' => $group->audio_path ?? $group->audio_file ?? null,
                         'image' => $group->task_image ?? null,
@@ -160,7 +166,7 @@ trait BuildsIeltsQuestionPayload
             }
         }
 
-        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'diagram_labeling'], true)) {
+        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'diagram_labeling', 'short_answer'], true)) {
             $correctAnswerGroups = $this->normalizeCompletionAnswerGroups($correctAnswer);
             $correctAnswers = array_map(
                 static fn (array $group) => implode(' / ', $group),
@@ -217,7 +223,7 @@ trait BuildsIeltsQuestionPayload
             // Audio đọc sẵn câu hỏi (Speaking). Path thô — resolve URL ở
             // resolveSectionMediaUrls().
             'question_audio' => $question->question_audio ?: null,
-            'hint' => $question->hint ?: null,
+            'hint' => $question->hint ?: (is_array($questionData) ? ($questionData['hint'] ?? null) : null),
             'model_answer' => $this->resolveModelAnswer($question, $questionData),
             'points' => $question->points,
             'options' => is_array($answerOptions) ? $answerOptions : [],
@@ -289,6 +295,9 @@ trait BuildsIeltsQuestionPayload
 
         if (empty($options['keep_hint'])) {
             unset($questionPayload['hint']);
+            if (isset($questionPayload['question_data']) && is_array($questionPayload['question_data'])) {
+                unset($questionPayload['question_data']['hint']);
+            }
         }
 
         if (empty($options['keep_model_answer'])) {
@@ -443,6 +452,13 @@ trait BuildsIeltsQuestionPayload
             'speaking_prompt' => 'essay',
             'drag_drop_disappear' => 'drag_drop_disappear',
             'drag_drop_reuse' => 'drag_drop_reuse',
+
+            // Tên cũ (legacy) — đề tạo từ các luồng trước vẫn hiển thị đúng
+            'true_false_ng' => 'true_false_not_given',
+            'tfng' => 'true_false_not_given',
+            'yes_no_ng' => 'yes_no_not_given',
+            'ynng' => 'yes_no_not_given',
+            'multiple_select' => 'multiple_choice_multiple',
         ];
 
         return $mapping[$type] ?? $type;

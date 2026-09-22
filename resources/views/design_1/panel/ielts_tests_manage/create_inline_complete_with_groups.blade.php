@@ -1028,6 +1028,7 @@
 
 @push('scripts_bottom')
 <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
+<script src="{{ asset('assets/js/ielts-shared/blank-utils.js') }}?v={{ filemtime(public_path('assets/js/ielts-shared/blank-utils.js')) }}"></script>
 <script>
 const SECTIONS_CONFIG = {
     listening: { skill: 'listening', title: 'Listening', icon: '🔊', mockParts: 4, mockQuestions: 40 },
@@ -1655,13 +1656,9 @@ async function maybeRestoreAutosaveSnapshot() {
         return;
     }
 
-    const params = new URLSearchParams(window.location.search || '');
-    const isPreviewReturn = params.get('restore_state') === '1';
     const isEditingExistingTest = !!AUTOSAVE_TEST_ID;
 
-    // Avoid overriding persisted DB data on normal edit page loads.
-    // Only allow snapshot restore when creating a new test or explicitly returning from preview.
-    if (isEditingExistingTest && !isPreviewReturn) {
+    if (isEditingExistingTest) {
         updateAutosaveStatus('Auto Save: dùng dữ liệu máy chủ cho bản chỉnh sửa hiện tại');
         return;
     }
@@ -2443,6 +2440,29 @@ function addQuestionGroup(button) {
 
         group.upload_id = uploadId;
         group.title = title;
+        const QUESTION_TYPE_FAMILIES = [
+            ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'],
+            ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling'],
+            ['drag_drop_disappear', 'drag_drop_reuse'],
+        ];
+
+        const oldType = group.question_type;
+        const hasQuestions = Array.isArray(group.questions) && group.questions.length > 0;
+
+        if (hasQuestions && oldType !== questionType) {
+            const sameFamily = QUESTION_TYPE_FAMILIES.some((family) =>
+                family.includes(oldType) && family.includes(questionType)
+            );
+
+            if (!sameFamily) {
+                alert('Group đang có câu hỏi dạng "' + getQuestionTypeLabel(oldType) + '".\n'
+                    + 'Không thể đổi sang "' + getQuestionTypeLabel(questionType) + '" vì dữ liệu câu hỏi khác nhau.\n\n'
+                    + 'Hãy xoá các câu hỏi trong group trước, hoặc tạo group mới.');
+                return;
+            }
+
+            group.questions.forEach((q) => { q.type = questionType; });
+        }
         group.question_type = questionType;
         group.max_words = maxWords || null;
         group.target_band = targetBand || null;
@@ -2735,6 +2755,7 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
 }
 
 function displayQuestionGroup(partItem, part, group) {
+    const sectionSkill = partItem.closest('.section-container')?.getAttribute('data-skill') || '';
     const groupsList = partItem.querySelector('.groups-list');
 
     const groupDiv = document.createElement('div');
@@ -2765,7 +2786,7 @@ function displayQuestionGroup(partItem, part, group) {
         ${groupRichContentHTML}
         <div class="questions-list" style="display:none;"></div>
         <div class="question-inline-form hidden mt-12 p-12" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;">
-            ${getQuestionFormHTML(group.question_type)}
+            ${getQuestionFormHTML(group.question_type, sectionSkill)}
             <div class="mt-8">
                 <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="saveQuestionToGroup(this)">
                     <i class="fas fa-check mr-5"></i>Save Question
@@ -3028,6 +3049,9 @@ function editGroupTitle(button) {
 }
 
 function resetQuestionForm(form) {
+    const hintInput = form.querySelector('.question-hint-input');
+    if (hintInput) setAnswerHelpValue(hintInput, '');
+
     const textInput = form.querySelector('.question-text-input');
     if (textInput) setContentEditorValue(textInput, '');
 
@@ -3128,6 +3152,11 @@ function editQuestion(button, questionIndex) {
     const explanationInput = form.querySelector('.question-explanation-input');
     if (explanationInput) setAnswerHelpValue(explanationInput, question.explanation || '');
 
+    const hintInput = form.querySelector('.question-hint-input');
+    if (hintInput) {
+        setAnswerHelpValue(hintInput, (question.question_data && question.question_data.hint) || question.hint || '');
+    }
+
     // Populate task image URL if present
     const qTaskImageInput = form.querySelector('.question-task-image-url');
     if (qTaskImageInput) {
@@ -3188,6 +3217,12 @@ function editQuestion(button, questionIndex) {
             options: optionMap,
             rows: matchingRows
         });
+        // Ô text của form Matching là prompt chung — không phải statement vừa bấm.
+        const promptInput = form.querySelector('.question-text-input');
+        if (promptInput) {
+            const promptSource = matchingQuestions.find(item => item.question_data && item.question_data.prompt);
+            setContentEditorValue(promptInput, promptSource ? promptSource.question_data.prompt : '');
+        }
     } else if (qType === 'note_completion') {
         renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswers || question.correctAnswer));
         bindNoteCompletionLivePreview(form);
@@ -3300,7 +3335,12 @@ function editQuestion(button, questionIndex) {
         console.log('✓ Drag & drop form populated with', (question.options || []).length, 'options and', (question.correctAnswers || []).length, 'answers');
     } else {
         const answerInput = form.querySelector('.question-answer-input');
-        if (answerInput) answerInput.value = question.correctAnswer || '';
+        if (answerInput) {
+            const raw = (question.correctAnswers && question.correctAnswers.length)
+                ? question.correctAnswers.join(' / ')
+                : question.correctAnswer;
+            answerInput.value = Array.isArray(raw) ? raw.join(' / ') : (raw || '');
+        }
     }
 
     // Mark as edit mode
@@ -3374,6 +3414,15 @@ function saveQuestionToGroup(button) {
         alert('Question text is required.');
         return;
     }
+    const BLANK_TEXT_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling', 'drag_drop_disappear', 'drag_drop_reuse'];
+    if (BLANK_TEXT_TYPES.includes(qType) && window.IeltsBlanks && window.IeltsBlanks.hasSplitBlank(text)) {
+        const proceed = confirm(
+            'Có chỗ trống ___ bị định dạng cắt làm nhiều đoạn (in đậm một phần, dán từ Word...).\n'
+            + 'Học viên sẽ thấy ' + getCompletionBlankCount(text) + ' ô trống.\n\n'
+            + 'Cancel = quay lại xoá và gõ lại ___ không định dạng.\nOK = vẫn lưu.'
+        );
+        if (!proceed) return;
+    }
 
     let questionData = { id: Date.now(), type: qType, text, explanation: explanation || null, points, title: title || null };
     questionData.question_data = {
@@ -3381,6 +3430,11 @@ function saveQuestionToGroup(button) {
     };
     if (title) {
         questionData.question_data.title = title;
+    }
+    const hintInput = form.querySelector('.question-hint-input');
+    const hintValue = hintInput ? getAnswerHelpValue(hintInput) : '';
+    if (hintValue && editorHtmlToPlainText(hintValue)) {
+        questionData.question_data.hint = hintValue;
     }
 
     if (qType === 'multiple_choice_single') {
@@ -3448,6 +3502,7 @@ function saveQuestionToGroup(button) {
         }
 
         const matchingQuestions = [];
+        const sharedPrompt = textPlain ? text : '';
 
         for (const row of statementRows) {
             const statementInput = row.querySelector('.matching-statement-text');
@@ -3480,6 +3535,10 @@ function saveQuestionToGroup(button) {
             return;
         }
 
+        if (sharedPrompt) {
+            matchingQuestions[0].question_data = { prompt: sharedPrompt };
+        }
+
         const isEditModeMatching = form.getAttribute('data-edit-mode') === 'true';
         const editIndexMatching = parseInt(form.getAttribute('data-edit-index'), 10);
 
@@ -3488,20 +3547,22 @@ function saveQuestionToGroup(button) {
 
             const updatedMatchingQuestions = matchingQuestions.map((item, index) => {
                 const existing = existingMatchingQuestions[index] || {};
-                const nextItem = {
+
+                const nextQuestionData = { ...(existing.question_data || {}) };
+                delete nextQuestionData.prompt;
+                if (item.question_data && item.question_data.prompt) {
+                    nextQuestionData.prompt = item.question_data.prompt;
+                }
+                if (title) {
+                    nextQuestionData.title = title;
+                }
+
+                return {
                     ...existing,
                     ...item,
                     title: title || null,
-                    question_data: {
-                        ...(existing.question_data || {}),
-                    }
+                    question_data: nextQuestionData,
                 };
-
-                if (title) {
-                    nextItem.question_data.title = title;
-                }
-
-                return nextItem;
             });
 
             group.questions = updatedMatchingQuestions;
@@ -3668,7 +3729,22 @@ function saveQuestionToGroup(button) {
 
     } else {
         const answerInput = form.querySelector('.question-answer-input');
-        questionData.correctAnswer = answerInput ? answerInput.value.trim() || null : null;
+        const answerValue = answerInput ? answerInput.value.trim() : '';
+        const blankCount = getCompletionBlankCount(text);
+
+        // 1 ô nhập -> tối đa 1 chỗ trống. Nhiều hơn phải dùng Sentence Completion.
+        if (blankCount > 1) {
+            alert('Câu này có ' + blankCount + ' chỗ trống ___ nhưng Short Answer chỉ nhập được 1 đáp án.\n'
+                + 'Hãy chuyển group sang Sentence Completion, hoặc bỏ bớt chỗ trống.');
+            return;
+        }
+
+        if (!answerValue) {
+            alert('Vui lòng nhập đáp án. Câu không có đáp án sẽ bị chấm sai cho mọi học viên.');
+            return;
+        }
+
+        questionData.correctAnswer = answerValue;
     }
 
     // Check if in edit mode
@@ -4098,22 +4174,12 @@ function normalizeTableCellAnswers(rawAnswer) {
     return text ? [text] : [];
 }
 
-function normalizeCompletionBlankSource(value) {
-    return editorHtmlToPlainText(String(value || ''))
-        .replace(/[_\uFF3F\u2017]/g, '_')
-        .replace(/\u200B/g, ' ')
-        .replace(/\uFEFF/g, ' ');
+function getCompletionBlankCount(value) {
+    return window.IeltsBlanks ? window.IeltsBlanks.count(value) : 0;
 }
 
 function hasCompletionBlank(value) {
-    const normalized = normalizeCompletionBlankSource(value);
-    return /(?:_\s*){2,}/.test(normalized);
-}
-
-function getCompletionBlankCount(value) {
-    const normalized = normalizeCompletionBlankSource(value);
-    const matches = normalized.match(/(?:_\s*){2,}/g);
-    return matches ? matches.length : 0;
+    return getCompletionBlankCount(value) > 0;
 }
 
 function countNoteCompletionBlanks(text) {
@@ -4590,7 +4656,7 @@ function updateTableCompletionState(form) {
     }
 }
 
-function getQuestionFormHTML(questionType) {
+function getQuestionFormHTML(questionType, skill = '') {
     const isMCSingle = questionType === 'multiple_choice_single';
     const isMCMultiple = questionType === 'multiple_choice_multiple';
     const isTFNG = questionType === 'true_false_not_given';
@@ -4626,6 +4692,12 @@ function getQuestionFormHTML(questionType) {
                 <textarea class="form-control question-explanation-input js-answer-help-editor" rows="3" data-height="180" placeholder="Provide a model answer or guidance for review..."></textarea>
             </div>
         </div>
+                ${skill === 'speaking' ? `<div class="form-row">
+            <div class="form-group">
+                <label class="input-label">Hint <small class="text-muted">(gợi ý hiện cho học viên khi làm bài)</small></label>
+                <textarea class="form-control question-hint-input js-answer-help-editor" rows="2" data-height="140" placeholder="VD: gợi ý ý tưởng, từ vựng, cấu trúc..."></textarea>
+            </div>
+        </div>` : ''}
         <div class="form-row">
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
@@ -4725,7 +4797,9 @@ function getQuestionFormHTML(questionType) {
             </div>
         </div>
         <div class="alert alert-info py-2 px-3 mb-12">
-            Create statements and answer columns like the test interface. Each statement will be saved as one question row.
+            Mỗi statement lưu thành một câu hỏi.
+            <strong>Matching Information:</strong> số cột = số đoạn văn (A, B, C…) trong bài đọc.
+            <strong>Matching Features / Headings:</strong> nhập danh sách lựa chọn vào ô Prompt bên dưới để học viên biết A, B, C là gì.
         </div>
         <div class="matching-matrix-wrap"></div>
         <div class="form-row">
@@ -4880,14 +4954,14 @@ function getQuestionFormHTML(questionType) {
     } else {
         html += `${titleField}<div class="form-row">
             <div class="form-group">
-                <label class="input-label">Question *</label>
-                <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="Enter the question"></textarea>
+                <label class="input-label">Answer Help</label>
+                <textarea class="form-control question-explanation-input js-answer-help-editor" rows="2" data-height="180" placeholder="Optional hint, model answer, or explanation for review..."></textarea>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label class="input-label">Model Answer / Keywords</label>
-                <input type="text" class="form-control question-answer-input" placeholder="Enter model answer or key words">
+                <label class="input-label">Đáp án * <small class="text-muted">(dùng / cho nhiều đáp án chấp nhận được; dùng ___ trong đề nếu muốn ô nhập nằm giữa câu)</small></label>
+                <input type="text" class="form-control question-answer-input" placeholder="VD: car park / carpark">
             </div>
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
@@ -5186,10 +5260,11 @@ function setupFormValidation() {
         // Preserve unsaved edits (especially Answer Help) from currently open edit forms.
         syncOpenQuestionEditFormsForDraft();
 
+        if (!syncOpenMatchingFormsIntoTestData()) {
+            return;
+        }
+
         if (submitAction === 'draft' || submitAction === 'preview') {
-            if (!syncOpenMatchingFormsIntoTestData()) {
-                return;
-            }
 
             if (submitAction === 'preview') {
                 let totalParts = 0;
@@ -5203,7 +5278,7 @@ function setupFormValidation() {
                 }
                 
                 // SAVE form state to localStorage BEFORE navigating to preview
-                saveFormStateToLocalStorage();
+                // saveFormStateToLocalStorage();
             }
 
             preserveSectionAudioFiles();
@@ -5318,11 +5393,18 @@ function syncOpenQuestionEditFormsForDraft() {
         }
 
         const qType = getInlineQuestionType(form) || (ctx.group.question_type || 'short_answer');
+        if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+            // Matching do syncOpenMatchingFormsIntoTestData() dựng lại từ ma trận.
+            // Patch ở đây sẽ ghi ô prompt đè lên text của MỌI statement trong group.
+            return;
+        }
         const existingQuestion = (ctx.group.questions || [])[editIndex];
 
         if (!existingQuestion) {
             return;
         }
+
+        const hintInput = form.querySelector('.question-hint-input');
 
         const explanationInput = form.querySelector('.question-explanation-input');
         const explanation = explanationInput ? getAnswerHelpValue(explanationInput) : null;
@@ -5353,20 +5435,19 @@ function syncOpenQuestionEditFormsForDraft() {
                 nextQuestion.question_data.title = title;
             }
 
+            if (hintInput) {
+                const hintValue = getAnswerHelpValue(hintInput);
+                if (hintValue && editorHtmlToPlainText(hintValue)) {
+                    nextQuestion.question_data.hint = hintValue;
+                } else {
+                    delete nextQuestion.question_data.hint;
+                }
+            }
+
             return nextQuestion;
         };
 
-        if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
-            ctx.group.questions = (ctx.group.questions || []).map((question) => {
-                if ((question.type || qType) !== qType) {
-                    return question;
-                }
-
-                return patchQuestion(question);
-            });
-        } else {
-            ctx.group.questions[editIndex] = patchQuestion(existingQuestion);
-        }
+        ctx.group.questions[editIndex] = patchQuestion(existingQuestion);
 
         renderQuestionsList(ctx.groupItem, ctx.group);
         updatePartStats(ctx.partItem, ctx.part);
@@ -5452,69 +5533,9 @@ function syncOpenMatchingFormsIntoTestData() {
     return true;
 }
 
-/**
- * Restore form state from localStorage after returning from preview
- * Called on page load to rebuild the form with previous data
- */
-function restoreFormStateFromLocalStorage() {
-    try {
-        const params = new URLSearchParams(window.location.search || '');
-        const restoreState = params.get('restore_state');
-        if (restoreState !== '1') {
-            console.log('ℹ Skip local restore (not returning from preview)');
-            return;
-        }
 
-        const testId = getTestId();
-        if (!testId) {
-            console.log('⚠ No testId found, skipping localStorage restore');
-            return;
-        }
-        
-        const key = 'ielts_test_form_state_' + testId;
-        const saved = localStorage.getItem(key);
-        
-        if (!saved) {
-            console.log('ℹ No saved form state found for test', testId);
-            return;
-        }
-        
-        const state = JSON.parse(saved);
-        if (!state.sections) {
-            console.log('⚠ Invalid saved state (no sections)');
-            return;
-        }
-        
-        // Only restore if it's recent (less than 30 minutes old)
-        const ageMinutes = (Date.now() - state.timestamp) / (60 * 1000);
-        if (ageMinutes > 30) {
-            console.log('ℹ Saved state is too old (' + ageMinutes.toFixed(1) + ' minutes), discarding');
-            localStorage.removeItem(key);
-            return;
-        }
-        
-        console.log('✓ Restoring form state from preview exit (saved ' + ageMinutes.toFixed(1) + ' minutes ago)');
-        
-        // Merge the restored state into testData
-        if (window.testData && window.testData.sections) {
-            testData.sections = state.sections;
-            console.log('✓ Merging restored data into testData...');
-            
-            // Re-render all sections to show restored data
-            renderExistingTestData();
-            updateCompletenessStatus();
-            
-            console.log('✓ Form state successfully restored!');
-            
-            // Clear localStorage after successful restore
-            localStorage.removeItem(key);
-        } else {
-            console.warn('⚠ testData not initialized, cannot restore');
-        }
-        
-    } catch (err) {
-        console.error('✗ Failed to restore form state:', err);
-    }
+function restoreFormStateFromLocalStorage() {
+    clearFormStateLocalStorage();
 }
 
 /**

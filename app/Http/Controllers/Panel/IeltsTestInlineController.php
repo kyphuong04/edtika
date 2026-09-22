@@ -1122,7 +1122,9 @@ class IeltsTestInlineController extends Controller
         $sectionAudioPaths = [];
         foreach ($groupsData['sections'] as $skill => $sectionData) {
             if ($skill === 'listening') {
-                $sectionAudioPaths['listening'] = $sectionData['files']['audio'] ?? $sectionData['audio_file'] ?? null;
+                $sectionAudioPaths['listening'] = $this->sanitizeClientMediaPath(
+                    $sectionData['files']['audio'] ?? $sectionData['audio_file'] ?? null
+                );
 
                 if ($request->hasFile('section_media.listening.audio')) {
                     $sectionAudioPaths['listening'] = $request->file('section_media.listening.audio')
@@ -1349,7 +1351,7 @@ class IeltsTestInlineController extends Controller
             }
         }
 
-        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'diagram_labeling'], true)) {
+        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'diagram_labeling', 'short_answer'], true)) {
             $correctAnswerGroups = $this->normalizeInlineCompletionAnswerGroups($correctAnswer);
             $correctAnswers = array_map(static function (array $group) {
                 return implode(' / ', $group);
@@ -1580,10 +1582,10 @@ class IeltsTestInlineController extends Controller
             $difficultyLevel = 'intermediate';
         }
 
-        $audioFilePath = $groupData['files']['audio'] ?? $groupData['audio_file'] ?? null;
-        $taskImagePath = $groupData['files']['image'] ?? $groupData['task_image'] ?? null;
-        $videoFilePath = $groupData['files']['video'] ?? $groupData['video_file'] ?? null;
-
+        $audioFilePath = $this->sanitizeClientMediaPath($groupData['files']['audio'] ?? $groupData['audio_file'] ?? null);
+        $taskImagePath = $this->sanitizeClientMediaPath($groupData['files']['image'] ?? $groupData['task_image'] ?? null);
+        $videoFilePath = $this->sanitizeClientMediaPath($groupData['files']['video'] ?? $groupData['video_file'] ?? null);
+        
         if (!empty($uploadId) && $request->hasFile("group_media.$uploadId.audio")) {
             $audioFilePath = $request->file("group_media.$uploadId.audio")
                 ->store('ielts/question_groups/audio', 'public');
@@ -1701,9 +1703,9 @@ class IeltsTestInlineController extends Controller
             $difficultyLevel = 'intermediate';
         }
 
-        $audioFilePath = $partData['files']['audio'] ?? $partData['audio_file'] ?? null;
-        $taskImagePath = $partData['files']['image'] ?? $partData['image_file'] ?? null;
-        $videoFilePath = $partData['files']['video'] ?? $partData['video_file'] ?? null;
+        $audioFilePath = $this->sanitizeClientMediaPath($partData['files']['audio'] ?? $partData['audio_file'] ?? null);
+        $taskImagePath = $this->sanitizeClientMediaPath($partData['files']['image'] ?? $partData['image_file'] ?? null);
+        $videoFilePath = $this->sanitizeClientMediaPath($partData['files']['video'] ?? $partData['video_file'] ?? null);
 
         if (!empty($uploadId) && $request->hasFile("group_media.$uploadId.audio")) {
             $audioFilePath = $request->file("group_media.$uploadId.audio")
@@ -1802,31 +1804,6 @@ class IeltsTestInlineController extends Controller
         ]);
     }
 
-    private function normalizeQuestionType(string $type): string
-    {
-        $mapping = [
-            'multiple_choice' => 'multiple_choice',
-            'multiple_select' => 'multiple_select',
-            'true_false_ng' => 'true_false_ng',
-            'yes_no_ng' => 'yes_no_ng',
-            'fill_blank' => 'fill_blank',
-            'sentence_completion' => 'sentence_completion',
-            'summary_completion' => 'summary_completion',
-            'note_completion' => 'note_completion',
-            'table_completion' => 'table_completion',
-            'flow_chart' => 'flow_chart',
-            'diagram_labeling' => 'diagram_labeling',
-            'diagram_label' => 'diagram_label',
-            'short_answer' => 'short_answer',
-            'essay' => 'essay',
-            'speaking_prompt' => 'essay',
-            'matching' => 'matching',
-            'drag_drop_disappear' => 'drag_drop_disappear',
-            'drag_drop_reuse' => 'drag_drop_reuse',
-        ];
-
-        return $mapping[$type] ?? 'multiple_choice';
-    }
 
     private function sanitizeInlineGroupsPayload(array $groupsData): array
     {
@@ -2172,5 +2149,23 @@ class IeltsTestInlineController extends Controller
         $roleName = strtolower(optional($user->role)->name ?? '');
 
         return in_array($roleName, $roles, true);
+    }
+
+    private function sanitizeClientMediaPath($path): ?string
+    {
+        if (!is_string($path)) {
+            return null;
+        }
+
+        $path = trim($path);
+        if ($path === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $path) || str_contains($path, '/')) {
+            return $path;
+        }
+
+        return null;
     }
 }

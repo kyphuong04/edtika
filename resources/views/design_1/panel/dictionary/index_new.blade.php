@@ -1560,6 +1560,9 @@
         opacity: 1 !important;
         transform: translateY(0) !important;
     }
+    
+
+    /* ── Word detail modal ─────────────────────────────────── */
     .word-detail-modal {
         position: fixed;
         inset: 0;
@@ -1567,160 +1570,280 @@
         z-index: 99999;
     }
     .word-detail-modal.is-open { display: block; }
-
+ 
     .word-detail-modal__backdrop {
         position: absolute;
         inset: 0;
-        background: rgba(2, 6, 23, 0.5);
+        background: rgba(15, 10, 40, 0.45);
     }
-
+ 
     .word-detail-modal__dialog {
         position: relative;
-        width: min(640px, calc(100vw - 24px));
-        margin: 60px auto;
+        width: min(720px, calc(100vw - 24px));
+        margin: 40px auto;
         background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.3);
-        overflow: hidden;
-        max-height: calc(100vh - 120px);
+        border-radius: 24px;
+        box-shadow: 0 30px 70px rgba(40, 16, 90, 0.28);
+        max-height: calc(100vh - 80px);
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
-    .dark-mode .word-detail-modal__dialog {
-        background: #1e293b;
-    }
-
+    .dark-mode .word-detail-modal__dialog { background: #1e293b; }
+ 
     .word-detail-modal__header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 8px;
-        padding: 18px 22px;
-        border-bottom: 1px solid #eceef4;
+        gap: 12px;
+        padding: 18px 20px 10px 26px;
     }
-    .dark-mode .word-detail-modal__header {
-        border-bottom-color: #334155;
+ 
+    .word-detail-modal__heading {
+        flex: 1;
+        min-width: 0;
     }
-
+ 
     .word-detail-modal__close {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
         border: none;
+        border-radius: 50%;
         background: transparent;
-        font-size: 28px;
-        line-height: 1;
         color: #475569;
+        font-size: 30px;
+        line-height: 1;
         cursor: pointer;
-        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, color 0.15s;
+    }
+    .word-detail-modal__close:hover {
+        background: rgba(81, 29, 153, 0.08);
+        color: #511D99;
+    }
+    .word-detail-modal__close:focus-visible {
+        outline: 2px solid #511D99;
+        outline-offset: 2px;
     }
     .dark-mode .word-detail-modal__close { color: #cbd5e1; }
-
+ 
+    /* Chỉ phần thân cuộn, phần tiêu đề (từ + phát âm) luôn đứng yên */
     .word-detail-modal__body {
-        padding: 22px;
+        padding: 4px 16px 24px 26px;
         overflow-y: auto;
         flex: 1 1 auto;
         min-height: 0;
+        scrollbar-width: thin;
+        scrollbar-color: #7c4dcc transparent;
     }
-
-    .wdm-word {
-        font-size: 30px;
-        font-weight: 800;
-        color: #1e293b;
-        margin-bottom: 8px;
+    .word-detail-modal__body::-webkit-scrollbar { width: 6px; }
+    .word-detail-modal__body::-webkit-scrollbar-track { background: transparent; }
+    .word-detail-modal__body::-webkit-scrollbar-thumb {
+        background: #7c4dcc;
+        border-radius: 10px;
     }
-    .dark-mode .wdm-word { color: #f1f5f9; }
-
-    .wdm-pron-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 18px;
-    }
-    .wdm-pron-item {
+ 
+    /* ── Tiêu đề: từ + IPA + nút loa ── */
+    .wdc-title-row {
         display: flex;
         align-items: center;
-        gap: 6px;
-        background: #f8fafc;
-        border: 1px solid rgba(81, 29, 153, 0.10);
-        border-radius: 12px;
-        padding: 6px 12px;
+        flex-wrap: wrap;
+        column-gap: 18px;
+        row-gap: 8px;
     }
-    .dark-mode .wdm-pron-item {
-        background: #0f172a;
-        border-color: rgba(255,255,255,0.12);
+ 
+    .wdc-word {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.15;
+        color: #511D99;
+        word-break: break-word;
     }
-    .wdm-pron-label {
+    .dark-mode .wdc-word { color: #c4b5fd; }
+ 
+    .wdc-pron-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+ 
+    .wdc-pron-label {
+        padding: 2px 7px;
+        border-radius: 6px;
+        background: rgba(81, 29, 153, 0.10);
+        color: #511D99;
         font-size: 11px;
         font-weight: 700;
-        text-transform: uppercase;
-        background: #511D99;
-        color: #fff;
-        padding: 2px 6px;
-        border-radius: 4px;
     }
-    .wdm-pron-ipa {
-        font-size: 15px;
-        color: #511D99;
-        font-style: italic;
+ 
+    .wdc-ipa {
+        font-size: 17px;
+        color: #334155;
     }
-    .dark-mode .wdm-pron-ipa { color: #c4b5fd; }
-    .wdm-pron-audio-btn {
-        background: none;
+    .dark-mode .wdc-ipa { color: #cbd5e1; }
+ 
+    .wdc-audio-btn {
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
         border: none;
-        cursor: pointer;
+        border-radius: 50%;
+        background: rgba(81, 29, 153, 0.12);
         color: #511D99;
-        display: flex;
+        display: inline-flex;
         align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
     }
-    .dark-mode .wdm-pron-audio-btn { color: #c4b5fd; }
-
-    .wdm-pos {
-        display: inline-block;
-        background: rgba(81, 29, 153, 0.08);
-        color: #511D99;
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 700;
-        margin: 14px 0 10px;
+    .wdc-audio-btn:hover { background: rgba(81, 29, 153, 0.20); }
+    .wdc-audio-btn:focus-visible {
+        outline: 2px solid #511D99;
+        outline-offset: 2px;
     }
-    .dark-mode .wdm-pos {
-        background: #1e1b4b;
+    .wdc-audio-btn.is-playing {
+        background: #511D99;
+        color: #ffffff;
+    }
+    .dark-mode .wdc-audio-btn {
+        background: rgba(196, 181, 253, 0.16);
         color: #c4b5fd;
     }
-
-    .wdm-def {
+ 
+    /* ── Loại từ + nghĩa ── */
+    .wdc-meaning-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+ 
+    .wdc-pos {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 12px;
+        border-radius: 8px;
+        background: rgba(81, 29, 153, 0.10);
+        color: #511D99;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .dark-mode .wdc-pos {
+        background: rgba(196, 181, 253, 0.14);
+        color: #c4b5fd;
+    }
+ 
+    .wdc-meaning {
+        font-size: 15px;
+        font-weight: 600;
+        color: #334155;
+    }
+    .dark-mode .wdc-meaning { color: #e2e8f0; }
+ 
+    .wdc-definition {
+        margin-top: 8px;
         font-size: 14px;
-        color: #374151;
+        line-height: 1.55;
+        color: #64748b;
+    }
+    .dark-mode .wdc-definition { color: #94a3b8; }
+ 
+    /* ── Collocation / Example ── */
+    .wdc-section-title {
+        margin: 22px 0 10px;
+        padding-left: 20px;
+        font-size: 17px;
+        font-weight: 800;
+        color: #511D99;
+    }
+    .dark-mode .wdc-section-title { color: #c4b5fd; }
+ 
+    .wdc-pill {
+        padding: 12px 20px;
+        border: 1px solid rgba(81, 29, 153, 0.06);
+        border-radius: 20px;
+        background: #f1edfb;
+        text-align: left;
+        font-size: 14px;
+        font-weight: 600;
         line-height: 1.6;
-        margin-bottom: 4px;
+        color: #1e293b;
     }
-    .dark-mode .wdm-def { color: #d1d5db; }
-
-    .wdm-example {
-        color: #64748b;
-        font-style: italic;
+    .wdc-pill + .wdc-pill { margin-top: 10px; }
+    .dark-mode .wdc-pill {
+        background: #0f172a;
+        border-color: rgba(196, 181, 253, 0.12);
+        color: #e2e8f0;
+    }
+ 
+    .wdc-highlight {
+        color: #7446c4;
+        font-weight: 700;
+    }
+    .dark-mode .wdc-highlight { color: #c4b5fd; }
+ 
+    /* ── Ảnh minh hoạ ── */
+    .wdc-image-wrap {
+        margin-top: 22px;
+        border-radius: 18px;
+        overflow: hidden;
+        aspect-ratio: 3 / 2;
+        background: #f1edfb;
+    }
+    .wdc-image-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+ 
+    /* ── Nhiều nghĩa (từ tra từ điển ngoài) ── */
+    .wdc-meaning-group + .wdc-meaning-group {
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px dashed rgba(81, 29, 153, 0.18);
+    }
+ 
+    .wdc-def-item {
+        margin-top: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #334155;
+    }
+    .wdc-def-item strong { color: #511D99; }
+    .dark-mode .wdc-def-item { color: #e2e8f0; }
+    .wdc-def-item .wdc-pill { margin-top: 8px; }
+ 
+    .wdc-syn {
+        margin-top: 10px;
         font-size: 13px;
-        padding-left: 12px;
-        border-left: 3px solid #e2e8f0;
-        margin: 4px 0 10px;
-    }
-    .dark-mode .wdm-example {
-        color: #94a3b8;
-        border-left-color: #334155;
-    }
-
-    .wdm-syn {
-        font-size: 13px;
         color: #64748b;
-        margin: 4px 0 10px;
     }
-    .dark-mode .wdm-syn { color: #94a3b8; }
-    .wdm-syn strong { color: #475569; }
-    .dark-mode .wdm-syn strong { color: #cbd5e1; }
-
-    .wdm-loading, .wdm-empty {
+    .wdc-syn strong { color: #475569; }
+    .dark-mode .wdc-syn,
+    .dark-mode .wdc-syn strong { color: #94a3b8; }
+ 
+    .wdm-loading,
+    .wdm-empty {
+        padding: 30px 0;
         text-align: center;
         color: #94a3b8;
-        padding: 30px 0;
+    }
+ 
+    @media (max-width: 575px) {
+        .word-detail-modal__dialog {
+            margin: 12px auto;
+            max-height: calc(100vh - 24px);
+            border-radius: 20px;
+        }
+        .word-detail-modal__header { padding: 14px 12px 8px 18px; }
+        .word-detail-modal__body { padding: 4px 12px 20px 18px; }
+        .wdc-word { font-size: 28px; }
+        .wdc-pill { padding: 10px 14px; }
     }
 
         /* ── Tab bar cho 2 word list ───────────────────────────── */
@@ -2115,10 +2238,10 @@
 </div>
 <div class="word-detail-modal" id="wordDetailModal" aria-hidden="true">
     <div class="word-detail-modal__backdrop js-word-detail-close"></div>
-    <div class="word-detail-modal__dialog" role="dialog" aria-modal="true" aria-label="Word detail">
+    <div class="word-detail-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="wordDetailModalTitle">
         <div class="word-detail-modal__header">
-            <div></div>
-            <button type="button" class="word-detail-modal__close js-word-detail-close" aria-label="Close">&times;</button>
+            <div class="word-detail-modal__heading" id="wordDetailModalHeading"></div>
+            <button type="button" class="word-detail-modal__close js-word-detail-close" aria-label="Đóng">&times;</button>
         </div>
         <div class="word-detail-modal__body" id="wordDetailModalBody">
             <div class="wdm-loading">Đang tải...</div>
@@ -3513,227 +3636,360 @@
         }
     });
 
-    // ── Click vào từ trong danh sách → mở dialog chi tiết ─────────────
     const wordDetailCache = {};
     const $wordDetailModal = $('#wordDetailModal');
+    const $wordDetailHeading = $('#wordDetailModalHeading');
     const $wordDetailModalBody = $('#wordDetailModalBody');
-
-    function renderWordDetailBody(data) {
-        if (!data) {
-            return '<div class="wdm-empty">Không tìm thấy dữ liệu.</div>';
+ 
+    let wdRequestId = 0;        // bỏ qua response cũ nếu người dùng đã mở từ khác
+    let wdLastFocus = null;
+    let wdCurrentAudio = null;
+ 
+    const WD_AUDIO_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>'
+        + '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>'
+        + '<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+ 
+    // ── Helpers ──────────────────────────────────────────────────────
+    function wdEsc(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+ 
+    // "/.../", "//...//", "[...]" hay "..." đều về đúng dạng "/.../"
+    function wdNormalizeIpa(ipa) {
+        const clean = String(ipa || '').trim().replace(/^[\/\[\s]+|[\/\]\s]+$/g, '');
+        return clean ? '/' + clean + '/' : '';
+    }
+ 
+    function wdSplitList(raw, separator) {
+        return String(raw || '')
+            .split(separator)
+            .map(function (item) { return item.trim().replace(/^["“]+|["”]+$/g, '').trim(); })
+            .filter(Boolean);
+    }
+ 
+    // Tô màu từ vựng (và dạng thêm s/es/ed/ing) trong câu ví dụ
+    function wdHighlight(text, word) {
+        const safeText = wdEsc(text);
+        const target = String(word || '').trim();
+        if (!target) return safeText;
+ 
+        try {
+            const pattern = wdEsc(target).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp('(^|[^\\p{L}])(' + pattern + '(?:s|es|ed|d|ing)?)(?=[^\\p{L}]|$)', 'giu');
+            return safeText.replace(re, '$1<span class="wdc-highlight">$2</span>');
+        } catch (e) {
+            return safeText;
         }
-
-        const wordText = data.headword || data.word || '';
-        let html = `<div class="wdm-word">${wordText}</div>`;
-
-        if (Array.isArray(data.pronunciations) && data.pronunciations.length) {
-            html += '<div class="wdm-pron-row">';
-            data.pronunciations.forEach(function (p) {
-                const label = p.label || '';
-                const ipa = p.ipa || p.text || '';
-                let audio = p.audio || '';
-                if (audio && audio.startsWith('//')) audio = 'https:' + audio;
-
-                html += '<div class="wdm-pron-item">';
-                if (label) html += `<span class="wdm-pron-label">${label}</span>`;
-                if (ipa) html += `<span class="wdm-pron-ipa">/${ipa}/</span>`;
-                html += `<button type="button" class="wdm-pron-audio-btn" data-audio="${audio}" data-word="${wordText}" onclick="playWordDetailAudio(this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                </button>`;
-                html += '</div>';
+    }
+ 
+    function wdAudioButton(audioUrl, word, label) {
+        return '<button type="button" class="wdc-audio-btn js-wd-audio"'
+            + ' data-audio="' + wdEsc(audioUrl) + '"'
+            + ' data-word="' + wdEsc(word) + '"'
+            + ' aria-label="' + wdEsc(label ? 'Phát âm ' + label : 'Phát âm') + '">'
+            + WD_AUDIO_ICON
+            + '</button>';
+    }
+ 
+    function wdHeadingHtml(word, pronunciations) {
+        let html = '<div class="wdc-title-row">';
+        html += '<h2 class="wdc-word" id="wordDetailModalTitle">' + wdEsc(word) + '</h2>';
+ 
+        (pronunciations || []).forEach(function (p) {
+            const ipa = wdNormalizeIpa(p.ipa);
+            html += '<span class="wdc-pron-group">';
+            if (p.label) html += '<span class="wdc-pron-label">' + wdEsc(p.label) + '</span>';
+            if (ipa) html += '<span class="wdc-ipa">' + wdEsc(ipa) + '</span>';
+            html += wdAudioButton(p.audio, word, p.label);
+            html += '</span>';
+        });
+ 
+        html += '</div>';
+        return html;
+    }
+ 
+    function wdEmpty(message) {
+        return '<div class="wdm-empty">' + wdEsc(message) + '</div>';
+    }
+ 
+    // ── Render: từ do teacher upload (bundle) ─────────────────────────
+    function renderTeacherWordDetail(d) {
+        if (!d) {
+            return { heading: '', body: wdEmpty('Không tìm thấy dữ liệu.') };
+        }
+ 
+        const word = d.word || '';
+        const translation = String(d.translation_vi || '').trim();
+        const definition = String(d.definition || '').trim();
+        let body = '';
+ 
+        if (d.part_of_speech || translation) {
+            body += '<div class="wdc-meaning-row">';
+            if (d.part_of_speech) {
+                body += '<span class="wdc-pos">' + wdEsc(posLabel(d.part_of_speech)) + '</span>';
+            }
+            if (translation) {
+                body += '<span class="wdc-meaning">' + wdEsc(translation) + '</span>';
+            }
+            body += '</div>';
+        }
+ 
+        // Chỉ hiện định nghĩa tiếng Anh khi khác nghĩa tiếng Việt (tránh lặp 2 dòng giống nhau)
+        if (definition && definition.toLowerCase() !== translation.toLowerCase()) {
+            body += '<div class="wdc-definition">' + wdEsc(definition) + '</div>';
+        }
+ 
+        const collocations = wdSplitList(d.collocation, /[\n,;]+/);
+        if (collocations.length) {
+            body += '<div class="wdc-section-title">Collocation</div>';
+            body += '<div class="wdc-pill">' + wdEsc(collocations.join(', ')) + '</div>';
+        }
+ 
+        // Nhiều câu ví dụ: xuống dòng trong ô Excel (Alt+Enter) hoặc ngăn cách bằng "|"
+        const examples = wdSplitList(d.example, /\r?\n|\|/);
+        if (examples.length) {
+            body += '<div class="wdc-section-title">Example</div>';
+            examples.forEach(function (example) {
+                body += '<div class="wdc-pill">' + wdHighlight(example, word) + '</div>';
             });
-            html += '</div>';
         }
-
+ 
+        if (d.image_url) {
+            body += '<div class="wdc-image-wrap">'
+                + '<img src="' + wdEsc(d.image_url) + '" alt="' + wdEsc('Hình minh hoạ cho ' + word) + '"'
+                + ' loading="lazy" onerror="this.parentNode.remove()">'
+                + '</div>';
+        }
+ 
+        return {
+            heading: wdHeadingHtml(word, [{ ipa: d.pronunciation, audio: d.audio_url }]),
+            body: body || wdEmpty('Từ này chưa có nội dung chi tiết.')
+        };
+    }
+ 
+    // ── Render: từ tra từ điển ngoài (academic / học viên tự lưu) ─────
+    function renderDictionaryWordDetail(data) {
+        if (!data) {
+            return { heading: '', body: wdEmpty('Không tìm thấy dữ liệu.') };
+        }
+ 
+        const word = data.headword || data.word || '';
+        const pronunciations = (Array.isArray(data.pronunciations) ? data.pronunciations : [])
+            .map(function (p) {
+                return { label: p.label || '', ipa: p.ipa || p.text || '', audio: p.audio || '' };
+            });
+ 
+        let body = '';
+ 
         if (Array.isArray(data.meanings) && data.meanings.length) {
             data.meanings.forEach(function (m) {
+                body += '<div class="wdc-meaning-group">';
+ 
                 if (m.partOfSpeech) {
-                    html += `<div class="wdm-pos">${m.partOfSpeech}</div>`;
+                    body += '<div class="wdc-meaning-row"><span class="wdc-pos">' + wdEsc(posLabel(m.partOfSpeech)) + '</span></div>';
                 }
-
-                if (Array.isArray(m.definitions) && m.definitions.length) {
-                    m.definitions.slice(0, 4).forEach(function (def, idx) {
-                        if (def.definition) {
-                            html += `<div class="wdm-def"><strong>${idx + 1}.</strong> ${def.definition}</div>`;
-                        }
-                        if (def.example) {
-                            html += `<div class="wdm-example">"${def.example}"</div>`;
-                        }
-                    });
-                }
-
+ 
+                (Array.isArray(m.definitions) ? m.definitions : []).slice(0, 4).forEach(function (def, idx) {
+                    if (!def.definition && !def.example) return;
+ 
+                    body += '<div class="wdc-def-item">';
+                    if (def.definition) {
+                        body += '<strong>' + (idx + 1) + '.</strong> ' + wdEsc(def.definition);
+                    }
+                    if (def.example) {
+                        body += '<div class="wdc-pill">' + wdHighlight(def.example, word) + '</div>';
+                    }
+                    body += '</div>';
+                });
+ 
                 if (Array.isArray(m.synonyms) && m.synonyms.length) {
-                    html += `<div class="wdm-syn"><strong>Synonyms:</strong> ${m.synonyms.join(', ')}</div>`;
+                    body += '<div class="wdc-syn"><strong>Synonyms:</strong> ' + wdEsc(m.synonyms.join(', ')) + '</div>';
                 }
                 if (Array.isArray(m.antonyms) && m.antonyms.length) {
-                    html += `<div class="wdm-syn"><strong>Antonyms:</strong> ${m.antonyms.join(', ')}</div>`;
+                    body += '<div class="wdc-syn"><strong>Antonyms:</strong> ' + wdEsc(m.antonyms.join(', ')) + '</div>';
                 }
+ 
+                body += '</div>';
             });
-        } else {
-            html += '<div class="wdm-empty">Chưa có định nghĩa chi tiết.</div>';
         }
-
-        return html;
+ 
+        return {
+            heading: wdHeadingHtml(word, pronunciations.length ? pronunciations : [{}]),
+            body: body || wdEmpty('Chưa có định nghĩa chi tiết.')
+        };
     }
-
-    window.playWordDetailAudio = function (btnEl) {
-        let url = btnEl.getAttribute('data-audio');
-        const wordText = btnEl.getAttribute('data-word');
-        if (url && url.startsWith('//')) url = 'https:' + url;
-
-        if (url) {
-            const audio = new Audio(url);
-            audio.play().catch(function () {
-                speakWordDetail(wordText);
-            });
-        } else {
-            speakWordDetail(wordText);
+ 
+    // ── Audio ────────────────────────────────────────────────────────
+    function wdStopAudio() {
+        if (wdCurrentAudio) {
+            wdCurrentAudio.pause();
+            wdCurrentAudio = null;
         }
-    };
-
-    function speakWordDetail(word) {
-        if (!word || !window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(word.trim());
-        utter.lang = 'en-US';
-        utter.rate = 0.9;
-        window.speechSynthesis.speak(utter);
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        $('.js-wd-audio.is-playing').removeClass('is-playing');
     }
-
-    function openWordDetailModal() {
-        $wordDetailModal.addClass('is-open').attr('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeWordDetailModal() {
-        $wordDetailModal.removeClass('is-open').attr('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>');
-    }
-
-        // Render nội dung từ do teacher upload (bundle) — KHÔNG gọi API từ điển
-    function renderTeacherWordBody(d) {
-        if (!d) return '<div class="wdm-empty">Không tìm thấy dữ liệu.</div>';
-
-        let html = `<div class="wdm-word">${d.word || ''}</div>`;
-
-        if (d.pronunciation || d.audio_url) {
-            let audio = d.audio_url || '';
-            if (audio && audio.startsWith('//')) audio = 'https:' + audio;
-
-            html += '<div class="wdm-pron-row"><div class="wdm-pron-item">';
-            if (d.pronunciation) html += `<span class="wdm-pron-ipa">/${d.pronunciation}/</span>`;
-            html += `<button type="button" class="wdm-pron-audio-btn" data-audio="${audio}" data-word="${d.word || ''}" onclick="playWordDetailAudio(this)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
-            </button>`;
-            html += '</div></div>';
-        }
-
-        if (d.image_url) {
-            html += `<img src="${d.image_url}" alt="" style="max-width:100%;border-radius:12px;margin-bottom:16px;">`;
-        }
-        if (d.part_of_speech) {
-            html += `<div class="wdm-pos">${d.part_of_speech}</div>`;
-        }
-        if (d.definition) {
-            html += `<div class="wdm-def">${d.definition}</div>`;
-        }
-        if (d.translation_vi) {
-            html += `<div class="wdm-def"><strong>Nghĩa tiếng Việt:</strong> ${d.translation_vi}</div>`;
-        }
-        if (d.collocation) {
-            html += `<div class="wdm-syn"><strong>Collocation:</strong> ${d.collocation}</div>`;
-        }
-        if (d.example) {
-            html += `<div class="wdm-example">"${d.example}"</div>`;
-        }
-
-        return html;
-    }
-
-    $(document).on('click', '.word-item', function (e) {
-        // Không mở dialog nếu click vào checkbox hoặc dấu tick "đã học"
-        if ($(e.target).is('.word-checkbox, .learned-badge') || $(e.target).closest('.learned-badge').length) {
+ 
+    function speakWordDetail(word, btnEl) {
+        const done = function () { if (btnEl) btnEl.classList.remove('is-playing'); };
+ 
+        if (!word || !window.speechSynthesis) {
+            done();
             return;
         }
-
+ 
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(String(word).trim());
+        utter.lang = 'en-US';
+        utter.rate = 0.9;
+        utter.onend = done;
+        utter.onerror = done;
+        window.speechSynthesis.speak(utter);
+    }
+ 
+    $(document).on('click', '.js-wd-audio', function () {
+        const btn = this;
+        const word = btn.getAttribute('data-word') || '';
+        let url = btn.getAttribute('data-audio') || '';
+ 
+        if (url.startsWith('//')) url = 'https:' + url;
+ 
+        wdStopAudio();
+        btn.classList.add('is-playing');
+ 
+        if (!url) {
+            speakWordDetail(word, btn);
+            return;
+        }
+ 
+        wdCurrentAudio = new Audio(url);
+        wdCurrentAudio.onended = function () { btn.classList.remove('is-playing'); };
+        wdCurrentAudio.play().catch(function () {
+            // Link audio lỗi / bị chặn → đọc bằng giọng trình duyệt
+            speakWordDetail(word, btn);
+        });
+    });
+ 
+    // ── Mở / đóng modal ──────────────────────────────────────────────
+    function openWordDetailModal(wordText) {
+        wdLastFocus = document.activeElement;
+        wdStopAudio();
+ 
+        $wordDetailHeading.html(wdHeadingHtml(wordText, []));
+        $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>').scrollTop(0);
+ 
+        $wordDetailModal.addClass('is-open').attr('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+ 
+        setTimeout(function () {
+            $wordDetailModal.find('.word-detail-modal__close').trigger('focus');
+        }, 30);
+ 
+        return ++wdRequestId;
+    }
+ 
+    function showWordDetail(requestId, result) {
+        if (requestId !== wdRequestId || !$wordDetailModal.hasClass('is-open')) return;
+ 
+        if (result.heading) $wordDetailHeading.html(result.heading);
+        $wordDetailModalBody.html(result.body).scrollTop(0);
+    }
+ 
+    function closeWordDetailModal() {
+        wdRequestId++;
+        wdStopAudio();
+ 
+        $wordDetailModal.removeClass('is-open').attr('aria-hidden', 'true');
+        document.body.style.overflow = '';
+ 
+        if (wdLastFocus && typeof wdLastFocus.focus === 'function') {
+            wdLastFocus.focus();
+        }
+    }
+ 
+    $(document).on('click', '.word-item', function (e) {
+        // Không mở modal khi bấm checkbox hoặc các icon trạng thái
+        if ($(e.target).closest('.word-checkbox, .word-badges, .learned-badge').length) {
+            return;
+        }
+ 
         const $item      = $(this);
         const wordText   = $item.data('word');
         const wordSource = $item.data('word-source');
         const wordId     = $item.data('word-id');
-
+ 
         if (!wordText) return;
-
-        openWordDetailModal();
-        $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>');
-
+ 
+        const requestId = openWordDetailModal(wordText);
+ 
         // ── Từ do teacher upload: lấy nội dung gốc từ bundle_vocabulary_words ──
         if (wordSource === 'bundle') {
             const cacheKey = 'bundle:' + wordId;
-
+ 
             if (wordDetailCache[cacheKey]) {
-                $wordDetailModalBody.html(renderTeacherWordBody(wordDetailCache[cacheKey]));
+                showWordDetail(requestId, renderTeacherWordDetail(wordDetailCache[cacheKey]));
                 return;
             }
-
-            $.get('/panel/dictionary/flashcards/' + wordId + '/detail', function (res) {
-                if (res.success && res.data) {
-                    wordDetailCache[cacheKey] = res.data;
-                    $wordDetailModalBody.html(renderTeacherWordBody(res.data));
-                } else {
-                    $wordDetailModalBody.html('<div class="wdm-empty">Không tìm thấy dữ liệu.</div>');
-                }
-            }).fail(function () {
-                $wordDetailModalBody.html('<div class="wdm-empty">Lỗi khi tải dữ liệu.</div>');
-            });
-
+ 
+            $.get('/panel/dictionary/flashcards/' + wordId + '/detail')
+                .done(function (res) {
+                    if (res.success && res.data) {
+                        wordDetailCache[cacheKey] = res.data;
+                        showWordDetail(requestId, renderTeacherWordDetail(res.data));
+                    } else {
+                        showWordDetail(requestId, { heading: '', body: wdEmpty('Không tìm thấy dữ liệu.') });
+                    }
+                })
+                .fail(function () {
+                    showWordDetail(requestId, { heading: '', body: wdEmpty('Không tải được dữ liệu. Đóng lại rồi thử mở lần nữa.') });
+                });
+ 
             return;
         }
-
-        // ── Academic / từ học viên tự lưu: tra từ điển ngoài như cũ ──
+ 
+        // ── Academic / từ học viên tự lưu: tra từ điển ngoài ──
         const cacheKey = 'dict:' + wordText;
-
+ 
         if (wordDetailCache[cacheKey]) {
-            $wordDetailModalBody.html(renderWordDetailBody(wordDetailCache[cacheKey]));
+            showWordDetail(requestId, renderDictionaryWordDetail(wordDetailCache[cacheKey]));
             return;
         }
-
+ 
         $.ajax({
             url: '/panel/dictionary/search-first',
             method: 'POST',
             data: {
                 query: wordText,
                 _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function (response) {
-                if (response.success && response.data) {
-                    wordDetailCache[cacheKey] = response.data;
-                    $wordDetailModalBody.html(renderWordDetailBody(response.data));
-                } else {
-                    $wordDetailModalBody.html('<div class="wdm-empty">Không tìm thấy dữ liệu.</div>');
-                }
-            },
-            error: function () {
-                $wordDetailModalBody.html('<div class="wdm-empty">Lỗi khi tải dữ liệu.</div>');
             }
+        })
+        .done(function (response) {
+            if (response.success && response.data) {
+                wordDetailCache[cacheKey] = response.data;
+                showWordDetail(requestId, renderDictionaryWordDetail(response.data));
+            } else {
+                showWordDetail(requestId, { heading: '', body: wdEmpty('Không tìm thấy dữ liệu.') });
+            }
+        })
+        .fail(function () {
+            showWordDetail(requestId, { heading: '', body: wdEmpty('Không tải được dữ liệu. Đóng lại rồi thử mở lần nữa.') });
         });
     });
+ 
     $(document).on('click', '.js-word-detail-close', closeWordDetailModal);
-
+ 
     $(document).on('keydown', function (e) {
         if (e.key === 'Escape' && $wordDetailModal.hasClass('is-open')) {
             closeWordDetailModal();
         }
     });
-
     
 
 })(jQuery);

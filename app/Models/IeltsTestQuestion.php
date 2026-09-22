@@ -494,7 +494,16 @@ class IeltsTestQuestion extends Model
 
     private function usesCompletionAnswerGroups(): bool
     {
-        return in_array($this->question_type, ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling', 'diagram_label'], true);
+        return in_array($this->question_type, [
+            'sentence_completion',
+            'summary_completion',
+            'note_completion',
+            'diagram_labeling',
+            'diagram_label',
+            // Short Answer: 1 ô nhập, cho phép nhiều đáp án bằng "/".
+            // Nhánh này đọc được cả đáp án cũ (chuỗi) lẫn mới (mảng).
+            'short_answer',
+        ], true);
     }
 
     private function normalizeCompletionAnswerGroups($value): array

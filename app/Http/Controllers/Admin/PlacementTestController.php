@@ -105,6 +105,7 @@ class PlacementTestController extends Controller
                 'has_audio'               => (bool) $q->audio_clip_id,
                 'audio_clip_id'           => $q->audio_clip_id,
                 'question_text'           => $q->question_text,
+                'instruction'             => $q->instruction,
                 'options'                 => $q->type === 'multiple_choice' ? ($q->options ?? []) : [],
                 // listening_image_choice: options là mảng đường dẫn ảnh -> kèm URL để preview
                 // + giữ nguyên đường dẫn gốc để JS gửi lại khi không đổi ảnh mới.
@@ -536,7 +537,14 @@ class PlacementTestController extends Controller
                 'linked_passage_id'   => $linkedPassageId,
                 'audio_clip_id'     => $hasAudio ? $clipId : null,
                 'audio_path'        => null,
-                'question_text'     => $q['question_text'] ?? '',
+                // 'question_text'     => $q['question_text'] ?? '',
+                'question_text'     => $type === 'sentence_completion'
+                    ? ($q['question_text'] ?? '')
+                    : $this->sanitizeRichText($q['question_text'] ?? ''),
+
+                // Đề bài luôn qua sanitize, kể cả với sentence_completion — nó không
+                // chứa dấu ___ nên không ảnh hưởng logic đếm chỗ trống.
+                'instruction'       => $this->sanitizeRichText($q['instruction'] ?? '') ?: null,
                 'options'           => $options,
                 'word_bank'         => $wordBank,
                 'blank_hints'       => $blankHints,

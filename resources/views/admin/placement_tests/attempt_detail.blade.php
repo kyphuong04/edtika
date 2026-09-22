@@ -37,6 +37,25 @@
 .pt-rich [style*="text-align: center"]  { text-align: center !important; }
 .pt-rich [style*="text-align: right"]   { text-align: right !important; }
 .pt-rich [style*="text-align: justify"] { text-align: justify !important; }
+.pt-instruction {
+    background: #f5f3ff;
+    border-left: 4px solid #a78bfa;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.5;
+}
+
+/* Layout admin có rule phủ nền tím mờ lên mọi phần tử trong .main-content;
+   không đè lại thì khung hướng dẫn sẽ bị ám màu và khó đọc. */
+.main-content .pt-instruction {
+    background: #f5f3ff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
 </style>
 @endpush
 
@@ -78,6 +97,10 @@
                     <span class="badge {{ $isCorrect ? 'badge-success' : 'badge-danger' }} float-right">
                         {{ $isCorrect ? 'Đúng' : 'Sai' }}
                     </span>
+
+                    @if(!empty($q['instruction']))
+                        <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
+                    @endif
 
                     @if($q['has_audio'] && $q['audio_url'])
                         <audio controls style="width:100%;max-width:380px;margin:8px 0;" src="{{ $q['audio_url'] }}"></audio>

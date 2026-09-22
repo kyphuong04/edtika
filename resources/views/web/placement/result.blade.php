@@ -93,6 +93,17 @@
     margin-bottom: 6px;
     display: block;
 }
+.pt-instruction {
+    background: #f5f3ff;
+    border-left: 4px solid #a78bfa;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.5;
+}
 </style>
 @endpush
 
@@ -182,6 +193,10 @@
                                     <span class="float-right badge {{ $isCorrect ? 'badge-success' : 'badge-danger' }}">
                                         {{ $isCorrect ? 'Đúng' : 'Sai' }}
                                     </span>
+
+                                    @if(!empty($q['instruction']))
+                                        <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
+                                    @endif
 
                                     <!-- @if($q['has_audio'] && $q['audio_url'])
                                         <audio controls style="width:100%;max-width:380px;margin:10px 0;display:block;" src="{{ $q['audio_url'] }}"></audio>
