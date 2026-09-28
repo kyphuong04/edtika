@@ -102,6 +102,9 @@ class IeltsTestAttempt extends Model
     /** Mock Test — mỗi Part của Speaking có ngân sách riêng 5 phút. */
     public const MOCK_SPEAKING_PART_DURATION_SECONDS = 5 * 60;
 
+    /** Các mốc thời gian học viên được chọn cho Practice Test (phút). 0 = không giới hạn. */
+    public const PRACTICE_DURATION_MINUTES = [0, 15, 20, 30, 45, 60, 90];
+
     /*
     |--------------------------------------------------------------------------
     | Relationships
@@ -333,15 +336,12 @@ class IeltsTestAttempt extends Model
         return $skill;
     }
 
-    /**
-     * Ngân sách thời gian (giây) cho 1 scope — null nghĩa là KHÔNG giới hạn
-     * (Practice Test, hoặc skill không nằm trong MOCK_SKILL_DURATIONS_SECONDS
-     * như Grammar/Vocabulary).
-     */
     public function getScopeBudgetSeconds(string $scopeKey): ?int
     {
         if (!$this->test->isMockTest()) {
-            return null;
+            // Practice: học viên tự chọn ở đầu bài. NULL/0 = không giới hạn.
+            $chosen = (int) ($this->practice_duration_seconds ?? 0);
+            return $chosen > 0 ? $chosen : null;
         }
 
         if (str_starts_with($scopeKey, 'speaking-part-')) {

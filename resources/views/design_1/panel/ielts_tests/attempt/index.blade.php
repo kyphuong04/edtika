@@ -48,6 +48,7 @@
 <script src="{{ $attemptJsVersion('state.js') }}"></script>
 <script src="{{ $attemptJsVersion('answers.js') }}"></script>
 <script src="{{ $attemptJsVersion('renderers.js') }}"></script>
+<script src="{{ $attemptJsVersion('highlights.js') }}"></script>
 <script src="{{ $attemptJsVersion('layout.js') }}"></script>
 <script src="{{ $attemptJsVersion('app.js') }}"></script>
 @endpush

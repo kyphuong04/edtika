@@ -23,4 +23,11 @@
     window.ATTEMPT_SPEAKING_MODEL_ANSWER_URL_TEMPLATE = @json(
         route('panel.ielts_tests.speaking_model_answer', ['attemptId' => $attempt->id, 'questionId' => '__QUESTION_ID__'])
     );
+    window.ATTEMPT_NEEDS_DURATION = @json($needsDuration ?? false);
+    window.ATTEMPT_DURATION_OPTIONS = @json($durationOptions ?? []);
+    window.ATTEMPT_SET_DURATION_URL = @json(route('panel.ielts_tests.practice_duration', $attempt->id));
+    window.ATTEMPT_CSRF = @json(csrf_token());
+    window.ATTEMPT_HIGHLIGHTS = @json($highlights ?? (object) []);
+    window.ATTEMPT_HL_STORE_URL = @json(route('panel.ielts_tests.highlights.store', $attempt->id));
+    window.ATTEMPT_HL_BASE_URL = @json(url('panel/ielts-tests/attempt/' . $attempt->id . '/highlights'));
 </script>

@@ -607,6 +607,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/attempt/{attemptId}/review', 'IeltsTestController@reviewAnswers')->name('panel.ielts_tests.review');
         Route::get('/attempt/{attemptId}/section-data', 'IeltsTestController@attemptSectionData')->name('panel.ielts_tests.attempt_section_data');
         Route::get('/attempt/{attemptId}/scope-status', 'IeltsTestController@scopeStatus')->name('panel.ielts_tests.scope_status');
+        Route::post('/attempt/{attemptId}/practice-duration', 'IeltsTestController@setPracticeDuration')->name('panel.ielts_tests.practice_duration');
+        Route::post('/attempt/{attemptId}/highlights', 'IeltsTestController@storeHighlight')->name('panel.ielts_tests.highlights.store');
+        Route::post('/attempt/{attemptId}/highlights/{highlightId}', 'IeltsTestController@updateHighlight')->name('panel.ielts_tests.highlights.update');
+        Route::delete('/attempt/{attemptId}/highlights/{highlightId}', 'IeltsTestController@destroyHighlight')->name('panel.ielts_tests.highlights.destroy');
         Route::post('/attempt/{attemptId}/speaking-part/{partId}/start', 'IeltsTestController@speakingStartPart')->name('panel.ielts_tests.speaking_start_part');
         Route::get('/attempt/{attemptId}/speaking-model-answer/{questionId}', 'IeltsTestController@speakingModelAnswer')->name('panel.ielts_tests.speaking_model_answer');
     });

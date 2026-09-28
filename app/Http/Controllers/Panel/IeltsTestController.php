@@ -14,6 +14,7 @@ use App\Models\IeltsTestSection;
 use App\Models\IeltsTestQuestion;
 use App\Models\AcademicWordListWord;
 use App\Models\Sale;
+use App\Models\IeltsAttemptHighlight;
 use App\QuizzesResult;
 use Illuminate\Http\Request;
 
@@ -454,10 +455,11 @@ class IeltsTestController extends Controller
         }
 
         $skill = $currentSection->skill;
+        $isMockTest = $attempt->test->isMockTest();
 
-        // Kích hoạt ngân sách thời gian. Speaking dùng scope riêng theo Part,
-        // client gọi speakingStartPart() khi xem từng câu -> bỏ qua ở đây.
-        if ($skill !== 'speaking') {
+        $needsDuration = !$isMockTest && $attempt->practice_duration_seconds === null;
+
+        if ($skill !== 'speaking' && !$needsDuration) {
             $scopeKey = $attempt->resolveScopeKey($skill);
 
             if ($attempt->hasScopeExpired($scopeKey)) {
@@ -468,7 +470,7 @@ class IeltsTestController extends Controller
             $attempt->activateScope($scopeKey);
         }
 
-        $isMockTest = $attempt->test->isMockTest();
+        
 
         $sectionData = $this->buildSectionData($currentSection);
         // Speaking cần Hint khi làm bài; Model Answer chỉ mở sẵn ở practice
@@ -494,6 +496,18 @@ class IeltsTestController extends Controller
 
         $scopeKeyForInitialTimer = $skill !== 'speaking' ? $attempt->resolveScopeKey($skill) : null;
 
+        $highlights = IeltsAttemptHighlight::where('attempt_id', $attempt->id)
+            ->orderBy('start_offset')
+            ->get(['id', 'part_id', 'start_offset', 'end_offset', 'text', 'note'])
+            ->groupBy('part_id')
+            ->map(fn ($rows) => $rows->map(fn ($r) => [
+                'id' => $r->id,
+                'start' => $r->start_offset,
+                'end' => $r->end_offset,
+                'text' => $r->text,
+                'note' => $r->note,
+            ])->values());
+
         return view('design_1.panel.ielts_tests.attempt.index', [
             'pageTitle' => 'Taking: ' . $attempt->test->title,
             'justContent' => true,
@@ -510,6 +524,12 @@ class IeltsTestController extends Controller
                 ? $attempt->getScopeTimeRemaining($scopeKeyForInitialTimer)
                 : null,
             'testType' => $attempt->test->type,
+            'needsDuration' => $needsDuration,
+            'durationOptions' => collect(IeltsTestAttempt::PRACTICE_DURATION_MINUTES)
+                ->map(fn ($m) => [
+                    'value' => $m,
+                    'label' => $m > 0 ? ($m . ' phút') : 'Không giới hạn thời gian',
+                ])->values(),
         ]);
     }
     
@@ -1062,6 +1082,52 @@ class IeltsTestController extends Controller
         ]);
     }
 
+
+    /**
+     * Practice Test: học viên chọn thời gian làm bài ở đầu bài. Lưu xong mới
+     * kích hoạt scope (đồng hồ bắt đầu chạy từ đây, không phải từ lúc mở trang).
+     */
+    public function setPracticeDuration(Request $request, $attemptId)
+    {
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with('test')->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($attempt->test->isMockTest()) {
+            return response()->json(['error' => 'not_practice'], 422);
+        }
+
+        $skill = $attempt->current_skill ?: optional($attempt->currentSection)->skill;
+        $scopeKey = $attempt->resolveScopeKey($skill ?: 'reading');
+
+        // Đã chọn rồi (reload trang) -> trả về thời gian còn lại, không reset.
+        if ($attempt->practice_duration_seconds !== null) {
+            return response()->json([
+                'status' => 'already_set',
+                'remaining_seconds' => $attempt->getScopeTimeRemaining($scopeKey),
+            ]);
+        }
+
+        $minutes = (int) $request->input('minutes');
+
+        if (!in_array($minutes, IeltsTestAttempt::PRACTICE_DURATION_MINUTES, true)) {
+            return response()->json(['error' => 'invalid_duration'], 422);
+        }
+
+        $attempt->practice_duration_seconds = $minutes * 60;
+        $attempt->updated_at = time();
+        $attempt->save();
+
+        $attempt->activateScope($scopeKey);
+
+        return response()->json([
+            'status' => 'ok',
+            'remaining_seconds' => $attempt->getScopeTimeRemaining($scopeKey),
+        ]);
+    }
+
     /**
      * Polling endpoint — client gọi định kỳ để đồng bộ lại timer (chống lệch
      * do throttle tab nền) và phát hiện hết giờ ngay cả khi học viên không
@@ -1136,5 +1202,80 @@ class IeltsTestController extends Controller
             'status' => 'ok',
             'model_answer' => $this->resolveModelAnswer($question, $questionData),
         ]);
+    }
+
+    /**
+     * Highlight + note trong bài đọc. Vị trí neo bằng offset text thuần của
+     * passage thuộc 1 part, kèm chuỗi đối chiếu (passage đổi -> bỏ qua).
+     */
+    private function findOwnedAttemptForHighlight($attemptId): IeltsTestAttempt
+    {
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with('test')->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return $attempt;
+    }
+
+    public function storeHighlight(Request $request, $attemptId)
+    {
+        $attempt = $this->findOwnedAttemptForHighlight($attemptId);
+
+        if ($attempt->status === 'completed') {
+            return response()->json(['error' => 'attempt_completed'], 409);
+        }
+
+        $data = $request->validate([
+            'part_id' => 'required|integer',
+            'start' => 'required|integer|min:0',
+            'end' => 'required|integer|gt:start',
+            'text' => 'required|string|max:500',
+            'note' => 'nullable|string|max:2000',
+        ]);
+
+        $highlight = IeltsAttemptHighlight::create([
+            'attempt_id' => $attempt->id,
+            'test_id' => $attempt->test_id,
+            'part_id' => $data['part_id'],
+            'start_offset' => $data['start'],
+            'end_offset' => $data['end'],
+            'text' => $data['text'],
+            'note' => $data['note'] ?? null,
+            'created_at' => time(),
+            'updated_at' => time(),
+        ]);
+
+        return response()->json(['status' => 'ok', 'id' => $highlight->id]);
+    }
+
+    public function updateHighlight(Request $request, $attemptId, $highlightId)
+    {
+        $attempt = $this->findOwnedAttemptForHighlight($attemptId);
+
+        if ($attempt->status === 'completed') {
+            return response()->json(['error' => 'attempt_completed'], 409);
+        }
+
+        $highlight = IeltsAttemptHighlight::where('attempt_id', $attempt->id)->findOrFail($highlightId);
+        $highlight->note = $request->input('note') ?: null;
+        $highlight->updated_at = time();
+        $highlight->save();
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function destroyHighlight($attemptId, $highlightId)
+    {
+        $attempt = $this->findOwnedAttemptForHighlight($attemptId);
+
+        if ($attempt->status === 'completed') {
+            return response()->json(['error' => 'attempt_completed'], 409);
+        }
+
+        IeltsAttemptHighlight::where('attempt_id', $attempt->id)->where('id', $highlightId)->delete();
+
+        return response()->json(['status' => 'ok']);
     }
 }

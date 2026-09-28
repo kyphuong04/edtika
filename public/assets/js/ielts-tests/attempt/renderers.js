@@ -138,6 +138,28 @@ const ExamMatchingDnD = {
         document.addEventListener('pointerdown', (ev) => this.onPointerDown(ev));
     },
 
+    paint(slot) {
+        const value = slot.dataset.value || '';
+        const label = slot.dataset.label || value;
+
+        slot.textContent = '';
+
+        if (slot.dataset.number) {
+            const num = document.createElement('span');
+            num.className = 'exam-match-slot-num';
+            num.textContent = slot.dataset.number;
+            slot.appendChild(num);
+        }
+
+        const text = document.createElement('span');
+        text.className = 'exam-match-slot-text';
+        text.textContent = value ? label : (slot.dataset.number ? '' : '–');
+        slot.appendChild(text);
+
+        slot.classList.toggle('filled', !!value);
+    },
+
+
     chips(groupId) {
         return Array.from(document.querySelectorAll('.exam-match-chip[data-group-id="' + groupId + '"]'));
     },
@@ -172,16 +194,16 @@ const ExamMatchingDnD = {
         }
 
         slot.dataset.value = value || '';
-        slot.textContent = value ? (label || value) : '–';
-        slot.classList.toggle('filled', !!value);
+        slot.dataset.label = value ? (label || value) : '';
+        this.paint(slot);
         AttemptAnswers.queueSave(question, value || '');
         this.syncChips(groupId);
     },
 
     clear(slot, skipSync) {
         slot.dataset.value = '';
-        slot.textContent = '–';
-        slot.classList.remove('filled');
+        slot.dataset.label = '';
+        this.paint(slot);
         if (slot.__question) AttemptAnswers.queueSave(slot.__question, '');
         if (!skipSync) this.syncChips(slot.dataset.groupId);
     },
@@ -209,7 +231,7 @@ const ExamMatchingDnD = {
         if (!chip && !slot) return;
 
         const el = chip || slot;
-        if (el.closest('.is-locked')) return;
+        if (el.closest('.is-locked') || document.querySelector('.exam-questions.is-locked')) return;
         if (ev.pointerType === 'mouse' && ev.button !== 0) return;
 
         if (chip) {
@@ -219,7 +241,7 @@ const ExamMatchingDnD = {
         }
 
         if (slot.classList.contains('filled')) {
-            this.startDrag(ev, slot, slot.dataset.groupId, slot.dataset.value, slot.textContent, slot);
+            this.startDrag(ev, slot, slot.dataset.groupId, slot.dataset.value, slot.dataset.label, slot);
             return;
         }
 
@@ -309,6 +331,11 @@ const ExamRenderers = {
         const card = handler.call(this.byType, entry);
         appendSaveIndicator(card, q.id);
         return card;
+    },
+
+        /** layout.js dùng khi dựng ô thả trong bài đọc. */
+    matchingLabel(options, key) {
+        return matchingOptionLabel(options, key);
     },
 
         /** Kho lựa chọn dùng chung cho cả group Matching. layout.js gọi hàm này. */
@@ -680,19 +707,12 @@ const ExamRenderers = {
             const slot = document.createElement('div');
             slot.className = 'exam-match-slot';
             slot.dataset.questionId = q.id;
-            slot.__question = q;   // để module kéo thả biết lưu vào câu nào
+            slot.__question = q;
 
-            const saved = AttemptState.getAnswer(q.id);
-            const savedKey = saved ? String(saved).trim() : '';
-
-            if (savedKey) {
-                slot.dataset.value = savedKey;
-                slot.textContent = matchingOptionLabel(options, savedKey);
-                slot.classList.add('filled');
-            } else {
-                slot.dataset.value = '';
-                slot.textContent = '–';
-            }
+            const saved = String(AttemptState.getAnswer(q.id) || '').trim();
+            slot.dataset.value = saved;
+            slot.dataset.label = saved ? matchingOptionLabel(options, saved) : '';
+            ExamMatchingDnD.paint(slot);
 
             row.appendChild(text);
             row.appendChild(slot);

@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let deviceChecked = false;
 
     ExamLayout.mount(root);
+    if (window.ExamHighlights) ExamHighlights.init();
     ExamLayout.onTimerZero = handleTimeUp;
 
     // Speaking: nạp sẵn các câu đã có bản thu (làm dở rồi quay lại) để luồng
@@ -488,16 +489,20 @@ document.addEventListener('DOMContentLoaded', function () {
         AttemptAnswers.flushAllPending();
     });
 
-    // ── Khởi động ────────────────────────────────────────────────
+        // ── Khởi động ────────────────────────────────────────────────
     function bootExam() {
+        const countdown = window.ATTEMPT_INITIAL_REMAINING_SECONDS;
+        // Practice có chọn thời gian cũng đếm ngược + poll như mock.
+        const hasCountdown = isMock || (typeof countdown === 'number' && countdown > 0);
+
         if (skill === 'speaking' && isMock) {
             const firstPart = currentPart();
             if (firstPart) {
                 activateSpeakingPart(firstPart.id).then(startPolling);
             }
-        } else if (isMock) {
+        } else if (hasCountdown) {
             ExamLayout.setTimerMode('down');
-            ExamLayout.setTimerSeconds(window.ATTEMPT_INITIAL_REMAINING_SECONDS || 0);
+            ExamLayout.setTimerSeconds(countdown || 0);
             ExamLayout.startTimerTick();
             startPolling();
         } else {
@@ -508,19 +513,52 @@ document.addEventListener('DOMContentLoaded', function () {
         refreshView();
     }
 
-    // Hiển thị overlay kiểm tra mic+loa trước khi vào bài (cả practice & mock)
-    // Key per attempt để không hiện lại nếu reload sau khi đã qua
+    // Overlay kiểm tra mic+loa. Key per attempt để không hiện lại khi reload.
     const deviceKey = 'ielts-device-checked:' + (meta.attemptId || '0');
     try {
         deviceChecked = sessionStorage.getItem(deviceKey) === '1';
-    } catch(e) {}
+    } catch (e) {}
 
-    if (!deviceChecked) {
+    // Kỹ năng không cần mic/loa -> vào thẳng bài, khỏi bước kiểm tra thiết bị.
+    // (Mock luôn có Listening + Speaking nên vẫn kiểm tra như cũ.)
+    const NO_DEVICE_SKILLS = ['reading', 'writing', 'grammar', 'vocabulary'];
+    const skipDeviceCheck = !isMock && NO_DEVICE_SKILLS.includes(skill);
+
+    function runDeviceCheckThenBoot() {
+        if (deviceChecked || skipDeviceCheck) {
+            bootExam();
+            return;
+        }
+
         ExamLayout.showDeviceOverlay(() => {
-            try { sessionStorage.setItem(deviceKey, '1'); } catch(e) {}
+            try { sessionStorage.setItem(deviceKey, '1'); } catch (e) {}
             bootExam();
         });
+    }
+
+    // Practice chưa chọn thời gian -> hỏi TRƯỚC khi kiểm tra thiết bị.
+    if (window.ATTEMPT_NEEDS_DURATION) {
+        ExamLayout.showDurationOverlay(window.ATTEMPT_DURATION_OPTIONS || [], (minutes, ui) => {
+            fetch(window.ATTEMPT_SET_DURATION_URL, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': window.ATTEMPT_CSRF
+                        || document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ minutes: minutes }),
+            })
+                .then((r) => r.ok ? r.json() : Promise.reject(r))
+                .then((data) => {
+                    window.ATTEMPT_INITIAL_REMAINING_SECONDS = data.remaining_seconds;
+                    ui.close();
+                    runDeviceCheckThenBoot();
+                })
+                .catch(() => ui.fail('Không lưu được thời gian làm bài. Vui lòng thử lại.'));
+        });
     } else {
-        bootExam();
+        runDeviceCheckThenBoot();
     }
 });

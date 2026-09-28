@@ -102,7 +102,8 @@ return [
             ['u', 'Inline', 'Inline', 'Common'],
         ],
         'placement' => [
-            'HTML.Allowed' => 'p,br,strong,b,em,i,u,s,ul,ol,li,span[style],div[style],h3,h4,a[href|target]',
+            // 'HTML.Allowed' => 'p,br,strong,b,em,i,u,s,ul,ol,li,span[style],div[style],h3,h4,a[href|target]',
+            'HTML.Allowed' => 'p[style],br,strong,b,em,i,u,s,ul[style],ol[style],li[style],span[style],div[style],h3[style],h4[style],a[href|target]',
             'CSS.AllowedProperties' => 'text-align,color,background-color,font-weight,font-style,text-decoration',
             'AutoFormat.AutoParagraph' => false,
             'AutoFormat.RemoveEmpty' => true,

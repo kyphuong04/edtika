@@ -71,9 +71,13 @@
 .note-editor .note-toolbar .note-btn.active-align i { color: #fff !important; }
 
 /* Summernote hay sinh inline style text-align — ép trình duyệt tôn trọng nó */
+.note-editor .note-editable [style*="text-align:left"],
 .note-editor .note-editable [style*="text-align: left"]    { text-align: left !important; }
+.note-editor .note-editable [style*="text-align:center"],
 .note-editor .note-editable [style*="text-align: center"]  { text-align: center !important; }
+.note-editor .note-editable [style*="text-align:right"],
 .note-editor .note-editable [style*="text-align: right"]   { text-align: right !important; }
+.note-editor .note-editable [style*="text-align:justify"],
 .note-editor .note-editable [style*="text-align: justify"] { text-align: justify !important; }
 .note-editor .note-editable ul { list-style: disc !important; padding-left: 24px !important; }
 .note-editor .note-editable ol { list-style: decimal !important; padding-left: 24px !important; }
@@ -96,12 +100,6 @@
 }
 .pt-rich-preview p { margin-bottom: 8px; }
 .pt-rich-preview p:last-child { margin-bottom: 0; }
-/* .pt-rich-preview ul { list-style: disc; padding-left: 24px; }
-.pt-rich-preview ol { list-style: decimal; padding-left: 24px; } */
-
-/* Theme admin reset ul/ol về list-style:none cho menu sidebar -> phải đè
-   bằng !important, nếu không số/gạch đầu dòng sẽ biến mất ở vùng preview
-   dù trong editor vẫn hiện bình thường. */
 .pt-rich-preview ul,
 .pt-rich-preview ol {
     padding-left: 24px !important;
@@ -113,9 +111,14 @@
     display: list-item !important;
     list-style: inherit !important;
 }
-.pt-rich-preview [style*="text-align: center"]  { text-align: center; }
-.pt-rich-preview [style*="text-align: right"]   { text-align: right; }
-.pt-rich-preview [style*="text-align: justify"] { text-align: justify; }
+.pt-rich-preview [style*="text-align:center"],
+.pt-rich-preview [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich-preview [style*="text-align:right"],
+.pt-rich-preview [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich-preview [style*="text-align:justify"],
+.pt-rich-preview [style*="text-align: justify"] { text-align: justify !important; }
+.pt-rich-preview [style*="text-align:left"],
+.pt-rich-preview [style*="text-align: left"]    { text-align: left !important; }
 .pt-rich-empty { color: #9ca3af; font-style: italic; }
 .main-content .pt-question-card img[id^="option-img-preview"] {
     background: #f8fafc !important;

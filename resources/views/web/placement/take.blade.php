@@ -84,19 +84,14 @@
 .pt-rich li { display: list-item !important; list-style: inherit !important; }
 .pt-rich p  { margin-bottom: 8px; }
 .pt-rich p:last-child { margin-bottom: 0; }
+.pt-rich [style*="text-align:center"],
 .pt-rich [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich [style*="text-align:right"],
 .pt-rich [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich [style*="text-align:justify"],
 .pt-rich [style*="text-align: justify"] { text-align: justify !important; }
-.pt-rich ul,
-.pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
-.pt-rich ul { list-style: disc !important; }
-.pt-rich ol { list-style: decimal !important; }
-.pt-rich li { display: list-item !important; list-style: inherit !important; }
-.pt-rich p  { margin-bottom: 8px; }
-.pt-rich p:last-child { margin-bottom: 0; }
-.pt-rich [style*="text-align: center"]  { text-align: center !important; }
-.pt-rich [style*="text-align: right"]   { text-align: right !important; }
-.pt-rich [style*="text-align: justify"] { text-align: justify !important; }
+.pt-rich [style*="text-align:left"],
+.pt-rich [style*="text-align: left"]    { text-align: left !important; }
 .pt-instruction {
     background: #f5f3ff;
     border-left: 4px solid #a78bfa;
@@ -107,6 +102,50 @@
     font-weight: 600;
     color: #4c1d95;
     line-height: 1.5;
+}
+/* ── Gộp số thứ tự và nội dung câu hỏi lên cùng một dòng ──────────────
+   Summernote bọc nội dung trong <p> (thẻ block) nên mặc định nó luôn
+   xuống dòng. Ép <p> ĐẦU TIÊN về inline; các <p> sau vẫn xuống dòng
+   bình thường để nội dung nhiều đoạn hiển thị đúng. */
+.pt-q-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.pt-q-head .pt-q-num {
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.pt-q-head .pt-q-text {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+/* Chỉ thẻ đầu tiên mới inline — nếu dùng * thì nội dung nhiều đoạn sẽ
+   dồn hết vào một dòng. */
+.pt-q-head .pt-q-text > p:first-child,
+.pt-q-head .pt-q-text > div:first-child {
+    display: inline;
+    margin: 0;
+}
+
+/* Danh sách vẫn phải xuống dòng dù đứng đầu. */
+.pt-q-head .pt-q-text > ul:first-child,
+.pt-q-head .pt-q-text > ol:first-child {
+    display: block;
+    margin-top: 6px;
+}
+
+@media (max-width: 575px) {
+    /* Màn hình hẹp: cho nội dung xuống dòng riêng cho dễ đọc. */
+    .pt-q-head { display: block; }
+    .pt-q-head .pt-q-num { display: inline-block; margin-bottom: 8px; }
+    .pt-q-head .pt-q-text > p:first-child { display: block; }
 }
 </style>
 @endpush
@@ -162,7 +201,7 @@
                 </div>
             @endif
             
-            <div class="pt-q-card">
+            <!-- <div class="pt-q-card">
                 <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
 
                 @if(!empty($q['instruction']))
@@ -208,6 +247,87 @@
                         // Tách question_text theo dấu ___ để chèn input ngay tại vị trí chỗ trống.
                         $parts = preg_split('/_{2,}/', $q['question_text']);
                     @endphp
+
+                    <div class="pt-q-text" style="font-weight:400;">
+                        @foreach($parts as $partIndex => $part)
+                            {!! nl2br(e($part)) !!}
+                            @if($partIndex < count($parts) - 1)
+                                <input type="text" class="pt-blank-input" name="answers[{{ $q['id'] }}][]" placeholder="..." required>
+                                @if(!empty($q['blank_hints'][$partIndex]))
+                                    <span class="pt-blank-hint">({{ $q['blank_hints'][$partIndex] }})</span>
+                                @endif
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
+            </div> -->
+            <div class="pt-q-card">
+
+                {{-- Đề bài / hướng dẫn vẫn đứng riêng phía trên --}}
+                @if(!empty($q['instruction']))
+                    <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
+                @endif
+
+                {{-- Audio giữ nguyên vị trí cũ, đứng trên câu hỏi --}}
+                @if(!empty($q['audio_group_start']) && $q['audio_url'])
+                    <div class="pt-audio-player" data-audio-player>
+                        <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="metadata"></audio>
+                        <button type="button" class="pt-audio-play-toggle" data-audio-toggle>
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <span class="pt-audio-time" data-audio-time>00:00</span>
+                        <div class="pt-audio-track" data-audio-track>
+                            <div class="pt-audio-fill" data-audio-fill></div>
+                        </div>
+                        <span class="pt-audio-duration" data-audio-duration>00:00</span>
+                    </div>
+                @endif
+
+                {{-- Số thứ tự + nội dung câu hỏi trên CÙNG MỘT DÒNG.
+                    sentence_completion không dùng wrapper này vì nội dung của nó
+                    phải xen kẽ với các ô input (tách theo dấu ___). --}}
+                @if($q['type'] !== 'sentence_completion')
+                    <div class="pt-q-head">
+                        <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
+                        <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
+                    </div>
+                @else
+                    <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
+                @endif
+
+                @if($q['type'] === 'multiple_choice')
+                    @foreach($q['options'] as $optIndex => $option)
+                        <label class="pt-option">
+                            <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $option }}" required>
+                            {{ chr(65 + $optIndex) }}. {{ $option }}
+                        </label>
+                    @endforeach
+
+                @elseif($q['type'] === 'listening_image_choice')
+                    <div class="pt-img-options">
+                        @foreach($q['image_options'] as $imgOpt)
+                            <label class="pt-img-option">
+                                <img src="{{ $imgOpt['url'] }}" alt="{{ $imgOpt['label'] }}">
+                                <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $imgOpt['label'] }}" required>
+                                {{ $imgOpt['label'] }}
+                            </label>
+                        @endforeach
+                    </div>
+
+                @elseif($q['type'] === 'error_correction')
+                    <input type="text" class="form-control" name="answers[{{ $q['id'] }}]"
+                        placeholder="Nhập lại câu đúng hoàn chỉnh..." required>
+
+                @elseif($q['type'] === 'sentence_completion')
+                    @if(!empty($q['word_bank']))
+                        <div class="pt-word-bank">
+                            @foreach($q['word_bank'] as $word)
+                                <span class="pt-word-chip">{{ $word }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @php $parts = preg_split('/_{2,}/', $q['question_text']); @endphp
 
                     <div class="pt-q-text" style="font-weight:400;">
                         @foreach($parts as $partIndex => $part)

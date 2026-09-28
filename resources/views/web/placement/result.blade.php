@@ -81,9 +81,14 @@
 .pt-rich li { display: list-item !important; list-style: inherit !important; }
 .pt-rich p  { margin-bottom: 8px; }
 .pt-rich p:last-child { margin-bottom: 0; }
+.pt-rich [style*="text-align:center"],
 .pt-rich [style*="text-align: center"]  { text-align: center !important; }
+.pt-rich [style*="text-align:right"],
 .pt-rich [style*="text-align: right"]   { text-align: right !important; }
+.pt-rich [style*="text-align:justify"],
 .pt-rich [style*="text-align: justify"] { text-align: justify !important; }
+.pt-rich [style*="text-align:left"],
+.pt-rich [style*="text-align: left"]    { text-align: left !important; }
 .pt-answer-img {
     width: 100%;
     aspect-ratio: 3 / 2;

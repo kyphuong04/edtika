@@ -44,26 +44,15 @@ const ExamLayout = {
         const headerMain = document.createElement('div');
         headerMain.className = 'exam-header-main';
 
-        const headerRow1 = document.createElement('div');
-        headerRow1.className = 'exam-header-row1';
-
         const testTitle = document.createElement('div');
         testTitle.className = 'exam-header-title';
         const meta = (typeof window !== 'undefined' && window.ATTEMPT_META) ? window.ATTEMPT_META : {};
         const skillForTitle = (AttemptState && AttemptState.skill) || meta.skill || '';
         testTitle.textContent = meta.testTitle || meta.title || (skillForTitle ? skillForTitle.toUpperCase() : '');
 
-        headerRow1.appendChild(testTitle);
-
-        const headerRow2 = document.createElement('div');
-        headerRow2.className = 'exam-header-row2';
-
         const audioIndicator = document.createElement('div');
         audioIndicator.className = 'exam-audio-indicator hidden';
         audioIndicator.innerHTML = '<i class="fas fa-volume-up"></i><span>Playing sound</span>';
-
-        const headerRow2Right = document.createElement('div');
-        headerRow2Right.className = 'exam-header-row2-right';
 
         const skillTabs = document.createElement('div');
         skillTabs.className = 'exam-skill-tabs';
@@ -72,14 +61,10 @@ const ExamLayout = {
         timer.className = 'exam-timer';
         timer.textContent = '00:00';
 
-        headerRow2Right.appendChild(skillTabs);
-        headerRow2Right.appendChild(timer);
-
-        headerRow2.appendChild(audioIndicator);
-        headerRow2.appendChild(headerRow2Right);
-
-        headerMain.appendChild(headerRow1);
-        headerMain.appendChild(headerRow2);
+        headerMain.appendChild(testTitle);
+        headerMain.appendChild(audioIndicator);
+        headerMain.appendChild(skillTabs);
+        headerMain.appendChild(timer);
 
         header.appendChild(logoWrap);
         header.appendChild(headerMain);
@@ -146,7 +131,7 @@ const ExamLayout = {
         rootEl.appendChild(fabNav);
 
         this.els = {
-            header, logoWrap, headerMain, headerRow1, headerRow2, testTitle,
+            header, logoWrap, headerMain, testTitle,
             skillTabs, audioIndicator, timer,
             body, context, resizer, questions,
             navigator, partNavBar, submitBtn,
@@ -234,6 +219,57 @@ const ExamLayout = {
 
     hideListeningGate() {
         if (this.listeningGateEl) this.listeningGateEl.classList.add('hidden');
+    },
+
+        /**
+     * Practice Test: chọn thời gian làm bài. Hiện TRƯỚC overlay kiểm tra
+     * thiết bị; đồng hồ chỉ bắt đầu sau khi server ghi nhận lựa chọn.
+     */
+    showDurationOverlay(options, onPick) {
+        const overlay = document.createElement('div');
+        overlay.className = 'exam-duration-overlay';
+        overlay.innerHTML = ''
+            + '<div class="exam-duration-card">'
+            + '  <div class="exam-duration-title">THIẾT LẬP CẤU TRÚC BÀI THI</div>'
+            + '  <div class="exam-duration-sub">Vui lòng chọn thời gian làm bài phù hợp</div>'
+            + '  <div class="exam-duration-icon">'
+            + '    <div class="exam-duration-icon-circle"><i class="fas fa-clock"></i></div>'
+            + '    <div class="exam-duration-icon-label">CHỌN THỜI GIAN LÀM BÀI</div>'
+            + '  </div>'
+            + '  <select class="exam-duration-select" id="examDurationSelect"></select>'
+            + '  <div class="exam-duration-error" id="examDurationError"></div>'
+            + '  <button type="button" class="exam-duration-start" id="examDurationStart">'
+            + '    BẮT ĐẦU LÀM BÀI NGAY <i class="fas fa-arrow-right"></i>'
+            + '  </button>'
+            + '</div>';
+        document.body.appendChild(overlay);
+
+        const select = overlay.querySelector('#examDurationSelect');
+        const startBtn = overlay.querySelector('#examDurationStart');
+        const errorEl = overlay.querySelector('#examDurationError');
+
+        (options || []).forEach((opt) => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            if (Number(opt.value) === 60) option.selected = true;
+            select.appendChild(option);
+        });
+
+        startBtn.addEventListener('click', () => {
+            startBtn.disabled = true;
+            errorEl.textContent = '';
+
+            onPick(parseInt(select.value, 10), {
+                close: () => overlay.remove(),
+                fail: (msg) => {
+                    startBtn.disabled = false;
+                    errorEl.textContent = msg;
+                },
+            });
+        });
+
+        return overlay;
     },
 
     // ── Device check overlay (mic + loa) ──────────────────────────────
@@ -492,6 +528,10 @@ const ExamLayout = {
         const m = String(Math.floor(total / 60)).padStart(2, '0');
         const s = String(total % 60).padStart(2, '0');
         this.els.timer.textContent = m + ':' + s;
+
+        // Dưới 2 phút -> chữ đỏ (chỉ khi đang đếm ngược).
+        const warn = this.timerMode === 'down' && total > 0 && total <= 120;
+        this.els.timer.classList.toggle('is-warning', warn);
     },
 
     syncTimerForContext(skill, partIndex, testType) {
@@ -684,10 +724,80 @@ const ExamLayout = {
         }, onJump);
     },
 
+        /** Ô thả đặt trong bài đọc (chỗ giáo viên gõ [[Q]]). */
+    createMatchSlot(entry, groupId) {
+        const q = entry.question;
+        const options = q.options || {};
+
+        const slot = document.createElement('span');
+        slot.className = 'exam-match-slot exam-match-slot-inline';
+        slot.id = 'exam-q-' + q.id;           // thanh điều hướng cuộn tới đây
+        slot.dataset.groupId = groupId;
+        slot.dataset.questionId = q.id;
+        slot.dataset.number = entry.startNumber;
+        slot.__question = q;
+
+        const saved = String(AttemptState.getAnswer(q.id) || '').trim();
+        slot.dataset.value = saved;
+        slot.dataset.label = saved ? ExamRenderers.matchingLabel(options, saved) : '';
+        ExamMatchingDnD.paint(slot);
+
+        return slot;
+    },
+
+    /**
+     * Thay mỗi [[Q]] trong bài đọc bằng một ô thả, gán lần lượt cho các
+     * statement của group Matching (kiểu kéo thả) trong part này.
+     */
+    mountPassageMatchSlots(container, part) {
+        const DROP_TYPES = ['matching_headings', 'matching_features', 'matching_sentence_endings'];
+
+        const queue = [];
+        (part.groups || []).forEach((group, idx) => {
+            if (!DROP_TYPES.includes(group.question_type)) return;
+            const groupId = 'mg-' + (group.id || (AttemptState.part.index + '-' + idx));
+            (group.questions || []).forEach((q) => {
+                const entry = AttemptState.entries.find((e) => e.question.id === q.id);
+                if (entry) queue.push({ entry: entry, groupId: groupId });
+            });
+        });
+
+        if (!queue.length) return;
+
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+        const nodes = [];
+        while (walker.nextNode()) {
+            if (walker.currentNode.nodeValue.indexOf('[[Q]]') !== -1) nodes.push(walker.currentNode);
+        }
+        if (!nodes.length) return;
+
+        let pos = 0;
+        nodes.forEach((node) => {
+            const pieces = node.nodeValue.split('[[Q]]');
+            const frag = document.createDocumentFragment();
+
+            pieces.forEach((piece, i) => {
+                if (piece) frag.appendChild(document.createTextNode(piece));
+                if (i < pieces.length - 1) {
+                    const item = queue[pos++];
+                    if (item) {
+                        frag.appendChild(this.createMatchSlot(item.entry, item.groupId));
+                        this._passageSlotIds.add(item.entry.question.id);
+                    }
+                }
+            });
+
+            node.parentNode.replaceChild(frag, node);
+        });
+
+        ExamMatchingDnD.ensureBound();
+    },
+
     renderContext(part) {
         const el = this.els.context;
         if (!el) return;
         el.innerHTML = '';
+        this._passageSlotIds = new Set();
         if (this.els.body) this.els.body.classList.remove('is-speaking', 'is-listening');
 
         const partFiles = (part && part.files) || {};
@@ -756,6 +866,10 @@ const ExamLayout = {
             div.className = 'exam-context-passage';
             div.innerHTML = part.passage;
             el.appendChild(div);
+            this.mountPassageMatchSlots(div, part);
+
+            // Highlight/note chỉ cho phép trong bài đọc.
+            if (window.ExamHighlights) window.ExamHighlights.mountRoot(div, part.id);
         }
     },
 
@@ -945,6 +1059,7 @@ const ExamLayout = {
             let lastTitle = '';
 
             (group.questions || []).forEach((question) => {
+                if (this._passageSlotIds && this._passageSlotIds.has(question.id)) return;
                 const entry = AttemptState.entries.find((e) => e.question.id === question.id);
                 if (!entry) return;
 

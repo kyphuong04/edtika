@@ -3493,7 +3493,9 @@ function saveQuestionToGroup(button) {
         const optionsMap = {};
         for (let idx = 0; idx < columnCount; idx++) {
             const key = matchingKeyFromIndex(idx);
-            optionsMap[key] = key;
+            const input = form.querySelector('.matching-option-text[data-key="' + key + '"]');
+            const text = input ? input.value.trim() : '';
+            optionsMap[key] = text || key;   // để trống -> giữ chữ cái như dữ liệu cũ
         }
 
         if (Object.keys(optionsMap).length < 2) {
@@ -4797,9 +4799,8 @@ function getQuestionFormHTML(questionType, skill = '') {
             </div>
         </div>
         <div class="alert alert-info py-2 px-3 mb-12">
-            Mỗi statement lưu thành một câu hỏi.
-            <strong>Matching Information:</strong> số cột = số đoạn văn (A, B, C…) trong bài đọc.
-            <strong>Matching Features / Headings:</strong> nhập danh sách lựa chọn vào ô Prompt bên dưới để học viên biết A, B, C là gì.
+            Mỗi statement lưu thành một câu hỏi. Nhập nội dung lựa chọn ở khung xanh bên dưới để học viên thấy nội dung thay vì chỉ chữ cái.<br>
+            <strong>Muốn học viên kéo đáp án vào thẳng bài đọc:</strong> gõ <code>[[Q]]</code> trong ô <em>Part Description</em> của Part, tại đúng vị trí cần đặt ô thả. Số <code>[[Q]]</code> phải bằng số statement.
         </div>
         <div class="matching-matrix-wrap"></div>
         <div class="form-row">
@@ -5052,7 +5053,20 @@ function buildMatchingMatrixInForm(form, statementCount, columnCount, seed = nul
     const safeStatements = Math.max(1, Math.min(40, parseInt(statementCount, 10) || 4));
     const safeColumns = Math.max(2, Math.min(26, parseInt(columnCount, 10) || 5));
 
+    const optionSeed = (seed && seed.options) ? seed.options : {};
     const rowSeed = Array.isArray(seed && seed.rows ? seed.rows : null) ? seed.rows : [];
+
+    // Nội dung từng lựa chọn. Để trống -> học viên chỉ thấy chữ cái (như cũ).
+    let optionRows = '';
+    for (let j = 0; j < safeColumns; j++) {
+        const key = matchingKeyFromIndex(j);
+        const value = (optionSeed[key] && optionSeed[key] !== key) ? optionSeed[key] : '';
+        optionRows += `<div class="d-flex align-items-center mb-2" style="gap:8px;">
+            <span style="width:28px;flex:0 0 auto;font-weight:700;color:#511D99;">${key}</span>
+            <input type="text" class="form-control form-control-sm matching-option-text" data-key="${key}"
+                   placeholder="Nội dung lựa chọn ${key}" value="${escapeHtml(value)}" style="flex:1;min-width:0;">
+        </div>`;
+    }
 
     const statementRows = [];
     for (let i = 0; i < safeStatements; i++) {
@@ -5077,7 +5091,11 @@ function buildMatchingMatrixInForm(form, statementCount, columnCount, seed = nul
         </tr>`);
     }
 
-    wrap.innerHTML = `<div class="matching-builder-card" style="border:1px solid #dbeafe;border-radius:8px;padding:12px;background:#fff;">
+    wrap.innerHTML = `<div class="matching-options-card" style="border:1px solid #bbf7d0;border-radius:8px;padding:12px;background:#f0fdf4;margin-bottom:12px;">
+        <label class="input-label">Nội dung các lựa chọn <small class="text-muted">(học viên kéo các ô này; để trống thì chỉ hiện chữ cái)</small></label>
+        ${optionRows}
+    </div>
+    <div class="matching-builder-card" style="border:1px solid #dbeafe;border-radius:8px;padding:12px;background:#fff;">
         <div class="table-responsive" style="overflow-x:auto;">
             <table class="table table-bordered mb-0" style="min-width:620px;">
                 <thead>
@@ -5111,6 +5129,22 @@ function initializeMatchingBuilder(form) {
     );
 }
 
+function collectMatchingSeed(form) {
+    const options = {};
+    form.querySelectorAll('.matching-option-text').forEach((input) => {
+        const key = input.getAttribute('data-key');
+        const value = input.value.trim();
+        if (key && value) options[key] = value;
+    });
+
+    const rows = Array.from(form.querySelectorAll('.matching-statement-row')).map((row) => ({
+        text: row.querySelector('.matching-statement-text')?.value || '',
+        correctAnswer: row.querySelector('.matching-correct-select')?.value || ''
+    }));
+
+    return { options, rows };
+}
+
 function generateMatchingMatrix(button) {
     const form = button ? button.closest('.question-inline-form') : null;
     if (!form) {
@@ -5120,10 +5154,12 @@ function generateMatchingMatrix(button) {
     const statementsInput = form.querySelector('.matching-statements-count');
     const columnsInput = form.querySelector('.matching-columns-count');
 
+    // Dựng lại ma trận nhưng giữ nội dung đang gõ dở.
     buildMatchingMatrixInForm(
         form,
         statementsInput ? statementsInput.value : 4,
-        columnsInput ? columnsInput.value : 5
+        columnsInput ? columnsInput.value : 5,
+        collectMatchingSeed(form)
     );
 }
 
