@@ -2,6 +2,7 @@
 
 namespace App\Support\Ielts;
 
+use App\Models\IeltsTestQuestion;
 use App\Models\IeltsTestAttempt;
 use Illuminate\Support\Facades\Schema;
 
@@ -50,10 +51,7 @@ trait GradesIeltsAttempts
             }
 
             $answer->autoGrade();
-
-            if ($answer->is_correct) {
-                $correctCount++;
-            }
+            $correctCount += (int) round((float) $answer->points_earned);
         }
 
         $scoreField = $skill . '_score';
@@ -114,11 +112,11 @@ trait GradesIeltsAttempts
         $attempt->save();
     }
 
-    /**
-     * Điểm kết thúc DUY NHẤT của 1 attempt — gọi khi hết giờ tự động nộp,
-     * khi học viên bấm nộp section cuối, hoặc submit toàn bài (legacy).
+        /**
+     * Chấm + tính band, KHÔNG đổi trạng thái attempt. An toàn gọi lại nhiều
+     * lần (dùng cho chấm lại dữ liệu cũ).
      */
-    public function finalizeAttempt(IeltsTestAttempt $attempt): void
+    public function gradeAttempt(IeltsTestAttempt $attempt): void
     {
         $skills = $attempt->test->sections()->distinct()->pluck('skill')->filter();
 
@@ -127,16 +125,54 @@ trait GradesIeltsAttempts
         }
 
         $attempt->refresh();
-        $attempt->listening_band = $this->scoreToBand($attempt->listening_score, 'listening');
-        $attempt->reading_band = $this->scoreToBand($attempt->reading_score, 'reading');
+        $attempt->listening_band = $this->skillBand($attempt, 'listening');
+        $attempt->reading_band = $this->skillBand($attempt, 'reading');
         $attempt->save();
 
         $this->refreshOverallBand($attempt);
+    }
+
+    /**
+     * Điểm kết thúc DUY NHẤT của 1 attempt — hết giờ tự nộp, nộp section
+     * cuối, hoặc submit toàn bài (legacy).
+     */
+    public function finalizeAttempt(IeltsTestAttempt $attempt): void
+    {
+        $this->gradeAttempt($attempt);
 
         $attempt->update([
             'status' => 'completed',
             'completed_at' => time(),
             'updated_at' => time(),
         ]);
+    }
+
+    /**
+     * Band Listening/Reading. Đề đủ 40 câu: tra bảng trực tiếp. Đề lẻ (VD
+     * 12 câu): quy đổi tỷ lệ về thang 40 — chỉ là band ƯỚC TÍNH.
+     */
+    public function skillBand(IeltsTestAttempt $attempt, string $skill): ?float
+    {
+        $total = $this->skillSlotTotal($attempt, $skill);
+
+        if ($total <= 0) {
+            return null; // đề không có skill này
+        }
+
+        $score = (float) ($attempt->{$skill . '_score'} ?? 0);
+        $scaled = $total === 40 ? $score : ($score / $total) * 40;
+
+        return $this->scoreToBand($scaled, $skill);
+    }
+
+    /** Tổng số câu (slot) chấm tự động của 1 skill trong đề. */
+    public function skillSlotTotal(IeltsTestAttempt $attempt, string $skill): int
+    {
+        return (int) IeltsTestQuestion::whereHas('section', fn ($q) => $q
+                ->where('test_id', $attempt->test_id)
+                ->where('skill', $skill))
+            ->where('auto_gradable', true)
+            ->get()
+            ->sum(fn (IeltsTestQuestion $question) => $question->slotCount());
     }
 }

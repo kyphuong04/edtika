@@ -50,10 +50,32 @@ class IeltsTestQuestion extends Model
     
     public function getCorrectAnswerArrayAttribute()
     {
-        if (is_string($this->correct_answer)) {
-            return json_decode($this->correct_answer, true) ?? [$this->correct_answer];
+        $raw = $this->correct_answer;
+
+        if (is_array($raw)) {
+            return $raw;
         }
-        return $this->correct_answer;
+
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+
+            // Chỉ nhận kết quả decode khi là mảng hoặc chuỗi JSON ("\"abc\"").
+            // Không nhận true/false/null/số — giữ nguyên chuỗi gốc.
+            if (json_last_error() === JSON_ERROR_NONE) {
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+                if (is_string($decoded)) {
+                    return [$decoded];
+                }
+            }
+        }
+
+        return [$raw];
     }
 
     public function getFormattedCorrectAnswerAttribute()
@@ -61,18 +83,22 @@ class IeltsTestQuestion extends Model
         if ($this->usesCompletionAnswerGroups()) {
             $groups = $this->normalizeCompletionAnswerGroups($this->correct_answer_array);
 
-            return implode(' | ', array_map(static function (array $variants) {
-                return implode(' / ', $variants);
-            }, $groups));
+            return implode(' | ', array_map(
+                fn ($variants) => implode(' / ', $this->flattenAnswerValues($variants)),
+                $groups
+            ));
         }
 
-        if (is_array($this->correct_answer_array)) {
-            return implode(', ', array_map(static function ($value) {
-                return is_array($value) ? implode(' / ', $value) : (string) $value;
-            }, $this->correct_answer_array));
+        $raw = $this->correct_answer_array;
+
+        if (is_array($raw)) {
+            return implode(', ', array_map(
+                fn ($value) => implode(' / ', $this->flattenAnswerValues($value)),
+                $raw
+            ));
         }
 
-        return $this->correct_answer;
+        return (string) $raw;
     }
     
     public function getAnswerOptionsArrayAttribute()
@@ -177,165 +203,239 @@ class IeltsTestQuestion extends Model
         return in_array($this->question_type, ['drag_drop_disappear', 'drag_drop_reuse'], true);
     }
     
-    /**
-     * Check if answer is correct
-     */
     public function checkAnswer($userAnswer)
     {
         if (!$this->auto_gradable) {
             return null; // Requires manual grading
         }
-        
-        $correctAnswers = $this->correct_answer_array;
 
-        // If no correct answer is stored, cannot grade
-        if (empty($correctAnswers)) {
-            return false;
-        }
+        $slots = $this->gradeSlots($userAnswer);
 
-        // Ensure it's an array
-        if (!is_array($correctAnswers)) {
-            $correctAnswers = [$correctAnswers];
-        }
+        return !empty($slots) && !in_array(false, array_column($slots, 'correct'), true);
+    }
 
-        // SAU
-        if ($this->usesCompletionAnswerGroups()) {
-            $expectedGroups = $this->normalizeCompletionAnswerGroups($correctAnswers);
-            $submittedGroups = $this->normalizeSubmittedCompletionAnswers($userAnswer);
+        /*
+    |--------------------------------------------------------------------------
+    | Chấm theo TỪNG Ô (slot)
+    |--------------------------------------------------------------------------
+    | 1 slot = 1 số thứ tự câu hỏi IELTS = 1 điểm. Nguồn sự thật DUY NHẤT cho:
+    |  - điểm (GradesIeltsAttempts cộng số slot đúng)
+    |  - số câu 1 dòng IeltsTestQuestion chiếm (slotCount())
+    |  - tô màu đúng/sai từng ô ở trang chữa bài
+    |
+    | Mỗi slot: ['submitted' => ?string, 'accepted' => string[], 'correct' => bool]
+    | Riêng table_completion có thêm 'cell' => "row-col" và 'parts' (từng blank
+    | trong ô đó, cùng cấu trúc).
+    */
 
-            if (empty($expectedGroups) || count($expectedGroups) !== count($submittedGroups)) {
-                return false;
-            }
-
-            foreach ($expectedGroups as $index => $variants) {
-                $submittedValue = $submittedGroups[$index][0] ?? null;
-                if ($submittedValue === null) {
-                    return false;
-                }
-
-                $matched = false;
-                foreach ($variants as $variant) {
-                    if ($submittedValue === $this->normalizeAnswer($variant)) {
-                        $matched = true;
-                        break;
-                    }
-                }
-
-                if (!$matched) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        // Matching (headings/information/features/sentence_endings): mỗi
-        // dòng IeltsTestQuestion ứng với 1 statement, đáp án đúng là 1 giá
-        // trị đơn (key cột, VD "A"). Trước patch này nó rơi vào nhánh so
-        // sánh chung ở cuối hàm và TÌNH CỜ vẫn đúng (vì đáp án chỉ có 1
-        // giá trị) — tách riêng để không phụ thuộc ngầm vào hành vi đó.
-        if ($this->isMatchingType()) {
-            return $this->checkMatchingAnswer($userAnswer, $correctAnswers);
-        }
-
-        // Drag & drop (disappear/reuse): nhiều blank trong 1 câu, đáp án
-        // đúng lưu MẢNG CÓ THỨ TỰ (correct_answer_array[idx] = đáp án của
-        // blank thứ idx). Trước patch này nó cũng rơi vào nhánh so sánh
-        // chung — nhưng nhánh đó dùng logic "khớp BẤT KỲ phần tử nào"
-        // (đúng cho multiple choice) chứ không phải "khớp ĐÚNG VỊ TRÍ"
-        // (cần cho drag&drop) -> gần như luôn chấm sai. Đây là bug thật.
-        if ($this->isDragDropType()) {
-            return $this->checkDragDropAnswer($userAnswer, $correctAnswers);
-        }
-        
-        // Normalize answer
-        $userAnswer = $this->normalizeAnswer($userAnswer);
-        
-        // For multiple select, check all selections
-        if ($this->isMultipleSelect()) {
-            $userSelections = is_array($userAnswer) ? $userAnswer : json_decode($userAnswer, true);
-            if (!is_array($userSelections)) {
-                return false;
-            }
-            sort($userSelections);
-            sort($correctAnswers);
-            return $userSelections === $correctAnswers;
-        }
-        
-        // For single answer
-        foreach ($correctAnswers as $correctAnswer) {
-            $normalizedCorrect = $this->normalizeAnswer($correctAnswer);
-            if ($userAnswer === $normalizedCorrect) {
-                return true;
-            }
-        }
-
+    public function gradeSlots($userAnswer): array
+    {
         if ($this->question_type === 'table_completion') {
-            $expected = [];
-            foreach ($this->table_completion_answers_array as $a) {
-                // $a['answers'] giờ là mảng THEO THỨ TỰ BLANK, mỗi phần tử
-                // là mảng biến thể chấp nhận được cho blank đó.
-                $expected["{$a['row']}-{$a['col']}"] = $a['answers'];
-            }
-
-            if (empty($expected)) {
-                return false;
-            }
-
-            // userAnswer kỳ vọng: JSON { answers: [{ row, col, answers: [v0, v1, ...] }] }
-            // answers[i] = mảng theo thứ tự blank trong cell. Vẫn chấp nhận
-            // dạng cũ { answer: "..." } (1 blank) để tương thích ngược.
-            $decoded = is_string($userAnswer) ? json_decode($userAnswer, true) : $userAnswer;
-            $userMap = [];
-
-            if (is_array($decoded) && !empty($decoded['answers']) && is_array($decoded['answers'])) {
-                foreach ($decoded['answers'] as $a) {
-                    if (!isset($a['row']) || !isset($a['col'])) {
-                        continue;
-                    }
-
-                    $key = "{$a['row']}-{$a['col']}";
-
-                    if (isset($a['answers']) && is_array($a['answers'])) {
-                        $userMap[$key] = $a['answers'];
-                    } elseif (isset($a['answer'])) {
-                        $userMap[$key] = [$a['answer']];
-                    }
-                }
-            }
-
-            foreach ($expected as $key => $expectedPerBlank) {
-                $submittedPerBlank = $userMap[$key] ?? null;
-
-                if ($submittedPerBlank === null || count($submittedPerBlank) !== count($expectedPerBlank)) {
-                    return false;
-                }
-
-                foreach ($expectedPerBlank as $blankIndex => $acceptedVariants) {
-                    $submittedValue = $submittedPerBlank[$blankIndex] ?? null;
-
-                    if ($submittedValue === null) {
-                        return false;
-                    }
-
-                    $matched = false;
-                    foreach ((array) $acceptedVariants as $variant) {
-                        if ($this->normalizeAnswer($submittedValue) === $this->normalizeAnswer($variant)) {
-                            $matched = true;
-                            break;
-                        }
-                    }
-
-                    if (!$matched) {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+            return $this->gradeTableSlots($userAnswer);
         }
 
-        return false;
+        if ($this->isMultipleSelect()) {
+            return $this->gradeMultipleSelectSlots($userAnswer);
+        }
+
+        if ($this->usesCompletionAnswerGroups()) {
+            $expected = $this->normalizeCompletionAnswerGroups($this->correct_answer_array);
+            return $this->gradeOrderedSlots($expected, $userAnswer);
+        }
+
+        if ($this->isDragDropType()) {
+            return $this->gradeOrderedSlots($this->expectedOrderedList(), $userAnswer);
+        }
+
+        // 1 ô: MCQ 1 đáp án, True/False/NG, Yes/No/NG, Matching, loại khác.
+        $accepted = $this->flattenAnswerValues($this->correct_answer_array);
+        $submitted = is_array($userAnswer)
+            ? ($this->flattenAnswerValues($userAnswer)[0] ?? null)
+            : $userAnswer;
+        $submitted = $submitted === null ? null : trim((string) $submitted);
+
+        return [$this->makeSlot($submitted === '' ? null : $submitted, $accepted)];
+    }
+
+    /** Số câu (số thứ tự) mà dòng câu hỏi này chiếm. Tối thiểu 1. */
+    public function slotCount(): int
+    {
+        if (!$this->auto_gradable) {
+            return 1; // Writing / Speaking
+        }
+
+        return max(1, count($this->gradeSlots(null)));
+    }
+
+    /** So 1 giá trị học viên với danh sách đáp án chấp nhận được. */
+    private function makeSlot(?string $submitted, array $accepted): array
+    {
+        $accepted = array_values($accepted);
+        $correct = false;
+
+        if ($submitted !== null && $submitted !== '') {
+            $needle = $this->normalizeAnswer($submitted);
+            foreach ($accepted as $variant) {
+                if ($needle === $this->normalizeAnswer((string) $variant)) {
+                    $correct = true;
+                    break;
+                }
+            }
+        }
+
+        return ['submitted' => $submitted, 'accepted' => $accepted, 'correct' => $correct];
+    }
+
+    /**
+     * Completion / drag & drop: so THEO VỊ TRÍ. Giữ nguyên ô rỗng để ô sau
+     * không bị dồn lên (bug cũ của normalizeSubmittedCompletionAnswers()).
+     */
+    private function gradeOrderedSlots(array $expected, $userAnswer): array
+    {
+        $submitted = $this->parseSubmittedOrderedAnswers($userAnswer);
+        $slots = [];
+
+        foreach (array_values($expected) as $index => $accepted) {
+            $value = isset($submitted[$index]) ? trim((string) $submitted[$index]) : '';
+            $slots[] = $this->makeSlot($value === '' ? null : $value, (array) $accepted);
+        }
+
+        return $slots;
+    }
+
+    /** Đáp án đúng của drag & drop dạng danh sách có thứ tự (mảng / JSON / "a|b" / xuống dòng). */
+    private function expectedOrderedList(): array
+    {
+        $raw = $this->correct_answer_array;
+
+        if (is_array($raw) && count($raw) === 1 && is_string(reset($raw))) {
+            $raw = reset($raw);
+        }
+
+        if (is_array($raw)) {
+            return array_values(array_map(fn ($value) => $this->flattenAnswerValues($value), $raw));
+        }
+
+        $text = trim((string) $raw);
+        if ($text === '') {
+            return [];
+        }
+
+        $parts = preg_split('/\s*\|\s*|\r\n|\r|\n/', $text);
+
+        return array_values(array_filter(array_map(
+            fn ($part) => $this->flattenAnswerValues($part),
+            $parts
+        )));
+    }
+
+    /**
+     * Table completion: 1 slot = 1 Ô có chỗ trống (khớp cách renderers.js
+     * đánh số: mỗi ô 1 số). Ô đúng khi MỌI blank trong ô đúng.
+     */
+    private function gradeTableSlots($userAnswer): array
+    {
+        $decoded = is_string($userAnswer) ? json_decode($userAnswer, true) : $userAnswer;
+        $userMap = [];
+
+        foreach ((is_array($decoded) ? ($decoded['answers'] ?? []) : []) as $cell) {
+            if (!is_array($cell) || !isset($cell['row'], $cell['col'])) {
+                continue;
+            }
+
+            $key = $cell['row'] . '-' . $cell['col'];
+
+            if (isset($cell['answers']) && is_array($cell['answers'])) {
+                $userMap[$key] = array_values($cell['answers']);
+            } elseif (isset($cell['answer'])) {
+                $userMap[$key] = [$cell['answer']];
+            }
+        }
+
+        $cells = $this->table_completion_answers_array ?: [];
+        usort($cells, fn ($a, $b) => [(int) $a['row'], (int) $a['col']] <=> [(int) $b['row'], (int) $b['col']]);
+
+        $slots = [];
+        foreach ($cells as $cell) {
+            $key = $cell['row'] . '-' . $cell['col'];
+            $parts = [];
+
+            foreach (array_values((array) ($cell['answers'] ?? [])) as $blankIndex => $variants) {
+                $value = isset($userMap[$key][$blankIndex]) ? trim((string) $userMap[$key][$blankIndex]) : '';
+                $parts[] = $this->makeSlot($value === '' ? null : $value, $this->flattenAnswerValues($variants));
+            }
+
+            $filled = array_values(array_filter(array_column($parts, 'submitted'), fn ($v) => $v !== null));
+
+            $slots[] = [
+                'cell' => $key,
+                'submitted' => $filled ? implode(' / ', $filled) : null,
+                'accepted' => array_map(fn ($part) => implode(' / ', $part['accepted']), $parts),
+                'correct' => !empty($parts) && !in_array(false, array_column($parts, 'correct'), true),
+                'parts' => $parts,
+            ];
+        }
+
+        return $slots;
+    }
+
+    /**
+     * Multiple choice nhiều đáp án ("Choose TWO"): mỗi đáp án đúng = 1 slot.
+     * Chọn dư so với số đáp án yêu cầu -> trừ đi số lựa chọn dư, tránh học
+     * viên tick hết để ăn điểm.
+     */
+    private function gradeMultipleSelectSlots($userAnswer): array
+    {
+        $correct = $this->flattenAnswerValues($this->correct_answer_array);
+        if (count($correct) === 1 && str_contains($correct[0], ',')) {
+            $correct = array_values(array_filter(array_map('trim', explode(',', $correct[0]))));
+        }
+
+        $picked = $userAnswer;
+        if (is_string($picked)) {
+            $decoded = json_decode($picked, true);
+            $picked = is_array($decoded) ? $decoded : array_map('trim', explode(',', $picked));
+        }
+
+        $pickedNorm = array_values(array_unique(array_map(
+            fn ($value) => $this->normalizeAnswer($value),
+            $this->flattenAnswerValues($picked)
+        )));
+
+        $slots = [];
+        foreach ($correct as $option) {
+            $hit = in_array($this->normalizeAnswer($option), $pickedNorm, true);
+            $slots[] = ['submitted' => $hit ? $option : null, 'accepted' => [$option], 'correct' => $hit];
+        }
+
+        $extra = max(0, count($pickedNorm) - count($correct));
+        for ($i = count($slots) - 1; $i >= 0 && $extra > 0; $i--) {
+            if ($slots[$i]['correct']) {
+                $slots[$i]['correct'] = false;
+                $extra--;
+            }
+        }
+
+        return $slots;
+    }
+
+    /** Làm phẳng chuỗi / mảng / mảng lồng nhiều tầng thành danh sách chuỗi đã trim, bỏ rỗng. */
+    private function flattenAnswerValues($value): array
+    {
+        if (!is_array($value)) {
+            $text = trim((string) $value);
+            return $text === '' ? [] : [$text];
+        }
+
+        $out = [];
+        array_walk_recursive($value, function ($item) use (&$out) {
+            $text = trim((string) $item);
+            if ($text !== '') {
+                $out[] = $text;
+            }
+        });
+
+        return $out;
     }
     
     /**
@@ -425,10 +525,21 @@ class IeltsTestQuestion extends Model
     private function parseSubmittedOrderedAnswers($value): array
     {
         if (is_array($value)) {
-            return array_values(array_map(
-                static fn ($item) => is_array($item) ? ($item[0] ?? '') : (string) $item,
-                $value
-            ));
+            // Định dạng cũ (trước Lớp 4): { answers: [ {answer: "..."}, ... ] }
+            if (isset($value['answers']) && is_array($value['answers'])) {
+                $value = $value['answers'];
+            }
+
+            return array_values(array_map(function ($item) {
+                if (is_array($item)) {
+                    $first = $item['answer'] ?? ($item[0] ?? '');
+                    return is_array($first)
+                        ? ($this->flattenAnswerValues($first)[0] ?? '')
+                        : (string) ($first ?? '');
+                }
+
+                return (string) ($item ?? '');
+            }, $value));
         }
 
         if ($value === null) {
@@ -584,11 +695,8 @@ class IeltsTestQuestion extends Model
     private function normalizeCompletionAnswerVariants($value): array
     {
         if (is_array($value)) {
-            return array_values(array_filter(array_map(function ($item) {
-                return trim((string) $item);
-            }, $value)));
+            return $this->flattenAnswerValues($value);
         }
-
         $text = trim((string) $value);
         if ($text === '') {
             return [];

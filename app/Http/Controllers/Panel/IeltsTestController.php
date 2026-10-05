@@ -627,17 +627,8 @@ class IeltsTestController extends Controller
                 'redirect' => route('panel.ielts_tests.take', $attempt->id)
             ]);
         } else {
-            // All sections completed - auto-grade and redirect to results
-            $this->autoGradeListening($attempt);
-            $this->autoGradeReading($attempt);
-            $this->calculateBandScores($attempt);
-            
-            $attempt->update([
-                'status' => 'completed',
-                'completed_at' => time(),
-                'updated_at' => time(),
-            ]);
-            
+            $this->finalizeAttempt($attempt);
+
             return response()->json([
                 'status' => 'completed',
                 'redirect' => route('panel.ielts_tests.results', $attempt->id)
@@ -645,25 +636,22 @@ class IeltsTestController extends Controller
         }
     }
     
-    /**
-     * Submit test
-     */
     public function submitTest($attemptId)
     {
-        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with(['test', 'answers.question'])->findOrFail($attemptId);
-        
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')
+            ->with(['test', 'answers.question'])
+            ->findOrFail($attemptId);
+
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
         }
-        $this->autoGradeListening($attempt);
-        $this->autoGradeReading($attempt);
-        $this->calculateBandScores($attempt);
-        
-        $attempt->update([
-            'status' => 'completed',
-            'completed_at' => time(),
-            'updated_at' => time(),
-        ]);
+
+        // Đã nộp rồi (bấm nộp 2 lần / F5 lại request) -> không chấm lại,
+        // tránh ghi đè completed_at.
+        if ($attempt->status !== 'completed') {
+            $this->finalizeAttempt($attempt);
+        }
+
         return redirect()->route('panel.ielts_tests.results', $attempt->id);
     }
     
@@ -883,19 +871,13 @@ class IeltsTestController extends Controller
         return $conversion[$score] ?? 0.0;
     }
     
-    /**
-     * Auto-submit test when time expires
-     */
     private function autoSubmitTest($attempt)
     {
-        $attempt->update([
-            'status' => 'completed',
-            'completed_at' => time(),
-        ]);
-        
-        $this->autoGradeListening($attempt);
-        $this->autoGradeReading($attempt);
-        $this->calculateBandScores($attempt);
+        if ($attempt->status === 'completed') {
+            return;
+        }
+
+        $this->finalizeAttempt($attempt);
     }
     
     /**
@@ -1019,14 +1001,12 @@ class IeltsTestController extends Controller
     }
     // Thêm cạnh autoSubmitTest() hiện có
 
-    /**
-     * Hết giờ 1 skill (Mock Test) -> tự động coi như học viên đã "Finish
-     * Section" cho skill đó, chuyển sang section tiếp theo (hoặc nộp cả bài
-     * nếu đây là section cuối). Không hỏi xác nhận — đúng chuẩn thi thật:
-     * hết giờ là dừng bút.
-     */
     private function autoSubmitSkill(IeltsTestAttempt $attempt, string $skill): void
     {
+        if ($attempt->status === 'completed') {
+            return;
+        }
+
         $attempt->settleScope($attempt->resolveScopeKey($skill));
         $attempt->completeSection($skill);
 
@@ -1039,15 +1019,8 @@ class IeltsTestController extends Controller
             return;
         }
 
-        $this->autoGradeListening($attempt);
-        $this->autoGradeReading($attempt);
-        $this->calculateBandScores($attempt);
-
-        $attempt->update([
-            'status' => 'completed',
-            'completed_at' => time(),
-            'updated_at' => time(),
-        ]);
+        // Section cuối -> chấm toàn bài + đóng attempt.
+        $this->finalizeAttempt($attempt);
     }
 
     /**

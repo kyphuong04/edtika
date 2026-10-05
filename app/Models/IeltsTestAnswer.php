@@ -106,26 +106,38 @@ class IeltsTestAnswer extends Model
         return !$this->question->auto_gradable && !$this->isGraded();
     }
     
-    /**
-     * Automatically grade this answer against the correct answer.
-     * 
-     * Only works for questions that support auto-grading (listening/reading).
-     * 
-     * @return bool Whether grading was successful
-     */
-    public function autoGrade()
+        public function autoGrade()
     {
-        if (!$this->question->auto_gradable) {
+        $question = $this->question;
+
+        if (!$question || !$question->auto_gradable) {
             return false;
         }
-        
-        $isCorrect = $this->question->checkAnswer($this->answer_text ?? $this->answer_options);
-        
-        $this->is_correct = $isCorrect;
-        $this->points_earned = $isCorrect ? $this->question->points : 0;
+
+        $slots = $question->gradeSlots($this->submittedValue());
+        $correctSlots = count(array_filter($slots, fn ($slot) => $slot['correct']));
+
+        $this->is_correct = !empty($slots) && $correctSlots === count($slots);
+        $this->points_earned = $correctSlots;
         $this->save();
-        
+
         return true;
+    }
+
+    /**
+     * Giá trị học viên đã nộp, đúng dạng mà gradeSlots() cần. MCQ nhiều đáp
+     * án lưu ở answer_options (xem answers.js) — code cũ dùng
+     * `answer_text ?? answer_options` nên sẽ chấm sai nếu answer_text là
+     * chuỗi rỗng thay vì null.
+     */
+    public function submittedValue()
+    {
+        if ($this->question && $this->question->isMultipleSelect()) {
+            $options = $this->answer_options_array;
+            return !empty($options) ? $options : $this->answer_text;
+        }
+
+        return $this->answer_text;
     }
     
     /**
