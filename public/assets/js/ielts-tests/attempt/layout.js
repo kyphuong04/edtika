@@ -95,7 +95,7 @@ const ExamLayout = {
         submitBtn.type = 'button';
         submitBtn.className = 'exam-submit-check-btn';
         const isWritingOrSpeaking = AttemptState.skill === 'speaking' || AttemptState.skill === 'writing';
-        submitBtn.title = isWritingOrSpeaking ? 'Nộp bài' : 'Nộp phần thi này';
+        submitBtn.title = isWritingOrSpeaking ? 'Submit' : 'Submit this section';
         submitBtn.innerHTML = '<i class="fas fa-check"></i>';
 
         const navRow = document.createElement('div');
@@ -113,13 +113,13 @@ const ExamLayout = {
         const fabPrev = document.createElement('button');
         fabPrev.type = 'button';
         fabPrev.className = 'exam-fab-btn';
-        fabPrev.title = 'Câu trước';
+        fabPrev.title = 'Previous question';
         fabPrev.innerHTML = '<i class="fas fa-chevron-left"></i>';
 
         const fabNext = document.createElement('button');
         fabNext.type = 'button';
         fabNext.className = 'exam-fab-btn';
-        fabNext.title = 'Câu tiếp theo';
+        fabNext.title = 'Next question';
         fabNext.innerHTML = '<i class="fas fa-chevron-right"></i>';
 
         fabNav.appendChild(fabPrev);
@@ -146,45 +146,6 @@ const ExamLayout = {
         this.renderSkillTabs();
     },
 
-    // ── Listening mock gate ──────────────────────────────────────────
-    // ensureListeningGate() {
-    //     if (this.listeningGateEl) return this.listeningGateEl;
-    //     const gate = document.createElement('div');
-    //     gate.className = 'exam-listening-gate hidden';
-    //     gate.id = 'examListeningGate';
-    //     gate.innerHTML = ''
-    //         + '<div class="elg-icon">🎧</div>'
-    //         + '<div class="elg-text">Bạn sẽ nghe một đoạn âm thanh trong bài kiểm tra này. Bạn sẽ không được phép tạm dừng hoặc tua lại âm thanh trong khi trả lời câu hỏi.</div>'
-    //         + '<div class="elg-hint">Để tiếp tục, hãy nhấn Phát.</div>'
-    //         + '<button type="button" class="elg-play">▶ Phát (Play)</button>';
-    //     this.els.questions.appendChild(gate);
-    //     this.listeningGateEl = gate;
-    //     return gate;
-    // },
-
-    // showListeningGate(onPlay) {
-    //     const gate = this.ensureListeningGate();
-    //     gate.classList.remove('hidden');
-    //     const block = this.els.questions.querySelector('.exam-listening-block');
-    //     if (block) block.style.display = 'none';
-    //     this.els.questions.querySelectorAll('.exam-question-card').forEach(el => { el.style.display = 'none'; });
-
-    //     const btn = gate.querySelector('.elg-play');
-    //     if (btn) {
-    //         btn.onclick = () => {
-    //             this.listeningGateShown = true;
-    //             this.hideListeningGate();
-    //             if (typeof onPlay === 'function') onPlay();
-    //         };
-    //     }
-    // },
-
-    // hideListeningGate() {
-    //     if (this.listeningGateEl) this.listeningGateEl.classList.add('hidden');
-    //     const block = this.els.questions.querySelector('.exam-listening-block');
-    //     if (block) block.style.display = '';
-    //     this.els.questions.querySelectorAll('.exam-question-card').forEach(el => { el.style.display = ''; });
-    // },
 
     ensureListeningGate() {
         if (this.listeningGateEl) return this.listeningGateEl;
@@ -194,9 +155,9 @@ const ExamLayout = {
         overlay.innerHTML = ''
             + '<div class="exam-listening-gate-card">'
             + '  <div class="elg-icon">🎧</div>'
-            + '  <div class="elg-text">Bạn sẽ nghe một đoạn âm thanh trong bài kiểm tra này. Bạn sẽ không được phép tạm dừng hoặc tua lại âm thanh trong khi trả lời câu hỏi.</div>'
-            + '  <div class="elg-hint">Để tiếp tục, hãy nhấn Phát.</div>'
-            + '  <button type="button" class="elg-play">▶ Phát (Play)</button>'
+            + '  <div class="elg-text">You will hear a recording in this test. You will not be able to pause or rewind the audio while answering the questions.</div>'
+            + '  <div class="elg-hint">Press Play to continue.</div>'
+            + '  <button type="button" class="elg-play">▶ Play</button>'
             + '</div>';
         document.body.appendChild(overlay);
         this.listeningGateEl = overlay;
@@ -280,25 +241,25 @@ const ExamLayout = {
         overlay.id = 'examDeviceOverlay';
         overlay.innerHTML = ''
             + '<div class="exam-device-card">'
-            + '  <div class="exam-device-title">Kiểm tra thiết bị</div>'
-            + '  <div class="exam-device-sub">Kiểm tra microphone và loa trước khi vào thi. Bạn có thể bỏ qua nếu không cần.</div>'
+            + '  <div class="exam-device-title">Device check</div>'
+            + '  <div class="exam-device-sub">Check your microphone and speakers before starting. You can skip this if you prefer.</div>'
             + '  <button type="button" class="exam-device-mic-btn" id="edMicBtn"><i class="fas fa-microphone"></i></button>'
-            + '  <div class="exam-device-status" id="edMicStatus">Nhấn để ghi âm thử (giữ loa để nghe lại)</div>'
-            + '  <div class="exam-device-error" id="edMicError">Không truy cập được microphone. Hãy cho phép trình duyệt sử dụng mic rồi thử lại.</div>'
+            + '  <div class="exam-device-status" id="edMicStatus">Tap to record a test clip (play it back to check your speakers)</div>'
+            + '  <div class="exam-device-error" id="edMicError">Microphone not available. Allow browser access to your microphone and try again.</div>'
             + '  <div class="exam-device-player" id="edPlayer">'
-            + '    <button type="button" id="edSeekBack" title="Lùi 5s"><i class="fas fa-undo"></i></button>'
+            + '    <button type="button" id="edSeekBack" title="Back 5s"><i class="fas fa-undo"></i></button>'
             + '    <button type="button" class="ed-play" id="edPlayToggle"><i class="fas fa-play"></i></button>'
-            + '    <button type="button" id="edSeekForward" title="Tới 5s"><i class="fas fa-redo"></i></button>'
+            + '    <button type="button" id="edSeekForward" title="Forward 5s"><i class="fas fa-redo"></i></button>'
             + '    <span class="exam-device-time" id="edTimeLabel">00:00</span>'
             + '    <div class="exam-device-track" id="edProgressTrack"><div class="exam-device-fill" id="edProgressFill"></div></div>'
             + '    <button type="button" id="edVolumeBtn"><i class="fas fa-volume-up"></i></button>'
             + '    <div class="exam-device-vol-track" id="edVolumeTrack"><div class="exam-device-vol-fill" id="edVolumeFill"></div></div>'
             + '    <span class="exam-device-speed" id="edSpeedBadge"><i class="fas fa-clock"></i> 1x</span>'
             + '  </div>'
-            + '  <span class="exam-device-rerecord" id="edRerecordLink" style="display:none;">Ghi âm lại</span>'
+            + '  <span class="exam-device-rerecord" id="edRerecordLink" style="display:none;">Record again</span>'
             + '  <hr class="exam-device-divider">'
-            + '  <button type="button" class="exam-device-continue" id="edContinueBtn" disabled>Tiếp tục vào thi</button>'
-            + '  <button type="button" class="exam-device-skip" id="edSkipBtn">Bỏ qua kiểm tra</button>'
+            + '  <button type="button" class="exam-device-continue" id="edContinueBtn" disabled>Start the test</button>'
+            + '  <button type="button" class="exam-device-skip" id="edSkipBtn">Skip device check</button>'
             + '  <audio id="edAudioPlayback" style="display:none;"></audio>'
             + '</div>';
         document.body.appendChild(overlay);
@@ -344,11 +305,11 @@ const ExamLayout = {
             isRecording = true;
             micBtn.classList.add('is-recording');
             micBtn.innerHTML = '<i class="fas fa-stop"></i>';
-            micStatus.textContent = 'Đang ghi âm... nhấn lại để dừng';
+            micStatus.textContent = 'Recording... tap again to stop';
         }
         function showRecorded() {
             setIdle();
-            micStatus.textContent = 'Đã ghi âm xong — nghe lại bên dưới để kiểm tra loa';
+            micStatus.textContent = 'Recording saved — play it back to check your speakers';
             player.classList.add('is-visible');
             document.getElementById('edRerecordLink').style.display = 'block';
             continueBtn.disabled = false;
@@ -382,7 +343,7 @@ const ExamLayout = {
                 setRecording();
             } catch (err) {
                 if (micError) micError.style.display = 'block';
-                micStatus.textContent = 'Nhấn để ghi âm';
+                micStatus.textContent = 'Tap to record';
             }
         }
         function stopRecording() {
@@ -397,7 +358,7 @@ const ExamLayout = {
             rerecordLink.style.display = 'none';
             continueBtn.disabled = true;
             continueBtn.classList.remove('is-ready');
-            micStatus.textContent = 'Nhấn để ghi âm thử (giữ loa để nghe lại)';
+            micStatus.textContent = 'Tap to record a test clip (play it back to check your speakers)';
             audioEl.pause();
             resetPlayerUI();
         });
@@ -603,7 +564,7 @@ const ExamLayout = {
             if (this.timerValue <= 0) {
                 this.stopTimerTick();
                 this.listeningPhase = 'locked';
-                this.els.timer.textContent = 'Đã hết giờ';
+                this.els.timer.textContent = 'Time is up';
                 this.els.timer.classList.remove('is-wrapup-warning');
                 this.els.timer.classList.add('is-time-up');
                 if (typeof this.onTimerZero === 'function') this.onTimerZero();
@@ -624,7 +585,7 @@ const ExamLayout = {
         if (!this.els.questions.querySelector('.exam-lock-banner')) {
             const banner = document.createElement('div');
             banner.className = 'exam-lock-banner';
-            banner.innerHTML = '<i class="fas fa-lock mr-6"></i> Đã hết giờ — không thể thay đổi đáp án';
+            banner.innerHTML = '<i class="fas fa-lock mr-6"></i> Time is up — answers are locked';
             this.els.questions.prepend(banner);
         }
         this.lockAllInputs();
@@ -944,6 +905,59 @@ const ExamLayout = {
         }
     },
 
+        /**
+     * Gap / Short answer: gộp cả group vào MỘT khối, ô nhập nằm ngay trong
+     * câu, số câu đứng cạnh ô. Bỏ viền thẻ và badge "Câu N" của từng câu để
+     * thí sinh không phải cuộn qua lại khi nghe.
+     */
+    renderBlankSheet(group, maxWords) {
+        const entries = (group.questions || [])
+            .map((q) => AttemptState.entries.find((e) => e.question.id === q.id))
+            .filter(Boolean);
+
+        if (!entries.length) return null;
+
+        const cards = entries.map((entry) => ExamRenderers.render(entry));
+
+        // Không câu nào có ô inline -> dùng cách hiển thị thường.
+        if (!cards.some((c) => c.querySelector('.exam-blank-input'))) return null;
+
+        const frag = document.createDocumentFragment();
+
+        if (maxWords > 0) {
+            const instruction = document.createElement('div');
+            instruction.className = 'exam-blank-sheet-instruction';
+            instruction.textContent = 'Write NO MORE THAN ' + maxWords + ' WORD'
+                + (maxWords > 1 ? 'S' : '') + ' AND/OR A NUMBER for each answer.';
+            frag.appendChild(instruction);
+        }
+
+        const sheet = document.createElement('div');
+        sheet.className = 'exam-blank-sheet';
+
+        if (group.title) {
+            const title = document.createElement('div');
+            title.className = 'exam-blank-sheet-title';
+            title.textContent = group.title;
+            sheet.appendChild(title);
+        }
+
+        if (group.passage) {
+            const intro = document.createElement('div');
+            intro.className = 'exam-blank-sheet-intro';
+            intro.innerHTML = group.passage;
+            sheet.appendChild(intro);
+        }
+
+        cards.forEach((card) => {
+            if (card.querySelector('.exam-blank-input')) card.classList.add('is-compact');
+            sheet.appendChild(card);
+        });
+
+        frag.appendChild(sheet);
+        return frag;
+    },
+
 
     renderQuestions(part) {
         const el = this.els.questions;
@@ -1003,10 +1017,12 @@ const ExamLayout = {
         const groups = Array.isArray(part.groups) ? part.groups : [];
 
         groups.forEach((group, gIdx) => {
+            const BLANK_SHEET_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'short_answer'];
+            const useSheet = AttemptState.skill === 'listening' && BLANK_SHEET_TYPES.includes(group.question_type);
             const maxWords = parseInt(group.max_words, 10);
             const showMaxWords = maxWords > 0 && TEXT_INPUT_TYPES.includes(group.question_type);
 
-            if (group.title || group.passage || showMaxWords) {
+            if (!useSheet && (group.title || group.passage || showMaxWords)) {
                 const groupBox = document.createElement('div');
                 groupBox.className = 'exam-part-instructions';
                 groupBox.innerHTML = (group.title ? '<strong>' + group.title + '</strong><br>' : '')
@@ -1023,11 +1039,45 @@ const ExamLayout = {
                 el.appendChild(groupBox);
             }
 
-            this.appendMediaBlock(el, group.files || {});
+            const DIAGRAM_TYPES = ['diagram_labeling', 'diagram_label', 'map_labeling'];
+            const isDiagram = DIAGRAM_TYPES.includes(group.question_type);
+            const groupFiles = group.files || {};
+            const diagramImage = groupFiles.image || (part.files || {}).image || null;
+
+            // Diagram: ảnh nằm trong khối 2 cột bên dưới, không in lại ở đây.
+            this.appendMediaBlock(el, isDiagram ? { audio: groupFiles.audio, video: groupFiles.video } : groupFiles);
+
+            if (isDiagram) {
+                const diagram = ExamRenderers.buildDiagramMatrix(group, diagramImage);
+                if (diagram) {
+                    el.appendChild(diagram);
+                    return; // sang group tiếp theo
+                }
+                // Đề cũ dạng điền ___ (chưa có danh sách lựa chọn) -> giữ cách hiển thị cũ.
+                this.appendMediaBlock(el, { image: diagramImage });
+            }
+
+            if (useSheet) {
+                const sheet = this.renderBlankSheet(group, maxWords);
+                if (sheet) {
+                    el.appendChild(sheet);
+                    return; // sang group tiếp theo
+                }
+            }
 
             // Matching Information / Features: làm bài trên ma trận.
             // const MATRIX_TYPES = ['matching_information', 'matching_features'];
             const MATRIX_TYPES = ['matching_information'];
+            const BOARD_TYPES = ['matching_information', 'matching_features'];
+            if (AttemptState.skill === 'listening' && BOARD_TYPES.includes(group.question_type)) {
+                const boardId = 'mg-' + (group.id || (AttemptState.part.index + '-' + gIdx));
+                const board = ExamRenderers.buildMatchingBoard(group, boardId);
+                if (board) {
+                    el.appendChild(board);
+                    ExamMatchingDnD.syncChips(boardId);
+                    return; // sang group tiếp theo
+                }
+            }
             if (MATRIX_TYPES.includes(group.question_type)) {
                 (group.questions || []).forEach((q) => {
                     const prompt = q.question_data && q.question_data.prompt;

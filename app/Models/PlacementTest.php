@@ -97,6 +97,7 @@ class PlacementTest extends Model
             $data['audio_group_start'] = isset($groupStarts[$i]);
             $data['audio_url']         = null;
             $data['audio_group_range'] = null;
+            $data['audio_group_instruction'] = null;
 
             if (isset($groupStarts[$i])) {
                 $clip = $this->audioClipById($question->audio_clip_id);
@@ -104,7 +105,9 @@ class PlacementTest extends Model
                     ? \Illuminate\Support\Facades\Storage::url($clip['path'])
                     : null;
 
-                // Quét tới để biết nhóm kết thúc ở câu nào -> nhãn "9–10"
+                // Đề bài của nhóm audio, hiện cạnh nhãn "Audio cho câu 9–10".
+                $data['audio_group_instruction'] = $clip['instruction'] ?? null;
+
                 $end = $i;
                 while (isset($list[$end + 1]) && $list[$end + 1]->audio_clip_id === $question->audio_clip_id) {
                     $end++;

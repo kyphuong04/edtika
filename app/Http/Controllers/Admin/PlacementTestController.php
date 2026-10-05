@@ -364,6 +364,9 @@ class PlacementTestController extends Controller
             $clips[] = [
                 'id'    => $id,
                 'label' => trim((string) ($clip['label'] ?? '')) ?: basename($path),
+                // Đề bài ngắn, text thuần — chỉ trim và giới hạn độ dài, không cần
+                // purifier (nó sẽ nuốt mất text không có thẻ).
+                'instruction' => mb_substr(trim((string) ($clip['instruction'] ?? '')), 0, 255),
                 'path'  => $path,
             ];
         }
@@ -405,6 +408,15 @@ class PlacementTestController extends Controller
 
         return collect($passages)->map(function ($passage) {
             $passage['content'] = $this->sanitizeRichText($passage['content'] ?? '');
+
+            // Word bank là danh sách từ gợi ý, luôn text thuần — trim và bỏ
+            // phần tử rỗng để trùng khớp khi hiển thị.
+            $passage['word_bank'] = collect($passage['word_bank'] ?? [])
+                ->map(fn ($w) => trim((string) $w))
+                ->filter()
+                ->values()
+                ->all();
+
             return $passage;
         })->values()->all();
     }

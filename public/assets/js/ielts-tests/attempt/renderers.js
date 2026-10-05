@@ -153,7 +153,7 @@ const ExamMatchingDnD = {
 
         const text = document.createElement('span');
         text.className = 'exam-match-slot-text';
-        text.textContent = value ? label : (slot.dataset.number ? '' : '–');
+        text.textContent = value ? label : 'Drop your answer here';
         slot.appendChild(text);
 
         slot.classList.toggle('filled', !!value);
@@ -353,9 +353,7 @@ const ExamRenderers = {
 
         const label = document.createElement('div');
         label.className = 'exam-match-pool-label';
-        label.textContent = pool.dataset.singleUse === '1'
-            ? 'Kéo mỗi lựa chọn vào một câu — mỗi lựa chọn chỉ dùng một lần'
-            : 'Kéo lựa chọn vào ô trống — có thể dùng lại nhiều lần';
+        label.textContent = 'List of Headings';
         pool.appendChild(label);
 
         const chips = document.createElement('div');
@@ -363,11 +361,26 @@ const ExamRenderers = {
 
         keys.forEach((key) => {
             const chip = document.createElement('span');
-            chip.className = 'exam-match-chip';
+            chip.className = 'exam-match-chip exam-match-chip-list';
             chip.dataset.groupId = groupId;
             chip.dataset.value = key;
             chip.dataset.label = matchingOptionLabel(options, key);
-            chip.textContent = chip.dataset.label;
+
+            const grip = document.createElement('span');
+            grip.className = 'exam-match-chip-grip';
+            grip.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+
+            const badge = document.createElement('span');
+            badge.className = 'exam-match-chip-key';
+            badge.textContent = key;
+
+            const body = document.createElement('span');
+            body.className = 'exam-match-chip-text';
+            body.textContent = options[key] && options[key] !== key ? options[key] : '';
+
+            chip.appendChild(grip);
+            chip.appendChild(badge);
+            if (body.textContent) chip.appendChild(body);
             chips.appendChild(chip);
         });
 
@@ -376,12 +389,110 @@ const ExamRenderers = {
         return pool;
     },
 
-
-    buildMatchingMatrix(group) {
-        // Chỉ lấy câu Matching (phòng dữ liệu cũ lẫn loại khác trong group).
+        /**
+     * Matching kiểu "bảng kéo thả": statement + ô thả bên trái, List of options
+     * bên phải. Đáp án vẫn lưu là 1 chữ cái — checkAnswer() không đổi.
+     */
+    buildMatchingBoard(group, groupId) {
         const entries = (group.questions || [])
             .map((q) => AttemptState.entries.find((e) => e.question.id === q.id))
-            .filter((e) => e && String(e.question.type || '').indexOf('matching_') === 0);
+            .filter(Boolean);
+        if (!entries.length) return null;
+
+        const options = {};
+        entries.forEach((e) => Object.assign(options, e.question.options || {}));
+        const keys = Object.keys(options).sort(matchingKeyCompare);
+        if (!keys.length) return null;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'exam-match-board';
+
+        // ── Cột trái: statement + ô thả ──────────────────────────────
+        const rows = document.createElement('div');
+        rows.className = 'exam-match-board-rows';
+
+        entries.forEach((entry) => {
+            const q = entry.question;
+
+            const row = document.createElement('div');
+            row.className = 'exam-match-board-row';
+            row.id = 'exam-q-' + q.id;
+
+            const num = document.createElement('span');
+            num.className = 'exam-match-board-num';
+            num.textContent = entry.startNumber;
+
+            const text = document.createElement('div');
+            text.className = 'exam-match-board-text';
+            text.innerHTML = q.text || '';
+
+            const slot = document.createElement('div');
+            slot.className = 'exam-match-slot exam-match-slot-board';
+            slot.dataset.groupId = groupId;
+            slot.dataset.questionId = q.id;
+            slot.__question = q;
+
+            const saved = String(AttemptState.getAnswer(q.id) || '').trim();
+            slot.dataset.value = saved;
+            slot.dataset.label = saved ? matchingOptionLabel(options, saved) : '';
+            ExamMatchingDnD.paint(slot);
+
+            row.appendChild(num);
+            row.appendChild(text);
+            row.appendChild(slot);
+            rows.appendChild(row);
+        });
+
+        // ── Cột phải: List of options ────────────────────────────────
+        const pool = document.createElement('div');
+        pool.className = 'exam-match-pool exam-match-pool-board';
+        pool.dataset.groupId = groupId;
+        // Matching Information / Features: 1 lựa chọn dùng được cho nhiều câu.
+        pool.dataset.singleUse = group.question_type === 'matching_headings' ? '1' : '0';
+
+        const poolLabel = document.createElement('div');
+        poolLabel.className = 'exam-match-pool-title';
+        poolLabel.textContent = 'List of options';
+        pool.appendChild(poolLabel);
+
+        const chips = document.createElement('div');
+        chips.className = 'exam-match-chips exam-match-chips-board';
+
+        keys.forEach((key) => {
+            const chip = document.createElement('span');
+            chip.className = 'exam-match-chip exam-match-chip-board';
+            chip.dataset.groupId = groupId;
+            chip.dataset.value = key;
+            chip.dataset.label = matchingOptionLabel(options, key);
+
+            const badge = document.createElement('span');
+            badge.className = 'exam-match-chip-key';
+            badge.textContent = key;
+
+            const body = document.createElement('span');
+            body.className = 'exam-match-chip-text';
+            body.textContent = options[key] && options[key] !== key ? options[key] : '';
+
+            chip.appendChild(badge);
+            if (body.textContent) chip.appendChild(body);
+            chips.appendChild(chip);
+        });
+
+        pool.appendChild(chips);
+
+        wrap.appendChild(rows);
+        wrap.appendChild(pool);
+
+        ExamMatchingDnD.ensureBound();
+        return wrap;
+    },
+
+
+    buildMatchingMatrix(group) {
+        // Nhận mọi câu có danh sách lựa chọn (matching_* và diagram/map labeling).
+        const entries = (group.questions || [])
+            .map((q) => AttemptState.entries.find((e) => e.question.id === q.id))
+            .filter((e) => e && e.question.options && Object.keys(e.question.options).length > 0);
         if (!entries.length) return null;
 
         // Gộp cột của MỌI statement — giáo viên có thể thêm statement nhiều lần
@@ -423,11 +534,15 @@ const ExamRenderers = {
         headStatement.className = 'exam-matrix-statement-head';
         headStatement.textContent = 'Statements';
         headRow.appendChild(headStatement);
-
         keys.forEach((k) => {
             const th = document.createElement('th');
             th.className = 'exam-matrix-col';
-            th.textContent = k;
+
+            const chip = document.createElement('span');
+            chip.className = 'exam-matrix-chip';
+            chip.textContent = k;
+            th.appendChild(chip);
+
             if (options[k] && String(options[k]) !== k) th.title = options[k];
             headRow.appendChild(th);
         });
@@ -465,7 +580,7 @@ const ExamRenderers = {
             AttemptAnswers.onStatusChange((qId, status) => {
                 if (String(qId) !== String(q.id)) return;
                 indicator.className = 'attempt-save-indicator status-' + status;
-                indicator.textContent = status === 'pending' ? 'Đang lưu...' : status === 'saved' ? 'Đã lưu' : 'Lỗi lưu';
+                indicator.textContent = status === 'pending' ? 'Saving...' : status === 'saved' ? 'Saved' : 'Not saved';
             });
             text.appendChild(indicator);
 
@@ -485,7 +600,7 @@ const ExamRenderers = {
                 radio.name = 'exam-mx-' + q.id;
                 radio.value = k;
                 radio.checked = saved === k.toUpperCase();
-                radio.setAttribute('aria-label', 'Câu ' + entry.startNumber + ' – ' + k);
+                radio.setAttribute('aria-label', 'Question ' + entry.startNumber + ' – ' + k);
 
                 if (radio.checked) td.classList.add('selected');
 
@@ -522,6 +637,41 @@ const ExamRenderers = {
         table.appendChild(tbody);
         scroller.appendChild(table);
         wrap.appendChild(scroller);
+        return wrap;
+    },
+
+        /**
+     * Diagram / Map Labeling: ảnh bên trái, ma trận chọn A–K bên phải.
+     * Đáp án lưu là 1 chữ cái, giống matching — checkAnswer() không đổi.
+     */
+        buildDiagramMatrix(group, imageUrl) {
+        const matrix = this.buildMatchingMatrix(group);
+        if (!matrix) return null;
+
+        // buildMatchingMatrix() đã bọc chữ cái vào .exam-matrix-chip.
+        const table = matrix.querySelector('.exam-matrix');
+        if (table) table.classList.add('is-diagram');
+
+        const wrap = document.createElement('div');
+        wrap.className = 'exam-diagram-wrap';
+
+        if (imageUrl) {
+            const imageBox = document.createElement('div');
+            imageBox.className = 'exam-diagram-image';
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = '';
+            imageBox.appendChild(img);
+            wrap.appendChild(imageBox);
+        } else {
+            wrap.classList.add('no-image');
+        }
+
+        const side = document.createElement('div');
+        side.className = 'exam-diagram-matrix';
+        side.appendChild(matrix);
+        wrap.appendChild(side);
+
         return wrap;
     },
 
@@ -585,10 +735,76 @@ const ExamRenderers = {
             return card;
         },
 
+        // multiple_choice_multiple(entry) {
+        //     const q = entry.question;
+        //     const card = makeCard(entry);
+        //     appendTextBlock(card, q.text);
+
+        //     const wrap = document.createElement('div');
+        //     wrap.className = 'exam-options';
+
+        //     // Đáp án cũ có thể là string (dữ liệu trước khi đổi loại câu hỏi).
+        //     const savedRaw = AttemptState.getAnswer(q.id);
+        //     const saved = Array.isArray(savedRaw) ? savedRaw : (savedRaw ? [savedRaw] : []);
+
+        //     (q.options || []).forEach((opt, index) => {
+        //         // <label> để bấm vào cả dòng đều tick được; input thật để
+        //         // lockAllInputs() khoá được khi hết giờ.
+        //         const row = document.createElement('label');
+        //         row.className = 'exam-option-row exam-option-check';
+        //         row.dataset.value = opt;
+
+        //         const box = document.createElement('input');
+        //         box.type = 'checkbox';
+        //         box.className = 'exam-option-checkbox';
+        //         box.checked = saved.includes(opt);
+
+        //         const letter = document.createElement('span');
+        //         letter.className = 'exam-option-letter';
+        //         letter.textContent = String.fromCharCode(65 + index);
+
+        //         const text = document.createElement('span');
+        //         text.className = 'exam-option-text';
+        //         text.textContent = opt;
+
+        //         if (box.checked) row.classList.add('selected');
+
+        //         box.addEventListener('change', () => {
+        //             const prev = AttemptState.getAnswer(q.id);
+        //             const current = Array.isArray(prev) ? prev.slice() : (prev ? [prev] : []);
+        //             const idx = current.indexOf(opt);
+
+        //             if (box.checked && idx < 0) current.push(opt);
+        //             if (!box.checked && idx >= 0) current.splice(idx, 1);
+
+        //             row.classList.toggle('selected', box.checked);
+        //             AttemptAnswers.queueSave(q, current);
+        //         });
+
+        //         row.appendChild(box);
+        //         row.appendChild(letter);
+        //         row.appendChild(text);
+        //         wrap.appendChild(row);
+        //     });
+
+        //     card.appendChild(wrap);
+        //     return card;
+        // },
+
         multiple_choice_multiple(entry) {
             const q = entry.question;
             const card = makeCard(entry);
             appendTextBlock(card, q.text);
+
+            // Giới hạn số đáp án được chọn (giáo viên đặt trong editor).
+            const maxSelect = parseInt((q.question_data || {}).maxSelect, 10) || 0;
+
+            if (maxSelect > 0) {
+                const hint = document.createElement('div');
+                hint.className = 'exam-max-select-hint';
+                hint.textContent = 'Choose ' + maxSelect + ' answer' + (maxSelect > 1 ? 's' : '') + '.';
+                card.appendChild(hint);
+            }
 
             const wrap = document.createElement('div');
             wrap.className = 'exam-options';
@@ -597,9 +813,16 @@ const ExamRenderers = {
             const savedRaw = AttemptState.getAnswer(q.id);
             const saved = Array.isArray(savedRaw) ? savedRaw : (savedRaw ? [savedRaw] : []);
 
+            const boxes = [];
+
+            function syncDisabled() {
+                if (!maxSelect) return;
+                const checked = boxes.filter((b) => b.checked).length;
+                boxes.forEach((b) => { b.disabled = !b.checked && checked >= maxSelect; });
+                wrap.classList.toggle('is-full', checked >= maxSelect);
+            }
+
             (q.options || []).forEach((opt, index) => {
-                // <label> để bấm vào cả dòng đều tick được; input thật để
-                // lockAllInputs() khoá được khi hết giờ.
                 const row = document.createElement('label');
                 row.className = 'exam-option-row exam-option-check';
                 row.dataset.value = opt;
@@ -608,6 +831,7 @@ const ExamRenderers = {
                 box.type = 'checkbox';
                 box.className = 'exam-option-checkbox';
                 box.checked = saved.includes(opt);
+                boxes.push(box);
 
                 const letter = document.createElement('span');
                 letter.className = 'exam-option-letter';
@@ -628,6 +852,7 @@ const ExamRenderers = {
                     if (!box.checked && idx >= 0) current.splice(idx, 1);
 
                     row.classList.toggle('selected', box.checked);
+                    syncDisabled();
                     AttemptAnswers.queueSave(q, current);
                 });
 
@@ -638,6 +863,7 @@ const ExamRenderers = {
             });
 
             card.appendChild(wrap);
+            syncDisabled();
             return card;
         },
 
@@ -660,7 +886,7 @@ const ExamRenderers = {
 
             const placeholder = document.createElement('option');
             placeholder.value = '';
-            placeholder.textContent = '-- Chọn --';
+            placeholder.textContent = '-- Select --';
             select.appendChild(placeholder);
 
             choices.forEach((choice) => {

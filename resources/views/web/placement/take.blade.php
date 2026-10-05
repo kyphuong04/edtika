@@ -5,7 +5,6 @@
     $appFooter = true;
     $floatingBar = null;
     $dontShowCookieSecurity = true;
-
 @endphp
 
 @push('styles_top')
@@ -67,6 +66,7 @@
 .pt-audio-time, .pt-audio-duration { font-size:12px; font-weight:700; color:#511D99; white-space:nowrap; min-width:34px; }
 .pt-audio-track { flex:1; height:5px; background:#ddd6fe; border-radius:99px; position:relative; cursor:pointer; min-width:70px; }
 .pt-audio-fill { position:absolute; left:0; top:0; height:100%; background:#511D99; border-radius:99px; width:0%; pointer-events:none; }
+
 /* ── Nhóm audio dùng chung cho nhiều câu (VD: câu 9–10) ── */
 .pt-audio-group {
     background:#eef2ff; border:1px solid #c7d2fe; border-radius:14px;
@@ -77,6 +77,11 @@
     text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;
 }
 .pt-audio-group .pt-audio-player { margin-bottom:0; background:#fff; }
+
+/* ── Hiển thị nội dung rich text soạn từ admin ────────────────────────
+   Theme reset ul/ol về list-style:none nên phải đè bằng !important.
+   HTMLPurifier chuẩn hoá style về dạng "text-align:center" (không dấu
+   cách) nên selector phải khớp cả hai biến thể. */
 .pt-rich ul,
 .pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
 .pt-rich ul { list-style: disc !important; }
@@ -92,6 +97,7 @@
 .pt-rich [style*="text-align: justify"] { text-align: justify !important; }
 .pt-rich [style*="text-align:left"],
 .pt-rich [style*="text-align: left"]    { text-align: left !important; }
+
 .pt-instruction {
     background: #f5f3ff;
     border-left: 4px solid #a78bfa;
@@ -103,6 +109,7 @@
     color: #4c1d95;
     line-height: 1.5;
 }
+
 /* ── Gộp số thứ tự và nội dung câu hỏi lên cùng một dòng ──────────────
    Summernote bọc nội dung trong <p> (thẻ block) nên mặc định nó luôn
    xuống dòng. Ép <p> ĐẦU TIÊN về inline; các <p> sau vẫn xuống dòng
@@ -141,11 +148,46 @@
     margin-top: 6px;
 }
 
+/* ── Khoảng cách trong thẻ đoạn văn ───────────────────────────────────
+   Rule gốc .pt-word-bank chỉ có margin-bottom (dùng cho word bank của
+   câu sentence_completion); trong thẻ đoạn văn cần cả margin-top để
+   tách khỏi tiêu đề. */
+.pt-passage-card .pt-word-bank {
+    margin-top: 14px;
+    margin-bottom: 18px;
+}
+.pt-passage-card { margin-bottom: 24px; }
+.pt-passage-card h5 { margin-bottom: 14px; }
+
 @media (max-width: 575px) {
     /* Màn hình hẹp: cho nội dung xuống dòng riêng cho dễ đọc. */
     .pt-q-head { display: block; }
     .pt-q-head .pt-q-num { display: inline-block; margin-bottom: 8px; }
     .pt-q-head .pt-q-text > p:first-child { display: block; }
+}
+/* Nhãn nhóm audio + đề bài nằm cùng hàng. Nhãn viết hoa, đề bài giữ
+   nguyên chữ thường nên phải tách text-transform ra khỏi hàng cha. */
+.pt-audio-group-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.pt-audio-group-head .pt-audio-group-label {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+.pt-audio-group-instruction {
+    background: #fff;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
 }
 </style>
 @endpush
@@ -176,100 +218,36 @@
         @foreach($questions as $index => $q)
 
             @if($passages->has($index + 1))
+                @php $psg = $passages[$index + 1]; @endphp
                 <div class="pt-passage-card">
                     <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
-                    <div class="pt-rich">{!! ptRichText($passages[$index + 1]['content']) !!}</div>
-                </div>
-            @endif
 
-            @if($q['audio_group_start'] && $q['audio_url'])
-                <div class="pt-audio-group">
-                    <div class="pt-audio-group-label">
-                        <i class="fas fa-headphones mr-1"></i>Audio cho câu {{ $q['audio_group_range'] }}
-                    </div>
-                    <div class="pt-audio-player" data-audio-player>
-                        <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="metadata"></audio>
-                        <button type="button" class="pt-audio-play-toggle" data-audio-toggle>
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <span class="pt-audio-time" data-audio-time>00:00</span>
-                        <div class="pt-audio-track" data-audio-track>
-                            <div class="pt-audio-fill" data-audio-fill></div>
-                        </div>
-                        <span class="pt-audio-duration" data-audio-duration>00:00</span>
-                    </div>
-                </div>
-            @endif
-            
-            <!-- <div class="pt-q-card">
-                <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
-
-                @if(!empty($q['instruction']))
-                    <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
-                @endif
-                
-
-                @if($q['type'] === 'multiple_choice')
-                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
-                    @foreach($q['options'] as $optIndex => $option)
-                        <label class="pt-option">
-                            <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $option }}" required>
-                            {{ chr(65 + $optIndex) }}. {{ $option }}
-                        </label>
-                    @endforeach
-
-                @elseif($q['type'] === 'listening_image_choice')
-                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
-                    <div class="pt-img-options">
-                        @foreach($q['image_options'] as $imgOpt)
-                            <label class="pt-img-option">
-                                <img src="{{ $imgOpt['url'] }}" alt="{{ $imgOpt['label'] }}">
-                                <input type="radio" name="answers[{{ $q['id'] }}]" value="{{ $imgOpt['label'] }}" required>
-                                {{ $imgOpt['label'] }}
-                            </label>
-                        @endforeach
-                    </div>
-
-                @elseif($q['type'] === 'error_correction')
-                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
-                    <input type="text" class="form-control" name="answers[{{ $q['id'] }}]" placeholder="Nhập lại câu đúng hoàn chỉnh..." required>
-
-                @elseif($q['type'] === 'sentence_completion')
-                    @if(!empty($q['word_bank']))
+                    {{-- Từ gợi ý đứng TRÊN đoạn văn để học viên thấy trước khi đọc --}}
+                    @if(!empty($psg['word_bank']))
                         <div class="pt-word-bank">
-                            @foreach($q['word_bank'] as $word)
+                            @foreach($psg['word_bank'] as $word)
                                 <span class="pt-word-chip">{{ $word }}</span>
                             @endforeach
                         </div>
                     @endif
 
-                    @php
-                        // Tách question_text theo dấu ___ để chèn input ngay tại vị trí chỗ trống.
-                        $parts = preg_split('/_{2,}/', $q['question_text']);
-                    @endphp
+                    <div class="pt-rich">{!! ptRichText($psg['content']) !!}</div>
+                </div>
+            @endif
 
-                    <div class="pt-q-text" style="font-weight:400;">
-                        @foreach($parts as $partIndex => $part)
-                            {!! nl2br(e($part)) !!}
-                            @if($partIndex < count($parts) - 1)
-                                <input type="text" class="pt-blank-input" name="answers[{{ $q['id'] }}][]" placeholder="..." required>
-                                @if(!empty($q['blank_hints'][$partIndex]))
-                                    <span class="pt-blank-hint">({{ $q['blank_hints'][$partIndex] }})</span>
-                                @endif
-                            @endif
-                        @endforeach
+            
+            @if(!empty($q['audio_group_start']) && $q['audio_url'])
+                <div class="pt-audio-group">
+                    <div class="pt-audio-group-head">
+                        <div class="pt-audio-group-label">
+                            <i class="fas fa-headphones mr-1"></i>Audio cho câu {{ $q['audio_group_range'] ?? ($index + 1) }}
+                        </div>
+
+                        @if(!empty($q['audio_group_instruction']))
+                            <div class="pt-audio-group-instruction">{{ $q['audio_group_instruction'] }}</div>
+                        @endif
                     </div>
-                @endif
-            </div> -->
-            <div class="pt-q-card">
 
-                {{-- Đề bài / hướng dẫn vẫn đứng riêng phía trên --}}
-                @if(!empty($q['instruction']))
-                    <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
-                @endif
-
-                {{-- Audio giữ nguyên vị trí cũ, đứng trên câu hỏi --}}
-                @if(!empty($q['audio_group_start']) && $q['audio_url'])
                     <div class="pt-audio-player" data-audio-player>
                         <audio id="audio-{{ $q['id'] }}" src="{{ $q['audio_url'] }}" preload="metadata"></audio>
                         <button type="button" class="pt-audio-play-toggle" data-audio-toggle>
@@ -281,11 +259,19 @@
                         </div>
                         <span class="pt-audio-duration" data-audio-duration>00:00</span>
                     </div>
+                </div>
+            @endif
+
+            <div class="pt-q-card">
+
+                {{-- Đề bài / hướng dẫn đứng riêng phía trên --}}
+                @if(!empty($q['instruction']))
+                    <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
                 @endif
 
                 {{-- Số thứ tự + nội dung câu hỏi trên CÙNG MỘT DÒNG.
-                    sentence_completion không dùng wrapper này vì nội dung của nó
-                    phải xen kẽ với các ô input (tách theo dấu ___). --}}
+                     sentence_completion không dùng wrapper này vì nội dung của nó
+                     phải xen kẽ với các ô input (tách theo dấu ___). --}}
                 @if($q['type'] !== 'sentence_completion')
                     <div class="pt-q-head">
                         <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
@@ -327,6 +313,9 @@
                         </div>
                     @endif
 
+                    {{-- Tách question_text theo dấu ___ để chèn input ngay tại
+                         vị trí chỗ trống. Dạng này là TEXT THUẦN, không qua
+                         rich text editor, nên vẫn dùng nl2br(e()). --}}
                     @php $parts = preg_split('/_{2,}/', $q['question_text']); @endphp
 
                     <div class="pt-q-text" style="font-weight:400;">
@@ -344,12 +333,27 @@
             </div>
         @endforeach
 
+        {{-- Đoạn văn đặt ở vị trí "Cuối bài" (position = số câu + 1).
+             Phải dùng count($questions), KHÔNG dùng $index — sau vòng lặp
+             $index mang giá trị chỉ số cuối nên sẽ trùng với đoạn văn đã
+             hiện trước câu cuối. --}}
         @if($passages->has(count($questions) + 1))
+            @php $psgLast = $passages[count($questions) + 1]; @endphp
             <div class="pt-passage-card">
                 <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
-                <div class="pt-rich">{!! ptRichText($passages[count($questions) + 1]['content']) !!}</div>
+
+                @if(!empty($psgLast['word_bank']))
+                    <div class="pt-word-bank">
+                        @foreach($psgLast['word_bank'] as $word)
+                            <span class="pt-word-chip">{{ $word }}</span>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div class="pt-rich">{!! ptRichText($psgLast['content']) !!}</div>
             </div>
         @endif
+
         <div class="pt-submit-actions">
             <button type="submit" class="pt-submit-btn" id="ptSubmitBtn">
                 <i class="fas fa-check mr-2"></i>Nộp bài đề này
@@ -491,4 +495,4 @@
     });
 })();
 </script>
-@endsection
+@endsectionr

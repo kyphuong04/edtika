@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
     buildAttemptModel(window.ATTEMPT_SECTION_DATA || {}, window.ATTEMPT_SAVED_ANSWERS || {});
 
     if (!AttemptState.parts.length) {
-        root.innerHTML = '<div class="exam-loading">Phần thi này chưa có nội dung. Vui lòng liên hệ giáo viên.</div>';
+        root.innerHTML = '<div class="exam-loading">This section has no content yet. Please contact your teacher.</div>';
         return;
     }
 
@@ -88,9 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (oldIsPlaying) {
             const proceed = window.confirm(
-                'Part bạn sắp chuyển tới dùng một file âm thanh KHÁC với Part hiện tại. '
-                + 'Nếu tiếp tục, âm thanh đang phát sẽ dừng lại và audio của Part mới sẽ bắt đầu. '
-                + 'Bạn có chắc chắn muốn chuyển Part không?'
+                `${unanswered.length} question(s) are still unanswered. Submit this section anyway?`
             );
             if (!proceed) return false;
 
@@ -432,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (ExamLayout.els.fabPrev) ExamLayout.els.fabPrev.disabled = true;
         if (ExamLayout.els.fabNext) ExamLayout.els.fabNext.disabled = true;
         ExamLayout.els.submitBtn.disabled = true;
-        ExamLayout.els.submitBtn.title = 'Đã hết giờ — đang chuyển...';
+        ExamLayout.els.submitBtn.title = 'Time is up — submitting...';
 
         window.setTimeout(() => callFinishSection(true), 400);
     }
@@ -478,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
         AttemptAnswers.flushAllPending();
         ExamLayout.lockAllInputs();
         ExamLayout.els.submitBtn.disabled = true;
-        ExamLayout.els.submitBtn.title = 'Đang nộp...';
+        ExamLayout.els.submitBtn.title = 'Submitting...';
         if (ExamLayout.els.fabPrev) ExamLayout.els.fabPrev.disabled = true;
         if (ExamLayout.els.fabNext) ExamLayout.els.fabNext.disabled = true;
 
@@ -556,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ui.close();
                     runDeviceCheckThenBoot();
                 })
-                .catch(() => ui.fail('Không lưu được thời gian làm bài. Vui lòng thử lại.'));
+                .catch(() => ui.fail('Could not save your time limit. Please try again.'));
         });
     } else {
         runDeviceCheckThenBoot();

@@ -27,6 +27,10 @@
 }
 .pt-correct-line { margin-top:10px; font-size:13px; font-weight:700; color:#16a34a; }
 .pt-test-header { background:#511D99; color:#fff; border-radius:12px; padding:14px 20px; margin:26px 0 14px; }
+
+/* ── Hiển thị nội dung rich text ──────────────────────────────────────
+   HTMLPurifier chuẩn hoá style về dạng "text-align:center" (không dấu
+   cách) nên selector phải khớp cả hai biến thể. */
 .pt-rich ul,
 .pt-rich ol { padding-left: 24px !important; margin-bottom: 10px !important; }
 .pt-rich ul { list-style: disc !important; }
@@ -42,6 +46,7 @@
 .pt-rich [style*="text-align: justify"] { text-align: justify !important; }
 .pt-rich [style*="text-align:left"],
 .pt-rich [style*="text-align: left"]    { text-align: left !important; }
+
 .pt-instruction {
     background: #f5f3ff;
     border-left: 4px solid #a78bfa;
@@ -61,13 +66,98 @@
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
+
+.pt-word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: #f5f3ff;
+    border: 1px dashed #a78bfa;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.pt-word-chip {
+    background: #fff;
+    border: 1px solid #ddd6fe;
+    color: #511D99;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+/* Thẻ đoạn văn dùng chung class .pt-q-card với câu hỏi nên selector phải
+   hẹp, tránh ảnh hưởng word bank ở chỗ khác. */
+.pt-q-card .pt-word-bank {
+    margin-top: 14px;
+    margin-bottom: 18px;
+}
+
+/* Layout admin phủ nền tím mờ + blur lên mọi phần tử trong .main-content.
+   Không đè lại thì hộp từ gợi ý sẽ bị ám màu, chip trắng thành tím. */
+.main-content .pt-word-bank {
+    background: #f5f3ff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+.main-content .pt-word-chip {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+/* ── Nhóm audio dùng chung cho nhiều câu (VD: câu 9–10) ── */
+.pt-audio-group {
+    background:#eef2ff; border:1px solid #c7d2fe; border-radius:14px;
+    padding:12px 16px; margin:8px 0 12px;
+}
+.pt-audio-group-label {
+    font-size:12px; font-weight:700; color:#4338CA;
+    text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;
+}
+.main-content .pt-audio-group {
+    background: #eef2ff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+/* Nhãn nhóm audio + đề bài nằm cùng hàng. Nhãn viết hoa, đề bài giữ
+   nguyên chữ thường nên phải tách text-transform ra khỏi hàng cha. */
+.pt-audio-group-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.pt-audio-group-head .pt-audio-group-label {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+.pt-audio-group-instruction {
+    background: #fff;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+}
+.main-content .pt-audio-group-instruction {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
 </style>
 @endpush
 
 @section('content')
 <section class="section">
     <div class="section-header">
-        <h1>Chi tiết bài làm — {{ $user->name }}</h1>
+        <h1>Chi tiết bài làm — {{ $user->full_name }}</h1>
     </div>
 
     <div class="section-body">
@@ -91,11 +181,23 @@
             @foreach($block['questions'] as $idx => $item)
 
                 @if($blockPassages->has($idx + 1))
+                    @php $psg = $blockPassages[$idx + 1]; @endphp
                     <div class="pt-q-card" style="background:#faf5ff;">
                         <strong>Đoạn văn đọc:</strong>
-                        <div class="mt-2 pt-rich">{!! ptRichText($blockPassages[$idx + 1]['content']) !!}</div>
+
+                        {{-- Từ gợi ý đứng TRÊN đoạn văn --}}
+                        @if(!empty($psg['word_bank']))
+                            <div class="pt-word-bank">
+                                @foreach($psg['word_bank'] as $word)
+                                    <span class="pt-word-chip">{{ $word }}</span>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="mt-2 pt-rich">{!! ptRichText($psg['content']) !!}</div>
                     </div>
                 @endif
+
                 @php $q = $item['question']; $isCorrect = $item['is_correct']; @endphp
                 <div class="pt-q-card" style="border-left:5px solid {{ $isCorrect ? '#22c55e' : '#ef4444' }};">
                     <span class="pt-q-num">Câu {{ $idx + 1 }}</span>
@@ -107,17 +209,42 @@
                         <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
                     @endif
 
-                    @if($q['has_audio'] && $q['audio_url'])
-                        <audio controls style="width:100%;max-width:380px;margin:8px 0;" src="{{ $q['audio_url'] }}"></audio>
+                    {{-- Audio của nhóm câu: chỉ render ở câu mở đầu nhóm, tránh
+                         lặp player khi nhiều câu dùng chung một file. --}}
+                    @if(!empty($q['audio_group_start']) && $q['audio_url'])
+                        <div class="pt-audio-group">
+                            <div class="pt-audio-group-head">
+                                <div class="pt-audio-group-label">
+                                    <i class="fas fa-headphones mr-1"></i>Audio cho câu {{ $q['audio_group_range'] ?? ($idx + 1) }}
+                                </div>
+
+                                @if(!empty($q['audio_group_instruction']))
+                                    <div class="pt-audio-group-instruction">{{ $q['audio_group_instruction'] }}</div>
+                                @endif
+                            </div>
+
+                            <audio controls style="width:100%;max-width:380px;" src="{{ $q['audio_url'] }}"></audio>
+                        </div>
                     @endif
 
                     @if($q['type'] === 'multiple_choice')
                         <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
+
+                        @php
+                            // Chuẩn hoá trước khi so sánh, khớp với cách
+                            // isAnswerCorrect() dùng trim() khi chấm điểm.
+                            $givenValue = is_scalar($item['given']) ? trim((string) $item['given']) : null;
+                            $hasAnswer = $givenValue !== null && $givenValue !== '';
+                        @endphp
+
+                        @if(!$hasAnswer)
+                            <div class="p-2 mb-2" style="background:#fef3c7;border-radius:8px;font-size:13px;color:#78350f;">
+                                <i class="fas fa-exclamation-circle mr-1"></i>Học viên không trả lời câu này.
+                            </div>
+                        @endif
+
                         @foreach($q['options'] as $option)
-                            @php
-                                $givenValue = is_scalar($item['given']) ? trim((string) $item['given']) : null;
-                                $isGiven = $givenValue !== null && $givenValue !== '' && $givenValue === trim((string) $option);
-                            @endphp
+                            @php $isGiven = $hasAnswer && $givenValue === trim((string) $option); @endphp
                             <div class="pt-option" style="{{ $isGiven ? ($isCorrect ? 'border-color:#22c55e;background:#f0fdf4;' : 'border-color:#ef4444;background:#fef2f2;') : '' }}">
                                 {{ $option }} @if($isGiven)<strong class="ml-2">(học viên chọn)</strong>@endif
                             </div>
@@ -125,12 +252,21 @@
 
                     @elseif($q['type'] === 'listening_image_choice')
                         <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
+
+                        @php
+                            $givenValue = is_scalar($item['given']) ? trim((string) $item['given']) : null;
+                            $hasAnswer = $givenValue !== null && $givenValue !== '';
+                        @endphp
+
+                        @if(!$hasAnswer)
+                            <div class="p-2 mb-2" style="background:#fef3c7;border-radius:8px;font-size:13px;color:#78350f;">
+                                <i class="fas fa-exclamation-circle mr-1"></i>Học viên không trả lời câu này.
+                            </div>
+                        @endif
+
                         <div class="pt-img-options">
                             @foreach($q['image_options'] as $imgOpt)
-                                @php
-                                    $givenValue = is_scalar($item['given']) ? trim((string) $item['given']) : null;
-                                    $isGiven = $givenValue !== null && $givenValue === trim((string) $imgOpt['label']);
-                                @endphp
+                                @php $isGiven = $hasAnswer && $givenValue === trim((string) $imgOpt['label']); @endphp
                                 <div class="pt-img-option" style="{{ $isGiven ? ($isCorrect ? 'border-color:#22c55e;' : 'border-color:#ef4444;') : '' }}">
                                     <img src="{{ $imgOpt['url'] }}">
                                     {{ $imgOpt['label'] }} @if($isGiven)(đã chọn)@endif
@@ -145,9 +281,10 @@
                         </div>
 
                     @elseif($q['type'] === 'sentence_completion')
-                        @php $parts = preg_split('/_{2,}/', $q['question_text']); @endphp
                         @php
                             $parts = preg_split('/_{2,}/', $q['question_text']);
+                            // given có thể là null khi hết giờ auto-submit -> ép về
+                            // mảng để không nổ "array offset on null".
                             $givenArr = is_array($item['given']) ? $item['given'] : [];
                         @endphp
                         <div class="pt-q-text" style="font-weight:400;">
@@ -163,6 +300,7 @@
                     @endif
 
                     <div class="pt-correct-line">Đáp án đúng: {{ $item['correct_display'] }}</div>
+
                     @if($item['answer_help'])
                         <div class="mt-2 p-2" style="background:#eff6ff;border-left:3px solid #3b82f6;border-radius:6px;font-size:13px;color:#1e40af;">
                             <i class="fas fa-lightbulb mr-1"></i><strong>Giải thích:</strong>
@@ -172,10 +310,21 @@
                 </div>
             @endforeach
 
+            {{-- Đoạn văn ở vị trí "Cuối bài" --}}
             @if($blockPassages->has(count($block['questions']) + 1))
+                @php $psgLast = $blockPassages[count($block['questions']) + 1]; @endphp
                 <div class="pt-q-card" style="background:#faf5ff;">
                     <strong>Đoạn văn đọc:</strong>
-                    <div class="mt-2 pt-rich">{!! ptRichText($blockPassages[$idx + 1]['content']) !!}</div>
+
+                    @if(!empty($psgLast['word_bank']))
+                        <div class="pt-word-bank">
+                            @foreach($psgLast['word_bank'] as $word)
+                                <span class="pt-word-chip">{{ $word }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="mt-2 pt-rich">{!! ptRichText($psgLast['content']) !!}</div>
                 </div>
             @endif
         @endforeach

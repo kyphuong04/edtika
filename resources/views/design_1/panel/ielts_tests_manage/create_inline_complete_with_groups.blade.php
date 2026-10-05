@@ -1043,6 +1043,12 @@ const SECTIONS_CONFIG = {
 // IeltsTest::SKILL_PART_COUNTS / SKILL_PART_LABELS ở server.
 const SKILL_PART_COUNTS = { listening: 4, reading: 3, writing: 2, speaking: 3 };
 const SKILL_PART_LABELS = { listening: 'Part', reading: 'Passage', writing: 'Task', speaking: 'Part' };
+// Diagram & Map Labeling dùng CHUNG trình dựng ma trận với các dạng Matching:
+// mỗi statement là 1 câu, đáp án là 1 chữ cái.
+const MATCHING_LIKE_TYPES = [
+    'matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings',
+    'diagram_labeling', 'map_labeling'
+];
 
 let currentTestType = @json($currentTestType ?? null);
 let uploadSequence = 0;
@@ -1832,15 +1838,16 @@ function setupFilePreviews() {
             return;
         }
 
+        const scope = input.closest('.col-md-4, .form-group, .section-media-block');
         let preview = null;
         if (input.classList.contains('section-audio-file')) {
-            preview = input.closest('.section-media-block')?.querySelector('.section-audio-preview');
+            preview = scope?.querySelector('.section-audio-preview');
         } else if (input.classList.contains('group-audio-file')) {
-            preview = input.closest('.col-md-4')?.querySelector('.group-audio-preview');
+            preview = scope?.querySelector('.group-audio-preview');
         } else if (input.classList.contains('group-image-file')) {
-            preview = input.closest('.col-md-4')?.querySelector('.group-image-preview');
+            preview = scope?.querySelector('.group-image-preview');
         } else if (input.classList.contains('group-video-file')) {
-            preview = input.closest('.col-md-4')?.querySelector('.group-video-preview');
+            preview = scope?.querySelector('.group-video-preview');
         }
 
         renderFilePreview(input, preview);
@@ -1853,7 +1860,7 @@ function removeSelectedFile(button) {
         return;
     }
 
-    const block = preview.closest('.col-md-4, .section-media-block');
+    const block = preview.closest('.col-md-4, .form-group, .s-media-block');
     if (!block) {
         return;
     }
@@ -2300,6 +2307,12 @@ function resetGroupEditorState(form) {
             submitBtn.innerHTML = '<i class="fas fa-plus mr-5"></i>Create Group';
         }
     }
+
+    form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => { input.value = ''; });
+    form.querySelectorAll('.file-preview').forEach(preview => {
+        preview.textContent = '';
+        preview.style.display = 'none';
+    });
 }
 
 function toggleAddPartForm(button) {
@@ -2428,6 +2441,18 @@ function addQuestionGroup(button) {
         return;
     }
 
+        const LABELING_TYPES = ['diagram_labeling', 'map_labeling'];
+    if (LABELING_TYPES.includes(questionType)) {
+        const hasNewImage = form.querySelector('.group-image-file')?.files?.length > 0;
+        const hasExistingImage = isEditMode
+            && (part.groups.find(g => String(g.id) === String(editGroupId))?.files?.image);
+
+        if (!hasNewImage && !hasExistingImage && !groupTaskImageUrl) {
+            alert('Dạng Diagram / Map Labeling cần ảnh bản đồ hoặc sơ đồ.\nHãy chọn ảnh từ máy hoặc dán URL.');
+            return;
+        }
+    }
+
     if (isEditMode) {
         const group = part.groups.find(g => String(g.id) === String(editGroupId));
         if (!group) {
@@ -2436,13 +2461,18 @@ function addQuestionGroup(button) {
         }
 
         const uploadId = group.upload_id || `group_${Date.now()}_${++uploadSequence}`;
+
+        // Đọc file TRƯỚC khi preserveSelectedFiles() di chuyển input ra khỏi form.
+        const imageInput = form.querySelector('.group-image-file');
+        const imageFile = imageInput && imageInput.files.length ? imageInput.files[0] : null;
+
         const fileInputNames = preserveSelectedFiles(form, uploadId);
 
         group.upload_id = uploadId;
         group.title = title;
         const QUESTION_TYPE_FAMILIES = [
-            ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'],
-            ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling'],
+            ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings', 'diagram_labeling', 'map_labeling'],
+            ['sentence_completion', 'summary_completion', 'note_completion'],
             ['drag_drop_disappear', 'drag_drop_reuse'],
         ];
 
@@ -2468,8 +2498,12 @@ function addQuestionGroup(button) {
         group.target_band = targetBand || null;
         group.passage = passage || null;
         group.task_image = groupTaskImageUrl || null;
+
         group.file_input_names = fileInputNames;
-        group.files = group.files || {};
+        group.files = {
+            ...(group.files || {}),
+            image: imageFile ? imageFile.name : (group.files?.image || null),
+        };
     } else {
         const uploadId = `group_${Date.now()}_${++uploadSequence}`;
         const fileInputNames = preserveSelectedFiles(form, uploadId);
@@ -2703,7 +2737,10 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
                                 <option value="summary_completion">Summary Completion</option>
                                 <option value="note_completion">Note Completion</option>
                                 <option value="table_completion">Table Completion</option>
-                                <option value="diagram_labeling">Diagram Labeling</option>
+                            </optgroup>
+                            <optgroup label="Map / Diagram">
+                                <option value="diagram_labeling">Diagram Labeling (chọn A–K)</option>
+                                <option value="map_labeling">Map Labeling (chọn A–K)</option>
                             </optgroup>
                             <optgroup label="Drag &amp; Drop">
                                 <option value="drag_drop_disappear">Drag &amp; Drop (Remove from List)</option>
@@ -2721,6 +2758,18 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
                     <div class="form-group">
                         <label class="input-label">Target Band</label>
                         <input type="number" class="form-control group-target-band" min="4" max="9" step="0.5" placeholder="e.g. 6.5">
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label class="input-label">Task / Map Image <small class="text-muted">(bắt buộc cho Diagram &amp; Map Labeling)</small></label>
+                        <div class="file-upload-area" onclick="this.querySelector('input[type=file]').click()">
+                            <i class="fas fa-image fa-2x text-muted mb-10"></i>
+                            <p class="mb-0 small">Click để chọn ảnh bản đồ / sơ đồ từ máy</p>
+                            <input type="file" class="group-image-file" accept="image/*">
+                        </div>
+                        <div class="file-preview group-image-preview" style="display:none;"></div>
+                        <input type="text" class="form-control group-task-image-url mt-8" placeholder="Hoặc dán URL ảnh có sẵn: https://... / /storage/...">
                     </div>
                 </div>
                 <div class="form-row full">
@@ -3046,6 +3095,20 @@ function editGroupTitle(button) {
     if (groupImageInput) {
         groupImageInput.value = group.task_image || '';
     }
+
+    form.querySelectorAll('input[type="file"]:not(.preserved-upload-input)').forEach(input => { input.value = ''; });
+
+    const groupImagePreview = form.querySelector('.group-image-preview');
+    if (groupImagePreview) {
+        const existingImage = group.files?.image || null;
+        if (existingImage) {
+            groupImagePreview.textContent = existingImage;
+            groupImagePreview.style.display = 'inline-flex';
+        } else {
+            groupImagePreview.textContent = '';
+            groupImagePreview.style.display = 'none';
+        }
+    }
 }
 
 function resetQuestionForm(form) {
@@ -3072,6 +3135,9 @@ function resetQuestionForm(form) {
 
     const pointsInput = form.querySelector('.question-points-input');
     if (pointsInput) pointsInput.value = '0.225';
+
+    const maxSelectInput = form.querySelector('.question-max-select-input');
+    if (maxSelectInput) maxSelectInput.value = '';
 
     const noteAnswerWrap = form.querySelector('.note-completion-answers');
     if (noteAnswerWrap) noteAnswerWrap.innerHTML = '';
@@ -3176,6 +3242,11 @@ function editQuestion(button, questionIndex) {
         optionsList.setAttribute('data-input-type', inputType);
         optionsList.setAttribute('data-group-name', groupName);
 
+        const maxSelectInput = form.querySelector('.question-max-select-input');
+        if (maxSelectInput) {
+            maxSelectInput.value = (question.question_data && question.question_data.maxSelect) || '';
+        }
+
         optionsList.innerHTML = (question.options || []).map((option, i) => {
             const isCorrect = qType === 'multiple_choice_multiple'
                 ? normalizedCorrectAnswers.includes(option)
@@ -3193,7 +3264,7 @@ function editQuestion(button, questionIndex) {
     } else if (qType === 'true_false_not_given' || qType === 'yes_no_not_given') {
         const answerSelect = form.querySelector('.question-answer-select');
         if (answerSelect) answerSelect.value = question.correctAnswer || '';
-    } else if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+    } else if (MATCHING_LIKE_TYPES.includes(qType)) {
         const matchingQuestions = (group.questions || []).filter(item => (item.type || qType) === qType);
         const primaryMatchingQuestion = matchingQuestions[0] || question;
         const optionMap = normalizeMatchingOptionsMap(primaryMatchingQuestion.options);
@@ -3226,7 +3297,7 @@ function editQuestion(button, questionIndex) {
     } else if (qType === 'note_completion') {
         renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswers || question.correctAnswer));
         bindNoteCompletionLivePreview(form);
-    } else if (qType === 'sentence_completion' || qType === 'summary_completion' || qType === 'diagram_labeling') {
+    } else if (qType === 'sentence_completion' || qType === 'summary_completion') {
         renderCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswers || question.correctAnswer));
     } else if (qType === 'table_completion' && question.table_structure) {
         const tcWrap = form.querySelector('.tc-builder-wrap');
@@ -3407,14 +3478,14 @@ function saveQuestionToGroup(button) {
     const explanation = getAnswerHelpValue(explanationInput);
     const pointsValue = parseFloat(form.querySelector('.question-points-input').value);
     const points = Number.isFinite(pointsValue) ? pointsValue : 0;
-    const isMatchingType = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType);
+    const isMatchingType = MATCHING_LIKE_TYPES.includes(qType);
     const isDragDropType = ['drag_drop_disappear', 'drag_drop_reuse'].includes(qType);
 
     if (!textPlain && !isMatchingType && !isDragDropType) {
         alert('Question text is required.');
         return;
     }
-    const BLANK_TEXT_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling', 'drag_drop_disappear', 'drag_drop_reuse'];
+    const BLANK_TEXT_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'drag_drop_disappear', 'drag_drop_reuse'];
     if (BLANK_TEXT_TYPES.includes(qType) && window.IeltsBlanks && window.IeltsBlanks.hasSplitBlank(text)) {
         const proceed = confirm(
             'Có chỗ trống ___ bị định dạng cắt làm nhiều đoạn (in đậm một phần, dán từ Word...).\n'
@@ -3475,6 +3546,18 @@ function saveQuestionToGroup(button) {
         questionData.correctAnswers = correctAnswers;
         questionData.correctAnswer = correctAnswers.join(', ');
         questionData.slotCount = correctAnswers.length;
+
+        const maxSelectInput = form.querySelector('.question-max-select-input');
+        const maxSelectValue = maxSelectInput ? parseInt(maxSelectInput.value, 10) : NaN;
+
+        if (Number.isFinite(maxSelectValue) && maxSelectValue > 0) {
+            if (maxSelectValue < correctAnswers.length) {
+                alert('Số đáp án được chọn (' + maxSelectValue + ') nhỏ hơn số đáp án đúng ('
+                    + correctAnswers.length + '). Học viên sẽ không thể chọn đủ.');
+                return;
+            }
+            questionData.question_data.maxSelect = maxSelectValue;
+        }
 
     } else if (qType === 'true_false_not_given' || qType === 'yes_no_not_given') {
         const answerSelect = form.querySelector('.question-answer-select');
@@ -3603,7 +3686,7 @@ function saveQuestionToGroup(button) {
             return;
         }
 
-    } else if (qType === 'sentence_completion' || qType === 'summary_completion' || qType === 'diagram_labeling') {
+    } else if (qType === 'sentence_completion' || qType === 'summary_completion') {
         const completionAnswers = collectCompletionAnswers(form);
         const completionAnswerGroups = collectCompletionAnswerGroups(form);
         const blankCount = countNoteCompletionBlanks(text);
@@ -3854,7 +3937,7 @@ function renderQuestionsList(groupItem, group, startNumber = 1) {
     const renderedCards = normalizedQuestions.map((question, qIndex) => {
         const qType = (question && question.type) || group.question_type || 'short_answer';
         const slotCountBase = Number.isFinite(Number(question && question.slotCount)) ? Number(question.slotCount) : 1;
-        const slotCount = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)
+        const slotCount = MATCHING_LIKE_TYPES.includes(qType)
             ? 1
             : Math.max(1, slotCountBase);
         const slotLabel = slotCount > 1
@@ -3902,8 +3985,13 @@ function renderQuestionsList(groupItem, group, startNumber = 1) {
                         : question.correctAnswer === o;
                     return `<span style="margin-right:6px;color:${isCorrect ? '#16a34a' : '#374151'};font-weight:${isCorrect ? '700' : '400'};">${String.fromCharCode(65 + i)}. ${escapeHtml(o)}${isCorrect ? ' ✓' : ''}</span>`;
                 }).join('');
+                const maxSelect = question.question_data && question.question_data.maxSelect;
+                const maxSelectBadge = (qType === 'multiple_choice_multiple' && maxSelect)
+                    ? `<span class="question-answer-badge" style="background:#dbeafe;color:#1e40af;">Chọn ${maxSelect}</span> `
+                    : '';
+                detailHTML = `<div style="font-size:12px;margin-top:4px;">${maxSelectBadge}${opts}</div>`;
                 detailHTML = `<div style="font-size:12px;margin-top:4px;">${opts}</div>`;
-            } else if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+            } else if (MATCHING_LIKE_TYPES.includes(qType)) {
                 const matchingAnswer = String(question.correctAnswer || question.correct_answer || '').trim();
                 detailHTML = matchingAnswer
                     ? `<span class="question-answer-badge">✓ ${escapeHtml(matchingAnswer)}</span>`
@@ -4113,10 +4201,11 @@ function getQuestionTypeLabel(type) {
         summary_completion: 'Summary Completion',
         note_completion: 'Note Completion',
         table_completion: 'Table Completion',
-        diagram_labeling: 'Diagram Labeling',
         short_answer: 'Short Answer',
         drag_drop_disappear: 'Drag & Drop – Remove from List',
         drag_drop_reuse: 'Drag & Drop – Keep in List',
+        diagram_labeling: 'Diagram Labeling (chọn A–K)',
+        map_labeling: 'Map Labeling (chọn A–K)',
     };
     return labels[type] || type;
 }
@@ -4663,8 +4752,8 @@ function getQuestionFormHTML(questionType, skill = '') {
     const isMCMultiple = questionType === 'multiple_choice_multiple';
     const isTFNG = questionType === 'true_false_not_given';
     const isYNNG = questionType === 'yes_no_not_given';
-    const isMatching = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(questionType);
-    const isCompletion = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling'].includes(questionType);
+    const isMatching = MATCHING_LIKE_TYPES.includes(questionType);
+    const isCompletion = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion'].includes(questionType);
     const isDragDrop = questionType === 'drag_drop_disappear' || questionType === 'drag_drop_reuse';
 
     let html = '';
@@ -4738,6 +4827,11 @@ function getQuestionFormHTML(questionType, skill = '') {
             </button>
         </div>
         <div class="form-row">
+            ${isMCMultiple ? `<div class="form-group" style="max-width:200px;">
+                <label class="input-label">Số đáp án được chọn</label>
+                <input type="number" class="form-control question-max-select-input" min="1" max="10" placeholder="VD: 2">
+                <small class="text-muted">Để trống = không giới hạn</small>
+            </div>` : ''}
             <div class="form-group" style="max-width:120px;">
                 <label class="input-label">Points</label>
                 <input type="number" class="form-control question-points-input" min="0" step="0.025" value="0.225">
@@ -5429,21 +5523,23 @@ function syncOpenQuestionEditFormsForDraft() {
         }
 
         const qType = getInlineQuestionType(form) || (ctx.group.question_type || 'short_answer');
-        if (['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
-            // Matching do syncOpenMatchingFormsIntoTestData() dựng lại từ ma trận.
-            // Patch ở đây sẽ ghi ô prompt đè lên text của MỌI statement trong group.
+
+        if (MATCHING_LIKE_TYPES.includes(qType)) {
+            // Matching / Diagram do syncOpenMatchingFormsIntoTestData() dựng lại
+            // từ ma trận. Patch ở đây sẽ ghi ô prompt đè lên text của MỌI statement.
             return;
         }
+
         const existingQuestion = (ctx.group.questions || [])[editIndex];
 
         if (!existingQuestion) {
             return;
         }
 
-        const hintInput = form.querySelector('.question-hint-input');
-
         const explanationInput = form.querySelector('.question-explanation-input');
         const explanation = explanationInput ? getAnswerHelpValue(explanationInput) : null;
+
+        const hintInput = form.querySelector('.question-hint-input');
 
         const titleInput = form.querySelector('.question-title-input');
         const title = titleInput ? titleInput.value.trim() : '';
@@ -5492,7 +5588,6 @@ function syncOpenQuestionEditFormsForDraft() {
 
     updateCompletenessStatus();
 }
-
     // Ensure section audio inputs are preserved whenever the form is submitted
 // ─── Form State Preservation (localStorage for preview exit) ─────────────────
 
@@ -5543,7 +5638,7 @@ function syncOpenMatchingFormsIntoTestData() {
 
     for (const form of openForms) {
         const qType = getInlineQuestionType(form);
-        if (!['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'].includes(qType)) {
+        if (!MATCHING_LIKE_TYPES.includes(qType)) {
             continue;
         }
 

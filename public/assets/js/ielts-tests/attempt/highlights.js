@@ -150,7 +150,7 @@ const ExamHighlights = {
         bar.innerHTML = ''
             + '<button type="button" data-act="highlight"><i class="fas fa-highlighter"></i> Highlight</button>'
             + '<button type="button" data-act="note"><i class="fas fa-sticky-note"></i> Note</button>'
-            + '<button type="button" data-act="delete"><i class="fas fa-trash-alt"></i> Xóa</button>';
+            + '<button type="button" data-act="delete"><i class="fas fa-trash-alt"></i> Delete</button>';
         document.body.appendChild(bar);
 
         bar.addEventListener('mousedown', (e) => e.preventDefault()); // giữ selection
@@ -334,11 +334,11 @@ const ExamHighlights = {
         overlay.innerHTML = ''
             + '<div class="exam-hl-modal-card">'
             + '  <div class="exam-hl-modal-head">'
-            + '    <span><i class="fas fa-sticky-note"></i> Thêm ghi chú</span>'
+            + '    <span><i class="fas fa-sticky-note"></i> Add a note</span>'
             + '    <button type="button" class="exam-hl-modal-close">&times;</button>'
             + '  </div>'
             + '  <div class="exam-hl-modal-quote"></div>'
-            + '  <textarea class="exam-hl-modal-text" maxlength="2000" placeholder="Nhập ghi chú của bạn tại đây..."></textarea>'
+            + '  <textarea class="exam-hl-modal-text" maxlength="2000" placeholder="Enter your note here..."></textarea>'
             + '  <div class="exam-hl-modal-actions">'
             + '    <button type="button" class="exam-hl-modal-cancel">Cancel</button>'
             + '    <button type="button" class="exam-hl-modal-save">Save</button>'

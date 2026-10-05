@@ -940,7 +940,7 @@ function updateBlankHint(index, blankIndex, value) {
 
 function addPassage() {
     passageSeq++;
-    passages.push({ id: 'p' + passageSeq, content: '', position: 1 });
+    passages.push({ id: 'p' + passageSeq, content: '', position: 1, word_bank: [] });
     renderPassages();
 }
 
@@ -978,6 +978,14 @@ function updatePassagePosition(id, value) {
     if (p) p.position = parseInt(value, 10) || 1;
 }
 
+function updatePassageWordBank(id, value) {
+    const p = passages.find(item => item.id === id);
+    if (p) {
+        p.word_bank = value.split(',').map(v => v.trim()).filter(Boolean);
+    }
+    // Không render lại để không mất con trỏ khi đang gõ.
+}
+
 function renderPassages() {
     const passagesContainer = document.getElementById('passagesContainer');
     const totalQ = questions.length;
@@ -994,7 +1002,20 @@ function renderPassages() {
                 <span class="pt-q-badge">Đoạn văn ${idx + 1}</span>
                 <button type="button" class="pt-remove-btn" onclick="removePassage('${p.id}')"><i class="fas fa-trash"></i></button>
             </div>
+
             ${richFieldHtml('Nội dung', p.content, `openPassageEditor('${p.id}')`)}
+
+            <div class="form-group mb-2">
+                <label class="input-label">
+                    Word Bank
+                    <small class="text-muted">(tuỳ chọn — cách nhau bởi dấu phẩy, hiện thành hộp từ gợi ý ngay dưới đoạn văn)</small>
+                </label>
+                <input type="text" class="form-control"
+                    value="${escapeHtml((p.word_bank || []).join(', '))}"
+                    placeholder="go, do, learn, make, take"
+                    oninput="updatePassageWordBank('${p.id}', this.value)">
+            </div>
+
             <div class="form-group mb-0" style="max-width:240px;">
                 <label class="input-label">Vị trí hiển thị</label>
                 <select class="form-control" onchange="updatePassagePosition('${p.id}', this.value); renderPassages();">${posOpts}</select>
@@ -1024,7 +1045,7 @@ function clipDisplayName(clip) {
 
 function addAudioClip() {
     clipSeq++;
-    audioClips.push({ id: 'a' + clipSeq, label: '', path: null, input_name: null, url: null });
+    audioClips.push({ id: 'a' + clipSeq, label: '', instruction: '', path: null, input_name: null, url: null });
     renderAudioClips();
 }
 
@@ -1057,6 +1078,12 @@ function updateClipLabel(id, value) {
     const clip = audioClips.find(c => c.id === id);
     if (clip) clip.label = value;
     // Không render lại ở đây để không mất con trỏ khi đang gõ.
+}
+
+function updateClipInstruction(id, value) {
+    const clip = audioClips.find(c => c.id === id);
+    if (clip) clip.instruction = value;
+    // Không render lại để không mất con trỏ khi đang gõ.
 }
 
 function onClipFileSelected(clipId, inputEl) {
@@ -1125,6 +1152,16 @@ function renderAudioClips() {
                     <label class="input-label">${fileLabel}</label>
                     <input type="file" accept="audio/*" class="form-control" onchange="onClipFileSelected('${clip.id}', this)">
                 </div>
+            </div>
+            <div class="form-group mt-2 mb-0">
+                <label class="input-label">
+                    Đề bài cho nhóm câu
+                    <small class="text-muted">(không bắt buộc — hiện cạnh nhãn "Audio cho câu…" ở trang làm bài)</small>
+                </label>
+                <input type="text" class="form-control"
+                    value="${escapeHtml(clip.instruction || '')}"
+                    placeholder="VD: Nghe audio và chọn đáp án phù hợp."
+                    oninput="updateClipInstruction('${clip.id}', this.value)">
             </div>
             <audio controls style="width:100%;margin-top:10px;${clip.url ? '' : 'display:none;'}" src="${clip.url || ''}"></audio>
             <div class="mt-2">${usageBadge}</div>
@@ -1479,6 +1516,7 @@ document.getElementById('placementTestForm').addEventListener('submit', function
     const clipsPayload = audioClips.map(c => ({
         id: c.id,
         label: c.label || '',
+        instruction: c.instruction || '',
         path: c.path || null,
         input_name: c.input_name || null,
     }));
