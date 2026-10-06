@@ -645,7 +645,7 @@ const ExamLayout = {
                         btn.className = 'epn-question-num';
                         btn.textContent = n;
 
-                        if (AttemptState.isAnswered(entry.question.id)) btn.classList.add('answered');
+                        if (AttemptState.isSlotAnswered(entry, n - entry.startNumber)) btn.classList.add('answered');
 
                         if (entry.question.id === AttemptState.current.questionId) btn.classList.add('current');
 
@@ -660,8 +660,7 @@ const ExamLayout = {
                 segment.appendChild(numsWrap);
             } else {
                 const total = partEntries.reduce((sum, e) => sum + e.slotCount, 0);
-                const answered = partEntries.reduce((sum, e) => sum + (AttemptState.isAnswered(e.question.id) ? e.slotCount : 0), 0);
-
+                const answered = partEntries.reduce((sum, e) => sum + AttemptState.answeredSlotCount(e), 0);
                 const summary = document.createElement('div');
                 summary.className = 'epn-part-summary';
                 summary.textContent = answered + '/' + total + ' question';

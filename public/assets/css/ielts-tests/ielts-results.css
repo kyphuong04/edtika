@@ -743,3 +743,68 @@ body.rs-modal-open:has(.rs-page) {
         background: #fff;
     }
 }
+/* =====================================================================
+   NAVBAR DÙNG CHUNG (partials/result_topbar.blade.php) — trang kết quả
+   và trang chữa bài. Tab là link, thêm dải thống kê + chọn kỹ năng.
+   ===================================================================== */
+a.rs-tab { display: inline-block; text-decoration: none; }
+a.rs-tab:hover { color: var(--rs-brand-hover, #3b1574); text-decoration: none; }
+.rs-tab.is-disabled { color: #b9b4cf; cursor: not-allowed; }
+.rs-tabs { gap: 22px; }
+
+.rs-skill-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 999px;
+    background: #f1ecfd;
+}
+.rs-skill-switch a {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4c1d95;
+    text-decoration: none;
+}
+.rs-skill-switch a.is-active { background: #4c1d95; color: #fff; }
+
+.rs-student {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+/* Dải thống kê Đúng / Sai / Chưa làm / Số câu đúng */
+.rs-statbar {
+    display: flex;
+    overflow: hidden;
+    border: 1px solid #e4dafb;
+    border-radius: 10px;
+    background: #fff;
+}
+.rs-statbar-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 76px;
+    padding: 5px 14px;
+    line-height: 1.15;
+}
+.rs-statbar-cell + .rs-statbar-cell { border-left: 1px solid #e4dafb; }
+.rs-statbar-cell strong { font-size: 17px; font-weight: 800; }
+.rs-statbar-cell span { font-size: 11px; color: #6b7280; }
+.rs-statbar-cell.is-correct strong { color: #16a34a; }
+.rs-statbar-cell.is-incorrect strong { color: #e11d48; }
+.rs-statbar-cell.is-empty strong { color: #4b5563; }
+.rs-statbar-cell.is-score { min-width: 104px; background: #f1ecfd; }
+.rs-statbar-cell.is-score strong { color: #4c1d95; }
+
+@media (max-width: 1100px) {
+    .rs-statbar-cell { min-width: 0; padding: 4px 10px; }
+    .rs-student { display: none; }
+}

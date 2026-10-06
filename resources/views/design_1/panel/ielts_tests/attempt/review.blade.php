@@ -1,27 +1,90 @@
 @extends('design_1.panel.layouts.panel')
 
-@push('styles_top')
 @php
     $assetV = fn (string $path) => asset($path) . '?v=' . (is_file(public_path($path)) ? filemtime(public_path($path)) : time());
+    $isListening = ($attemptMeta['skill'] ?? '') === 'listening';
 @endphp
+
+@push('styles_top')
+{{-- attempt.css: giao diện từng dạng câu hỏi (dùng chung với trang làm bài).
+     ielts-results.css: navbar + cửa sổ "Làm lại" (dùng chung với trang kết quả).
+     attempt-review.css: tô đúng/sai cho các dạng câu chưa làm lại giao diện.
+     review-shell.css: khung trang chữa bài + T/F/NG + sidebar Answer Help. --}}
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/attempt.css') }}">
+<link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/ielts-results.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/attempt-review.css') }}">
+<link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-shell.css') }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endpush
 
 @section('content')
-<div class="attempt-page">
+<div class="rvx-page">
     @if(!empty($isMentorPreview) && !empty($mentorPreviewExitUrl))
-    <div class="attempt-mentor-banner">
-        <span>Đang xem trước với vai trò học viên — bài làm và bản ghi âm sẽ bị xóa khi thoát xem trước.</span>
-        <a href="{{ $mentorPreviewExitUrl }}" onclick="return confirm('Thoát chế độ xem trước?');">Thoát preview</a>
-    </div>
+        <div class="rs-preview-banner rvx-preview-banner">
+            <span>Đang xem trước với vai trò học viên — bài làm và bản ghi âm sẽ bị xóa khi thoát xem trước.</span>
+            <a href="{{ $mentorPreviewExitUrl }}" onclick="return confirm('Thoát chế độ xem trước?');">Thoát preview</a>
+        </div>
     @endif
 
-    <div id="attemptRoot" class="exam-root">
-        <div class="exam-loading">Đang tải bài chữa...</div>
+    @include('design_1.panel.ielts_tests.partials.result_topbar', ['topbar' => $topbar])
+
+    {{-- exam-root is-review: giữ để CSS câu hỏi của trang làm bài và lớp tô
+         đúng/sai (attempt-review.css) vẫn áp dụng. --}}
+    <div id="attemptRoot" class="exam-root is-review rvx-root">
+        <div class="exam-body rvx-body">
+            <aside class="rvx-left">
+                <nav class="rvx-part-tabs" id="rvxPartTabs" aria-label="{{ $isListening ? 'Chọn Part' : 'Chọn Passage' }}"></nav>
+                <div class="exam-context rvx-context" id="rvxContext"></div>
+                <div class="rvx-pager" id="rvxPager">
+                    <button type="button" class="rvx-pager-arrow" data-step="-1" aria-label="Câu trước">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    <div class="rvx-pager-track" id="rvxPagerTrack" role="list"></div>
+                    <button type="button" class="rvx-pager-arrow" data-step="1" aria-label="Câu tiếp theo">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </aside>
+
+            {{-- Thanh kéo đổi độ rộng 2 cột — cùng giao diện với trang làm bài --}}
+            <div class="exam-resizer rvx-resizer" id="rvxResizer" role="separator"
+                 aria-orientation="vertical" aria-label="Kéo để đổi độ rộng cột" tabindex="0"></div>
+
+            <section class="rvx-right">
+                <div class="exam-questions rvx-questions" id="rvxQuestions">
+                    <div class="exam-loading">Đang tải bài chữa...</div>
+                </div>
+                <div class="rvx-footer">
+                    <button type="button" class="rvx-nav-btn rvx-nav-btn--prev" id="rvxPrev">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i> Câu trước
+                    </button>
+                    <button type="button" class="rvx-nav-btn rvx-nav-btn--next" id="rvxNext">
+                        Câu tiếp theo <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </section>
+        </div>
     </div>
 </div>
+
+{{-- ── Sidebar Answer Help (mở bằng icon bóng đèn) ──────────────────── --}}
+<div class="rvx-drawer" id="rvxDrawer" hidden>
+    <div class="rvx-drawer-backdrop" data-drawer-close></div>
+    <aside class="rvx-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="rvxDrawerTitle">
+        <header class="rvx-drawer-head">
+            <span class="rvx-drawer-icon"><i class="far fa-lightbulb" aria-hidden="true"></i></span>
+            <h3 id="rvxDrawerTitle">Answer Help</h3>
+            <button type="button" class="rvx-drawer-close" data-drawer-close aria-label="Đóng">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </header>
+        <div class="rvx-drawer-body" id="rvxDrawerBody"></div>
+    </aside>
+</div>
+
+@if(!empty($canRetake))
+    @include('design_1.panel.ielts_tests.partials.retake_modal', ['retakeUrl' => $retakeUrl])
+@endif
 @endsection
 
 @push('scripts_bottom')
@@ -31,15 +94,16 @@
     window.REVIEW_SECTION_DATA = @json($sectionData);
     window.REVIEW_SAVED_ANSWERS = @json((object) $savedAnswers->all());
     window.REVIEW_RESULTS = @json((object) $reviewResults);
+    window.ATTEMPT_HIGHLIGHTS = @json($highlights ?? (object) []);
 </script>
-@php
-    $assetV = fn (string $path) => asset($path) . '?v=' . (is_file(public_path($path)) ? filemtime(public_path($path)) : time());
-@endphp
-{{-- Cùng bộ máy UI với trang làm bài. KHÔNG nạp answers.js / highlights.js /
-     app.js — review.js thay thế cả 3. --}}
+{{-- Cùng bộ máy dựng câu hỏi với trang làm bài. KHÔNG nạp answers.js / app.js —
+     review.js thay thế. highlights.js chỉ để hiển thị lại highlight + note
+     (review.js khoá thao tác thêm/sửa/xoá). --}}
 <script src="{{ $assetV('assets/js/ielts-shared/blank-utils.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/state.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/renderers.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/layout.js') }}"></script>
+<script src="{{ $assetV('assets/js/ielts-tests/attempt/highlights.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/review.js') }}"></script>
+<script src="{{ $assetV('assets/js/ielts-tests/result-shell.js') }}"></script>
 @endpush

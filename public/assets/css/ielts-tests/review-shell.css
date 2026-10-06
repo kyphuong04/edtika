@@ -1,0 +1,570 @@
+/* =====================================================================
+   review-shell.css — khung trang CHỮA BÀI (Breakdown).
+   Nạp SAU attempt.css, ielts-results.css, attempt-review.css.
+   Tiền tố rvx- cho khung mới; không đụng trang làm bài.
+   ===================================================================== */
+
+.rvx-page,
+.rvx-drawer {
+    --rs-ink: #1e1b4b;
+    --rs-ink-soft: #4b5563;
+    --rs-muted: #8b88a8;
+    --rs-brand: #4c1d95;
+    --rs-brand-hover: #3b1574;
+    --rs-lilac: #f1ecfd;
+    --rs-lilac-strong: #e4dafb;
+    --rs-line: #ece8f6;
+    --rs-correct: #16a34a;
+    --rs-correct-bg: #dcfce7;
+    --rs-incorrect: #e11d48;
+    --rs-incorrect-bg: #ffe4e6;
+    --rs-empty: #8b88a8;
+    --rs-empty-bg: #f1f0f6;
+}
+
+.rvx-page *,
+.rvx-page *::before,
+.rvx-page *::after,
+.rvx-drawer *,
+.rvx-drawer *::before,
+.rvx-drawer *::after { box-sizing: border-box; }
+
+/* Phủ toàn màn hình, tách khỏi padding của layout panel bao ngoài. */
+.rvx-page {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    color: var(--rs-ink);
+}
+
+.rvx-preview-banner { flex-shrink: 0; margin: 8px 16px 0; }
+
+/* ── Navbar ───────────────────────────────────────────────────────── */
+.rs-topbar.rvx-topbar {
+    flex-shrink: 0;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--rs-line);
+    background: #fff;
+}
+
+/* ── Thân: 2 cột ──────────────────────────────────────────────────── */
+.exam-root.rvx-root {
+    flex: 1;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.rvx-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.rvx-left {
+    flex: 0 0 50%;   /* JS ghi đè flex-basis khi kéo thanh giữa */
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: #fff;
+}
+
+/* Thanh kéo giữa 2 cột: dùng lại .exam-resizer của attempt.css */
+.exam-resizer.rvx-resizer { flex-shrink: 0; }
+.exam-resizer.rvx-resizer:focus-visible {
+    outline: 2px solid var(--rs-brand);
+    outline-offset: -2px;
+}
+
+.rvx-right {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Tab Passage / Part */
+.rvx-part-tabs {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 16px 20px 4px;
+}
+
+.rvx-part-tab {
+    padding: 7px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--rs-lilac);
+    color: var(--rs-brand);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.rvx-part-tab:hover { background: var(--rs-lilac-strong); }
+.rvx-part-tab.is-active { background: var(--rs-brand); color: #fff; }
+.rvx-part-tab:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+/* Bài đọc */
+.exam-context.rvx-context {
+    flex: 1;
+    min-height: 0;
+    width: auto !important;
+    padding: 12px 20px 20px;
+    overflow-y: auto;
+    background: transparent;
+}
+.exam-context.rvx-context.hidden { display: block; }
+.rvx-context h4:empty { display: none; }
+
+.rvx-context .exam-context-passage {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--rs-ink);
+}
+.rvx-context .exam-context-passage :is(h1, h2, h3) {
+    margin: 4px 0 14px;
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #2e1065;
+}
+.rvx-context .exam-context-passage p { margin: 0 0 14px; }
+
+/* Thanh số câu dưới bài đọc */
+.rvx-pager {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--rs-line);
+}
+
+.rvx-pager-arrow {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--rs-lilac);
+    color: var(--rs-brand);
+    font-size: 13px;
+    cursor: pointer;
+}
+.rvx-pager-arrow:hover:not(:disabled) { background: var(--rs-lilac-strong); }
+.rvx-pager-arrow:disabled { opacity: .4; cursor: not-allowed; }
+
+.rvx-pager-track {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 6px;
+    padding-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rs-brand) var(--rs-line);
+}
+.rvx-pager-track::-webkit-scrollbar { height: 4px; }
+.rvx-pager-track::-webkit-scrollbar-track { background: var(--rs-line); border-radius: 4px; }
+.rvx-pager-track::-webkit-scrollbar-thumb { background: var(--rs-brand); border-radius: 4px; }
+
+.rvx-pager-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--rs-ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.rvx-pager-num:hover { background: var(--rs-lilac); }
+.rvx-pager-num.is-active { background: var(--rs-brand); color: #fff; }
+.rvx-pager-num:focus-visible,
+.rvx-pager-arrow:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+/* Cột câu hỏi */
+.exam-questions.rvx-questions {
+    flex: 1;
+    min-height: 0;
+    padding: 20px 32px 24px;
+    overflow-y: auto;
+}
+
+.rvx-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 32px 16px;
+    border-top: 1px solid var(--rs-line);
+}
+
+.rvx-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 170px;
+    height: 46px;
+    padding: 0 22px;
+    border: 1.5px solid var(--rs-brand);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.rvx-nav-btn--prev { background: #fff; color: var(--rs-brand); }
+.rvx-nav-btn--prev:hover:not(:disabled) { background: var(--rs-lilac); }
+.rvx-nav-btn--next { background: var(--rs-brand); color: #fff; }
+.rvx-nav-btn--next:hover:not(:disabled) { background: var(--rs-brand-hover); border-color: var(--rs-brand-hover); }
+.rvx-nav-btn:disabled { opacity: .45; cursor: not-allowed; }
+.rvx-nav-btn:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+/* ── Group câu hỏi ────────────────────────────────────────────────── */
+.rvx-group + .rvx-group { margin-top: 28px; }
+
+.rvx-group-heading {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #2e1065;
+}
+
+/* Hướng dẫn + bảng định nghĩa TRUE/FALSE/NOT GIVEN do người ra đề nhập */
+.rvx-group--tfng .exam-part-instructions {
+    margin: 0 0 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--rs-ink-soft);
+    font-size: 13px;
+    line-height: 1.6;
+}
+.rvx-group--tfng .exam-part-instructions > strong:first-child {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--rs-ink);
+}
+.rvx-group--tfng .exam-part-instructions table {
+    width: 100%;
+    margin: 12px 0 4px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border: 1px solid var(--rs-line);
+    border-radius: 10px;
+    font-size: 13px;
+}
+.rvx-group--tfng .exam-part-instructions :is(td, th) {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--rs-line);
+    text-align: left;
+    color: var(--rs-ink-soft);
+}
+.rvx-group--tfng .exam-part-instructions tr:last-child :is(td, th) { border-bottom: 0; }
+.rvx-group--tfng .exam-part-instructions tr :is(td, th):first-child {
+    width: 30%;
+    background: #faf8ff;
+    font-weight: 800;
+    color: var(--rs-ink);
+}
+
+/* ── Hàng T/F/NG, Y/N/NG ──────────────────────────────────────────── */
+.exam-question-card.rvx-tf-card {
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--rs-line);
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+}
+.exam-question-card.rvx-tf-card.rvx-current {
+    border-color: #c4b5fd;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+}
+
+.rvx-tf-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 150px 34px 38px;
+    align-items: center;
+    gap: 14px;
+}
+
+.rvx-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--rs-brand);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.rvx-tf-text .exam-question-text {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--rs-ink);
+}
+
+.exam-root.is-review .rvx-tf-answer .exam-tfng-select {
+    width: 100%;
+    max-width: none;
+    height: 36px;
+    margin: 0;
+    padding: 0 10px;
+    border: 1px solid #ddd6fe;
+    border-radius: 8px;
+    background-color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--rs-brand);
+    -webkit-text-fill-color: var(--rs-brand);
+}
+.rvx-tf-card.rvx-is-empty .rvx-tf-answer .exam-tfng-select {
+    color: var(--rs-muted);
+    -webkit-text-fill-color: var(--rs-muted);
+    border-style: dashed;
+}
+
+.rvx-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 15px;
+}
+.rvx-status.is-correct { background: var(--rs-correct-bg); color: var(--rs-correct); }
+.rvx-status.is-incorrect { background: var(--rs-incorrect-bg); color: var(--rs-incorrect); }
+.rvx-status.is-empty { background: var(--rs-empty-bg); color: var(--rs-empty); }
+
+.rvx-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--rs-lilac);
+    color: var(--rs-brand);
+    font-size: 17px;
+    cursor: pointer;
+    transition: background .15s, color .15s, transform .15s;
+}
+.rvx-help:hover { background: var(--rs-brand); color: #fff; }
+.rvx-help:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+/* ── Sidebar Answer Help ──────────────────────────────────────────── */
+body.rvx-drawer-open { overflow: hidden; }
+
+.rvx-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+}
+.rvx-drawer[hidden] { display: none; }
+
+.rvx-drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(30, 27, 75, .35);
+    opacity: 0;
+    transition: opacity .25s ease;
+}
+
+.rvx-drawer-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(460px, 100vw);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: -18px 0 48px rgba(30, 27, 75, .18);
+    transform: translateX(100%);
+    transition: transform .25s ease;
+}
+
+.rvx-drawer.is-open .rvx-drawer-backdrop { opacity: 1; }
+.rvx-drawer.is-open .rvx-drawer-panel { transform: translateX(0); }
+
+.rvx-drawer-head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--rs-line);
+}
+.rvx-drawer-head h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--rs-ink);
+}
+
+.rvx-drawer-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--rs-lilac);
+    color: var(--rs-brand);
+    font-size: 17px;
+}
+
+.rvx-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--rs-ink-soft);
+    font-size: 16px;
+    cursor: pointer;
+}
+.rvx-drawer-close:hover { background: var(--rs-lilac); color: var(--rs-brand); }
+.rvx-drawer-close:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+.rvx-drawer-body {
+    flex: 1;
+    min-height: 0;
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--rs-ink);
+}
+
+.rvx-help-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+.rvx-help-status.is-correct { background: var(--rs-correct-bg); color: var(--rs-correct); }
+.rvx-help-status.is-incorrect { background: var(--rs-incorrect-bg); color: var(--rs-incorrect); }
+.rvx-help-status.is-empty { background: var(--rs-empty-bg); color: #6d5e9c; }
+
+.rvx-help-question {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #faf8ff;
+}
+
+.rvx-help-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0 0 20px;
+}
+.rvx-help-answers > div {
+    padding: 10px 12px;
+    border: 1px solid var(--rs-line);
+    border-radius: 10px;
+}
+.rvx-help-answers dt {
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--rs-ink-soft);
+}
+.rvx-help-answers dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+}
+.rvx-help-answers dd.is-correct,
+.rvx-help-answers dd.is-key { color: var(--rs-correct); }
+.rvx-help-answers dd.is-incorrect { color: var(--rs-incorrect); }
+.rvx-help-answers dd.is-empty { color: var(--rs-muted); font-weight: 600; }
+
+.rvx-help-explain h4 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--rs-ink);
+}
+.rvx-help-explain-body p { margin: 0 0 10px; }
+.rvx-help-empty { margin: 0; color: var(--rs-muted); font-style: italic; }
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+    .rs-topbar.rvx-topbar { flex-wrap: wrap; row-gap: 8px; padding: 8px 16px; }
+}
+
+@media (max-width: 900px) {
+    .rvx-body { flex-direction: column; }
+    .exam-resizer.rvx-resizer { display: none; }
+    .rvx-left {
+        flex: 0 0 auto !important;
+        max-width: none;
+        max-height: 42vh;
+        border-right: 0;
+        border-bottom: 1px solid var(--rs-line);
+    }
+    .exam-questions.rvx-questions { padding: 16px; }
+    .rvx-footer { padding: 10px 16px 12px; }
+    .rvx-nav-btn { min-width: 0; flex: 1; }
+}
+
+@media (max-width: 640px) {
+    .rvx-tf-row {
+        grid-template-columns: 30px minmax(0, 1fr) 30px 34px;
+        grid-template-areas:
+            "num text   text   text"
+            ".   answer status help";
+        row-gap: 8px;
+    }
+    .rvx-num { grid-area: num; width: 30px; height: 30px; font-size: 13px; }
+    .rvx-tf-text { grid-area: text; }
+    .rvx-tf-answer { grid-area: answer; }
+    .rvx-status { grid-area: status; width: 30px; height: 30px; }
+    .rvx-help { grid-area: help; width: 34px; height: 34px; }
+    .rvx-help-answers { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rvx-drawer-backdrop,
+    .rvx-drawer-panel { transition: none; }
+}

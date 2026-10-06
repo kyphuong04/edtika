@@ -1748,8 +1748,8 @@ body.is-resizing-exam .exam-questions { pointer-events: none; }
 }
 
 .epn-question-num.answered {
-    background: #7c3aed;
-    border-color: #7c3aed;
+    background: #5A2B81;
+    border-color: #5A2B81;
     color: #fff;
 }
 

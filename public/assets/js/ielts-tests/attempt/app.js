@@ -462,11 +462,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     ExamLayout.els.submitBtn.addEventListener('click', () => {
         if (finished) return;
-
-        const unanswered = AttemptState.entries.filter((e) => !AttemptState.isAnswered(e.question.id));
-        if (unanswered.length > 0) {
+        const unansweredCount = AttemptState.entries.reduce(
+            (sum, e) => sum + (e.slotCount - AttemptState.answeredSlotCount(e)), 0
+        );
+        if (unansweredCount > 0) {
             const proceed = window.confirm(
-                `Còn ${unanswered.length} câu chưa trả lời. Vẫn muốn nộp phần thi này?`
+                `Còn ${unansweredCount} câu chưa trả lời. Vẫn muốn nộp phần thi này?`
             );
             if (!proceed) return;
         }

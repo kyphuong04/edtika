@@ -67,6 +67,61 @@ const AttemptState = {
         return String(value).trim() !== '';
     },
 
+        /**
+     * Ô thứ slotIndex (0-based) của 1 câu đã được trả lời chưa. Câu nhiều ô
+     * (completion, drag & drop, bảng, chọn nhiều đáp án) phải xét TỪNG Ô —
+     * isAnswered() chỉ cho biết cả câu có ô nào được làm hay không.
+     */
+    isSlotAnswered(entry, slotIndex) {
+        const q = entry.question;
+        if (entry.slotCount <= 1) return this.isAnswered(q.id);
+
+        const value = this.answers[q.id];
+        const filled = (v) => v !== undefined && v !== null && String(v).trim() !== '';
+
+        if (Array.isArray(value)) {
+            // "Choose TWO/THREE": mỗi lựa chọn đã tick tính 1 ô, không theo vị trí.
+            if (q.type === 'multiple_choice_multiple') return value.filter(filled).length > slotIndex;
+            return filled(value[slotIndex]);
+        }
+
+        if (value && typeof value === 'object') {
+            // table_completion: { "row-col": [blank0, blank1] } — ô thứ i là
+            // cell có chỗ trống thứ i (trái sang phải, trên xuống dưới).
+            const key = this.tableSlotKeys(q)[slotIndex];
+            const cell = key ? value[key] : null;
+            return Array.isArray(cell) ? cell.some(filled) : filled(cell);
+        }
+
+        return slotIndex === 0 && filled(value);
+    },
+
+    /** Số ô đã trả lời của 1 câu. */
+    answeredSlotCount(entry) {
+        let n = 0;
+        for (let i = 0; i < entry.slotCount; i++) {
+            if (this.isSlotAnswered(entry, i)) n++;
+        }
+        return n;
+    },
+
+    /** Danh sách "row-col" của các cell có chỗ trống, đúng thứ tự đánh số. */
+    tableSlotKeys(question) {
+        if (question.__tableSlotKeys) return question.__tableSlotKeys;
+
+        const keys = [];
+        const rows = ((question.table_structure || {}).rows) || [];
+        rows.forEach((row, rIdx) => {
+            const cells = Array.isArray(row) ? row : (row.cells || []);
+            cells.forEach((cellText, cIdx) => {
+                if (window.IeltsBlanks && window.IeltsBlanks.count(cellText || '') > 0) keys.push(rIdx + '-' + cIdx);
+            });
+        });
+
+        question.__tableSlotKeys = keys;
+        return keys;
+    },
+
     currentPart() {
         return this.parts[this.part.index] || null;
     },

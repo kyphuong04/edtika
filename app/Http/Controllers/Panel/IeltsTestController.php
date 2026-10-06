@@ -1334,7 +1334,7 @@ class IeltsTestController extends Controller
             ];
         }
 
-        // ── Tab chuyển phần (Mock nhiều kỹ năng) ──────────────────────
+        // ── Tab chuyển kỹ năng (Mock nhiều kỹ năng) ───────────────────
         $reviewUrl = route('panel.ielts_tests.review', $attempt->id);
         $sectionTabs = $sections->map(function ($s) use ($sections, $section, $reviewUrl) {
             $sameSkill = $sections->where('skill', $s->skill)->values();
@@ -1354,6 +1354,36 @@ class IeltsTestController extends Controller
 
         $skillBand = $attempt->getAttribute($section->skill . '_band');
 
+        // ── Dải thống kê trên navbar: cả kỹ năng đang xem ─────────────
+        $slotSummary = $this->sectionSlotSummary($attempt, $section);
+        $stats = [
+            'correct' => $slotSummary['correct'],
+            'incorrect' => $slotSummary['incorrect'],
+            'empty' => $slotSummary['empty'],
+            'total' => $slotSummary['total'],
+        ];
+
+        // ── Highlight + ghi chú học viên tạo lúc làm bài (chỉ xem) ─────
+        $highlights = IeltsAttemptHighlight::where('attempt_id', $attempt->id)
+            ->orderBy('start_offset')
+            ->get(['id', 'part_id', 'start_offset', 'end_offset', 'text', 'note'])
+            ->groupBy('part_id')
+            ->map(fn ($rows) => $rows->map(fn ($r) => [
+                'id' => $r->id,
+                'start' => $r->start_offset,
+                'end' => $r->end_offset,
+                'text' => $r->text,
+                'note' => $r->note,
+            ])->values());
+
+        // Chỉ chính học viên mới làm lại / xem trang kết quả được.
+        $canRetake = $isOwner
+            && (!empty($attempt->is_preview) || $attempt->test->canUserTake($attempt->user_id) === true);
+
+        $backUrl = $attempt->test->type === 'mock'
+            ? route('panel.ielts_tests.mock')
+            : route('panel.ielts_tests.practice');
+
         return view('design_1.panel.ielts_tests.attempt.review', [
             'pageTitle' => 'Review: ' . $attempt->test->title,
             'justContent' => true,
@@ -1364,6 +1394,20 @@ class IeltsTestController extends Controller
             'sectionData' => $sectionData,
             'savedAnswers' => $savedAnswers,
             'reviewResults' => $reviewResults,
+            'highlights' => $highlights,
+            'canRetake' => $canRetake,
+            'retakeUrl' => route('panel.ielts_tests.retake', $attempt->id),
+            'topbar' => [
+                'active' => 'breakdown',
+                'logoUrl' => $backUrl,
+                'overallUrl' => $isOwner ? route('panel.ielts_tests.results', $attempt->id) : null,
+                'breakdownUrl' => $request->fullUrl(),
+                'stats' => $stats,
+                'canRetake' => $canRetake,
+                'studentName' => $isOwner ? null : ($attempt->user->full_name ?? $attempt->user->name ?? ''),
+                'sections' => $sectionTabs->all(),
+                'extraClass' => 'rvx-topbar',
+            ],
             'attemptMeta' => [
                 'attemptId' => $attempt->id,
                 'testId' => $attempt->test_id,
@@ -1376,9 +1420,7 @@ class IeltsTestController extends Controller
                 'score' => $score,
                 'total' => $total,
                 'band' => $skillBand !== null ? (float) $skillBand : null,
-                'resultsUrl' => route('panel.ielts_tests.results', $attempt->id),
-                'sections' => $sectionTabs,
-                'studentName' => $isOwner ? null : ($attempt->user->full_name ?? $attempt->user->name ?? ''),
+                'resultsUrl' => $isOwner ? route('panel.ielts_tests.results', $attempt->id) : null,
             ],
         ]);
     }
