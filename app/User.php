@@ -212,6 +212,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Thay 3 banner trang kết quả IELTS (Admin > IELTS Tests > Banner trang kết quả).
+     */
+    public function canManageIeltsResultBanners()
+    {
+        return $this->isManager() || $this->isCeo();
+    }
+
+    /**
      * All Adaptive Placement Test attempts this user has taken, most recent first.
      */
     public function placementAttempts()

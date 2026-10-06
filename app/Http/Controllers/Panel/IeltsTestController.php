@@ -8,6 +8,7 @@ use App\Support\Ielts\GradesIeltsAttempts;
 
 use App\Http\Controllers\Controller;
 use App\Models\IeltsTest;
+use App\Models\IeltsResultBanner;
 use App\Models\IeltsTestAttempt;
 use App\Models\IeltsTestAnswer;
 use App\Models\IeltsTestSection;
@@ -434,6 +435,14 @@ class IeltsTestController extends Controller
 
         if ($attempt->status === 'completed') {
             return redirect()->route('panel.ielts_tests.results', $attemptId);
+        }
+
+        if ($attempt->status === IeltsTestAttempt::STATUS_ARCHIVED) {
+            return redirect()->route('panel.ielts_tests.mock')->with(['toast' => [
+                'title' => 'Bài làm đã được làm lại',
+                'msg' => 'Kết quả này đã bị hủy khi bạn chọn làm lại bài thi.',
+                'status' => 'info',
+            ]]);
         }
 
         $currentSection = $attempt->currentSection;
@@ -880,69 +889,498 @@ class IeltsTestController extends Controller
         $this->finalizeAttempt($attempt);
     }
     
+    
+
     /**
-     * View results
+     * Trang kết quả: tab Overall (banner theo tỷ lệ đúng, ô điểm, xem giải
+     * thích) và tab Breakdown (bảng theo loại câu hỏi, chi tiết từng kỹ năng).
      */
     public function results($attemptId)
     {
-        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with(['test', 'answers.question.section'])
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')
+            ->with(['test.sections.parts.questionGroups', 'test.sections.questions', 'answers'])
             ->findOrFail($attemptId);
-        
+
         if ($attempt->user_id !== auth()->id()) {
             abort(403);
         }
-        
+
+        if ($attempt->status !== 'completed') {
+            return redirect()->route('panel.ielts_tests.take', $attempt->id);
+        }
+
         $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
             && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
 
-        $data = [
-            'pageTitle' => 'Test Results',
+        $test = $attempt->test;
+        $reviewUrl = route('panel.ielts_tests.review', $attempt->id);
+
+        $skillOrder = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
+        $skillLabels = [
+            'listening' => 'Listening', 'reading' => 'Reading', 'writing' => 'Writing',
+            'speaking' => 'Speaking', 'grammar' => 'Grammar', 'vocabulary' => 'Vocabulary',
+        ];
+        $criteriaLabels = [
+            'writing' => [
+                'task_achievement' => 'Task Achievement / Response',
+                'coherence' => 'Coherence & Cohesion',
+                'lexical' => 'Lexical Resource',
+                'grammar' => 'Grammatical Range & Accuracy',
+            ],
+            'speaking' => [
+                'fluency' => 'Fluency & Coherence',
+                'lexical' => 'Lexical Resource',
+                'grammar' => 'Grammatical Range & Accuracy',
+                'pronunciation' => 'Pronunciation',
+            ],
+        ];
+
+        $skills = [];
+        $summary = ['correct' => 0, 'incorrect' => 0, 'empty' => 0, 'total' => 0];
+        $byLabel = [];
+
+        foreach ($test->sections->sortBy('sort_order')->values()->groupBy('skill') as $skill => $skillSections) {
+            $skillSections = $skillSections->values();
+            $label = $skillLabels[$skill] ?? ucfirst($skill);
+
+            // ── Writing / Speaking: mentor chấm tay ──────────────────
+            if (in_array($skill, ['writing', 'speaking'], true)) {
+                $graded = !empty($attempt->getAttribute($skill . '_graded_at'));
+                $raw = $attempt->getAttribute($skill . '_criteria');
+                $criteria = is_array($raw) ? $raw : (json_decode((string) $raw, true) ?: []);
+
+                $rows = [];
+                foreach ($criteriaLabels[$skill] as $key => $criterionLabel) {
+                    $value = $criteria[$key] ?? null;
+                    $rows[] = [
+                        'label' => $criterionLabel,
+                        'value' => ($graded && is_numeric($value)) ? (float) $value : null,
+                    ];
+                }
+
+                $band = $attempt->getAttribute($skill . '_band');
+
+                $skills[] = [
+                    'skill' => $skill,
+                    'label' => $label,
+                    'type' => 'manual',
+                    'graded' => $graded,
+                    'band' => ($graded && $band !== null) ? (float) $band : null,
+                    'criteria' => $rows,
+                    'reviewUrl' => $reviewUrl . '?skill=' . $skill,
+                ];
+                continue;
+            }
+
+            // ── Listening / Reading / ...: chấm tự động theo từng ô ──
+            $agg = ['correct' => 0, 'incorrect' => 0, 'empty' => 0, 'total' => 0];
+            $sectionBlocks = [];
+
+            foreach ($skillSections as $index => $section) {
+                $sectionSummary = $this->sectionSlotSummary($attempt, $section);
+
+                foreach (array_keys($agg) as $key) {
+                    $agg[$key] += $sectionSummary[$key];
+                }
+
+                foreach ($sectionSummary['byType'] as $type => $counts) {
+                    $meta = $this->questionTypeMeta($type);
+                    $byLabel[$meta['label']] ??= $meta + ['total' => 0, 'correct' => 0, 'incorrect' => 0, 'empty' => 0];
+                    foreach (['total', 'correct', 'incorrect', 'empty'] as $key) {
+                        $byLabel[$meta['label']][$key] += $counts[$key];
+                    }
+                }
+
+                $sectionBlocks[] = [
+                    'label' => $skillSections->count() > 1 ? $label . ' ' . ($index + 1) : null,
+                    'reviewUrl' => $reviewUrl . '?section=' . $section->id,
+                    'parts' => $sectionSummary['parts'],
+                ];
+            }
+
+            foreach (array_keys($summary) as $key) {
+                $summary[$key] += $agg[$key];
+            }
+
+            $band = $attempt->getAttribute($skill . '_band');
+
+            $skills[] = [
+                'skill' => $skill,
+                'label' => $label,
+                'type' => 'auto',
+                'band' => $band !== null ? (float) $band : null,
+                'sections' => $sectionBlocks,
+                'reviewUrl' => $sectionBlocks[0]['reviewUrl'] ?? $reviewUrl,
+            ] + $agg;
+        }
+
+        $orderOf = function (string $skill) use ($skillOrder) {
+            $pos = array_search($skill, $skillOrder, true);
+            return $pos === false ? 99 : $pos;
+        };
+        usort($skills, fn ($a, $b) => $orderOf($a['skill']) <=> $orderOf($b['skill']));
+
+        $overallBand = $attempt->overall_band !== null ? (float) $attempt->overall_band : null;
+        if ($overallBand === null && count($skills) === 1) {
+            $overallBand = $skills[0]['band'];
+        }
+
+        $pendingManual = collect($skills)->where('type', 'manual')->where('graded', false)->pluck('label')->all();
+
+        // ── Banner: tỷ lệ ô đúng của Listening/Reading; đề chỉ có W/S thì
+        //    dùng band/9 khi đã chấm xong, chờ chấm -> banner động viên.
+        if ($summary['total'] > 0) {
+            $ratio = $summary['correct'] / $summary['total'];
+        } else {
+            $ratio = (empty($pendingManual) && $overallBand !== null) ? $overallBand / 9 : null;
+        }
+        $banner = IeltsResultBanner::forTier(IeltsResultBanner::tierForRatio($ratio));
+
+        $seconds = ($attempt->started_at && $attempt->completed_at)
+            ? max(0, (int) $attempt->completed_at - (int) $attempt->started_at)
+            : null;
+        $durationLabel = $seconds === null
+            ? '--:--:--'
+            : sprintf('%02d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
+
+        // Preview của giáo viên luôn làm lại được; học viên thì theo canUserTake().
+        $canRetake = !empty($attempt->is_preview) || $test->canUserTake($attempt->user_id) === true;
+
+        return view('design_1.panel.ielts_tests.results', [
+            'pageTitle' => 'Results: ' . $test->title,
+            'justContent' => true,
             'attempt' => $attempt,
-            'test' => $attempt->test,
+            'test' => $test,
+            'skills' => $skills,
+            'summary' => $summary,
+            'byType' => array_values($byLabel),
+            'overallBand' => $overallBand,
+            'pendingManual' => $pendingManual,
+            'banner' => $banner,
+            'durationLabel' => $durationLabel,
+            'reviewUrl' => $skills[0]['reviewUrl'] ?? $reviewUrl,
+            'canRetake' => $canRetake,
+            'retakeUrl' => route('panel.ielts_tests.retake', $attempt->id),
+            'backUrl' => $test->type === 'mock'
+                ? route('panel.ielts_tests.mock')
+                : route('panel.ielts_tests.practice'),
             'isMentorPreview' => $isMentorPreview,
             'mentorPreviewExitUrl' => $isMentorPreview
                 ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
                 : null,
+        ]);
+    }
+
+    /**
+     * Nút "Làm lại" ở trang kết quả.
+     *  - Học viên: lưu trữ bài cũ (archived) rồi mở bài mới qua startTest().
+     *  - Preview của giáo viên: xoá hẳn bài preview rồi mở preview mới.
+     */
+    public function retakeTest(Request $request, $attemptId)
+    {
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')
+            ->with('test.sections')
+            ->findOrFail($attemptId);
+
+        if ($attempt->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($attempt->status !== 'completed') {
+            return redirect()->route('panel.ielts_tests.mock');
+        }
+
+        $test = $attempt->test;
+
+        if (!empty($attempt->is_preview)) {
+            IeltsAttemptHighlight::where('attempt_id', $attempt->id)->delete();
+            $attempt->deleteWithRelatedData();
+
+            return redirect()->route('panel.my_ielts_tests.preview_student', $test->id);
+        }
+
+        // Kiểm tra TRƯỚC khi lưu trữ: không được làm lại thì giữ nguyên bài cũ.
+        $canTake = $test->canUserTake(auth()->id());
+        if ($canTake !== true) {
+            $messages = [
+                'daily_limit' => 'Bạn đã dùng hết lượt Mock Test hôm nay. Hãy quay lại vào ngày mai.',
+                'max_attempts' => 'Bạn đã đạt số lần làm tối đa của đề này.',
+                'not_enrolled' => 'Bạn cần đăng ký khoá học để làm đề này.',
+            ];
+
+            return back()->with(['toast' => [
+                'title' => 'Chưa thể làm lại',
+                'msg' => $messages[$canTake] ?? 'Bạn chưa thể làm lại đề này.',
+                'status' => 'error',
+            ]]);
+        }
+
+        $attempt->archive(auth()->id());
+
+        return $this->startTest($request, $test->id);
+    }
+
+    /** Nhãn + icon cho bảng "Bảng dữ liệu chi tiết". */
+    private function questionTypeMeta(string $type): array
+    {
+        $map = [
+            'multiple_choice_single' => ['Multiple choice (One Answer)', 'fa-list-ul'],
+            'multiple_choice_multiple' => ['Multiple choice (Many Answers)', 'fa-tasks'],
+            'true_false_not_given' => ['True / False / Not Given', 'fa-check-double'],
+            'yes_no_not_given' => ['Yes / No / Not Given', 'fa-check-double'],
+            'matching_headings' => ['Matching headings', 'fa-random'],
+            'matching_information' => ['Matching information', 'fa-random'],
+            'matching_features' => ['Matching features', 'fa-random'],
+            'matching_sentence_endings' => ['Matching sentence endings', 'fa-random'],
+            'sentence_completion' => ['Sentence Completion', 'fa-pen'],
+            'summary_completion' => ['Summary Completion', 'fa-align-left'],
+            'note_completion' => ['Note Completion', 'fa-sticky-note'],
+            'table_completion' => ['Table Completion', 'fa-table'],
+            'diagram_labeling' => ['Diagram / Map Labeling', 'fa-map-marked-alt'],
+            'short_answer' => ['Short Answer', 'fa-pen'],
+            'drag_drop_disappear' => ['Drag & Drop', 'fa-hand-pointer'],
+            'drag_drop_reuse' => ['Drag & Drop', 'fa-hand-pointer'],
         ];
-        
-        return view('design_1.panel.ielts_tests.results', $data);
+
+        [$label, $icon] = $map[$type] ?? [ucwords(str_replace('_', ' ', $type)), 'fa-question-circle'];
+
+        return ['label' => $label, 'icon' => $icon];
+    }
+
+
+        /**
+     * Trạng thái TỪNG Ô của 1 section, đánh số đúng thứ tự trang làm bài
+     * (buildSectionData: part -> group -> câu hỏi, mỗi câu chiếm slotCount số).
+     * Kèm thống kê theo loại câu hỏi cho "Bảng dữ liệu chi tiết".
+     *
+     * @return array{parts: array, byType: array, correct: int, incorrect: int, empty: int, total: int}
+     */
+    private function sectionSlotSummary(IeltsTestAttempt $attempt, IeltsTestSection $section): array
+    {
+        $questions = $section->questions->keyBy('id');
+        $answers = $attempt->answers->keyBy('question_id');
+        $payload = $this->buildSectionData($section);
+
+        $counts = ['correct' => 0, 'incorrect' => 0, 'empty' => 0];
+        $byType = [];
+        $parts = [];
+        $number = 1;
+
+        foreach ($payload['parts'] ?? [] as $partIndex => $part) {
+            $items = [];
+
+            foreach ($part['groups'] ?? [] as $group) {
+                foreach ($group['questions'] ?? [] as $questionPayload) {
+                    $question = $questions->get($questionPayload['id'] ?? null);
+                    $slotCount = max(1, (int) ($questionPayload['slotCount'] ?? 1));
+                    $type = (string) ($questionPayload['type'] ?? ($question->question_type ?? 'other'));
+
+                    $slots = [];
+                    if ($question && $question->auto_gradable) {
+                        $answer = $answers->get($question->id);
+                        if ($answer) {
+                            $answer->setRelation('question', $question);
+                        }
+                        $slots = $question->gradeSlots($answer ? $answer->submittedValue() : null);
+                    }
+
+                    for ($i = 0; $i < $slotCount; $i++) {
+                        $slot = $slots[$i] ?? null;
+                        $submitted = $slot['submitted'] ?? null;
+
+                        if ($slot && $slot['correct']) {
+                            $status = 'correct';
+                        } elseif ($submitted !== null && trim((string) $submitted) !== '') {
+                            $status = 'incorrect';
+                        } else {
+                            $status = 'empty';
+                        }
+
+                        $counts[$status]++;
+
+                        if (!isset($byType[$type])) {
+                            $byType[$type] = ['total' => 0, 'correct' => 0, 'incorrect' => 0, 'empty' => 0];
+                        }
+                        $byType[$type]['total']++;
+                        $byType[$type][$status]++;
+
+                        $items[] = ['n' => $number++, 'status' => $status];
+                    }
+                }
+            }
+
+            $parts[] = [
+                'title' => !empty($part['title']) ? $part['title'] : ('Part ' . ($partIndex + 1)),
+                'items' => $items,
+            ];
+        }
+
+        return ['parts' => $parts, 'byType' => $byType, 'total' => array_sum($counts)] + $counts;
     }
     
     /**
-     * Review answers
+     * Trang chữa bài.
+     *  - Listening / Reading / Grammar / Vocabulary: giao diện MỚI — dùng lại
+     *    bộ máy UI của trang làm bài ở chế độ chỉ đọc (attempt/review.blade.php).
+     *  - Writing / Speaking: tạm giữ giao diện cũ (review.blade.php) tới bước 4.
+     *
+     * Chọn phần cần xem: ?section={id} (ưu tiên) hoặc ?skill={skill} (trang kết
+     * quả multi-skill đang dùng), mặc định section đầu tiên của đề.
      */
-    public function reviewAnswers($attemptId)
+    public function reviewAnswers(Request $request, $attemptId)
     {
-        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->with(['test.sections.questions.questionGroup', 'answers', 'writingGrader'])
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')
+            ->with([
+                'test.sections.parts.questionGroups',
+                'test.sections.questions.questionGroup',
+                'answers',
+                'writingGrader',
+                'user',
+            ])
             ->findOrFail($attemptId);
-        
+
         $authUser = auth()->user();
-        
-        // Owner, teachers, admins, organizations, and managers can view
-        $canView = $attempt->user_id === $authUser->id 
-            || $authUser->isTeacher() 
-            || $authUser->isAdmin() 
+        $isOwner = $attempt->user_id === $authUser->id;
+
+        $canView = $isOwner
+            || $authUser->isTeacher()
+            || $authUser->isAdmin()
             || $authUser->isOrganization()
             || $authUser->isManager();
-        
+
         if (!$canView) {
             abort(403);
         }
-        
+
+        // Chưa nộp xong thì không có gì để chữa.
+        if ($attempt->status !== 'completed') {
+            if ($isOwner) {
+                return redirect()->route('panel.ielts_tests.take', $attempt->id);
+            }
+            abort(404);
+        }
+
         $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
             && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
+        $mentorPreviewExitUrl = $isMentorPreview
+            ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
+            : null;
 
-        $data = [
-            'pageTitle' => trans('update.review_answers'),
+        $sections = $attempt->test->sections->sortBy('sort_order')->values();
+
+        $section = null;
+        if ($request->filled('section')) {
+            $section = $sections->firstWhere('id', (int) $request->input('section'));
+        }
+        if (!$section && $request->filled('skill')) {
+            $section = $sections->firstWhere('skill', (string) $request->input('skill'));
+        }
+        if (!$section) {
+            $section = $sections->first();
+        }
+
+        // Writing / Speaking (hoặc đề không có section): giao diện cũ.
+        if (!$section || in_array($section->skill, ['writing', 'speaking'], true)) {
+            return view('design_1.panel.ielts_tests.review', [
+                'pageTitle' => trans('update.review_answers'),
+                'attempt' => $attempt,
+                'test' => $attempt->test,
+                'isMentorPreview' => $isMentorPreview,
+                'mentorPreviewExitUrl' => $mentorPreviewExitUrl,
+            ]);
+        }
+
+        // ── Dữ liệu đề: cùng nguồn với trang làm bài ──────────────────
+        $sectionData = $this->buildSectionData($section);
+        $sectionData = $this->resolveSectionMediaUrls($sectionData);
+
+        foreach ($sectionData['parts'] as &$part) {
+            $part['transcript'] = !empty($part['transcript']) ? clean($part['transcript']) : null;
+        }
+        unset($part);
+
+        // ── Đáp án học viên: cùng shape với takeTest() ────────────────
+        $answersByQuestion = $attempt->answers->keyBy('question_id');
+
+        $savedAnswers = $attempt->answers->mapWithKeys(fn ($answer) => [
+            $answer->question_id => [
+                'answer_text' => $answer->answer_text,
+                'answer_options' => $answer->answer_options_array,
+                'file_url' => $answer->audio_url,
+            ],
+        ]);
+
+        // ── Kết quả chấm theo TỪNG Ô: cùng gradeSlots() dùng để tính điểm ──
+        $reviewResults = [];
+        $score = 0;
+        $total = 0;
+
+        foreach ($section->questions as $question) {
+            $answer = $answersByQuestion->get($question->id);
+            if ($answer) {
+                $answer->setRelation('question', $question);
+            }
+
+            $slots = $question->auto_gradable
+                ? $question->gradeSlots($answer ? $answer->submittedValue() : null)
+                : [];
+
+            $score += count(array_filter($slots, fn ($slot) => $slot['correct']));
+            $total += $question->slotCount();
+
+            $reviewResults[$question->id] = [
+                'slots' => $slots,
+                'explanation' => !empty($question->explanation) ? clean($question->explanation) : null,
+            ];
+        }
+
+        // ── Tab chuyển phần (Mock nhiều kỹ năng) ──────────────────────
+        $reviewUrl = route('panel.ielts_tests.review', $attempt->id);
+        $sectionTabs = $sections->map(function ($s) use ($sections, $section, $reviewUrl) {
+            $sameSkill = $sections->where('skill', $s->skill)->values();
+            $label = ucfirst($s->skill);
+            if ($sameSkill->count() > 1) {
+                $label .= ' ' . ($sameSkill->search(fn ($x) => $x->id === $s->id) + 1);
+            }
+
+            $isManual = in_array($s->skill, ['writing', 'speaking'], true);
+
+            return [
+                'label' => $label,
+                'url' => $reviewUrl . ($isManual ? '?skill=' . $s->skill : '?section=' . $s->id),
+                'active' => $s->id === $section->id,
+            ];
+        })->values();
+
+        $skillBand = $attempt->getAttribute($section->skill . '_band');
+
+        return view('design_1.panel.ielts_tests.attempt.review', [
+            'pageTitle' => 'Review: ' . $attempt->test->title,
+            'justContent' => true,
             'attempt' => $attempt,
             'test' => $attempt->test,
             'isMentorPreview' => $isMentorPreview,
-            'mentorPreviewExitUrl' => $isMentorPreview
-                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
-                : null,
-        ];
-        
-        return view('design_1.panel.ielts_tests.review', $data);
+            'mentorPreviewExitUrl' => $mentorPreviewExitUrl,
+            'sectionData' => $sectionData,
+            'savedAnswers' => $savedAnswers,
+            'reviewResults' => $reviewResults,
+            'attemptMeta' => [
+                'attemptId' => $attempt->id,
+                'testId' => $attempt->test_id,
+                'testTitle' => $attempt->test->title,
+                'testType' => 'review',
+                'isMockTest' => false, // review: audio tua tự do, không gate
+                'skill' => $section->skill,
+            ],
+            'reviewMeta' => [
+                'score' => $score,
+                'total' => $total,
+                'band' => $skillBand !== null ? (float) $skillBand : null,
+                'resultsUrl' => route('panel.ielts_tests.results', $attempt->id),
+                'sections' => $sectionTabs,
+                'studentName' => $isOwner ? null : ($attempt->user->full_name ?? $attempt->user->name ?? ''),
+            ],
+        ]);
     }
 
     public function attemptSectionData($attemptId)

@@ -1,0 +1,162 @@
+/* =====================================================================
+   review.css — chế độ CHỮA BÀI. Nạp SAU attempt.css.
+   Mọi rule nằm dưới .exam-root.is-review -> không đụng trang làm bài.
+   ===================================================================== */
+
+.exam-root.is-review .attempt-save-indicator { display: none; }
+
+/* Input bị khoá nhưng vẫn phải đọc rõ */
+.exam-root.is-review input:disabled,
+.exam-root.is-review select:disabled,
+.exam-root.is-review textarea:disabled {
+    opacity: 1;
+    color: #1f2937;
+    -webkit-text-fill-color: #1f2937;
+    cursor: default;
+}
+.exam-root.is-review .exam-option-row,
+.exam-root.is-review .exam-matrix-cell label { cursor: default; }
+
+/* ── Header: điểm thay đồng hồ ─────────────────────────────────────── */
+.exam-root.is-review .exam-timer.rv-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #f5f3ff;
+    color: #511D99;
+    font-weight: 800;
+    font-size: 13px;
+    white-space: nowrap;
+}
+.exam-root.is-review .rv-band {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #511D99;
+    color: #fff;
+    font-size: 12px;
+}
+.exam-root.is-review .rv-student {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+.exam-root.is-review a.exam-skill-tab { text-decoration: none; }
+
+/* Nút quay lại kết quả (thay nút nộp bài) */
+.exam-root.is-review .exam-submit-check-btn.rv-back-btn {
+    width: auto;
+    gap: 8px;
+    padding: 0 16px;
+    background: #511D99;
+    border-color: #511D99;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.exam-root.is-review .exam-submit-check-btn.rv-back-btn:hover { background: #3f1677; }
+
+/* ── Đáp án đúng chèn sau ô ────────────────────────────────────────── */
+.exam-root.is-review .rv-key {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 6px 0 2px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 13px;
+    font-weight: 700;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.exam-root.is-review .rv-key::before { content: '\2192'; margin-right: 4px; }
+
+/* ── Ô điền ────────────────────────────────────────────────────────── */
+.exam-root.is-review .exam-blank-input.graded-incorrect { text-decoration: line-through; }
+.exam-root.is-review .exam-blank-input.graded-empty {
+    border-bottom-color: #9ca3af;
+    background: #f3f4f6;
+}
+
+/* ── Dropdown TFNG, ô matching, ô drag & drop, ô short answer ──────── */
+.exam-root.is-review .graded-correct:is(.exam-tfng-select, .exam-match-slot, .exam-dd-slot, .exam-short-input) {
+    border-color: #22c55e !important;
+    background: #f0fdf4 !important;
+}
+.exam-root.is-review .graded-incorrect:is(.exam-tfng-select, .exam-match-slot, .exam-dd-slot, .exam-short-input) {
+    border-color: #ef4444 !important;
+    background: #fef2f2 !important;
+}
+.exam-root.is-review .graded-empty:is(.exam-tfng-select, .exam-match-slot, .exam-dd-slot, .exam-short-input) {
+    border-color: #9ca3af !important;
+    border-style: dashed !important;
+    background: #f9fafb !important;
+}
+
+/* ── Trắc nghiệm: đè style "selected" tím của trang làm bài ─────────── */
+.exam-root.is-review .exam-option-row.correct-highlight {
+    border-color: #22c55e;
+    background: #f0fdf4;
+    box-shadow: none;
+}
+.exam-root.is-review .exam-option-row.incorrect-highlight {
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: none;
+}
+
+/* ── Ma trận matching ──────────────────────────────────────────────── */
+.exam-root.is-review .exam-matrix-cell.rv-cell-key { background: #dcfce7 !important; }
+.exam-root.is-review .exam-matrix-cell.rv-cell-wrong { background: #fee2e2 !important; }
+.exam-root.is-review .exam-matrix-row.graded-empty .exam-matrix-num { background: #9ca3af; }
+
+/* ── Thanh điều hướng ──────────────────────────────────────────────── */
+.exam-root.is-review .epn-question-num.skipped {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #9ca3af;
+}
+.exam-root.is-review .epn-question-num.current { border: 2px solid #111827 !important; }
+
+/* ── Giải thích ────────────────────────────────────────────────────── */
+.exam-root.is-review .rv-explain-title {
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.exam-root.is-review .rv-loose-explanations { margin-top: 20px; }
+.exam-root.is-review .rv-loose-item + .rv-loose-item { margin-top: 8px; }
+
+/* ── Transcript (Listening) ────────────────────────────────────────── */
+.exam-root.is-review .rv-transcript-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 14px;
+    border: 1px solid #ddd6fe;
+    border-radius: 8px;
+    background: #fff;
+    color: #511D99;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.exam-root.is-review .rv-transcript-toggle:hover { background: #faf8ff; }
+.exam-root.is-review .rv-transcript {
+    margin-top: 12px;
+    padding: 14px 16px;
+    max-height: 360px;
+    overflow-y: auto;
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1f2937;
+}
+.exam-root.is-review .rv-hidden { display: none; }

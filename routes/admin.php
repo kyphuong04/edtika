@@ -1348,6 +1348,16 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::post('/store/mock', 'IeltsTestController@storeMock')->name('admin.ielts_tests.store_mock');
             Route::post('/store/practice', 'IeltsTestController@storePractice')->name('admin.ielts_tests.store_practice');
             
+            // Banner trang kết quả (Manager / CEO)
+            Route::get('/result-banners', 'IeltsResultBannerController@index')
+                ->name('admin.ielts_result_banners.index');
+            Route::post('/result-banners/{tier}/upload', 'IeltsResultBannerController@upload')
+                ->where('tier', 'low|mid|high')
+                ->name('admin.ielts_result_banners.upload');
+            Route::post('/result-banners/{tier}/reset', 'IeltsResultBannerController@reset')
+                ->where('tier', 'low|mid|high')
+                ->name('admin.ielts_result_banners.reset');
+
             Route::post('/store', 'IeltsTestController@store')->name('admin.ielts_tests.store');
             Route::get('/{id}/edit', 'IeltsTestController@edit')->name('admin.ielts_tests.edit');
             Route::post('/{id}/update', 'IeltsTestController@update')->name('admin.ielts_tests.update');

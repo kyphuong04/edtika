@@ -21,6 +21,8 @@ class IeltsTestAttempt extends Model
     protected $table = 'ielts_test_attempts';
     
     protected $guarded = ['id'];
+
+    public const STATUS_ARCHIVED = 'archived';
     
     // SAU
     protected $casts = [
@@ -68,6 +70,16 @@ class IeltsTestAttempt extends Model
                 $attempt->is_preview = false;
             }
         });
+    }
+
+    public function archive(?int $byUserId = null): void
+    {
+        $this->forceFill([
+            'status' => self::STATUS_ARCHIVED,
+            'archived_at' => time(),
+            'archived_by' => $byUserId,
+            'updated_at' => time(),
+        ])->save();
     }
 
     /**

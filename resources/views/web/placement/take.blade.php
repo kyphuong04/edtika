@@ -110,14 +110,14 @@
     line-height: 1.5;
 }
 
-/* ── Gộp số thứ tự và nội dung câu hỏi lên cùng một dòng ──────────────
-   Summernote bọc nội dung trong <p> (thẻ block) nên mặc định nó luôn
-   xuống dòng. Ép <p> ĐẦU TIÊN về inline; các <p> sau vẫn xuống dòng
-   bình thường để nội dung nhiều đoạn hiển thị đúng. */
+
+/* ── Hàng đầu: số thứ tự + đề bài trên CÙNG MỘT DÒNG ─────────────────
+   Nội dung câu hỏi tách xuống dòng riêng để chiếm trọn chiều rộng,
+   dễ đọc với câu dài. */
 .pt-q-head {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 14px;
 }
@@ -127,25 +127,25 @@
     margin-bottom: 0;
 }
 
-.pt-q-head .pt-q-text {
+/* Đề bài: khung tím nhạt kéo dài hết phần còn lại của hàng. */
+.pt-q-head .pt-instruction {
     flex: 1;
     min-width: 0;
     margin-bottom: 0;
+    border-left: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
 }
 
-/* Chỉ thẻ đầu tiên mới inline — nếu dùng * thì nội dung nhiều đoạn sẽ
-   dồn hết vào một dòng. */
-.pt-q-head .pt-q-text > p:first-child,
-.pt-q-head .pt-q-text > div:first-child {
-    display: inline;
-    margin: 0;
-}
+/* Đề bài do Summernote sinh ra bọc trong <p> -> gỡ margin để không
+   làm lệch chiều cao hàng. */
+.pt-q-head .pt-instruction p { margin: 0; }
 
-/* Danh sách vẫn phải xuống dòng dù đứng đầu. */
-.pt-q-head .pt-q-text > ul:first-child,
-.pt-q-head .pt-q-text > ol:first-child {
-    display: block;
-    margin-top: 6px;
+@media (max-width: 575px) {
+    .pt-q-head { display: block; }
+    .pt-q-head .pt-q-num { display: inline-block; margin-bottom: 8px; }
+    .pt-q-head .pt-instruction { margin-top: 4px; }
 }
 
 /* ── Khoảng cách trong thẻ đoạn văn ───────────────────────────────────
@@ -264,21 +264,14 @@
 
             <div class="pt-q-card">
 
-                {{-- Đề bài / hướng dẫn đứng riêng phía trên --}}
-                @if(!empty($q['instruction']))
-                    <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
-                @endif
-
-                {{-- Số thứ tự + nội dung câu hỏi trên CÙNG MỘT DÒNG.
-                     sentence_completion không dùng wrapper này vì nội dung của nó
-                     phải xen kẽ với các ô input (tách theo dấu ___). --}}
-                @if($q['type'] !== 'sentence_completion')
-                    <div class="pt-q-head">
-                        <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
-                        <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
-                    </div>
-                @else
+                <div class="pt-q-head">
                     <span class="pt-q-num">Câu {{ $index + 1 }}@if($q['has_audio']) &middot; Listening @endif</span>
+                    @if(!empty($q['instruction']))
+                        <div class="pt-instruction pt-rich">{!! ptRichText($q['instruction']) !!}</div>
+                    @endif
+                </div>
+                @if($q['type'] !== 'sentence_completion')
+                    <div class="pt-q-text pt-rich">{!! ptRichText($q['question_text']) !!}</div>
                 @endif
 
                 @if($q['type'] === 'multiple_choice')

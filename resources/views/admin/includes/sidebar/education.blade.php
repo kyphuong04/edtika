@@ -181,6 +181,11 @@
                                 <a class="nav-link" href="{{ getAdminPanelUrl() }}/placement-results">Bài làm của học viên</a>
                             </li>
                         @endif
+                        @if(method_exists($authUser, 'canManageIeltsResultBanners') && $authUser->canManageIeltsResultBanners())
+                            <li class="{{ request()->is(getAdminPanelUrl('/ielts-tests/result-banners', false)) ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/result-banners">Banner trang kết quả</a>
+                            </li>
+                        @endif
                     </ul>
                 </li>
             @endif

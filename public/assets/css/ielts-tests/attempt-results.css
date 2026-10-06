@@ -1,0 +1,267 @@
+/* =====================================================================
+   attempt-results.css — trang KẾT QUẢ. Nạp SAU attempt.css, dùng chung
+   khung (.attempt-page / .exam-root / .exam-header) và màu với trang làm
+   bài. Mọi class riêng dùng tiền tố exres-.
+   ===================================================================== */
+
+.exres-header-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 10px;
+    background: #fff;
+    color: #511D99;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+.exres-header-btn:hover { background: #f3eefe; color: #511D99; text-decoration: none; }
+
+.exres-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+    background: #faf8ff;
+}
+
+.exres-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Tổng quan ─────────────────────────────────────────────────────── */
+.exres-hero {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 24px 28px;
+    background: #fff;
+    border: 1px solid #ede9fe;
+    border-radius: 14px;
+}
+
+.exres-hero-band {
+    flex-shrink: 0;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    background: #511D99;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(81, 29, 153, .25);
+}
+.exres-hero-band-value { font-size: 40px; font-weight: 900; line-height: 1; }
+.exres-hero-band-label {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #ddd6fe;
+}
+.exres-hero-band.is-pending {
+    background: #f5f3ff;
+    color: #a78bfa;
+    border: 2px dashed #c4b5fd;
+    box-shadow: none;
+}
+.exres-hero-band.is-pending .exres-hero-band-label { color: #a78bfa; }
+
+.exres-hero-main { flex: 1; min-width: 0; }
+.exres-hero-title { font-size: 20px; font-weight: 800; color: #1f2937; }
+
+.exres-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.exres-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #f5f3ff;
+    color: #511D99;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.exres-note { margin-top: 12px; font-size: 13px; color: #6b7280; }
+.exres-note i { color: #f59e0b; margin-right: 4px; }
+
+.exres-hero-actions { flex-shrink: 0; }
+
+/* ── Nút ───────────────────────────────────────────────────────────── */
+.exres-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid #511D99;
+    border-radius: 10px;
+    background: #511D99;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 6px 14px rgba(81, 29, 153, .25);
+    transition: background .15s;
+}
+.exres-btn:hover { background: #3f1677; color: #fff; text-decoration: none; }
+
+.exres-btn--ghost {
+    background: #fff;
+    color: #511D99;
+    border-color: #ddd6fe;
+    box-shadow: none;
+}
+.exres-btn--ghost:hover { background: #faf8ff; color: #511D99; }
+
+/* ── Thẻ kỹ năng ───────────────────────────────────────────────────── */
+.exres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+    gap: 20px;
+}
+.exres-grid.is-single { grid-template-columns: 1fr; }
+
+.exres-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #ede9fe;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.exres-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 22px;
+    border-bottom: 1px solid #f3f0fb;
+}
+.exres-card-skill {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #511D99;
+}
+
+.exres-pill {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #511D99;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.exres-pill.is-pending { background: #fef3c7; color: #92400e; }
+
+.exres-card-body { flex: 1; padding: 20px 22px; }
+.exres-card-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 22px;
+    border-top: 1px solid #f3f0fb;
+}
+
+/* ── Donut + chú thích ─────────────────────────────────────────────── */
+.exres-score-row { display: flex; align-items: center; gap: 28px; margin-bottom: 20px; }
+
+.exres-donut { position: relative; flex-shrink: 0; width: 132px; height: 132px; }
+.exres-donut svg { display: block; transform: rotate(-90deg); }
+.exres-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.exres-donut-value { font-size: 24px; font-weight: 900; line-height: 1; color: #1f2937; }
+.exres-donut-sub { margin-top: 4px; font-size: 11px; font-weight: 600; color: #6b7280; }
+
+.exres-legend { display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #374151; }
+.exres-legend-item { display: flex; align-items: center; gap: 10px; }
+.exres-legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+.exres-legend-dot.correct { background: #22c55e; }
+.exres-legend-dot.incorrect { background: #ef4444; }
+.exres-legend-dot.empty { background: #d1d5db; }
+
+/* ── Chấm tròn từng câu (dùng lại .epn-question-num của attempt.css) ── */
+.exres-section-label { margin: 4px 0 8px; font-size: 13px; font-weight: 800; color: #1f2937; }
+.exres-part + .exres-part { margin-top: 14px; }
+.exres-part-title {
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+.exres-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.exres-dots .epn-question-num {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: transform .12s, box-shadow .12s;
+}
+.exres-dots .epn-question-num.empty { background: #f3f4f6; border-color: #d1d5db; color: #9ca3af; }
+.exres-dots .epn-question-num:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(17, 24, 39, .15);
+    text-decoration: none;
+}
+
+/* ── Writing / Speaking ────────────────────────────────────────────── */
+.exres-pending-box {
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 13px;
+}
+.exres-criteria { display: flex; flex-direction: column; gap: 10px; }
+.exres-criterion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #faf8ff;
+}
+.exres-criterion-label { font-size: 14px; font-weight: 600; color: #374151; }
+.exres-criterion-value {
+    min-width: 52px;
+    padding: 4px 10px;
+    border: 1px solid #ddd6fe;
+    border-radius: 999px;
+    background: #fff;
+    color: #511D99;
+    font-weight: 800;
+    text-align: center;
+}
+.exres-criterion-value.is-empty { color: #c4b5fd; }
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .exres-body { padding: 16px; }
+    .exres-hero { flex-direction: column; align-items: flex-start; }
+    .exres-grid { grid-template-columns: 1fr; }
+    .exres-score-row { flex-direction: column; align-items: flex-start; }
+    .exam-root.is-result .exam-skill-tabs { display: none; }
+}

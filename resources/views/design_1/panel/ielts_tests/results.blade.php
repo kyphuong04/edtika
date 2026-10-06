@@ -1,543 +1,312 @@
-﻿{{--
-    IELTS Results Page
-    - Single-skill tests: left card (score) + right card (illustration/quote)
-    - Multi-skill tests: grid of per-skill cards, no illustration/quote
---}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>IELTS Results &mdash; {{ $test->title ?? 'Test' }}</title>
+﻿@extends('design_1.panel.layouts.panel')
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    @php
-        $ieltsCssDir = 'assets/css/ielts-tests/';
-        $resultsCssVersion = is_file(public_path($ieltsCssDir . 'results.css')) ? filemtime(public_path($ieltsCssDir . 'results.css')) : time();
-    @endphp
-    <link rel="stylesheet" href="{{ asset($ieltsCssDir . 'results.css') }}?v={{ $resultsCssVersion }}">
-</head>
-<body>
-
+@push('styles_top')
 @php
-    /* User */
-    $authUser    = auth()->user();
-    $userName    = strtoupper($authUser->full_name ?? $authUser->name ?? 'TEST TAKER');
-    $userAvatar  = $authUser->avatar ?? null;
-    $userInitial = strtoupper(substr($authUser->full_name ?? $authUser->name ?? 'T', 0, 1));
+    $resultsCss = 'assets/css/ielts-tests/ielts-results.css';
+@endphp
+<link rel="stylesheet" href="{{ asset($resultsCss) }}?v={{ is_file(public_path($resultsCss)) ? filemtime(public_path($resultsCss)) : time() }}">
+@endpush
 
-    /* IELTS band conversion */
-    $ieltsBandTable = [
-        0=>0.0, 1=>1.0, 2=>1.0, 3=>2.0, 4=>2.5, 5=>2.5,
-        6=>3.0, 7=>3.0, 8=>3.5, 9=>3.5, 10=>3.5,
-        11=>4.0, 12=>4.0, 13=>4.5, 14=>4.5, 15=>4.5,
-        16=>5.0, 17=>5.0, 18=>5.5, 19=>5.5, 20=>5.5, 21=>5.5, 22=>5.5,
-        23=>6.0, 24=>6.0, 25=>6.0, 26=>6.0,
-        27=>6.5, 28=>6.5, 29=>6.5,
-        30=>7.0, 31=>7.0, 32=>7.0,
-        33=>7.5, 34=>7.5,
-        35=>8.0, 36=>8.0,
-        37=>8.5, 38=>8.5,
-        39=>9.0, 40=>9.0,
+@section('content')
+@php
+    $hasAuto = $summary['total'] > 0;
+    $pct = fn (int $n) => $summary['total'] > 0 ? round($n / $summary['total'] * 100, 1) : 0;
+    $statRows = [
+        ['key' => 'correct',   'label' => 'Đúng',    'icon' => 'fa-check', 'value' => $summary['correct']],
+        ['key' => 'incorrect', 'label' => 'Sai',     'icon' => 'fa-times', 'value' => $summary['incorrect']],
+        ['key' => 'empty',     'label' => 'Bỏ qua',  'icon' => 'fa-minus', 'value' => $summary['empty']],
     ];
-
-    /* Detect all skills actually completed in this attempt (most reliable) */
-    $allSkills = [];
-    if ($attempt->listening_completed) $allSkills[] = 'listening';
-    if ($attempt->reading_completed)   $allSkills[] = 'reading';
-    if ($attempt->writing_completed)   $allSkills[] = 'writing';
-    if ($attempt->speaking_completed)  $allSkills[] = 'speaking';
-
-    // Fallback: derive from test sections if no completed flags set
-    if (empty($allSkills)) {
-        if ($test->relationLoaded('sections') && $test->sections->isNotEmpty()) {
-            $allSkills = $test->sections->pluck('skill')->filter()->unique()->values()->toArray();
-        } else {
-            $allSkills = \App\Models\IeltsTestSection::where('test_id', $test->id)
-                ->whereNotNull('skill')->distinct()->pluck('skill')->values()->toArray();
-        }
-        if (empty($allSkills) && $attempt->answers->isNotEmpty()) {
-            foreach ($attempt->answers as $_a) {
-                if ($_a->question && $_a->question->section && $_a->question->section->skill) {
-                    $allSkills[] = $_a->question->section->skill;
-                }
-            }
-            $allSkills = array_values(array_unique($allSkills));
-        }
-    }
-    $skillOrder = ['listening','reading','writing','speaking'];
-    usort($allSkills, fn($a,$b) => (array_search($a,$skillOrder)??99) <=> (array_search($b,$skillOrder)??99));
-
-    $isMultiSkill = count($allSkills) > 1;
-
-    /* Detect current skill (for single-skill layout) */
-    $skill = $attempt->current_skill ?? null;
-    if (!$skill) {
-        if ($attempt->speaking_completed)      $skill = 'speaking';
-        elseif ($attempt->writing_completed)   $skill = 'writing';
-        elseif ($attempt->reading_completed)   $skill = 'reading';
-        elseif ($attempt->listening_completed) $skill = 'listening';
-    }
-    if (!$skill && $attempt->answers->isNotEmpty()) {
-        foreach ($attempt->answers as $_ans) {
-            if ($_ans->question && $_ans->question->section && $_ans->question->section->skill) {
-                $skill = $_ans->question->section->skill;
-                break;
-            }
-        }
-    }
-    if (!$skill || !in_array($skill, ['listening','reading','writing','speaking'])) {
-        $skill = $allSkills[0] ?? 'listening';
-    }
-
-    /* Page title & back URL */
-    $pageTitle = $isMultiSkill
-        ? strtoupper($test->title ?? 'TEST') . ' - RESULTS'
-        : strtoupper($skill) . ' - ' . strtoupper($test->title ?? 'TEST');
-    $backUrl = ($test->type === 'mock')
-        ? route('panel.ielts_tests.mock')
-        : route('panel.ielts_tests.practice');
-
-    /* Helper: build per-skill data */
-    if (!function_exists('buildSkillData')) {
-    function buildSkillData(string $skl, $attempt, array $bt): array {
-        $d = ['skill' => $skl];
-        if ($skl === 'writing') {
-            $d['is_writing'] = true;
-            $d['graded'] = !empty($attempt->writing_graded_at);
-            $d['sections'] = \App\Models\IeltsTestSection::where('test_id', $attempt->test_id)
-                ->where('skill','writing')->orderBy('section_number')->get();
-            return $d;
-        }
-        if ($skl === 'speaking') {
-            $d['is_speaking'] = true;
-            $d['graded'] = !empty($attempt->speaking_graded_at);
-            $d['band']   = $attempt->speaking_band;
-            $raw = $attempt->speaking_criteria;
-            $d['criteria'] = $raw ? (is_array($raw) ? $raw : json_decode($raw, true)) : null;
-            return $d;
-        }
-        $answers = $attempt->answers->filter(fn($a) =>
-            $a->question && $a->question->section && $a->question->section->skill === $skl
-        );
-        $answerMap = [];
-        foreach ($answers as $ans) {
-            $n = $ans->question->question_number ?? null;
-            if ($n !== null) $answerMap[$n] = $ans->is_correct ? 'correct' : 'incorrect';
-        }
-        // Use actual total questions from test (not just answered ones)
-        $questionsForSkill = \App\Models\IeltsTestQuestion::whereHas('section', fn($q) =>
-            $q->where('test_id', $attempt->test_id)->where('skill', $skl)
-        )->get();
-        // For questions like table_completion, count individual cell answers as separate items
-        $actualTotal = 0;
-        foreach ($questionsForSkill as $qItem) {
-            if (($qItem->question_type ?? '') === 'table_completion') {
-                $actualTotal += count($qItem->table_completion_answers_array ?? []);
-            } else {
-                $actualTotal += 1;
-            }
-        }
-        $rawScore      = (int)($skl === 'reading' ? ($attempt->reading_score??0) : ($attempt->listening_score??0));
-        $answeredCount = $answers->count();
-        $total         = max(1, $actualTotal ?: $answeredCount);
-        $correct       = min($rawScore, $total);
-        $incorrect     = max(0, $answeredCount - $correct); // only actually wrong answers
-        $band       = $bt[min($correct,40)] ?? 0.0;
-        $circum     = round(2*M_PI*70, 2);
-        $cArc       = $total > 0 ? round(($correct/$total)*$circum,2) : 0;
-        $iArc       = $total > 0 ? round(($incorrect/$total)*$circum,2) : $circum;
-        return $d + compact('answerMap','rawScore','total','correct','incorrect','band','circum') + ['correctArc'=>$cArc,'incorrectArc'=>$iArc];
-    }
-    } // end function_exists buildSkillData
-
-    /* Build data for all skills */
-    $skillsData = [];
-    foreach ($allSkills as $_s) $skillsData[$_s] = buildSkillData($_s, $attempt, $ieltsBandTable);
-
-    /* Single-skill convenience vars */
-    $isWriting  = ($skill === 'writing');
-    $isSpeaking = ($skill === 'speaking');
-    if (!$isMultiSkill) {
-        $sd = $skillsData[$skill] ?? buildSkillData($skill, $attempt, $ieltsBandTable);
-        if ($isWriting) {
-            $writingSections = $sd['sections'];
-        } elseif ($isSpeaking) {
-            $speakingBand     = $sd['band'];
-            $speakingCriteria = $sd['criteria'];
-            $isSpGraded       = $sd['graded'];
-        } else {
-            extract(array_intersect_key($sd, array_flip(['answerMap','rawScore','total','correct','incorrect','band','circum','correctArc','incorrectArc'])));
-            $totalQuestions = $sd['total'];
-            $correctCount   = $sd['correct'];
-            $incorrectCount = $sd['incorrect'];
-            $bandScore      = $sd['band'];
-        }
-    }
-
-    /* Speaking criteria keys */
-    $spCriteriaKeys = [
-        ['key'=>['fluency','fluency_and_coherence','fc'],                                                  'label'=>'Fluency &amp; Coherence'],
-        ['key'=>['lexical','lexical_resource','vocabulary','lr'],                                           'label'=>'Lexical Resource'],
-        ['key'=>['grammar','grammatical_range','grammar_and_accuracy','gra','grammatical_range_and_accuracy'],'label'=>'Grammar Range &amp; Accuracy'],
-        ['key'=>['pronunciation','p'],                                                                      'label'=>'Pronunciation'],
-    ];
-    if (!function_exists('spScore')) {
-    function spScore(array $keys, ?array $criteria): ?float {
-        if (!$criteria) return null;
-        foreach ($keys as $k) { if (isset($criteria[$k])) return (float)$criteria[$k]; }
-        $lower = array_change_key_case($criteria, CASE_LOWER);
-        foreach ($keys as $k) { if (isset($lower[strtolower($k)])) return (float)$lower[strtolower($k)]; }
-        return null;
-    }
-    } // end function_exists spScore
-
-    /* Motivational quotes (single-skill only) */
-    $quotes = [
-        ['text'=>'Every expert was once a beginner. Keep going - your score will grow with every practice.',              'author'=>'Unknown'],
-        ['text'=>'The secret of getting ahead is getting started. Each attempt brings you closer to your goal.',         'author'=>'Mark Twain'],
-        ['text'=>'Success is not final, failure is not fatal: it is the courage to continue that counts.',               'author'=>'Winston Churchill'],
-        ['text'=>'It does not matter how slowly you go as long as you do not stop.',                                     'author'=>'Confucius'],
-        ['text'=>"Believe you can and you're halfway there. Your next attempt will be even better.",                     'author'=>'Theodore Roosevelt'],
-        ['text'=>'Great things are not done by impulse, but by a series of small things brought together.',              'author'=>'Vincent Van Gogh'],
-        ['text'=>'Hardships often prepare ordinary people for an extraordinary destiny. Stay consistent.',               'author'=>'C.S. Lewis'],
-        ['text'=>"The more that you read, the more things you will know. The more you learn, the more places you'll go.",'author'=>'Dr. Seuss'],
-        ['text'=>'Practice is the hardest part of learning, and training is the essence of transformation.',             'author'=>'Ann Voskamp'],
-        ['text'=>'Education is not the filling of a bucket, but the lighting of a fire.',                                'author'=>'W.B. Yeats'],
-    ];
-    $quote = $quotes[$attempt->id % count($quotes)];
 @endphp
 
-{{-- HEADER --}}
-<header class="res-header">
-    <div class="res-header-user">
-        <div class="res-avatar">
-            @if($userAvatar)
-                <img src="{{ $userAvatar }}" alt="{{ $userName }}">
-            @else
-                {{ $userInitial }}
-            @endif
-        </div>
-        <span class="res-username">{{ $userName }}</span>
-    </div>
-    <span class="res-header-title">{{ $pageTitle }}</span>
+<div class="rs-page">
     @if(!empty($isMentorPreview) && !empty($mentorPreviewExitUrl))
-    <a href="{{ $mentorPreviewExitUrl }}" class="res-back-btn" style="margin-right: 8px; background: #fff3cd; border-color: #e0c26a; color: #7a5c00;"
-        onclick="return confirm('Thoát chế độ xem trước? Toàn bộ bài làm thử và bản ghi âm sẽ bị xóa.');">
-        Exit preview
-    </a>
+        <div class="rs-preview-banner">
+            <span>Đang xem trước với vai trò học viên — bài làm và bản ghi âm sẽ bị xóa khi thoát xem trước.</span>
+            <a href="{{ $mentorPreviewExitUrl }}" onclick="return confirm('Thoát chế độ xem trước?');">Thoát preview</a>
+        </div>
     @endif
-    <a href="{{ $backUrl }}" class="res-back-btn">Back</a>
-</header>
 
-@if($isMultiSkill)
-{{-- MULTI-SKILL GRID LAYOUT --}}
-<div class="res-multi-body">
-    @php $skillCount = count($allSkills); @endphp
-    <div class="res-multi-grid skills-{{ $skillCount }}">
+    {{-- ── Thanh trên cùng ───────────────────────────────────────── --}}
+    <header class="rs-topbar">
+        <div class="rs-topbar-left">
+            <a href="{{ $backUrl }}" class="rs-logo" title="Về danh sách đề">EDTIKA</a>
+            <nav class="rs-tabs" role="tablist" aria-label="Kết quả">
+                <button type="button" class="rs-tab is-active" role="tab" data-tab="overall" aria-selected="true">Overall</button>
+                <i class="fas fa-chevron-right rs-tab-sep" aria-hidden="true"></i>
+                <button type="button" class="rs-tab" role="tab" data-tab="breakdown" aria-selected="false">Breakdown</button>
+            </nav>
+        </div>
 
-        @foreach($skillsData as $skl => $sd)
-        @php
-            $skillLabel = strtoupper($skl);
-            $reviewUrl  = route('panel.ielts_tests.review', $attempt->id) . '?skill=' . $skl;
-        @endphp
-        <div class="res-skill-card">
-            {{-- Card header: skill label + band/status --}}
-            <div class="res-skill-card-header">
-                <span class="res-skill-label">{{ $skillLabel }}</span>
-                @if(!empty($sd['is_writing']))
-                    <span class="res-skill-band">
-                        @if($sd['graded']) <span style="font-size:13px;color:#555;">Graded</span>
-                        @else <span style="font-size:12px;color:#bbb;font-style:italic;">Pending</span>
-                        @endif
-                    </span>
-                @elseif(!empty($sd['is_speaking']))
-                    <span class="res-skill-band">
-                        @if($sd['graded'] && $sd['band'] !== null)
-                            {{ number_format((float)$sd['band'],1) }}<span class="band-unit">band</span>
-                        @else <span style="font-size:12px;color:#bbb;font-style:italic;">Pending</span>
-                        @endif
-                    </span>
-                @else
-                    <span class="res-skill-band">{{ number_format((float)$sd['band'],1) }}<span class="band-unit">band</span></span>
-                @endif
+        <div class="rs-topbar-actions">
+            @if($canRetake)
+                <button type="button" class="rs-btn rs-btn--outline" data-retake-open>
+                    <i class="fas fa-redo-alt"></i> Làm lại
+                </button>
+            @endif
+            <button type="button" class="rs-btn rs-btn--primary" disabled title="Tính năng đang được phát triển">
+                <i class="fas fa-share-alt"></i> Chia sẻ kết quả
+            </button>
+        </div>
+    </header>
+
+    <main class="rs-main">
+
+        {{-- ══ OVERALL ═══════════════════════════════════════════════ --}}
+        <section class="rs-panel is-active" data-panel="overall" role="tabpanel">
+            <div class="rs-banner">
+                <img src="{{ $banner['url'] }}" alt="{{ $banner['alt'] }}">
             </div>
-            <div class="res-skill-divider"></div>
 
-            {{-- Card content --}}
-            <div class="res-skill-content">
+            <div class="rs-overview">
+                <div class="rs-card rs-result">
+                    <h2 class="rs-card-title">Kết quả làm bài</h2>
 
-                @if(!empty($sd['is_writing']))
-                    {{-- Writing --}}
-                    <div class="res-multi-wr-list">
-                        @forelse($sd['sections'] as $wsec)
-                        @php $pNum = $wsec->section_number ?? ($loop->index + 1); @endphp
-                        <div class="res-multi-wr-item">
-                            <div class="res-multi-wr-title">Task {{ $pNum }}</div>
-                            @if($sd['graded'])
-                                <div class="res-multi-wr-status">Evaluated &mdash; click View Details</div>
-                            @else
-                                <div class="res-multi-wr-status res-multi-wr-pending">Awaiting evaluation</div>
-                            @endif
+                    <div class="rs-result-body">
+                        <div class="rs-score">
+                            <div class="rs-score-main">
+                                @if($hasAuto)
+                                    <div class="rs-score-value">{{ $summary['correct'] }}/{{ $summary['total'] }}</div>
+                                    <div class="rs-score-label">câu đúng</div>
+                                @elseif($overallBand !== null)
+                                    <div class="rs-score-value">{{ number_format($overallBand, 1) }}</div>
+                                    <div class="rs-score-label">band</div>
+                                @else
+                                    <div class="rs-score-value is-pending">—</div>
+                                    <div class="rs-score-label">đang chờ chấm</div>
+                                @endif
+
+                                @if($hasAuto && $overallBand !== null)
+                                    <span class="rs-score-band">Band {{ number_format($overallBand, 1) }}</span>
+                                @endif
+                            </div>
+
+                            <div class="rs-score-time">
+                                <i class="far fa-clock" aria-hidden="true"></i>
+                                <div>
+                                    <span>Thời gian làm bài</span>
+                                    <strong>{{ $durationLabel }}</strong>
+                                </div>
+                            </div>
                         </div>
-                        @empty
-                        <div class="res-multi-wr-item">
-                            <div class="res-multi-wr-title">Task 1 &amp; Task 2</div>
-                            @if($sd['graded'])
-                                <div class="res-multi-wr-status">Evaluated &mdash; click View Details</div>
-                            @else
-                                <div class="res-multi-wr-status res-multi-wr-pending">Awaiting evaluation</div>
-                            @endif
-                        </div>
-                        @endforelse
+
+                        @if($hasAuto)
+                            <div class="rs-stats">
+                                @foreach($statRows as $row)
+                                    <div class="rs-stat rs-stat--{{ $row['key'] }}">
+                                        <span class="rs-stat-icon"><i class="fas {{ $row['icon'] }}" aria-hidden="true"></i></span>
+                                        <div class="rs-stat-body">
+                                            <div class="rs-stat-head">
+                                                <span>{{ $row['label'] }}</span>
+                                                <span>{{ $row['value'] }} câu</span>
+                                            </div>
+                                            <div class="rs-stat-bar"><span style="width: {{ $pct($row['value']) }}%"></span></div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="rs-pending-note">
+                                Bài Writing/Speaking của bạn đang chờ giáo viên chấm. Điểm và nhận xét sẽ hiện ở đây khi chấm xong.
+                            </div>
+                        @endif
                     </div>
 
-                @elseif(!empty($sd['is_speaking']))
-                    {{-- Speaking --}}
-                    @if($sd['graded'] && $sd['band'] !== null)
-                        <div class="res-multi-sp-overall">{{ number_format((float)$sd['band'],1) }} <span class="sp-lbl">OVERALL</span></div>
-                    @else
-                        <div class="res-multi-sp-overall" style="color:#bbb">&mdash; <span class="sp-lbl">OVERALL</span></div>
+                    @if(!empty($pendingManual) && $hasAuto)
+                        <div class="rs-pending-note rs-pending-note--inline">
+                            {{ implode(' và ', $pendingManual) }} đang chờ giáo viên chấm — band tổng sẽ cập nhật khi chấm xong.
+                        </div>
                     @endif
-                    <div class="res-multi-sp-criteria">
-                        @foreach($spCriteriaKeys as $crit)
-                        @php $sc = $sd['graded'] ? spScore($crit['key'], $sd['criteria']) : null; @endphp
-                        <div class="res-multi-sp-row">
-                            <div class="res-multi-sp-badge {{ $sc===null ? 'empty' : '' }}" style="{{ $sc===null ? 'color:transparent' : '' }}">
-                                {{ $sc !== null ? number_format($sc,1) : '0' }}
-                            </div>
-                            <span class="res-multi-sp-name">{!! $crit['label'] !!}</span>
-                        </div>
-                        @endforeach
-                    </div>
-
-                @else
-                    {{-- Listening / Reading --}}
-                    <div class="res-mini-lr-wrap">
-                        <div class="res-mini-score-row">
-                            <div class="res-mini-donut-wrap">
-                                @php
-                                    $mc  = round(2*M_PI*50, 2); // r=50
-                                    $cA  = $sd['total']>0 ? round(($sd['correct']/$sd['total'])*$mc,2) : 0;
-                                    $iA  = $sd['total']>0 ? round(($sd['incorrect']/$sd['total'])*$mc,2) : $mc;
-                                @endphp
-                                <svg width="120" height="120" viewBox="0 0 120 120">
-                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e5e5" stroke-width="16"/>
-                                    @if($sd['incorrect']>0)
-                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#111" stroke-width="16"
-                                            stroke-dasharray="{{ $iA }} {{ $mc }}" stroke-dashoffset="0"
-                                            stroke-linecap="butt" transform="rotate(-90 60 60)"/>
-                                    @endif
-                                    @if($sd['correct']>0)
-                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#c0c0c0" stroke-width="16"
-                                            stroke-dasharray="{{ $cA }} {{ $mc }}"
-                                            stroke-dashoffset="{{ round(-$iA,2) }}"
-                                            stroke-linecap="butt" transform="rotate(-90 60 60)"/>
-                                    @endif
-                                </svg>
-                                <div class="res-mini-donut-score">{{ number_format((float)$sd['band'],1) }}</div>
-                            </div>
-                            <div class="res-mini-legend">
-                                <div class="res-mini-legend-item">
-                                    <div class="mini-legend-box correct"></div>
-                                    <span>Correct: <strong>{{ $sd['correct'] }}/{{ $sd['total'] }}</strong></span>
-                                </div>
-                                <div class="res-mini-legend-item">
-                                    <div class="mini-legend-box incorrect"></div>
-                                    <span>Wrong: <strong>{{ $sd['incorrect'] }}/{{ $sd['total'] }}</strong></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="res-mini-dots-side">
-                            <div class="res-mini-dots-label">Questions overview</div>
-                            <div class="res-mini-dots-grid">
-                                @for($qi=1; $qi<=$sd['total']; $qi++)
-                                    @php $ds = $sd['answerMap'][$qi] ?? 'unanswered'; @endphp
-                                    <div class="res-mini-dot {{ $ds }}" title="Q{{ $qi }}: {{ $ds }}">{{ $qi }}</div>
-                                @endfor
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-            </div>{{-- /.res-skill-content --}}
-
-            <div class="res-skill-footer">
-                <a href="{{ $reviewUrl }}" class="res-skill-detail-btn">View Details</a>
-            </div>
-        </div>{{-- /.res-skill-card --}}
-        @endforeach
-
-    </div>{{-- /.res-multi-grid --}}
-</div>{{-- /.res-multi-body --}}
-
-@else
-{{-- SINGLE-SKILL LAYOUT (original) --}}
-<div class="res-body">
-
-@if($isWriting)
-    {{-- WRITING LEFT CARD --}}
-    <div class="res-left">
-        <div class="wr-tasks-list">
-            @forelse($writingSections as $section)
-            @php $partNum = $section->section_number ?? ($loop->index + 1); @endphp
-            <div class="wr-task-card">
-                <div class="wr-task-card-title">IELTS Band score and Suggestions &mdash; Task {{ $partNum }}</div>
-                @if($attempt->writing_graded_at)
-                    <div class="wr-task-card-status">Your writing has been evaluated. Please click &ldquo;View detail&rdquo; to see more.</div>
-                @else
-                    <div class="wr-task-card-status wr-task-pending">Your writing is awaiting evaluation. Results will appear here once graded.</div>
-                @endif
-            </div>
-            @empty
-            <div class="wr-task-card">
-                <div class="wr-task-card-title">IELTS Band score and Suggestions &mdash; Task 1</div>
-                @if($attempt->writing_graded_at)
-                    <div class="wr-task-card-status">Your writing has been evaluated. Please click &ldquo;View detail&rdquo; to see more.</div>
-                @else
-                    <div class="wr-task-card-status wr-task-pending">Your writing is awaiting evaluation. Results will appear here once graded.</div>
-                @endif
-            </div>
-            @endforelse
-        </div>
-        <div class="res-detail-btn-wrap" style="margin-top: 24px;">
-            <a href="{{ route('panel.ielts_tests.review', $attempt->id) }}" class="res-detail-btn">View details</a>
-        </div>
-    </div>
-
-@elseif($isSpeaking)
-    {{-- SPEAKING LEFT CARD --}}
-    @php
-        $spCritFull = [
-            ['key'=>['fluency','fluency_and_coherence','fc'],                                                   'label'=>'Fluency and Coherence'],
-            ['key'=>['lexical','lexical_resource','vocabulary','lr'],                                            'label'=>'Lexical Resource'],
-            ['key'=>['grammar','grammatical_range','grammar_and_accuracy','gra','grammatical_range_and_accuracy'],'label'=>'Grammatical Range &amp; Accuracy'],
-            ['key'=>['pronunciation','p'],                                                                       'label'=>'Pronunciation'],
-        ];
-    @endphp
-    <div class="res-left">
-        <div class="sp-left-inner">
-            <div class="sp-overall">
-                @if($isSpGraded && $speakingBand !== null)
-                    {{ number_format((float)$speakingBand, 1) }} <span class="sp-overall-label">OVERALL</span>
-                @else
-                    &mdash; <span class="sp-overall-label">OVERALL</span>
-                @endif
-            </div>
-            <div class="sp-criteria-list">
-                @foreach($spCritFull as $crit)
-                @php $score = $isSpGraded ? spScore($crit['key'], $speakingCriteria) : null; @endphp
-                <div class="sp-criterion-row">
-                    <div class="sp-score-badge {{ $score===null ? 'empty' : '' }}">
-                        {{ $score !== null ? number_format($score, 1) : '' }}
-                    </div>
-                    <span class="sp-criterion-name">{!! $crit['label'] !!}</span>
                 </div>
+
+                <a href="{{ $reviewUrl }}" class="rs-card rs-explain">
+                    <span class="rs-explain-icon"><i class="fas fa-book-open" aria-hidden="true"></i></span>
+                    <span class="rs-explain-body">
+                        <span class="rs-explain-title">Xem giải thích <span class="rs-free">FREE</span></span>
+                        <span class="rs-explain-text">Xem giải thích chi tiết và đáp án cho từng câu hỏi để hiểu rõ hơn.</span>
+                    </span>
+                    <span class="rs-explain-arrow"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                </a>
+            </div>
+
+            @if(!empty($byType))
+                <div class="rs-card rs-table-card">
+                    <h2 class="rs-card-title"><i class="fas fa-list-alt" aria-hidden="true"></i> Bảng dữ liệu chi tiết</h2>
+
+                    <div class="rs-table-scroll">
+                        <table class="rs-table">
+                            <thead>
+                                <tr>
+                                    <th>Loại câu hỏi</th>
+                                    <th><i class="fas fa-hashtag" aria-hidden="true"></i> Số câu hỏi</th>
+                                    <th><i class="far fa-check-circle" aria-hidden="true"></i> Đúng</th>
+                                    <th><i class="far fa-times-circle" aria-hidden="true"></i> Sai</th>
+                                    <th><i class="far fa-minus-square" aria-hidden="true"></i> Bỏ qua</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($byType as $row)
+                                    <tr>
+                                        <td>
+                                            <span class="rs-type">
+                                                <i class="fas {{ $row['icon'] }}" aria-hidden="true"></i>
+                                                {{ $row['label'] }}
+                                            </span>
+                                        </td>
+                                        <td><span class="rs-pill">{{ $row['total'] }}</span></td>
+                                        <td><span class="rs-pill rs-pill--correct">{{ $row['correct'] }}</span></td>
+                                        <td><span class="rs-pill rs-pill--incorrect">{{ $row['incorrect'] }}</span></td>
+                                        <td><span class="rs-pill rs-pill--empty">{{ $row['empty'] }}</span></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+        </section>
+
+        {{-- ══ BREAKDOWN ═════════════════════════════════════════════ --}}
+        <section class="rs-panel" data-panel="breakdown" role="tabpanel" hidden>
+            <div class="rs-skill-grid {{ count($skills) === 1 ? 'is-single' : '' }}">
+                @foreach($skills as $s)
+                    <article class="rs-card rs-skill">
+                        <header class="rs-skill-head">
+                            <h3>{{ $s['label'] }}</h3>
+                            @if($s['band'] !== null)
+                                <span class="rs-skill-band">Band {{ number_format($s['band'], 1) }}</span>
+                            @elseif($s['type'] === 'manual')
+                                <span class="rs-skill-band is-pending">Chờ chấm</span>
+                            @endif
+                        </header>
+
+                        @if($s['type'] === 'auto')
+                            <p class="rs-skill-sum">
+                                Đúng <strong>{{ $s['correct'] }}</strong> · Sai <strong>{{ $s['incorrect'] }}</strong>
+                                · Bỏ qua <strong>{{ $s['empty'] }}</strong> trên {{ $s['total'] }} câu
+                            </p>
+
+                            @foreach($s['sections'] as $block)
+                                @if($block['label'])
+                                    <div class="rs-section-label">{{ $block['label'] }}</div>
+                                @endif
+                                @foreach($block['parts'] as $part)
+                                    <div class="rs-part">
+                                        <div class="rs-part-title">{{ $part['title'] }}</div>
+                                        <div class="rs-dots">
+                                            @foreach($part['items'] as $item)
+                                                <a href="{{ $block['reviewUrl'] }}&q={{ $item['n'] }}"
+                                                   class="rs-dot is-{{ $item['status'] }}"
+                                                   title="Câu {{ $item['n'] }}">{{ $item['n'] }}</a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endforeach
+                        @else
+                            @if(!$s['graded'])
+                                <p class="rs-skill-sum">Bài của bạn đang chờ giáo viên chấm.</p>
+                            @endif
+                            <div class="rs-criteria">
+                                @foreach($s['criteria'] as $c)
+                                    <div class="rs-criterion">
+                                        <span>{{ $c['label'] }}</span>
+                                        <strong class="{{ $c['value'] === null ? 'is-empty' : '' }}">
+                                            {{ $c['value'] !== null ? number_format($c['value'], 1) : '—' }}
+                                        </strong>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <footer class="rs-skill-foot">
+                            <a href="{{ $s['reviewUrl'] }}" class="rs-link">
+                                {{ $s['type'] === 'auto' ? 'Xem đáp án' : 'Xem nhận xét' }}
+                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </a>
+                        </footer>
+                    </article>
                 @endforeach
             </div>
-            <div class="res-detail-btn-wrap" style="margin-top: 36px;">
-                <a href="{{ route('panel.ielts_tests.review', $attempt->id) }}" class="res-detail-btn">View details</a>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
+</div>
 
-@else
-    {{-- LISTENING / READING LEFT CARD --}}
-    <div class="res-left">
-        <div class="res-score-row">
-            <div class="res-donut-wrap">
-                <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="90" cy="90" r="70" fill="none" stroke="#e5e5e5" stroke-width="22"/>
-                    @if($incorrectCount > 0)
-                    <circle cx="90" cy="90" r="70" fill="none" stroke="#111" stroke-width="22"
-                            stroke-dasharray="{{ $incorrectArc }} {{ $circum }}" stroke-dashoffset="0"
-                            stroke-linecap="butt" transform="rotate(-90 90 90)"/>
-                    @endif
-                    @if($correctCount > 0)
-                    <circle cx="90" cy="90" r="70" fill="none" stroke="#c0c0c0" stroke-width="22"
-                            stroke-dasharray="{{ $correctArc }} {{ $circum }}"
-                            stroke-dashoffset="{{ round(-$incorrectArc, 2) }}"
-                            stroke-linecap="butt" transform="rotate(-90 90 90)"/>
-                    @endif
-                </svg>
-                <div class="res-donut-score">{{ number_format($bandScore, 1) }}</div>
-            </div>
-            <div class="res-legend">
-                <div class="res-legend-item">
-                    <div class="legend-box correct"></div>
-                    <span>Correct: <strong>{{ $correctCount }}/{{ $totalQuestions }}</strong></span>
-                </div>
-                <div class="res-legend-item">
-                    <div class="legend-box incorrect"></div>
-                    <span>Incorrect: <strong>{{ $incorrectCount }}/{{ $totalQuestions }}</strong></span>
-                </div>
-            </div>
-        </div>
-        <div class="res-dots-label">Questions overview</div>
-        @php $dotCols = $totalQuestions <= 10 ? $totalQuestions : ($totalQuestions <= 20 ? 10 : 8); @endphp
-        <div class="res-dots-grid" style="grid-template-columns: repeat({{ $dotCols }}, 1fr)">
-            @for($i = 1; $i <= $totalQuestions; $i++)
-                @php $dotState = $answerMap[$i] ?? 'unanswered'; @endphp
-                <div class="res-dot {{ $dotState }}" title="Q{{ $i }}: {{ $dotState }}">{{ $i }}</div>
-            @endfor
-        </div>
-        <div class="res-detail-btn-wrap">
-            <a href="{{ route('panel.ielts_tests.review', $attempt->id) }}" class="res-detail-btn">View details</a>
+{{-- ── Xác nhận làm lại ─────────────────────────────────────────── --}}
+@if($canRetake)
+    <div class="rs-modal" id="rsRetakeModal" role="dialog" aria-modal="true" aria-labelledby="rsRetakeTitle" hidden>
+        <div class="rs-modal-backdrop" data-retake-close></div>
+        <div class="rs-modal-card">
+            <span class="rs-modal-icon"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i></span>
+            <h3 id="rsRetakeTitle">Xác nhận làm lại bài thi</h3>
+            <p>Kết quả hiện tại của bạn sẽ bị hủy và không thể khôi phục.<br>Bạn có chắc chắn muốn làm lại bài thi này không?</p>
+            <form action="{{ $retakeUrl }}" method="POST" class="rs-modal-actions">
+                @csrf
+                <button type="button" class="rs-btn rs-btn--outline" data-retake-close>Hủy</button>
+                <button type="submit" class="rs-btn rs-btn--primary" data-retake-submit>Xác nhận làm lại</button>
+            </form>
         </div>
     </div>
 @endif
+@endsection
 
-    {{-- RIGHT CARD: illustration + quote --}}
-    <div class="res-right">
-        <div class="res-illustration">
-            <svg viewBox="0 0 340 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <ellipse cx="170" cy="238" rx="125" ry="12" fill="#d0d0d0"/>
-                <rect x="152" y="148" width="38" height="58" rx="8" fill="#4a4a8a"/>
-                <rect x="154" y="202" width="13" height="36" rx="5" fill="#333268"/>
-                <rect x="173" y="202" width="13" height="36" rx="5" fill="#333268"/>
-                <ellipse cx="160" cy="238" rx="10" ry="5" fill="#222"/>
-                <ellipse cx="180" cy="238" rx="10" ry="5" fill="#222"/>
-                <rect x="104" y="150" width="48" height="30" rx="4" fill="#fff" stroke="#ccc" stroke-width="1.5"/>
-                <line x1="128" y1="150" x2="128" y2="180" stroke="#ccc" stroke-width="1.2"/>
-                <rect x="132" y="148" width="22" height="10" rx="5" fill="#4a4a8a"/>
-                <rect x="190" y="132" width="11" height="36" rx="5" fill="#4a4a8a" transform="rotate(-22 195 150)"/>
-                <polygon points="220,98 223,109 234,109 225,115 228,126 220,120 212,126 215,115 206,109 217,109" fill="#f5c518" stroke="#e0a800" stroke-width="1"/>
-                <circle cx="171" cy="130" r="21" fill="#f5cba7"/>
-                <ellipse cx="171" cy="113" rx="21" ry="11" fill="#3d2200"/>
-                <circle cx="164" cy="129" r="2.5" fill="#222"/>
-                <circle cx="178" cy="129" r="2.5" fill="#222"/>
-                <path d="M164,136 Q171,143 178,136" stroke="#a05020" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                <rect x="154" y="111" width="34" height="5" rx="2" fill="#222"/>
-                <polygon points="171,101 193,114 149,114" fill="#222"/>
-                <line x1="193" y1="114" x2="195" y2="123" stroke="#f5c518" stroke-width="2"/>
-                <circle cx="195" cy="125" r="3.5" fill="#f5c518"/>
-                <rect x="44" y="172" width="32" height="6" rx="2" fill="#c09040"/>
-                <rect x="54" y="178" width="12" height="22" rx="2" fill="#c09040"/>
-                <rect x="46" y="199" width="28" height="6" rx="2" fill="#c09040"/>
-                <ellipse cx="60" cy="157" rx="20" ry="22" fill="#f5c518"/>
-                <circle cx="250" cy="88" r="5" fill="#e74c3c"/>
-                <circle cx="263" cy="72" r="4" fill="#3498db"/>
-                <circle cx="280" cy="95" r="3.5" fill="#2ecc71"/>
-                @if(!$isWriting && !$isSpeaking)
-                <rect x="234" y="130" width="82" height="50" rx="10" fill="#4a4a8a"/>
-                <polygon points="264,180 278,180 271,194" fill="#4a4a8a"/>
-                <text x="275" y="152" text-anchor="middle" font-size="10" fill="#aabbff" font-weight="bold" letter-spacing="1">IELTS BAND</text>
-                <text x="275" y="174" text-anchor="middle" font-size="24" fill="#fff" font-weight="900">{{ number_format($bandScore, 1) }}</text>
-                @endif
-            </svg>
-        </div>
-        <div class="res-quote">
-            "{{ $quote['text'] }}"
-            <span class="res-quote-author">&mdash; {{ $quote['author'] }}</span>
-        </div>
-    </div>
+@push('scripts_bottom')
+<script>
+(function () {
+    // ── Tab Overall / Breakdown ──────────────────────────────────────
+    var tabs = document.querySelectorAll('.rs-tab');
+    var panels = document.querySelectorAll('.rs-panel');
 
-</div>{{-- /.res-body --}}
-@endif
+    function showTab(name) {
+        tabs.forEach(function (t) {
+            var on = t.dataset.tab === name;
+            t.classList.toggle('is-active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach(function (p) {
+            var on = p.dataset.panel === name;
+            p.classList.toggle('is-active', on);
+            p.hidden = !on;
+        });
+        var url = window.location.pathname + window.location.search + (name === 'breakdown' ? '#breakdown' : '');
+        window.history.replaceState(null, '', url);
+    }
 
-</body>
-</html>
+    tabs.forEach(function (t) {
+        t.addEventListener('click', function () { showTab(t.dataset.tab); });
+    });
+    if (window.location.hash === '#breakdown') showTab('breakdown');
+
+    // ── Modal làm lại ────────────────────────────────────────────────
+    var modal = document.getElementById('rsRetakeModal');
+    if (!modal) return;
+
+    var opener = document.querySelector('[data-retake-open]');
+    var submit = modal.querySelector('[data-retake-submit]');
+
+    function openModal() {
+        modal.hidden = false;
+        document.body.classList.add('rs-modal-open');
+        submit.focus();
+    }
+    function closeModal() {
+        modal.hidden = true;
+        document.body.classList.remove('rs-modal-open');
+        if (opener) opener.focus();
+    }
+
+    if (opener) opener.addEventListener('click', openModal);
+    modal.querySelectorAll('[data-retake-close]').forEach(function (el) {
+        el.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    // Chặn bấm 2 lần -> tạo 2 attempt.
+    modal.querySelector('form').addEventListener('submit', function () {
+        submit.disabled = true;
+        submit.textContent = 'Đang chuẩn bị bài thi...';
+    });
+})();
+</script>
+@endpush
