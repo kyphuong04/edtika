@@ -73,7 +73,12 @@
     <aside class="rvx-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="rvxDrawerTitle">
         <header class="rvx-drawer-head">
             <span class="rvx-drawer-icon"><i class="far fa-lightbulb" aria-hidden="true"></i></span>
-            <h3 id="rvxDrawerTitle">Answer Help</h3>
+            <h3 id="rvxDrawerTitle">Giải thích đáp án</h3>
+            @if(!empty($reviewMeta['reportUrl']))
+                <button type="button" class="rvx-report-btn" id="rvxReportOpen">
+                    <i class="far fa-flag" aria-hidden="true"></i> Báo lỗi đáp án
+                </button>
+            @endif
             <button type="button" class="rvx-drawer-close" data-drawer-close aria-label="Đóng">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
@@ -81,6 +86,42 @@
         <div class="rvx-drawer-body" id="rvxDrawerBody"></div>
     </aside>
 </div>
+
+{{-- ── Cửa sổ "Báo lỗi đáp án" (mở từ nút trong sidebar) ───────────── --}}
+@if(!empty($reviewMeta['reportUrl']))
+<div class="rvx-report" id="rvxReport" hidden>
+    <div class="rvx-report-backdrop" data-report-close></div>
+    <form class="rvx-report-dialog" id="rvxReportForm" role="dialog" aria-modal="true"
+          aria-labelledby="rvxReportTitle" novalidate>
+        <button type="button" class="rvx-report-x" data-report-close aria-label="Đóng">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+
+        <h3 class="rvx-report-title" id="rvxReportTitle">Báo lỗi đáp án</h3>
+        <p class="rvx-report-sub">Nếu bạn phát hiện đáp án hoặc phần giải thích chưa chính xác, hãy cho chúng tôi biết để cải thiện nội dung nhé!</p>
+
+        <dl class="rvx-report-info">
+            <div><dt>Câu hỏi:</dt><dd id="rvxReportQuestion">—</dd></div>
+            <div><dt>Đáp án hiện tại:</dt><dd id="rvxReportAnswer">—</dd></div>
+            <div><dt>Dạng bài:</dt><dd id="rvxReportSkill">{{ $reviewMeta['skillLabel'] ?? '' }}</dd></div>
+        </dl>
+
+        <label class="rvx-report-label" for="rvxReportMessage">Mô tả chi tiết</label>
+        <div class="rvx-report-field">
+            <textarea id="rvxReportMessage" name="message" rows="5"
+                      maxlength="{{ $reviewMeta['reportMax'] ?? 300 }}"
+                      placeholder="Nhập nội dung cụ thể (tối đa {{ $reviewMeta['reportMax'] ?? 300 }} ký tự)..."></textarea>
+            <span class="rvx-report-count" id="rvxReportCount">0/{{ $reviewMeta['reportMax'] ?? 300 }}</span>
+        </div>
+        <p class="rvx-report-msg" id="rvxReportMsg" role="status" aria-live="polite" hidden></p>
+
+        <div class="rvx-report-actions">
+            <button type="button" class="rvx-report-cancel" data-report-close>Hủy</button>
+            <button type="submit" class="rvx-report-submit" id="rvxReportSubmit" disabled>Gửi báo cáo</button>
+        </div>
+    </form>
+</div>
+@endif
 
 @if(!empty($canRetake))
     @include('design_1.panel.ielts_tests.partials.retake_modal', ['retakeUrl' => $retakeUrl])

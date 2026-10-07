@@ -5,7 +5,8 @@
    ===================================================================== */
 
 .rvx-page,
-.rvx-drawer {
+.rvx-drawer,
+.rvx-report {
     --rs-ink: #1e1b4b;
     --rs-ink-soft: #4b5563;
     --rs-muted: #8b88a8;
@@ -27,7 +28,10 @@
 .rvx-page *::after,
 .rvx-drawer *,
 .rvx-drawer *::before,
-.rvx-drawer *::after { box-sizing: border-box; }
+.rvx-drawer *::after,
+.rvx-report *,
+.rvx-report *::before,
+.rvx-report *::after { box-sizing: border-box; }
 
 /* Phủ toàn màn hình, tách khỏi padding của layout panel bao ngoài. */
 .rvx-page {
@@ -405,7 +409,7 @@ body.rvx-drawer-open { overflow: hidden; }
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(460px, 100vw);
+    width: min(520px, 100vw);
     display: flex;
     flex-direction: column;
     background: #fff;
@@ -427,7 +431,9 @@ body.rvx-drawer-open { overflow: hidden; }
 }
 .rvx-drawer-head h3 {
     flex: 1;
+    min-width: 0;
     margin: 0;
+    line-height: 1.3;
     font-size: 16px;
     font-weight: 800;
     color: var(--rs-ink);
@@ -564,7 +570,204 @@ body.rvx-drawer-open { overflow: hidden; }
     .rvx-help-answers { grid-template-columns: 1fr; }
 }
 
+/* ── Nút "Báo lỗi đáp án" trên đầu sidebar ───────────────────────── */
+.rvx-report-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--rs-lilac-strong);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--rs-brand);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+.rvx-report-btn:hover { background: var(--rs-lilac); border-color: var(--rs-brand); }
+.rvx-report-btn:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+/* ── Cửa sổ "Báo lỗi đáp án" ────────────────────────────────────── */
+.rvx-report {
+    position: fixed;
+    inset: 0;
+    z-index: 2200; /* trên sidebar Answer Help (2100) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.rvx-report[hidden] { display: none; }
+
+.rvx-report-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(30, 27, 75, .45);
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.rvx-report-dialog {
+    position: relative;
+    width: min(520px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    margin: 0;
+    padding: 28px 28px 24px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(30, 27, 75, .25);
+    color: var(--rs-ink);
+    opacity: 0;
+    transform: translateY(12px) scale(.98);
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.rvx-report.is-open .rvx-report-backdrop { opacity: 1; }
+.rvx-report.is-open .rvx-report-dialog { opacity: 1; transform: none; }
+
+.rvx-report-x {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--rs-ink-soft);
+    font-size: 15px;
+    cursor: pointer;
+}
+.rvx-report-x:hover { background: var(--rs-lilac); color: var(--rs-brand); }
+
+.rvx-report-title {
+    margin: 0 40px 8px 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--rs-ink);
+}
+
+.rvx-report-sub {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--rs-ink-soft);
+}
+
+.rvx-report-info {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--rs-lilac);
+}
+.rvx-report-info > div { display: flex; gap: 8px; font-size: 14px; }
+.rvx-report-info dt { flex-shrink: 0; margin: 0; font-weight: 600; color: var(--rs-ink-soft); }
+.rvx-report-info dd { margin: 0; font-weight: 700; color: var(--rs-ink); word-break: break-word; }
+
+.rvx-report-label {
+    display: block;
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--rs-ink);
+}
+
+.rvx-report-field { position: relative; }
+
+.rvx-report-field textarea {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 14px 30px;
+    border: 1px solid var(--rs-lilac-strong);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--rs-ink);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.rvx-report-field textarea::placeholder { color: var(--rs-muted); }
+.rvx-report-field textarea:focus { border-color: var(--rs-brand); box-shadow: 0 0 0 3px rgba(76, 29, 149, .12); }
+.rvx-report-field textarea:disabled { background: #faf9fd; color: var(--rs-ink-soft); }
+
+.rvx-report-count {
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    font-size: 12px;
+    color: var(--rs-muted);
+    pointer-events: none;
+}
+.rvx-report-count.is-full { color: var(--rs-incorrect); font-weight: 700; }
+
+.rvx-report-msg {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.rvx-report-msg[hidden] { display: none; }
+.rvx-report-msg.is-success { background: var(--rs-correct-bg); color: #166534; }
+.rvx-report-msg.is-error { background: var(--rs-incorrect-bg); color: #9f1239; }
+
+.rvx-report-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.rvx-report-cancel,
+.rvx-report-submit {
+    min-width: 120px;
+    height: 44px;
+    padding: 0 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.rvx-report-cancel {
+    border: 1px solid var(--rs-lilac-strong);
+    background: #fff;
+    color: var(--rs-brand);
+}
+.rvx-report-cancel:hover { background: var(--rs-lilac); }
+.rvx-report-submit {
+    border: 1px solid var(--rs-brand);
+    background: var(--rs-brand);
+    color: #fff;
+}
+.rvx-report-submit:hover:not(:disabled) { background: var(--rs-brand-hover); }
+.rvx-report-submit:disabled { opacity: .45; cursor: not-allowed; }
+.rvx-report-form.is-sent .rvx-report-submit,
+.rvx-report-dialog.is-sent .rvx-report-submit { display: none; }
+
+@media (max-width: 520px) {
+    .rvx-report-btn { padding: 0 10px; font-size: 12px; }
+    .rvx-report-dialog { padding: 22px 18px 18px; }
+    .rvx-report-actions > button { flex: 1; min-width: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .rvx-drawer-backdrop,
-    .rvx-drawer-panel { transition: none; }
+    .rvx-drawer-panel,
+    .rvx-report-backdrop,
+    .rvx-report-dialog { transition: none; }
 }

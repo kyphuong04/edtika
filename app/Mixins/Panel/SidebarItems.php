@@ -664,6 +664,31 @@ class SidebarItems
             }
         }
 
+        // Thông báo đề lỗi — học viên báo lỗi đáp án đề IELTS do giáo viên tạo.
+        if ($user->isTeacher()) {
+            if (empty($items['noticeboard'])) {
+                $items['noticeboard'] = [
+                    'icon' => self::getIcon('noticeboard'),
+                    'text' => trans('panel.noticeboard'),
+                    'url' => '/panel/noticeboard',
+                    'extraUrl' => '/panel/course-noticeboard',
+                    'items' => []
+                ];
+            }
+
+            $newReports = 0;
+            try {
+                $newReports = \App\Models\IeltsAnswerReport::newCountFor((int) $user->id);
+            } catch (\Throwable $e) {
+                // Chưa chạy migration -> không hiện số.
+            }
+
+            $items['noticeboard']['items'][] = [
+                'text' => 'Thông báo đề lỗi' . ($newReports > 0 ? " ({$newReports})" : ''),
+                'url' => '/panel/noticeboard/answer-reports',
+            ];
+        }
+
         // AI Contents
         if ($user->checkAccessToAIContentFeature() and $user->can('panel_ai_contents')) {
             $items['ai_contents'] = [

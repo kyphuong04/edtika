@@ -329,7 +329,8 @@ const AnswerHelp = {
         });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen()) this.close();
+            // Đang mở cửa sổ báo lỗi thì Esc chỉ đóng cửa sổ đó.
+            if (e.key === 'Escape' && this.isOpen() && !ReportModal.isOpen()) this.close();
         });
     },
 
@@ -342,21 +343,23 @@ const AnswerHelp = {
         return RV_TFNG_TYPES.includes(entry.question.type) ? String(value).toUpperCase() : String(value);
     },
 
+    /** Đáp án đúng dạng chữ: các ô cách nhau ", ", đáp án thay thế " / ". */
+    keyText(entry) {
+        return ReviewData.slotsOf(entry.question.id)
+            .map((s) => (s.accepted || []).map((a) => this.choiceLabel(entry, a)).join(' / '))
+            .filter(Boolean).join(', ');
+    },
+
     render(entry) {
         const q = entry.question;
         const slots = ReviewData.slotsOf(q.id);
         const st = ReviewData.entryStatus(entry);
         const explanation = ReviewData.resultOf(q.id).explanation;
 
-        const numberLabel = entry.slotCount > 1
-            ? ('Câu ' + entry.startNumber + ' – ' + entry.endNumber)
-            : ('Câu ' + entry.startNumber);
-
-        this.title.textContent = 'Answer Help · ' + numberLabel;
+        this.title.textContent = 'Giải thích đáp án – Câu ' + rvNumberLabel(entry);
 
         const yours = slots.map((s) => this.choiceLabel(entry, s.submitted)).filter(Boolean).join(', ');
-        const keys = slots.map((s) => (s.accepted || []).map((a) => this.choiceLabel(entry, a)).join(' / '))
-            .filter(Boolean).join(', ');
+        const keys = this.keyText(entry);
 
         const statusText = { correct: 'Bạn trả lời đúng', incorrect: 'Bạn trả lời sai', empty: 'Bạn chưa trả lời câu này' }[st];
 
@@ -406,6 +409,7 @@ const AnswerHelp = {
 
     close() {
         if (!this.root || this.root.hidden) return;
+        if (ReportModal.isOpen()) ReportModal.close();
         this.root.classList.remove('is-open');
         document.body.classList.remove('rvx-drawer-open');
 
@@ -415,6 +419,172 @@ const AnswerHelp = {
 
         if (this.returnFocus && document.body.contains(this.returnFocus)) this.returnFocus.focus();
         this.returnFocus = null;
+    },
+};
+
+/** "2" hoặc "5 – 7" (câu chiếm nhiều ô). */
+function rvNumberLabel(entry) {
+    return entry.slotCount > 1
+        ? (entry.startNumber + ' – ' + entry.endNumber)
+        : String(entry.startNumber);
+}
+
+/* =====================================================================
+   Cửa sổ "Báo lỗi đáp án" — mở từ nút trên đầu sidebar Answer Help.
+   Gửi về panel.ielts_tests.report_answer; manager xem ở Admin > IELTS Tests
+   > Thông báo đề thi lỗi.
+   ===================================================================== */
+const ReportModal = {
+    root: null,
+    form: null,
+    textarea: null,
+    count: null,
+    submitBtn: null,
+    cancelBtn: null,
+    msg: null,
+    entry: null,
+    max: 300,
+    sending: false,
+    returnFocus: null,
+    closeTimer: null,
+
+    init() {
+        this.root = document.getElementById('rvxReport');
+        const openBtn = document.getElementById('rvxReportOpen');
+        if (!this.root || !openBtn) return;
+
+        this.form = document.getElementById('rvxReportForm');
+        this.textarea = document.getElementById('rvxReportMessage');
+        this.count = document.getElementById('rvxReportCount');
+        this.submitBtn = document.getElementById('rvxReportSubmit');
+        this.cancelBtn = this.root.querySelector('.rvx-report-cancel');
+        this.msg = document.getElementById('rvxReportMsg');
+        this.max = parseInt(this.textarea.getAttribute('maxlength'), 10) || 300;
+
+        openBtn.addEventListener('click', () => {
+            if (AnswerHelp.entry) this.open(AnswerHelp.entry, openBtn);
+        });
+
+        this.root.querySelectorAll('[data-report-close]').forEach((el) => {
+            el.addEventListener('click', () => this.close());
+        });
+
+        this.textarea.addEventListener('input', () => this.update());
+        this.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.send();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen()) {
+                e.stopPropagation();
+                this.close();
+            }
+        });
+    },
+
+    isOpen() {
+        return !!(this.root && !this.root.hidden);
+    },
+
+    open(entry, trigger) {
+        window.clearTimeout(this.closeTimer);
+        const sameEntry = this.entry && this.entry.question.id === entry.question.id;
+        this.entry = entry;
+        this.returnFocus = trigger || document.activeElement;
+
+        document.getElementById('rvxReportQuestion').textContent = 'Câu ' + rvNumberLabel(entry);
+        document.getElementById('rvxReportAnswer').textContent = AnswerHelp.keyText(entry) || '—';
+
+        // Giữ lại nội dung đang gõ dở nếu mở lại đúng câu đó.
+        if (!sameEntry || this.form.classList.contains('is-sent')) this.textarea.value = '';
+        this.form.classList.remove('is-sent');
+        this.textarea.disabled = false;
+        this.cancelBtn.textContent = 'Hủy';
+        this.showMessage('', '');
+        this.update();
+
+        this.root.hidden = false;
+        window.requestAnimationFrame(() => this.root.classList.add('is-open'));
+        this.textarea.focus();
+    },
+
+    close() {
+        if (!this.isOpen()) return;
+        window.clearTimeout(this.closeTimer);
+        this.root.classList.remove('is-open');
+        this.root.hidden = true;
+        if (this.returnFocus && document.body.contains(this.returnFocus)) this.returnFocus.focus();
+        this.returnFocus = null;
+    },
+
+    update() {
+        const len = this.textarea.value.length;
+        this.count.textContent = len + '/' + this.max;
+        this.count.classList.toggle('is-full', len >= this.max);
+        this.submitBtn.disabled = this.sending
+            || this.form.classList.contains('is-sent')
+            || this.textarea.value.trim() === '';
+    },
+
+    showMessage(text, type) {
+        this.msg.textContent = text;
+        this.msg.className = 'rvx-report-msg' + (type ? ' is-' + type : '');
+        this.msg.hidden = !text;
+    },
+
+    async send() {
+        const meta = window.REVIEW_META || {};
+        const message = this.textarea.value.trim();
+        if (!this.entry || !meta.reportUrl || !message || this.sending) return;
+
+        this.sending = true;
+        this.submitBtn.textContent = 'Đang gửi...';
+        this.update();
+        this.showMessage('', '');
+
+        const tokenEl = document.querySelector('meta[name="csrf-token"]');
+
+        try {
+            const res = await fetch(meta.reportUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': tokenEl ? tokenEl.getAttribute('content') : '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    question_id: this.entry.question.id,
+                    question_number: rvNumberLabel(this.entry),
+                    message,
+                }),
+            });
+
+            let data = {};
+            try { data = await res.json(); } catch (e) { /* không phải JSON */ }
+
+            if (res.ok && data.status === 'ok') {
+                this.form.classList.add('is-sent');
+                this.textarea.disabled = true;
+                this.cancelBtn.textContent = 'Đóng';
+                this.showMessage(data.message || 'Đã gửi báo cáo. Cảm ơn bạn!', 'success');
+                this.closeTimer = window.setTimeout(() => this.close(), 2200);
+            } else {
+                const firstError = data.errors ? Object.values(data.errors)[0] : null;
+                const text = (Array.isArray(firstError) ? firstError[0] : firstError)
+                    || data.message
+                    || (res.status === 419 ? 'Phiên làm việc đã hết hạn, hãy tải lại trang.' : 'Không gửi được báo cáo, hãy thử lại.');
+                this.showMessage(text, 'error');
+            }
+        } catch (e) {
+            this.showMessage('Không kết nối được máy chủ, hãy thử lại.', 'error');
+        } finally {
+            this.sending = false;
+            this.submitBtn.textContent = 'Gửi báo cáo';
+            this.update();
+        }
     },
 };
 
@@ -547,6 +717,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     rvInitReadOnlyHighlights();
     AnswerHelp.init();
+    ReportModal.init();
 
     const isListening = AttemptState.skill === 'listening';
     const entries = AttemptState.entries;

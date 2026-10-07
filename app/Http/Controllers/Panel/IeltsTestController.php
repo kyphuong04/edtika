@@ -16,6 +16,7 @@ use App\Models\IeltsTestQuestion;
 use App\Models\AcademicWordListWord;
 use App\Models\Sale;
 use App\Models\IeltsAttemptHighlight;
+use App\Models\IeltsAnswerReport;
 use App\QuizzesResult;
 use Illuminate\Http\Request;
 
@@ -1421,7 +1422,141 @@ class IeltsTestController extends Controller
                 'total' => $total,
                 'band' => $skillBand !== null ? (float) $skillBand : null,
                 'resultsUrl' => $isOwner ? route('panel.ielts_tests.results', $attempt->id) : null,
+                'reportUrl' => IeltsAnswerReport::recipientFor($attempt->test, $authUser)
+                    ? route('panel.ielts_tests.report_answer', $attempt->id)
+                    : null,
+                'skillLabel' => IeltsAnswerReport::SKILL_LABELS[$section->skill] ?? ('IELTS ' . ucfirst($section->skill)),
+                'reportMax' => IeltsAnswerReport::MESSAGE_MAX,
             ],
+        ]);
+    }
+
+    /**
+     * Học viên báo lỗi đáp án / giải thích của 1 câu từ sidebar "Giải thích
+     * đáp án" ở trang chữa bài. Báo cáo gửi tới giáo viên tạo đề, xem tại
+     * Panel > Bảng thông báo > Thông báo đề lỗi (Panel\IeltsAnswerReportController).
+     */
+    public function reportAnswer(Request $request, $attemptId)
+    {
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')
+            ->with(['answers', 'test.creator'])
+            ->findOrFail($attemptId);
+
+        $authUser = auth()->user();
+        $isOwner = $attempt->user_id === $authUser->id;
+
+        $canView = $isOwner
+            || $authUser->isTeacher()
+            || $authUser->isAdmin()
+            || $authUser->isOrganization()
+            || $authUser->isManager();
+
+        if (!$canView) {
+            abort(403);
+        }
+
+        if ($attempt->status !== 'completed') {
+            return response()->json(['status' => 'error', 'message' => 'Bài làm chưa được nộp.'], 422);
+        }
+
+        // Chỉ đề do giáo viên (role teacher) tạo mới nhận báo lỗi.
+        $teacher = IeltsAnswerReport::recipientFor($attempt->test, $authUser);
+        if (!$teacher) {
+            return response()->json(['status' => 'error', 'message' => 'Đề này không nhận báo lỗi đáp án.'], 403);
+        }
+
+        $data = $request->validate([
+            'question_id' => 'required|integer',
+            'question_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9 \x{2013}\-]+$/u'],
+            'message' => 'required|string|max:' . IeltsAnswerReport::MESSAGE_MAX,
+        ], [
+            'message.required' => 'Hãy mô tả lỗi bạn phát hiện.',
+            'message.max' => 'Mô tả tối đa ' . IeltsAnswerReport::MESSAGE_MAX . ' ký tự.',
+        ]);
+
+        $message = trim($data['message']);
+        if ($message === '') {
+            return response()->json(['status' => 'error', 'message' => 'Hãy mô tả lỗi bạn phát hiện.'], 422);
+        }
+
+        // Câu hỏi phải thuộc đúng đề của bài làm này.
+        $question = IeltsTestQuestion::with('section')
+            ->where('id', (int) $data['question_id'])
+            ->whereHas('section', fn ($q) => $q->where('test_id', $attempt->test_id))
+            ->first();
+
+        if (!$question) {
+            return response()->json(['status' => 'error', 'message' => 'Không tìm thấy câu hỏi.'], 404);
+        }
+
+        // Chống gửi trùng: cùng người, cùng câu, báo cáo trước chưa xử lý xong.
+        $pending = IeltsAnswerReport::where('user_id', $authUser->id)
+            ->where('question_id', $question->id)
+            ->where('status', IeltsAnswerReport::STATUS_NEW)
+            ->exists();
+
+        if ($pending) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bạn đã báo lỗi câu này rồi, chúng tôi đang kiểm tra.',
+            ], 429);
+        }
+
+        $recent = IeltsAnswerReport::where('user_id', $authUser->id)
+            ->where('created_at', '>=', time() - 3600)
+            ->count();
+
+        if ($recent >= 20) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bạn đã gửi quá nhiều báo cáo, hãy thử lại sau.',
+            ], 429);
+        }
+
+        // Ảnh chụp đáp án đúng + đáp án học viên tại thời điểm gửi.
+        $answer = $attempt->answers->firstWhere('question_id', $question->id);
+        if ($answer) {
+            $answer->setRelation('question', $question);
+        }
+
+        $slots = $question->auto_gradable
+            ? $question->gradeSlots($answer ? $answer->submittedValue() : null)
+            : [];
+
+        $currentAnswer = collect($slots)
+            ->map(fn ($s) => implode(' / ', array_map('strval', $s['accepted'] ?? [])))
+            ->filter(fn ($v) => $v !== '')
+            ->implode(', ');
+
+        $studentAnswer = collect($slots)
+            ->map(fn ($s) => $s['submitted'] === null ? '' : (string) $s['submitted'])
+            ->filter(fn ($v) => $v !== '')
+            ->implode(', ');
+
+        if (in_array($question->question_type, ['true_false_not_given', 'yes_no_not_given'], true)) {
+            $currentAnswer = mb_strtoupper($currentAnswer);
+            $studentAnswer = mb_strtoupper($studentAnswer);
+        }
+
+        IeltsAnswerReport::create([
+            'user_id' => $authUser->id,
+            'teacher_id' => $teacher->id,
+            'attempt_id' => $attempt->id,
+            'test_id' => $attempt->test_id,
+            'section_id' => $question->section_id,
+            'question_id' => $question->id,
+            'question_number' => $data['question_number'] ?? null,
+            'skill' => optional($question->section)->skill,
+            'question_type' => $question->question_type,
+            'current_answer' => $currentAnswer !== '' ? $currentAnswer : null,
+            'student_answer' => $studentAnswer !== '' ? $studentAnswer : null,
+            'message' => $message,
+            'status' => IeltsAnswerReport::STATUS_NEW,
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Cảm ơn bạn! Báo cáo đã được gửi, chúng tôi sẽ kiểm tra sớm.',
         ]);
     }
 

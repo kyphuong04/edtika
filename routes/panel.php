@@ -418,6 +418,12 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     });
 
     Route::group(['prefix' => 'noticeboard'], function () {
+        // Thông báo đề lỗi — học viên báo lỗi đáp án đề IELTS (giáo viên tạo đề)
+        Route::get('/answer-reports', 'IeltsAnswerReportController@index')->name('panel.ielts_answer_reports.index');
+        Route::post('/answer-reports/{reportId}/toggle', 'IeltsAnswerReportController@toggle')
+            ->where('reportId', '[0-9]+')
+            ->name('panel.ielts_answer_reports.toggle');
+
         Route::get('/', 'NoticeboardController@index');
         Route::get('/new', 'NoticeboardController@create');
         Route::post('/store', 'NoticeboardController@store');
@@ -608,6 +614,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/attempt/{attemptId}/retake', 'IeltsTestController@retakeTest')->name('panel.ielts_tests.retake');
 
         Route::get('/attempt/{attemptId}/review', 'IeltsTestController@reviewAnswers')->name('panel.ielts_tests.review');
+        Route::post('/attempt/{attemptId}/report-answer', 'IeltsTestController@reportAnswer')->name('panel.ielts_tests.report_answer');
         Route::get('/attempt/{attemptId}/section-data', 'IeltsTestController@attemptSectionData')->name('panel.ielts_tests.attempt_section_data');
         Route::get('/attempt/{attemptId}/scope-status', 'IeltsTestController@scopeStatus')->name('panel.ielts_tests.scope_status');
         Route::post('/attempt/{attemptId}/practice-duration', 'IeltsTestController@setPracticeDuration')->name('panel.ielts_tests.practice_duration');
