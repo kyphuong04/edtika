@@ -534,6 +534,11 @@
 
 @include('design_1.web.includes.purchase_notifications')
 
+{{-- Thông báo đề lỗi: tự cập nhật số trên sidebar + trang danh sách (giáo viên) --}}
+@if(auth()->check() && auth()->user()->isTeacher())
+    @include('design_1.panel.ielts_tests_manage.partials.answer_report_poller')
+@endif
+
 
 @stack('styles_bottom')
 @stack('scripts_bottom')

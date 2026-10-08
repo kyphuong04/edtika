@@ -20,6 +20,8 @@
     .ar-icon-btn.is-primary { background:#5A2B81; border-color:#5A2B81; color:#fff; }
     .ar-icon-btn.is-primary:hover { background:#4c1d95; color:#fff; }
     .ar-meta { font-size:12px; color:#6b7280; }
+    .ar-row-new td { animation: arFlash 3s ease-out; }
+    @keyframes arFlash { 0%, 40% { background:#f1ecfd; } 100% { background:transparent; } }
 </style>
 @endpush
 
@@ -33,7 +35,10 @@
         ];
     @endphp
 
-    <div class="row">
+    {{-- #arStats và #arTable được answer_report_poller tải lại khi có báo cáo mới --}}
+    <div id="arLive" data-latest-id="{{ $latestId }}"></div>
+
+    <div class="row" id="arStats">
         @foreach($statCards as $i => $card)
             <div class="col-12 col-lg-4 {{ $i ? 'mt-16 mt-lg-0' : '' }}">
                 <a href="{{ route('panel.ielts_answer_reports.index', array_filter(['status' => $card['status']])) }}"
@@ -112,6 +117,7 @@
             </div>
         </form>
 
+        <div id="arTable">
         @if($reports->isEmpty())
             <div class="text-center text-gray-500 py-40 px-16 border-top-gray-100">
                 {{ request()->hasAny(['status', 'test_id', 'skill', 'search']) ? 'Không có báo cáo nào khớp bộ lọc.' : 'Chưa có học viên nào báo lỗi đề của bạn.' }}
@@ -141,7 +147,7 @@
                                 ]))
                                 : null;
                         @endphp
-                        <tr class="{{ $report->isResolved() ? 'ar-row-resolved' : '' }}">
+                        <tr class="{{ $report->isResolved() ? 'ar-row-resolved' : '' }}" data-report-id="{{ $report->id }}">
                             <td class="text-left align-middle" style="min-width:220px;">
                                 <span class="d-block font-weight-500 text-dark">{{ $report->test->title ?? ('Đề #' . $report->test_id) }}</span>
                                 <div class="mt-4">
@@ -211,5 +217,6 @@
                 {{ $reports->links() }}
             </div>
         @endif
+        </div>
     </div>
 @endsection

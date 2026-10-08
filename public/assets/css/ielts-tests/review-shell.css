@@ -255,7 +255,8 @@
 }
 
 /* Hướng dẫn + bảng định nghĩa TRUE/FALSE/NOT GIVEN do người ra đề nhập */
-.rvx-group--tfng .exam-part-instructions {
+.rvx-group--tfng .exam-part-instructions,
+.rvx-group--mcq .exam-part-instructions {
     margin: 0 0 16px;
     padding: 0;
     border: 0;
@@ -265,7 +266,8 @@
     font-size: 13px;
     line-height: 1.6;
 }
-.rvx-group--tfng .exam-part-instructions > strong:first-child {
+.rvx-group--tfng .exam-part-instructions > strong:first-child,
+.rvx-group--mcq .exam-part-instructions > strong:first-child {
     display: block;
     margin-bottom: 2px;
     color: var(--rs-ink);
@@ -385,6 +387,181 @@
 }
 .rvx-help:hover { background: var(--rs-brand); color: #fff; }
 .rvx-help:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+/* ── Multiple choice (1 đáp án / nhiều đáp án) ────────────────────── */
+.rvx-group--mcq .exam-part-instructions { margin-bottom: 14px; font-size: 14px; color: var(--rs-ink); }
+.rvx-group--mcq .exam-part-instructions strong { color: var(--rs-ink); }
+.rvx-group--mcq .rvx-mcq-instr > strong:first-child { display: inline; margin: 0; }
+
+.rvx-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.exam-question-card.rvx-mcq-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: 14px;
+    margin-bottom: 6px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+}
+.exam-question-card.rvx-mcq-card--single { grid-template-columns: auto minmax(0, 1fr) 38px; }
+.exam-question-card.rvx-mcq-card + .exam-question-card.rvx-mcq-card { border-top-color: var(--rs-line); }
+.exam-question-card.rvx-mcq-card.rvx-current {
+    border-color: #c4b5fd;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+}
+
+.rvx-num.rvx-num--range {
+    width: auto;
+    min-width: 48px;
+    height: 48px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.rvx-mcq-body { min-width: 0; }
+
+.exam-root.is-review .rvx-mcq-text,
+.rvx-mcq-text {
+    margin: 6px 0 8px;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--rs-ink);
+}
+.rvx-mcq-text p { margin: 0; }
+
+.rvx-mcq-options {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.rvx-mcq-options.is-two-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: column;
+    column-gap: 18px;
+}
+
+.rvx-opt {
+    display: grid;
+    grid-template-columns: 18px 20px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 14px;
+    color: var(--rs-ink);
+}
+.rvx-mcq-options.is-multi { gap: 6px; }
+.rvx-mcq-options.is-multi .rvx-opt {
+    grid-template-columns: 18px 22px minmax(0, 1fr) 34px 38px;
+    gap: 12px;
+}
+
+.rvx-opt-letter { font-weight: 700; color: var(--rs-ink); }
+.rvx-opt.is-correct .rvx-opt-letter { color: var(--rs-correct); }
+.rvx-opt.is-incorrect .rvx-opt-letter { color: var(--rs-incorrect); }
+
+/* Ô chọn vẽ bằng CSS (không phải input thật) — trang chữa bài chỉ để xem. */
+.rvx-opt-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #4c1d95;
+    background: #fff;
+    color: #fff;
+    font-size: 10px;
+}
+.rvx-opt-mark.is-radio { border-radius: 50%; }
+.rvx-opt-mark.is-check { width: 20px; height: 20px; border-radius: 5px; }
+.rvx-opt-mark.is-radio.is-on { box-shadow: inset 0 0 0 3px #fff; background: #4c1d95; }
+.rvx-opt-mark.is-check.is-on { background: #4c1d95; }
+.rvx-opt.is-correct .rvx-opt-mark { border-color: var(--rs-correct); }
+.rvx-opt.is-correct .rvx-opt-mark.is-on { background: var(--rs-correct); }
+.rvx-opt.is-incorrect .rvx-opt-mark { border-color: var(--rs-incorrect); }
+.rvx-opt.is-incorrect .rvx-opt-mark.is-on { background: var(--rs-incorrect); }
+
+.rvx-opt-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 30px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    line-height: 1.4;
+}
+.rvx-opt-label { flex: 1; min-width: 0; }
+.rvx-opt-icon { flex-shrink: 0; font-size: 14px; }
+
+.rvx-opt.is-correct .rvx-opt-text { background: var(--rs-correct-bg); color: #15803d; }
+.rvx-opt.is-incorrect .rvx-opt-text { background: var(--rs-incorrect-bg); color: #be123c; }
+.rvx-opt.is-correct .rvx-opt-icon { color: var(--rs-correct); }
+.rvx-opt.is-incorrect .rvx-opt-icon { color: var(--rs-incorrect); }
+
+/* Nhiều đáp án: dải màu nhạt dần về bên phải giống mockup */
+.rvx-mcq-options.is-multi .rvx-opt.is-correct .rvx-opt-text {
+    background: linear-gradient(90deg, var(--rs-correct-bg) 0%, rgba(220, 252, 231, .35) 70%, rgba(220, 252, 231, 0) 100%);
+}
+.rvx-mcq-options.is-multi .rvx-opt.is-incorrect .rvx-opt-text {
+    background: linear-gradient(90deg, var(--rs-incorrect-bg) 0%, rgba(255, 228, 230, .35) 70%, rgba(255, 228, 230, 0) 100%);
+}
+
+.rvx-opt-status { display: inline-flex; justify-content: center; width: 34px; }
+
+.rvx-mcq-card--single > .rvx-help { margin-top: 2px; }
+
+/* Answer Help: đáp án dạng "A. ..." mỗi dòng + khối phương án đang xem */
+.rvx-help-answers.is-mcq { grid-template-columns: 1fr; }
+.rvx-help-answers.is-mcq dd { display: grid; gap: 4px; font-size: 14px; }
+.rvx-help-opt { display: block; font-weight: 600; line-height: 1.45; }
+.rvx-help-opt.is-correct { color: var(--rs-correct); }
+.rvx-help-opt.is-incorrect { color: var(--rs-incorrect); }
+
+.rvx-help-focus {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--rs-line);
+    background: #faf8ff;
+}
+.rvx-help-focus-head { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--rs-ink-soft); }
+.rvx-help-focus-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--rs-brand);
+    color: #fff;
+    font-size: 13px;
+}
+.rvx-help-focus p { margin: 8px 0 0; font-size: 14px; color: var(--rs-ink); }
+.rvx-help-focus.is-correct { border-color: #bbf7d0; background: #f0fdf4; }
+.rvx-help-focus.is-correct .rvx-help-focus-head { color: #15803d; }
+.rvx-help-focus.is-correct .rvx-help-focus-letter { background: var(--rs-correct); }
+.rvx-help-focus.is-incorrect { border-color: #fecdd3; background: #fff1f2; }
+.rvx-help-focus.is-incorrect .rvx-help-focus-head { color: #be123c; }
+.rvx-help-focus.is-incorrect .rvx-help-focus-letter { background: var(--rs-incorrect); }
+.rvx-help-focus.is-missed { border-color: #bbf7d0; border-style: dashed; }
+.rvx-help-focus.is-missed .rvx-help-focus-head { color: #15803d; }
 
 /* ── Sidebar Answer Help ──────────────────────────────────────────── */
 body.rvx-drawer-open { overflow: hidden; }
@@ -562,11 +739,11 @@ body.rvx-drawer-open { overflow: hidden; }
             ".   answer status help";
         row-gap: 8px;
     }
-    .rvx-num { grid-area: num; width: 30px; height: 30px; font-size: 13px; }
-    .rvx-tf-text { grid-area: text; }
-    .rvx-tf-answer { grid-area: answer; }
-    .rvx-status { grid-area: status; width: 30px; height: 30px; }
-    .rvx-help { grid-area: help; width: 34px; height: 34px; }
+    .rvx-tf-row .rvx-num { grid-area: num; width: 30px; height: 30px; font-size: 13px; }
+    .rvx-tf-row .rvx-tf-text { grid-area: text; }
+    .rvx-tf-row .rvx-tf-answer { grid-area: answer; }
+    .rvx-tf-row .rvx-status { grid-area: status; width: 30px; height: 30px; }
+    .rvx-tf-row .rvx-help { grid-area: help; width: 34px; height: 34px; }
     .rvx-help-answers { grid-template-columns: 1fr; }
 }
 
@@ -763,6 +940,18 @@ body.rvx-drawer-open { overflow: hidden; }
     .rvx-report-btn { padding: 0 10px; font-size: 12px; }
     .rvx-report-dialog { padding: 22px 18px 18px; }
     .rvx-report-actions > button { flex: 1; min-width: 0; }
+}
+
+@media (max-width: 720px) {
+    .rvx-mcq-options.is-two-col { grid-template-columns: 1fr; grid-auto-flow: row; grid-template-rows: none !important; }
+    .exam-question-card.rvx-mcq-card { column-gap: 10px; padding: 10px 8px; }
+    .exam-question-card.rvx-mcq-card--single { grid-template-columns: auto minmax(0, 1fr) 34px; }
+    .rvx-mcq-card .rvx-num { width: 30px; height: 30px; font-size: 13px; }
+    .rvx-mcq-card .rvx-num.rvx-num--range { min-width: 40px; height: 40px; padding: 0 8px; font-size: 12px; }
+    .rvx-mcq-card--single > .rvx-help { width: 34px; height: 34px; }
+    .rvx-opt { gap: 8px; }
+    .rvx-mcq-options.is-multi .rvx-opt { grid-template-columns: 16px 20px minmax(0, 1fr) 30px 34px; gap: 8px; }
+    .rvx-mcq-options.is-multi .rvx-help { width: 34px; height: 34px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -78,10 +78,25 @@ class IeltsAnswerReportController extends Controller
 
         return view('design_1.panel.ielts_tests_manage.answer_reports', [
             'pageTitle' => 'Thông báo đề lỗi',
+            'latestId' => (int) (clone $base)->max('id'),
             'reports' => $reports,
             'stats' => $stats,
             'tests' => $tests,
             'skillLabels' => IeltsAnswerReport::SKILL_LABELS,
+        ]);
+    }
+
+    /**
+     * Trình duyệt của giáo viên gọi định kỳ (answer_report_poller) để cập nhật
+     * số trên sidebar và tải lại danh sách khi có báo cáo mới — không cần F5.
+     */
+    public function summary()
+    {
+        $teacherId = (int) auth()->id();
+
+        return response()->json([
+            'new_count' => IeltsAnswerReport::newCountFor($teacherId),
+            'latest_id' => (int) IeltsAnswerReport::where('teacher_id', $teacherId)->max('id'),
         ]);
     }
 

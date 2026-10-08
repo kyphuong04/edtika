@@ -420,6 +420,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     Route::group(['prefix' => 'noticeboard'], function () {
         // Thông báo đề lỗi — học viên báo lỗi đáp án đề IELTS (giáo viên tạo đề)
         Route::get('/answer-reports', 'IeltsAnswerReportController@index')->name('panel.ielts_answer_reports.index');
+        Route::get('/answer-reports/summary', 'IeltsAnswerReportController@summary')->name('panel.ielts_answer_reports.summary');
         Route::post('/answer-reports/{reportId}/toggle', 'IeltsAnswerReportController@toggle')
             ->where('reportId', '[0-9]+')
             ->name('panel.ielts_answer_reports.toggle');
