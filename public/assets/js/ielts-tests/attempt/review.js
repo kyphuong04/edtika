@@ -454,6 +454,12 @@ const ReviewMcq = {
         const states = this.optionStates(entry);
         const textEl = card.querySelector('.exam-question-text');
 
+        // Listening: giao diện riêng theo mockup (vòng số + ▶, không bóng đèn từng câu).
+        if (window.ReviewListening && window.ReviewListening.enabled) {
+            this.decorateListening(entry, card, { multi, st, states, textEl });
+            return;
+        }
+
         // ── Đầu thẻ: số câu + đề bài (+ bóng đèn cho câu 1 đáp án) ──────
         const num = document.createElement('span');
         num.className = 'rvx-num' + (entry.slotCount > 1 ? ' rvx-num--range' : '');
@@ -534,6 +540,90 @@ const ReviewMcq = {
         card.appendChild(body);
         if (!multi) card.appendChild(this.helpButton(entry));
     },
+
+    /**
+     * Listening (mockup):
+     *  - 1 đáp án : [vòng số + ▶] | đề bài đậm + hàng A–E (radio), hàng đã chọn tô cả dòng, ✔/✖ cuối dòng
+     *  - nhiều    : đề bài như dòng hướng dẫn + mỗi phương án là 1 ô viền (checkbox bên ngoài)
+     *               | cột phải: mỗi số câu 1 vòng số + ▶ riêng (VD 14, 15)
+     * Không có bóng đèn từng câu — sidebar Answer Help mở bằng tab ở mép phải.
+     */
+    decorateListening(entry, card, ctx) {
+        const RL = window.ReviewListening;
+        const { multi, st, states, textEl } = ctx;
+
+        const body = document.createElement('div');
+        body.className = 'rvl-qbody';
+
+        if (textEl) {
+            textEl.className = multi ? 'rvl-qtext rvl-qtext--plain' : 'rvl-qtext';
+            body.appendChild(textEl);
+        }
+
+        const list = document.createElement('ul');
+        list.className = 'rvl-opts' + (multi ? ' is-boxed' : '');
+
+        states.forEach((opt) => {
+            const li = document.createElement('li');
+            li.className = 'rvl-opt' + (opt.state !== 'none' ? ' is-' + opt.state : '');
+
+            const mark = document.createElement('span');
+            mark.className = 'rvl-opt-mark ' + (multi ? 'is-check' : 'is-radio') + (opt.picked ? ' is-on' : '');
+            mark.setAttribute('aria-hidden', 'true');
+            if (multi && opt.picked) mark.innerHTML = '<i class="fas fa-check"></i>';
+
+            const letter = document.createElement('span');
+            letter.className = 'rvl-opt-letter';
+            letter.textContent = opt.letter + (multi ? '.' : '');
+
+            const text = document.createElement('span');
+            text.className = 'rvl-opt-text';
+            text.textContent = opt.text;
+            if (opt.picked) {
+                const sr = document.createElement('span');
+                sr.className = 'rvx-sr-only';
+                sr.textContent = ' (bạn đã chọn – ' + (opt.state === 'correct' ? 'đúng' : 'sai') + ')';
+                text.appendChild(sr);
+            }
+
+            const icon = document.createElement('i');
+            icon.className = 'rvl-opt-icon' + (opt.picked ? ' fas ' + (opt.state === 'correct' ? 'fa-check' : 'fa-times') : '');
+            icon.setAttribute('aria-hidden', 'true');
+
+            if (multi) {
+                // [checkbox] [ô viền: "A." nội dung ... ✔/✖]
+                const box = document.createElement('span');
+                box.className = 'rvl-opt-box';
+                box.appendChild(letter);
+                box.appendChild(text);
+                box.appendChild(icon);
+                li.appendChild(mark);
+                li.appendChild(box);
+            } else {
+                // [A] [radio] nội dung ... ✔/✖  (cả dòng tô màu)
+                li.appendChild(letter);
+                li.appendChild(mark);
+                li.appendChild(text);
+                li.appendChild(icon);
+            }
+            list.appendChild(li);
+        });
+        body.appendChild(list);
+
+        const nums = document.createElement('div');
+        nums.className = 'rvl-qnums' + (multi ? ' is-right' : '');
+        for (let n = entry.startNumber; n <= entry.endNumber; n++) nums.appendChild(RL.numberBlock(entry, n));
+
+        card.innerHTML = '';
+        card.classList.add('rvl-mcq', multi ? 'rvl-mcq--multi' : 'rvl-mcq--single', 'rvx-is-' + st);
+        if (multi) {
+            card.appendChild(body);
+            card.appendChild(nums);
+        } else {
+            card.appendChild(nums);
+            card.appendChild(body);
+        }
+    },
 };
 
 /* =====================================================================
@@ -555,6 +645,15 @@ const AnswerHelp = {
 
         this.root.querySelectorAll('[data-drawer-close]').forEach((el) => {
             el.addEventListener('click', () => this.close());
+        });
+
+        // Listening: "Nghe đoạn này" trong mục Trích transcript.
+        this.body.addEventListener('click', (e) => {
+            const btn = e.target.closest && e.target.closest('.rvl-help-play');
+            if (!btn || !this.entry || !window.ReviewListening) return;
+            const entry = this.entry;
+            this.close();
+            window.ReviewListening.playEntry(entry);
         });
 
         document.addEventListener('keydown', (e) => {
@@ -637,6 +736,7 @@ const AnswerHelp = {
             + '  <div><dt>Đáp án của bạn</dt><dd class="is-' + st + '">' + (yours || 'Chưa trả lời') + '</dd></div>'
             + '  <div><dt>Đáp án đúng</dt><dd class="is-key">' + (keys || '—') + '</dd></div>'
             + '</dl>'
+            + (window.ReviewListening && window.ReviewListening.enabled ? window.ReviewListening.excerptHtml(entry) : '')
             + '<section class="rvx-help-explain">'
             + '  <h4>Giải thích</h4>'
             + (explanation
@@ -989,6 +1089,34 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentNumber = 1;
     let transcriptOpen = false;
 
+    // Listening: transcript + thanh audio + nút ▶ từng câu (review-listening.js).
+    const RL = (isListening && window.ReviewListening && document.getElementById('rvlPlayer'))
+        ? window.ReviewListening
+        : null;
+    if (RL) {
+        RL.init({
+            context: els.context,
+            player: document.getElementById('rvlPlayer'),
+            entries,
+            sectionFiles: (window.REVIEW_SECTION_DATA || {}).files || {},
+            onPlayEntry: (entry) => goTo(entry.startNumber, { scroll: true, fromPlay: true }),
+        });
+        root.classList.add('rvl-root');
+
+        // Tab ở mép phải (mockup): mở sidebar giải thích của câu đang xem.
+        const helpTab = document.createElement('button');
+        helpTab.type = 'button';
+        helpTab.className = 'rvl-help-tab';
+        helpTab.title = 'Giải thích đáp án câu đang xem';
+        helpTab.setAttribute('aria-label', 'Mở giải thích đáp án câu đang xem');
+        helpTab.innerHTML = '<i class="fas fa-chevron-left" aria-hidden="true"></i>';
+        helpTab.addEventListener('click', () => {
+            const entry = entryOfNumber(currentNumber);
+            if (entry) AnswerHelp.open(entry, helpTab);
+        });
+        document.querySelector('.rvx-right').appendChild(helpTab);
+    }
+
     function entryOfNumber(n) {
         return entries.find((e) => n >= e.startNumber && n <= e.endNumber) || null;
     }
@@ -1000,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'rvx-part-tab' + (idx === AttemptState.part.index ? ' is-active' : '');
-            btn.textContent = (isListening ? 'Part ' : 'Passage ') + (idx + 1);
+            btn.textContent = (isListening ? 'Section ' : 'Passage ') + (idx + 1);
             if (part.title) btn.title = part.title;
             btn.setAttribute('aria-pressed', idx === AttemptState.part.index ? 'true' : 'false');
             btn.addEventListener('click', () => {
@@ -1121,10 +1249,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         ExamLayout.renderContext(part);
         renderGroups(part);
-        placeListeningBlock(part);
 
         const partIndex = AttemptState.part.index;
         const partEntries = entries.filter((e) => e.partIndex === partIndex);
+
+        if (RL) {
+            // Khối audio mặc định của layout.js không dùng -> thanh audio riêng ở cột trái.
+            els.questions.querySelectorAll('.exam-listening-block').forEach((b) => b.remove());
+            RL.renderPart(part, partEntries);
+        } else {
+            placeListeningBlock(part);
+        }
 
         partEntries.forEach((entry) => {
             if (ReviewTfng.isTfng(entry)) ReviewTfng.decorate(entry);
@@ -1137,6 +1272,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const groupEntries = partEntries.filter((e) => holder.contains(document.getElementById('exam-q-' + e.question.id)));
             ReviewTfng.decorateGroup(holder, groupEntries);
         });
+
+        // Nút ▶ cạnh vòng số câu (dạng đã làm lại giao diện chữa bài).
+        if (RL) {
+            partEntries.forEach((entry) => {
+                const card = document.getElementById('exam-q-' + entry.question.id);
+                RL.decorateNumber(card && card.querySelector('.rvx-num'), entry);
+            });
+        }
 
         ExamLayout.lockAllInputs();
         els.context.scrollTop = 0;
@@ -1175,6 +1318,10 @@ document.addEventListener('DOMContentLoaded', function () {
         markCurrent(entry, opts.scroll !== false);
         syncPager();
         AnswerHelp.follow(entry);
+
+        // Tô đậm đoạn đáp án trong transcript; chỉ cuộn transcript khi audio đang dừng
+        // (đang phát thì để transcript chạy theo audio). Nút ▶ tự xử lý phần tua.
+        if (RL && !opts.fromPlay) RL.focusEntry(entry, { scroll: RL.audio.paused });
     }
 
     els.prev.addEventListener('click', () => goTo(currentNumber - 1));

@@ -800,6 +800,17 @@ class IeltsTestInlineController extends Controller
             return redirect()->route('panel.my_ielts_tests.preview_student', $createdTestId);
         }
 
+        // Lưu nháp: ở lại trang soạn đề (chuyển sang trang sửa của đề vừa tạo) để làm tiếp.
+        if ($saveAsDraft && $createdTestId) {
+            return redirect()
+                ->route('panel.my_ielts_tests.edit_inline', $createdTestId)
+                ->with(['toast' => [
+                    'title' => 'Đã lưu nháp',
+                    'msg' => 'Bản nháp đã được lưu, bạn có thể tiếp tục soạn đề.',
+                    'status' => 'success',
+                ]]);
+        }
+
         return redirect()
             ->route('panel.my_ielts_tests.index')
             ->with(['toast' => [
@@ -1009,6 +1020,17 @@ class IeltsTestInlineController extends Controller
 
         if ($previewMode) {
             return redirect()->route('panel.my_ielts_tests.preview_student', $test->id);
+        }
+
+        // Lưu nháp: ở lại trang sửa đề để làm tiếp.
+        if ($saveAsDraft) {
+            return redirect()
+                ->route('panel.my_ielts_tests.edit_inline', $test->id)
+                ->with(['toast' => [
+                    'title' => 'Đã lưu nháp',
+                    'msg' => 'Bản nháp đã được lưu, bạn có thể tiếp tục soạn đề.',
+                    'status' => 'success',
+                ]]);
         }
 
         return redirect()
@@ -1729,6 +1751,7 @@ class IeltsTestInlineController extends Controller
             'instructions' => $this->sanitizeInlineText($partData['instructions'] ?? null, 65000),
             'passage' => $this->sanitizeInlineText($partData['passage'] ?? null, 65000),
             'transcript' => $this->sanitizeInlineText($partData['transcript'] ?? null, 65000),
+            'transcript_data' => \App\Support\Ielts\ListeningTranscript::sanitize($partData['transcript_data'] ?? null),
             'audio_file' => $audioFilePath,
             'task_image' => $taskImagePath,
             'video_file' => $videoFilePath,
@@ -1835,6 +1858,7 @@ class IeltsTestInlineController extends Controller
                 $partData['instructions'] = $this->sanitizeInlineText($partData['instructions'] ?? null, 65000);
                 $partData['passage'] = $this->sanitizeInlineText($partData['passage'] ?? null, 65000);
                 $partData['transcript'] = $this->sanitizeInlineText($partData['transcript'] ?? null, 65000);
+                $partData['transcript_data'] = \App\Support\Ielts\ListeningTranscript::sanitize($partData['transcript_data'] ?? null);
 
                 if (!empty($partData['files']) && is_array($partData['files'])) {
                     foreach (['audio', 'image', 'video'] as $fileType) {

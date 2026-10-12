@@ -14,6 +14,9 @@
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/ielts-results.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/attempt-review.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-shell.css') }}">
+@if($isListening)
+<link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-listening.css') }}">
+@endif
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endpush
 
@@ -35,6 +38,10 @@
             <aside class="rvx-left">
                 <nav class="rvx-part-tabs" id="rvxPartTabs" aria-label="{{ $isListening ? 'Chọn Part' : 'Chọn Passage' }}"></nav>
                 <div class="exam-context rvx-context" id="rvxContext"></div>
+                @if($isListening)
+                    {{-- Thanh audio Listening (review-listening.js dựng) --}}
+                    <div class="rvl-player" id="rvlPlayer" hidden></div>
+                @endif
                 <div class="rvx-pager" id="rvxPager">
                     <button type="button" class="rvx-pager-arrow" data-step="-1" aria-label="Câu trước">
                         <i class="fas fa-arrow-left" aria-hidden="true"></i>
@@ -145,6 +152,9 @@
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/renderers.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/layout.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/highlights.js') }}"></script>
+@if($isListening)
+<script src="{{ $assetV('assets/js/ielts-tests/attempt/review-listening.js') }}"></script>
+@endif
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/review.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/result-shell.js') }}"></script>
 @endpush

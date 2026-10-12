@@ -1,0 +1,208 @@
+/* =====================================================================
+   transcript-editor.css — cửa sổ nhập Transcript (trình tạo đề Listening)
+   Tiền tố tse-
+   ===================================================================== */
+
+body.tse-open { overflow: hidden; }
+
+.tse-modal {
+    --tse-brand: #511d99;
+    --tse-brand-soft: #f1ecfd;
+    --tse-line: #e5e7eb;
+    --tse-ink: #1f2937;
+    --tse-muted: #6b7280;
+    position: fixed;
+    inset: 0;
+    z-index: 2050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.tse-modal[hidden] { display: none; }
+.tse-modal *, .tse-modal *::before, .tse-modal *::after { box-sizing: border-box; }
+
+.tse-backdrop { position: absolute; inset: 0; background: rgba(17, 24, 39, .45); }
+
+.tse-dialog {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(1100px, 100%);
+    height: min(92vh, 900px);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(17, 24, 39, .3);
+    overflow: hidden;
+    color: var(--tse-ink);
+    font-size: 14px;
+}
+
+.tse-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 10px;
+    border-bottom: 1px solid var(--tse-line);
+}
+.tse-head h3 { margin: 0; font-size: 18px; font-weight: 800; }
+.tse-sub { margin: 2px 0 0; color: var(--tse-muted); font-size: 13px; }
+.tse-x {
+    width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: transparent; font-size: 24px; line-height: 1; color: var(--tse-muted); cursor: pointer;
+}
+.tse-x:hover { background: var(--tse-brand-soft); color: var(--tse-brand); }
+
+.tse-toolbar { padding: 10px 20px; border-bottom: 1px solid var(--tse-line); background: #faf9fd; }
+.tse-player { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.tse-player.is-disabled .tse-audio,
+.tse-player.is-disabled .tse-rate { opacity: .4; pointer-events: none; }
+.tse-audio { flex: 1 1 320px; min-width: 240px; height: 40px; }
+.tse-rate { height: 36px; border: 1px solid var(--tse-line); border-radius: 8px; padding: 0 8px; background: #fff; }
+.tse-hint { color: var(--tse-muted); font-size: 12px; }
+.tse-hint kbd {
+    padding: 1px 6px; border: 1px solid var(--tse-line); border-bottom-width: 2px;
+    border-radius: 4px; background: #fff; font-size: 11px; color: var(--tse-ink);
+}
+.tse-noaudio { margin: 8px 0 0; color: #92400e; font-size: 13px; }
+
+.tse-draft {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 10px 20px; border-bottom: 1px solid #fde68a; background: #fffbeb; color: #92400e; font-size: 13px;
+}
+.tse-draft[hidden] { display: none; }
+.tse-draft-text { flex: 1 1 260px; }
+.tse-foot-note { color: #92400e; font-size: 12px; margin-right: 8px; }
+
+.tse-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 20px 16px; }
+
+.tse-block { padding: 12px 0; border-bottom: 1px dashed var(--tse-line); }
+.tse-block:last-child { border-bottom: 0; }
+.tse-block-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.tse-block-head h4 { margin: 0; font-size: 14px; font-weight: 800; }
+.tse-count { color: var(--tse-muted); font-weight: 600; }
+
+.tse-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 34px; padding: 0 12px;
+    border: 1px solid var(--tse-line); border-radius: 10px;
+    background: #fff; color: var(--tse-ink); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.tse-btn:hover:not(:disabled) { border-color: var(--tse-brand); color: var(--tse-brand); }
+.tse-btn--primary { border-color: var(--tse-brand); background: var(--tse-brand); color: #fff; }
+.tse-btn--primary:hover:not(:disabled) { background: #3f1679; color: #fff; }
+.tse-btn:disabled { opacity: .45; cursor: not-allowed; }
+.tse-stamp { height: 40px; padding: 0 16px; font-size: 14px; }
+
+.tse-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--tse-muted); cursor: pointer; font-size: 13px;
+}
+.tse-icon:hover { background: var(--tse-brand-soft); color: var(--tse-brand); }
+.tse-icon--danger:hover { background: #fee2e2; color: #b91c1c; }
+
+.tse-check { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--tse-muted); cursor: pointer; }
+
+/* Người nói */
+.tse-speakers { display: flex; flex-wrap: wrap; gap: 8px; }
+.tse-speaker {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 6px 6px 10px; border: 1px solid var(--tse-line); border-radius: 12px; background: #fff;
+}
+.tse-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.tse-speaker-name { width: 130px; height: 30px; border: 1px solid transparent; border-radius: 6px; padding: 0 6px; font-weight: 700; }
+.tse-speaker-name:hover, .tse-speaker-name:focus { border-color: var(--tse-line); outline: none; }
+
+/* Dán nhanh */
+.tse-paste-text { width: 100%; padding: 10px 12px; border: 1px solid var(--tse-line); border-radius: 10px; font: inherit; resize: vertical; }
+.tse-paste-actions { display: flex; gap: 8px; margin-top: 8px; }
+.tse-paste .tse-check { margin-top: 6px; }
+
+/* Gắn đáp án */
+.tse-tagbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.tse-tag-hint { color: var(--tse-muted); font-size: 13px; }
+.tse-tag-number { height: 34px; min-width: 96px; border: 1px solid var(--tse-line); border-radius: 8px; padding: 0 8px; background: #fff; }
+.tse-coverage { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tse-cov {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; height: 26px; padding: 0 6px; border-radius: 999px;
+    background: #f3f4f6; color: var(--tse-muted); font-size: 12px; font-weight: 700;
+}
+.tse-cov.is-done { background: #dcfce7; color: #166534; }
+
+/* Các dòng */
+.tse-lines { display: grid; gap: 6px; }
+.tse-empty { margin: 8px 0; color: var(--tse-muted); }
+.tse-line {
+    display: grid;
+    grid-template-columns: 32px 170px 150px minmax(0, 1fr) 64px;
+    align-items: start;
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: background .3s, border-color .2s;
+}
+.tse-line:hover { background: #fafafa; }
+.tse-line.is-target { border-color: #c4b5fd; background: #faf7ff; }
+.tse-line.is-flash { background: #dcfce7; }
+
+.tse-idx {
+    width: 32px; height: 32px; border: 0; border-radius: 50%;
+    background: #f3f4f6; color: var(--tse-muted); font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.tse-line.is-target .tse-idx { background: var(--tse-brand); color: #fff; }
+
+.tse-time { display: flex; align-items: center; gap: 2px; }
+.tse-time-input {
+    width: 84px; height: 32px; padding: 0 8px; border: 1px solid var(--tse-line); border-radius: 8px;
+    font-variant-numeric: tabular-nums; text-align: center;
+}
+.tse-time-input.is-invalid { border-color: #dc2626; background: #fef2f2; }
+
+.tse-line-speaker {
+    width: 100%; height: 32px; padding: 0 6px;
+    border: 1px solid var(--tse-line); border-left: 4px solid #94a3b8; border-radius: 8px; background: #fff;
+}
+
+.tse-textwrap { min-width: 0; }
+.tse-text {
+    display: block; width: 100%; min-height: 34px; padding: 6px 10px;
+    border: 1px solid var(--tse-line); border-radius: 8px; font: inherit; line-height: 1.5; resize: none; overflow: hidden;
+}
+.tse-text:focus, .tse-time-input:focus, .tse-line-speaker:focus { outline: none; border-color: var(--tse-brand); box-shadow: 0 0 0 3px rgba(81, 29, 153, .12); }
+.tse-text::selection { background: #ddd6fe; }
+
+.tse-marks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tse-mark {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 4px 1px 8px; border-radius: 999px; background: var(--tse-brand-soft);
+    color: var(--tse-brand); font-size: 12px; font-weight: 600;
+}
+.tse-mark button { width: 18px; height: 18px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; line-height: 1; }
+.tse-mark button:hover { background: rgba(81, 29, 153, .15); }
+
+.tse-line-actions { display: flex; gap: 2px; }
+
+.tse-foot {
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    padding: 12px 20px; border-top: 1px solid var(--tse-line); background: #fff;
+}
+.tse-foot-info { margin-right: auto; color: var(--tse-muted); font-size: 13px; }
+
+/* Nút Transcript trên thẻ Part */
+.part-transcript-btn.has-transcript { border-color: #16a34a; color: #15803d; }
+
+@media (max-width: 860px) {
+    .tse-line {
+        grid-template-columns: 32px minmax(0, 1fr) 64px;
+        grid-template-areas: "idx time act" "idx speaker speaker" "idx text text";
+    }
+    .tse-idx { grid-area: idx; }
+    .tse-time { grid-area: time; }
+    .tse-line-speaker { grid-area: speaker; }
+    .tse-textwrap { grid-area: text; }
+    .tse-line-actions { grid-area: act; justify-content: flex-end; }
+}

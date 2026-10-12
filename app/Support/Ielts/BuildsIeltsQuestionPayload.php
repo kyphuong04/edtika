@@ -49,6 +49,9 @@ trait BuildsIeltsQuestionPayload
                 'instructions' => $part->instructions,
                 'passage' => $part->passage,
                 'transcript' => $part->transcript,
+                // Transcript có cấu trúc (người nói, mốc giờ, đoạn đáp án).
+                // Chỉ dùng cho trang chữa bài + trình tạo đề; stripSectionAnswers() gỡ ra.
+                'transcript_data' => $part->transcript_data ?: null,
                 'files' => [
                     'audio' => $part->audio_file ?: null,
                     'image' => $part->task_image ?: null,
@@ -329,6 +332,9 @@ trait BuildsIeltsQuestionPayload
         }
 
         foreach ($sectionData['parts'] as &$part) {
+            // Transcript là "đáp án" của Listening -> không gửi xuống trang làm bài.
+            unset($part['transcript'], $part['transcript_data']);
+
             if (empty($part['groups']) || !is_array($part['groups'])) {
                 continue;
             }

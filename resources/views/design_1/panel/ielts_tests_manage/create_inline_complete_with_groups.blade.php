@@ -715,6 +715,7 @@
     min-width: 180px;
 }
 </style>
+<link rel="stylesheet" href="{{ asset('assets/css/ielts-tests/transcript-editor.css') }}?v={{ filemtime(public_path('assets/css/ielts-tests/transcript-editor.css')) }}">
 @endpush
 
 @section('content')
@@ -1028,6 +1029,9 @@
 
 @push('scripts_bottom')
 <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
+{{-- Cửa sổ nhập Transcript cho Part Listening (người nói, mốc giờ, gắn đáp án) --}}
+<script>window.IELTS_PUBLIC_DISK_URL = @json(rtrim(\Illuminate\Support\Facades\Storage::disk('public')->url(''), '/'));</script>
+<script src="{{ asset('assets/js/ielts-tests/transcript-editor.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/transcript-editor.js')) }}"></script>
 <script src="{{ asset('assets/js/ielts-shared/blank-utils.js') }}?v={{ filemtime(public_path('assets/js/ielts-shared/blank-utils.js')) }}"></script>
 <script>
 const SECTIONS_CONFIG = {
@@ -2620,6 +2624,15 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
         mediaHTML += '</div>';
     }
 
+    // Listening: nút mở cửa sổ Transcript (transcript-editor.js), kèm số dòng đã nhập.
+    const isListeningSection = section && section.getAttribute('data-skill') === 'listening';
+    const transcriptLines = (part.transcript_data && Array.isArray(part.transcript_data.lines)) ? part.transcript_data.lines.length : 0;
+    const transcriptBtnHTML = isListeningSection
+        ? `<button type="button" class="btn btn-sm btn-outline-secondary part-transcript-btn${transcriptLines ? ' has-transcript' : ''}" onclick="IeltsTranscriptEditor.open(this)" title="Transcript: người nói, mốc giờ, gắn đáp án">
+                <i class="fas fa-closed-captioning"></i> Transcript${transcriptLines ? ` (${transcriptLines} dòng)` : ''}
+           </button>`
+        : '';
+
     const hasPartRichContent = Boolean(part.instructions || part.passage);
     const partRichContentHTML = hasPartRichContent
         ? `<div class="part-rich-content collapsible-richtext collapsed mb-8" style="font-size: 14px;">
@@ -2652,6 +2665,7 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
             <button type="button" class="btn btn-sm btn-outline-primary" onclick="editPartTitle(this)" title="Edit part title">
                 <i class="fas fa-edit"></i>
             </button>
+            ${transcriptBtnHTML}
             <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="toggleAddGroupForm(this)">
                 <i class="fas fa-plus"></i> Group
             </button>

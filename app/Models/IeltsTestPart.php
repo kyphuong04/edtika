@@ -15,6 +15,8 @@ class IeltsTestPart extends Model
     protected $casts = [
         'created_at' => 'integer',
         'updated_at' => 'integer',
+        // Transcript Listening có cấu trúc — xem App\Support\Ielts\ListeningTranscript
+        'transcript_data' => 'array',
     ];
 
     // Relationships
