@@ -13,6 +13,11 @@
  *   text chứa [[qN]]...[[/qN]] = đoạn đáp án câu N.
  * Đề cũ chỉ có part.transcript (HTML) -> hiển thị nguyên văn, không đồng bộ.
  *
+ * Đoạn nghe từng câu (part.transcript_data.segments = { "5": {start, end} }, giáo viên
+ * nhập): nút ▶ phát đúng đoạn rồi tự dừng; đoạn được tô trên thanh tua, có đếm
+ * ngược, Lặp đoạn / Nghe lại đoạn / Nghe tiếp. Câu chưa có đoạn -> phát từ dòng
+ * chứa đáp án và chạy tiếp như bình thường.
+ *
  * review.js gọi: init(), renderPart(), decorateNumber(), focusEntry().
  */
 (function () {
@@ -48,6 +53,9 @@
         noteTimer: null,
         entries: [],
         sectionFiles: {},
+        segments: {},       // đoạn nghe của Part đang xem
+        seg: null,          // đoạn đang phát: { start, end, label, ended }
+        loop: false,        // Lặp đoạn (giữ khi chuyển câu)
         onPlayEntry: null,  // review.js: đánh dấu câu đang xem
 
         init: function (opts) {
@@ -72,6 +80,7 @@
             this.els.context.addEventListener('click', function (e) {
                 var line = e.target.closest && e.target.closest('.rvl-line.has-time');
                 if (!line || window.getSelection().toString()) return;
+                self.clearSegment();
                 self.seek(parseFloat(line.dataset.start), true);
             });
         },
@@ -80,7 +89,17 @@
         buildPlayer: function () {
             var p = this.els.player;
             p.innerHTML = ''
-                + '<input type="range" class="rvl-seek rv-allow" min="0" max="1000" value="0" step="1" aria-label="Tua audio">'
+                + '<div class="rvl-segbar" hidden>'
+                + '  <span class="rvl-seg-label"></span>'
+                + '  <button type="button" class="rvl-segbtn rvl-seg-loop rv-allow" aria-pressed="false" title="Phát lặp lại đoạn này"><i class="fas fa-redo-alt"></i> Lặp đoạn</button>'
+                + '  <button type="button" class="rvl-segbtn rvl-seg-replay rv-allow"><i class="fas fa-undo-alt"></i> Nghe lại đoạn</button>'
+                + '  <button type="button" class="rvl-segbtn rvl-seg-continue rv-allow"><i class="fas fa-forward"></i> Nghe tiếp</button>'
+                + '  <button type="button" class="rvl-segbtn rvl-seg-close rv-allow" aria-label="Thoát chế độ nghe đoạn" title="Thoát chế độ nghe đoạn"><i class="fas fa-times"></i></button>'
+                + '</div>'
+                + '<div class="rvl-seekwrap">'
+                + '  <div class="rvl-segrange" hidden></div>'
+                + '  <input type="range" class="rvl-seek rv-allow" min="0" max="1000" value="0" step="1" aria-label="Tua audio">'
+                + '</div>'
                 + '<div class="rvl-controls">'
                 + '  <span class="rvl-time">00:00 / 00:00</span>'
                 + '  <div class="rvl-vol">'
@@ -106,11 +125,38 @@
             this.els.playBtn = p.querySelector('.rvl-play-main');
             this.els.note = p.querySelector('.rvl-note');
 
-            this.els.playBtn.addEventListener('click', function () { self.toggle(); });
-            p.querySelectorAll('.rvl-skip').forEach(function (b) {
-                b.addEventListener('click', function () { self.seek(a.currentTime + parseFloat(b.dataset.skip), false); });
+            this.els.segbar = p.querySelector('.rvl-segbar');
+            this.els.segLabel = p.querySelector('.rvl-seg-label');
+            this.els.segRange = p.querySelector('.rvl-segrange');
+            this.els.segLoop = p.querySelector('.rvl-seg-loop');
+
+            this.els.playBtn.addEventListener('click', function () {
+                // Hết đoạn mà bấm phát -> nghe lại đoạn đó.
+                if (self.seg && self.seg.ended) self.replaySegment();
+                else self.toggle();
             });
-            p.querySelector('.rvl-restart').addEventListener('click', function () { self.seek(0, true); });
+            p.querySelectorAll('.rvl-skip').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    self.clearSegment();
+                    self.seek(a.currentTime + parseFloat(b.dataset.skip), false);
+                });
+            });
+            p.querySelector('.rvl-restart').addEventListener('click', function () {
+                self.clearSegment();
+                self.seek(0, true);
+            });
+
+            this.els.segLoop.addEventListener('click', function () {
+                self.loop = !self.loop;
+                self.renderSegment();
+                if (self.loop && self.seg && self.seg.ended) self.replaySegment();
+            });
+            p.querySelector('.rvl-seg-replay').addEventListener('click', function () { self.replaySegment(); });
+            p.querySelector('.rvl-seg-continue').addEventListener('click', function () {
+                self.clearSegment();
+                if (self.audioUrl) self.audio.play().catch(function () {});
+            });
+            p.querySelector('.rvl-seg-close').addEventListener('click', function () { self.clearSegment(); });
 
             var rateBtn = p.querySelector('.rvl-rate');
             rateBtn.addEventListener('click', function () {
@@ -138,6 +184,7 @@
             });
             this.els.seek.addEventListener('change', function () {
                 seeking = false;
+                self.clearSegment();
                 if (isFinite(a.duration)) self.seek(a.duration * self.els.seek.value / 1000, false);
             });
             this._isSeeking = function () { return seeking; };
@@ -157,10 +204,14 @@
             a.addEventListener('play', function () { self.syncPlay(); });
             a.addEventListener('pause', function () { self.syncPlay(); });
             a.addEventListener('ended', function () { self.syncPlay(); });
-            a.addEventListener('loadedmetadata', function () { self.renderTime(a.currentTime); });
+            a.addEventListener('loadedmetadata', function () {
+                self.renderTime(a.currentTime);
+                self.renderSegment();
+            });
             a.addEventListener('timeupdate', function () {
                 if (!self._isSeeking()) self.renderTime(a.currentTime);
                 self.syncActiveLine(a.currentTime);
+                self.checkSegment(a.currentTime);
             });
         },
 
@@ -194,6 +245,87 @@
             if (play) this.audio.play().catch(function () {});
         },
 
+        // ── Nghe theo đoạn ─────────────────────────────────────────────
+        /** Đoạn nghe của câu (hoặc 1 số trong câu nhiều ô); câu nhiều ô: từ đoạn đầu tới hết đoạn cuối. */
+        segmentFor: function (entry, onlyNumber) {
+            var from = onlyNumber || entry.startNumber;
+            var to = onlyNumber || entry.endNumber;
+            var start = null;
+            var end = null;
+            for (var n = from; n <= to; n++) {
+                var sg = this.segments[String(n)];
+                if (!sg || !(sg.end > sg.start)) continue;
+                start = start === null ? sg.start : Math.min(start, sg.start);
+                end = end === null ? sg.end : Math.max(end, sg.end);
+            }
+            if (start === null) return null;
+            return { start: Number(start), end: Number(end), label: from === to ? String(from) : (from + ' – ' + to), ended: false };
+        },
+
+        playSegment: function (seg) {
+            this.seg = seg;
+            this.seek(seg.start, true);
+            this.renderSegment();
+        },
+
+        replaySegment: function () {
+            if (!this.seg) return;
+            this.seg.ended = false;
+            this.seek(this.seg.start, true);
+            this.renderSegment();
+        },
+
+        clearSegment: function () {
+            if (!this.seg) return;
+            this.seg = null;
+            this.renderSegment();
+        },
+
+        /** Gọi mỗi timeupdate: tới mốc kết thúc -> lặp hoặc dừng. */
+        checkSegment: function (t) {
+            var seg = this.seg;
+            if (!seg || seg.ended) return;
+
+            // Người dùng tua ra ngoài đoạn bằng cách khác -> thoát chế độ đoạn.
+            if (t < seg.start - 1 || t > seg.end + 1.5) {
+                this.clearSegment();
+                return;
+            }
+
+            if (t >= seg.end - 0.05) {
+                if (this.loop) {
+                    this.audio.currentTime = seg.start;
+                } else {
+                    seg.ended = true;
+                    this.audio.pause();
+                }
+            }
+            this.renderSegment();
+        },
+
+        renderSegment: function () {
+            var seg = this.seg;
+            var d = this.audio.duration;
+
+            this.els.segbar.hidden = !seg;
+            this.els.segRange.hidden = !seg || !(isFinite(d) && d > 0);
+            this.els.player.classList.toggle('is-segment', !!seg);
+            this.els.segLoop.classList.toggle('is-on', this.loop);
+            this.els.segLoop.setAttribute('aria-pressed', this.loop ? 'true' : 'false');
+            if (!seg) return;
+
+            if (isFinite(d) && d > 0) {
+                this.els.segRange.style.left = (seg.start / d * 100) + '%';
+                this.els.segRange.style.width = (Math.max(0.5, (seg.end - seg.start) / d * 100)) + '%';
+            }
+
+            var left = Math.max(0, seg.end - Math.max(seg.start, this.audio.currentTime));
+            this.els.segLabel.innerHTML = seg.ended
+                ? '<b>Câu ' + seg.label + '</b> · hết đoạn'
+                : '<b>Câu ' + seg.label + '</b> · ' + (this.loop ? 'đang lặp · ' : '') + 'còn ' + fmt(Math.ceil(left));
+            this.els.segbar.classList.toggle('is-ended', !!seg.ended);
+        },
+
         note: function (text) {
             var n = this.els.note;
             n.textContent = text;
@@ -207,6 +339,8 @@
             this.part = part;
             this.lines = [];
             this.activeLine = -1;
+            this.segments = (part.transcript_data && part.transcript_data.segments) || {};
+            this.clearSegment();
 
             var ctx = this.els.context;
             ctx.classList.remove('hidden');
@@ -382,6 +516,15 @@
             var label = onlyNumber
                 ? String(onlyNumber)
                 : (entry.slotCount > 1 ? (entry.startNumber + ' – ' + entry.endNumber) : String(entry.startNumber));
+
+            // Giáo viên đã nhập đoạn nghe -> phát đúng đoạn rồi tự dừng.
+            var seg = this.segmentFor(entry, onlyNumber);
+            if (seg && this.audioUrl) {
+                this.lastUserScroll = Date.now();
+                this.playSegment(seg);
+                return;
+            }
+            this.clearSegment();
 
             if (!marks.length) {
                 this.note('Câu ' + label + ' chưa được gắn vị trí trong transcript.');

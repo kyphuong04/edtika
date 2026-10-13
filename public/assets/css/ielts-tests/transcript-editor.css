@@ -206,3 +206,26 @@ body.tse-open { overflow: hidden; }
     .tse-textwrap { grid-area: text; }
     .tse-line-actions { grid-area: act; justify-content: flex-end; }
 }
+
+/* ── Đoạn nghe từng câu ─────────────────────────────────────────── */
+.tse-seg-hint { display: block; margin: 0 0 10px; line-height: 1.5; }
+.tse-segs { display: grid; gap: 6px; }
+.tse-seg {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border: 1px solid var(--tse-line);
+    border-radius: 10px;
+    transition: background .3s, border-color .2s;
+}
+.tse-seg.is-done { border-color: #bbf7d0; background: #f6fef9; }
+.tse-seg.is-bad { border-color: #fecaca; background: #fef2f2; }
+.tse-seg.is-flash { background: #dcfce7; }
+.tse-seg-num { min-width: 64px; font-weight: 800; color: var(--tse-brand); }
+.tse-seg-arrow { color: var(--tse-muted); padding: 0 2px; }
+.tse-seg-play { height: 30px; padding: 0 10px; font-size: 12px; }
+.tse-seg-len { min-width: 70px; color: var(--tse-muted); font-size: 12px; }
+.tse-seg.is-bad .tse-seg-len { color: #b91c1c; font-weight: 600; }
+.tse-seg [data-act="seg-clear"] { margin-left: auto; }

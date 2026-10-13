@@ -95,7 +95,9 @@
         target: 0,          // dòng sẽ được "Đánh dấu"
         selection: null,    // { line, start, end } — đoạn đang bôi đen
         dirty: false,
-        range: null,        // { from, to } số câu của Part
+        range: null,
+        segments: {},       // { "5": { start, end } } — đoạn nghe từng câu
+        previewEnd: null,   // mốc dừng của "Nghe thử"        // { from, to } số câu của Part
 
         // ── Khởi tạo khung (1 lần) ─────────────────────────────────────
         build: function () {
@@ -157,6 +159,12 @@
                 + '      </div>'
                 + '      <div class="tse-coverage"></div>'
                 + '    </section>'
+                + '    <section class="tse-block">'
+                + '      <div class="tse-block-head"><h4>Đoạn nghe từng câu <span class="tse-seg-count"></span></h4></div>'
+                + '      <p class="tse-tag-hint tse-seg-hint">Mốc bắt đầu – kết thúc của đoạn audio chứa đáp án. Trên trang chữa bài, bấm ▶ ở câu sẽ phát đúng đoạn này rồi tự dừng. '
+                + 'Phát audio, đến đầu đoạn bấm ⏱ ô bắt đầu, đến cuối đoạn bấm ⏱ ô kết thúc (hoặc gõ mm:ss). Câu bỏ trống: phát từ dòng chứa đáp án như cũ.</p>'
+                + '      <div class="tse-segs"></div>'
+                + '    </section>'
                 + '    <section class="tse-block tse-block--lines">'
                 + '      <div class="tse-block-head"><h4>Các dòng <span class="tse-count"></span></h4>'
                 + '        <button type="button" class="tse-btn" data-act="add-line"><i class="fas fa-plus"></i> Thêm dòng</button></div>'
@@ -189,6 +197,17 @@
 
             document.addEventListener('keydown', function (e) { self.onKey(e); });
 
+            // "Nghe thử" đoạn nghe: tự dừng ở mốc kết thúc.
+            this.audio.addEventListener('timeupdate', function () {
+                if (self.previewEnd !== null && self.audio.currentTime >= self.previewEnd) {
+                    self.previewEnd = null;
+                    self.audio.pause();
+                }
+            });
+            this.audio.addEventListener('seeking', function () {
+                if (self.previewEnd !== null && (self.audio.currentTime > self.previewEnd + 0.5)) self.previewEnd = null;
+            });
+
             this.audio.addEventListener('ratechange', function () {
                 modal.querySelector('.tse-rate').value = String(self.audio.playbackRate);
             });
@@ -219,6 +238,16 @@
             this.lines = (data.lines || []).map(function (l) {
                 return { speaker: l.speaker || null, text: l.text || '', start: (l.start === 0 || l.start) ? Number(l.start) : null };
             });
+
+            this.segments = {};
+            var segSrc = data.segments || {};
+            Object.keys(segSrc).forEach(function (n) {
+                var sg = segSrc[n] || {};
+                this.segments[n] = {
+                    start: (sg.start === 0 || sg.start) ? Number(sg.start) : null,
+                    end: (sg.end === 0 || sg.end) ? Number(sg.end) : null,
+                };
+            }, this);
 
             this.target = this.firstUnstamped();
             this.selection = null;
@@ -266,6 +295,16 @@
             this.lines = (data.lines || []).map(function (l) {
                 return { speaker: l.speaker || null, text: l.text || '', start: (l.start === 0 || l.start) ? Number(l.start) : null };
             });
+
+            this.segments = {};
+            var segSrc = data.segments || {};
+            Object.keys(segSrc).forEach(function (n) {
+                var sg = segSrc[n] || {};
+                this.segments[n] = {
+                    start: (sg.start === 0 || sg.start) ? Number(sg.start) : null,
+                    end: (sg.end === 0 || sg.end) ? Number(sg.end) : null,
+                };
+            }, this);
             this.target = this.firstUnstamped();
             this.modal.querySelector('.tse-draft').hidden = true;
             this.modal.querySelector('.tse-paste').hidden = true;
@@ -301,7 +340,26 @@
                 return { id: s.id, name: (s.name || '').trim() || ('Speaker ' + (i + 1)), narrator: !!s.narrator };
             });
 
-            part.transcript_data = lines.length ? { speakers: speakers, lines: lines } : null;
+            // Đoạn nghe: chỉ lưu đoạn đủ 2 mốc và kết thúc > bắt đầu; đoạn dở dang -> hỏi trước.
+            var segments = {};
+            var broken = [];
+            Object.keys(this.segments).forEach(function (n) {
+                var sg = this.segments[n];
+                var hasStart = sg.start !== null;
+                var hasEnd = sg.end !== null;
+                if (!hasStart && !hasEnd) return;
+                if (hasStart && hasEnd && sg.end > sg.start) segments[n] = { start: sg.start, end: sg.end };
+                else broken.push(n);
+            }, this);
+
+            if (broken.length && !window.confirm('Đoạn nghe của câu ' + broken.join(', ') + ' chưa đủ mốc hoặc mốc kết thúc không sau mốc bắt đầu — sẽ bị bỏ qua. Vẫn lưu?')) {
+                return;
+            }
+
+            var hasSegments = Object.keys(segments).length > 0;
+            part.transcript_data = (lines.length || hasSegments)
+                ? Object.assign({ speakers: speakers, lines: lines }, hasSegments ? { segments: segments } : {})
+                : null;
 
             // Giữ bản nháp trên trình duyệt tới khi đề được lưu (trang sửa đề không khôi phục auto save).
             Drafts.write(this.ctx.skill, this.ctx.partIndex, part.title, part.transcript_data);
@@ -388,7 +446,87 @@
             this.renderLines();
             this.renderTagPicker();
             this.renderCoverage();
+            this.renderSegments();
             this.renderStampButton();
+        },
+
+        // ── Đoạn nghe từng câu ─────────────────────────────────────────
+        segNumbers: function () {
+            var list = [];
+            if (this.range) {
+                for (var n = this.range.from; n <= this.range.to; n++) list.push(String(n));
+            }
+            // Đoạn đã lưu cho số câu ngoài phạm vi hiện tại (đề bị đổi số) vẫn hiện để sửa / xoá.
+            Object.keys(this.segments).forEach(function (n) { if (list.indexOf(n) < 0) list.push(n); });
+            return list.sort(function (a, b) { return a - b; });
+        },
+
+        segRowHtml: function (n) {
+            var sg = this.segments[n] || { start: null, end: null };
+            return '<div class="tse-seg" data-n="' + esc(n) + '">'
+                + '<span class="tse-seg-num">Câu ' + esc(n) + '</span>'
+                + '<input type="text" class="tse-time-input tse-seg-input" data-edge="start" value="' + esc(formatTime(sg.start)) + '" placeholder="Bắt đầu" aria-label="Bắt đầu đoạn câu ' + esc(n) + '">'
+                + '<button type="button" class="tse-icon" data-act="seg-stamp" data-edge="start" title="Lấy thời điểm audio hiện tại làm mốc bắt đầu"><i class="fas fa-stopwatch"></i></button>'
+                + '<span class="tse-seg-arrow">→</span>'
+                + '<input type="text" class="tse-time-input tse-seg-input" data-edge="end" value="' + esc(formatTime(sg.end)) + '" placeholder="Kết thúc" aria-label="Kết thúc đoạn câu ' + esc(n) + '">'
+                + '<button type="button" class="tse-icon" data-act="seg-stamp" data-edge="end" title="Lấy thời điểm audio hiện tại làm mốc kết thúc"><i class="fas fa-stopwatch"></i></button>'
+                + '<button type="button" class="tse-btn tse-seg-play" data-act="seg-play"><i class="fas fa-play"></i> Nghe thử</button>'
+                + '<span class="tse-seg-len"></span>'
+                + '<button type="button" class="tse-icon tse-icon--danger" data-act="seg-clear" title="Xoá đoạn nghe"><i class="fas fa-times"></i></button>'
+                + '</div>';
+        },
+
+        renderSegments: function () {
+            var box = this.modal.querySelector('.tse-segs');
+            var nums = this.segNumbers();
+            if (!nums.length) {
+                box.innerHTML = '<span class="tse-tag-hint">Part chưa có câu hỏi — thêm câu hỏi trước để nhập đoạn nghe.</span>';
+                this.modal.querySelector('.tse-seg-count').textContent = '';
+                return;
+            }
+            box.innerHTML = nums.map(this.segRowHtml, this).join('');
+            nums.forEach(this.syncSegRow, this);
+            this.renderSegCount();
+        },
+
+        renderSegCount: function () {
+            var nums = this.segNumbers();
+            var done = nums.filter(function (n) {
+                var sg = this.segments[n];
+                return sg && sg.start !== null && sg.end !== null && sg.end > sg.start;
+            }, this).length;
+            this.modal.querySelector('.tse-seg-count').textContent = nums.length ? '(' + done + '/' + nums.length + ')' : '';
+        },
+
+        /** Độ dài đoạn + báo lỗi khi kết thúc <= bắt đầu. */
+        syncSegRow: function (n) {
+            var row = this.modal.querySelector('.tse-seg[data-n="' + n + '"]');
+            if (!row) return;
+            var sg = this.segments[n] || { start: null, end: null };
+            var bad = sg.start !== null && sg.end !== null && sg.end <= sg.start;
+            var ok = sg.start !== null && sg.end !== null && !bad;
+            row.classList.toggle('is-done', ok);
+            row.classList.toggle('is-bad', bad);
+            row.querySelector('.tse-seg-len').textContent = ok
+                ? (Math.round((sg.end - sg.start) * 10) / 10) + ' giây'
+                : (bad ? 'Kết thúc phải sau bắt đầu' : '');
+            row.querySelector('.tse-seg-play').disabled = !ok || !this.audioUrl;
+        },
+
+        setSegEdge: function (n, edge, value) {
+            if (!this.segments[n]) this.segments[n] = { start: null, end: null };
+            this.segments[n][edge] = value;
+            this.touch();
+            this.syncSegRow(n);
+            this.renderSegCount();
+        },
+
+        playSegment: function (n) {
+            var sg = this.segments[n];
+            if (!sg || sg.start === null || sg.end === null || !this.audioUrl) return;
+            this.previewEnd = sg.end;
+            this.audio.currentTime = sg.start;
+            this.audio.play().catch(function () {});
         },
 
         renderSpeakers: function () {
@@ -728,6 +866,24 @@
                 case 'paste-append': this.applyPaste('append'); break;
                 case 'tag': this.tag(); break;
                 case 'draft-restore': this.restoreDraft(); break;
+                case 'seg-stamp': {
+                    if (!this.audioUrl) break;
+                    var segRow = el.closest('.tse-seg');
+                    var tnow = Math.round(this.audio.currentTime * 100) / 100;
+                    this.setSegEdge(segRow.dataset.n, el.dataset.edge, tnow);
+                    segRow.querySelector('.tse-seg-input[data-edge="' + el.dataset.edge + '"]').value = formatTime(tnow);
+                    segRow.classList.add('is-flash');
+                    window.setTimeout(function () { segRow.classList.remove('is-flash'); }, 500);
+                    break;
+                }
+                case 'seg-play': this.playSegment(el.closest('.tse-seg').dataset.n); break;
+                case 'seg-clear': {
+                    var clearRow = el.closest('.tse-seg');
+                    delete this.segments[clearRow.dataset.n];
+                    this.touch();
+                    this.renderSegments();
+                    break;
+                }
                 case 'draft-discard': this.discardDraft(); break;
                 case 'untag': this.untag(i, Number(el.dataset.k)); break;
                 case 'add-line':
@@ -797,6 +953,18 @@
         onChange: function (e) {
             var t = e.target;
             var row = t.closest('.tse-line');
+
+            if (t.classList.contains('tse-seg-input')) {
+                var segVal = parseTime(t.value);
+                if (segVal === undefined) {
+                    t.classList.add('is-invalid');
+                    return;
+                }
+                t.classList.remove('is-invalid');
+                t.value = formatTime(segVal);
+                this.setSegEdge(t.closest('.tse-seg').dataset.n, t.dataset.edge, segVal);
+                return;
+            }
 
             if (t.classList.contains('tse-time-input') && row) {
                 var i = Number(row.dataset.i);

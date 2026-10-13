@@ -443,3 +443,59 @@ mark.rvl-ans.is-focus {
     /* khớp grid-template-areas của hàng T/F/NG trên mobile (review-shell.css) */
     .rvl-root .rvx-tf-row { grid-template-columns: 40px minmax(0, 1fr) 30px 34px; }
 }
+
+/* Nhiều đáp án: đáp án đúng học viên chưa chọn -> viền nét đứt (ô checkbox vẫn trống) */
+.rvl-opts.is-boxed .rvl-opt.is-missed .rvl-opt-box { border-style: dashed; border-color: #86efac; }
+
+/* ── Nghe theo đoạn (đoạn nghe từng câu) ────────────────────────── */
+.rvl-seekwrap { position: relative; }
+.rvl-segrange {
+    position: absolute;
+    top: 50%;
+    height: 12px;
+    border-radius: 4px;
+    background: rgba(250, 204, 21, .45);
+    box-shadow: inset 0 0 0 1px rgba(202, 138, 4, .6);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+.rvl-segrange[hidden] { display: none; }
+.rvl-seekwrap .rvl-seek { position: relative; z-index: 1; background-color: transparent; }
+
+.rvl-segbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0 2px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background: #fefce8;
+    border: 1px solid #fde68a;
+    font-size: 12px;
+    color: #713f12;
+}
+.rvl-segbar[hidden] { display: none; }
+.rvl-seg-label { margin-right: auto; font-variant-numeric: tabular-nums; }
+.rvl-seg-label b { color: var(--rs-brand); }
+.rvl-segbar.is-ended .rvl-seg-label { color: #a16207; font-weight: 600; }
+
+.rvl-segbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--rs-lilac-strong);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--rs-brand);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.rvl-segbtn:hover { background: var(--rs-lilac); }
+.rvl-segbtn:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+.rvl-segbtn.rvl-seg-loop.is-on { background: var(--rs-brand); border-color: var(--rs-brand); color: #fff; }
+.rvl-segbtn.rvl-seg-close { width: 28px; padding: 0; justify-content: center; color: var(--rs-ink-soft); }
+.rvl-segbar.is-ended .rvl-seg-replay { background: var(--rs-brand); border-color: var(--rs-brand); color: #fff; }

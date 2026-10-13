@@ -8,6 +8,7 @@ namespace App\Support\Ielts;
  *
  *   speakers: [{ id: "s1", name: "Jen", narrator: false }]
  *   lines:    [{ speaker: "s1", text: "Hi, [[q1]]I booked a room[[/q1]].", start: 12.5 }]
+ *   segments: { "1": { start: 10.5, end: 21 } }  — đoạn nghe của từng câu (giáo viên nhập)
  *
  * Toàn bộ là chữ thường (strip_tags) — trang chữa bài hiển thị bằng textContent,
  * không chèn HTML. Đoạn đáp án dùng cú pháp [[qN]]...[[/qN]].
@@ -86,14 +87,58 @@ class ListeningTranscript
             ];
         }
 
-        if (!$lines) {
+        $segments = self::sanitizeSegments($raw['segments'] ?? []);
+
+        if (!$lines && !$segments) {
             return null;
         }
 
-        return [
+        $out = [
             'speakers' => array_values($speakers),
             'lines' => $lines,
         ];
+
+        if ($segments) {
+            $out['segments'] = $segments;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Đoạn nghe từng câu: { "số câu": { start, end } } (giây). Bỏ đoạn thiếu mốc hoặc
+     * end <= start. Trả mảng có key là chuỗi số câu, sắp tăng dần.
+     */
+    private static function sanitizeSegments($raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $out = [];
+        foreach (array_slice($raw, 0, 300, true) as $number => $segment) {
+            if (!is_array($segment) || !preg_match('/^\d{1,3}$/', (string) $number) || (int) $number < 1) {
+                continue;
+            }
+
+            $start = $segment['start'] ?? null;
+            $end = $segment['end'] ?? null;
+            if (!is_numeric($start) || !is_numeric($end)) {
+                continue;
+            }
+
+            $start = round(max(0, min(self::MAX_SECONDS, (float) $start)), 2);
+            $end = round(max(0, min(self::MAX_SECONDS, (float) $end)), 2);
+            if ($end <= $start) {
+                continue;
+            }
+
+            $out[(string) (int) $number] = ['start' => $start, 'end' => $end];
+        }
+
+        uksort($out, fn ($a, $b) => (int) $a <=> (int) $b);
+
+        return $out;
     }
 
     /** Chữ thường 1 dòng: bỏ thẻ HTML, gộp khoảng trắng, cắt độ dài. */

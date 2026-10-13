@@ -13,6 +13,9 @@
  *   - Multiple choice 1 đáp án / nhiều đáp án: tô xanh/đỏ phương án đã chọn,
  *     bóng đèn theo câu (1 đáp án) hoặc theo từng phương án (nhiều đáp án)
  *     (ReviewMcq).
+ *   - Sentence / Note completion (Reading): mỗi ô trống thay bằng "viên"
+ *     đáp án ngay trong câu: đúng -> xanh ✔; sai/bỏ trống -> đỏ ✖ → đáp án
+ *     đúng (xanh), kèm bóng đèn theo từng ô (ReviewCompletion).
  * Các dạng khác tạm dùng lớp tô đúng/sai cũ (ReviewMarker).
  *
  * Dữ liệu (attempt/review.blade.php):
@@ -34,6 +37,7 @@ const AttemptAnswers = {
 
 const RV_TFNG_TYPES = ['true_false_not_given', 'yes_no_not_given'];
 const RV_MCQ_TYPES = ['multiple_choice_single', 'multiple_choice_multiple'];
+const RV_COMPLETION_TYPES = ['sentence_completion', 'note_completion'];
 const RV_NUMBER_WORDS = ['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
 
 function rvNorm(value) {
@@ -397,8 +401,25 @@ const ReviewMcq = {
                 picked: isPicked,
                 key: isKey,
                 state: isPicked ? (isKey ? 'correct' : 'incorrect') : 'none',
+                // Hiển thị trên trang chữa bài: phương án đã chọn + đáp án đúng (kể cả khi
+                // học viên không chọn) -> câu sai thấy cùng lúc đáp án mình chọn và đáp án đúng.
+                shown: isPicked || isKey,
+                tone: isKey ? 'correct' : 'incorrect',
+                missed: isKey && !isPicked,
             };
         });
+    },
+
+    /** Lớp màu của 1 phương án: is-correct / is-incorrect (+ is-missed: đáp án đúng chưa chọn). */
+    rowClass(opt) {
+        if (!opt.shown) return '';
+        return ' is-' + opt.tone + (opt.missed ? ' is-missed' : '');
+    },
+
+    srText(opt) {
+        if (opt.missed) return ' (đáp án đúng)';
+        if (opt.picked) return ' (bạn đã chọn – ' + (opt.state === 'correct' ? 'đúng' : 'sai') + ')';
+        return '';
     },
 
     /** "A, D" — dùng cho cửa sổ báo lỗi. */
@@ -485,7 +506,7 @@ const ReviewMcq = {
 
         states.forEach((opt) => {
             const li = document.createElement('li');
-            li.className = 'rvx-opt' + (opt.state !== 'none' ? ' is-' + opt.state : '');
+            li.className = 'rvx-opt' + this.rowClass(opt);
             li.dataset.optionIndex = String(opt.index);
 
             const letter = document.createElement('span');
@@ -493,7 +514,7 @@ const ReviewMcq = {
             letter.textContent = opt.letter;
 
             const mark = document.createElement('span');
-            mark.className = 'rvx-opt-mark ' + (multi ? 'is-check' : 'is-radio') + (opt.picked ? ' is-on' : '');
+            mark.className = 'rvx-opt-mark ' + (multi ? 'is-check' : 'is-radio') + ((opt.picked || (!multi && opt.key)) ? ' is-on' : '');
             mark.setAttribute('aria-hidden', 'true');
             if (multi && opt.picked) mark.innerHTML = '<i class="fas fa-check"></i>';
 
@@ -504,10 +525,10 @@ const ReviewMcq = {
             label.textContent = opt.text;
             text.appendChild(label);
 
-            if (opt.picked) {
+            if (opt.shown) {
                 const sr = document.createElement('span');
                 sr.className = 'rvx-sr-only';
-                sr.textContent = ' (bạn đã chọn – ' + (opt.state === 'correct' ? 'đúng' : 'sai') + ')';
+                sr.textContent = this.srText(opt);
                 label.appendChild(sr);
             }
 
@@ -519,12 +540,12 @@ const ReviewMcq = {
                 // Cột ✔/✖ luôn chiếm chỗ để các bóng đèn thẳng hàng.
                 const slot = document.createElement('span');
                 slot.className = 'rvx-opt-status';
-                if (opt.picked) slot.appendChild(this.statusIcon(opt.state));
+                if (opt.shown) slot.appendChild(this.statusIcon(opt.tone));
                 li.appendChild(slot);
                 li.appendChild(this.helpButton(entry, opt.index));
-            } else if (opt.picked) {
+            } else if (opt.shown) {
                 const icon = document.createElement('i');
-                icon.className = 'rvx-opt-icon fas ' + (opt.state === 'correct' ? 'fa-check' : 'fa-times');
+                icon.className = 'rvx-opt-icon fas ' + (opt.tone === 'correct' ? 'fa-check' : 'fa-times');
                 icon.setAttribute('aria-hidden', 'true');
                 text.appendChild(icon);
             }
@@ -565,10 +586,10 @@ const ReviewMcq = {
 
         states.forEach((opt) => {
             const li = document.createElement('li');
-            li.className = 'rvl-opt' + (opt.state !== 'none' ? ' is-' + opt.state : '');
+            li.className = 'rvl-opt' + this.rowClass(opt);
 
             const mark = document.createElement('span');
-            mark.className = 'rvl-opt-mark ' + (multi ? 'is-check' : 'is-radio') + (opt.picked ? ' is-on' : '');
+            mark.className = 'rvl-opt-mark ' + (multi ? 'is-check' : 'is-radio') + ((opt.picked || (!multi && opt.key)) ? ' is-on' : '');
             mark.setAttribute('aria-hidden', 'true');
             if (multi && opt.picked) mark.innerHTML = '<i class="fas fa-check"></i>';
 
@@ -579,15 +600,15 @@ const ReviewMcq = {
             const text = document.createElement('span');
             text.className = 'rvl-opt-text';
             text.textContent = opt.text;
-            if (opt.picked) {
+            if (opt.shown) {
                 const sr = document.createElement('span');
                 sr.className = 'rvx-sr-only';
-                sr.textContent = ' (bạn đã chọn – ' + (opt.state === 'correct' ? 'đúng' : 'sai') + ')';
+                sr.textContent = this.srText(opt);
                 text.appendChild(sr);
             }
 
             const icon = document.createElement('i');
-            icon.className = 'rvl-opt-icon' + (opt.picked ? ' fas ' + (opt.state === 'correct' ? 'fa-check' : 'fa-times') : '');
+            icon.className = 'rvl-opt-icon' + (opt.shown ? ' fas ' + (opt.tone === 'correct' ? 'fa-check' : 'fa-times') : '');
             icon.setAttribute('aria-hidden', 'true');
 
             if (multi) {
@@ -630,6 +651,236 @@ const ReviewMcq = {
    Sidebar Answer Help — trượt từ phải sang, đè lên trang.
    Nội dung hiện tại: đề bài, đáp án của học viên, đáp án đúng, giải thích.
    ===================================================================== */
+/* =====================================================================
+   Sentence completion & Note completion (Reading)
+     - Sentence: mỗi câu là 1 thẻ viền: [số] câu văn, ô trống thay bằng
+       viên đáp án ngay trong câu.
+     - Note    : cả group nằm trong 1 khung ghi chú (tiêu đề giữa, mục,
+       gạch đầu dòng do người ra đề soạn); mỗi ô trống = [số] + viên đáp án.
+   Viên đáp án: đúng  -> [answer ✔]
+                sai   -> [bài làm ✖] → [đáp án ✔]
+                trống -> [ ✖ ]       → [đáp án ✔]
+   Bóng đèn cạnh từng ô mở Answer Help của đúng ô đó.
+   ===================================================================== */
+const ReviewCompletion = {
+    applies(entry) {
+        return !!entry
+            && RV_COMPLETION_TYPES.includes(entry.question.type)
+            && AttemptState.skill !== 'listening';
+    },
+
+    isNote(entry) {
+        return entry.question.type === 'note_completion';
+    },
+
+    /** Đáp án chấp nhận của 1 ô (bỏ phần tử rỗng). */
+    acceptedOf(slot) {
+        return ((slot && Array.isArray(slot.accepted)) ? slot.accepted : [])
+            .map((a) => String(a == null ? '' : a).trim())
+            .filter(Boolean);
+    },
+
+    submittedOf(slot) {
+        return slot && slot.submitted != null ? String(slot.submitted).trim() : '';
+    },
+
+    pill(text, tone) {
+        const el = document.createElement('span');
+        el.className = 'rvx-pill is-' + tone + (text ? '' : ' is-blank');
+        if (text) {
+            const t = document.createElement('span');
+            t.className = 'rvx-pill-text';
+            t.textContent = text;
+            el.appendChild(t);
+        }
+        el.insertAdjacentHTML('beforeend', '<i class="fas ' + (tone === 'correct' ? 'fa-check' : 'fa-times')
+            + '" aria-hidden="true"></i>');
+        return el;
+    },
+
+    /** Khối thay cho 1 ô trống: [số] [viên đáp án] (→ [đáp án đúng]) [bóng đèn]. */
+    buildBlank(entry, index, withNumber) {
+        const slot = ReviewData.slotsOf(entry.question.id)[index];
+        const st = ReviewData.status(slot);
+        const number = entry.startNumber + index;
+        const submitted = this.submittedOf(slot);
+        const accepted = this.acceptedOf(slot);
+
+        const wrap = document.createElement('span');
+        wrap.className = 'rvx-blank is-' + st;
+        wrap.dataset.number = String(number);
+
+        if (withNumber) {
+            const num = document.createElement('span');
+            num.className = 'rvx-num rvx-num--inline';
+            num.textContent = number;
+            wrap.appendChild(num);
+        }
+
+        const answers = document.createElement('span');
+        answers.className = 'rvx-blank-answers';
+        answers.setAttribute('aria-hidden', 'true');
+
+        if (st === 'correct') {
+            answers.appendChild(this.pill(submitted || accepted[0] || '', 'correct'));
+        } else {
+            answers.appendChild(this.pill(submitted, 'incorrect'));
+            const arrow = document.createElement('span');
+            arrow.className = 'rvx-arrow';
+            arrow.textContent = '→';
+            answers.appendChild(arrow);
+            const key = this.pill(accepted[0] || '—', 'correct');
+            key.classList.add('is-key');
+            if (accepted.length > 1) key.title = 'Đáp án chấp nhận: ' + accepted.join(' / ');
+            answers.appendChild(key);
+        }
+        wrap.appendChild(answers);
+
+        const sr = document.createElement('span');
+        sr.className = 'rvx-sr-only';
+        sr.textContent = 'Câu ' + number + ': '
+            + ({ correct: 'đúng', incorrect: 'sai', empty: 'chưa trả lời' }[st])
+            + (submitted ? ', bạn điền "' + submitted + '"' : '')
+            + (st !== 'correct' && accepted.length ? ', đáp án đúng "' + accepted.join(' / ') + '"' : '')
+            + '.';
+        wrap.appendChild(sr);
+
+        const help = document.createElement('button');
+        help.type = 'button';
+        help.className = 'rvx-help rvx-help--sm rv-allow';
+        help.dataset.questionId = entry.question.id;
+        help.dataset.slotIndex = String(index);
+        help.setAttribute('aria-label', 'Xem đáp án và giải thích câu ' + number);
+        help.title = 'Answer Help';
+        help.innerHTML = '<i class="far fa-lightbulb" aria-hidden="true"></i>';
+        wrap.appendChild(help);
+
+        return wrap;
+    },
+
+    decorate(entry) {
+        const q = entry.question;
+        const card = document.getElementById('exam-q-' + q.id);
+        if (!card || card.dataset.rvxDone) return;
+
+        const text = card.querySelector('.exam-question-text');
+        const inputs = Array.from(card.querySelectorAll('.exam-blank-input'));
+        // Đề cũ không có ___ trong câu -> giữ cách tô cũ.
+        if (!text || !inputs.length) {
+            ReviewMarker.decorateEntry(entry);
+            return;
+        }
+        card.dataset.rvxDone = '1';
+
+        const note = this.isNote(entry);
+        const single = !note && inputs.length === 1;
+
+        card.querySelectorAll('.exam-blank-number').forEach((b) => b.remove());
+        inputs.forEach((input, i) => input.replaceWith(this.buildBlank(entry, i, !single)));
+
+        const badge = card.querySelector('.exam-question-number');
+        if (badge) badge.remove();
+        card.querySelectorAll('.attempt-save-indicator').forEach((el) => el.remove());
+
+        card.classList.add(note ? 'rvx-note-card' : 'rvx-sc-card', 'rvx-is-' + ReviewData.entryStatus(entry));
+
+        if (note) return;
+
+        if (single) {
+            card.classList.add('rvx-sc-item');
+            const holder = document.createElement('span');
+            text.replaceWith(holder);
+            holder.replaceWith(this.sentenceRow(text, entry.startNumber));
+            return;
+        }
+
+        // Nhiều câu trong 1 question (mỗi câu 1 đoạn / 1 dòng): tách mỗi câu
+        // có ô trống thành 1 thẻ riêng, số câu đứng thành cột bên trái.
+        card.classList.add('rvx-sc-split');
+        const frag = document.createDocumentFragment();
+        this.splitLines(text).forEach((nodes) => {
+            const box = document.createElement('div');
+            box.className = 'exam-question-text';
+            nodes.forEach((n) => box.appendChild(n));
+
+            const first = box.querySelector('.rvx-blank');
+            if (!first) {
+                if (box.textContent.trim() || box.querySelector('img, table')) {
+                    box.classList.add('rvx-sc-intro');
+                    frag.appendChild(box);
+                }
+                return;
+            }
+
+            const inlineNum = first.querySelector('.rvx-num--inline');
+            if (inlineNum) inlineNum.remove();
+
+            const item = document.createElement('div');
+            item.className = 'rvx-sc-item';
+            item.appendChild(this.sentenceRow(box, first.dataset.number));
+            frag.appendChild(item);
+        });
+        text.replaceWith(frag);
+    },
+
+    /** [số câu] [câu văn] */
+    sentenceRow(textEl, number) {
+        const row = document.createElement('div');
+        row.className = 'rvx-sc-row';
+        const num = document.createElement('span');
+        num.className = 'rvx-num rvx-num--sc';
+        num.textContent = number;
+        row.appendChild(num);
+        row.appendChild(textEl);
+        return row;
+    },
+
+    /**
+     * Chia nội dung câu hỏi thành từng dòng: mỗi khối (p, div, li, h*) là 1
+     * dòng, trong khối lại tách tiếp theo <br>. Trả về mảng các mảng node.
+     */
+    splitLines(container) {
+        const BLOCKS = /^(P|DIV|LI|H[1-6]|BLOCKQUOTE)$/;
+        const lines = [];
+        let current = [];
+        const flush = () => { if (current.length) lines.push(current); current = []; };
+
+        const walk = (parent) => {
+            Array.from(parent.childNodes).forEach((node) => {
+                if (node.nodeName === 'BR') { flush(); return; }
+                if (node.nodeName === 'UL' || node.nodeName === 'OL') { flush(); walk(node); flush(); return; }
+                if (node.nodeType === 1 && BLOCKS.test(node.nodeName)) {
+                    flush();
+                    if (node.querySelector('br, p, div, li')) walk(node);
+                    else current.push(node);
+                    flush();
+                    return;
+                }
+                current.push(node);
+            });
+        };
+
+        walk(container);
+        flush();
+        return lines;
+    },
+
+    /** Note completion: gom tiêu đề + các thẻ của group vào 1 khung ghi chú. */
+    decorateGroup(holder) {
+        if (holder.dataset.type !== 'note_completion') return;
+        if (holder.querySelector('.rvx-notes')) return;
+
+        const items = Array.from(holder.children).filter((el) => el.classList.contains('rvx-note-card')
+            || el.classList.contains('exam-question-title'));
+        if (!items.some((el) => el.classList.contains('rvx-note-card'))) return;
+
+        const panel = document.createElement('div');
+        panel.className = 'rvx-notes';
+        items[0].insertAdjacentElement('beforebegin', panel);
+        items.forEach((el) => panel.appendChild(el));
+    },
+};
+
 const AnswerHelp = {
     root: null,
     body: null,
@@ -710,7 +961,7 @@ const AnswerHelp = {
     render(entry, focus) {
         const q = entry.question;
         const slots = ReviewData.slotsOf(q.id);
-        const st = ReviewData.entryStatus(entry);
+        let st = ReviewData.entryStatus(entry);
         const explanation = ReviewData.resultOf(q.id).explanation;
 
         this.title.textContent = 'Giải thích đáp án – Câu ' + rvNumberLabel(entry);
@@ -718,10 +969,21 @@ const AnswerHelp = {
         const isMcq = ReviewMcq.isMcq(entry);
         const focusIndex = focus && focus.optionIndex !== undefined ? focus.optionIndex : null;
 
+        // Câu nhiều ô (Note completion...): mở từ bóng đèn của 1 ô -> chỉ ô đó.
+        const slotIndex = focus && focus.slotIndex !== undefined ? focus.slotIndex : null;
+        const oneSlot = !isMcq && slotIndex !== null && slots.length > 1 && slots[slotIndex];
+        this.focusNumber = oneSlot ? String(entry.startNumber + slotIndex) : null;
+        if (oneSlot) {
+            st = ReviewData.status(oneSlot);
+            this.title.textContent = 'Giải thích đáp án – Câu ' + (entry.startNumber + slotIndex);
+        }
+
         const yours = isMcq
             ? this.mcqAnswerHtml(entry, 'picked')
-            : rvEscape(slots.map((s) => this.choiceLabel(entry, s.submitted)).filter(Boolean).join(', '));
-        const keys = isMcq ? this.mcqAnswerHtml(entry, 'key') : rvEscape(this.keyText(entry));
+            : rvEscape((oneSlot ? [oneSlot] : slots).map((s) => this.choiceLabel(entry, s.submitted)).filter(Boolean).join(', '));
+        const keys = isMcq
+            ? this.mcqAnswerHtml(entry, 'key')
+            : rvEscape(oneSlot ? (oneSlot.accepted || []).join(' / ') : this.keyText(entry));
 
         const statusText = { correct: 'Bạn trả lời đúng', incorrect: 'Bạn trả lời sai', empty: 'Bạn chưa trả lời câu này' }[st];
 
@@ -730,7 +992,7 @@ const AnswerHelp = {
             + '  <i class="fas ' + ({ correct: 'fa-check-circle', incorrect: 'fa-times-circle', empty: 'fa-minus-circle' }[st]) + '" aria-hidden="true"></i>'
             + '  <span>' + statusText + '</span>'
             + '</div>'
-            + (q.text ? '<div class="rvx-help-question">' + q.text + '</div>' : '')
+            + (q.text && !oneSlot ? '<div class="rvx-help-question">' + q.text + '</div>' : '')
             + (isMcq && focusIndex !== null ? this.mcqFocusHtml(entry, focusIndex) : '')
             + '<dl class="rvx-help-answers' + (isMcq ? ' is-mcq' : '') + '">'
             + '  <div><dt>Đáp án của bạn</dt><dd class="is-' + st + '">' + (yours || 'Chưa trả lời') + '</dd></div>'
@@ -857,7 +1119,8 @@ const ReportModal = {
         this.entry = entry;
         this.returnFocus = trigger || document.activeElement;
 
-        document.getElementById('rvxReportQuestion').textContent = 'Câu ' + rvNumberLabel(entry);
+        this.number = (AnswerHelp.entry === entry && AnswerHelp.focusNumber) || rvNumberLabel(entry);
+        document.getElementById('rvxReportQuestion').textContent = 'Câu ' + this.number;
         document.getElementById('rvxReportAnswer').textContent = AnswerHelp.keyText(entry) || '—';
 
         // Giữ lại nội dung đang gõ dở nếu mở lại đúng câu đó.
@@ -921,7 +1184,7 @@ const ReportModal = {
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     question_id: this.entry.question.id,
-                    question_number: rvNumberLabel(this.entry),
+                    question_number: this.number || rvNumberLabel(this.entry),
                     message,
                 }),
             });
@@ -1199,6 +1462,9 @@ document.addEventListener('DOMContentLoaded', function () {
             holder.dataset.type = group.question_type || '';
             if (RV_TFNG_TYPES.includes(group.question_type)) holder.classList.add('rvx-group--tfng');
             if (RV_MCQ_TYPES.includes(group.question_type)) holder.classList.add('rvx-group--mcq');
+            if (RV_COMPLETION_TYPES.includes(group.question_type) && AttemptState.skill !== 'listening') {
+                holder.classList.add('rvx-group--completion');
+            }
             container.appendChild(holder);
 
             ExamLayout.els.questions = holder;
@@ -1264,13 +1530,15 @@ document.addEventListener('DOMContentLoaded', function () {
         partEntries.forEach((entry) => {
             if (ReviewTfng.isTfng(entry)) ReviewTfng.decorate(entry);
             else if (ReviewMcq.isMcq(entry)) ReviewMcq.decorate(entry);
+            else if (ReviewCompletion.applies(entry)) ReviewCompletion.decorate(entry);
             else ReviewMarker.decorateEntry(entry);
         });
         ReviewMarker.flushLooseExplanations(els.questions);
 
-        els.questions.querySelectorAll('.rvx-group--tfng, .rvx-group--mcq').forEach((holder) => {
+        els.questions.querySelectorAll('.rvx-group--tfng, .rvx-group--mcq, .rvx-group--completion').forEach((holder) => {
             const groupEntries = partEntries.filter((e) => holder.contains(document.getElementById('exam-q-' + e.question.id)));
             ReviewTfng.decorateGroup(holder, groupEntries);
+            if (holder.classList.contains('rvx-group--completion')) ReviewCompletion.decorateGroup(holder);
         });
 
         // Nút ▶ cạnh vòng số câu (dạng đã làm lại giao diện chữa bài).
@@ -1295,13 +1563,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Câu đang xem ───────────────────────────────────────────────────
-    function markCurrent(entry, scroll) {
+    function markCurrent(entry, scroll, number) {
         root.querySelectorAll('.rvx-current').forEach((el) => el.classList.remove('rvx-current'));
         const card = document.getElementById('exam-q-' + entry.question.id);
         if (!card) return;
 
         card.classList.add('rvx-current');
-        if (scroll) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Câu nhiều ô điền ngay trong câu: tô + cuộn tới đúng ô đang xem.
+        const blank = number ? card.querySelector('.rvx-blank[data-number="' + number + '"]') : null;
+        if (blank) blank.classList.add('rvx-current');
+
+        if (scroll) (blank || card).scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function goTo(n, options) {
@@ -1315,7 +1588,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (entry.partIndex !== AttemptState.part.index) showPart(entry.partIndex);
 
-        markCurrent(entry, opts.scroll !== false);
+        markCurrent(entry, opts.scroll !== false, n);
         syncPager();
         AnswerHelp.follow(entry);
 
@@ -1341,10 +1614,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const entry = entries.find((x) => String(x.question.id) === String(questionId));
         if (!entry) return;
 
-        goTo(entry.startNumber, { scroll: false });
+        // Bấm vào 1 ô trống (hoặc bóng đèn của ô) -> đúng số câu của ô đó.
+        const blank = t.closest('.rvx-blank');
+        const blankNumber = blank ? parseInt(blank.dataset.number, 10) : NaN;
+        goTo(blankNumber > 0 ? blankNumber : entry.startNumber, { scroll: false });
+
         if (help) {
             const optionIndex = help.dataset.optionIndex;
-            AnswerHelp.open(entry, help, optionIndex !== undefined ? { optionIndex: parseInt(optionIndex, 10) } : null);
+            const slotIndex = help.dataset.slotIndex;
+            let focus = null;
+            if (optionIndex !== undefined) focus = { optionIndex: parseInt(optionIndex, 10) };
+            else if (slotIndex !== undefined) focus = { slotIndex: parseInt(slotIndex, 10) };
+            AnswerHelp.open(entry, help, focus);
         }
     }, true);
 
