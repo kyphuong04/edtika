@@ -1111,3 +1111,46 @@ body.rvx-drawer-open { overflow: hidden; }
     .rvx-sc-item, .exam-question-card.rvx-sc-card.rvx-sc-item { padding: 12px; }
     .rvx-pill { font-size: 13px; padding: 2px 10px; }
 }
+
+/* ── Table completion (Reading) ───────────────────────────────────── */
+.exam-question-card.rvx-table-card {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.rvx-table-card > .exam-question-text { margin: 0 0 12px; padding: 0; font-size: 14px; color: var(--rs-ink); }
+.rvx-table-card .exam-table-wrap { border-color: var(--rs-line); border-radius: 14px; }
+.rvx-table-card .exam-table-wrap table { font-size: 14px; }
+.rvx-table-card .exam-table-wrap th {
+    padding: 14px 16px;
+    background: #f5f3ff;
+    border-color: var(--rs-line);
+    color: var(--rs-ink);
+    font-weight: 800;
+}
+.rvx-table-card .exam-table-wrap td {
+    padding: 12px 16px;
+    border-color: var(--rs-line);
+    color: var(--rs-ink);
+}
+.rvx-table-card .exam-table-wrap td:first-child { font-weight: 700; }
+.rvx-table-card .exam-table-cell {
+    display: block;
+    line-height: 1.75;
+    white-space: pre-line;
+}
+.rvx-table-card .exam-table-wrap table { min-width: 640px; }
+.rvx-table-card td.has-blank { min-width: 230px; }
+.rvx-table-card .rvx-blank { white-space: normal; }
+.rvx-table-card .rvx-pill { white-space: nowrap; word-break: normal; }
+.rvx-table-card .rvx-num.rvx-num--inline { width: 32px; height: 32px; font-size: 14px; }
+.rvx-table-card td:has(.rvx-blank.rvx-current) { background: #faf7ff; }
+.rvx-table-card .rvx-blank.rvx-current { box-shadow: none; }
+.rvx-table-card .rvx-blank,
+.rvx-table-card .rvx-blank-answers { gap: 4px; }
+.rvx-table-card .rvx-pill { min-height: 26px; padding: 2px 9px; gap: 6px; font-size: 13px; }
+.rvx-table-card .rvx-pill.is-blank { min-width: 48px; }
+.rvx-table-card .rvx-num.rvx-num--inline { width: 30px; height: 30px; margin-right: 2px; }
+.rvx-table-card .rvx-help.rvx-help--sm { width: 28px; height: 28px; font-size: 13px; margin-left: 2px; }
