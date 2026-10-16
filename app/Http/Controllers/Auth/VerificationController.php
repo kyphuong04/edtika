@@ -7,6 +7,7 @@ use App\Mixins\RegistrationBonus\RegistrationBonusAccounting;
 use App\Models\Affiliate;
 use App\Models\Verification;
 use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -305,6 +306,11 @@ class VerificationController extends Controller
                     $response = $loginController->afterLogged($request, true);
 
                     if ($request->wantsJson()) {
+                        // afterLogged() đã trả JSON (status/redirect hoặc lỗi) -> trả nguyên để giữ url.intended
+                        if ($response instanceof JsonResponse) {
+                            return $response;
+                        }
+
                         $redirectUrl = method_exists($response, 'getTargetUrl') ? $response->getTargetUrl() : url('/panel');
                         return response()->json(['status' => 'ok', 'redirect' => $redirectUrl]);
                     }

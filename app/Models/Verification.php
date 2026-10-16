@@ -6,6 +6,7 @@ use App\Notifications\SendVerificationEmailCode;
 use App\Notifications\SendVerificationSMSCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
 class Verification extends Model
 {
@@ -54,7 +55,19 @@ class Verification extends Model
 
     public function sendEmailCode()
     {
-        $this->notify(new SendVerificationEmailCode($this));
+        try {
+            $this->notify(new SendVerificationEmailCode($this));
+        } catch (\Throwable $exception) {
+            // Không để lỗi SMTP làm hỏng luồng đăng ký (user đã được tạo);
+            // người dùng vẫn có thể bấm "Gửi lại mã" trong modal.
+            Log::error('Send verification email failed', [
+                'verification_id' => $this->id,
+                'email' => $this->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
 
         return true;
     }

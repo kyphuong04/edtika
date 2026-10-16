@@ -2,6 +2,8 @@
 
 @php
     $appHeader = true;
+    // Trang chủ tự render modal đăng nhập/đăng ký riêng -> tắt modal trùng trong layout
+    $hideLayoutAuthModal = true;
     $appFooter = true;
     $floatingBar = null;
     $dontShowCookieSecurity = true;
@@ -462,25 +464,8 @@
 
     $authThemeSettings = getThemeAuthenticationPagesSettings();
     $authSliderBackground = (!empty($authThemeSettings) and !empty($authThemeSettings['slider_background_image'])) ? $authThemeSettings['slider_background_image'] : null;
-    $authSliderSlides = (!empty($authThemeSettings) and !empty($authThemeSettings['slider_contents']) and is_array($authThemeSettings['slider_contents']))
-        ? array_values($authThemeSettings['slider_contents'])
-        : [];
-
-    if (empty($authSliderSlides)) {
-        $authSliderSlides = [
-            [
-                'image' => asset('store/icons/—Pngtree—abstract purple line wave background_5542852 1.png'),
-                'title' => '',
-                'subtitle' => '',
-            ],
-        ];
-    }
-
-    $authSliderSlides = array_slice($authSliderSlides, 0, 3);
-
-    while (count($authSliderSlides) < 3) {
-        $authSliderSlides[] = $authSliderSlides[count($authSliderSlides) - 1];
-    }
+    // Slide lấy từ Admin > Giao diện > Ảnh modal đăng nhập (fallback: cài đặt theme)
+    $authSliderSlides = \App\Models\AuthModalSlide::forModal();
 @endphp
 
 @push('styles_top')
@@ -4140,7 +4125,7 @@
                                     <button type="button" class="edtika-auth-method" data-login-method="phone">{{ $t['auth']['phoneMethod'] }}</button>
                                 </div>
 
-                                <form method="POST" action="/login">
+                                <form method="POST" action="/login" data-auth-ajax="login" novalidate>
                                     @csrf
                                     <input type="hidden" name="type" id="edtikaLoginType" value="email">
 
@@ -4177,7 +4162,7 @@
                             <div class="edtika-auth-pane" data-auth-pane="register">
                                 <h3 class="edtika-auth-pane__title">{{ $t['auth']['registerTitle'] }}</h3>
 
-                                <form method="POST" action="/register">
+                                <form method="POST" action="/register" data-auth-ajax="register" novalidate>
                                     @csrf
 
                                     <div class="edtika-auth-field">
@@ -4248,6 +4233,8 @@
                                     {{ $t['auth']['hasAccount'] }} <button type="button" data-auth-tab-switch="login">{{ $t['auth']['loginTab'] }}</button>
                                 </div>
                             </div>
+
+                            @include('design_1.web.includes.auth_otp_pane')
 
                             <div class="edtika-auth-pane" data-auth-pane="forgot">
                                 <h3 class="edtika-auth-pane__title">{{ trans('update.recover_your_password') }}</h3>

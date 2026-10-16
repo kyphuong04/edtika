@@ -219,6 +219,12 @@ class User extends Authenticatable
         return $this->isManager() || $this->isCeo();
     }
 
+    /** Đổi ảnh / chữ slider bên phải modal Đăng nhập - Đăng ký. */
+    public function canManageAuthModalSlides()
+    {
+        return $this->isManager() || $this->isCeo();
+    }
+
     /**
      * All Adaptive Placement Test attempts this user has taken, most recent first.
      */

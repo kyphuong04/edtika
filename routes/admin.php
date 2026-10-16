@@ -1328,6 +1328,17 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/{id}/delete', 'LandingBuilderController@delete');
         });
         
+        // Ảnh slider modal Đăng nhập / Đăng ký (Manager / CEO)
+        Route::group(['prefix' => 'auth-modal-slides'], function () {
+            Route::get('/', 'AuthModalSlideController@index')->name('admin.auth_modal_slides.index');
+            Route::post('/{slot}', 'AuthModalSlideController@update')
+                ->where('slot', '[1-3]')
+                ->name('admin.auth_modal_slides.update');
+            Route::post('/{slot}/reset', 'AuthModalSlideController@reset')
+                ->where('slot', '[1-3]')
+                ->name('admin.auth_modal_slides.reset');
+        });
+
         // IELTS Test Module Routes
         Route::group(['prefix' => 'ielts-tests'], function () {
             // Test Management

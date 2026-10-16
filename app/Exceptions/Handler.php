@@ -63,6 +63,12 @@ class Handler extends ExceptionHandler
             return $this->renderApi($request, $exception);
         }
 
+        // Lỗi validate phải trả về 422 (JSON cho AJAX / redirect kèm $errors cho form thường),
+        // không được rơi vào trang lỗi 500 bên dưới khi APP_DEBUG=false.
+        if ($exception instanceof ValidationException) {
+            return parent::render($request, $exception);
+        }
+
         $modelNotFound = ($exception instanceof ModelNotFoundException);
 
         if (

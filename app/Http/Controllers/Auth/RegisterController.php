@@ -224,6 +224,10 @@ class RegisterController extends Controller
             }
 
             if (count($errors)) {
+                if ($request->wantsJson()) {
+                    return response()->json(['errors' => $errors], 422);
+                }
+
                 return back()->withErrors($errors)->withInput($request->all());
             }
         }
@@ -241,6 +245,11 @@ class RegisterController extends Controller
 
             if (!$checkIsValid) {
                 $errors['mobile'] = [trans('update.mobile_number_is_not_valid')];
+
+                if ($request->wantsJson()) {
+                    return response()->json(['errors' => $errors], 422);
+                }
+
                 return back()->withErrors($errors)->withInput($request->all());
             }
         }

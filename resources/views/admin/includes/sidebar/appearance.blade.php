@@ -1,8 +1,22 @@
+@php
+    $canManageAuthModalSlides = method_exists($authUser, 'canManageAuthModalSlides') && $authUser->canManageAuthModalSlides();
+@endphp
+
 @if(
         $authUser->can('admin_themes') or
-        $authUser->can('admin_landing_builder')
+        $authUser->can('admin_landing_builder') or
+        $canManageAuthModalSlides
     )
     <li class="menu-header">{{ trans('update.appearance') }}</li>
+@endif
+
+@if($canManageAuthModalSlides)
+    <li class="{{ request()->is(getAdminPanelUrl('/auth-modal-slides*', false)) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ getAdminPanelUrl('/auth-modal-slides') }}">
+            <x-iconsax-bul-gallery class="icons" width="24px" height="24px"/>
+            <span>Ảnh modal đăng nhập</span>
+        </a>
+    </li>
 @endif
 
 @can('admin_themes')
