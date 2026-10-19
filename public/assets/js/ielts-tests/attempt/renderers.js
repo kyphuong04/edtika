@@ -353,7 +353,11 @@ const ExamRenderers = {
 
         const label = document.createElement('div');
         label.className = 'exam-match-pool-label';
-        label.textContent = 'List of Headings';
+        label.textContent = ({
+            matching_sentence_endings: 'List of Endings',
+            matching_features: 'List of Options',
+            matching_information: 'List of Options',
+        })[group.question_type] || 'List of Headings';
         pool.appendChild(label);
 
         const chips = document.createElement('div');

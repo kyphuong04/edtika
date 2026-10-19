@@ -28,25 +28,8 @@
 
     $authThemeSettings = getThemeAuthenticationPagesSettings();
     $authSliderBackground = (!empty($authThemeSettings) and !empty($authThemeSettings['slider_background_image'])) ? $authThemeSettings['slider_background_image'] : null;
-    $authSliderSlides = (!empty($authThemeSettings) and !empty($authThemeSettings['slider_contents']) and is_array($authThemeSettings['slider_contents']))
-        ? array_values($authThemeSettings['slider_contents'])
-        : [];
-
-    if (empty($authSliderSlides)) {
-        $authSliderSlides = [
-            [
-                'image' => asset('store/icons/—Pngtree—abstract purple line wave background_5542852 1.png'),
-                'title' => '',
-                'subtitle' => '',
-            ],
-        ];
-    }
-
-    $authSliderSlides = array_slice($authSliderSlides, 0, 3);
-
-    while (count($authSliderSlides) < 3) {
-        $authSliderSlides[] = $authSliderSlides[count($authSliderSlides) - 1];
-    }
+    // Slide lấy từ Admin > Giao diện > Ảnh modal đăng nhập (fallback: cài đặt theme)
+    $authSliderSlides = \App\Models\AuthModalSlide::forModal();
 
     $floatingSupportCtaSettings = getFloatingSupportCtaSettings();
     $floatingSupportCtaEnabled = !isset($floatingSupportCtaSettings['enabled']) || !empty($floatingSupportCtaSettings['enabled']);
@@ -653,6 +636,7 @@
     </style>
 
     <link rel="stylesheet" href="/assets/design_1/css/overrides.css">
+    <link rel="stylesheet" href="/assets/design_1/css/edtika-auth-otp.css?v=1">
 
 </head>
 
@@ -671,6 +655,7 @@
     {{-- Content --}}
     @yield('content')
 
+    @if(empty($hideLayoutAuthModal))
     <div class="edtika-auth-modal" id="edtikaAuthModal" aria-hidden="true">
         <div class="edtika-auth-modal__dialog" role="dialog" aria-modal="true" aria-label="{{ $authModalText['dialogAria'] }}">
             <button type="button" class="edtika-auth-modal__close" id="edtikaAuthModalClose" aria-label="{{ $authModalText['closeAria'] }}">&times;</button>
@@ -697,7 +682,7 @@
                             <button type="button" class="edtika-auth-method" data-login-method="phone">{{ $authModalText['phoneMethod'] }}</button>
                         </div>
 
-                        <form method="POST" action="/login">
+                        <form method="POST" action="/login" data-auth-ajax="login" novalidate>
                             @csrf
                             <input type="hidden" name="type" id="edtikaLoginType" value="email">
 
@@ -734,7 +719,7 @@
                     <div class="edtika-auth-pane" data-auth-pane="register">
                         <h3 class="edtika-auth-pane__title">{{ $authModalText['registerTitle'] }}</h3>
 
-                        <form method="POST" action="/register">
+                        <form method="POST" action="/register" data-auth-ajax="register" novalidate>
                             @csrf
 
                             <div class="edtika-auth-field">
@@ -805,6 +790,8 @@
                             {{ $authModalText['hasAccount'] }} <button type="button" data-auth-tab-switch="login">{{ $authModalText['loginTab'] }}</button>
                         </div>
                     </div>
+
+                    @include('design_1.web.includes.auth_otp_pane')
 
                     <div class="edtika-auth-pane" data-auth-pane="forgot">
                         <h3 class="edtika-auth-pane__title">{{ trans('update.recover_your_password') }}</h3>
@@ -902,6 +889,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     @if($floatingSupportCtaEnabled)
         <div class="edtika-floating-cta" id="edtikaFloatingCta">
@@ -990,21 +978,23 @@
     (function () {
         'use strict';
 
-        var authModal = document.getElementById('edtikaAuthModal');
-        var authModalCloseBtn = document.getElementById('edtikaAuthModalClose');
-        var authModalOpenBtns = document.querySelectorAll('[data-open-auth-modal="true"]');
-        var authTabs = document.querySelectorAll('[data-auth-tab]');
-        var authPanes = document.querySelectorAll('[data-auth-pane]');
-        var authTabSwitchBtns = document.querySelectorAll('[data-auth-tab-switch]');
-        var loginMethodBtns = document.querySelectorAll('[data-login-method]');
-        var loginFieldBlocks = document.querySelectorAll('[data-login-field]');
-        var loginTypeInput = document.getElementById('edtikaLoginType');
-        var forgotMethodBtns = document.querySelectorAll('[data-forgot-method]');
-        var forgotFieldBlocks = document.querySelectorAll('[data-forgot-field]');
-        var forgotTypeInput = document.getElementById('edtikaForgotType');
-        var passwordToggleBtns = document.querySelectorAll('[data-password-toggle]');
-        var authSliderSlides = document.querySelectorAll('[data-auth-slide]');
-        var authSliderDots = document.querySelectorAll('[data-auth-slider-dot]');
+        // Trang tự render modal riêng (vd: trang chủ) thì layout không gắn sự kiện lần 2
+        var layoutAuthEnabled = @json(empty($hideLayoutAuthModal));
+        var authModal = layoutAuthEnabled ? document.getElementById('edtikaAuthModal') : null;
+        var authModalCloseBtn = layoutAuthEnabled ? document.getElementById('edtikaAuthModalClose') : null;
+        var authModalOpenBtns = layoutAuthEnabled ? document.querySelectorAll('[data-open-auth-modal="true"]') : [];
+        var authTabs = layoutAuthEnabled ? document.querySelectorAll('[data-auth-tab]') : [];
+        var authPanes = layoutAuthEnabled ? document.querySelectorAll('[data-auth-pane]') : [];
+        var authTabSwitchBtns = layoutAuthEnabled ? document.querySelectorAll('[data-auth-tab-switch]') : [];
+        var loginMethodBtns = layoutAuthEnabled ? document.querySelectorAll('[data-login-method]') : [];
+        var loginFieldBlocks = layoutAuthEnabled ? document.querySelectorAll('[data-login-field]') : [];
+        var loginTypeInput = layoutAuthEnabled ? document.getElementById('edtikaLoginType') : null;
+        var forgotMethodBtns = layoutAuthEnabled ? document.querySelectorAll('[data-forgot-method]') : [];
+        var forgotFieldBlocks = layoutAuthEnabled ? document.querySelectorAll('[data-forgot-field]') : [];
+        var forgotTypeInput = layoutAuthEnabled ? document.getElementById('edtikaForgotType') : null;
+        var passwordToggleBtns = layoutAuthEnabled ? document.querySelectorAll('[data-password-toggle]') : [];
+        var authSliderSlides = layoutAuthEnabled ? document.querySelectorAll('[data-auth-slide]') : [];
+        var authSliderDots = layoutAuthEnabled ? document.querySelectorAll('[data-auth-slider-dot]') : [];
         var authSliderIntervalId = null;
         var authSliderActiveIndex = 0;
         var authSliderDelay = 3400;
@@ -1266,6 +1256,7 @@
         }
     })();
 </script>
+<script src="/assets/design_1/js/edtika-auth-otp.js?v=1"></script>
 
 @if(empty($justMobileApp) and checkShowCookieSecurityDialog() and empty($dontShowCookieSecurity))
     @include('design_1.web.includes.cookie_security.cookie-security')
