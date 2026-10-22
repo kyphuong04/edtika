@@ -14,6 +14,9 @@ Route::middleware(['web', 'share', 'check_maintenance', 'check_restriction'])->p
     Route::get('/finished', [PlacementPlayController::class, 'finished'])->name('placement.finished');
     Route::get('/request-login', [PlacementPlayController::class, 'requestLogin'])->name('placement.request_login');   // ← dòng mới
     Route::get('/result', [PlacementPlayController::class, 'result'])->name('placement.result');
+    Route::post('/result/consult', [PlacementPlayController::class, 'submitConsult'])
+        ->middleware('throttle:5,1')
+        ->name('placement.submit_consult');
 });
  
 

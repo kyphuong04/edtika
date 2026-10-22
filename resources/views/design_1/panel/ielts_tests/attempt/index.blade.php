@@ -12,6 +12,8 @@
 @endphp
 <link rel="stylesheet" href="{{ asset($attemptCssPath) }}?v={{ $attemptCssVersion }}">
 <link rel="stylesheet" href="{{ asset($speakingStageCssPath) }}?v={{ $speakingStageCssVersion }}">
+@php $flowchartCssPath = 'assets/css/ielts-shared/flowchart.css'; @endphp
+<link rel="stylesheet" href="{{ asset($flowchartCssPath) }}?v={{ is_file(public_path($flowchartCssPath)) ? filemtime(public_path($flowchartCssPath)) : time() }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endpush
 
@@ -44,6 +46,7 @@
 @endphp
 {{-- Màn hình Speaking 2 cột — dùng chung với preview, phải load trước renderers.js --}}
 <script src="{{ $sharedJsVersion('blank-utils.js') }}"></script>
+<script src="{{ $sharedJsVersion('flowchart.js') }}"></script>
 <script src="{{ $sharedJsVersion('speaking-stage.js') }}"></script>
 <script src="{{ $attemptJsVersion('state.js') }}"></script>
 <script src="{{ $attemptJsVersion('answers.js') }}"></script>

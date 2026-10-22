@@ -195,6 +195,7 @@ class IeltsQuestionGroup extends Model
             'table_completion' => 'Table Completion',
             'flow_chart_completion' => 'Flow Chart Completion',
             'diagram_labeling' => 'Diagram Labeling',
+            'diagram_completion' => 'Diagram Labeling',
             'map_labeling' => 'Map Labeling',
             'form_completion' => 'Form Completion',
             'short_answer' => 'Short Answer Questions',

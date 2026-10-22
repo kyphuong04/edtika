@@ -975,6 +975,32 @@ const ExamRenderers = {
         note_completion(entry) { return ExamRenderers.byType._completionLike(entry); },
         diagram_labeling(entry) { return ExamRenderers.byType._completionLike(entry); },
 
+        /**
+         * Flow chart (Reading) / Diagram Labeling điền từ (Listening): dựng sơ đồ từ
+         * question_data.flowchart (ielts-shared/flowchart.js), mỗi ___ là 1 ô nhập.
+         * Lưu đáp án y như Note Completion (mảng theo thứ tự ô trống).
+         */
+        _flowChart(entry) {
+            const q = entry.question;
+            const card = makeCard(entry);
+            const Flow = window.IeltsFlowchart;
+            const flow = Flow ? Flow.fromQuestion(q) : null;
+            const variant = Flow ? Flow.variantOf(q.type) : 'chart';
+
+            const saved = AttemptState.getAnswer(q.id) || [];
+            const source = flow ? Flow.toHtml(flow, { variant }) : q.text;
+            const { html } = renderTextWithBlanks(source, saved, false);
+            appendTextBlock(card, html, flow ? 'exam-question-text exam-flow' : 'exam-question-text');
+            decorateBlankNumbers(card, entry);
+
+            card.classList.add('has-inline-blanks', 'exam-flow-card', 'exam-flow-card--' + variant);
+            wireBlankInputs(card, q);
+
+            return card;
+        },
+        flow_chart_completion(entry) { return ExamRenderers.byType._flowChart(entry); },
+        diagram_completion(entry) { return ExamRenderers.byType._flowChart(entry); },
+
         table_completion(entry) {
             const q = entry.question;
             const card = makeCard(entry);

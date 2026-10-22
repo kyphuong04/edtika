@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\IeltsPlacementAttempt;
 use App\Models\IeltsPlacementAttemptAnswer;
+use App\Models\PlacementConsultRequest;
 use App\Models\PlacementSpeakingQuestion;
 use App\Models\PlacementTest;
 use App\Models\PlacementQuestion;
@@ -23,7 +24,7 @@ class PlacementPlayController extends Controller
         // KHÁCH (guest) truy cập. Laravel's `auth` middleware tự lưu URL hiện
         // tại (route('placement.result')) và tự redirect ngược lại đó sau khi
         // đăng nhập thành công — không cần code thêm cho bước quay lại này.
-        $this->middleware('auth')->only(['result']);
+        $this->middleware('auth')->only(['result', 'submitConsult']);
         $this->engine = $engine;
     }
 
@@ -368,10 +369,153 @@ class PlacementPlayController extends Controller
 
         $testBlocks = $isDemoData ? collect() : $this->buildTestBlocksForAttempt($attempt);
 
+        $courses = $this->mockCourses();
+        $finalLevel = (string) $attempt->final_level;
+
+        $consultRequest = $isDemoData
+            ? null
+            : PlacementConsultRequest::where('attempt_id', $attempt->id)->latest('id')->first();
+
         return view('web.placement.result', [
-            'attempt'    => $attempt,
-            'isDemoData' => $isDemoData,
-            'testBlocks' => $testBlocks,
+            'attempt'            => $attempt,
+            'isDemoData'         => $isDemoData,
+            'testBlocks'         => $testBlocks,
+            'levelLabel'         => self::LEVEL_LABELS[$finalLevel] ?? '',
+            'maxSteps'           => PlacementAdaptiveEngine::MAX_STEPS,
+            'courses'            => $courses,
+            'recommendedCourse'  => $this->recommendedCourseKey($finalLevel, $courses),
+            'consultRequest'     => $consultRequest,
+            'consultPrefill'     => [
+                'full_name' => $user->full_name,
+                'mobile'    => $user->mobile,
+                'email'     => $user->email,
+            ],
+        ]);
+    }
+
+    /**
+     * Tên gọi hiển thị dưới level CEFR trên chứng chỉ ở trang kết quả.
+     */
+    public const LEVEL_LABELS = [
+        'A1'  => 'Beginner',
+        'A2'  => 'Elementary',
+        'B1'  => 'Intermediate',
+        'B2'  => 'Upper-Intermediate',
+        'B2+' => 'Upper-Intermediate+',
+    ];
+
+    /**
+     * DỮ LIỆU GIẢ — danh sách khoá học gợi ý ở cuối trang kết quả.
+     *
+     * TODO: khi có khoá học chính thức, thay hàm này bằng truy vấn thật
+     * (VD: Webinar theo category IELTS) và giữ nguyên cấu trúc mảng trả về
+     * để view không phải sửa. `levels` = các final_level của Placement Test
+     * được coi là phù hợp với khoá đó (dùng để gắn nhãn "Phù hợp với bạn").
+     */
+    private function mockCourses(): array
+    {
+        return [
+            [
+                'key'         => 'foundation',
+                'title'       => 'Foundation IELTS',
+                'range'       => 'A1 - A2',
+                'description' => 'Xây nền vững chắc cho hành trình chinh phục IELTS.',
+                'tier'        => 'Beginner',
+                'duration'    => '8 - 10 tuần',
+                'icon'        => 'fa-seedling',
+                'levels'      => ['A1', 'A2'],
+                'buy_url'     => '#',
+                'detail_url'  => '#',
+            ],
+            [
+                'key'         => 'intermediate',
+                'title'       => 'Intermediate IELTS',
+                'range'       => 'B1 - B2',
+                'description' => 'Nâng cao toàn diện 4 kỹ năng với phương pháp bài bản.',
+                'tier'        => 'Intermediate',
+                'duration'    => '8 - 12 tuần',
+                'icon'        => 'fa-rocket',
+                'levels'      => ['B1', 'B2'],
+                'buy_url'     => '#',
+                'detail_url'  => '#',
+            ],
+            [
+                'key'         => 'advanced',
+                'title'       => 'Advanced IELTS',
+                'range'       => 'C1 - C2',
+                'description' => 'Luyện chuyên sâu, tối ưu chiến lược để đạt band điểm cao.',
+                'tier'        => 'Advanced',
+                'duration'    => '8 - 12 tuần',
+                'icon'        => 'fa-trophy',
+                'levels'      => ['B2+'],
+                'buy_url'     => '#',
+                'detail_url'  => '#',
+            ],
+        ];
+    }
+
+    private function recommendedCourseKey(string $finalLevel, array $courses): ?string
+    {
+        foreach ($courses as $course) {
+            if (in_array($finalLevel, $course['levels'] ?? [], true)) {
+                return $course['key'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Lưu form "Bạn muốn được tư vấn thêm về lộ trình học?" ở trang kết quả.
+     * Trả JSON khi gọi bằng fetch, redirect + toast khi submit form thường.
+     */
+    public function submitConsult(Request $request)
+    {
+        $user = $request->user();
+        $courses = collect($this->mockCourses())->keyBy('key');
+
+        $data = $request->validate([
+            'full_name'  => 'required|string|max:100',
+            'mobile'     => ['required', 'string', 'max:20', 'regex:/^[0-9+\s().-]{8,20}$/'],
+            'email'      => 'nullable|email|max:150',
+            'course_key' => 'required|string|in:' . $courses->keys()->implode(','),
+        ], [
+            'full_name.required'  => 'Vui lòng nhập họ và tên.',
+            'mobile.required'     => 'Vui lòng nhập số điện thoại.',
+            'mobile.regex'        => 'Số điện thoại không hợp lệ.',
+            'email.email'         => 'Email không hợp lệ.',
+            'course_key.required' => 'Vui lòng chọn khoá học bạn quan tâm.',
+            'course_key.in'       => 'Khoá học không hợp lệ.',
+        ]);
+
+        $attempt = $user->latestPlacementResult;
+
+        $consult = PlacementConsultRequest::create([
+            'attempt_id'   => $attempt?->id,
+            'user_id'      => $user->id,
+            'full_name'    => trim($data['full_name']),
+            'mobile'       => trim($data['mobile']),
+            'email'        => $data['email'] ?? null,
+            'course_key'   => $data['course_key'],
+            'course_title' => $courses[$data['course_key']]['title'],
+            'final_level'  => $attempt?->final_level,
+            'status'       => PlacementConsultRequest::STATUS_NEW,
+        ]);
+
+        $message = 'Đội ngũ học thuật của Edtika sẽ liên hệ với bạn sớm nhất.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok'      => true,
+                'message' => $message,
+                'sent_at' => $consult->created_at->format('H:i, d/m/Y'),
+            ]);
+        }
+
+        return redirect()->route('placement.result')->with('toast', [
+            'status' => 'success',
+            'title'  => 'Đã gửi thông tin',
+            'msg'    => $message,
         ]);
     }
 
@@ -412,11 +556,31 @@ class PlacementPlayController extends Controller
                 ];
             });
 
+            // Danh sách audio của đề, theo thứ tự xuất hiện — dùng cho player
+            // lớn ở đầu tab trong modal "Xem đáp án".
+            $audioClips = $questions
+                ->filter(fn ($item) => !empty($item['question']['audio_group_start']) && !empty($item['question']['audio_url']))
+                ->map(function ($item) use ($test) {
+                    $q = $item['question'];
+                    $clip = $test->audioClipById($q['audio_clip_id'] ?? null);
+
+                    return [
+                        'clip_id'     => $q['audio_clip_id'],
+                        'url'         => $q['audio_url'],
+                        'range'       => $q['audio_group_range'],
+                        'label'       => 'Câu ' . $q['audio_group_range'],
+                        'instruction' => $q['audio_group_instruction'] ?? ($clip['instruction'] ?? null),
+                    ];
+                })
+                ->values();
+
             return [
-                'test'      => $test,
-                'index'     => $i,
-                'is_scored' => $attempt->isStepScored($i),
-                'questions' => $questions,
+                'test'        => $test,
+                'index'       => $i,
+                'is_scored'   => $attempt->isStepScored($i),
+                'questions'   => $questions,
+                'audio_clips' => $audioClips,
+                'score'       => $attempt->scores[$i] ?? null,
             ];
         })->filter()->values();
     }

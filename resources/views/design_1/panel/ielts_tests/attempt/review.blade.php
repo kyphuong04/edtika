@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/ielts-results.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/attempt-review.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-shell.css') }}">
+<link rel="stylesheet" href="{{ $assetV('assets/css/ielts-shared/flowchart.css') }}">
 @if($isListening)
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-listening.css') }}">
 @endif
@@ -148,6 +149,7 @@
      review.js thay thế. highlights.js chỉ để hiển thị lại highlight + note
      (review.js khoá thao tác thêm/sửa/xoá). --}}
 <script src="{{ $assetV('assets/js/ielts-shared/blank-utils.js') }}"></script>
+<script src="{{ $assetV('assets/js/ielts-shared/flowchart.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/state.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/renderers.js') }}"></script>
 <script src="{{ $assetV('assets/js/ielts-tests/attempt/layout.js') }}"></script>

@@ -241,25 +241,25 @@ const ExamLayout = {
         overlay.id = 'examDeviceOverlay';
         overlay.innerHTML = ''
             + '<div class="exam-device-card">'
-            + '  <div class="exam-device-title">Device check</div>'
-            + '  <div class="exam-device-sub">Check your microphone and speakers before starting. You can skip this if you prefer.</div>'
+            + '  <div class="exam-device-title">Kiểm tra thiết bị</div>'
+            + '  <div class="exam-device-sub">Kiểm tra microphone và loa trước khi vào thi. Bạn có thể bỏ qua nếu không cần.</div>'
             + '  <button type="button" class="exam-device-mic-btn" id="edMicBtn"><i class="fas fa-microphone"></i></button>'
-            + '  <div class="exam-device-status" id="edMicStatus">Tap to record a test clip (play it back to check your speakers)</div>'
-            + '  <div class="exam-device-error" id="edMicError">Microphone not available. Allow browser access to your microphone and try again.</div>'
+            + '  <div class="exam-device-status" id="edMicStatus">Nhấn để ghi âm thử (giữ loa để nghe lại)</div>'
+            + '  <div class="exam-device-error" id="edMicError">Không truy cập được microphone. Hãy cho phép trình duyệt sử dụng mic rồi thử lại.</div>'
             + '  <div class="exam-device-player" id="edPlayer">'
-            + '    <button type="button" id="edSeekBack" title="Back 5s"><i class="fas fa-undo"></i></button>'
+            + '    <button type="button" id="edSeekBack" title="Lùi 5s"><i class="fas fa-undo"></i></button>'
             + '    <button type="button" class="ed-play" id="edPlayToggle"><i class="fas fa-play"></i></button>'
-            + '    <button type="button" id="edSeekForward" title="Forward 5s"><i class="fas fa-redo"></i></button>'
+            + '    <button type="button" id="edSeekForward" title="Tới 5s"><i class="fas fa-redo"></i></button>'
             + '    <span class="exam-device-time" id="edTimeLabel">00:00</span>'
             + '    <div class="exam-device-track" id="edProgressTrack"><div class="exam-device-fill" id="edProgressFill"></div></div>'
             + '    <button type="button" id="edVolumeBtn"><i class="fas fa-volume-up"></i></button>'
             + '    <div class="exam-device-vol-track" id="edVolumeTrack"><div class="exam-device-vol-fill" id="edVolumeFill"></div></div>'
             + '    <span class="exam-device-speed" id="edSpeedBadge"><i class="fas fa-clock"></i> 1x</span>'
             + '  </div>'
-            + '  <span class="exam-device-rerecord" id="edRerecordLink" style="display:none;">Record again</span>'
+            + '  <span class="exam-device-rerecord" id="edRerecordLink" style="display:none;">Ghi âm lại</span>'
             + '  <hr class="exam-device-divider">'
-            + '  <button type="button" class="exam-device-continue" id="edContinueBtn" disabled>Start the test</button>'
-            + '  <button type="button" class="exam-device-skip" id="edSkipBtn">Skip device check</button>'
+            + '  <button type="button" class="exam-device-continue" id="edContinueBtn" disabled>Tiếp tục vào thi</button>'
+            + '  <button type="button" class="exam-device-skip" id="edSkipBtn">Bỏ qua kiểm tra</button>'
             + '  <audio id="edAudioPlayback" style="display:none;"></audio>'
             + '</div>';
         document.body.appendChild(overlay);
@@ -305,11 +305,11 @@ const ExamLayout = {
             isRecording = true;
             micBtn.classList.add('is-recording');
             micBtn.innerHTML = '<i class="fas fa-stop"></i>';
-            micStatus.textContent = 'Recording... tap again to stop';
+            micStatus.textContent = 'Đang ghi âm... nhấn lại để dừng';
         }
         function showRecorded() {
             setIdle();
-            micStatus.textContent = 'Recording saved — play it back to check your speakers';
+            micStatus.textContent = 'Ghi âm đã lưu — phát lại để kiểm tra loa';
             player.classList.add('is-visible');
             document.getElementById('edRerecordLink').style.display = 'block';
             continueBtn.disabled = false;
@@ -343,7 +343,7 @@ const ExamLayout = {
                 setRecording();
             } catch (err) {
                 if (micError) micError.style.display = 'block';
-                micStatus.textContent = 'Tap to record';
+                micStatus.textContent = 'Nhấn để ghi âm';
             }
         }
         function stopRecording() {
@@ -358,7 +358,7 @@ const ExamLayout = {
             rerecordLink.style.display = 'none';
             continueBtn.disabled = true;
             continueBtn.classList.remove('is-ready');
-            micStatus.textContent = 'Tap to record a test clip (play it back to check your speakers)';
+            micStatus.textContent = 'Nhấn để ghi âm một đoạn thử (phát lại để kiểm tra loa)';
             audioEl.pause();
             resetPlayerUI();
         });
@@ -1011,7 +1011,7 @@ const ExamLayout = {
         }
 
 
-        const TEXT_INPUT_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling', 'short_answer'];
+        const TEXT_INPUT_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion', 'diagram_labeling', 'flow_chart_completion', 'diagram_completion', 'short_answer'];
         const MATCHING_TYPES = ['matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings'];
         const groups = Array.isArray(part.groups) ? part.groups : [];
 

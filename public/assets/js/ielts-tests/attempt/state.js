@@ -147,6 +147,7 @@ function hydrateSavedAnswerValue(question, saved) {
 
     if (
         ['sentence_completion', 'summary_completion', 'note_completion', 'diagram_labeling',
+            'flow_chart_completion', 'diagram_completion',
             'drag_drop_disappear', 'drag_drop_reuse'].includes(type)
     ) {
         try {

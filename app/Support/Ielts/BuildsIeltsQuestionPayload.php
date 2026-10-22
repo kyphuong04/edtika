@@ -169,7 +169,7 @@ trait BuildsIeltsQuestionPayload
             }
         }
 
-        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'diagram_labeling', 'short_answer'], true)) {
+        if (in_array($questionType, ['note_completion', 'sentence_completion', 'summary_completion', 'flow_chart_completion', 'diagram_completion', 'diagram_labeling', 'short_answer'], true)) {
             $correctAnswerGroups = $this->normalizeCompletionAnswerGroups($correctAnswer);
             $correctAnswers = array_map(
                 static fn (array $group) => implode(' / ', $group),
@@ -451,6 +451,8 @@ trait BuildsIeltsQuestionPayload
             'summary_completion' => 'summary_completion',
             'note_completion' => 'note_completion',
             'table_completion' => 'table_completion',
+            'flow_chart_completion' => 'flow_chart_completion',
+            'diagram_completion' => 'diagram_completion',
             'diagram_labeling' => 'diagram_labeling',
             'diagram_label' => 'diagram_labeling',
             'short_answer' => 'short_answer',

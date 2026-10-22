@@ -1,6 +1,7 @@
 @extends('design_1.panel.layouts.panel')
 
 @push('styles_top')
+<link rel="stylesheet" href="{{ asset('assets/css/ielts-shared/flowchart.css') }}?v={{ filemtime(public_path('assets/css/ielts-shared/flowchart.css')) }}">
 <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
 <style>
 
@@ -1033,6 +1034,9 @@
 <script>window.IELTS_PUBLIC_DISK_URL = @json(rtrim(\Illuminate\Support\Facades\Storage::disk('public')->url(''), '/'));</script>
 <script src="{{ asset('assets/js/ielts-tests/transcript-editor.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/transcript-editor.js')) }}"></script>
 <script src="{{ asset('assets/js/ielts-shared/blank-utils.js') }}?v={{ filemtime(public_path('assets/js/ielts-shared/blank-utils.js')) }}"></script>
+{{-- Flow Chart Completion (Reading) / Diagram Labeling điền từ (Listening): trình dựng theo từng bước --}}
+<script src="{{ asset('assets/js/ielts-shared/flowchart.js') }}?v={{ filemtime(public_path('assets/js/ielts-shared/flowchart.js')) }}"></script>
+<script src="{{ asset('assets/js/ielts-tests/flowchart-builder.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/flowchart-builder.js')) }}"></script>
 <script>
 const SECTIONS_CONFIG = {
     listening: { skill: 'listening', title: 'Listening', icon: '🔊', mockParts: 4, mockQuestions: 40 },
@@ -2751,9 +2755,11 @@ function displayPart(section, part, audioFile, imageFile, videoFile) {
                                 <option value="summary_completion">Summary Completion</option>
                                 <option value="note_completion">Note Completion</option>
                                 <option value="table_completion">Table Completion</option>
+                                ${skill === 'reading' ? '<option value="flow_chart_completion">Flow Chart Completion</option>' : ''}
                             </optgroup>
                             <optgroup label="Map / Diagram">
                                 <option value="diagram_labeling">Diagram Labeling (chọn A–K)</option>
+                                ${skill === 'listening' ? '<option value="diagram_completion">Diagram Labeling (điền từ)</option>' : ''}
                                 <option value="map_labeling">Map Labeling (chọn A–K)</option>
                             </optgroup>
                             <optgroup label="Drag &amp; Drop">
@@ -3191,6 +3197,8 @@ function resetQuestionForm(form) {
                                 makeMCOptionRow(inputType, 1, groupName);
     }
 
+    if (window.IeltsFlowBuilder) window.IeltsFlowBuilder.reset(form);
+
     // Remove edit mode data
     form.removeAttribute('data-edit-mode');
     form.removeAttribute('data-edit-index');
@@ -3308,6 +3316,8 @@ function editQuestion(button, questionIndex) {
             const promptSource = matchingQuestions.find(item => item.question_data && item.question_data.prompt);
             setContentEditorValue(promptInput, promptSource ? promptSource.question_data.prompt : '');
         }
+    } else if (window.IeltsFlowBuilder && window.IeltsFlowBuilder.isFlowType(qType)) {
+        window.IeltsFlowBuilder.populate(form, question);
     } else if (qType === 'note_completion') {
         renderNoteCompletionAnswerInputs(form, normalizeNoteCompletionAnswers(question.correctAnswers || question.correctAnswer));
         bindNoteCompletionLivePreview(form);
@@ -3486,8 +3496,11 @@ function saveQuestionToGroup(button) {
     const titleInput = form.querySelector('.question-title-input');
     const title = titleInput ? titleInput.value.trim() : '';
     const textInput = form.querySelector('.question-text-input');
-    const text = textInput ? getContentEditorValue(textInput) : '';
-    const textPlain = textInput ? getContentEditorPlainValue(textInput) : '';
+    const isFlowType = !!(window.IeltsFlowBuilder && window.IeltsFlowBuilder.isFlowType(qType));
+    const flowPayload = isFlowType ? window.IeltsFlowBuilder.collect(form) : null;
+    if (isFlowType && !flowPayload) return;
+    const text = isFlowType ? flowPayload.text : (textInput ? getContentEditorValue(textInput) : '');
+    const textPlain = isFlowType ? flowPayload.plain : (textInput ? getContentEditorPlainValue(textInput) : '');
     const explanationInput = form.querySelector('.question-explanation-input');
     const explanation = getAnswerHelpValue(explanationInput);
     const pointsValue = parseFloat(form.querySelector('.question-points-input').value);
@@ -3522,7 +3535,14 @@ function saveQuestionToGroup(button) {
         questionData.question_data.hint = hintValue;
     }
 
-    if (qType === 'multiple_choice_single') {
+    if (isFlowType) {
+        // Cấu trúc sơ đồ để dựng lại + đáp án từng ô theo thứ tự (chấm như Note Completion).
+        questionData.question_data.flowchart = flowPayload.flowchart;
+        questionData.correctAnswers = flowPayload.answers;
+        questionData.correctAnswer = JSON.stringify(flowPayload.answerGroups);
+        questionData.slotCount = flowPayload.answerGroups.length;
+
+    } else if (qType === 'multiple_choice_single') {
         const optionRows = form.querySelectorAll('.mc-option-row');
         const options = [];
         let correctAnswer = null;
@@ -3986,6 +4006,8 @@ function renderQuestionsList(groupItem, group, startNumber = 1) {
                     <span class="question-answer-badge">${opts.length} option${opts.length !== 1 ? 's' : ''}, ${ans.length} blank${ans.length !== 1 ? 's' : ''}</span>
                     <span style="margin-left:6px;color:#16a34a;">✓ ${ans.map(a => escapeHtml(a)).join(', ')}</span>
                 </div>`;
+            } else if (window.IeltsFlowBuilder && window.IeltsFlowBuilder.isFlowType(qType)) {
+                detailHTML = window.IeltsFlowBuilder.summaryHtml(question);
             } else if (qType === 'note_completion') {
                 const blankCount = (Array.isArray(question.correctAnswers) ? question.correctAnswers.length : normalizeNoteCompletionAnswers(question.correctAnswer).length) || (question.slotCount || 1);
                 detailHTML = `<div style="font-size:12px;margin-top:4px;">
@@ -4220,6 +4242,8 @@ function getQuestionTypeLabel(type) {
         drag_drop_reuse: 'Drag & Drop – Keep in List',
         diagram_labeling: 'Diagram Labeling (chọn A–K)',
         map_labeling: 'Map Labeling (chọn A–K)',
+        flow_chart_completion: 'Flow Chart Completion',
+        diagram_completion: 'Diagram Labeling (điền từ)',
     };
     return labels[type] || type;
 }
@@ -4810,6 +4834,11 @@ function getQuestionFormHTML(questionType, skill = '') {
             </div>
         </div>`;
         return html;
+    }
+
+    // Flow chart / Diagram điền từ: trình dựng theo từng bước (flowchart-builder.js).
+    if (window.IeltsFlowBuilder && window.IeltsFlowBuilder.isFlowType(questionType)) {
+        return window.IeltsFlowBuilder.formHtml(questionType);
     }
 
     html = `<div class="mb-8"><span class="question-type-badge">${getQuestionTypeLabel(questionType)}</span></div>`;

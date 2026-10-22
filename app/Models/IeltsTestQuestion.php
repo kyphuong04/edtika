@@ -180,7 +180,7 @@ class IeltsTestQuestion extends Model
     
     public function isFillBlank()
     {
-        return in_array($this->question_type, ['fill_blank', 'sentence_completion', 'note_completion', 'table_completion', 'summary_completion', 'flow_chart', 'diagram_label', 'short_answer']);
+        return in_array($this->question_type, ['fill_blank', 'sentence_completion', 'note_completion', 'table_completion', 'summary_completion', 'flow_chart', 'flow_chart_completion', 'diagram_completion', 'diagram_label', 'short_answer']);
     }
     
     public function isEssay()
@@ -609,6 +609,10 @@ class IeltsTestQuestion extends Model
             'sentence_completion',
             'summary_completion',
             'note_completion',
+            // Flow chart (Reading) / Diagram Labeling điền từ (Listening):
+            // sơ đồ nhiều ô trống ___, chấm theo vị trí giống Note Completion.
+            'flow_chart_completion',
+            'diagram_completion',
             'diagram_labeling',
             'diagram_label',
             // Short Answer: 1 ô nhập, cho phép nhiều đáp án bằng "/".
