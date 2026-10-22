@@ -937,10 +937,9 @@ function updateBlankHint(index, blankIndex, value) {
 }
 
 /* ── Đoạn văn đọc ──────────────────────────────────────────────────────── */
-
 function addPassage() {
     passageSeq++;
-    passages.push({ id: 'p' + passageSeq, content: '', position: 1, word_bank: [] });
+    passages.push({ id: 'p' + passageSeq, content: '', position: 1, word_bank: [], instruction: '' });
     renderPassages();
 }
 
@@ -985,6 +984,11 @@ function updatePassageWordBank(id, value) {
     }
     // Không render lại để không mất con trỏ khi đang gõ.
 }
+function updatePassageInstruction(id, value) {
+    const p = passages.find(item => item.id === id);
+    if (p) p.instruction = value;
+    // Không render lại để không mất con trỏ khi đang gõ.
+}
 
 function renderPassages() {
     const passagesContainer = document.getElementById('passagesContainer');
@@ -1004,6 +1008,17 @@ function renderPassages() {
             </div>
 
             ${richFieldHtml('Nội dung', p.content, `openPassageEditor('${p.id}')`)}
+
+            <div class="form-group mb-2">
+                <label class="input-label">
+                    Đề bài cho đoạn văn
+                    <small class="text-muted">(không bắt buộc — hiện cạnh tiêu đề "Đoạn văn đọc")</small>
+                </label>
+                <input type="text" class="form-control"
+                    value="${escapeHtml(p.instruction || '')}"
+                    placeholder="VD: Read the passage and answer questions 1-5."
+                    oninput="updatePassageInstruction('${p.id}', this.value)">
+            </div>
 
             <div class="form-group mb-2">
                 <label class="input-label">

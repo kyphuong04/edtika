@@ -409,8 +409,10 @@ class PlacementTestController extends Controller
         return collect($passages)->map(function ($passage) {
             $passage['content'] = $this->sanitizeRichText($passage['content'] ?? '');
 
-            // Word bank là danh sách từ gợi ý, luôn text thuần — trim và bỏ
-            // phần tử rỗng để trùng khớp khi hiển thị.
+            // Đề bài ngắn, text thuần từ input — chỉ trim và giới hạn độ dài.
+            // Không đẩy qua purifier vì nó nuốt mất text không có thẻ.
+            $passage['instruction'] = mb_substr(trim((string) ($passage['instruction'] ?? '')), 0, 255);
+
             $passage['word_bank'] = collect($passage['word_bank'] ?? [])
                 ->map(fn ($w) => trim((string) $w))
                 ->filter()

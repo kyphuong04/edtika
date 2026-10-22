@@ -1396,3 +1396,202 @@ body.rvx-drawer-open { overflow: hidden; }
     .rvx-num.rvx-mx-num { width: 34px; height: 34px; font-size: 14px; }
     .exam-matrix.rvx-mx th.exam-matrix-statement-head { padding-left: 16px; }
 }
+
+/* ── Diagram / Map Labeling (A–K): ảnh trên, bảng chọn dưới ───────── */
+.rvx-group--map .exam-diagram-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+}
+.rvx-group--map .exam-diagram-image {
+    position: static;
+    flex: none;
+    padding: 10px;
+    border-color: var(--rs-line);
+    border-radius: 14px;
+    background: #faf8ff;
+}
+.rvx-group--map .exam-diagram-image img { max-height: 520px; width: auto; max-width: 100%; margin: 0 auto; object-fit: contain; }
+.rvx-group--map .exam-diagram-matrix { flex: none; }
+.exam-matrix.rvx-mx.is-diagram th.exam-matrix-col { min-width: 44px; padding: 12px 4px; }
+
+/* Listening: vòng số + ▶ trong cột statement */
+.exam-matrix.rvx-mx--listening th.exam-matrix-statement-head { padding-left: 16px; }
+.exam-matrix.rvx-mx--listening .exam-matrix-statement-inner { align-items: center; gap: 14px; }
+.exam-matrix.rvx-mx--listening .rvl-qnum { flex: 0 0 auto; gap: 2px; }
+.exam-matrix.rvx-mx--listening .rvl-qnum { gap: 0; }
+.exam-matrix.rvx-mx--listening .rvl-ring { width: 28px; height: 28px; margin: 4px; font-size: 13px; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--rs-brand); }
+.exam-matrix.rvx-mx--listening .rvl-qplay-tri { width: 22px; height: 16px; font-size: 11px; }
+.exam-matrix.rvx-mx--listening td.exam-matrix-statement { min-width: 220px; padding: 6px 14px; }
+.exam-matrix.rvx-mx--listening .exam-matrix-cell label { min-height: 44px; }
+
+/* ── Listening: Sentence / Summary / Note completion, Short answer ── */
+.rvx-group--lsheet .exam-blank-sheet-intro,
+.rvx-group--lsheet .exam-blank-sheet-instruction {
+    margin: 0 0 4px;
+    color: var(--rs-ink);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+}
+.rvx-group--lsheet .exam-blank-sheet-intro > :first-child { margin-top: 0; }
+.rvx-group--lsheet .exam-blank-sheet-intro > :last-child { margin-bottom: 0; }
+.exam-blank-sheet.rvx-ls-sheet {
+    margin-top: 12px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+.exam-blank-sheet.rvx-ls-sheet .exam-blank-sheet-title {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #ede9fe;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: #3b0764;
+}
+.exam-blank-sheet.rvx-ls-sheet .exam-question-card.rvx-ls-card {
+    margin: 0 0 10px;
+    padding: 10px 16px;
+    border: 1px solid var(--rs-line);
+    border-radius: 14px;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+}
+.exam-blank-sheet.rvx-ls-sheet .exam-question-card.rvx-ls-card.rvx-current {
+    border-color: #c4b5fd;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+}
+.rvx-ls-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+}
+/* Ghi đè chấm đầu dòng kiểu list-item của trang làm bài: dùng chấm riêng */
+.exam-blank-sheet.rvx-ls-sheet .rvx-ls-card .exam-question-text {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+    line-height: 2;
+    color: var(--rs-ink);
+}
+.exam-blank-sheet.rvx-ls-sheet .rvx-ls-card .exam-question-text::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--rs-ink);
+}
+.exam-blank-sheet.rvx-ls-sheet .rvx-ls-card.is-rich .exam-question-text { padding-left: 0; }
+.exam-blank-sheet.rvx-ls-sheet .rvx-ls-card.is-rich .exam-question-text::before { display: none; }
+.rvx-ls-card .exam-question-text > :first-child { margin-top: 0; }
+.rvx-ls-card .exam-question-text > :last-child { margin-bottom: 0; }
+.rvx-ls-card .rvx-pill,
+.rvx-group--completion .rvx-table-card .rvx-pill { border-radius: 8px; }
+.rvx-ls-card .rvx-blank.rvx-current { box-shadow: none; }
+
+/* Listening: vòng số + ▶ nằm ngay trong ô bảng */
+.rvx-table-card .rvx-blank > .rvl-qnum {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-right: 2px;
+}
+.rvx-table-card .rvx-blank > .rvl-qnum .rvl-ring {
+    width: 26px;
+    height: 26px;
+    margin: 4px;
+    font-size: 12px;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--rs-brand);
+}
+.rvx-table-card .rvx-blank > .rvl-qnum .rvl-qplay-tri { width: 20px; height: 14px; font-size: 10px; }
+.rvx-group--completion .rvx-table-card .exam-table-wrap td:first-child { color: #3b0764; }
+.rvx-group--completion .rvx-table-card .exam-table-wrap th { text-align: center; }
+.rvx-table-card .rvx-blank { flex-wrap: nowrap; }
+.rvx-table-card .rvx-blank > .rvx-blank-answers { flex-wrap: wrap; }
+.rvx-table-card .exam-table-wrap td:last-child { min-width: 260px; }
+
+/* ── Drag & Drop (Remove from list / Keep in list) ────────────────── */
+.exam-question-card.rvx-dd-card {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.rvx-dd-list { display: flex; flex-direction: column; }
+.rvx-dd-heading {
+    margin: 4px 0 8px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #3b0764;
+}
+.rvx-dd-heading > :first-child { margin-top: 0; }
+.rvx-dd-heading > :last-child { margin-bottom: 0; }
+.rvx-dd-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.25fr) 40px;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rs-line);
+    border-radius: 10px;
+    transition: background .15s, box-shadow .15s;
+}
+.rvx-dd-list.is-listening .rvx-dd-row { grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.25fr); }
+.rvx-dd-row:last-child { border-bottom: 0; }
+.rvx-dd-row.rvx-current { background: #faf7ff; box-shadow: inset 3px 0 0 #8b5cf6; }
+.rvx-dd-statement { font-size: 14px; line-height: 1.55; color: var(--rs-ink); }
+.rvx-dd-statement > :first-child { margin-top: 0; }
+.rvx-dd-statement > :last-child { margin-bottom: 0; }
+.rvx-dd-gap { color: var(--rs-muted); letter-spacing: 1px; }
+.rvx-dd-num { display: flex; justify-content: center; }
+.rvx-dd-num .rvl-qnum { gap: 0; }
+.rvx-dd-help { display: flex; justify-content: center; }
+.rvx-dd-help .rvx-help.rvx-help--sm { width: 34px; height: 34px; font-size: 15px; }
+
+.rvx-dd-answers { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rvx-dd-answer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.rvx-dd-answer-text { min-width: 0; overflow-wrap: anywhere; }
+.rvx-dd-answer-icon { flex: 0 0 auto; font-size: 15px; }
+.rvx-dd-answer.is-correct { background: #ecfdf3; color: #15803d; }
+.rvx-dd-answer.is-incorrect { background: #fff1f2; color: #e11d48; }
+.rvx-dd-answer.is-blank .rvx-dd-answer-text { font-weight: 500; font-style: italic; opacity: .85; }
+
+/* Kho đáp án: chỉ xem, hiện đủ */
+.rvx-dd-card .exam-dd-bank-wrap { margin-top: 16px; }
+.rvx-dd-card .exam-dd-chip,
+.rvx-dd-card .exam-dd-chip.used { opacity: 1; cursor: default; pointer-events: none; }
+
+@media (max-width: 640px) {
+    .rvx-dd-row,
+    .rvx-dd-list.is-listening .rvx-dd-row {
+        grid-template-columns: 44px minmax(0, 1fr) 34px;
+        grid-template-areas: "num st help" "num ans ans";
+        gap: 8px 10px;
+    }
+    .rvx-dd-list.is-listening .rvx-dd-row { grid-template-areas: "num st st" "num ans ans"; }
+    .rvx-dd-num { grid-area: num; align-self: start; }
+    .rvx-dd-statement { grid-area: st; }
+    .rvx-dd-answers { grid-area: ans; }
+    .rvx-dd-help { grid-area: help; }
+}

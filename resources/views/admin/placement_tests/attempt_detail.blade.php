@@ -122,8 +122,10 @@
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
-/* Nhãn nhóm audio + đề bài nằm cùng hàng. Nhãn viết hoa, đề bài giữ
-   nguyên chữ thường nên phải tách text-transform ra khỏi hàng cha. */
+
+/* Nhãn nhóm audio + đề bài nằm cùng một hàng. Nhãn viết hoa nên
+   text-transform phải nằm ở nhãn, không ở hàng cha, để đề bài giữ
+   nguyên chữ thường. */
 .pt-audio-group-head {
     display: flex;
     align-items: center;
@@ -150,6 +152,43 @@
     background: #fff !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+/* Tiêu đề đoạn văn + đề bài trên cùng một hàng, giống nhóm audio. */
+.pt-passage-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.pt-passage-head strong {
+    flex-shrink: 0;
+}
+.pt-passage-instruction {
+    background: #f5f3ff;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+}
+.main-content .pt-passage-instruction {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 575px) {
+    .pt-passage-head,
+    .pt-audio-group-head { display: block; }
+    .pt-passage-head strong { display: block; margin-bottom: 8px; }
+    .pt-audio-group-head .pt-audio-group-label { margin-bottom: 8px; }
 }
 </style>
 @endpush
@@ -183,7 +222,13 @@
                 @if($blockPassages->has($idx + 1))
                     @php $psg = $blockPassages[$idx + 1]; @endphp
                     <div class="pt-q-card" style="background:#faf5ff;">
-                        <strong>Đoạn văn đọc:</strong>
+                        <div class="pt-passage-head">
+                            <strong>Đoạn văn đọc:</strong>
+
+                            @if(!empty($psg['instruction']))
+                                <div class="pt-passage-instruction">{{ $psg['instruction'] }}</div>
+                            @endif
+                        </div>
 
                         {{-- Từ gợi ý đứng TRÊN đoạn văn --}}
                         @if(!empty($psg['word_bank']))
@@ -314,7 +359,13 @@
             @if($blockPassages->has(count($block['questions']) + 1))
                 @php $psgLast = $blockPassages[count($block['questions']) + 1]; @endphp
                 <div class="pt-q-card" style="background:#faf5ff;">
-                    <strong>Đoạn văn đọc:</strong>
+                    <div class="pt-passage-head">
+                        <strong>Đoạn văn đọc:</strong>
+
+                        @if(!empty($psgLast['instruction']))
+                            <div class="pt-passage-instruction">{{ $psgLast['instruction'] }}</div>
+                        @endif
+                    </div>
 
                     @if(!empty($psgLast['word_bank']))
                         <div class="pt-word-bank">

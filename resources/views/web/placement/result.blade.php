@@ -137,6 +137,7 @@
     margin-top: 14px;
     margin-bottom: 18px;
 }
+
 /* Nhãn nhóm audio + đề bài nằm cùng hàng. Nhãn viết hoa, đề bài giữ
    nguyên chữ thường nên phải tách text-transform ra khỏi hàng cha. */
 .pt-audio-group-head {
@@ -160,6 +161,34 @@
     line-height: 1.4;
     flex: 1;
     min-width: 0;
+}
+
+/* Tiêu đề đoạn văn + đề bài trên cùng một hàng, giống nhóm audio. */
+.pt-passage-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.pt-passage-head strong {
+    flex-shrink: 0;
+}
+.pt-passage-instruction {
+    background: #f5f3ff;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 575px) {
+    .pt-passage-head { display: block; }
+    .pt-passage-head strong { display: block; margin-bottom: 8px; }
 }
 </style>
 @endpush
@@ -235,9 +264,14 @@
                                 @if($blockPassages->has($idx + 1))
                                     @php $psg = $blockPassages[$idx + 1]; @endphp
                                     <div class="pt-answer-passage-card">
-                                        <strong>Đoạn văn đọc:</strong>
+                                        <div class="pt-passage-head">
+                                            <strong>Đoạn văn đọc:</strong>
 
-                                        {{-- Từ gợi ý đứng TRÊN đoạn văn --}}
+                                            @if(!empty($psg['instruction']))
+                                                <div class="pt-passage-instruction">{{ $psg['instruction'] }}</div>
+                                            @endif
+                                        </div>
+
                                         @if(!empty($psg['word_bank']))
                                             <div class="pt-word-bank">
                                                 @foreach($psg['word_bank'] as $word)
@@ -363,7 +397,13 @@
                             @if($blockPassages->has(count($block['questions']) + 1))
                                 @php $psgLast = $blockPassages[count($block['questions']) + 1]; @endphp
                                 <div class="pt-answer-passage-card">
-                                    <strong>Đoạn văn đọc:</strong>
+                                    <div class="pt-passage-head">
+                                        <strong>Đoạn văn đọc:</strong>
+
+                                        @if(!empty($psgLast['instruction']))
+                                            <div class="pt-passage-instruction">{{ $psgLast['instruction'] }}</div>
+                                        @endif
+                                    </div>
 
                                     @if(!empty($psgLast['word_bank']))
                                         <div class="pt-word-bank">

@@ -189,6 +189,35 @@
     flex: 1;
     min-width: 0;
 }
+
+/* Tiêu đề đoạn văn + đề bài trên cùng một hàng, giống nhóm audio. */
+.pt-passage-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.pt-passage-head h5 {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+.pt-passage-instruction {
+    background: #f5f3ff;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #4c1d95;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 575px) {
+    .pt-passage-head { display: block; }
+    .pt-passage-head h5 { margin-bottom: 8px; }
+}
 </style>
 @endpush
 
@@ -220,9 +249,14 @@
             @if($passages->has($index + 1))
                 @php $psg = $passages[$index + 1]; @endphp
                 <div class="pt-passage-card">
-                    <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
+                    <div class="pt-passage-head">
+                        <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
 
-                    {{-- Từ gợi ý đứng TRÊN đoạn văn để học viên thấy trước khi đọc --}}
+                        @if(!empty($psg['instruction']))
+                            <div class="pt-passage-instruction">{{ $psg['instruction'] }}</div>
+                        @endif
+                    </div>
+
                     @if(!empty($psg['word_bank']))
                         <div class="pt-word-bank">
                             @foreach($psg['word_bank'] as $word)
@@ -326,14 +360,16 @@
             </div>
         @endforeach
 
-        {{-- Đoạn văn đặt ở vị trí "Cuối bài" (position = số câu + 1).
-             Phải dùng count($questions), KHÔNG dùng $index — sau vòng lặp
-             $index mang giá trị chỉ số cuối nên sẽ trùng với đoạn văn đã
-             hiện trước câu cuối. --}}
         @if($passages->has(count($questions) + 1))
             @php $psgLast = $passages[count($questions) + 1]; @endphp
             <div class="pt-passage-card">
-                <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
+                <div class="pt-passage-head">
+                    <h5><i class="fas fa-book-open mr-2"></i>Đoạn văn đọc</h5>
+
+                    @if(!empty($psgLast['instruction']))
+                        <div class="pt-passage-instruction">{{ $psgLast['instruction'] }}</div>
+                    @endif
+                </div>
 
                 @if(!empty($psgLast['word_bank']))
                     <div class="pt-word-bank">
