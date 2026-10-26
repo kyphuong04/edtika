@@ -595,7 +595,7 @@ body.prs-modal-open { overflow: hidden; }
             </div>
         </section>
 
-        {{-- ═══ 4. Khoá học (dữ liệu giả — xem PlacementPlayController::mockCourses) ═══ --}}
+        {{-- ═══ 4. Khoá học (dữ liệu giả — xem App\Support\Placement\PlacementCourseCatalog) ═══ --}}
         <section class="prs-card prs-courses">
             <div class="prs-courses__head">
                 <div>

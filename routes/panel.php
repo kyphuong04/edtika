@@ -25,6 +25,14 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
     Route::post('/content-delete-request', 'ContentDeleteRequestController@store');
 
+    /* Yêu cầu tư vấn từ trang kết quả Placement Test — dành cho role Admin
+       (Manager/CEO dùng bản /admin/placement-consults). Kiểm quyền trong controller. */
+    Route::group(['prefix' => 'placement-consults'], function () {
+        Route::get('/', 'PlacementConsultRequestController@index')->name('panel.placement_consults.index');
+        Route::patch('/{consult}', 'PlacementConsultRequestController@update')->name('panel.placement_consults.update');
+        Route::delete('/{consult}', 'PlacementConsultRequestController@destroy')->name('panel.placement_consults.destroy');
+    });
+
     Route::group(['prefix' => 'users'], function () {
         Route::post('/offlineToggle', 'UserController@offlineToggle');
         Route::get('/{id}/getInfo', 'UserController@getUserInfo');

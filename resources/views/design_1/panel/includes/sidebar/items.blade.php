@@ -57,6 +57,10 @@
                             <span class="sidebar-text ml-8 font-14 {{ $isActiveMainManu ? 'text-white' : (!empty($sidebarMenu['className']) ? $sidebarMenu['className'] : 'text-dark') }}">{{ $sidebarMenu['text'] }}</span>
                         </div>
 
+                        @if(!empty($sidebarMenu['badge']))
+                            <span class="sidebar-badge" @if($sidebarMenuName === 'placement_consults') data-pc-sidebar-badge @endif style="min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;">{{ $sidebarMenu['badge'] }}</span>
+                        @endif
+
                     </a>
                 @endif
             @endforeach

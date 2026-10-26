@@ -46,6 +46,8 @@
 @elseif($name == 'rewards')
     <x-iconsax-lin-award class="icons" width="20px" height="20px"/>
 
+@elseif($name == 'placement_consults')
+    <x-iconsax-lin-call-calling class="icons" width="20px" height="20px"/>
 @elseif($name == 'support')
     <x-iconsax-lin-message class="icons" width="20px" height="20px"/>
 

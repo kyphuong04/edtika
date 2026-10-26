@@ -7,6 +7,7 @@ use App\User;
 use App\Models\PlacementTest;
 use App\Models\PlacementQuestion;
 use App\Models\IeltsPlacementAttemptAnswer;
+use App\Models\PlacementConsultRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -41,7 +42,13 @@ class PlacementResultController extends Controller
             ? Storage::url($attempt->speaking_recording_path)
             : null;
 
-        return view('admin.placement_tests.result_modal_content', compact('user', 'attempt', 'speakingAudioUrl'));
+        // Các yêu cầu tư vấn học viên đã gửi từ trang kết quả (mới nhất trước)
+        $consults = PlacementConsultRequest::where('user_id', $user->id)
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        return view('admin.placement_tests.result_modal_content', compact('user', 'attempt', 'speakingAudioUrl', 'consults'));
     }
 
     public function detail(User $user)

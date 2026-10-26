@@ -9,6 +9,7 @@ use App\Models\PlacementSpeakingQuestion;
 use App\Models\PlacementTest;
 use App\Models\PlacementQuestion;
 use App\Services\PlacementAdaptiveEngine;
+use App\Support\Placement\PlacementCourseCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -369,7 +370,7 @@ class PlacementPlayController extends Controller
 
         $testBlocks = $isDemoData ? collect() : $this->buildTestBlocksForAttempt($attempt);
 
-        $courses = $this->mockCourses();
+        $courses = PlacementCourseCatalog::all();
         $finalLevel = (string) $attempt->final_level;
 
         $consultRequest = $isDemoData
@@ -383,7 +384,7 @@ class PlacementPlayController extends Controller
             'levelLabel'         => self::LEVEL_LABELS[$finalLevel] ?? '',
             'maxSteps'           => PlacementAdaptiveEngine::MAX_STEPS,
             'courses'            => $courses,
-            'recommendedCourse'  => $this->recommendedCourseKey($finalLevel, $courses),
+            'recommendedCourse'  => PlacementCourseCatalog::recommendedKeyFor($finalLevel),
             'consultRequest'     => $consultRequest,
             'consultPrefill'     => [
                 'full_name' => $user->full_name,
@@ -405,80 +406,19 @@ class PlacementPlayController extends Controller
     ];
 
     /**
-     * DỮ LIỆU GIẢ — danh sách khoá học gợi ý ở cuối trang kết quả.
-     *
-     * TODO: khi có khoá học chính thức, thay hàm này bằng truy vấn thật
-     * (VD: Webinar theo category IELTS) và giữ nguyên cấu trúc mảng trả về
-     * để view không phải sửa. `levels` = các final_level của Placement Test
-     * được coi là phù hợp với khoá đó (dùng để gắn nhãn "Phù hợp với bạn").
-     */
-    private function mockCourses(): array
-    {
-        return [
-            [
-                'key'         => 'foundation',
-                'title'       => 'Foundation IELTS',
-                'range'       => 'A1 - A2',
-                'description' => 'Xây nền vững chắc cho hành trình chinh phục IELTS.',
-                'tier'        => 'Beginner',
-                'duration'    => '8 - 10 tuần',
-                'icon'        => 'fa-seedling',
-                'levels'      => ['A1', 'A2'],
-                'buy_url'     => '#',
-                'detail_url'  => '#',
-            ],
-            [
-                'key'         => 'intermediate',
-                'title'       => 'Intermediate IELTS',
-                'range'       => 'B1 - B2',
-                'description' => 'Nâng cao toàn diện 4 kỹ năng với phương pháp bài bản.',
-                'tier'        => 'Intermediate',
-                'duration'    => '8 - 12 tuần',
-                'icon'        => 'fa-rocket',
-                'levels'      => ['B1', 'B2'],
-                'buy_url'     => '#',
-                'detail_url'  => '#',
-            ],
-            [
-                'key'         => 'advanced',
-                'title'       => 'Advanced IELTS',
-                'range'       => 'C1 - C2',
-                'description' => 'Luyện chuyên sâu, tối ưu chiến lược để đạt band điểm cao.',
-                'tier'        => 'Advanced',
-                'duration'    => '8 - 12 tuần',
-                'icon'        => 'fa-trophy',
-                'levels'      => ['B2+'],
-                'buy_url'     => '#',
-                'detail_url'  => '#',
-            ],
-        ];
-    }
-
-    private function recommendedCourseKey(string $finalLevel, array $courses): ?string
-    {
-        foreach ($courses as $course) {
-            if (in_array($finalLevel, $course['levels'] ?? [], true)) {
-                return $course['key'];
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Lưu form "Bạn muốn được tư vấn thêm về lộ trình học?" ở trang kết quả.
      * Trả JSON khi gọi bằng fetch, redirect + toast khi submit form thường.
      */
     public function submitConsult(Request $request)
     {
         $user = $request->user();
-        $courses = collect($this->mockCourses())->keyBy('key');
+        $courses = PlacementCourseCatalog::options();
 
         $data = $request->validate([
             'full_name'  => 'required|string|max:100',
             'mobile'     => ['required', 'string', 'max:20', 'regex:/^[0-9+\s().-]{8,20}$/'],
             'email'      => 'nullable|email|max:150',
-            'course_key' => 'required|string|in:' . $courses->keys()->implode(','),
+            'course_key' => 'required|string|in:' . implode(',', array_keys($courses)),
         ], [
             'full_name.required'  => 'Vui lòng nhập họ và tên.',
             'mobile.required'     => 'Vui lòng nhập số điện thoại.',
@@ -497,7 +437,7 @@ class PlacementPlayController extends Controller
             'mobile'       => trim($data['mobile']),
             'email'        => $data['email'] ?? null,
             'course_key'   => $data['course_key'],
-            'course_title' => $courses[$data['course_key']]['title'],
+            'course_title' => $courses[$data['course_key']],
             'final_level'  => $attempt?->final_level,
             'status'       => PlacementConsultRequest::STATUS_NEW,
         ]);

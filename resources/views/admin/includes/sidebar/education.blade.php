@@ -148,12 +148,21 @@
                 </li>
             @endcan()
 
+            @php
+                // Badge số "Yêu cầu tư vấn" mới (gửi từ trang kết quả Placement Test)
+                $canSeePlacementConsults = method_exists($authUser, 'canManagePlacementConsults') && $authUser->canManagePlacementConsults();
+                $placementConsultNewCount = $canSeePlacementConsults ? \App\Models\PlacementConsultRequest::newCount() : 0;
+            @endphp
+
             {{-- IELTS Tests - TEMPORARY: Permission bypassed for testing --}}
             @if(true) {{-- TODO: Change back to @can('admin_ielts_tests') after fixing permissions --}}
-                <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false)) or request()->is(getAdminPanelUrl('/placement-tests*', false)) or request()->is(getAdminPanelUrl('/placement-results*', false))) ? 'active' : '' }}">
+                <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/ielts-tests*', false)) or request()->is(getAdminPanelUrl('/practice-categories*', false)) or request()->is(getAdminPanelUrl('/placement-tests*', false)) or request()->is(getAdminPanelUrl('/placement-results*', false)) or request()->is(getAdminPanelUrl('/placement-consults*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <x-iconsax-bul-clipboard-text class="icons" width="24px" height="24px"/>
                         <span>{{ trans('update.ielts_tests') }}</span>
+                        @if($canSeePlacementConsults && $placementConsultNewCount > 0)
+                            <span class="badge badge-danger ml-auto" data-pc-sidebar-badge style="font-size:10px;padding:3px 6px;">{{ $placementConsultNewCount }}</span>
+                        @endif
                     </a>
                     <ul class="dropdown-menu">
                         <li class="{{ (request()->is(getAdminPanelUrl('/ielts-tests', false))) ? 'active' : '' }}">
@@ -179,6 +188,16 @@
                         @if($authUser->isManager() || $authUser->isCeo())
                             <li class="{{ (request()->is(getAdminPanelUrl('/placement-results*', false))) ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ getAdminPanelUrl() }}/placement-results">Bài làm của học viên</a>
+                            </li>
+                        @endif
+                        @if($canSeePlacementConsults)
+                            <li class="{{ (request()->is(getAdminPanelUrl('/placement-consults*', false))) ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ getAdminPanelUrl() }}/placement-consults">
+                                    Yêu cầu tư vấn
+                                    @if($placementConsultNewCount > 0)
+                                        <span class="badge badge-danger ml-1" data-pc-sidebar-badge style="font-size:10px;padding:3px 6px;">{{ $placementConsultNewCount }}</span>
+                                    @endif
+                                </a>
                             </li>
                         @endif
                         @if(method_exists($authUser, 'canManageIeltsResultBanners') && $authUser->canManageIeltsResultBanners())

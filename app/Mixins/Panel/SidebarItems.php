@@ -283,6 +283,20 @@ class SidebarItems
             }
         }
         
+        // Yêu cầu tư vấn từ trang kết quả Placement Test (Admin/Manager/CEO).
+        // Role Admin chỉ dùng panel nên mục này là lối vào duy nhất của Admin.
+        if (method_exists($user, 'canManagePlacementConsults') && $user->canManagePlacementConsults()) {
+            $newConsults = \App\Models\PlacementConsultRequest::newCount();
+
+            $items['placement_consults'] = [
+                'icon' => self::getIcon('placement_consults'),
+                'text' => 'Yêu cầu tư vấn',
+                'url' => '/panel/placement-consults',
+                'badge' => $newConsults > 0 ? $newConsults : null,
+                'items' => []
+            ];
+        }
+
         // Question Bank - For Teachers, Organizations, Admins, Managers, CEOs (role hierarchy)
         if ($user->isAdmin() || $user->isTeacher() || $user->isOrganization() || $user->isManager() || $user->isCeo()) {
             $questionBankItems = [

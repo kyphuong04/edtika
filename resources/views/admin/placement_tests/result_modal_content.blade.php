@@ -65,3 +65,37 @@
         <div class="text-muted"><i class="fas fa-microphone-slash mr-2"></i>Học viên chưa ghi âm phần Speaking (hoặc đã bỏ qua).</div>
     @endif
 @endif
+
+@if(isset($consults) && $consults->isNotEmpty())
+    <h5 class="mb-3 mt-30">Yêu cầu tư vấn đã gửi</h5>
+    <table class="table table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Gửi lúc</th>
+                <th>Khóa quan tâm</th>
+                <th>SĐT</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($consults as $consult)
+                <tr>
+                    <td style="white-space:nowrap;">{{ $consult->created_at->format('d/m/Y H:i') }}</td>
+                    <td>{{ $consult->course_title }}</td>
+                    <td>{{ $consult->mobile }}</td>
+                    <td>
+                        <span class="badge {{ $consult->statusBadgeClass() }}">{{ $consult->statusLabel() }}</span>
+                        @if($consult->admin_note)
+                            <div style="font-size:12px;color:#6b7280;margin-top:4px;white-space:pre-line;">{{ \Illuminate\Support\Str::limit($consult->admin_note, 160) }}</div>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    <div class="mt-2">
+        <a href="{{ getAdminPanelUrl() }}/placement-consults?search={{ urlencode($consults->first()->mobile) }}" target="_blank" style="font-size:13px;">
+            Mở trang Yêu cầu tư vấn <i class="fas fa-external-link-alt ml-1"></i>
+        </a>
+    </div>
+@endif

@@ -254,6 +254,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Xem & xử lý "Yêu cầu tư vấn" gửi từ trang kết quả Placement Test.
+     */
+    public function canManagePlacementConsults()
+    {
+        return $this->isAdmin() || $this->isManager() || $this->isCeo();
+    }
+
+    /**
      * Check if user can upload/manage bundle vocabulary sets.
      */
     public function canManageBundleVocabulary()

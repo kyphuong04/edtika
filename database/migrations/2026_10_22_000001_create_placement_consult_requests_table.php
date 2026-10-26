@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * học viên đang ở level nào và nghe lại phần Speaking khi chấm chữa.
  *
  * course_key / course_title đang là snapshot từ danh sách khoá học GIẢ
- * (PlacementPlayController::mockCourses()). Khi có khoá học thật, có thể
+ * (App\Support\Placement\PlacementCourseCatalog). Khi có khoá học thật, có thể
  * thêm cột webinar_id mà không phải đổi các cột hiện có.
  */
 class CreatePlacementConsultRequestsTable extends Migration

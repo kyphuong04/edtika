@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\PlacementTestController;
 use App\Http\Controllers\Admin\PlacementSpeakingQuestionController;
 use App\Http\Controllers\Admin\PlacementResultController;
 use App\Http\Controllers\Admin\PlacementResultManagerController;
+use App\Http\Controllers\Admin\PlacementConsultRequestController;
 
 $prefix = getAdminPanelUrlPrefix();
 
@@ -72,6 +73,13 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
 
             Route::delete('/{attempt}', [PlacementResultManagerController::class, 'destroy'])
                 ->name('admin.placement_results.destroy');
+        });
+
+        // Yêu cầu tư vấn gửi từ trang kết quả Placement Test
+        Route::prefix('placement-consults')->name('admin.placement_consults.')->group(function () {
+            Route::get('/', [PlacementConsultRequestController::class, 'index'])->name('index');
+            Route::patch('/{consult}', [PlacementConsultRequestController::class, 'update'])->name('update');
+            Route::delete('/{consult}', [PlacementConsultRequestController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('placement-speaking-questions')->name('admin.placement_speaking.')->group(function () {
