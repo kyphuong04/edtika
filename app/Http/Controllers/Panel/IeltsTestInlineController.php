@@ -517,6 +517,8 @@ class IeltsTestInlineController extends Controller
             'target_band_max' => 'nullable|numeric|min:0|max:9',
             // JSON array hashtag từ hidden input #hashtagsInput (chỉ practice).
             'hashtags' => 'nullable|string|max:2000',
+            // "Tài liệu IELTS liên quan" (sidebar giải thích đáp án) — JSON từ #reviewResourcesInput.
+            'review_resources' => 'nullable|string|max:10000',
             'question_groups_data' => ($saveAsDraft ? 'nullable' : 'required') . '|json',
             'section_media' => 'nullable|array',
             'section_media.*.audio' => 'nullable|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg|max:51200',
@@ -677,6 +679,7 @@ class IeltsTestInlineController extends Controller
                     'hashtags' => $testType === 'practice'
                         ? IeltsTest::normalizeHashtags($validated['hashtags'] ?? null)
                         : null,
+                    'review_resources' => IeltsTest::normalizeReviewResources($validated['review_resources'] ?? null),
                     'is_active' => true,
                     'is_free' => true,
                     'created_by' => $user->id,
@@ -845,6 +848,8 @@ class IeltsTestInlineController extends Controller
             'target_band_max' => 'nullable|numeric|min:0|max:9',
             // JSON array hashtag từ hidden input #hashtagsInput (chỉ practice).
             'hashtags' => 'nullable|string|max:2000',
+            // "Tài liệu IELTS liên quan" (sidebar giải thích đáp án) — JSON từ #reviewResourcesInput.
+            'review_resources' => 'nullable|string|max:10000',
             'question_groups_data' => ($saveAsDraft ? 'nullable' : 'required') . '|json',
             'section_media' => 'nullable|array',
             'section_media.*.audio' => 'nullable|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/x-m4a,audio/ogg|max:51200',
@@ -985,6 +990,7 @@ class IeltsTestInlineController extends Controller
                     'hashtags' => $testType === 'practice'
                         ? IeltsTest::normalizeHashtags($validated['hashtags'] ?? null)
                         : null,
+                    'review_resources' => IeltsTest::normalizeReviewResources($validated['review_resources'] ?? null),
                     'is_active' => true,
                     'is_free' => true,
                     'status' => $saveAsDraft ? 'draft' : 'pending_approval',
@@ -2154,6 +2160,10 @@ class IeltsTestInlineController extends Controller
                 })($form['practice_part_number'] ?? null),
                 'hashtags' => json_encode(
                     IeltsTest::normalizeHashtags($form['hashtags'] ?? null),
+                    JSON_UNESCAPED_UNICODE
+                ),
+                'review_resources' => json_encode(
+                    IeltsTest::normalizeReviewResources($form['review_resources'] ?? null) ?? [],
                     JSON_UNESCAPED_UNICODE
                 ),
             ],

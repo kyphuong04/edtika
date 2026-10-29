@@ -1595,3 +1595,291 @@ body.rvx-drawer-open { overflow: hidden; }
     .rvx-dd-answers { grid-area: ans; }
     .rvx-dd-help { grid-area: help; }
 }
+/* =====================================================================
+   Sidebar "Giải thích đáp án" — bản theo từng số câu (review.js: AnswerHelp)
+   ===================================================================== */
+.rvx-drawer-panel { width: min(640px, 100vw); }
+.rvx-drawer-head { padding: 18px 22px; }
+.rvx-drawer-head .rvx-drawer-icon { display: none; }
+.rvx-drawer-head h3 { font-size: 22px; font-weight: 800; color: var(--rs-brand); letter-spacing: -.01em; }
+.rvx-drawer-body { padding: 18px 22px 28px; }
+
+/* Đáp án đúng / của bạn */
+.rvh-answers { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.rvh-ans {
+    display: inline-flex;
+    align-items: center;
+    gap: 22px;
+    min-width: 200px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+}
+.rvh-ans b { font-size: 20px; font-weight: 800; }
+.rvh-ans.is-key { background: #dcf8ea; color: #16794a; }
+.rvh-ans.is-key b { color: #16a34a; }
+.rvh-ans.is-wrong { background: var(--rs-incorrect-bg); color: #9f1239; }
+.rvh-ans.is-wrong b { color: var(--rs-incorrect); }
+.rvh-ans.is-empty { background: var(--rs-empty-bg); color: #6d5e9c; }
+.rvh-ans.is-empty b { font-size: 15px; }
+.rvh-ans-ok { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--rs-correct); }
+
+/* Dòng thời gian các mục */
+.rvh-flow { position: relative; }
+.rvh-flow::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 17px;
+    width: 2px;
+    background: var(--rs-line);
+}
+
+.rvh-sec {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 12px;
+    margin-bottom: 14px;
+}
+.rvh-sec-icon {
+    position: relative;
+    z-index: 1;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #ddd2f7;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--rs-brand);
+    font-size: 15px;
+}
+.rvh-sec--mistake .rvh-sec-icon { border-color: var(--rs-brand); background: var(--rs-brand); color: #fff; }
+
+.rvh-sec-head {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--rs-lilac);
+    color: var(--rs-brand);
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+.rvh-sec-head i { font-size: 14px; transition: transform .2s ease; }
+.rvh-sec.is-collapsed .rvh-sec-head i { transform: rotate(-90deg); }
+.rvh-sec-head:focus-visible { outline: 2px solid var(--rs-brand); outline-offset: 2px; }
+
+.rvh-sec-body { grid-column: 2; padding-top: 10px; }
+.rvh-sec.is-collapsed .rvh-sec-body { display: none; }
+
+.rvh-empty { margin: 0; color: var(--rs-muted); font-style: italic; }
+
+/* 1. Phân tích câu hỏi */
+.rvh-question {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e4dcf7;
+    border-radius: 10px;
+    background: #fff;
+}
+.rvh-q-text { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.75; color: var(--rs-ink); }
+.rvh-q-trans { margin: 2px 0 0; font-size: 14px; color: var(--rs-ink-soft); }
+.rvh-kw { padding: 1px 4px; border-radius: 4px; background: #fdf2a8; color: inherit; }
+.rvh-gap { letter-spacing: .05em; color: var(--rs-brand); font-weight: 700; }
+
+.rvh-options { margin: 0 0 12px; padding: 0; list-style: none; }
+.rvh-options li { display: flex; align-items: flex-start; gap: 12px; padding: 4px 0; font-size: 14px; color: var(--rs-ink); }
+.rvh-opt-letter {
+    flex: 0 0 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f1f0f6;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--rs-ink);
+}
+.rvh-options li.is-key { color: #16a34a; font-weight: 600; }
+.rvh-options li.is-key .rvh-opt-letter { background: #16a34a; color: #fff; }
+.rvh-options li.is-wrong { color: var(--rs-incorrect); }
+.rvh-options li.is-wrong .rvh-opt-letter { background: var(--rs-incorrect); color: #fff; }
+.rvh-options--inline { display: flex; flex-wrap: wrap; gap: 8px; }
+.rvh-options--inline li { padding: 4px 12px; border: 1px solid var(--rs-line); border-radius: 999px; font-weight: 700; }
+.rvh-options--inline li.is-key { border-color: #bbf7d0; background: #ecfdf3; }
+.rvh-options--inline li.is-wrong { border-color: #fecdd3; background: #fff1f2; }
+
+.rvh-rich { font-size: 14px; line-height: 1.65; color: var(--rs-ink); }
+.rvh-rich > :first-child { margin-top: 0; }
+.rvh-rich > :last-child { margin-bottom: 0; }
+.rvh-rich p { margin: 0 0 8px; }
+.rvh-rich table { max-width: 100%; margin: 8px 0; border-collapse: collapse; }
+.rvh-rich table :is(td, th) { padding: 6px 10px; border: 1px solid #c9c3d9; vertical-align: top; }
+.rvh-rich table th { background: #f1ecfb; text-align: left; }
+
+.rvh-vocab { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rs-line); }
+.rvh-vocab h5 { margin: 0 0 6px; font-size: 15px; font-weight: 800; color: var(--rs-brand); }
+.rvh-vocab ul { margin: 0; padding-left: 20px; list-style: disc; }
+.rvh-vocab li { margin: 2px 0; font-size: 14px; }
+.rvh-vocab li::marker { color: var(--rs-brand); }
+.rvh-vocab b { color: #6d28d9; }
+
+/* 2. Đối chiếu paraphrase */
+.rvh-para { width: 100%; margin: 0 0 10px; border: 1px solid #e4dcf7; border-radius: 10px; border-collapse: separate; border-spacing: 0; overflow: hidden; font-size: 14px; }
+.rvh-para th { padding: 9px 14px; background: #f6f2fe; color: var(--rs-brand); font-weight: 600; text-align: left; }
+.rvh-para td { padding: 8px 14px; border-top: 1px solid var(--rs-line); color: var(--rs-ink-soft); }
+.rvh-para td:first-child { color: var(--rs-brand); font-weight: 700; }
+.rvh-para :is(th, td) + :is(th, td) { border-left: 1px solid var(--rs-line); }
+.rvh-para-note b, .rvh-para-note strong { color: var(--rs-brand); }
+
+/* 3. Trích dẫn trong bài */
+.rvh-quote {
+    margin: 0 0 10px;
+    padding: 10px 14px;
+    border-left: 3px solid #c4b5fd;
+    border-radius: 0 8px 8px 0;
+    background: #faf8ff;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--rs-ink);
+}
+.rvh-locate {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border: 1px solid #ddd2f7;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--rs-brand);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.rvh-locate:hover { background: var(--rs-brand); color: #fff; }
+.rvh-locate-msg { display: block; margin-top: 6px; font-size: 13px; color: var(--rs-incorrect); }
+.rvh-sec[data-sec="evidence"] .rvl-help-excerpt { margin: 0; }
+
+mark.rvh-evidence {
+    padding: 1px 0;
+    border-radius: 3px;
+    background: #fde68a;
+    box-shadow: 0 0 0 2px #fde68a;
+    color: inherit;
+    animation: rvh-flash 1.6s ease 2;
+}
+@keyframes rvh-flash { 50% { background: #fcd34d; box-shadow: 0 0 0 4px #fcd34d; } }
+
+/* 4. Vì sao các đáp án khác không đúng */
+.rvh-wrong { margin-bottom: 12px; font-size: 14px; }
+.rvh-wrong:last-child { margin-bottom: 0; }
+.rvh-wrong-head { margin: 0 0 2px; color: var(--rs-ink); }
+.rvh-wrong-head b { color: #6d28d9; }
+.rvh-wrong.is-mine { padding: 10px 12px; border: 1px solid #fecdd3; border-radius: 10px; background: #fff7f8; }
+.rvh-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--rs-incorrect-bg); color: var(--rs-incorrect); font-size: 11px; font-weight: 700; vertical-align: 1px; }
+.rvh-auto { margin-bottom: 12px; padding: 10px 12px; border-radius: 10px; background: #fff7ed; }
+.rvh-auto ul { margin: 4px 0 0; padding-left: 18px; list-style: disc; }
+.rvh-auto li { margin: 2px 0; }
+
+/* 5. Vì sao bạn làm sai câu này? */
+.rvh-mistake { position: relative; }
+.rvh-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1.5px solid #a78bfa;
+    border-radius: 10px;
+    background: #fff;
+    color: #8b7ab8;
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+}
+.rvh-select.has-value { color: var(--rs-brand); }
+.rvh-select i { color: var(--rs-brand); transition: transform .2s ease; }
+.rvh-select[aria-expanded="true"] i { transform: rotate(180deg); }
+.rvh-menu {
+    position: absolute;
+    top: 48px;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    margin: 0;
+    padding: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid #ece8f6;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 14px 32px rgba(30, 27, 75, .16);
+    list-style: none;
+}
+.rvh-menu[hidden] { display: none; }
+.rvh-menu li {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f3f1f9;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--rs-ink);
+    cursor: pointer;
+}
+.rvh-menu li:last-child { border-bottom: 0; color: var(--rs-brand); }
+.rvh-menu li:hover,
+.rvh-menu li[aria-selected="true"] { background: #efe9fd; }
+.rvh-other { position: relative; margin-top: 10px; }
+.rvh-other[hidden] { display: none; }
+.rvh-other textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px 14px 26px;
+    border: 1px solid #e4dcf7;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--rs-ink);
+    resize: vertical;
+}
+.rvh-other textarea:focus { outline: none; border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167, 139, 250, .2); }
+.rvh-count { position: absolute; right: 12px; bottom: 8px; font-size: 12px; color: var(--rs-muted); }
+.rvh-saved { min-height: 18px; margin: 6px 0 0; font-size: 12px; color: var(--rs-muted); }
+.rvh-saved.is-ok { color: var(--rs-correct); }
+.rvh-saved.is-error { color: var(--rs-incorrect); }
+.rvh-mistake-ro { margin: 0; padding: 10px 14px; border-radius: 10px; background: #faf8ff; font-size: 14px; }
+
+/* 6. Tài liệu IELTS liên quan */
+.rvh-res { padding: 12px 16px; border: 1px solid #ece8f6; border-radius: 10px; }
+.rvh-res + .rvh-res { margin-top: 8px; }
+.rvh-res a, .rvh-res > b { font-size: 15px; font-weight: 700; color: var(--rs-brand); text-decoration: underline; text-underline-offset: 3px; }
+.rvh-res a i { margin-left: 4px; font-size: 12px; transform: rotate(-45deg); }
+.rvh-res p { margin: 2px 0 0; font-size: 14px; color: var(--rs-ink-soft); }
+
+@media (max-width: 640px) {
+    .rvx-drawer-head h3 { font-size: 18px; }
+    .rvh-ans { min-width: 0; flex: 1 1 140px; gap: 12px; }
+    .rvh-sec { grid-template-columns: 28px minmax(0, 1fr); column-gap: 8px; }
+    .rvh-sec-icon { width: 28px; height: 28px; font-size: 12px; }
+    .rvh-flow::before { left: 13px; }
+    .rvh-sec-head { font-size: 15px; }
+}

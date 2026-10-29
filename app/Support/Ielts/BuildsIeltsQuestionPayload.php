@@ -296,6 +296,11 @@ trait BuildsIeltsQuestionPayload
             $questionPayload['explanation']
         );
 
+        // Giải thích chi tiết theo từng số câu (ReviewExplanation) chỉ dùng ở trang chữa bài.
+        if (isset($questionPayload['question_data']) && is_array($questionPayload['question_data'])) {
+            unset($questionPayload['question_data']['explain']);
+        }
+
         if (empty($options['keep_hint'])) {
             unset($questionPayload['hint']);
             if (isset($questionPayload['question_data']) && is_array($questionPayload['question_data'])) {

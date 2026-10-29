@@ -624,6 +624,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
         Route::get('/attempt/{attemptId}/review', 'IeltsTestController@reviewAnswers')->name('panel.ielts_tests.review');
         Route::post('/attempt/{attemptId}/report-answer', 'IeltsTestController@reportAnswer')->name('panel.ielts_tests.report_answer');
+        Route::post('/attempt/{attemptId}/mistake-reason', 'IeltsTestController@saveMistakeReason')->name('panel.ielts_tests.mistake_reason');
         Route::get('/attempt/{attemptId}/section-data', 'IeltsTestController@attemptSectionData')->name('panel.ielts_tests.attempt_section_data');
         Route::get('/attempt/{attemptId}/scope-status', 'IeltsTestController@scopeStatus')->name('panel.ielts_tests.scope_status');
         Route::post('/attempt/{attemptId}/practice-duration', 'IeltsTestController@setPracticeDuration')->name('panel.ielts_tests.practice_duration');

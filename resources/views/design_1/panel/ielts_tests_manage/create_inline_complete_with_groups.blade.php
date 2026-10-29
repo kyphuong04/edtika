@@ -5,6 +5,8 @@
 <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
 {{-- Bảng kiểu Word trong Passage / Instructions / Answer help / Hint --}}
 <link rel="stylesheet" href="{{ asset('assets/css/ielts-shared/rich-table.css') }}?v={{ filemtime(public_path('assets/css/ielts-shared/rich-table.css')) }}">
+{{-- Giải thích chi tiết theo từng số câu (sidebar chữa bài) + Tài liệu IELTS liên quan --}}
+<link rel="stylesheet" href="{{ asset('assets/css/ielts-tests/explain-builder.css') }}?v={{ filemtime(public_path('assets/css/ielts-tests/explain-builder.css')) }}">
 <style>
 
     /* --- FIX LỖI HOVER & ACTIVE CHO NÚT CĂN LỀ --- */
@@ -877,6 +879,30 @@
                     <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
                 @enderror
             </div>
+
+            {{-- "Tài liệu IELTS liên quan" — hiện cuối sidebar "Giải thích đáp án" ở trang chữa bài.
+                 Dòng được dựng bằng explain-builder.js (IeltsReviewResources) từ hidden input bên dưới. --}}
+            @php
+                $existingReviewResources = isset($test)
+                    ? (\App\Models\IeltsTest::normalizeReviewResources($test->review_resources) ?? [])
+                    : [];
+                $reviewResourcesValue = old('review_resources', json_encode($existingReviewResources, JSON_UNESCAPED_UNICODE));
+            @endphp
+            <div class="form-group" id="reviewResourcesField">
+                <label class="input-label">
+                    Tài liệu IELTS liên quan
+                    <small class="text-muted">(hiện ở cuối sidebar "Giải thích đáp án" khi học viên chữa bài)</small>
+                </label>
+                <div class="rr-list" id="reviewResourcesList"></div>
+                <button type="button" class="eb-add" id="reviewResourcesAdd"><i class="fas fa-plus"></i> Thêm tài liệu</button>
+                <input type="hidden" name="review_resources" id="reviewResourcesInput" value="{{ $reviewResourcesValue }}">
+                <small class="text-muted font-14 d-block mt-5">
+                    Tối đa {{ \App\Models\IeltsTest::REVIEW_RESOURCES_MAX }} tài liệu. Link bắt đầu bằng http:// hoặc https://; dòng không có tên sẽ bị bỏ qua.
+                </small>
+                @error('review_resources')
+                    <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
+                @enderror
+            </div>
         </div>
 
         {{-- Completeness Status --}}
@@ -1040,6 +1066,8 @@
 {{-- Flow Chart Completion (Reading) / Diagram Labeling điền từ (Listening): trình dựng theo từng bước --}}
 <script src="{{ asset('assets/js/ielts-shared/flowchart.js') }}?v={{ filemtime(public_path('assets/js/ielts-shared/flowchart.js')) }}"></script>
 <script src="{{ asset('assets/js/ielts-tests/flowchart-builder.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/flowchart-builder.js')) }}"></script>
+{{-- Khung "Giải thích chi tiết" (từ vựng, paraphrase, đáp án sai...) cho sidebar trang chữa bài --}}
+<script src="{{ asset('assets/js/ielts-tests/explain-builder.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/explain-builder.js')) }}"></script>
 <script>
 const SECTIONS_CONFIG = {
     listening: { skill: 'listening', title: 'Listening', icon: '🔊', mockParts: 4, mockQuestions: 40 },
@@ -1479,6 +1507,7 @@ function buildAutosavePayload() {
             practice_scope: scopeEl ? scopeEl.value : '',
             practice_part_number: partNumberEl ? partNumberEl.value : '',
             hashtags: JSON.stringify(hashtagList),
+            review_resources: (document.getElementById('reviewResourcesInput') || {}).value || '[]',
             
         },
         testData: testData
@@ -1703,6 +1732,9 @@ function applyAutosaveSnapshot(payload) {
     if (scopeEl) scopeEl.value = payload.form.practice_scope || '';
 
     setHashtagsFieldValue(payload.form.hashtags || '');
+    if (window.IeltsReviewResources && payload.form.review_resources !== undefined) {
+        window.IeltsReviewResources.set(payload.form.review_resources || '[]');
+    }
 
     currentTestType = payload.form.type || currentTestType;
     const partNumberEl = document.querySelector('select[name="practice_part_number"]');
@@ -2919,6 +2951,7 @@ function displayQuestionGroup(partItem, part, group) {
         <div class="questions-list" style="display:none;"></div>
         <div class="question-inline-form hidden mt-12 p-12" style="background:#fff;border:1px solid #dbeafe;border-radius:8px;">
             ${getQuestionFormHTML(group.question_type, sectionSkill)}
+            ${window.IeltsExplainBuilder ? window.IeltsExplainBuilder.panelHtml(group.question_type, sectionSkill) : ''}
             <div class="mt-8">
                 <button type="button" class="btn-1 btn-sm rounded-12 d-inline-flex align-items-center" style="height:38px;gap:6px;white-space:nowrap;" onclick="saveQuestionToGroup(this)">
                     <i class="fas fa-check mr-5"></i>Save Question
@@ -3261,6 +3294,7 @@ function resetQuestionForm(form) {
     }
 
     if (window.IeltsFlowBuilder) window.IeltsFlowBuilder.reset(form);
+    if (window.IeltsExplainBuilder) window.IeltsExplainBuilder.reset(form);
 
     // Remove edit mode data
     form.removeAttribute('data-edit-mode');
@@ -3501,6 +3535,19 @@ function editQuestion(button, questionIndex) {
         }
     }
 
+    // Giải thích chi tiết theo từng số câu (Matching: mỗi statement là 1 câu hỏi riêng).
+    if (window.IeltsExplainBuilder) {
+        if (MATCHING_LIKE_TYPES.includes(qType)) {
+            const matchingItems = (group.questions || []).filter(item => (item.type || qType) === qType);
+            window.IeltsExplainBuilder.load(form, (matchingItems.length ? matchingItems : [question]).map((item) => {
+                const ex = item.question_data && item.question_data.explain;
+                return ex && ex.slots ? (ex.slots[0] || ex.slots['0'] || null) : null;
+            }));
+        } else {
+            window.IeltsExplainBuilder.load(form, (question.question_data && question.question_data.explain) || null);
+        }
+    }
+
     // Mark as edit mode
     form.setAttribute('data-edit-mode', 'true');
     form.setAttribute('data-edit-index', questionIndex);
@@ -3685,6 +3732,10 @@ function saveQuestionToGroup(button) {
 
         const matchingQuestions = [];
         const sharedPrompt = textPlain ? text : '';
+        // Giải thích chi tiết theo thứ tự statement (null = không có khung -> giữ dữ liệu cũ).
+        const matchingExplains = window.IeltsExplainBuilder && form.querySelector('.eb')
+            ? window.IeltsExplainBuilder.collectMatching(form)
+            : null;
 
         for (const row of statementRows) {
             const statementInput = row.querySelector('.matching-statement-text');
@@ -3708,7 +3759,8 @@ function saveQuestionToGroup(button) {
                 explanation: explanation || null,
                 points,
                 options: { ...optionsMap },
-                correctAnswer: selectedAnswer
+                correctAnswer: selectedAnswer,
+                __explain: matchingExplains ? (matchingExplains[statementRows.indexOf(row)] || null) : undefined
             });
         }
 
@@ -3729,6 +3781,8 @@ function saveQuestionToGroup(button) {
 
             const updatedMatchingQuestions = matchingQuestions.map((item, index) => {
                 const existing = existingMatchingQuestions[index] || {};
+                const itemExplain = item.__explain;
+                delete item.__explain;
 
                 const nextQuestionData = { ...(existing.question_data || {}) };
                 delete nextQuestionData.prompt;
@@ -3737,6 +3791,11 @@ function saveQuestionToGroup(button) {
                 }
                 if (title) {
                     nextQuestionData.title = title;
+                }
+                if (itemExplain) {
+                    nextQuestionData.explain = itemExplain;
+                } else if (itemExplain === null) {
+                    delete nextQuestionData.explain;
                 }
 
                 return {
@@ -3767,6 +3826,10 @@ function saveQuestionToGroup(button) {
                 if (title) {
                     item.question_data.title = title;
                 }
+                if (item.__explain) {
+                    item.question_data.explain = item.__explain;
+                }
+                delete item.__explain;
             });
             matchingQuestions.forEach((item) => {
                 group.questions.push(item);
@@ -3932,6 +3995,16 @@ function saveQuestionToGroup(button) {
     // Check if in edit mode
     const isEditMode = form.getAttribute('data-edit-mode') === 'true';
     const editIndex = parseInt(form.getAttribute('data-edit-index'), 10);
+
+    // Giải thích chi tiết theo từng số câu (sidebar trang chữa bài).
+    const explainData = window.IeltsExplainBuilder ? window.IeltsExplainBuilder.collect(form) : undefined;
+    if (explainData) {
+        questionData.question_data.explain = explainData;
+    } else if (explainData === undefined && isEditMode && Number.isFinite(editIndex)) {
+        // Form không có khung giải thích (skill khác) -> giữ nguyên dữ liệu cũ nếu có.
+        const prev = group.questions[editIndex] && group.questions[editIndex].question_data;
+        if (prev && prev.explain) questionData.question_data.explain = prev.explain;
+    }
 
     if (isEditMode && Number.isFinite(editIndex)) {
         // Attach task image from question-level input or fallback to group's task_image when editing
@@ -5680,6 +5753,14 @@ function syncOpenQuestionEditFormsForDraft() {
                 } else {
                     delete nextQuestion.question_data.hint;
                 }
+            }
+
+            // Giải thích chi tiết đang soạn dở.
+            const explainDraft = window.IeltsExplainBuilder ? window.IeltsExplainBuilder.collect(form) : undefined;
+            if (explainDraft) {
+                nextQuestion.question_data.explain = explainDraft;
+            } else if (explainDraft === null) {
+                delete nextQuestion.question_data.explain;
             }
 
             return nextQuestion;

@@ -101,6 +101,21 @@ return [
         'custom_elements' => [
             ['u', 'Inline', 'Inline', 'Common'],
         ],
+        // Giải thích đáp án ở trang chữa bài IELTS (ô Answer help + giải thích chi tiết):
+        // giữ bảng soạn bằng trình tạo đề (rich-table.js) và định dạng inline.
+        'ielts_review' => [
+            'HTML.Doctype' => 'HTML 4.01 Transitional',
+            'HTML.Allowed' => 'div[style],p[style],br,b,strong,i,em,u,s,sub,sup,mark,span[style],'
+                . 'a[href|title|target],ul[style],ol[style],li[style],h3[style],h4[style],h5[style],'
+                . 'img[src|alt|width|height|style],'
+                . 'table[style],thead,tbody,tfoot,tr[style],td[style|colspan|rowspan],th[style|colspan|rowspan]',
+            'CSS.AllowedProperties' => 'font-weight,font-style,text-decoration,color,background-color,text-align,'
+                . 'vertical-align,padding,padding-top,padding-right,padding-bottom,padding-left,margin,'
+                . 'border,border-top,border-right,border-bottom,border-left,border-collapse,width,max-width',
+            'AutoFormat.AutoParagraph' => false,
+            'AutoFormat.RemoveEmpty' => false,
+            'Attr.AllowedFrameTargets' => ['_blank'],
+        ],
         'placement' => [
             // 'HTML.Allowed' => 'p,br,strong,b,em,i,u,s,ul,ol,li,span[style],div[style],h3,h4,a[href|target]',
             'HTML.Allowed' => 'p[style],br,strong,b,em,i,u,s,ul[style],ol[style],li[style],span[style],div[style],h3[style],h4[style],a[href|target]',

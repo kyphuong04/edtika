@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Support\Ielts\BuildsIeltsQuestionPayload;
 use App\Support\Ielts\GradesIeltsAttempts;
+use App\Support\Ielts\ReviewExplanation;
 
 use App\Http\Controllers\Controller;
 use App\Models\IeltsTest;
@@ -17,6 +18,7 @@ use App\Models\AcademicWordListWord;
 use App\Models\Sale;
 use App\Models\IeltsAttemptHighlight;
 use App\Models\IeltsAnswerReport;
+use App\Models\IeltsAttemptMistakeReason;
 use App\QuizzesResult;
 use Illuminate\Http\Request;
 
@@ -1334,7 +1336,10 @@ class IeltsTestController extends Controller
 
             $reviewResults[$question->id] = [
                 'slots' => $slots,
-                'explanation' => !empty($question->explanation) ? clean($question->explanation) : null,
+                // ielts_review: giữ bảng soạn trong ô Answer help (clean() mặc định xoá <table>).
+                'explanation' => ReviewExplanation::html($question->explanation),
+                // Giải thích chi tiết theo từng số câu (null = câu chưa có, dùng explanation).
+                'explain' => ReviewExplanation::forQuestion($question),
             ];
         }
 
@@ -1430,7 +1435,97 @@ class IeltsTestController extends Controller
                     : null,
                 'skillLabel' => IeltsAnswerReport::SKILL_LABELS[$section->skill] ?? ('IELTS ' . ucfirst($section->skill)),
                 'reportMax' => IeltsAnswerReport::MESSAGE_MAX,
+                // "Vì sao bạn làm sai câu này?" — chỉ học viên làm bài mới chọn được (url = null -> chỉ xem).
+                'mistake' => [
+                    'url' => $isOwner ? route('panel.ielts_tests.mistake_reason', $attempt->id) : null,
+                    'reasons' => IeltsAttemptMistakeReason::optionsFor($section->skill),
+                    'other' => IeltsAttemptMistakeReason::OTHER,
+                    'max' => IeltsAttemptMistakeReason::OTHER_MAX,
+                    'saved' => (object) IeltsAttemptMistakeReason::where('attempt_id', $attempt->id)
+                        ->get(['question_id', 'slot_index', 'reason_code', 'reason_text'])
+                        ->mapWithKeys(fn ($r) => [$r->question_id . ':' . $r->slot_index => [
+                            'code' => $r->reason_code,
+                            'text' => $r->reason_text,
+                        ]])
+                        ->all(),
+                ],
+                // "Tài liệu IELTS liên quan" — giáo viên nhập theo đề.
+                'resources' => ReviewExplanation::resources($attempt->test),
             ],
+        ]);
+    }
+
+    /**
+     * "Vì sao bạn làm sai câu này?" — học viên chọn lý do cho 1 số câu sai /
+     * bỏ trống ở sidebar Giải thích đáp án. Chọn lại = cập nhật; reason_code
+     * rỗng = bỏ chọn. Chỉ chính học viên làm bài mới lưu được.
+     */
+    public function saveMistakeReason(Request $request, $attemptId)
+    {
+        $attempt = IeltsTestAttempt::withoutGlobalScope('not_preview')->findOrFail($attemptId);
+        $authUser = auth()->user();
+
+        if ((int) $attempt->user_id !== (int) $authUser->id) {
+            abort(403);
+        }
+
+        if ($attempt->status !== 'completed') {
+            return response()->json(['status' => 'error', 'message' => 'Bài làm chưa được nộp.'], 422);
+        }
+
+        $data = $request->validate([
+            'question_id' => 'required|integer',
+            'slot_index' => 'required|integer|min:0|max:200',
+            'question_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9 \x{2013}\-]+$/u'],
+            'reason_code' => 'nullable|string|max:40',
+            'reason_text' => 'nullable|string|max:' . IeltsAttemptMistakeReason::OTHER_MAX,
+        ], [
+            'reason_text.max' => 'Lý do tối đa ' . IeltsAttemptMistakeReason::OTHER_MAX . ' ký tự.',
+        ]);
+
+        $question = IeltsTestQuestion::with('section')
+            ->where('id', (int) $data['question_id'])
+            ->whereHas('section', fn ($q) => $q->where('test_id', $attempt->test_id))
+            ->first();
+
+        if (!$question || !$question->section) {
+            return response()->json(['status' => 'error', 'message' => 'Không tìm thấy câu hỏi.'], 404);
+        }
+
+        $key = [
+            'attempt_id' => $attempt->id,
+            'question_id' => $question->id,
+            'slot_index' => (int) $data['slot_index'],
+        ];
+
+        $code = trim((string) ($data['reason_code'] ?? ''));
+        if ($code === '') {
+            IeltsAttemptMistakeReason::where($key)->delete();
+            return response()->json(['status' => 'ok', 'reason' => null]);
+        }
+
+        $skill = $question->section->skill;
+        if (!array_key_exists($code, IeltsAttemptMistakeReason::reasonsFor($skill))) {
+            return response()->json(['status' => 'error', 'message' => 'Lý do không hợp lệ.'], 422);
+        }
+
+        $text = $code === IeltsAttemptMistakeReason::OTHER
+            ? trim((string) ($data['reason_text'] ?? ''))
+            : '';
+
+        $row = IeltsAttemptMistakeReason::updateOrCreate($key, [
+            'user_id' => $authUser->id,
+            'test_id' => $attempt->test_id,
+            'question_number' => $data['question_number'] ?? null,
+            'skill' => $skill,
+            'question_type' => $question->question_type,
+            'reason_code' => $code,
+            'reason_text' => $text !== '' ? $text : null,
+        ]);
+
+        return response()->json([
+            'status' => 'ok',
+            'reason' => ['code' => $row->reason_code, 'text' => $row->reason_text],
         ]);
     }
 

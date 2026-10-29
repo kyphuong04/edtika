@@ -1,0 +1,201 @@
+/* =========================================================================
+   Trình tạo đề — khung "Giải thích chi tiết" (explain-builder.js)
+   ========================================================================= */
+.eb {
+    margin: 14px 0 6px;
+    border: 1px solid #e4dcf7;
+    border-radius: 12px;
+    background: #fbfaff;
+}
+
+.eb-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #2e1065;
+    text-align: left;
+    cursor: pointer;
+}
+
+.eb-toggle-icon {
+    display: inline-flex;
+    flex: 0 0 30px;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ede9fe;
+    color: #511d99;
+}
+
+.eb-toggle-text { flex: 1; min-width: 0; font-size: 14px; }
+.eb-toggle-text small { display: block; font-size: 12px; color: #6b7280; }
+
+.eb-badge {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #f1f0f6;
+    color: #6b6890;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.eb-badge:empty { display: none; }
+.eb-badge.is-done { background: #dcfce7; color: #15803d; }
+
+.eb-chevron { color: #511d99; transition: transform .2s ease; }
+.eb.is-open .eb-chevron { transform: rotate(180deg); }
+
+.eb-body { padding: 0 14px 14px; }
+.eb-body[hidden] { display: none; }
+
+.eb-intro { margin: 0 0 10px; font-size: 13px; color: #4b5563; }
+
+.eb-slotbar { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.eb-slots { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; }
+
+.eb-slot {
+    min-width: 34px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #ddd6fe;
+    border-radius: 999px;
+    background: #fff;
+    color: #511d99;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.eb-slot i { font-size: 10px; color: #16a34a; }
+.eb-slot.is-filled { border-color: #bbf7d0; background: #f0fdf4; }
+.eb-slot.is-active { border-color: #511d99; background: #511d99; color: #fff; }
+.eb-slot.is-active i { color: #bbf7d0; }
+
+.eb-refresh {
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #4b5563;
+    font-size: 12px;
+    cursor: pointer;
+}
+.eb-refresh:hover { border-color: #c4b5fd; color: #511d99; }
+
+.eb-ctx {
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    border-left: 3px solid #a78bfa;
+    border-radius: 0 8px 8px 0;
+    background: #fff;
+    font-size: 13px;
+    color: #374151;
+}
+.eb-ctx:empty { display: none; }
+.eb-none { margin: 0; font-size: 13px; color: #92400e; }
+.eb-fields[hidden], .eb-none[hidden] { display: none; }
+
+.eb-field { margin-bottom: 14px; }
+.eb-field > label,
+.eb-wrong-title {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2e1065;
+}
+.eb-sub { display: block; margin: 10px 0 4px; font-size: 12px; font-weight: 600; color: #4b5563; }
+
+.eb-help { display: block; margin-top: 4px; font-size: 12px; color: #6b7280; }
+.eb-help--box { margin: 0 0 14px; padding: 8px 12px; border-radius: 8px; background: #eff6ff; color: #1e40af; }
+
+.eb-rows { display: flex; flex-direction: column; gap: 6px; }
+.eb-rows:empty { display: none; }
+.eb-row { display: flex; align-items: flex-start; gap: 6px; }
+.eb-row > input { flex: 1; min-width: 0; }
+.eb-row--common > input { flex: 0 0 34%; }
+.eb-row--common .eb-mini-wrap { flex: 1; min-width: 0; }
+
+.eb-del {
+    flex: 0 0 30px;
+    height: 30px;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    background: #fff;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+.eb-add {
+    margin-top: 6px;
+    padding: 5px 12px;
+    border: 1px dashed #c4b5fd;
+    border-radius: 8px;
+    background: #fff;
+    color: #511d99;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.eb-add:hover { background: #f5f3ff; }
+
+/* Ô soạn ngắn */
+.eb-mini-wrap { border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+.eb-mini-wrap:focus-within { border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167, 139, 250, .18); }
+.eb-mini-tools { display: flex; gap: 2px; padding: 3px 4px 0; }
+.eb-mini-tools button {
+    width: 24px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #4b5563;
+    font-size: 12px;
+    cursor: pointer;
+}
+.eb-mini-tools button:hover { background: #ede9fe; color: #511d99; }
+.eb-mini {
+    min-height: 34px;
+    padding: 4px 10px 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1f2937;
+    outline: none;
+}
+.eb-mini:empty::before { content: attr(data-placeholder); color: #9ca3af; }
+
+.eb-opt { margin-bottom: 8px; }
+.eb-opt-label { margin-bottom: 3px; font-size: 13px; font-weight: 600; color: #6d28d9; }
+
+/* Tài liệu IELTS liên quan (form thông tin đề) */
+.rr-list { display: flex; flex-direction: column; gap: 8px; }
+.rr-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1.2fr) 32px;
+    gap: 6px;
+    align-items: center;
+}
+.rr-del {
+    height: 32px;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    background: #fff;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+@media (max-width: 767.98px) {
+    .eb-row, .rr-row { display: grid; grid-template-columns: 1fr 30px; }
+    .eb-row > :not(.eb-del), .rr-row > :not(.rr-del) { grid-column: 1; }
+    .eb-row .eb-del, .rr-row .rr-del { grid-column: 2; grid-row: 1; }
+    .eb-row--common > input { flex: none; }
+}

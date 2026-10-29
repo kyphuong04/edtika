@@ -37,6 +37,8 @@ class IeltsTest extends Model
         'target_band_max' => 'float',
         'hashtags' => 'array',
         'practice_part_number' => 'integer',
+        // "Tài liệu IELTS liên quan" ở sidebar giải thích đáp án: [{title, description, url}]
+        'review_resources' => 'array',
     ];
 
     /**
@@ -94,6 +96,55 @@ class IeltsTest extends Model
     ];
 
     public const PART_NUMBER_MAX = 4;
+
+    /** "Tài liệu IELTS liên quan" ở sidebar giải thích đáp án — tối đa số dòng. */
+    public const REVIEW_RESOURCES_MAX = 5;
+
+    /**
+     * Chuẩn hoá danh sách tài liệu (JSON string hoặc mảng) -> [{title, description, url}].
+     * Bỏ dòng không có tiêu đề; url chỉ nhận http(s). Rỗng -> null.
+     */
+    public static function normalizeReviewResources($value): ?array
+    {
+        if (is_string($value)) {
+            $value = json_decode(trim($value), true);
+        }
+
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $out = [];
+        foreach ($value as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $clean = function ($v, int $max) {
+                $v = is_scalar($v) ? trim(preg_replace('/\s+/u', ' ', strip_tags((string) $v))) : '';
+                return mb_substr($v, 0, $max);
+            };
+
+            $title = $clean($row['title'] ?? '', 200);
+            if ($title === '') {
+                continue;
+            }
+
+            $url = $clean($row['url'] ?? '', 500);
+            $out[] = [
+                'title' => $title,
+                'description' => $clean($row['description'] ?? '', 400),
+                'url' => preg_match('~^https?://~i', $url) ? $url : '',
+            ];
+
+            if (count($out) >= self::REVIEW_RESOURCES_MAX) {
+                break;
+            }
+        }
+
+        return $out ?: null;
+    }
+
     public static function normalizeHashtags($value): array
     {
         if ($value === null || $value === '') {
