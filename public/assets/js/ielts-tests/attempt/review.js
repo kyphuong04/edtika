@@ -1686,35 +1686,271 @@ const ReviewDragDrop = {
     },
 };
 
+/* =====================================================================
+   Sidebar "Giải thích đáp án" — theo TỪNG SỐ CÂU, mọi dạng bài.
+
+   Thứ tự (mục nào không có dữ liệu thì ẩn):
+     Đáp án đúng / đáp án của bạn
+     1. Phân tích câu hỏi   (câu hỏi + từ khoá tô vàng + bản dịch, phương án,
+                              phân tích của giáo viên, từ vựng quan trọng)
+     2. Đối chiếu paraphrase
+     3. Trích dẫn trong bài  (Reading: đoạn trích + "Xem vị trí trong bài";
+                              Listening: trích transcript + "Nghe đoạn này")
+     4. Vì sao các đáp án khác không đúng (theo dạng bài + tự phân tích bài điền từ)
+     5. Vì sao bạn làm sai câu này? (câu sai / bỏ trống — lưu DB)
+     6. Tài liệu IELTS liên quan  (giáo viên nhập theo đề)
+
+   Dữ liệu: REVIEW_RESULTS[qid].explain.slots[i] (App\Support\Ielts\ReviewExplanation).
+   Câu chưa có -> dùng REVIEW_RESULTS[qid].explanation (ô Answer help cũ).
+   ===================================================================== */
+const RV_BLANK_RE = /[_＿‗](?:[\s ]*[_＿‗])+/g;
+
+// Dạng có danh sách phương án (giáo viên chọn phương án gây nhiễu để giải thích).
+const RV_OPTION_BANK_TYPES = [
+    'matching_headings', 'matching_information', 'matching_features', 'matching_sentence_endings',
+    'diagram_labeling', 'diagram_label', 'map_labeling', 'drag_drop_disappear', 'drag_drop_reuse',
+];
+
+const RV_TFNG_LABELS = {
+    true_false_not_given: ['TRUE', 'FALSE', 'NOT GIVEN'],
+    yes_no_not_given: ['YES', 'NO', 'NOT GIVEN'],
+};
+
+const ReviewExplain = {
+    /** Dữ liệu giải thích của 1 ô (MCQ nhiều đáp án dùng chung ô 0). */
+    slotData(entry, slotIndex) {
+        const ex = ReviewData.resultOf(entry.question.id).explain;
+        const slots = ex && ex.slots;
+        if (!slots) return null;
+        const idx = ReviewMcq.isMcq(entry) ? 0 : (slotIndex || 0);
+        return slots[idx] || slots[String(idx)] || null;
+    },
+
+    /** HTML -> chữ thuần, xuống dòng theo khối. */
+    toLines(html) {
+        const box = document.createElement('div');
+        box.innerHTML = String(html || '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/(p|div|li|h\d|tr)>/gi, '\n')
+            .replace(/<\/t[dh]>/gi, ' \t ');
+        return (box.textContent || '').replace(/ /g, ' ').split(/\n+/)
+            .map((l) => l.replace(/\s*\t\s*/g, ' | ').replace(/\s+/g, ' ').replace(/^\|\s*|\s*\|$/g, '').trim())
+            .filter(Boolean);
+    },
+
+    /** Câu chứa chỗ trống thứ slotIndex (đếm theo thứ tự đọc). Chỗ trống đó -> "____". */
+    blankLine(lines, slotIndex) {
+        let seen = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const count = (lines[i].match(RV_BLANK_RE) || []).length;
+            if (slotIndex < seen + count) {
+                let k = 0;
+                const target = slotIndex - seen;
+                return lines[i].replace(RV_BLANK_RE, () => (k++ === target ? '____' : '…'));
+            }
+            seen += count;
+        }
+        return '';
+    },
+
+    /** Nội dung câu hỏi của đúng số câu đang xem (chữ thuần). */
+    questionText(entry, slotIndex) {
+        const q = entry.question;
+        const multi = entry.slotCount > 1 && !ReviewMcq.isMcq(entry);
+
+        if (!multi) return this.toLines(q.text).join(' ').replace(RV_BLANK_RE, '____');
+
+        if (q.type === 'table_completion' && q.table_structure) {
+            const t = q.table_structure;
+            const headers = Array.isArray(t.headers) ? t.headers : [];
+            let seen = 0;
+            const rows = Array.isArray(t.rows) ? t.rows : [];
+            for (let r = 0; r < rows.length; r++) {
+                const cells = Array.isArray(rows[r]) ? rows[r] : [];
+                for (let c = 0; c < cells.length; c++) {
+                    const text = this.toLines(cells[c]).join(' ');
+                    const count = (text.match(RV_BLANK_RE) || []).length;
+                    if (slotIndex < seen + count) {
+                        let k = 0;
+                        const target = slotIndex - seen;
+                        const cell = text.replace(RV_BLANK_RE, () => (k++ === target ? '____' : '…'));
+                        const head = this.toLines(headers[c]).join(' ');
+                        const rowHead = c > 0 ? this.toLines(cells[0]).join(' ') : '';
+                        return (rowHead ? rowHead + ' – ' : '') + (head ? head + ': ' : '') + cell;
+                    }
+                    seen += count;
+                }
+            }
+            return '';
+        }
+
+        let html = q.text;
+        if (window.IeltsFlowchart && window.IeltsFlowchart.isFlowType(q.type)) {
+            const flow = window.IeltsFlowchart.fromQuestion(q);
+            if (flow) html = window.IeltsFlowchart.toPlainHtml(flow);
+        }
+        return this.blankLine(this.toLines(html), slotIndex);
+    },
+
+    /** Tô vàng từ khoá (cột trái bảng paraphrase + từ vựng) trong câu hỏi. */
+    highlight(text, data) {
+        let html = rvEscape(text).replace(/____/g, '<span class="rvh-gap">____</span>');
+        if (!data) return html;
+
+        const terms = [];
+        ((data.paraphrase && data.paraphrase.rows) || []).forEach((r) => { if (r.question) terms.push(r.question); });
+        (data.vocab || []).forEach((v) => { if (v.term) terms.push(v.term); });
+
+        terms
+            .map((t) => String(t).trim())
+            .filter((t) => t.length > 1)
+            .sort((a, b) => b.length - a.length)
+            .forEach((term) => {
+                const safe = rvEscape(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Không tô lại bên trong thẻ đã chèn.
+                const re = new RegExp('(^|[^\\p{L}\\p{N}>])(' + safe + ')(?=$|[^\\p{L}\\p{N}])(?![^<]*>)', 'giu');
+                html = html.replace(re, '$1<mark class="rvh-kw">$2</mark>');
+            });
+        return html;
+    },
+
+    // ── Tự phân tích đáp án điền từ của học viên ─────────────────────
+    words(s) {
+        return rvNorm(s).replace(/[.,;:!?"'()]/g, ' ').split(/\s+/).filter(Boolean);
+    },
+
+    distance(a, b) {
+        if (a === b) return 0;
+        if (Math.abs(a.length - b.length) > 3) return 99;
+        const prev = [];
+        for (let j = 0; j <= b.length; j++) prev[j] = j;
+        for (let i = 1; i <= a.length; i++) {
+            let diag = prev[0];
+            prev[0] = i;
+            for (let j = 1; j <= b.length; j++) {
+                const tmp = prev[j];
+                prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+                diag = tmp;
+            }
+        }
+        return prev[b.length];
+    },
+
+    plural(a, b) {
+        const forms = (w) => [w + 's', w + 'es', w.replace(/y$/, 'ies')];
+        return forms(a).includes(b) || forms(b).includes(a);
+    },
+
+    /** Mảng chuỗi lý do tự phát hiện cho 1 ô điền từ sai. */
+    autoReasons(entry, slot) {
+        const out = [];
+        const submitted = String(slot && slot.submitted != null ? slot.submitted : '').trim();
+        if (!submitted || slot.correct) return out;
+
+        const accepted = ((slot.parts && slot.parts.length ? slot.parts.flatMap((p) => p.accepted || []) : slot.accepted) || [])
+            .map((a) => String(a).trim()).filter(Boolean);
+        const subWords = this.words(submitted);
+        const max = parseInt(entry.group && entry.group.max_words, 10) || 0;
+
+        if (max > 0 && subWords.length > max) {
+            out.push('Vượt giới hạn số từ: đề yêu cầu tối đa <b>' + max + ' từ</b>, bạn viết <b>' + subWords.length + ' từ</b>.');
+        }
+
+        const sub = subWords.join(' ');
+        let best = null;
+        accepted.forEach((a) => {
+            const key = this.words(a).join(' ');
+            if (!key) return;
+            const d = this.distance(sub, key);
+            if (!best || d < best.d) best = { a, key, d };
+        });
+        if (!best) return out;
+
+        const key = best.key;
+        const keyWords = key.split(' ');
+        if (subWords.length === keyWords.length && subWords.every((w, i) => w === keyWords[i] || this.plural(w, keyWords[i]))
+            && sub !== key) {
+            out.push('Sai dạng <b>số ít / số nhiều</b>: bạn viết “' + rvEscape(submitted) + '”, đáp án là “' + rvEscape(best.a) + '”.');
+        } else if (best.d > 0 && best.d <= (key.length >= 6 ? 2 : 1)) {
+            out.push('Gần đúng nhưng <b>sai chính tả</b>: bạn viết “' + rvEscape(submitted) + '”, đáp án là “' + rvEscape(best.a) + '”.');
+        } else if ((' ' + sub + ' ').includes(' ' + key + ' ') && sub !== key) {
+            out.push('<b>Thừa từ</b>: bạn viết “' + rvEscape(submitted) + '”, đáp án chỉ cần “' + rvEscape(best.a) + '”.');
+        } else if ((' ' + key + ' ').includes(' ' + sub + ' ') && sub !== key) {
+            out.push('<b>Thiếu từ</b>: bạn viết “' + rvEscape(submitted) + '”, đáp án đầy đủ là “' + rvEscape(best.a) + '”.');
+        }
+        return out;
+    },
+
+    /** Tìm khoá giải thích (không phân biệt hoa thường). */
+    reasonFor(options, key) {
+        if (!options || key === null || key === undefined) return null;
+        const k = rvNorm(key);
+        const hit = Object.keys(options).find((x) => rvNorm(x) === k);
+        return hit ? options[hit] : null;
+    },
+};
+
 const AnswerHelp = {
     root: null,
     body: null,
     title: null,
     entry: null,
+    slotIndex: null,
     returnFocus: null,
+    collapsed: {},     // mục đang thu gọn (giữ khi chuyển câu)
 
     init() {
         this.root = document.getElementById('rvxDrawer');
         if (!this.root) return;
         this.body = document.getElementById('rvxDrawerBody');
         this.title = document.getElementById('rvxDrawerTitle');
+        DrawerResize.init(this.root.querySelector('.rvx-drawer-panel'));
 
         this.root.querySelectorAll('[data-drawer-close]').forEach((el) => {
             el.addEventListener('click', () => this.close());
         });
 
-        // Listening: "Nghe đoạn này" trong mục Trích transcript.
         this.body.addEventListener('click', (e) => {
-            const btn = e.target.closest && e.target.closest('.rvl-help-play');
-            if (!btn || !this.entry || !window.ReviewListening) return;
-            const entry = this.entry;
-            this.close();
-            window.ReviewListening.playEntry(entry);
+            const t = e.target;
+            if (!t.closest) return;
+
+            // Listening: "Nghe đoạn này" trong mục Trích transcript.
+            const play = t.closest('.rvl-help-play');
+            if (play && this.entry && window.ReviewListening) {
+                const entry = this.entry;
+                this.close();
+                window.ReviewListening.playEntry(entry);
+                return;
+            }
+
+            // Reading: "Xem vị trí trong bài".
+            const locate = t.closest('[data-rvh-locate]');
+            if (locate) {
+                this.locateEvidence(locate);
+                return;
+            }
+
+            // Mở / thu gọn 1 mục.
+            const head = t.closest('.rvh-sec-head');
+            if (head) {
+                const sec = head.closest('.rvh-sec');
+                const open = sec.classList.toggle('is-collapsed') === false;
+                head.setAttribute('aria-expanded', open ? 'true' : 'false');
+                this.collapsed[sec.dataset.sec] = !open;
+                return;
+            }
+
+            MistakeReason.onClick(e);
         });
+
+        this.body.addEventListener('input', (e) => MistakeReason.onInput(e));
 
         document.addEventListener('keydown', (e) => {
             // Đang mở cửa sổ báo lỗi thì Esc chỉ đóng cửa sổ đó.
-            if (e.key === 'Escape' && this.isOpen() && !ReportModal.isOpen()) this.close();
+            if (e.key === 'Escape' && this.isOpen() && !ReportModal.isOpen()) {
+                if (MistakeReason.closeMenu()) return;
+                this.close();
+            }
         });
     },
 
@@ -1749,12 +1985,227 @@ const AnswerHelp = {
         return (slot.accepted || []).join(' / ');
     },
 
-    /** Ô "Đáp án của bạn" / "Đáp án đúng" cho multiple choice: "A. ..." mỗi dòng. */
-    mcqAnswerHtml(entry, which) {
-        const rows = ReviewMcq.optionStates(entry).filter((o) => (which === 'picked' ? o.picked : o.key));
-        if (!rows.length) return '';
-        return rows.map((o) => '<span class="rvx-help-opt' + (which === 'picked' ? ' is-' + o.state : '') + '"><b>'
-            + o.letter + '.</b> ' + rvEscape(o.text) + '</span>').join('');
+    // ── Khung từng mục ───────────────────────────────────────────────
+    section(key, icon, title, inner, extraClass) {
+        if (!inner) return '';
+        const collapsed = !!this.collapsed[key];
+        return '<section class="rvh-sec' + (extraClass ? ' ' + extraClass : '') + (collapsed ? ' is-collapsed' : '') + '" data-sec="' + key + '">'
+            + '  <span class="rvh-sec-icon" aria-hidden="true">' + icon + '</span>'
+            + '  <button type="button" class="rvh-sec-head" aria-expanded="' + (collapsed ? 'false' : 'true') + '">'
+            + '    <span>' + title + '</span><i class="fas fa-chevron-down" aria-hidden="true"></i>'
+            + '  </button>'
+            + '  <div class="rvh-sec-body">' + inner + '</div>'
+            + '</section>';
+    },
+
+    /** Ô "Đáp án đúng" (+ "Đáp án của bạn" khi sai / chưa trả lời). */
+    answersHtml(entry, slot, st) {
+        const isMcq = ReviewMcq.isMcq(entry);
+        let keys;
+        let yours;
+
+        if (isMcq) {
+            const states = ReviewMcq.optionStates(entry);
+            keys = states.filter((o) => o.key).map((o) => o.letter).join(', ');
+            yours = states.filter((o) => o.picked).map((o) => o.letter).join(', ');
+        } else {
+            keys = slot ? (this.slotKeyText(slot).split(' / ').map((a) => this.choiceLabel(entry, a)).join(' / ')) : this.keyText(entry);
+            yours = slot ? this.choiceLabel(entry, slot.submitted) : '';
+        }
+
+        const keyBox = '<div class="rvh-ans is-key"><span>Đáp án đúng</span><b>' + rvEscape(keys || '—') + '</b></div>';
+        if (st === 'correct') {
+            return '<div class="rvh-answers">' + keyBox + '<div class="rvh-ans-ok"><i class="fas fa-check-circle" aria-hidden="true"></i> Bạn trả lời đúng</div></div>';
+        }
+        const yourBox = st === 'empty'
+            ? '<div class="rvh-ans is-empty"><span>Đáp án của bạn</span><b>Chưa trả lời</b></div>'
+            : '<div class="rvh-ans is-wrong"><span>Đáp án của bạn</span><b>' + rvEscape(yours || '—') + '</b></div>';
+        return '<div class="rvh-answers">' + keyBox + yourBox + '</div>';
+    },
+
+    /** 1. Phân tích câu hỏi */
+    analysisHtml(entry, slotIndex, data, legacy) {
+        const q = entry.question;
+        let html = '';
+
+        const text = ReviewExplain.questionText(entry, slotIndex);
+        if (text || (data && data.translation)) {
+            html += '<div class="rvh-question">'
+                + (text ? '<p class="rvh-q-text">' + ReviewExplain.highlight(text, data) + '</p>' : '')
+                + (data && data.translation ? '<p class="rvh-q-trans">(' + rvEscape(data.translation) + ')</p>' : '')
+                + '</div>';
+        }
+
+        // Phương án (MCQ): tô đáp án đúng / phương án đã chọn sai.
+        if (ReviewMcq.isMcq(entry)) {
+            html += '<ul class="rvh-options">' + ReviewMcq.optionStates(entry).map((o) => {
+                const tone = o.key ? 'is-key' : (o.picked ? 'is-wrong' : '');
+                return '<li class="' + tone + '"><span class="rvh-opt-letter">' + o.letter + '</span><span>' + rvEscape(o.text) + '</span></li>';
+            }).join('') + '</ul>';
+        }
+
+        // TFNG: nhãn đúng
+        if (RV_TFNG_TYPES.includes(q.type)) {
+            const labels = RV_TFNG_LABELS[q.type] || [];
+            const slot = ReviewData.slotsOf(q.id)[0] || {};
+            const key = rvNorm((slot.accepted || [])[0]);
+            const picked = rvNorm(slot.submitted);
+            html += '<ul class="rvh-options rvh-options--inline">' + labels.map((l) => {
+                const n = rvNorm(l);
+                const tone = n === key ? 'is-key' : (n === picked ? 'is-wrong' : '');
+                return '<li class="' + tone + '"><span>' + l + '</span></li>';
+            }).join('') + '</ul>';
+        }
+
+        const body = (data && data.analysis) || legacy;
+        if (body) html += '<div class="rvh-rich">' + body + '</div>';
+
+        if (data && data.vocab && data.vocab.length) {
+            html += '<div class="rvh-vocab"><h5>Từ vựng quan trọng:</h5><ul>'
+                + data.vocab.map((v) => '<li><b>' + rvEscape(v.term) + '</b>' + (v.meaning ? ': ' + rvEscape(v.meaning) : '') + '</li>').join('')
+                + '</ul></div>';
+        }
+
+        return html || '<p class="rvh-empty">Chưa có giải thích cho câu này.</p>';
+    },
+
+    /** 2. Đối chiếu paraphrase */
+    paraphraseHtml(data) {
+        const p = data && data.paraphrase;
+        if (!p || (!(p.rows && p.rows.length) && !p.note)) return '';
+        let html = '';
+        if (p.rows && p.rows.length) {
+            html += '<table class="rvh-para"><thead><tr><th>Keywords trong câu hỏi / đáp án</th><th>Cụm tương ứng trong bài</th></tr></thead><tbody>'
+                + p.rows.map((r) => '<tr><td>' + rvEscape(r.question || '') + '</td><td>' + rvEscape(r.passage || '') + '</td></tr>').join('')
+                + '</tbody></table>';
+        }
+        if (p.note) html += '<div class="rvh-rich rvh-para-note">' + p.note + '</div>';
+        return html;
+    },
+
+    /** 3. Trích dẫn trong bài */
+    evidenceHtml(entry, data) {
+        if (window.ReviewListening && window.ReviewListening.enabled) {
+            const ex = window.ReviewListening.excerptHtml(entry);
+            // Bỏ tiêu đề riêng của khối transcript (đã có tiêu đề mục).
+            return ex ? ex.replace(/<h4>[\s\S]*?<\/h4>/, '') : '';
+        }
+        if (!data || !data.evidence) return '';
+        return '<blockquote class="rvh-quote">“' + rvEscape(data.evidence) + '”</blockquote>'
+            + '<button type="button" class="rvh-locate" data-rvh-locate="' + rvEscape(data.evidence) + '">'
+            + '<i class="fas fa-search-location" aria-hidden="true"></i> Xem vị trí trong bài</button>'
+            + '<span class="rvh-locate-msg" role="status" aria-live="polite"></span>';
+    },
+
+    /** 4. Vì sao các đáp án khác không đúng — theo dạng bài. */
+    wrongHtml(entry, slot, data) {
+        const q = entry.question;
+        const options = data && data.wrong && data.wrong.options;
+        const item = (label, reason, mine, tag) => '<div class="rvh-wrong' + (mine ? ' is-mine' : '') + '">'
+            + '<p class="rvh-wrong-head">' + label + (mine ? ' <span class="rvh-tag">' + (tag || 'Bạn đã chọn') + '</span>' : '') + '</p>'
+            + (reason ? '<div class="rvh-rich">' + reason + '</div>' : '')
+            + '</div>';
+
+        // Multiple choice: từng phương án sai.
+        if (ReviewMcq.isMcq(entry)) {
+            const rows = ReviewMcq.optionStates(entry).filter((o) => !o.key).map((o) => ({
+                o, reason: ReviewExplain.reasonFor(options, o.letter) || ReviewExplain.reasonFor(options, o.text),
+            })).filter((r) => r.reason || r.o.picked);
+            if (!rows.some((r) => r.reason)) return '';
+            rows.sort((a, b) => (b.o.picked ? 1 : 0) - (a.o.picked ? 1 : 0));
+            return rows.map((r) => item('<b>Đáp án ' + r.o.letter + ' không đúng</b>', r.reason, r.o.picked)).join('');
+        }
+
+        // TRUE / FALSE / NOT GIVEN: 2 nhãn còn lại.
+        if (RV_TFNG_TYPES.includes(q.type)) {
+            const key = rvNorm((slot && slot.accepted || [])[0]);
+            const picked = rvNorm(slot && slot.submitted);
+            const rows = (RV_TFNG_LABELS[q.type] || []).filter((l) => rvNorm(l) !== key).map((l) => ({
+                l, reason: ReviewExplain.reasonFor(options, l), mine: rvNorm(l) === picked,
+            })).filter((r) => r.reason);
+            rows.sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0));
+            return rows.map((r) => item('<b>Không phải ' + r.l + '</b>', r.reason, r.mine)).join('');
+        }
+
+        // Có danh sách phương án (Matching, Labeling A–K, Drag & drop): phương án gây nhiễu.
+        const hasOptionBank = RV_OPTION_BANK_TYPES.includes(q.type);
+        if (hasOptionBank) {
+            if (!options) return '';
+            const accepted = ((slot && slot.accepted) || []).map(rvNorm);
+            const picked = rvNorm(slot && slot.submitted);
+            const rows = Object.keys(options).filter((k) => !accepted.includes(rvNorm(k))).map((k) => ({
+                k, reason: options[k], mine: rvNorm(k) === picked,
+            }));
+            rows.sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0));
+            return rows.map((r) => item('<b>' + rvEscape(this.choiceLabel(entry, r.k) || r.k) + '</b> không đúng', r.reason, r.mine)).join('');
+        }
+
+        // Dạng điền từ: tự phân tích bài làm + đáp án sai thường gặp.
+        let html = '';
+        const auto = ReviewExplain.autoReasons(entry, slot);
+        if (auto.length) {
+            html += '<div class="rvh-auto"><p class="rvh-wrong-head"><b>Phân tích đáp án của bạn</b></p><ul>'
+                + auto.map((a) => '<li>' + a + '</li>').join('') + '</ul></div>';
+        }
+        // Bỏ dòng trùng (cùng đáp án sai + cùng lý do).
+        const seen = {};
+        const common = ((data && data.wrong && data.wrong.common) || []).filter((c) => {
+            const k = rvNorm(c.answer) + '|' + rvNorm(String(c.reason || '').replace(/<[^>]*>/g, ''));
+            if (seen[k]) return false;
+            seen[k] = true;
+            return true;
+        });
+        const mine = rvNorm(slot && slot.submitted);
+        html += common.map((c) => item('Viết “<b>' + rvEscape(c.answer) + '</b>” là sai', c.reason, mine && rvNorm(c.answer) === mine, 'Lỗi của bạn')).join('');
+        return html;
+    },
+
+    render(entry, focus) {
+        const q = entry.question;
+        const slots = ReviewData.slotsOf(q.id);
+        const isMcq = ReviewMcq.isMcq(entry);
+
+        let slotIndex = focus && focus.slotIndex !== undefined && focus.slotIndex !== null ? focus.slotIndex : 0;
+        if (isMcq || slotIndex >= slots.length) slotIndex = 0;
+        this.slotIndex = slotIndex;
+
+        const multi = !isMcq && slots.length > 1;
+        const slot = isMcq ? null : slots[slotIndex];
+        const st = multi ? ReviewData.status(slot) : ReviewData.entryStatus(entry);
+        const number = multi ? String(entry.startNumber + slotIndex) : rvNumberLabel(entry);
+        this.focusNumber = multi ? number : null;
+        this.title.textContent = 'Giải thích đáp án – Câu ' + number;
+
+        const data = ReviewExplain.slotData(entry, slotIndex);
+        const legacy = ReviewData.resultOf(q.id).explanation || '';
+        const focusIndex = focus && focus.optionIndex !== undefined ? focus.optionIndex : null;
+        const isListening = !!(window.ReviewListening && window.ReviewListening.enabled);
+
+        this.body.innerHTML = ''
+            + this.answersHtml(entry, multi ? slot : (isMcq ? null : slots[0]), st)
+            + (isMcq && focusIndex !== null ? this.mcqFocusHtml(entry, focusIndex) : '')
+            + '<div class="rvh-flow">'
+            + this.section('analysis', '<i class="far fa-lightbulb"></i>', 'Phân tích câu hỏi', this.analysisHtml(entry, slotIndex, data, legacy))
+            + this.section('paraphrase', '<i class="fas fa-link"></i>', 'Đối chiếu paraphrase', this.paraphraseHtml(data))
+            + this.section('evidence', '<i class="fas fa-quote-left"></i>', isListening ? 'Trích transcript' : 'Trích dẫn trong bài', this.evidenceHtml(entry, data))
+            + this.section('wrong', '<i class="fas fa-times"></i>', 'Vì sao các đáp án khác không đúng', this.wrongHtml(entry, slot || slots[0], data))
+            + this.section('mistake', '<i class="fas fa-question"></i>', 'Vì sao bạn làm sai câu này?', st === 'correct' ? '' : MistakeReason.html(entry, slotIndex, number), 'rvh-sec--mistake')
+            + this.section('resources', '<i class="fas fa-book-open"></i>', 'Tài liệu IELTS liên quan', this.resourcesHtml())
+            + '</div>';
+
+        this.body.scrollTop = 0;
+    },
+
+    /** 6. Tài liệu IELTS liên quan (giáo viên nhập theo đề). */
+    resourcesHtml() {
+        const list = (window.REVIEW_META && window.REVIEW_META.resources) || [];
+        if (!list.length) return '';
+        return list.map((r) => '<div class="rvh-res">'
+            + (r.url
+                ? '<a href="' + rvEscape(r.url) + '" target="_blank" rel="noopener">' + rvEscape(r.title) + ' <i class="fas fa-arrow-right" aria-hidden="true"></i></a>'
+                : '<b>' + rvEscape(r.title) + '</b>')
+            + (r.description ? '<p>' + rvEscape(r.description) + '</p>' : '')
+            + '</div>').join('');
     },
 
     /** Khối "Phương án X" khi mở từ bóng đèn của 1 phương án (câu nhiều đáp án). */
@@ -1776,55 +2227,71 @@ const AnswerHelp = {
             + '</div>';
     },
 
-    render(entry, focus) {
-        const q = entry.question;
-        const slots = ReviewData.slotsOf(q.id);
-        let st = ReviewData.entryStatus(entry);
-        const explanation = ReviewData.resultOf(q.id).explanation;
+    /** Reading: tìm đoạn trích trong bài đọc, tô và cuộn tới. */
+    locateEvidence(btn) {
+        const quote = btn.getAttribute('data-rvh-locate') || '';
+        const msg = btn.parentNode.querySelector('.rvh-locate-msg');
+        const roots = Array.from(document.querySelectorAll('#rvxContext .exam-context-passage, #rvxContext .exam-part-instructions'));
+        const norm = (s) => s.replace(/\s+/g, ' ').toLowerCase();
+        const needle = norm(quote.replace(/^[“"']|[”"']$/g, '').trim());
 
-        this.title.textContent = 'Giải thích đáp án – Câu ' + rvNumberLabel(entry);
+        document.querySelectorAll('mark.rvh-evidence').forEach((m) => {
+            const p = m.parentNode;
+            while (m.firstChild) p.insertBefore(m.firstChild, m);
+            p.removeChild(m);
+            p.normalize();
+        });
 
-        const isMcq = ReviewMcq.isMcq(entry);
-        const focusIndex = focus && focus.optionIndex !== undefined ? focus.optionIndex : null;
+        for (const root of roots) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            const nodes = [];
+            let text = '';
+            while (walker.nextNode()) {
+                const n = walker.currentNode;
+                // Ánh xạ từng ký tự của chuỗi đã gộp khoảng trắng về node gốc.
+                for (let i = 0; i < n.nodeValue.length; i++) {
+                    const ch = n.nodeValue[i];
+                    if (/\s/.test(ch)) {
+                        if (text.endsWith(' ')) continue;
+                        text += ' ';
+                    } else {
+                        text += ch.toLowerCase();
+                    }
+                    nodes.push([n, i]);
+                }
+            }
+            const at = text.indexOf(needle);
+            if (at < 0) continue;
 
-        // Câu nhiều ô (Note completion...): mở từ bóng đèn của 1 ô -> chỉ ô đó.
-        const slotIndex = focus && focus.slotIndex !== undefined ? focus.slotIndex : null;
-        const oneSlot = !isMcq && slotIndex !== null && slots.length > 1 && slots[slotIndex];
-        this.focusNumber = oneSlot ? String(entry.startNumber + slotIndex) : null;
-        if (oneSlot) {
-            st = ReviewData.status(oneSlot);
-            this.title.textContent = 'Giải thích đáp án – Câu ' + (entry.startNumber + slotIndex);
+            const start = nodes[at];
+            const end = nodes[at + needle.length - 1];
+            const range = document.createRange();
+            range.setStart(start[0], start[1]);
+            range.setEnd(end[0], end[1] + 1);
+
+            const hits = [];
+            const w2 = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            while (w2.nextNode()) if (range.intersectsNode(w2.currentNode)) hits.push(w2.currentNode);
+            let first = null;
+            hits.forEach((node) => {
+                let s = node === range.startContainer ? range.startOffset : 0;
+                let e = node === range.endContainer ? range.endOffset : node.nodeValue.length;
+                if (e <= s) return;
+                const target = s > 0 ? node.splitText(s) : node;
+                if (e - s < target.nodeValue.length) target.splitText(e - s);
+                const mark = document.createElement('mark');
+                mark.className = 'rvh-evidence';
+                target.parentNode.insertBefore(mark, target);
+                mark.appendChild(target);
+                if (!first) first = mark;
+            });
+
+            this.close();
+            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
         }
 
-        const yours = isMcq
-            ? this.mcqAnswerHtml(entry, 'picked')
-            : rvEscape((oneSlot ? [oneSlot] : slots).map((s) => this.choiceLabel(entry, s.submitted)).filter(Boolean).join(', '));
-        const keys = isMcq
-            ? this.mcqAnswerHtml(entry, 'key')
-            : rvEscape(oneSlot ? this.slotKeyText(oneSlot) : this.keyText(entry));
-
-        const statusText = { correct: 'Bạn trả lời đúng', incorrect: 'Bạn trả lời sai', empty: 'Bạn chưa trả lời câu này' }[st];
-
-        this.body.innerHTML = ''
-            + '<div class="rvx-help-status is-' + st + '">'
-            + '  <i class="fas ' + ({ correct: 'fa-check-circle', incorrect: 'fa-times-circle', empty: 'fa-minus-circle' }[st]) + '" aria-hidden="true"></i>'
-            + '  <span>' + statusText + '</span>'
-            + '</div>'
-            + (q.text && !oneSlot ? '<div class="rvx-help-question">' + q.text + '</div>' : '')
-            + (isMcq && focusIndex !== null ? this.mcqFocusHtml(entry, focusIndex) : '')
-            + '<dl class="rvx-help-answers' + (isMcq ? ' is-mcq' : '') + '">'
-            + '  <div><dt>Đáp án của bạn</dt><dd class="is-' + st + '">' + (yours || 'Chưa trả lời') + '</dd></div>'
-            + '  <div><dt>Đáp án đúng</dt><dd class="is-key">' + (keys || '—') + '</dd></div>'
-            + '</dl>'
-            + (window.ReviewListening && window.ReviewListening.enabled ? window.ReviewListening.excerptHtml(entry) : '')
-            + '<section class="rvx-help-explain">'
-            + '  <h4>Giải thích</h4>'
-            + (explanation
-                ? '<div class="rvx-help-explain-body">' + explanation + '</div>'
-                : '<p class="rvx-help-empty">Chưa có giải thích cho câu này.</p>')
-            + '</section>';
-
-        this.body.scrollTop = 0;
+        if (msg) msg.textContent = 'Không tìm thấy đoạn trích trong bài đọc.';
     },
 
     open(entry, trigger, focus) {
@@ -1843,17 +2310,20 @@ const AnswerHelp = {
         }
     },
 
-    /** Đang mở mà chuyển câu -> đổi nội dung theo câu mới. */
-    follow(entry) {
-        if (this.isOpen() && entry && (!this.entry || this.entry.question.id !== entry.question.id)) {
+    /** Đang mở mà chuyển câu (hoặc sang ô khác của cùng câu) -> đổi nội dung. */
+    follow(entry, number) {
+        if (!this.isOpen() || !entry) return;
+        const slotIndex = number ? Math.max(0, number - entry.startNumber) : 0;
+        if (!this.entry || this.entry.question.id !== entry.question.id || (entry.slotCount > 1 && slotIndex !== this.slotIndex)) {
             this.entry = entry;
-            this.render(entry);
+            this.render(entry, { slotIndex });
         }
     },
 
     close() {
         if (!this.root || this.root.hidden) return;
         if (ReportModal.isOpen()) ReportModal.close();
+        MistakeReason.flush();
         this.root.classList.remove('is-open');
         document.body.classList.remove('rvx-drawer-open');
 
@@ -1863,6 +2333,246 @@ const AnswerHelp = {
 
         if (this.returnFocus && document.body.contains(this.returnFocus)) this.returnFocus.focus();
         this.returnFocus = null;
+    },
+};
+
+/* ── Kéo giãn chiều ngang sidebar (mép trái) ─────────────────────────────
+   Kéo bằng chuột / cảm ứng, hoặc focus vào tay nắm rồi dùng phím ← →.
+   Nhấp đúp = về độ rộng mặc định. Độ rộng được nhớ cho lần sau (localStorage).
+   Màn hình hẹp (< 768px) sidebar luôn full màn hình, không kéo được. */
+const DrawerResize = {
+    KEY: 'ielts-review-drawer-width',
+    MIN: 420,
+    DEFAULT: 640,
+    panel: null,
+    handle: null,
+
+    max() {
+        return Math.max(this.MIN, Math.round(window.innerWidth * 0.92));
+    },
+
+    enabled() {
+        return window.innerWidth >= 768;
+    },
+
+    apply(width, save) {
+        if (!this.panel) return;
+        if (!this.enabled() || !width) {
+            this.panel.style.width = '';
+            return;
+        }
+        const w = Math.round(Math.min(this.max(), Math.max(this.MIN, width)));
+        this.panel.style.width = w + 'px';
+        if (this.handle) this.handle.setAttribute('aria-valuenow', String(w));
+        if (save) {
+            try { window.localStorage.setItem(this.KEY, String(w)); } catch (e) { /* bỏ qua */ }
+        }
+    },
+
+    saved() {
+        try { return parseInt(window.localStorage.getItem(this.KEY), 10) || 0; } catch (e) { return 0; }
+    },
+
+    init(panel) {
+        if (!panel || this.panel) return;
+        this.panel = panel;
+
+        const handle = document.createElement('div');
+        handle.className = 'rvx-drawer-resize';
+        handle.setAttribute('role', 'separator');
+        handle.setAttribute('aria-orientation', 'vertical');
+        handle.setAttribute('aria-label', 'Kéo để đổi độ rộng khung giải thích');
+        handle.setAttribute('aria-valuemin', String(this.MIN));
+        handle.setAttribute('tabindex', '0');
+        handle.title = 'Kéo để đổi độ rộng · nhấp đúp để về mặc định';
+        panel.appendChild(handle);
+        this.handle = handle;
+
+        this.apply(this.saved(), false);
+
+        handle.addEventListener('pointerdown', (e) => {
+            if (!this.enabled() || e.button !== 0) return;
+            e.preventDefault();
+            handle.setPointerCapture(e.pointerId);
+            document.body.classList.add('rvx-drawer-resizing');
+
+            const move = (ev) => this.apply(window.innerWidth - ev.clientX, false);
+            const up = (ev) => {
+                handle.removeEventListener('pointermove', move);
+                handle.removeEventListener('pointerup', up);
+                handle.removeEventListener('pointercancel', up);
+                document.body.classList.remove('rvx-drawer-resizing');
+                this.apply(window.innerWidth - ev.clientX, true);
+            };
+            handle.addEventListener('pointermove', move);
+            handle.addEventListener('pointerup', up);
+            handle.addEventListener('pointercancel', up);
+        });
+
+        handle.addEventListener('dblclick', () => {
+            try { window.localStorage.removeItem(this.KEY); } catch (e) { /* bỏ qua */ }
+            this.apply(0, false);
+        });
+
+        handle.addEventListener('keydown', (e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            const current = panel.getBoundingClientRect().width;
+            this.apply(current + (e.key === 'ArrowLeft' ? 40 : -40), true);
+        });
+
+        // Thu nhỏ cửa sổ trình duyệt -> không để sidebar rộng hơn màn hình.
+        window.addEventListener('resize', () => this.apply(this.saved() || 0, false));
+    },
+};
+
+/* ── "Vì sao bạn làm sai câu này?" ──────────────────────────────────── */
+const MistakeReason = {
+    timer: null,
+    pending: null,
+
+    meta() {
+        return (window.REVIEW_META && window.REVIEW_META.mistake) || null;
+    },
+
+    key(entry, slotIndex) {
+        return entry.question.id + ':' + (slotIndex || 0);
+    },
+
+    saved(entry, slotIndex) {
+        const m = this.meta();
+        return (m && m.saved && m.saved[this.key(entry, slotIndex)]) || null;
+    },
+
+    html(entry, slotIndex, number) {
+        const m = this.meta();
+        if (!m || !m.reasons || !m.reasons.length) return '';
+        const saved = this.saved(entry, slotIndex);
+        const label = saved ? ((m.reasons.find((r) => r.code === saved.code) || {}).label || '') : '';
+        const isOther = saved && saved.code === m.other;
+
+        // Người xem không phải học viên làm bài (giáo viên…): chỉ xem.
+        if (!m.url) {
+            return saved
+                ? '<p class="rvh-mistake-ro">' + rvEscape(label) + (isOther && saved.text ? ': ' + rvEscape(saved.text) : '') + '</p>'
+                : '<p class="rvh-empty">Học viên chưa chọn lý do.</p>';
+        }
+
+        const text = isOther && saved.text ? saved.text : '';
+        return '<div class="rvh-mistake" data-question-id="' + entry.question.id + '" data-slot="' + (slotIndex || 0) + '" data-number="' + rvEscape(number) + '">'
+            + '  <button type="button" class="rvh-select' + (saved ? ' has-value' : '') + '" aria-haspopup="listbox" aria-expanded="false">'
+            + '    <span>' + rvEscape(label || 'Chọn lý do') + '</span><i class="fas fa-chevron-down" aria-hidden="true"></i>'
+            + '  </button>'
+            + '  <ul class="rvh-menu" role="listbox" hidden>'
+            + m.reasons.map((r) => '<li role="option" data-code="' + rvEscape(r.code) + '" aria-selected="' + (saved && saved.code === r.code ? 'true' : 'false') + '">' + rvEscape(r.label) + '</li>').join('')
+            + '  </ul>'
+            + '  <div class="rvh-other"' + (isOther ? '' : ' hidden') + '>'
+            + '    <textarea maxlength="' + m.max + '" rows="4" placeholder="Nhập lý do của bạn...">' + rvEscape(text) + '</textarea>'
+            + '    <span class="rvh-count">' + text.length + '/' + m.max + '</span>'
+            + '  </div>'
+            + '  <p class="rvh-saved" role="status" aria-live="polite"></p>'
+            + '</div>';
+    },
+
+    closeMenu() {
+        const open = document.querySelector('.rvh-mistake .rvh-menu:not([hidden])');
+        if (!open) return false;
+        open.hidden = true;
+        open.parentNode.querySelector('.rvh-select').setAttribute('aria-expanded', 'false');
+        return true;
+    },
+
+    onClick(e) {
+        const box = e.target.closest('.rvh-mistake');
+        if (!box) { this.closeMenu(); return; }
+
+        const select = e.target.closest('.rvh-select');
+        if (select) {
+            const menu = box.querySelector('.rvh-menu');
+            menu.hidden = !menu.hidden;
+            select.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+            return;
+        }
+
+        const li = e.target.closest('.rvh-menu li');
+        if (!li) return;
+        const m = this.meta();
+        const code = li.dataset.code;
+        box.querySelector('.rvh-select span').textContent = li.textContent;
+        box.querySelector('.rvh-select').classList.add('has-value');
+        box.querySelectorAll('.rvh-menu li').forEach((x) => x.setAttribute('aria-selected', x === li ? 'true' : 'false'));
+        this.closeMenu();
+
+        const other = box.querySelector('.rvh-other');
+        other.hidden = code !== m.other;
+        if (code === m.other) {
+            const ta = other.querySelector('textarea');
+            ta.focus();
+            this.save(box, code, ta.value.trim());
+        } else {
+            this.save(box, code, '');
+        }
+    },
+
+    onInput(e) {
+        const ta = e.target.closest('.rvh-other textarea');
+        if (!ta) return;
+        const box = ta.closest('.rvh-mistake');
+        const m = this.meta();
+        box.querySelector('.rvh-count').textContent = ta.value.length + '/' + m.max;
+        window.clearTimeout(this.timer);
+        this.pending = { box, text: ta.value.trim() };
+        this.timer = window.setTimeout(() => this.flush(), 700);
+    },
+
+    /** Lưu nốt nội dung "Lý do khác" đang gõ dở (đóng sidebar / chuyển câu). */
+    flush() {
+        window.clearTimeout(this.timer);
+        if (!this.pending) return;
+        const p = this.pending;
+        this.pending = null;
+        this.save(p.box, this.meta().other, p.text);
+    },
+
+    async save(box, code, text) {
+        const m = this.meta();
+        if (!m || !m.url) return;
+        const status = box.querySelector('.rvh-saved');
+        const questionId = parseInt(box.dataset.questionId, 10);
+        const slotIndex = parseInt(box.dataset.slot, 10) || 0;
+        const tokenEl = document.querySelector('meta[name="csrf-token"]');
+
+        if (status) { status.textContent = 'Đang lưu...'; status.className = 'rvh-saved'; }
+        try {
+            const res = await fetch(m.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': tokenEl ? tokenEl.getAttribute('content') : '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    question_id: questionId,
+                    slot_index: slotIndex,
+                    question_number: box.dataset.number || null,
+                    reason_code: code,
+                    reason_text: text || null,
+                }),
+            });
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json.status !== 'ok') throw new Error(json.message || 'save_failed');
+
+            m.saved = m.saved || {};
+            m.saved[questionId + ':' + slotIndex] = json.reason;
+            if (status) { status.textContent = 'Đã lưu lý do.'; status.className = 'rvh-saved is-ok'; }
+        } catch (err) {
+            if (status) {
+                status.textContent = err && err.message && err.message !== 'save_failed' ? err.message : 'Chưa lưu được, hãy thử lại.';
+                status.className = 'rvh-saved is-error';
+            }
+        }
     },
 };
 
@@ -2193,7 +2903,7 @@ document.addEventListener('DOMContentLoaded', function () {
         helpTab.innerHTML = '<i class="fas fa-chevron-left" aria-hidden="true"></i>';
         helpTab.addEventListener('click', () => {
             const entry = entryOfNumber(currentNumber);
-            if (entry) AnswerHelp.open(entry, helpTab);
+            if (entry) AnswerHelp.open(entry, helpTab, { slotIndex: currentNumber - entry.startNumber });
         });
         document.querySelector('.rvx-right').appendChild(helpTab);
     }
@@ -2442,7 +3152,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         markCurrent(entry, opts.scroll !== false, n);
         syncPager();
-        AnswerHelp.follow(entry);
+        AnswerHelp.follow(entry, n);
 
         // Tô đậm đoạn đáp án trong transcript; chỉ cuộn transcript khi audio đang dừng
         // (đang phát thì để transcript chạy theo audio). Nút ▶ tự xử lý phần tua.
@@ -2477,6 +3187,7 @@ document.addEventListener('DOMContentLoaded', function () {
             let focus = null;
             if (optionIndex !== undefined) focus = { optionIndex: parseInt(optionIndex, 10) };
             else if (slotIndex !== undefined) focus = { slotIndex: parseInt(slotIndex, 10) };
+            else if (blankNumber > 0) focus = { slotIndex: blankNumber - entry.startNumber };
             AnswerHelp.open(entry, help, focus);
         }
     }, true);
