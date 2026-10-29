@@ -1469,25 +1469,26 @@ class DictionaryController extends Controller
             ], 400);
         }
 
-        // Generate practice questions
+        // Generate practice questions (Quiz: đề là nghĩa tiếng Việt, đáp án là từ)
+        $pool = $wordList->words->map(function ($w) {
+            return ['id' => $w->id, 'word' => $w->word, 'pronunciation' => $w->pronunciation ?? ''];
+        });
+
         $questions = [];
         foreach ($practiceWords as $word) {
-            // Get 3 random wrong answers from the same word list
-            $wrongAnswers = $wordList->words
-                ->where('id', '!=', $word->id)
-                ->random(min(3, $wordList->words->count() - 1))
-                ->pluck('word')
-                ->toArray();
-
-            // Combine with correct answer and shuffle
-            $answers = array_merge([$word->word], $wrongAnswers);
-            shuffle($answers);
-
             $questions[] = [
                 'word_id' => $word->id,
-                'question' => $word->definition,
+                'question' => $this->buildQuizPrompt($word->translation, $word->definition, $word->word),
+                'definition' => $word->definition,
+                'translation' => $word->translation,
+                'example' => $word->example,
+                'audio_url' => null, // Academic chưa có file audio → client dùng giọng đọc của trình duyệt
                 'correct_answer' => $word->word,
-                'answers' => $answers,
+                'answers' => $this->buildQuizOptions(
+                    ['word' => $word->word, 'pronunciation' => $word->pronunciation ?? ''],
+                    $word->id,
+                    $pool
+                ),
             ];
         }
 
@@ -1526,7 +1527,7 @@ class DictionaryController extends Controller
             ], 404);
         }
 
-        $myWordList->load('flashcards');
+        $myWordList->load('flashcards.bundleWord');
 
         // Get flashcards to practice
         if ($request->flashcard_ids && count($request->flashcard_ids) > 0) {
@@ -1542,29 +1543,26 @@ class DictionaryController extends Controller
             ], 400);
         }
 
-        // Generate practice questions
+        // Generate practice questions (Quiz: đề là nghĩa tiếng Việt, đáp án là từ)
+        $pool = $myWordList->flashcards->map(function ($f) {
+            return ['id' => $f->id, 'word' => $f->word, 'pronunciation' => $f->pronunciation ?? ''];
+        });
+
         $questions = [];
-        $allFlashcards = $myWordList->flashcards;
         foreach ($practiceFlashcards as $flashcard) {
-            // Get up to 3 random wrong answers from My Word List (with pronunciation)
-            $wrongFlashcards = $allFlashcards
-                ->where('id', '!=', $flashcard->id)
-                ->random(min(3, max(0, $allFlashcards->count() - 1)));
-
-            // Build answer objects (word + pronunciation)
-            $answersData = [
-                ['word' => $flashcard->word, 'pronunciation' => $flashcard->pronunciation ?? ''],
-            ];
-            foreach ($wrongFlashcards as $wf) {
-                $answersData[] = ['word' => $wf->word, 'pronunciation' => $wf->pronunciation ?? ''];
-            }
-            shuffle($answersData);
-
             $questions[] = [
                 'flashcard_id' => $flashcard->id,
-                'question' => $flashcard->definition,
+                'question' => $this->buildQuizPrompt($flashcard->translation, $flashcard->definition, $flashcard->word),
+                'definition' => $flashcard->definition,
+                'translation' => $flashcard->translation,
+                'example' => $flashcard->example,
+                'audio_url' => optional($flashcard->bundleWord)->audio_url,
                 'correct_answer' => $flashcard->word,
-                'answers' => $answersData,
+                'answers' => $this->buildQuizOptions(
+                    ['word' => $flashcard->word, 'pronunciation' => $flashcard->pronunciation ?? ''],
+                    $flashcard->id,
+                    $pool
+                ),
             ];
         }
 
@@ -1628,24 +1626,19 @@ class DictionaryController extends Controller
 
         $questions = [];
         foreach ($practiceFlashcards as $flashcard) {
-            $wrongFlashcards = $allFlashcards
-                ->where('id', '!=', $flashcard['id'])
-                ->shuffle()
-                ->take(min(3, max(0, $allFlashcards->count() - 1)));
-
-            $answersData = [
-                ['word' => $flashcard['word'], 'pronunciation' => $flashcard['pronunciation'] ?? ''],
-            ];
-            foreach ($wrongFlashcards as $wf) {
-                $answersData[] = ['word' => $wf['word'], 'pronunciation' => $wf['pronunciation'] ?? ''];
-            }
-            shuffle($answersData);
-
             $questions[] = [
                 'flashcard_id' => $flashcard['id'],
-                'question' => $flashcard['definition'],
+                'question' => $this->buildQuizPrompt($flashcard['translation'] ?? null, $flashcard['definition'] ?? null, $flashcard['word']),
+                'definition' => $flashcard['definition'] ?? '',
+                'translation' => $flashcard['translation'] ?? '',
+                'example' => $flashcard['example'] ?? '',
+                'audio_url' => $flashcard['audio_url'] ?? null,
                 'correct_answer' => $flashcard['word'],
-                'answers' => $answersData,
+                'answers' => $this->buildQuizOptions(
+                    ['word' => $flashcard['word'], 'pronunciation' => $flashcard['pronunciation'] ?? ''],
+                    $flashcard['id'],
+                    $allFlashcards
+                ),
             ];
         }
 
@@ -1669,76 +1662,77 @@ class DictionaryController extends Controller
     public function submitPracticeAnswer(Request $request)
     {
         $request->validate([
-            'word_id' => 'nullable|exists:academic_word_list_words,id',
-            'flashcard_id' => 'nullable|exists:user_flashcards,id',
-            'selected_answer' => 'required|string',
-            'correct_answer' => 'required|string',
+            'word_id' => 'nullable|integer|exists:academic_word_list_words,id',
+            'flashcard_id' => 'nullable|integer|exists:user_flashcards,id',
+            'selected_answer' => 'nullable|string',
+            'skipped' => 'nullable|boolean',
         ]);
 
+        if (!$request->word_id && !$request->flashcard_id) {
+            return response()->json(['success' => false, 'message' => 'Missing word reference'], 400);
+        }
+
         $user = Auth::user();
-        $isCorrect = $request->selected_answer === $request->correct_answer;
 
-        // Update progress based on word source
+        // Lấy đáp án đúng từ DB, không tin giá trị client gửi lên
         if ($request->word_id) {
-            // Academic word list word
-            $progress = UserWordProgress::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'academic_word_list_word_id' => $request->word_id,
-                ],
-                [
-                    'word' => $request->correct_answer,
-                    'last_practiced_at' => now(),
-                ]
-            );
+            $word = AcademicWordListWord::with('academicWordList')->find($request->word_id);
 
-            $progress->increment('practice_count');
-
-            if ($isCorrect) {
-                $progress->increment('correct_count');
-                $progress->update([
-                    'is_learned'      => true,
-                    'learned_at'      => $progress->learned_at ?: now(),
-                    'needs_review'    => false,
-                    'needs_review_at' => null,
-                ]);
-            } else {
-                $progress->update([
-                    'is_learned'      => false,
-                    'needs_review'    => true,
-                    'needs_review_at' => now(),
-                ]);
+            if (!$word || !$word->academicWordList || !$word->academicWordList->hasAccess($user->id)) {
+                return response()->json(['success' => false, 'message' => 'Access denied'], 403);
             }
-        } elseif ($request->flashcard_id) {
-            // My Word List flashcard
-            $progress = UserWordProgress::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'flashcard_id' => $request->flashcard_id,
-                ],
-                [
-                    'word' => $request->correct_answer,
-                    'last_practiced_at' => now(),
-                ]
-            );
 
-            $progress->increment('practice_count');
-            if ($isCorrect) {
-                $progress->increment('correct_count');
+            $correctAnswer = $word->word;
+            $progressKey = ['user_id' => $user->id, 'academic_word_list_word_id' => $word->id];
+        } else {
+            $flashcard = Flashcard::where('user_id', $user->id)->find($request->flashcard_id);
 
-                // Persist learned state immediately after first correct answer.
-                if (!$progress->is_learned) {
-                    $progress->update([
-                        'is_learned' => true,
-                        'learned_at' => now(),
-                    ]);
-                }
+            if (!$flashcard) {
+                return response()->json(['success' => false, 'message' => 'Access denied'], 403);
             }
+
+            $correctAnswer = $flashcard->word;
+            $progressKey = ['user_id' => $user->id, 'flashcard_id' => $flashcard->id];
+        }
+
+        // Bỏ qua (hoặc bấm Tiếp theo khi chưa chọn) được tính là sai
+        $isSkipped = $request->boolean('skipped') || $request->selected_answer === null || trim($request->selected_answer) === '';
+        $isCorrect = !$isSkipped
+            && $this->normalizePracticeAnswer($request->selected_answer) === $this->normalizePracticeAnswer($correctAnswer);
+
+        $progress = UserWordProgress::updateOrCreate(
+            $progressKey,
+            [
+                'word' => $correctAnswer,
+                'last_practiced_at' => now(),
+            ]
+        );
+
+        $progress->increment('practice_count');
+
+        // Áp dụng giống nhau cho từ Academic, Bundle và My Word List:
+        // đúng -> đã học, sai/bỏ qua -> cần học lại
+        if ($isCorrect) {
+            $progress->increment('correct_count');
+            $progress->update([
+                'is_learned'      => true,
+                'learned_at'      => $progress->learned_at ?: now(),
+                'needs_review'    => false,
+                'needs_review_at' => null,
+            ]);
+        } else {
+            $progress->update([
+                'is_learned'      => false,
+                'needs_review'    => true,
+                'needs_review_at' => now(),
+            ]);
         }
 
         return response()->json([
             'success' => true,
             'is_correct' => $isCorrect,
+            'is_skipped' => $isSkipped,
+            'correct_answer' => $correctAnswer,
             'message' => $isCorrect ? 'Correct!' : 'Incorrect',
         ]);
     }
@@ -1902,6 +1896,72 @@ class DictionaryController extends Controller
                 'example'        => $flashcard->example,
             ],
         ]);
+    }
+
+    /**
+     * Chuẩn hóa đáp án để so sánh (Quiz chọn sẵn, Điền từ / Nghe viết gõ tay):
+     * không phân biệt hoa thường, gộp khoảng trắng, bỏ dấu câu ở hai đầu.
+     */
+    private function normalizePracticeAnswer($value): string
+    {
+        $value = mb_strtolower((string) $value);
+        $value = str_replace(['’', '‘', '`'], "'", $value);
+        $value = preg_replace('/\s+/u', ' ', $value);
+
+        return trim($value, " \t\n\r\0\x0B.,!?;:\"'()");
+    }
+
+    /**
+     * Đề câu Quiz: ưu tiên nghĩa tiếng Việt, thiếu thì dùng definition tiếng Anh.
+     */
+    private function buildQuizPrompt($translation, $definition, $word = null): string
+    {
+        $translation = trim((string) $translation);
+        if ($translation !== '') {
+            return $translation;
+        }
+
+        $definition = trim((string) $definition);
+        if ($definition !== '' && mb_strtolower($definition) !== mb_strtolower(trim((string) $word))) {
+            return $definition;
+        }
+
+        return '(Chưa có nghĩa cho từ này)';
+    }
+
+    /**
+     * 4 lựa chọn cho câu Quiz: 1 đáp án đúng + tối đa 3 đáp án nhiễu lấy ngẫu nhiên
+     * từ toàn bộ bộ từ. Bỏ các từ trùng chữ với đáp án đúng hoặc trùng nhau.
+     *
+     * @param array $correct ['word' => ..., 'pronunciation' => ...]
+     * @param mixed $correctId id của từ đúng
+     * @param \Illuminate\Support\Collection $pool mỗi phần tử có id, word, pronunciation
+     */
+    private function buildQuizOptions(array $correct, $correctId, $pool): array
+    {
+        $correctKey = mb_strtolower(trim((string) $correct['word']));
+
+        $distractors = collect($pool)
+            ->filter(function ($item) use ($correctId, $correctKey) {
+                return $item['id'] != $correctId
+                    && trim((string) $item['word']) !== ''
+                    && mb_strtolower(trim((string) $item['word'])) !== $correctKey;
+            })
+            ->unique(function ($item) {
+                return mb_strtolower(trim((string) $item['word']));
+            })
+            ->shuffle()
+            ->take(3)
+            ->map(function ($item) {
+                return ['word' => $item['word'], 'pronunciation' => $item['pronunciation'] ?? ''];
+            })
+            ->values()
+            ->all();
+
+        $options = array_merge([$correct], $distractors);
+        shuffle($options);
+
+        return $options;
     }
 
     private function getOrCreatePersonalWordList($user): WordList

@@ -1910,7 +1910,528 @@
         user-select: none;
     }
     .dark-mode .flashcard-counter { color: #c4b5fd; }
-    
+
+    /* ═════════════════════════════════════════════════════════
+     * Practice: modal chọn chế độ, Quiz, modal kết quả (pq-*)
+     * ═════════════════════════════════════════════════════════ */
+    .btn-flashcard .pq-crown { color: #f5b301; vertical-align: -3px; margin-left: 4px; }
+
+    .pq-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 76px;
+        padding: 9px 22px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background .2s, border-color .2s, color .2s, opacity .2s;
+    }
+    .pq-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .pq-btn--outline { background: #fff; color: #511D99; border: 1.5px solid #511D99; }
+    .pq-btn--outline:not(:disabled):hover { background: #f5f0fd; }
+    .pq-btn--soft { background: #efe9fb; color: #511D99; border: 1.5px solid transparent; }
+    .pq-btn--soft:not(:disabled):hover { background: #e4dbf7; }
+    .pq-btn--primary { background: #511D99; color: #fff; border: 1.5px solid #511D99; }
+    .pq-btn--primary:not(:disabled):hover { background: #43177f; border-color: #43177f; }
+    .pq-btn--lg { padding: 12px 22px; font-size: 15px; border-radius: 10px; width: 100%; }
+
+    /* ── Quiz ─────────────────────────────────────────────── */
+    .practice-mode-container.pq-quiz { padding: 22px 24px 18px; }
+    .pq-quiz__badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 999px;
+        background: #efe9fb;
+        color: #511D99;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .pq-quiz__prompt {
+        margin: 16px 0 18px;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.35;
+        color: #1e1b4b;
+        word-break: break-word;
+    }
+    .pq-quiz__options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 12px;
+    }
+    .pq-option {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        min-height: 54px;
+        padding: 12px 16px;
+        background: #fff;
+        border: 1.5px solid #e3dcf2;
+        border-radius: 8px;
+        text-align: left;
+        color: #1e1b4b;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color .2s, background .2s;
+    }
+    .pq-option:not(:disabled):hover { border-color: #b49de0; }
+    .pq-option:disabled { cursor: default; opacity: 1; }
+    .pq-option__radio {
+        position: relative;
+        flex: 0 0 22px;
+        width: 22px;
+        height: 22px;
+        border: 2px solid #9a80d1;
+        border-radius: 50%;
+        background: #fff;
+    }
+    .pq-option__text { flex: 1; min-width: 0; word-break: break-word; }
+    .pq-option__mark {
+        flex: 0 0 26px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    .pq-option__mark svg { width: 14px; height: 14px; }
+
+    /* Vừa chọn – đang chờ chấm */
+    .pq-option.is-selected { border-color: #511D99; background: #f3eefc; }
+    .pq-option.is-selected .pq-option__radio { border-color: #511D99; }
+    .pq-option.is-selected .pq-option__radio::after,
+    .pq-option.is-correct.is-chosen .pq-option__radio::after,
+    .pq-option.is-incorrect .pq-option__radio::after {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    .pq-option.is-selected .pq-option__radio { color: #511D99; }
+
+    /* Đúng */
+    .pq-option.is-correct { border-color: #4ade80; background: #f0fdf4; color: #15803d; }
+    .pq-option.is-correct .pq-option__radio { border-color: #16a34a; color: #16a34a; }
+    .pq-option.is-correct .pq-option__mark { display: inline-flex; background: #dcfce7; color: #16a34a; }
+    /* Đáp án đúng được tô lại khi chọn sai / bỏ qua: radio đặc + dấu tick */
+    .pq-option.is-correct:not(.is-chosen) .pq-option__radio {
+        background: #16a34a;
+        border-color: #16a34a;
+    }
+    .pq-option.is-correct:not(.is-chosen) .pq-option__radio::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 11px;
+        border: solid #fff;
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(45deg);
+    }
+
+    /* Sai */
+    .pq-option.is-incorrect { border-color: #fb7185; background: #fff1f2; color: #e11d48; }
+    .pq-option.is-incorrect .pq-option__radio { border-color: #e11d48; color: #e11d48; }
+    .pq-option.is-incorrect .pq-option__mark { display: inline-flex; background: #ffe4e6; color: #e11d48; }
+
+    /* ── Điền từ (Word Completion) ────────────────────────── */
+    .pq-fill { margin-top: 14px; }
+    .pq-fill__sentences {
+        margin: 0 0 14px;
+        padding-left: 22px;
+        list-style: disc;
+        color: #111827;
+        font-size: 16px;
+        line-height: 1.55;
+    }
+    .pq-fill__sentences li { margin-bottom: 4px; padding-left: 2px; }
+    .pq-fill__sentences li::marker { color: #111827; }
+    .pq-fill__blank { letter-spacing: 0; white-space: nowrap; }
+    .pq-fill__meaning { list-style: none; margin-left: -22px; color: #475569; font-size: 15px; }
+    .pq-fill__meaning strong { color: #1e1b4b; }
+    .pq-fill__input,
+    .pq-fill__box {
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 15px;
+    }
+    .pq-fill__input {
+        border: 1.5px solid #d9cdf0;
+        background: #fff;
+        color: #1e1b4b;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .pq-fill__input::placeholder { color: #94a3b8; }
+    .pq-fill__input:focus { border-color: #511D99; box-shadow: 0 0 0 3px rgba(81, 29, 153, .12); }
+    .pq-fill__result { display: flex; flex-direction: column; gap: 8px; }
+    .pq-fill__box {
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 700;
+        word-break: break-word;
+    }
+    .pq-fill__box svg { flex: 0 0 18px; width: 18px; height: 18px; }
+    .pq-fill__box.is-correct { border: 1.5px solid #4ade80; background: #f0fdf4; color: #166534; }
+    .pq-fill__box.is-incorrect { border: 1.5px solid #fb7185; background: #fff1f2; color: #9f1239; }
+    .pq-fill__box.is-empty { font-style: italic; font-weight: 500; }
+    .pq-fill__hint {
+        margin-top: 10px;
+        padding: 4px 18px;
+        border: 1.5px solid #511D99;
+        border-radius: 999px;
+        background: #f3eefc;
+        color: #511D99;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: .02em;
+    }
+    .pq-fill__hint:disabled { cursor: default; }
+    .pq-fill__hint:not(:disabled):hover { background: #e9e0fa; }
+    .dark-mode .pq-fill__sentences,
+    .dark-mode .pq-fill__sentences li::marker { color: #f1f5f9; }
+    .dark-mode .pq-fill__input { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+
+    /* ── Nghe Viết (Dictation) ───────────────────────────── */
+    .pq-audio {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        min-height: 148px;
+        padding: 20px 16px;
+        margin-bottom: 14px;
+        border: 1.5px solid #d9cdf0;
+        border-radius: 8px;
+        background: #fff;
+        overflow: hidden;
+    }
+    .pq-audio.hidden { display: none !important; }
+    .pq-audio__wave {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        height: 56px;
+    }
+    .pq-audio__wave span {
+        flex: 0 0 4px;
+        width: 4px;
+        min-height: 3px;
+        border-radius: 3px;
+        background: #4c1d95;
+        transform-origin: center;
+    }
+    .pq-audio__wave span:nth-child(3n+1) { background: #9b5de5; }
+    .pq-audio__wave span:nth-child(-n+4) { background: #a78bfa; }
+    .pq-audio__wave.is-right span:nth-last-child(-n+4) { background: #a78bfa; }
+    .pq-audio.is-playing .pq-audio__wave span { animation: pqWave .9s ease-in-out infinite; }
+    @keyframes pqWave {
+        0%, 100% { transform: scaleY(1); }
+        50%      { transform: scaleY(.35); }
+    }
+    .pq-audio__play {
+        flex: 0 0 auto;
+        width: 64px;
+        height: 64px;
+        border: none;
+        border-radius: 50%;
+        background: #511D99;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 4px;
+        cursor: pointer;
+        box-shadow: 0 0 0 9px rgba(81, 29, 153, .10), 0 0 0 18px rgba(81, 29, 153, .05);
+        transition: transform .15s, background .2s;
+    }
+    .pq-audio__play:hover { background: #43177f; }
+    .pq-audio__play:active { transform: scale(.96); }
+    .pq-audio.is-playing .pq-audio__play { animation: pqPulse 1.2s ease-out infinite; }
+    @keyframes pqPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(81, 29, 153, .30), 0 0 0 0 rgba(81, 29, 153, .12); }
+        100% { box-shadow: 0 0 0 12px rgba(81, 29, 153, 0), 0 0 0 22px rgba(81, 29, 153, 0); }
+    }
+    .pq-audio__msg { margin: -6px 0 10px; font-size: 13px; color: #e11d48; }
+    .pq-audio__msg:empty { display: none; }
+    .dark-mode .pq-audio { background: #0f172a; border-color: #334155; }
+
+    @media (max-width: 575.98px) {
+        .pq-audio { gap: 10px; min-height: 120px; padding: 16px 8px; }
+        .pq-audio__wave { gap: 3px; }
+        .pq-audio__wave span { flex-basis: 3px; width: 3px; }
+        .pq-audio__wave span:nth-child(-n+6) { display: none; }
+        .pq-audio__wave.is-right span:nth-child(-n+6) { display: block; }
+        .pq-audio__wave.is-right span:nth-last-child(-n+6) { display: none; }
+        .pq-audio__play { width: 54px; height: 54px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .pq-audio.is-playing .pq-audio__wave span,
+        .pq-audio.is-playing .pq-audio__play { animation: none; }
+    }
+
+    .pq-quiz__skipped.is-fill { margin: 0 0 8px; }
+    .pq-quiz__skipped {
+        margin: -6px 0 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #e11d48;
+    }
+
+    .pq-quiz__footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px 26px;
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid #eeeaf6;
+    }
+    .pq-quiz__counter {
+        min-width: 48px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e1b4b;
+        user-select: none;
+    }
+
+    .dark-mode .pq-quiz__prompt,
+    .dark-mode .pq-quiz__counter { color: #f1f5f9; }
+    .dark-mode .pq-option { background: #1e293b; border-color: #334155; color: #f1f5f9; }
+    .dark-mode .pq-option.is-selected { background: rgba(81, 29, 153, .25); border-color: #a78bfa; }
+    .dark-mode .pq-option.is-correct { background: rgba(22, 163, 74, .15); color: #4ade80; }
+    .dark-mode .pq-option.is-incorrect { background: rgba(225, 29, 72, .15); color: #fb7185; }
+    .dark-mode .pq-quiz__footer { border-top-color: #334155; }
+    .dark-mode .pq-btn--outline { background: transparent; color: #c4b5fd; border-color: #a78bfa; }
+
+    @media (max-width: 575.98px) {
+        .practice-mode-container.pq-quiz { padding: 18px 16px 14px; }
+        .pq-quiz__prompt { font-size: 20px; }
+        .pq-quiz__options { grid-template-columns: 1fr; }
+        .pq-quiz__footer { gap: 10px; }
+        .pq-quiz__footer .pq-btn { padding: 8px 14px; min-width: 0; }
+    }
+
+    /* ── Modal chung ──────────────────────────────────────── */
+    .pq-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 99998;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .pq-modal.is-open { display: flex; }
+    .pq-modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(30, 20, 60, .35);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+    }
+    .pq-modal__dialog {
+        position: relative;
+        width: 100%;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 24px 60px rgba(40, 16, 90, .25);
+    }
+    .dark-mode .pq-modal__dialog { background: #1e293b; }
+    .pq-modal__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1.5px solid #511D99;
+        background: #fff;
+        color: #511D99;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    /* ── Modal chọn chế độ ───────────────────────────────── */
+    .pq-mode { max-width: 460px; padding: 26px 28px 22px; text-align: center; }
+    .pq-mode__icon {
+        width: 96px;
+        height: 96px;
+        margin: 0 auto 14px;
+        border-radius: 50%;
+        background: #efe9fb;
+        color: #511D99;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .pq-mode__title { margin: 0; font-size: 24px; font-weight: 800; color: #511D99; }
+    .pq-mode__divider { height: 1px; background: #e7e0f3; margin: 14px 0 18px; }
+    .pq-mode__options { display: flex; flex-direction: column; gap: 16px; text-align: left; padding: 0 10px; }
+    .pq-mode__option {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: #1e1b4b;
+        cursor: pointer;
+    }
+    .pq-mode__option.is-disabled { cursor: not-allowed; opacity: .5; }
+    .pq-mode__input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+    .pq-mode__box {
+        position: relative;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #9a80d1;
+        border-radius: 5px;
+        background: #fff;
+        transition: background .15s, border-color .15s;
+    }
+    .pq-mode__input:checked + .pq-mode__box { background: #511D99; border-color: #511D99; }
+    .pq-mode__input:checked + .pq-mode__box::after {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 2px;
+        width: 6px;
+        height: 12px;
+        border: solid #fff;
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(45deg);
+    }
+    .pq-mode__input:focus-visible + .pq-mode__box { outline: 2px solid #b49de0; outline-offset: 2px; }
+    .pq-mode__soon {
+        margin-left: auto;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .pq-mode__start {
+        width: 100%;
+        margin-top: 46px;
+        padding: 13px 20px;
+        border: none;
+        border-radius: 999px;
+        background: #511D99;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s;
+    }
+    .pq-mode__start:not(:disabled):hover { background: #43177f; }
+    .pq-mode__start:disabled { background: #c9bce6; cursor: not-allowed; }
+    .dark-mode .pq-mode__option { color: #f1f5f9; }
+
+    /* ── Modal kết quả ───────────────────────────────────── */
+    .pq-result { max-width: 640px; padding: 40px 30px 22px; }
+    .pq-result__close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        border: none;
+        background: transparent;
+        color: #511D99;
+        cursor: pointer;
+        padding: 4px;
+    }
+    .pq-result__score {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 8px 16px;
+        border: 1px solid #d9cdf0;
+        border-radius: 8px;
+        background: #f3eefc;
+    }
+    .pq-result__score-label { font-size: 15px; color: #511D99; }
+    .pq-result__score-value { font-size: 32px; font-weight: 800; color: #3b1673; }
+    .pq-result__cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 10px;
+        border-top: 1px solid #ece7f5;
+        border-bottom: 1px solid #ece7f5;
+    }
+    .pq-result__col { padding: 12px 0 10px; }
+    .pq-result__col + .pq-result__col { border-left: 1px solid #ece7f5; }
+    .pq-result__col:first-child { padding-right: 10px; }
+    .pq-result__col:last-child { padding-left: 10px; }
+    .pq-result__pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid;
+        font-size: 15px;
+    }
+    .pq-result__pill strong { font-size: 22px; font-weight: 800; }
+    .pq-result__pill.is-learned { background: #ecfdf5; border-color: #a7f3d0; color: #15803d; }
+    .pq-result__pill.is-review { background: #fff1f2; border-color: #fecdd3; color: #e11d48; }
+    .pq-result__sep { width: 1px; height: 18px; background: currentColor; opacity: .4; }
+    .pq-result__list {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0 6px;
+        max-height: 150px;
+        overflow-y: auto;
+        text-align: center;
+        font-size: 15px;
+        line-height: 1.85;
+        color: #2a2a8c;
+        scrollbar-width: thin;
+        scrollbar-color: #7c4ddb #f1edf9;
+    }
+    .pq-result__list::-webkit-scrollbar { width: 6px; }
+    .pq-result__list::-webkit-scrollbar-track { background: #f1edf9; border-radius: 6px; }
+    .pq-result__list::-webkit-scrollbar-thumb { background: #7c4ddb; border-radius: 6px; }
+    .pq-result__empty { color: #94a3b8; font-size: 14px; }
+    .pq-result__actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 18px;
+    }
+    .dark-mode .pq-result__list { color: #c7d2fe; }
+
+    @media (max-width: 575.98px) {
+        .pq-result { padding: 36px 16px 16px; }
+        .pq-result__score-value { font-size: 26px; }
+        .pq-result__pill { font-size: 13px; gap: 6px; padding: 6px 8px; }
+        .pq-result__pill strong { font-size: 18px; }
+        .pq-result__actions { grid-template-columns: 1fr; }
+    }
 </style>
 @endpush
 
@@ -2003,7 +2524,7 @@
                             <button class="action-btn btn-select-all">{{ trans('panel.select_all') }}</button>
                             <button class="action-btn btn-deselect-all">{{ trans('panel.deselect_all') }}</button>
                             <button class="action-btn btn-practice">{{ trans('panel.practice') }}</button>
-                            <button class="action-btn btn-practice btn-flashcard">{{ 'Luyện tập bằng Flashcard' }}</button>
+                            <button class="action-btn btn-practice btn-flashcard">Luyện tập nâng cao PRO <svg class="pq-crown" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 7.5l4.6 3.9L12 4.5l4.4 6.9L21 7.5l-1.9 11H4.9L3 7.5z"/></svg></button>
                         </div>
                     </div>
                 </div>
@@ -2041,32 +2562,58 @@
                             <button class="action-btn btn-deselect-all">{{ trans('panel.deselect_all') }}</button>
                             <button class="action-btn btn-delete">{{ trans('panel.delete') }}</button>
                             <button class="action-btn btn-practice">{{ trans('panel.practice') }}</button>
-                            <button class="action-btn btn-practice btn-flashcard">{{ 'Luyện tập bằng Flashcard' }}</button>
+                            <button class="action-btn btn-practice btn-flashcard">Luyện tập nâng cao PRO <svg class="pq-crown" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 7.5l4.6 3.9L12 4.5l4.4 6.9L21 7.5l-1.9 11H4.9L3 7.5z"/></svg></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Practice Mode Container (hidden by default) -->
-            <div class="practice-mode-container hidden" id="practiceModeContainer">
-                <div class="score-board">
-                    <div class="score-item">
-                        <div class="score-label">{{ strtoupper(trans('panel.correct')) }}: <span class="score-value correct" id="correctCount">0</span></div>
-                    </div>
-                    <div class="score-item">
-                        <div class="score-label">{{ strtoupper(trans('panel.incorrect')) }}: <span class="score-value incorrect" id="incorrectCount">0</span></div>
-                    </div>
+            <!-- Practice Mode Container: Quiz (hidden by default) -->
+            <div class="practice-mode-container pq-quiz hidden" id="practiceModeContainer">
+                <span class="pq-quiz__badge" id="pqModeBadge">Trắc nghiệm (Quiz)</span>
+                <h2 class="pq-quiz__prompt" id="pqPrompt"></h2>
+
+                <div class="pq-quiz__options" id="pqOptions" role="radiogroup" aria-labelledby="pqPrompt">
+                    <!-- Options are rendered by JS -->
                 </div>
-                
-                <div class="question-text" id="questionText"></div>
-                
-                <div class="answers-grid" id="answersGrid">
-                    <!-- Answers will be loaded here -->
+
+                {{-- Điền từ (Word Completion) + Nghe Viết (Dictation): dùng chung ô nhập & ô kết quả --}}
+                <div class="pq-fill hidden" id="pqFill">
+                    @php
+                        // Chiều cao các vạch sóng âm (px), bên phải là bản đối xứng
+                        $pqWaveBars = [3, 3, 5, 7, 10, 14, 22, 12, 26, 34, 16, 22, 12, 28, 44, 24, 36, 18, 10];
+                    @endphp
+                    <div class="pq-audio hidden" id="pqAudio">
+                        <div class="pq-audio__wave" aria-hidden="true">
+                            @foreach($pqWaveBars as $i => $h)
+                                <span style="height: {{ $h }}px; animation-delay: -{{ ($i % 7) * 0.13 }}s;"></span>
+                            @endforeach
+                        </div>
+                        <button type="button" class="pq-audio__play" id="pqPlayBtn" aria-label="Phát âm thanh">
+                            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" fill="currentColor"/></svg>
+                        </button>
+                        <div class="pq-audio__wave is-right" aria-hidden="true">
+                            @foreach(array_reverse($pqWaveBars) as $i => $h)
+                                <span style="height: {{ $h }}px; animation-delay: -{{ ($i % 7) * 0.13 }}s;"></span>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="pq-audio__msg" id="pqAudioMsg" role="status"></div>
+
+                    <ul class="pq-fill__sentences" id="pqFillSentences"></ul>
+                    <input type="text" class="pq-fill__input" id="pqFillInput"
+                           placeholder="Điền từ vào ô trống..." aria-label="Điền từ vào ô trống"
+                           autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+                    <div class="pq-fill__result" id="pqFillResult"></div>
+                    <button type="button" class="pq-fill__hint" id="pqHintBtn">Gợi ý: <span id="pqHintText"></span></button>
                 </div>
-                
-                <div class="practice-actions">
-                    <button class="practice-btn btn-exit" id="exitPracticeBtn">{{ trans('panel.exit') }}</button>
-                    <button class="practice-btn btn-next" id="nextQuestionBtn" disabled>{{ trans('panel.next') }}</button>
+
+                <div class="pq-quiz__footer">
+                    <button type="button" class="pq-btn pq-btn--outline" id="pqExitBtn">Thoát</button>
+                    <button type="button" class="pq-btn pq-btn--soft" id="pqPrevBtn">&lt; Trước đó</button>
+                    <span class="pq-quiz__counter" id="pqCounter">0 / 0</span>
+                    <button type="button" class="pq-btn pq-btn--outline" id="pqSkipBtn">Bỏ qua</button>
+                    <button type="button" class="pq-btn pq-btn--primary" id="pqNextBtn">Tiếp theo &gt;</button>
                 </div>
             </div>
 
@@ -2248,6 +2795,94 @@
         </div>
     </div>
 </div>
+
+{{-- ── Modal: chọn chế độ luyện tập ─────────────────────────── --}}
+<div class="pq-modal" id="pqModeModal" aria-hidden="true">
+    <div class="pq-modal__backdrop js-pq-mode-close"></div>
+    <div class="pq-modal__dialog pq-mode" role="dialog" aria-modal="true" aria-labelledby="pqModeTitle">
+        <button type="button" class="pq-modal__close js-pq-mode-close" aria-label="Đóng">
+            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="pq-mode__icon" aria-hidden="true">
+            <svg width="58" height="58" viewBox="0 0 64 64" fill="none">
+                <rect x="12" y="10" width="34" height="44" rx="5" stroke="currentColor" stroke-width="4"/>
+                <rect x="21" y="5" width="16" height="9" rx="3" fill="currentColor"/>
+                <circle cx="21" cy="26" r="3" fill="currentColor"/>
+                <path d="M28 26h11" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="21" cy="38" r="3" fill="currentColor"/>
+                <path d="M28 38h8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <path d="M55 24l4 4-17 17-6 2 2-6 17-17z" fill="currentColor"/>
+            </svg>
+        </div>
+
+        <h3 class="pq-mode__title" id="pqModeTitle">Thiết lập chế độ luyện tập</h3>
+        <div class="pq-mode__divider"></div>
+
+        {{-- Chỉ chọn được 1 chế độ. --}}
+        <div class="pq-mode__options">
+            <label class="pq-mode__option">
+                <input type="checkbox" class="pq-mode__input" value="dictation">
+                <span class="pq-mode__box" aria-hidden="true"></span>
+                <span class="pq-mode__label">Nghe Viết (Dictation)</span>
+            </label>
+            <label class="pq-mode__option">
+                <input type="checkbox" class="pq-mode__input" value="quiz">
+                <span class="pq-mode__box" aria-hidden="true"></span>
+                <span class="pq-mode__label">Trắc Nghiệm (Quiz)</span>
+            </label>
+            <label class="pq-mode__option">
+                <input type="checkbox" class="pq-mode__input" value="completion">
+                <span class="pq-mode__box" aria-hidden="true"></span>
+                <span class="pq-mode__label">Điền từ (Word Completion)</span>
+            </label>
+        </div>
+
+        <button type="button" class="pq-mode__start" id="pqStartBtn" disabled>Bắt đầu luyện tập</button>
+    </div>
+</div>
+
+{{-- ── Modal: kết quả sau khi luyện tập ─────────────────────── --}}
+<div class="pq-modal" id="pqResultModal" aria-hidden="true">
+    <div class="pq-modal__backdrop js-pq-result-finish"></div>
+    <div class="pq-modal__dialog pq-result" role="dialog" aria-modal="true" aria-labelledby="pqResultTitle">
+        <button type="button" class="pq-result__close js-pq-result-finish" aria-label="Đóng">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+
+        <div class="pq-result__score">
+            <span class="pq-result__score-label" id="pqResultTitle">Số câu đúng</span>
+            <strong class="pq-result__score-value" id="pqResultScore">0 / 0</strong>
+        </div>
+
+        <div class="pq-result__cols">
+            <div class="pq-result__col">
+                <div class="pq-result__pill is-learned">
+                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Đã học</span>
+                    <span class="pq-result__sep"></span>
+                    <strong id="pqLearnedCount">0</strong>
+                </div>
+                <ul class="pq-result__list" id="pqLearnedList"></ul>
+            </div>
+            <div class="pq-result__col">
+                <div class="pq-result__pill is-review">
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+                    <span>Cần học lại</span>
+                    <span class="pq-result__sep"></span>
+                    <strong id="pqReviewCount">0</strong>
+                </div>
+                <ul class="pq-result__list" id="pqReviewList"></ul>
+            </div>
+        </div>
+
+        <div class="pq-result__actions">
+            <button type="button" class="pq-btn pq-btn--outline pq-btn--lg" id="pqRetryBtn">Làm lại</button>
+            <button type="button" class="pq-btn pq-btn--outline pq-btn--lg" id="pqRetryWrongBtn">Luyện từ sai</button>
+            <button type="button" class="pq-btn pq-btn--primary pq-btn--lg js-pq-result-finish">Hoàn thành</button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts_bottom')
@@ -2261,12 +2896,7 @@
     let currentWordListType = null;
     let currentWordListSourceType = null;
     let currentWordListSourceId = null;
-    let currentQuestions = [];
     let currentWordData = null;
-    let currentQuestionIndex = 0;
-    let correctAnswers = 0;
-    let incorrectAnswers = 0;
-    let selectedAnswer = null;
     let practicedCorrectIds = new Set(); // word/flashcard IDs answered correctly in normal practice
     let lastSelectedIds = [];
 
@@ -2771,6 +3401,7 @@
         $(this).addClass('active');
 
         // Đang trong chế độ luyện tập thì thoát trước
+        pqClearTimer();
         $('#practiceModeContainer, #flashcardPracticeContainer').addClass('hidden');
 
         if (tab === 'my') {
@@ -3040,10 +3671,75 @@
         });
     });
 
-    // Start Practice
+    /* =================================================================
+     * LUYỆN TẬP: chọn chế độ -> Quiz -> kết quả
+     * ================================================================= */
+    const PQ_REVEAL_DELAY = 1000;   // ms giữ trạng thái "vừa chọn" (tím) trước khi hiện đúng/sai
+    const PQ_MODE_LABELS = {
+        quiz: 'Trắc nghiệm (Quiz)',
+        dictation: 'Nghe Viết (Dictation)',
+        completion: 'Điền từ (Word Completion)'
+    };
+
+    const pq = {
+        ctx: null,          // bộ từ đang luyện: { listId, listType, sourceType, sourceId }
+        mode: null,         // 'quiz' | 'dictation' | 'completion'
+        roundIds: [],       // id các từ của vòng hiện tại (dùng cho "Làm lại")
+        questions: [],
+        answers: [],        // mỗi phần tử: null | { selected, status: 'pending'|'correct'|'incorrect'|'skipped' }
+        hints: [],          // Điền từ: true = đã mở gợi ý 50%
+        drafts: [],         // Điền từ: chữ đang gõ dở của từng câu
+        index: 0,
+        pending: false,
+        timer: null,
+        loading: false
+    };
+
+    const PQ_ICON_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const PQ_ICON_CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+
+    function pqEsc(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function pqCsrf() {
+        return $('meta[name="csrf-token"]').attr('content');
+    }
+
+    function pqOpenModal($modal) {
+        $modal.addClass('is-open').attr('aria-hidden', 'false');
+        $('body').css('overflow', 'hidden');
+    }
+
+    function pqCloseModal($modal) {
+        $modal.removeClass('is-open').attr('aria-hidden', 'true');
+        if (!$('.pq-modal.is-open').length) {
+            $('body').css('overflow', '');
+        }
+    }
+
+    function pqClearTimer() {
+        pqStopAudio();
+        if (pq.timer) {
+            clearTimeout(pq.timer);
+            pq.timer = null;
+        }
+        pq.pending = false;
+    }
+
+    // Đưa modal ra <body> để không bị cắt bởi layout panel
+    const $pqModeModal = $('#pqModeModal').appendTo('body');
+    const $pqResultModal = $('#pqResultModal').appendTo('body');
+
+    // ── 1. Nhấn "Luyện tập" (không phải nút PRO) → mở modal chọn chế độ ──
     $(document).on('click', '.btn-practice:not(.btn-flashcard)', function(e) {
         e.stopPropagation();
-        
+
         let selectedIds = [];
         $(this).closest('.word-list-expanded').find('.word-checkbox:checked').each(function() {
             selectedIds.push($(this).data('word-id'));
@@ -3055,172 +3751,675 @@
         }
 
         lastSelectedIds = selectedIds.slice();
-        startPractice(selectedIds);
-    });
-
-    // Start Practice Session
-    function startPractice(wordIds) {
-        let url = '/panel/dictionary/practice/start-my-word-list';
-        
-        let data = {
-            _token: $('meta[name="csrf-token"]').attr('content')
+        pq.roundIds = selectedIds.slice();
+        pq.ctx = {
+            listId: currentWordListId,
+            listType: currentWordListType,
+            sourceType: currentWordListSourceType,
+            sourceId: currentWordListSourceId
         };
 
-        if (currentWordListType === 'academic') {
-            if (currentWordListSourceType === 'bundle') {
+        // Mặc định không tích sẵn ô nào
+        $pqModeModal.find('.pq-mode__input').prop('checked', false);
+        $('#pqStartBtn').prop('disabled', true);
+        pqOpenModal($pqModeModal);
+    });
+
+    // Chỉ cho chọn 1 trong 3 chế độ
+    $(document).on('change', '.pq-mode__input', function() {
+        if (this.checked) {
+            $('.pq-mode__input').not(this).prop('checked', false);
+        }
+        $('#pqStartBtn').prop('disabled', !$('.pq-mode__input:checked').length);
+    });
+
+    $(document).on('click', '.js-pq-mode-close', function() {
+        pqCloseModal($pqModeModal);
+    });
+
+    $('#pqStartBtn').on('click', function() {
+        const mode = $('.pq-mode__input:checked').val();
+        if (!mode) return;
+
+        pqCloseModal($pqModeModal);
+        pq.mode = mode;
+
+        if (mode === 'quiz' || mode === 'completion' || mode === 'dictation') {
+            pqStartSession(pq.roundIds);
+        } else {
+            alert('Chế độ này đang được phát triển.');
+        }
+    });
+
+    // ── 2. Tải câu hỏi (dùng chung cho Quiz / Điền từ) ───────────
+    function pqStartSession(wordIds) {
+        if (pq.loading || !pq.ctx || !wordIds.length) return;
+
+        const ctx = pq.ctx;
+        let url = '/panel/dictionary/practice/start-my-word-list';
+        const data = { _token: pqCsrf() };
+
+        if (ctx.listType === 'academic') {
+            if (ctx.sourceType === 'bundle') {
                 url = '/panel/dictionary/practice/start-bundle-word-list';
-                data.vocabulary_set_id = currentWordListSourceId;
+                data.vocabulary_set_id = ctx.sourceId;
                 data.flashcard_ids = wordIds;
             } else {
                 url = '/panel/dictionary/practice/start';
-                data.word_list_id = currentWordListSourceId;
+                data.word_list_id = ctx.sourceId;
                 data.word_ids = wordIds;
             }
         } else {
             data.flashcard_ids = wordIds;
         }
 
+        pq.loading = true;
+
         $.ajax({
             url: url,
             method: 'POST',
             data: data,
             success: function(response) {
-                if (response.success) {
-                    currentQuestions = response.data.questions;
-                    currentQuestionIndex = 0;
-                    correctAnswers = 0;
-                    incorrectAnswers = 0;
-                    
-                    // Hide word lists and show practice mode
-                    $('#flashcardPracticeContainer').addClass('hidden');
-                    $('#academicWordListsSection, #myWordListSection').addClass('hidden');
-                    $('#practiceModeContainer').removeClass('hidden');
-                    
-                    showQuestion();
+                if (!response.success || !response.data || !(response.data.questions || []).length) {
+                    alert((response && response.message) || '{{ trans('panel.failed_to_start_practice') }}');
+                    return;
+                }
+
+                pqClearTimer();
+                pq.roundIds = wordIds.slice();
+                pq.questions = response.data.questions.map(pqNormalizeQuestion);
+                pq.answers = pq.questions.map(function() { return null; });
+                pq.hints = pq.questions.map(function() { return false; });
+                pq.drafts = pq.questions.map(function() { return ''; });
+                pq.index = 0;
+
+                $('#pqModeBadge').text(PQ_MODE_LABELS[pq.mode] || PQ_MODE_LABELS.quiz);
+                $('#flashcardPracticeContainer, #dictionaryResult').addClass('hidden');
+                $('#academicWordListsSection, #myWordListSection').addClass('hidden');
+                $('#practiceModeContainer').removeClass('hidden');
+
+                pqRenderQuestion();
+
+                const top = $('#practiceModeContainer').offset().top - 90;
+                if (window.scrollY > top) {
+                    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
                 }
             },
-            error: function(error) {
-                console.error('Error starting practice:', error);
-                alert('{{ trans('panel.failed_to_start_practice') }}');
+            error: function(xhr) {
+                console.error('Error starting practice:', xhr);
+                const msg = xhr && xhr.responseJSON && xhr.responseJSON.message;
+                alert(msg || '{{ trans('panel.failed_to_start_practice') }}');
+            },
+            complete: function() {
+                pq.loading = false;
             }
         });
     }
 
-    // Show Question
-    function showQuestion() {
-        if (currentQuestionIndex >= currentQuestions.length) {
-            // Practice finished – show results
-            const total = currentQuestions.length;
-            $('#questionText').html(
-                `<div style="text-align:center;padding:20px 0;">
-                    <div style="font-size:48px;margin-bottom:10px;">🎉</div>
-                    <div style="font-size:22px;font-weight:700;margin-bottom:8px;">{{ trans('panel.practice') }} Complete!</div>
-                    <div style="font-size:16px;color:#64748b;">${correctAnswers} / ${total} correct</div>
-                </div>`
-            );
-            $('#answersGrid').html('');
-            $('#nextQuestionBtn').prop('disabled', true);
+    // API Academic và My/Bundle trả về hơi khác nhau → gom về 1 dạng
+    function pqNormalizeQuestion(q) {
+        const isAcademic = !!q.word_id;
+        return {
+            id: isAcademic ? q.word_id : q.flashcard_id,
+            idKey: isAcademic ? 'word_id' : 'flashcard_id',
+            prompt: q.question || q.definition || '',
+            correct: String(q.correct_answer || ''),
+            options: (q.answers || []).map(function(a) {
+                return String((a && typeof a === 'object') ? (a.word || '') : a);
+            }),
+            sentencesHtml: pqBuildSentencesHtml(q),
+            audioUrl: q.audio_url || ''
+        };
+    }
+
+    /* ---------- Nghe Viết: phát âm thanh ----------
+     * Ưu tiên file audio của từ (từ giáo viên upload). Không có, hoặc file lỗi,
+     * thì dùng giọng đọc tiếng Anh của trình duyệt (Web Speech API). */
+    let pqAudioEl = null;
+    let pqAudioToken = 0;
+
+    function pqSetPlaying(on) {
+        $('#pqAudio').toggleClass('is-playing', !!on);
+    }
+
+    function pqStopAudio() {
+        pqAudioToken++;
+        if (pqAudioEl) {
+            pqAudioEl.pause();
+            pqAudioEl.onended = pqAudioEl.onerror = null;
+            pqAudioEl = null;
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        pqSetPlaying(false);
+    }
+
+    function pqPickVoice() {
+        if (!('speechSynthesis' in window)) return null;
+        const voices = window.speechSynthesis.getVoices() || [];
+        return voices.find(function(v) { return /^en[-_]US/i.test(v.lang); })
+            || voices.find(function(v) { return /^en[-_]GB/i.test(v.lang); })
+            || voices.find(function(v) { return /^en/i.test(v.lang); })
+            || null;
+    }
+
+    function pqSpeak(text, token) {
+        if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+            $('#pqAudioMsg').text('Trình duyệt không hỗ trợ phát âm. Vui lòng dùng Chrome, Edge hoặc Safari bản mới.');
+            pqSetPlaying(false);
             return;
         }
 
-        let question = currentQuestions[currentQuestionIndex];
-        selectedAnswer = null;
-        
-        $('#questionText').text(question.question);
-        $('#correctCount').text(correctAnswers);
-        $('#incorrectCount').text(incorrectAnswers);
-        $('#nextQuestionBtn').prop('disabled', true);
-        
-        let answersHtml = '';
-        question.answers.forEach(function(answer) {
-            const answerWord = (typeof answer === 'object' && answer !== null) ? answer.word : answer;
-            const answerPron = (typeof answer === 'object' && answer !== null && answer.pronunciation) ? answer.pronunciation : '';
-            const pronHtml = answerPron ? `<div class="answer-pronunciation">/${answerPron}/</div>` : '';
-            answersHtml += `
-                <div class="answer-card" data-answer="${answerWord}">
-                    <div class="answer-word">${answerWord}</div>
-                    ${pronHtml}
-                </div>
-            `;
-        });
-        
-        $('#answersGrid').html(answersHtml);
+        const utter = new SpeechSynthesisUtterance(text);
+        const voice = pqPickVoice();
+        utter.lang = voice ? voice.lang : 'en-US';
+        if (voice) utter.voice = voice;
+        utter.rate = 0.85;
+        utter.onstart = function() { if (token === pqAudioToken) pqSetPlaying(true); };
+        utter.onend = utter.onerror = function() { if (token === pqAudioToken) pqSetPlaying(false); };
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+        pqSetPlaying(true);
     }
 
-    // Select Answer
-    $(document).on('click', '.answer-card', function() {
-        if (selectedAnswer !== null) return; // Already answered
-        
-        selectedAnswer = $(this).data('answer');
-        let question = currentQuestions[currentQuestionIndex];
-        let isCorrect = selectedAnswer === question.correct_answer;
-        
-        $(this).addClass(isCorrect ? 'correct' : 'incorrect');
-        
-        // Show correct answer if wrong
-        if (!isCorrect) {
-            $(`.answer-card[data-answer="${question.correct_answer}"]`).addClass('correct');
-        }
-        
-        // Update scores
-        if (isCorrect) {
-            correctAnswers++;
+    function pqPlayCurrent() {
+        const q = pq.questions[pq.index];
+        if (!q) return;
 
-            // Show the learned tick for any correctly answered item in normal practice.
-            const practicedId = question.word_id || question.flashcard_id;
-            if (practicedId) {
-                practicedCorrectIds.add(practicedId);
-                $(`.learned-badge[data-word-id="${practicedId}"]`).addClass('show');
-            }
-        } else {
-            incorrectAnswers++;
+        pqStopAudio();
+        $('#pqAudioMsg').text('');
+        const token = pqAudioToken;
+
+        let url = String(q.audioUrl || '').trim();
+        if (!url) {
+            pqSpeak(q.correct, token);
+            return;
         }
-        
-        $('#correctCount').text(correctAnswers);
-        $('#incorrectCount').text(incorrectAnswers);
-        $('#nextQuestionBtn').prop('disabled', false);
-        
-        // Submit answer to server
-        let wordKey = (currentWordListType === 'academic' && currentWordListSourceType !== 'bundle') ? 'word_id' : 'flashcard_id';
-        let submitData = {
-            [wordKey]: question[wordKey],
-            selected_answer: selectedAnswer,
-            correct_answer: question.correct_answer,
-            _token: $('meta[name="csrf-token"]').attr('content')
+        if (url.indexOf('//') === 0) url = 'https:' + url;
+
+        const audio = new Audio(url);
+        pqAudioEl = audio;
+        pqSetPlaying(true);
+
+        // onerror và play().catch có thể cùng xảy ra → chỉ fallback 1 lần
+        const fallback = function() {
+            if (token !== pqAudioToken || pqAudioEl !== audio) return;
+            pqAudioEl = null;
+            pqSpeak(q.correct, token);
         };
-        
+
+        audio.onended = function() { if (token === pqAudioToken) pqSetPlaying(false); };
+        audio.onerror = fallback;
+
+        const playing = audio.play();
+        if (playing && typeof playing.catch === 'function') {
+            playing.catch(function(err) {
+                // Trình duyệt chặn tự phát → chờ người dùng bấm nút Play
+                if (err && err.name === 'NotAllowedError') {
+                    if (token === pqAudioToken) pqSetPlaying(false);
+                    return;
+                }
+                fallback();
+            });
+        }
+    }
+
+    $('#pqPlayBtn').on('click', function() {
+        pqPlayCurrent();
+        $('#pqFillInput:visible').trigger('focus');
+    });
+
+    // Một số trình duyệt nạp danh sách giọng đọc trễ
+    if ('speechSynthesis' in window && typeof window.speechSynthesis.addEventListener === 'function') {
+        window.speechSynthesis.addEventListener('voiceschanged', function() {});
+    }
+
+    /* ---------- Điền từ: câu ví dụ có ô trống + gợi ý ---------- */
+    const PQ_BLANK = '<span class="pq-fill__blank">________</span>';
+
+    // Khớp từ gốc và một số biến thể thường gặp (recycle → recycled/recycling, study → studies)
+    function pqWordRegex(word) {
+        const w = String(word || '').trim();
+        if (!w) return null;
+
+        const esc = function(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+        const lower = w.toLowerCase();
+        const alts = [esc(w) + '(?:s|es|ed|d|ing|ly|er|ers)?'];
+
+        if (/e$/.test(lower) && w.length > 2) {
+            alts.push(esc(w.slice(0, -1)) + '(?:ing|ed|er|ers)');
+        }
+        if (/[^aeiou]y$/.test(lower) && w.length > 2) {
+            alts.push(esc(w.slice(0, -1)) + '(?:ies|ied|ier|iest)');
+        }
+
+        return new RegExp('(^|[^\\p{L}\\p{N}])(' + alts.join('|') + ')(?=$|[^\\p{L}\\p{N}])', 'giu');
+    }
+
+    // Tách example thành các câu, chỉ giữ câu có chứa từ cần điền và thay từ đó bằng ô trống
+    function pqBuildSentencesHtml(q) {
+        const raw = String(q.example || '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/&nbsp;/g, ' ');
+
+        const sentences = [];
+        raw.split(/\r?\n|\s+\|\s+/).forEach(function(line) {
+            line = line.replace(/^\s*(?:[-•*]|\d+[.)])\s+/, '').trim();
+            if (!line) return;
+            (line.match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g) || [line]).forEach(function(part) {
+                part = part.trim();
+                if (part) sentences.push(part);
+            });
+        });
+
+        const items = [];
+        sentences.forEach(function(sentence) {
+            const re = pqWordRegex(q.correct_answer);
+            if (!re || items.length >= 3) return;
+
+            let out = '';
+            let last = 0;
+            let found = false;
+            let m;
+
+            while ((m = re.exec(sentence)) !== null) {
+                const start = m.index + m[1].length;
+                out += pqEsc(sentence.slice(last, start)) + PQ_BLANK;
+                last = start + m[2].length;
+                found = true;
+                if (m[0].length === 0) re.lastIndex++;
+            }
+
+            if (found) {
+                items.push('<li>' + out + pqEsc(sentence.slice(last)) + '</li>');
+            }
+        });
+
+        if (items.length) {
+            return items.join('');
+        }
+
+        // Không có câu ví dụ chứa từ → dùng nghĩa của từ làm đề
+        const meaning = q.translation || q.definition || q.question || '';
+        return meaning
+            ? '<li class="pq-fill__meaning">Chưa có câu ví dụ. Điền từ có nghĩa: <strong>' + pqEsc(meaning) + '</strong></li>'
+            : '<li class="pq-fill__meaning">Chưa có câu ví dụ cho từ này.</li>';
+    }
+
+    // Gợi ý: chưa mở → toàn dấu *, mở → hiện 50% số chữ cái đầu (cart → ca**)
+    function pqMaskWord(word, revealHalf) {
+        const chars = Array.from(String(word || ''));
+        const isLetter = function(ch) { return /[\p{L}\p{N}]/u.test(ch); };
+        const total = chars.filter(isLetter).length;
+        const show = revealHalf ? Math.max(1, Math.floor(total / 2)) : 0;
+        let n = 0;
+
+        return chars.map(function(ch) {
+            if (!isLetter(ch)) return ch;
+            n++;
+            return n <= show ? ch : '*';
+        }).join('');
+    }
+
+    // Giống normalizePracticeAnswer() phía server
+    function pqNormalizeAnswer(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/[’‘`]/g, "'")
+            .replace(/\s+/g, ' ')
+            .replace(/^[\s.,!?;:"'()]+|[\s.,!?;:"'()]+$/g, '');
+    }
+
+    function pqFillBox(type, text, icon) {
+        const empty = !String(text || '').trim();
+        return '<div class="pq-fill__box ' + type + (empty ? ' is-empty' : '') + '">'
+             + '<span>' + (empty ? '(Bỏ trống)' : pqEsc(text)) + '</span>' + icon + '</div>';
+    }
+
+    function pqRenderFill(q, a) {
+        $('#pqFillSentences').html(q.sentencesHtml);
+
+        const $input = $('#pqFillInput');
+        const $result = $('#pqFillResult');
+        const $hint = $('#pqHintBtn');
+
+        if (!a) {
+            $result.empty();
+            $input.removeClass('hidden').val(pq.drafts[pq.index] || '');
+            $hint.prop('disabled', !!pq.hints[pq.index]);
+            $('#pqHintText').text(pqMaskWord(q.correct, !!pq.hints[pq.index]));
+            setTimeout(function() { $input.trigger('focus'); }, 0);
+
+            // Nghe Viết: tự phát âm thanh khi mở câu mới
+            if (pq.mode === 'dictation') {
+                pqPlayCurrent();
+            }
+            return;
+        }
+
+        // Đã trả lời / bỏ qua: hiện kết quả và gợi ý đầy đủ
+        $input.addClass('hidden');
+        let html = '';
+        if (a.status === 'correct') {
+            html = pqFillBox('is-correct', a.selected, PQ_ICON_CHECK);
+        } else {
+            if (a.status === 'incorrect') {
+                html += pqFillBox('is-incorrect', a.selected, PQ_ICON_CROSS);
+            }
+            html += pqFillBox('is-correct', q.correct, PQ_ICON_CHECK);
+        }
+        $result.html(html);
+        $hint.prop('disabled', true);
+        $('#pqHintText').text(q.correct);
+    }
+
+    function pqSubmitFill() {
+        if (pq.answers[pq.index]) return;
+
+        const value = String($('#pqFillInput').val() || '').trim();
+        if (!value) {
+            $('#pqFillInput').trigger('focus');
+            return;
+        }
+
+        const q = pq.questions[pq.index];
+        const isCorrect = pqNormalizeAnswer(value) === pqNormalizeAnswer(q.correct);
+
+        pq.answers[pq.index] = { selected: value, status: isCorrect ? 'correct' : 'incorrect' };
+        pq.drafts[pq.index] = '';
+        pqTrackLocal(q, isCorrect);
+        pqSubmitAnswer(q, value, false);
+        pqRenderQuestion();
+    }
+
+    $('#pqFillInput').on('input', function() {
+        pq.drafts[pq.index] = $(this).val();
+    }).on('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            pqSubmitFill();
+        }
+    });
+
+    $('#pqHintBtn').on('click', function() {
+        if (pq.answers[pq.index] || pq.hints[pq.index]) return;
+        pq.hints[pq.index] = true;
+        $('#pqHintText').text(pqMaskWord(pq.questions[pq.index].correct, true));
+        $(this).prop('disabled', true);
+        $('#pqFillInput').trigger('focus');
+    });
+
+    // ── 3. Hiển thị câu hỏi ──────────────────────────────────────
+    function pqRenderQuestion() {
+        const q = pq.questions[pq.index];
+        if (!q) return;
+
+        const a = pq.answers[pq.index];
+        const locked = !!a;
+        const isDictation = pq.mode === 'dictation';
+        const isFill = pq.mode === 'completion' || isDictation;   // 2 dạng gõ đáp án
+
+        pqStopAudio();
+        $('#pqAudioMsg').text('');
+        $('#pqPrompt, #pqOptions').toggleClass('hidden', isFill);
+        $('#pqFill').toggleClass('hidden', !isFill);
+        $('#pqAudio').toggleClass('hidden', !isDictation);
+        $('#pqFillSentences, #pqHintBtn').toggleClass('hidden', isDictation);
+        $('#pqFillInput').attr('placeholder', isDictation
+            ? 'Nhập đáp án bạn nghe được vào đây...'
+            : 'Điền từ vào ô trống...');
+
+        $('#pqSkippedNote').remove();
+        if (a && a.status === 'skipped') {
+            $('<div class="pq-quiz__skipped" id="pqSkippedNote">Bạn đã bỏ qua câu này</div>')
+                .toggleClass('is-fill', isFill)
+                .insertBefore(isFill ? '#pqFillResult' : '#pqOptions');
+        }
+
+        $('#pqCounter').text((pq.index + 1) + ' / ' + pq.questions.length);
+
+        if (isFill) {
+            pqRenderFill(q, a);
+            pqUpdateNav();
+            return;
+        }
+
+        $('#pqPrompt').text(q.prompt);
+
+        let html = '';
+        q.options.forEach(function(word, i) {
+            const classes = ['pq-option'];
+            let mark = '';
+            const isChosen = !!a && a.selected === word;
+            const isRight = word === q.correct;
+
+            if (a && a.status === 'pending' && isChosen) {
+                classes.push('is-selected');
+            } else if (a && a.status !== 'pending') {
+                if (isChosen) classes.push('is-chosen');
+                if (isRight) {
+                    classes.push('is-correct');
+                    mark = PQ_ICON_CHECK;
+                } else if (isChosen) {
+                    classes.push('is-incorrect');
+                    mark = PQ_ICON_CROSS;
+                }
+            }
+
+            html += '<button type="button" class="' + classes.join(' ') + '" data-index="' + i + '"'
+                  + ' role="radio" aria-checked="' + (isChosen ? 'true' : 'false') + '"'
+                  + (locked ? ' disabled' : '') + '>'
+                  + '<span class="pq-option__radio" aria-hidden="true"></span>'
+                  + '<span class="pq-option__text">' + pqEsc(word) + '</span>'
+                  + '<span class="pq-option__mark" aria-hidden="true">' + mark + '</span>'
+                  + '</button>';
+        });
+
+        $('#pqOptions').html(html);
+        pqUpdateNav();
+    }
+
+    function pqUpdateNav() {
+        const answered = !!pq.answers[pq.index];
+        $('#pqPrevBtn').prop('disabled', pq.pending || pq.index === 0);
+        $('#pqSkipBtn').prop('disabled', pq.pending || answered);
+        $('#pqNextBtn').prop('disabled', pq.pending);
+    }
+
+    // ── 4. Chọn đáp án: tím → (sau PQ_REVEAL_DELAY) xanh/đỏ ──────
+    $(document).on('click', '#pqOptions .pq-option', function() {
+        if (pq.pending || pq.answers[pq.index]) return;
+
+        const qIndex = pq.index;
+        const q = pq.questions[qIndex];
+        const selected = q.options[$(this).data('index')];
+
+        pq.answers[qIndex] = { selected: selected, status: 'pending' };
+        pq.pending = true;
+        pqRenderQuestion();
+
+        pq.timer = setTimeout(function() {
+            pq.timer = null;
+            pq.pending = false;
+
+            const isCorrect = selected === q.correct;
+            pq.answers[qIndex].status = isCorrect ? 'correct' : 'incorrect';
+            pqTrackLocal(q, isCorrect);
+            pqSubmitAnswer(q, selected, false);
+
+            if (pq.index === qIndex) {
+                pqRenderQuestion();
+            } else {
+                pqUpdateNav();
+            }
+        }, PQ_REVEAL_DELAY);
+    });
+
+    // Bỏ qua / Tiếp theo khi chưa chọn → tính là sai
+    function pqMarkSkipped(qIndex) {
+        const q = pq.questions[qIndex];
+        pq.answers[qIndex] = { selected: null, status: 'skipped' };
+        pqTrackLocal(q, false);
+        pqSubmitAnswer(q, null, true);
+    }
+
+    function pqTrackLocal(q, isCorrect) {
+        if (isCorrect) {
+            practicedCorrectIds.add(q.id);
+        } else {
+            practicedCorrectIds.delete(q.id);
+        }
+    }
+
+    function pqSubmitAnswer(q, selected, skipped) {
+        const data = {
+            _token: pqCsrf(),
+            selected_answer: selected || '',
+            skipped: skipped ? 1 : 0
+        };
+        data[q.idKey] = q.id;
+
         $.ajax({
             url: '/panel/dictionary/practice/submit-answer',
             method: 'POST',
-            data: submitData
+            data: data
+        }).fail(function(xhr) {
+            console.error('Error submitting answer:', xhr);
         });
+    }
+
+    function pqGoNext() {
+        if (pq.index < pq.questions.length - 1) {
+            pq.index++;
+            pqRenderQuestion();
+        } else {
+            pqShowResults();
+        }
+    }
+
+    $('#pqNextBtn').on('click', function() {
+        if (pq.pending || !pq.questions.length) return;
+
+        // Điền từ / Nghe Viết: đã gõ mà chưa nộp → chấm trước, ở lại câu này để xem đúng/sai
+        if ((pq.mode === 'completion' || pq.mode === 'dictation') && !pq.answers[pq.index]
+            && String($('#pqFillInput').val() || '').trim() !== '') {
+            pqSubmitFill();
+            return;
+        }
+
+        if (!pq.answers[pq.index]) {
+            pqMarkSkipped(pq.index);
+        }
+        pqGoNext();
     });
 
-    // Next Question
-    $('#nextQuestionBtn').on('click', function() {
-        currentQuestionIndex++;
-        showQuestion();
+    $('#pqSkipBtn').on('click', function() {
+        if (pq.pending || !pq.questions.length || pq.answers[pq.index]) return;
+        pqMarkSkipped(pq.index);
+        pqGoNext();
     });
 
-    // Exit Practice
-    $('#exitPracticeBtn').on('click', function() {
+    // Quay lại: chỉ xem lại, không làm lại được
+    $('#pqPrevBtn').on('click', function() {
+        if (pq.pending || pq.index === 0) return;
+        pq.index--;
+        pqRenderQuestion();
+    });
+
+    $('#pqExitBtn').on('click', function() {
+        const answeredCount = pq.answers.filter(function(a) { return !!a; }).length;
+        if (answeredCount > 0 && answeredCount < pq.questions.length
+            && !confirm('Bạn muốn thoát phiên luyện tập? Kết quả các câu đã làm vẫn được lưu.')) {
+            return;
+        }
         exitPractice();
     });
 
+    // ── 5. Kết quả ───────────────────────────────────────────────
+    function pqShowResults() {
+        const learned = [];
+        const review = [];
+        let correctCount = 0;
+
+        pq.questions.forEach(function(q, i) {
+            const a = pq.answers[i];
+            if (a && a.status === 'correct') {
+                correctCount++;
+                learned.push(q);
+            } else {
+                review.push(q);
+            }
+        });
+
+        const listHtml = function(items) {
+            if (!items.length) {
+                return '<li class="pq-result__empty">Không có từ nào</li>';
+            }
+            return items.map(function(q) { return '<li>' + pqEsc(q.correct) + '</li>'; }).join('');
+        };
+
+        $('#pqResultScore').text(correctCount + ' / ' + pq.questions.length);
+        $('#pqLearnedCount').text(learned.length);
+        $('#pqReviewCount').text(review.length);
+        $('#pqLearnedList').html(listHtml(learned)).scrollTop(0);
+        $('#pqReviewList').html(listHtml(review)).scrollTop(0);
+
+        pq.wrongIds = review.map(function(q) { return q.id; });
+        $('#pqRetryWrongBtn').prop('disabled', pq.wrongIds.length === 0);
+
+        pqOpenModal($pqResultModal);
+    }
+
+    // Làm lại: cùng bộ từ, cùng chế độ
+    $('#pqRetryBtn').on('click', function() {
+        pqCloseModal($pqResultModal);
+        pqStartSession(pq.roundIds);
+    });
+
+    // Luyện từ sai: chỉ các từ sai/bỏ qua, cùng chế độ
+    $('#pqRetryWrongBtn').on('click', function() {
+        if (!pq.wrongIds || !pq.wrongIds.length) return;
+        pqCloseModal($pqResultModal);
+        pqStartSession(pq.wrongIds.slice());
+    });
+
+    // Hoàn thành / nút X / click nền
+    $(document).on('click', '.js-pq-result-finish', function() {
+        pqCloseModal($pqResultModal);
+        exitPractice();
+    });
+
+    $(document).on('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        if ($pqModeModal.hasClass('is-open')) {
+            pqCloseModal($pqModeModal);
+        } else if ($pqResultModal.hasClass('is-open')) {
+            pqCloseModal($pqResultModal);
+            exitPractice();
+        }
+    });
+
     function exitPractice() {
+        pqClearTimer();
         $('#practiceModeContainer').addClass('hidden');
         $('#flashcardPracticeContainer').addClass('hidden');
-        
-        if (currentWordListType === 'academic') {
+
+        const ctx = pq.ctx || {
+            listId: currentWordListId,
+            listType: currentWordListType,
+            sourceType: currentWordListSourceType,
+            sourceId: currentWordListSourceId
+        };
+
+        // Reload danh sách để cập nhật trạng thái đã học / cần ôn
+        if (ctx.listType === 'academic') {
             $('#academicWordListsSection').removeClass('hidden');
+            loadAcademicWordList(ctx.listId, ctx.sourceType, ctx.sourceId);
         } else {
             $('#myWordListSection').removeClass('hidden');
-        }
-        
-        // Reload the word list to show updated learned/tick status
-        if (currentWordListType === 'academic') {
-            loadAcademicWordList(currentWordListId, currentWordListSourceType, currentWordListSourceId);
-        } else {
             loadMyWordList();
         }
     }

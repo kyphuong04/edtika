@@ -3,6 +3,8 @@
 @push('styles_top')
 <link rel="stylesheet" href="{{ asset('assets/css/ielts-shared/flowchart.css') }}?v={{ filemtime(public_path('assets/css/ielts-shared/flowchart.css')) }}">
 <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
+{{-- Bảng kiểu Word trong Passage / Instructions / Answer help / Hint --}}
+<link rel="stylesheet" href="{{ asset('assets/css/ielts-shared/rich-table.css') }}?v={{ filemtime(public_path('assets/css/ielts-shared/rich-table.css')) }}">
 <style>
 
     /* --- FIX LỖI HOVER & ACTIVE CHO NÚT CĂN LỀ --- */
@@ -1030,6 +1032,7 @@
 
 @push('scripts_bottom')
 <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
+<script src="{{ asset('assets/js/ielts-tests/rich-table.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/rich-table.js')) }}"></script>
 {{-- Cửa sổ nhập Transcript cho Part Listening (người nói, mốc giờ, gắn đáp án) --}}
 <script>window.IELTS_PUBLIC_DISK_URL = @json(rtrim(\Illuminate\Support\Facades\Storage::disk('public')->url(''), '/'));</script>
 <script src="{{ asset('assets/js/ielts-tests/transcript-editor.js') }}?v={{ filemtime(public_path('assets/js/ielts-tests/transcript-editor.js')) }}"></script>
@@ -1098,6 +1101,7 @@ const ANSWER_HELP_EDITOR_TOOLBAR = [
     ['color', ['foreColor', 'backColor']],
     ['para', ['ul', 'ol']], // Bỏ 'paragraph' ở đây
     ['alignment', ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify']], // Thêm nhóm 4 nút căn lề độc lập
+    ['table', ['rtTable']], // Bảng kiểu Word (rich-table.js)
     ['view', ['codeview']]
 ];
 
@@ -1110,6 +1114,36 @@ const CONTENT_EDITOR_TOOLBAR = [
     ['insert', ['picture', 'link']],
     ['view', ['codeview']]
 ];
+
+// Passage + Instructions (Part / Group): thêm nút Bảng kiểu Word.
+// Các ô khác dùng CONTENT_EDITOR_TOOLBAR (question text, mô tả đề) giữ nguyên.
+const CONTENT_TABLE_EDITOR_TOOLBAR = [
+    ['style', ['style']],
+    ['font', ['bold', 'italic', 'underline', 'clear']],
+    ['color', ['foreColor', 'backColor']],
+    ['para', ['ul', 'ol']],
+    ['alignment', ['alignLeft', 'alignCenter', 'alignRight', 'alignJustify']],
+    ['insert', ['picture', 'link']],
+    ['table', ['rtTable']],
+    ['view', ['codeview']]
+];
+const RICH_TABLE_EDITOR_SELECTOR = '.part-instructions-input, .part-passage, .group-passage';
+
+function richTableEnabled() {
+    return typeof window.IeltsRichTable !== 'undefined';
+}
+
+function richTableButtons() {
+    return richTableEnabled()
+        ? Object.assign({}, customAlignmentButtons, window.IeltsRichTable.buttons)
+        : customAlignmentButtons;
+}
+
+function richTableToolbar(toolbar) {
+    return richTableEnabled()
+        ? toolbar
+        : toolbar.filter(function (group) { return group[0] !== 'table'; });
+}
 
 // 1. Hàm tự viết để bám sát và căn lề đúng thẻ cha
 function safeAlign(context, alignValue) {
@@ -1186,7 +1220,9 @@ function getEditorHtmlValue(element) {
 
     const $element = $(element);
     if (jQuery().summernote && $element.next('.note-editor').length) {
-        return ($element.summernote('code') || '').trim();
+        const html = ($element.summernote('code') || '').trim();
+        // Gỡ class chỉ dùng lúc soạn bảng (vùng chọn ô, đường kẻ mờ).
+        return window.IeltsRichTable ? window.IeltsRichTable.clean(html) : html;
     }
 
     return ($element.val() || '').trim();
@@ -1250,10 +1286,23 @@ function initAnswerHelpEditors(context) {
         return;
     }
 
-    makeSummernote($editors, 180, undefined, {
-        toolbar: ANSWER_HELP_EDITOR_TOOLBAR,
-        buttons: customAlignmentButtons
-    });
+    const answerHelpOptions = {
+        toolbar: richTableToolbar(ANSWER_HELP_EDITOR_TOOLBAR),
+        buttons: richTableButtons()
+    };
+    if (richTableEnabled()) {
+        answerHelpOptions.popover = window.IeltsRichTable.popover();
+        answerHelpOptions.callbacks = {
+            // Dán bảng từ Word / Excel: làm sạch định dạng, giữ gộp ô.
+            onPaste: function (e) { window.IeltsRichTable.handlePaste(this, e); }
+        };
+    }
+
+    makeSummernote($editors, 180, undefined, answerHelpOptions);
+
+    if (richTableEnabled()) {
+        window.IeltsRichTable.attach($editors);
+    }
 }
 
 function fixSummernoteDropdowns(context) {
@@ -1349,10 +1398,11 @@ function initContentEditors(context) {
     $editors.each(function () {
         const editor = $(this);
         const height = parseInt(editor.attr('data-height') || '160', 10);
+        const withTable = richTableEnabled() && editor.is(RICH_TABLE_EDITOR_SELECTOR);
 
-        makeSummernote(editor, Number.isFinite(height) ? height : 160, undefined, {
-            toolbar: CONTENT_EDITOR_TOOLBAR,
-            buttons: customAlignmentButtons,
+        const editorOptions = {
+            toolbar: withTable ? CONTENT_TABLE_EDITOR_TOOLBAR : CONTENT_EDITOR_TOOLBAR,
+            buttons: withTable ? richTableButtons() : customAlignmentButtons,
             callbacks: {
                 onChange: function () {
                     if (this.classList.contains('question-text-input')) {
@@ -1372,7 +1422,20 @@ function initContentEditors(context) {
                     }
                 }
             }
-        });
+        };
+
+        if (withTable) {
+            // Thanh "Bảng" riêng thay cho popover bảng mặc định của Summernote.
+            editorOptions.popover = window.IeltsRichTable.popover();
+            // Dán bảng từ Word / Excel: làm sạch định dạng, giữ gộp ô.
+            editorOptions.callbacks.onPaste = function (e) { window.IeltsRichTable.handlePaste(this, e); };
+        }
+
+        makeSummernote(editor, Number.isFinite(height) ? height : 160, undefined, editorOptions);
+
+        if (withTable) {
+            window.IeltsRichTable.attach(editor);
+        }
     });
     fixSummernoteDropdowns($context);
 }

@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/attempt-review.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-shell.css') }}">
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-shared/flowchart.css') }}">
+{{-- Bảng soạn trong Passage / Instructions / Answer help (trình tạo đề) --}}
+<link rel="stylesheet" href="{{ $assetV('assets/css/ielts-shared/rich-table.css') }}">
 @if($isListening)
 <link rel="stylesheet" href="{{ $assetV('assets/css/ielts-tests/review-listening.css') }}">
 @endif

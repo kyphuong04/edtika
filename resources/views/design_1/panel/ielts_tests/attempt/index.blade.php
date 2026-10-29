@@ -14,6 +14,9 @@
 <link rel="stylesheet" href="{{ asset($speakingStageCssPath) }}?v={{ $speakingStageCssVersion }}">
 @php $flowchartCssPath = 'assets/css/ielts-shared/flowchart.css'; @endphp
 <link rel="stylesheet" href="{{ asset($flowchartCssPath) }}?v={{ is_file(public_path($flowchartCssPath)) ? filemtime(public_path($flowchartCssPath)) : time() }}">
+@php $richTableCssPath = 'assets/css/ielts-shared/rich-table.css'; @endphp
+{{-- Bảng soạn trong Passage / Instructions (trình tạo đề) --}}
+<link rel="stylesheet" href="{{ asset($richTableCssPath) }}?v={{ is_file(public_path($richTableCssPath)) ? filemtime(public_path($richTableCssPath)) : time() }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endpush
 

@@ -27,6 +27,8 @@
  *   - Flow chart (Reading): sơ đồ căn giữa, mỗi ô trống = [số] [viên đáp án]
  *     [💡]; Diagram Labeling điền từ (Listening): mỗi bước 1 thẻ, cột trái là
  *     vòng số + nút ▶ nghe lại đoạn (ReviewFlow).
+ *   - Drag & drop (giữ / bỏ khỏi danh sách): mỗi chỗ trống 1 hàng [câu] [số]
+ *     [đáp án đã chọn / đáp án đúng] (ReviewDragDrop).
  * Các dạng khác tạm dùng lớp tô đúng/sai cũ (ReviewMarker).
  *
  * Dữ liệu (attempt/review.blade.php):
@@ -51,6 +53,14 @@ const RV_MCQ_TYPES = ['multiple_choice_single', 'multiple_choice_multiple'];
 const RV_COMPLETION_TYPES = ['sentence_completion', 'note_completion', 'table_completion'];
 // Sơ đồ điền từ: Flow chart (Reading) + Diagram Labeling điền từ (Listening).
 const RV_FLOW_TYPES = ['flow_chart_completion', 'diagram_completion'];
+
+// Listening: các dạng gộp vào 1 khối (blank sheet) ở trang làm bài.
+const RV_LISTEN_SHEET_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'short_answer'];
+
+function rvListening() {
+    const RLw = window.ReviewListening;
+    return !!(RLw && RLw.enabled);
+}
 const RV_NUMBER_WORDS = ['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
 
 function rvNorm(value) {
@@ -677,9 +687,9 @@ const ReviewMcq = {
    ===================================================================== */
 const ReviewCompletion = {
     applies(entry) {
-        return !!entry
-            && RV_COMPLETION_TYPES.includes(entry.question.type)
-            && AttemptState.skill !== 'listening';
+        if (!entry || !RV_COMPLETION_TYPES.includes(entry.question.type)) return false;
+        // Listening: chỉ Table dùng chung lớp này (các dạng khác xem ReviewListenSheet).
+        return AttemptState.skill !== 'listening' || entry.question.type === 'table_completion';
     },
 
     isNote(entry) {
@@ -735,7 +745,9 @@ const ReviewCompletion = {
         wrap.className = 'rvx-blank is-' + st;
         wrap.dataset.number = String(number);
 
-        if (withNumber) {
+        if (opts.numberEl) {
+            wrap.appendChild(opts.numberEl);   // Listening: vòng số + ▶
+        } else if (withNumber) {
             const num = document.createElement('span');
             num.className = 'rvx-num rvx-num--inline';
             num.textContent = number;
@@ -811,6 +823,7 @@ const ReviewCompletion = {
                 const badge = td.querySelector('.exam-table-number');
                 if (badge) badge.remove();
 
+                const listening = rvListening();
                 inputs.forEach((input, i) => {
                     input.replaceWith(this.blankEl({
                         entry,
@@ -818,7 +831,9 @@ const ReviewCompletion = {
                         number,
                         slotIndex: found.index,
                         withNumber: i === 0,
-                        withHelp: i === inputs.length - 1,
+                        // Listening: vòng số + ▶ nghe đoạn của câu; Answer Help ở tab mép phải.
+                        numberEl: listening && i === 0 ? window.ReviewListening.numberBlock(entry, number) : null,
+                        withHelp: !listening && i === inputs.length - 1,
                     }));
                 });
 
@@ -1334,11 +1349,15 @@ const ReviewEndings = {
      [số] Statement | A | B | C … | 💡
    Ô đáp án đúng: nền xanh + chấm xanh; ô học viên chọn sai: nền đỏ + chấm đỏ.
    ===================================================================== */
+const RV_LABELING_TYPES = ['diagram_labeling', 'diagram_label', 'map_labeling'];
+
 const ReviewMatrix = {
+    /** Matching information (Reading) + Diagram / Map Labeling dạng A–K (mọi skill). */
     applies(entry) {
-        return !!entry
-            && entry.question.type === 'matching_information'
-            && AttemptState.skill !== 'listening';
+        if (!entry) return false;
+        const type = entry.question.type;
+        if (RV_LABELING_TYPES.includes(type)) return true;
+        return type === 'matching_information' && AttemptState.skill !== 'listening';
     },
 
     decorate(entry) {
@@ -1359,7 +1378,14 @@ const ReviewMatrix = {
         row.classList.add('rvx-mx-row', 'rvx-is-' + st);
 
         const num = row.querySelector('.exam-matrix-num');
-        if (num) num.className = 'rvx-num rvx-mx-num';
+        const RLw = window.ReviewListening;
+        const listening = !!(RLw && RLw.enabled);
+        if (num && listening) {
+            // Listening: vòng số + ▶ nghe đoạn audio của câu (như các dạng khác).
+            num.replaceWith(RLw.numberBlock(entry, entry.startNumber));
+        } else if (num) {
+            num.className = 'rvx-num rvx-mx-num';
+        }
         row.querySelectorAll('.attempt-save-indicator').forEach((el) => el.remove());
 
         row.querySelectorAll('.exam-matrix-cell').forEach((td) => {
@@ -1389,13 +1415,23 @@ const ReviewMatrix = {
             }
         });
 
+        const table = row.closest('table');
+        if (table) table.classList.add('rvx-mx');
+
+        // Listening đã có tab "Answer Help" ở mép phải -> không thêm cột bóng đèn.
+        if (listening) {
+            if (table) table.classList.add('rvx-mx--listening');
+            const head = table && table.querySelector('.exam-matrix-statement-head');
+            if (head) head.textContent = '';
+            return;
+        }
+
         const helpTd = document.createElement('td');
         helpTd.className = 'rvx-mx-help';
         helpTd.appendChild(ReviewCompletion.helpButton(entry, 0, entry.startNumber));
         row.appendChild(helpTd);
 
         // Cột bóng đèn trên tiêu đề bảng (1 lần).
-        const table = row.closest('table');
         const headRow = table && table.querySelector('thead tr');
         if (headRow && !headRow.querySelector('.rvx-mx-help-head')) {
             const th = document.createElement('th');
@@ -1406,6 +1442,247 @@ const ReviewMatrix = {
             if (stHead) stHead.textContent = 'Statement';
             table.classList.add('rvx-mx');
         }
+    },
+};
+
+/* =====================================================================
+   Listening — Sentence / Summary / Note completion, Short answer
+   (trang làm bài gộp cả group vào 1 khối "blank sheet")
+     [Public Service broadcast]                   <- khung tiêu đề (Group Title)
+     [số ▶]  • Volunteer workers must be at least [18 ✔] years old.
+     [số ▶]  • Job applicants should not have [criminal records ✖] → [police records ✔]
+   Mỗi câu 1 thẻ viền; Answer Help mở bằng tab mép phải.
+   ===================================================================== */
+const ReviewListenSheet = {
+    applies(entry) {
+        return !!entry
+            && AttemptState.skill === 'listening'
+            && RV_LISTEN_SHEET_TYPES.includes(entry.question.type);
+    },
+
+    decorate(entry) {
+        const q = entry.question;
+        const card = document.getElementById('exam-q-' + q.id);
+        if (!card || card.dataset.rvxDone) return;
+
+        const text = card.querySelector('.exam-question-text');
+        const inputs = Array.from(card.querySelectorAll('.exam-blank-input'));
+        if (!text || !inputs.length || !card.closest('.exam-blank-sheet')) {
+            ReviewMarker.decorateEntry(entry);
+            return;
+        }
+        card.dataset.rvxDone = '1';
+
+        const slots = ReviewData.slotsOf(q.id);
+        card.querySelectorAll('.exam-blank-number, .exam-question-number, .attempt-save-indicator').forEach((el) => el.remove());
+
+        inputs.forEach((input, i) => {
+            input.replaceWith(ReviewCompletion.blankEl({
+                entry,
+                slot: slots[i],
+                number: entry.startNumber + i,
+                slotIndex: i,
+                withNumber: i > 0,      // ô đầu: số ở cột trái
+                withHelp: false,
+            }));
+        });
+
+        const row = document.createElement('div');
+        row.className = 'rvx-ls-row';
+        let num;
+        if (rvListening()) {
+            num = window.ReviewListening.numberBlock(entry, entry.startNumber);
+        } else {
+            num = document.createElement('span');
+            num.className = 'rvx-num';
+            num.textContent = entry.startNumber;
+        }
+
+        const holder = document.createElement('span');
+        text.replaceWith(holder);
+        row.appendChild(num);
+        row.appendChild(text);
+        holder.replaceWith(row);
+
+        card.classList.add('rvx-ls-card', 'rvx-is-' + ReviewData.entryStatus(entry));
+        // Ghi chú nhiều dòng (tiêu đề mục, gạch đầu dòng riêng) -> không thêm chấm đầu dòng.
+        if (text.querySelector('ul, ol, h1, h2, h3, h4, h5') || text.querySelectorAll('p').length > 1) {
+            card.classList.add('is-rich');
+        }
+    },
+
+    /** Khung tiêu đề: bỏ nếu Group Title chỉ là "Questions 1–5" (đã có tiêu đề nhóm). */
+    decorateGroup(holder) {
+        const sheet = holder.querySelector('.exam-blank-sheet');
+        if (!sheet) return;
+        sheet.classList.add('rvx-ls-sheet');
+
+        const title = sheet.querySelector('.exam-blank-sheet-title');
+        if (title && /^\s*questions?\s*\d/i.test(title.textContent)) title.remove();
+
+        // Hướng dẫn của giáo viên đứng trước dòng giới hạn số từ, ngoài khung.
+        const intro = sheet.querySelector('.exam-blank-sheet-intro');
+        if (intro) {
+            const limit = holder.querySelector('.exam-blank-sheet-instruction');
+            sheet.parentNode.insertBefore(intro, limit || sheet);
+        }
+    },
+};
+
+/* =====================================================================
+   Drag & Drop — Remove from list (disappear) / Keep in list (reuse)
+   Mỗi chỗ trống thành 1 hàng:
+     [câu / nhãn]          [số ▶]   [original, new ideas        ✔]
+     [câu / nhãn]          [số ▶]   [retail experience          ✖]   <- học viên chọn
+                                    [an understanding of food   ✔]   <- đáp án đúng
+   Dòng không có chỗ trống (VD "Area of voluntary work") làm tiêu đề cột.
+   Kho đáp án giữ ở dưới, hiện đủ (không làm mờ đáp án đã dùng).
+   Reading: số là vòng tròn thường + bóng đèn theo từng ô.
+   ===================================================================== */
+const ReviewDragDrop = {
+    applies(entry) {
+        return !!entry && (entry.question.type === 'drag_drop_disappear' || entry.question.type === 'drag_drop_reuse');
+    },
+
+    answerRow(text, tone) {
+        const row = document.createElement('span');
+        row.className = 'rvx-dd-answer is-' + tone;
+        const t = document.createElement('span');
+        t.className = 'rvx-dd-answer-text';
+        t.textContent = text;
+        const icon = document.createElement('span');
+        icon.className = 'rvx-dd-answer-icon';
+        icon.innerHTML = '<i class="fas ' + (tone === 'correct' ? 'fa-check' : 'fa-times') + '" aria-hidden="true"></i>';
+        row.appendChild(t);
+        row.appendChild(icon);
+        return row;
+    },
+
+    answersFor(slot) {
+        const st = ReviewData.status(slot);
+        const submitted = ReviewCompletion.submittedOf(slot);
+        const accepted = ReviewCompletion.acceptedOf(slot);
+
+        const box = document.createElement('div');
+        box.className = 'rvx-dd-answers';
+        if (st === 'correct') {
+            box.appendChild(this.answerRow(submitted || accepted[0] || '', 'correct'));
+        } else {
+            const mine = this.answerRow(submitted, 'incorrect');
+            if (!submitted) {
+                mine.classList.add('is-blank');
+                mine.querySelector('.rvx-dd-answer-text').textContent = 'Chưa trả lời';
+            }
+            box.appendChild(mine);
+            const key = this.answerRow(accepted.join(' / ') || '—', 'correct');
+            key.classList.add('is-key');
+            box.appendChild(key);
+        }
+        return box;
+    },
+
+    /** Câu văn của 1 dòng, bỏ chỗ trống ở cuối; chỗ trống giữa câu -> "……". */
+    statementOf(nodes, slotEl) {
+        const box = document.createElement('div');
+        box.className = 'rvx-dd-statement';
+        nodes.forEach((n) => box.appendChild(n));
+        const slots = Array.from(box.querySelectorAll('.exam-dd-slot'));
+        slots.forEach((s) => {
+            const gap = document.createElement('span');
+            gap.className = 'rvx-dd-gap' + (s === slotEl ? ' is-self' : '');
+            gap.textContent = '……';
+            s.replaceWith(gap);
+        });
+        // Chỗ trống đứng cuối câu: bỏ luôn dấu "……" cho gọn.
+        const gaps = box.querySelectorAll('.rvx-dd-gap');
+        const last = gaps[gaps.length - 1];
+        if (last && box.lastChild) {
+            const range = document.createRange();
+            range.setStartAfter(last);
+            range.setEndAfter(box.lastChild);
+            if (range.toString().replace(/[\s.:;,!?…]/g, '') === '') last.remove();
+        }
+        return box;
+    },
+
+    decorate(entry) {
+        const q = entry.question;
+        const card = document.getElementById('exam-q-' + q.id);
+        if (!card || card.dataset.rvxDone) return;
+
+        const text = card.querySelector('.exam-question-text');
+        if (!text || !text.querySelector('.exam-dd-slot')) {
+            ReviewMarker.decorateEntry(entry);
+            return;
+        }
+        card.dataset.rvxDone = '1';
+
+        const listening = rvListening();
+        const slots = ReviewData.slotsOf(q.id);
+        let slotIndex = 0;
+
+        const list = document.createElement('div');
+        list.className = 'rvx-dd-list' + (listening ? ' is-listening' : '');
+
+        ReviewCompletion.splitLines(text).forEach((nodes) => {
+            const holder = document.createElement('div');
+            nodes.forEach((n) => holder.appendChild(n));
+            const ddSlots = Array.from(holder.querySelectorAll('.exam-dd-slot'));
+
+            if (!ddSlots.length) {
+                if (!holder.textContent.trim() && !holder.querySelector('img, table')) return;
+                holder.className = 'rvx-dd-heading';
+                list.appendChild(holder);
+                return;
+            }
+
+            ddSlots.forEach((slotEl, k) => {
+                const index = slotIndex++;
+                const number = entry.startNumber + index;
+                const slot = slots[index];
+
+                const row = document.createElement('div');
+                row.className = 'rvx-dd-row rvx-is-' + ReviewData.status(slot);
+                row.dataset.number = String(number);
+
+                // Nhiều chỗ trống cùng 1 dòng: câu văn chỉ in ở hàng đầu.
+                const statement = k === 0
+                    ? this.statementOf(Array.from(holder.childNodes).map((n) => n.cloneNode(true)), null)
+                    : Object.assign(document.createElement('div'), { className: 'rvx-dd-statement' });
+                if (k === 0 && ddSlots.length > 1) {
+                    // Đánh dấu chỗ trống của từng hàng bằng số câu.
+                    statement.querySelectorAll('.rvx-dd-gap').forEach((g, gi) => { g.textContent = '(' + (number + gi) + ')'; });
+                }
+
+                let num;
+                if (listening) {
+                    num = window.ReviewListening.numberBlock(entry, number);
+                } else {
+                    num = document.createElement('span');
+                    num.className = 'rvx-num';
+                    num.textContent = number;
+                }
+                const numCol = document.createElement('div');
+                numCol.className = 'rvx-dd-num';
+                numCol.appendChild(num);
+
+                row.appendChild(statement);
+                row.appendChild(numCol);
+                row.appendChild(this.answersFor(slot));
+                if (!listening) {
+                    const helpCol = document.createElement('div');
+                    helpCol.className = 'rvx-dd-help';
+                    helpCol.appendChild(ReviewCompletion.helpButton(entry, index, number));
+                    row.appendChild(helpCol);
+                }
+                list.appendChild(row);
+            });
+        });
+
+        text.replaceWith(list);
+        card.querySelectorAll('.exam-question-number, .attempt-save-indicator').forEach((el) => el.remove());
+        card.querySelectorAll('.exam-dd-chip').forEach((chip) => chip.classList.remove('used', 'active-pick'));
+        card.classList.add('rvx-dd-card', 'rvx-is-' + ReviewData.entryStatus(entry));
     },
 };
 
@@ -2003,12 +2280,22 @@ document.addEventListener('DOMContentLoaded', function () {
             holder.dataset.type = group.question_type || '';
             if (RV_TFNG_TYPES.includes(group.question_type)) holder.classList.add('rvx-group--tfng');
             if (RV_MCQ_TYPES.includes(group.question_type)) holder.classList.add('rvx-group--mcq');
-            if (RV_COMPLETION_TYPES.includes(group.question_type) && AttemptState.skill !== 'listening') {
+            if (RV_COMPLETION_TYPES.includes(group.question_type)
+                && (AttemptState.skill !== 'listening' || group.question_type === 'table_completion')) {
                 holder.classList.add('rvx-group--completion');
             }
             if (RV_FLOW_TYPES.includes(group.question_type)) holder.classList.add('rvx-group--flow');
+            if (group.question_type === 'drag_drop_disappear' || group.question_type === 'drag_drop_reuse') {
+                holder.classList.add('rvx-group--mh', 'rvx-group--dd');
+            }
+            if (AttemptState.skill === 'listening' && RV_LISTEN_SHEET_TYPES.includes(group.question_type)) {
+                holder.classList.add('rvx-group--lsheet');
+            }
             if (group.question_type === 'matching_headings' && AttemptState.skill !== 'listening') {
                 holder.classList.add('rvx-group--mh');
+            }
+            if (RV_LABELING_TYPES.includes(group.question_type)) {
+                holder.classList.add('rvx-group--mh', 'rvx-group--mx', 'rvx-group--map');
             }
             if (group.question_type === 'matching_information' && AttemptState.skill !== 'listening') {
                 holder.classList.add('rvx-group--mh', 'rvx-group--mx');
@@ -2084,6 +2371,8 @@ document.addEventListener('DOMContentLoaded', function () {
             else if (ReviewMcq.isMcq(entry)) ReviewMcq.decorate(entry);
             else if (ReviewFlow.applies(entry)) ReviewFlow.decorate(entry);
             else if (ReviewCompletion.applies(entry)) ReviewCompletion.decorate(entry);
+            else if (ReviewListenSheet.applies(entry)) ReviewListenSheet.decorate(entry);
+            else if (ReviewDragDrop.applies(entry)) ReviewDragDrop.decorate(entry);
             else if (ReviewMatching.applies(entry)) ReviewMatching.decorate(entry);
             else if (ReviewEndings.applies(entry)) ReviewEndings.decorate(entry);
             else if (ReviewMatrix.applies(entry)) ReviewMatrix.decorate(entry);
@@ -2091,7 +2380,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         ReviewMarker.flushLooseExplanations(els.questions);
 
-        els.questions.querySelectorAll('.rvx-group--tfng, .rvx-group--mcq, .rvx-group--completion, .rvx-group--mh, .rvx-group--flow').forEach((holder) => {
+        els.questions.querySelectorAll('.rvx-group--tfng, .rvx-group--mcq, .rvx-group--completion, .rvx-group--mh, .rvx-group--flow, .rvx-group--lsheet').forEach((holder) => {
             // Theo danh sách câu của group (ô Matching có thể nằm trong bài đọc, ngoài holder).
             const ids = holder.__questionIds;
             const groupEntries = partEntries.filter((e) => (ids
@@ -2099,13 +2388,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 : holder.contains(document.getElementById('exam-q-' + e.question.id))));
             ReviewTfng.decorateGroup(holder, groupEntries);
             if (holder.classList.contains('rvx-group--completion')) ReviewCompletion.decorateGroup(holder);
+            if (holder.classList.contains('rvx-group--lsheet')) ReviewListenSheet.decorateGroup(holder);
         });
 
         // Nút ▶ cạnh vòng số câu (dạng đã làm lại giao diện chữa bài).
         if (RL) {
             partEntries.forEach((entry) => {
                 const card = document.getElementById('exam-q-' + entry.question.id);
-                RL.decorateNumber(card && card.querySelector('.rvx-num'), entry);
+                RL.decorateNumber(card && card.querySelector('.rvx-num:not(.rvx-num--inline)'), entry);
             });
         }
 
@@ -2131,7 +2421,9 @@ document.addEventListener('DOMContentLoaded', function () {
         card.classList.add('rvx-current');
 
         // Câu nhiều ô điền ngay trong câu: tô + cuộn tới đúng ô đang xem.
-        const blank = number ? card.querySelector('.rvx-blank[data-number="' + number + '"]') : null;
+        const blank = number
+            ? card.querySelector('.rvx-blank[data-number="' + number + '"], .rvx-dd-row[data-number="' + number + '"]')
+            : null;
         if (blank) blank.classList.add('rvx-current');
 
         if (scroll) (blank || card).scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2175,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!entry) return;
 
         // Bấm vào 1 ô trống (hoặc bóng đèn của ô) -> đúng số câu của ô đó.
-        const blank = t.closest('.rvx-blank');
+        const blank = t.closest('.rvx-blank, .rvx-dd-row');
         const blankNumber = blank ? parseInt(blank.dataset.number, 10) : NaN;
         goTo(blankNumber > 0 ? blankNumber : entry.startNumber, { scroll: false });
 

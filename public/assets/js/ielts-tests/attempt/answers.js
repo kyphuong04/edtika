@@ -86,7 +86,12 @@ const AttemptAnswers = {
                 'flow_chart_completion', 'diagram_completion',
                 'drag_drop_disappear', 'drag_drop_reuse'].includes(type)
         ) {
-            return { question_id: question.id, answer_text: JSON.stringify(Array.isArray(value) ? value : []) };
+            // Diagram Labeling dạng ma trận A–K gửi 1 chữ cái (chuỗi) -> bọc thành
+            // mảng 1 phần tử. Trước đây chuỗi bị đổi thành "[]" nên mất bài làm.
+            let list = [];
+            if (Array.isArray(value)) list = value;
+            else if (value !== null && value !== undefined && String(value).trim() !== '') list = [String(value)];
+            return { question_id: question.id, answer_text: JSON.stringify(list) };
         }
 
         if (type === 'table_completion') {
