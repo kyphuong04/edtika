@@ -590,7 +590,8 @@ const ReviewMcq = {
      *  - 1 đáp án : [vòng số + ▶] | đề bài đậm + hàng A–E (radio), hàng đã chọn tô cả dòng, ✔/✖ cuối dòng
      *  - nhiều    : đề bài như dòng hướng dẫn + mỗi phương án là 1 ô viền (checkbox bên ngoài)
      *               | cột phải: mỗi số câu 1 vòng số + ▶ riêng (VD 14, 15)
-     * Không có bóng đèn từng câu — sidebar Answer Help mở bằng tab ở mép phải.
+     * Bóng đèn như Reading: 1 đáp án -> cuối thẻ; nhiều đáp án -> cuối từng phương án.
+     * (Tab ở mép phải vẫn mở sidebar của câu đang xem.)
      */
     decorateListening(entry, card, ctx) {
         const RL = window.ReviewListening;
@@ -643,6 +644,7 @@ const ReviewMcq = {
                 box.appendChild(icon);
                 li.appendChild(mark);
                 li.appendChild(box);
+                li.appendChild(this.helpButton(entry, opt.index));
             } else {
                 // [A] [radio] nội dung ... ✔/✖  (cả dòng tô màu)
                 li.appendChild(letter);
@@ -666,6 +668,7 @@ const ReviewMcq = {
         } else {
             card.appendChild(nums);
             card.appendChild(body);
+            card.appendChild(this.helpButton(entry));
         }
     },
 };
@@ -833,7 +836,7 @@ const ReviewCompletion = {
                         withNumber: i === 0,
                         // Listening: vòng số + ▶ nghe đoạn của câu; Answer Help ở tab mép phải.
                         numberEl: listening && i === 0 ? window.ReviewListening.numberBlock(entry, number) : null,
-                        withHelp: !listening && i === inputs.length - 1,
+                        withHelp: i === inputs.length - 1,
                     }));
                 });
 
@@ -1020,7 +1023,7 @@ const ReviewFlow = {
                 number: entry.startNumber + i,
                 slotIndex: i,
                 withNumber: !steps,
-                withHelp: !steps,
+                withHelp: true,
             }));
         });
 
@@ -1483,7 +1486,7 @@ const ReviewListenSheet = {
                 number: entry.startNumber + i,
                 slotIndex: i,
                 withNumber: i > 0,      // ô đầu: số ở cột trái
-                withHelp: false,
+                withHelp: true,         // bóng đèn của đúng ô (như Reading)
             }));
         });
 
@@ -1669,12 +1672,10 @@ const ReviewDragDrop = {
                 row.appendChild(statement);
                 row.appendChild(numCol);
                 row.appendChild(this.answersFor(slot));
-                if (!listening) {
-                    const helpCol = document.createElement('div');
-                    helpCol.className = 'rvx-dd-help';
-                    helpCol.appendChild(ReviewCompletion.helpButton(entry, index, number));
-                    row.appendChild(helpCol);
-                }
+                const helpCol = document.createElement('div');
+                helpCol.className = 'rvx-dd-help';
+                helpCol.appendChild(ReviewCompletion.helpButton(entry, index, number));
+                row.appendChild(helpCol);
                 list.appendChild(row);
             });
         });
@@ -2649,7 +2650,12 @@ const ReportModal = {
 
         this.number = (AnswerHelp.entry === entry && AnswerHelp.focusNumber) || rvNumberLabel(entry);
         document.getElementById('rvxReportQuestion').textContent = 'Câu ' + this.number;
-        document.getElementById('rvxReportAnswer').textContent = AnswerHelp.keyText(entry) || '—';
+        // Câu nhiều ô (Note completion…): chỉ đáp án của đúng ô đang xem.
+        const focusSlot = AnswerHelp.entry === entry && AnswerHelp.focusNumber
+            ? ReviewData.slotsOf(entry.question.id)[AnswerHelp.slotIndex]
+            : null;
+        document.getElementById('rvxReportAnswer').textContent =
+            (focusSlot ? AnswerHelp.slotKeyText(focusSlot) : AnswerHelp.keyText(entry)) || '—';
 
         // Giữ lại nội dung đang gõ dở nếu mở lại đúng câu đó.
         if (!sameEntry || this.form.classList.contains('is-sent')) this.textarea.value = '';
@@ -3089,6 +3095,19 @@ document.addEventListener('DOMContentLoaded', function () {
             else ReviewMarker.decorateEntry(entry);
         });
         ReviewMarker.flushLooseExplanations(els.questions);
+
+        // Dạng chưa có giao diện chữa riêng (VD Matching ở Listening): vẫn có bóng đèn mở sidebar.
+        partEntries.forEach((entry) => {
+            const card = document.getElementById('exam-q-' + entry.question.id);
+            if (!card || card.querySelector('.rvx-help')) return;
+            const row = document.createElement('span');
+            row.className = 'rvx-help-fallback';
+            row.appendChild(ReviewMcq.helpButton(entry));
+            // Đặt ngay sau số câu (bảng Matching có kho đáp án nổi bên phải che cuối hàng).
+            const num = card.querySelector('.exam-match-board-num, .exam-question-number, .rvx-num, .rvl-qnum');
+            if (num && num.parentNode) num.parentNode.insertBefore(row, num.nextSibling);
+            else card.appendChild(row);
+        });
 
         els.questions.querySelectorAll('.rvx-group--tfng, .rvx-group--mcq, .rvx-group--completion, .rvx-group--mh, .rvx-group--flow, .rvx-group--lsheet').forEach((holder) => {
             // Theo danh sách câu của group (ô Matching có thể nằm trong bài đọc, ngoài holder).

@@ -1933,3 +1933,7 @@ body.rvx-drawer-resizing .rvx-drawer-panel { transition: none; }
     .rvx-drawer-resize { display: none; }
     .rvx-drawer-panel { width: 100vw !important; max-width: 100vw; }
 }
+
+/* Bóng đèn dự phòng cho dạng chưa có giao diện chữa riêng */
+.rvx-help-fallback { display: inline-flex; flex: 0 0 auto; align-items: center; }
+.rvx-help-fallback .rvx-help { width: 34px; height: 34px; font-size: 15px; }

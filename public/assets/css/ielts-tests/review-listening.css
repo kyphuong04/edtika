@@ -499,3 +499,18 @@ mark.rvl-ans.is-focus {
 .rvl-segbtn.rvl-seg-loop.is-on { background: var(--rs-brand); border-color: var(--rs-brand); color: #fff; }
 .rvl-segbtn.rvl-seg-close { width: 28px; padding: 0; justify-content: center; color: var(--rs-ink-soft); }
 .rvl-segbar.is-ended .rvl-seg-replay { background: var(--rs-brand); border-color: var(--rs-brand); color: #fff; }
+
+/* ── Bóng đèn mở sidebar Giải thích đáp án (như Reading) ─────────── */
+.exam-question-card.rvl-mcq--single { grid-template-columns: 64px minmax(0, 1fr) 40px; }
+.exam-question-card.rvl-mcq--single > .rvx-help { align-self: start; margin-top: 2px; width: 36px; height: 36px; font-size: 16px; }
+.rvl-opts.is-boxed .rvl-opt { grid-template-columns: 22px minmax(0, 1fr) 34px; }
+.rvl-opts.is-boxed .rvl-opt > .rvx-help { width: 32px; height: 32px; font-size: 14px; }
+.rvx-ls-card .rvx-help.rvx-help--sm,
+.rvx-flow-card .rvx-help.rvx-help--sm { margin-left: 6px; vertical-align: middle; }
+.rvx-dd-list.is-listening .rvx-dd-row { grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.25fr) 40px; }
+@media (max-width: 640px) {
+    .rvx-dd-list.is-listening .rvx-dd-row {
+        grid-template-columns: 44px minmax(0, 1fr) 34px;
+        grid-template-areas: "num st help" "num ans ans";
+    }
+}
