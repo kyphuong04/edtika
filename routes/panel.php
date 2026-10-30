@@ -433,6 +433,13 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             ->where('reportId', '[0-9]+')
             ->name('panel.ielts_answer_reports.toggle');
 
+        // Thông báo từ vựng lỗi — học viên báo lỗi từ vựng trong bộ từ do giáo viên tạo
+        Route::get('/vocabulary-reports', 'VocabularyWordReportController@index')->name('panel.vocabulary_word_reports.index');
+        Route::get('/vocabulary-reports/summary', 'VocabularyWordReportController@summary')->name('panel.vocabulary_word_reports.summary');
+        Route::post('/vocabulary-reports/{reportId}/toggle', 'VocabularyWordReportController@toggle')
+            ->where('reportId', '[0-9]+')
+            ->name('panel.vocabulary_word_reports.toggle');
+
         Route::get('/', 'NoticeboardController@index');
         Route::get('/new', 'NoticeboardController@create');
         Route::post('/store', 'NoticeboardController@store');
@@ -820,6 +827,7 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/flashcards/{id}/detail', 'DictionaryController@getFlashcardDetail');
         Route::get('/bundle-word-lists/{id}', 'DictionaryController@getBundleWordList');
         Route::post('/word-status/toggle', 'DictionaryController@toggleWordStatus');
+        Route::post('/word-report', 'DictionaryController@reportWord')->name('panel.dictionary.report_word');
         
         // Flashcard Management
         Route::get('/flashcards-preview', 'DictionaryController@flashcardsPreview');

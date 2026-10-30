@@ -2432,6 +2432,200 @@
         .pq-result__pill strong { font-size: 18px; }
         .pq-result__actions { grid-template-columns: 1fr; }
     }
+    /* ═════════════════════════════════════════════════════════
+     * Báo lỗi từ vựng (nút trong cửa sổ chi tiết từ + modal)
+     * ═════════════════════════════════════════════════════════ */
+    .word-detail-modal__actions {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 42px;
+    }
+    .word-detail-modal__report {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 36px;
+        padding: 0 16px;
+        border: 1.5px solid #511D99;
+        border-radius: 10px;
+        background: #fff;
+        color: #511D99;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .word-detail-modal__report:hover { background: #f5f0fd; }
+    .word-detail-modal__report:focus-visible { outline: 2px solid #511D99; outline-offset: 2px; }
+    .word-detail-modal__report.hidden { display: none !important; }
+    .dark-mode .word-detail-modal__report { background: transparent; color: #c4b5fd; border-color: #a78bfa; }
+
+    .vw-report {
+        position: fixed;
+        inset: 0;
+        z-index: 100001; /* trên cửa sổ chi tiết từ (99999) */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .vw-report[hidden] { display: none; }
+    .vw-report__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(30, 20, 60, .35);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+    }
+    .vw-report__dialog {
+        position: relative;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 560px;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+        margin: 0;
+        padding: 30px 32px 26px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(40, 16, 90, .25);
+    }
+    .vw-report__x {
+        position: absolute;
+        top: 18px;
+        right: 20px;
+        padding: 4px;
+        border: none;
+        background: transparent;
+        color: #511D99;
+        cursor: pointer;
+        line-height: 0;
+    }
+    .vw-report__title {
+        margin: 0 36px 10px 0;
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1.2;
+        color: #511D99;
+    }
+    .vw-report__sub { margin: 0 0 22px; font-size: 14px; line-height: 1.55; color: #5b4a86; }
+    .vw-report__label { display: block; margin: 0 0 8px; font-size: 16px; font-weight: 700; color: #511D99; }
+    .vw-report__textarea {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        min-height: 132px;
+        padding: 12px 14px;
+        border: 1.5px solid #d9cdf0;
+        border-radius: 10px;
+        background: #fcfbff;
+        color: #1e1b4b;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        resize: vertical;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .vw-report__textarea::placeholder { color: #a3a3b8; }
+    .vw-report__textarea:focus { border-color: #511D99; box-shadow: 0 0 0 3px rgba(81, 29, 153, .12); }
+    .vw-report__textarea:disabled { opacity: .7; }
+    .vw-report__count { margin-top: 6px; text-align: right; font-size: 13px; color: #6b6b85; }
+    .vw-report__count.is-full { color: #e11d48; font-weight: 600; }
+    .vw-report__msg { margin: 10px 0 0; padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+    .vw-report__msg.is-success { background: #ecfdf5; color: #15803d; }
+    .vw-report__msg.is-error { background: #fff1f2; color: #e11d48; }
+    .vw-report__actions { display: flex; justify-content: center; gap: 12px; margin-top: 26px; }
+    .vw-report__btn {
+        min-width: 180px;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s, opacity .2s;
+    }
+    .vw-report__btn--outline { background: #fff; color: #511D99; border: 1.5px solid #511D99; }
+    .vw-report__btn--outline:hover { background: #f5f0fd; }
+    .vw-report__btn--primary { background: #511D99; color: #fff; border: 1.5px solid #511D99; }
+    .vw-report__btn--primary:not(:disabled):hover { background: #43177f; }
+    .vw-report__btn--primary:disabled { opacity: .5; cursor: not-allowed; }
+    .vw-report__dialog.is-sent .vw-report__btn--primary { display: none; }
+    .dark-mode .vw-report__dialog { background: #1e293b; }
+    .dark-mode .vw-report__textarea { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+
+    @media (max-width: 575.98px) {
+        .word-detail-modal__report { padding: 0 10px; }
+        .word-detail-modal__report span { display: none; }
+        .vw-report__dialog { padding: 24px 18px 18px; }
+        .vw-report__title { font-size: 24px; }
+        .vw-report__actions { flex-direction: column-reverse; }
+        .vw-report__btn { width: 100%; min-width: 0; }
+    }
+
+    /* ═════════════════════════════════════════════════════════
+     * Khung ảnh minh hoạ từ vựng: ảnh 1:1, 3:2, dọc hay ngang đều
+     * hiện trọn vẹn (contain), không méo, không cắt. Phần trống được
+     * phủ bằng chính ảnh đó làm mờ.
+     * ═════════════════════════════════════════════════════════ */
+    .vc-media {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        background: #f3effb;
+    }
+    .vc-media__bg {
+        position: absolute;
+        inset: -24px;
+        z-index: 0;
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        filter: blur(18px) saturate(1.1);
+        opacity: .5;
+        transform: scale(1.05);
+        pointer-events: none;
+    }
+    .vc-media__img {
+        position: absolute !important;
+        inset: 0;
+        z-index: 1;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        object-fit: contain !important;
+        object-position: center;
+        display: block;
+    }
+    .vc-media__fallback {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 14px;
+    }
+    .dark-mode .vc-media { background: #0f172a; }
+
+    /* Thẻ flashcard (Luyện tập nâng cao PRO): khung 3:2, rộng tối đa 340px */
+    #flashcardVisual.vc-media {
+        width: 100%;
+        max-width: 340px;
+        aspect-ratio: 3 / 2;
+        height: auto;
+        margin-bottom: 6px;
+        border-radius: 14px;
+    }
+    /* Cửa sổ chi tiết từ: giữ khung 3:2 nhưng ảnh không còn bị cắt */
+    .wdc-image-wrap.vc-media img { object-fit: contain; }
+
 </style>
 @endpush
 
@@ -2636,9 +2830,11 @@
 
                             <div id="flashcardPartOfSpeech" style="display:inline-flex;align-items:center;gap:8px;font-size:15px;color:#334155;line-height:1.2;margin-bottom:18px;"></div>
 
-                            <div id="flashcardVisual" style="width:100%;max-width:340px;height:200px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                                <img id="flashcardImage" src="" alt="" style="max-width:100%;max-height:100%;display:none;object-fit:contain;">
-                                <div id="flashcardImageFallback" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px;padding:16px;">No image</div>
+                            {{-- Ảnh tỉ lệ nào (1:1, 3:2, dọc...) cũng hiện trọn trong khung, không méo / cắt --}}
+                            <div id="flashcardVisual" class="vc-media">
+                                <div class="vc-media__bg" id="flashcardImageBg" aria-hidden="true"></div>
+                                <img id="flashcardImage" class="vc-media__img" src="" alt="" style="display:none;">
+                                <div id="flashcardImageFallback" class="vc-media__fallback">No image</div>
                             </div>
                         </div>
 
@@ -2788,12 +2984,46 @@
     <div class="word-detail-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="wordDetailModalTitle">
         <div class="word-detail-modal__header">
             <div class="word-detail-modal__heading" id="wordDetailModalHeading"></div>
-            <button type="button" class="word-detail-modal__close js-word-detail-close" aria-label="Đóng">&times;</button>
+            <div class="word-detail-modal__actions">
+                <button type="button" class="word-detail-modal__report hidden" id="wdReportBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M5 21V4.5m0 0h11.2a.8.8 0 0 1 .64 1.28L14.5 9l2.34 3.22a.8.8 0 0 1-.64 1.28H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Báo lỗi</span>
+                </button>
+                <button type="button" class="word-detail-modal__close js-word-detail-close" aria-label="Đóng">&times;</button>
+            </div>
         </div>
         <div class="word-detail-modal__body" id="wordDetailModalBody">
             <div class="wdm-loading">Đang tải...</div>
         </div>
     </div>
+</div>
+
+{{-- ── Modal: báo lỗi từ vựng (mở từ nút "Báo lỗi" trong cửa sổ chi tiết từ) ── --}}
+<div class="vw-report" id="vwReport" aria-hidden="true" hidden>
+    <div class="vw-report__backdrop" data-vw-report-close></div>
+    <form class="vw-report__dialog" id="vwReportForm" role="dialog" aria-modal="true"
+          aria-labelledby="vwReportTitle" novalidate>
+        <button type="button" class="vw-report__x" data-vw-report-close aria-label="Đóng">
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+
+        <h3 class="vw-report__title" id="vwReportTitle">Báo lỗi từ vựng</h3>
+        <p class="vw-report__sub">Nếu bạn phát hiện nội dung từ vựng hoặc phần giải nghĩa chưa chính xác, hãy cho chúng tôi biết để cải thiện nội dung nhé!</p>
+
+        <label class="vw-report__label" for="vwReportMessage">Mô tả chi tiết</label>
+        <textarea class="vw-report__textarea" id="vwReportMessage" name="message" rows="5"
+                  maxlength="{{ \App\Models\VocabularyWordReport::MESSAGE_MAX }}"
+                  placeholder="Nhập nội dung cụ thể (tối đa {{ \App\Models\VocabularyWordReport::MESSAGE_MAX }} ký tự)..."></textarea>
+        <div class="vw-report__count" id="vwReportCount">0/{{ \App\Models\VocabularyWordReport::MESSAGE_MAX }}</div>
+        <p class="vw-report__msg" id="vwReportMsg" role="status" aria-live="polite" hidden></p>
+
+        <div class="vw-report__actions">
+            <button type="button" class="vw-report__btn vw-report__btn--outline" id="vwReportCancel" data-vw-report-close>Hủy</button>
+            <button type="submit" class="vw-report__btn vw-report__btn--primary" id="vwReportSubmit" disabled>Gửi báo cáo</button>
+        </div>
+    </form>
 </div>
 
 {{-- ── Modal: chọn chế độ luyện tập ─────────────────────────── --}}
@@ -2891,6 +3121,19 @@
     "use strict";
 
     $('#wordDetailModal').appendTo('body');
+
+    // ── Khung ảnh minh hoạ (.vc-media): nền mờ lấy từ chính ảnh ─────────
+    function vcCssUrl(url) {
+        return 'url("' + String(url || '').replace(/["\\\n\r]/g, function(ch) {
+            return encodeURIComponent(ch);
+        }) + '")';
+    }
+
+    function vcSetMediaBg(selector, url) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        el.style.backgroundImage = url ? vcCssUrl(url) : 'none';
+    }
 
     let currentWordListId = null;
     let currentWordListType = null;
@@ -3511,6 +3754,7 @@
             let wordHtml = `
                 <div class="word-item" data-word-id="${word.id}" data-word="${word.word}"
                      data-word-source="${wordSource}"
+                     data-reportable="${word.can_report ? 1 : 0}"
                      data-learned="${isLearned ? 1 : 0}"
                      data-review="${needsReview ? 1 : 0}"
                      data-star="${isStarred ? 1 : 0}">
@@ -4654,6 +4898,7 @@
             $('#flashcardExample').html('-');
             $('#flashcardAudioBtn').hide().data('audio', '');
             $('#flashcardImage').hide().attr('src', '');
+            vcSetMediaBg('#flashcardImageBg', '');
             $('#flashcardImageFallback').show();
             $('#flashcardCard').css('justify-content', 'flex-start');
             $('#flashcardFrontGroup, #flashcardFrontLabel').show();
@@ -4698,19 +4943,24 @@
         if (card.image_url) {
             const imageEl = document.getElementById('flashcardImage');
             const fallbackEl = document.getElementById('flashcardImageFallback');
+            const imageUrl = card.image_url;
             imageEl.style.display = 'none';
             fallbackEl.style.display = 'flex';
+            vcSetMediaBg('#flashcardImageBg', '');
             imageEl.onload = function() {
                 fallbackEl.style.display = 'none';
                 imageEl.style.display = 'block';
+                vcSetMediaBg('#flashcardImageBg', imageUrl);
             };
             imageEl.onerror = function() {
                 imageEl.style.display = 'none';
                 fallbackEl.style.display = 'flex';
+                vcSetMediaBg('#flashcardImageBg', '');
             };
-            imageEl.src = card.image_url;
+            imageEl.src = imageUrl;
         } else {
             $('#flashcardImage').hide().attr('src', '');
+            vcSetMediaBg('#flashcardImageBg', '');
             $('#flashcardImageFallback').show();
         }
 
@@ -4960,8 +5210,10 @@
         }
  
         if (d.image_url) {
-            body += '<div class="wdc-image-wrap">'
-                + '<img src="' + wdEsc(d.image_url) + '" alt="' + wdEsc('Hình minh hoạ cho ' + word) + '"'
+            // Khung 3:2, ảnh hiện trọn (contain) + nền mờ từ chính ảnh → không méo, không cắt
+            body += '<div class="wdc-image-wrap vc-media">'
+                + '<div class="vc-media__bg" aria-hidden="true" style="background-image:' + wdEsc(vcCssUrl(d.image_url)) + '"></div>'
+                + '<img class="vc-media__img" src="' + wdEsc(d.image_url) + '" alt="' + wdEsc('Hình minh hoạ cho ' + word) + '"'
                 + ' loading="lazy" onerror="this.parentNode.remove()">'
                 + '</div>';
         }
@@ -5080,6 +5332,7 @@
     function openWordDetailModal(wordText) {
         wdLastFocus = document.activeElement;
         wdStopAudio();
+        wdSetReportTarget(null);
  
         $wordDetailHeading.html(wdHeadingHtml(wordText, []));
         $wordDetailModalBody.html('<div class="wdm-loading">Đang tải...</div>').scrollTop(0);
@@ -5104,6 +5357,7 @@
     function closeWordDetailModal() {
         wdRequestId++;
         wdStopAudio();
+        vwReport.close(true);
  
         $wordDetailModal.removeClass('is-open').attr('aria-hidden', 'true');
         document.body.style.overflow = '';
@@ -5127,6 +5381,13 @@
         if (!wordText) return;
  
         const requestId = openWordDetailModal(wordText);
+
+        // Nút "Báo lỗi": chỉ từ thuộc bộ từ do giáo viên tạo (bundle / academic)
+        wdSetReportTarget(
+            String($item.attr('data-reportable')) === '1' && (wordSource === 'bundle' || wordSource === 'academic')
+                ? { source: wordSource, id: wordId, word: String(wordText) }
+                : null
+        );
  
         // ── Từ do teacher upload: lấy nội dung gốc từ bundle_vocabulary_words ──
         if (wordSource === 'bundle') {
@@ -5185,9 +5446,154 @@
     $(document).on('click', '.js-word-detail-close', closeWordDetailModal);
  
     $(document).on('keydown', function (e) {
-        if (e.key === 'Escape' && $wordDetailModal.hasClass('is-open')) {
+        if (e.key !== 'Escape') return;
+
+        // Đang mở cửa sổ báo lỗi (nằm trên) → chỉ đóng cửa sổ đó
+        if (vwReport.isOpen()) {
+            vwReport.close();
+            return;
+        }
+
+        if ($wordDetailModal.hasClass('is-open')) {
             closeWordDetailModal();
         }
+    });
+
+    // ── Báo lỗi từ vựng ────────────────────────────────────────────
+    let wdReportTarget = null;
+
+    function wdSetReportTarget(target) {
+        wdReportTarget = target;
+        $('#wdReportBtn').toggleClass('hidden', !target);
+    }
+
+    const vwReport = {
+        $root: $('#vwReport').appendTo('body'),
+        $form: $('#vwReportForm'),
+        $text: $('#vwReportMessage'),
+        $count: $('#vwReportCount'),
+        $submit: $('#vwReportSubmit'),
+        $cancel: $('#vwReportCancel'),
+        $msg: $('#vwReportMsg'),
+        target: null,
+        sending: false,
+        closeTimer: null,
+        returnFocus: null,
+
+        max() {
+            return parseInt(this.$text.attr('maxlength'), 10) || 300;
+        },
+
+        isOpen() {
+            return !this.$root.prop('hidden');
+        },
+
+        open(target, trigger) {
+            if (!target) return;
+            clearTimeout(this.closeTimer);
+
+            const sameWord = this.target && this.target.source === target.source
+                && String(this.target.id) === String(target.id);
+            const wasSent = this.$form.hasClass('is-sent');
+
+            this.target = target;
+            this.returnFocus = trigger || document.activeElement;
+
+            // Giữ nội dung đang gõ dở nếu mở lại đúng từ đó
+            if (!sameWord || wasSent) this.$text.val('');
+            this.$form.removeClass('is-sent');
+            this.$text.prop('disabled', false);
+            this.$cancel.text('Hủy');
+            this.showMessage('', '');
+            this.update();
+
+            this.$root.prop('hidden', false).attr('aria-hidden', 'false');
+            setTimeout(() => this.$text.trigger('focus'), 30);
+        },
+
+        close(silent) {
+            if (!this.isOpen()) return;
+            clearTimeout(this.closeTimer);
+            this.$root.prop('hidden', true).attr('aria-hidden', 'true');
+
+            if (!silent && this.returnFocus && document.body.contains(this.returnFocus)) {
+                this.returnFocus.focus();
+            }
+            this.returnFocus = null;
+        },
+
+        update() {
+            const len = this.$text.val().length;
+            this.$count.text(len + '/' + this.max()).toggleClass('is-full', len >= this.max());
+            this.$submit.prop('disabled', this.sending
+                || this.$form.hasClass('is-sent')
+                || this.$text.val().trim() === '');
+        },
+
+        showMessage(text, type) {
+            this.$msg.text(text || '')
+                .attr('class', 'vw-report__msg' + (type ? ' is-' + type : ''))
+                .prop('hidden', !text);
+        },
+
+        send() {
+            const message = this.$text.val().trim();
+            if (!this.target || !message || this.sending) return;
+
+            this.sending = true;
+            this.$submit.text('Đang gửi...');
+            this.update();
+            this.showMessage('', '');
+
+            $.ajax({
+                url: '/panel/dictionary/word-report',
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    source: this.target.source,
+                    id: this.target.id,
+                    message: message
+                }
+            })
+            .done((data) => {
+                if (data && data.status === 'ok') {
+                    this.$form.addClass('is-sent');
+                    this.$text.prop('disabled', true);
+                    this.$cancel.text('Đóng');
+                    this.showMessage(data.message || 'Đã gửi báo cáo. Cảm ơn bạn!', 'success');
+                    this.closeTimer = setTimeout(() => this.close(), 2200);
+                } else {
+                    this.showMessage((data && data.message) || 'Không gửi được báo cáo, hãy thử lại.', 'error');
+                }
+            })
+            .fail((xhr) => {
+                const data = (xhr && xhr.responseJSON) || {};
+                const firstError = data.errors ? Object.values(data.errors)[0] : null;
+                const text = (Array.isArray(firstError) ? firstError[0] : firstError)
+                    || data.message
+                    || (xhr && xhr.status === 419 ? 'Phiên làm việc đã hết hạn, hãy tải lại trang.' : 'Không gửi được báo cáo, hãy thử lại.');
+                this.showMessage(text, 'error');
+            })
+            .always(() => {
+                this.sending = false;
+                this.$submit.text('Gửi báo cáo');
+                this.update();
+            });
+        }
+    };
+
+    $('#wdReportBtn').on('click', function () {
+        vwReport.open(wdReportTarget, this);
+    });
+
+    vwReport.$text.on('input', function () { vwReport.update(); });
+    vwReport.$form.on('submit', function (e) {
+        e.preventDefault();
+        vwReport.send();
+    });
+    $(document).on('click', '[data-vw-report-close]', function () {
+        vwReport.close();
     });
     
 

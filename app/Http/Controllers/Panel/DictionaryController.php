@@ -13,6 +13,7 @@ use App\Models\AcademicWordListWord;
 use App\Models\Bundle;
 use App\Models\BundleVocabularySet;
 use App\Models\BundleVocabularyWord;
+use App\Models\VocabularyWordReport;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1326,8 +1327,11 @@ class DictionaryController extends Controller
             ], 403);
         }
 
+        // Báo lỗi từ vựng: chỉ bộ từ do giáo viên tạo mới nhận báo cáo
+        $canReport = VocabularyWordReport::recipientFor($wordList->creator, $user) !== null;
+
         // Get user progress for each word
-        $words = $wordList->words->map(function($word) use ($user) {
+        $words = $wordList->words->map(function($word) use ($user, $canReport) {
             $progress = UserWordProgress::where('user_id', $user->id)
                 ->where('academic_word_list_word_id', $word->id)
                 ->first();
@@ -1345,6 +1349,7 @@ class DictionaryController extends Controller
                 'practice_count' => $progress ? $progress->practice_count : 0,
                 'correct_count' => $progress ? $progress->correct_count : 0,
                 'word_source' => 'academic',
+                'can_report' => $canReport,
             ];
         });
 
@@ -1756,7 +1761,15 @@ class DictionaryController extends Controller
             ->get()
             ->keyBy('flashcard_id');
 
-        $flashcards = $myWordList->flashcards->map(function ($flashcard) use ($progressByFlashcard) {
+        // Báo lỗi từ vựng: bộ từ (bundle) nào có giáo viên nhận báo cáo
+        $reportableSetIds = $this->reportableBundleSetIds(
+            $user,
+            $myWordList->flashcards->map(function ($f) {
+                return optional($f->bundleWord)->vocabulary_set_id;
+            })->filter()->unique()->values()->all()
+        );
+
+        $flashcards = $myWordList->flashcards->map(function ($flashcard) use ($progressByFlashcard, $reportableSetIds) {
             $progress = $progressByFlashcard->get($flashcard->id);
             $bw       = $flashcard->bundleWord;   // null nếu là từ tự lưu
 
@@ -1779,6 +1792,7 @@ class DictionaryController extends Controller
                 'is_starred'        => $progress ? (bool) $progress->is_starred : false,
                 'practice_count'    => $progress ? $progress->practice_count : 0,
                 'correct_count'     => $progress ? $progress->correct_count : 0,
+                'can_report'        => $bw && in_array((int) $bw->vocabulary_set_id, $reportableSetIds, true),
             ];
         });
 
@@ -2028,7 +2042,9 @@ class DictionaryController extends Controller
             ->get()
             ->keyBy('flashcard_id');
 
-        return $words->map(function ($word, $i) use ($flashcards, $progressByFlashcard) {
+        $canReport = in_array($setId, $this->reportableBundleSetIds($user, [$setId]), true);
+
+        return $words->map(function ($word, $i) use ($flashcards, $progressByFlashcard, $canReport) {
             $flashcard = $flashcards[$i];
             $progress  = $progressByFlashcard->get($flashcard->id);
 
@@ -2051,8 +2067,153 @@ class DictionaryController extends Controller
                 'is_starred'        => $progress ? (bool) $progress->is_starred : false,
                 'practice_count'    => $progress ? $progress->practice_count : 0,
                 'correct_count'     => $progress ? $progress->correct_count : 0,
+                'can_report'        => $canReport,
             ];
         })->values();
+    }
+
+    /**
+     * Trong các bộ từ (bundle) cho trước, bộ nào có giáo viên nhận báo lỗi từ vựng.
+     *
+     * @return int[]
+     */
+    private function reportableBundleSetIds($user, array $setIds): array
+    {
+        if (empty($setIds)) {
+            return [];
+        }
+
+        return BundleVocabularySet::query()
+            ->with('creator')
+            ->whereIn('id', $setIds)
+            ->get()
+            ->filter(function ($set) use ($user) {
+                return VocabularyWordReport::recipientFor($set->creator, $user) !== null;
+            })
+            ->pluck('id')
+            ->map(function ($id) { return (int) $id; })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Học viên báo lỗi nội dung 1 từ vựng từ cửa sổ chi tiết từ.
+     * Báo cáo gửi tới giáo viên tạo bộ từ, xem tại
+     * Panel > Bảng thông báo > Thông báo từ vựng lỗi (Panel\VocabularyWordReportController).
+     *
+     * source = bundle   → id là user_flashcards.id (thẻ của học viên ứng với từ giáo viên upload)
+     * source = academic → id là academic_word_list_words.id
+     */
+    public function reportWord(Request $request)
+    {
+        $data = $request->validate([
+            'source'  => 'required|in:' . VocabularyWordReport::SOURCE_BUNDLE . ',' . VocabularyWordReport::SOURCE_ACADEMIC,
+            'id'      => 'required|integer',
+            'message' => 'required|string|max:' . VocabularyWordReport::MESSAGE_MAX,
+        ], [
+            'message.required' => 'Hãy mô tả lỗi bạn phát hiện.',
+            'message.max'      => 'Mô tả tối đa ' . VocabularyWordReport::MESSAGE_MAX . ' ký tự.',
+        ]);
+
+        $user    = Auth::user();
+        $message = trim($data['message']);
+
+        if ($message === '') {
+            return response()->json(['status' => 'error', 'message' => 'Hãy mô tả lỗi bạn phát hiện.'], 422);
+        }
+
+        $flashcardId = null;
+
+        if ($data['source'] === VocabularyWordReport::SOURCE_BUNDLE) {
+            $flashcard = Flashcard::with('bundleWord.vocabularySet.creator')
+                ->where('user_id', $user->id)
+                ->find((int) $data['id']);
+
+            $wordModel = $flashcard ? $flashcard->bundleWord : null;
+            $set       = $wordModel ? $wordModel->vocabularySet : null;
+
+            if (!$wordModel || !$set) {
+                return response()->json(['status' => 'error', 'message' => 'Không tìm thấy từ vựng.'], 404);
+            }
+
+            $flashcardId = $flashcard->id;
+            $creator     = $set->creator;
+            $snapshot    = [
+                'set_id'          => $set->id,
+                'set_name'        => $set->name,
+                'word_id'         => $wordModel->id,
+                'word'            => $wordModel->word,
+                'part_of_speech'  => $wordModel->part_of_speech,
+                'current_meaning' => $wordModel->translation_vi ?: $wordModel->definition,
+            ];
+        } else {
+            $wordModel = AcademicWordListWord::with('academicWordList.creator')->find((int) $data['id']);
+            $list      = $wordModel ? $wordModel->academicWordList : null;
+
+            if (!$wordModel || !$list) {
+                return response()->json(['status' => 'error', 'message' => 'Không tìm thấy từ vựng.'], 404);
+            }
+
+            if (!$list->hasAccess($user->id)) {
+                return response()->json(['status' => 'error', 'message' => 'Bạn không có quyền truy cập bộ từ này.'], 403);
+            }
+
+            $creator  = $list->creator;
+            $snapshot = [
+                'set_id'          => $list->id,
+                'set_name'        => $list->name,
+                'word_id'         => $wordModel->id,
+                'word'            => $wordModel->word,
+                'part_of_speech'  => $wordModel->part_of_speech ?? null,
+                'current_meaning' => $wordModel->translation ?: $wordModel->definition,
+            ];
+        }
+
+        $teacher = VocabularyWordReport::recipientFor($creator, $user);
+        if (!$teacher) {
+            return response()->json(['status' => 'error', 'message' => 'Bộ từ này không nhận báo lỗi.'], 403);
+        }
+
+        // Chống gửi trùng: cùng người, cùng từ, báo cáo trước chưa xử lý xong.
+        $pending = VocabularyWordReport::where('user_id', $user->id)
+            ->where('source', $data['source'])
+            ->where('word_id', $snapshot['word_id'])
+            ->where('status', VocabularyWordReport::STATUS_NEW)
+            ->exists();
+
+        if ($pending) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Bạn đã báo lỗi từ này rồi, chúng tôi đang kiểm tra.',
+            ], 429);
+        }
+
+        $recent = VocabularyWordReport::where('user_id', $user->id)
+            ->where('created_at', '>=', time() - 3600)
+            ->count();
+
+        if ($recent >= 20) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Bạn đã gửi quá nhiều báo cáo, hãy thử lại sau.',
+            ], 429);
+        }
+
+        VocabularyWordReport::create(array_merge($snapshot, [
+            'user_id'      => $user->id,
+            'teacher_id'   => $teacher->id,
+            'source'       => $data['source'],
+            'flashcard_id' => $flashcardId,
+            'word'         => mb_substr((string) $snapshot['word'], 0, 255),
+            'set_name'     => $snapshot['set_name'] !== null ? mb_substr((string) $snapshot['set_name'], 0, 255) : null,
+            'message'      => $message,
+            'status'       => VocabularyWordReport::STATUS_NEW,
+        ]));
+
+        return response()->json([
+            'status'  => 'ok',
+            'message' => 'Cảm ơn bạn! Báo cáo đã được gửi, chúng tôi sẽ kiểm tra sớm.',
+        ]);
     }
 
     /**

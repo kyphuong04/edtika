@@ -1,5 +1,7 @@
 {{--
-    Thông báo đề lỗi — tự cập nhật không cần tải lại trang (chỉ giáo viên).
+    Thông báo đề lỗi / Thông báo từ vựng lỗi — tự cập nhật không cần tải lại trang (chỉ giáo viên).
+    Dùng chung cho nhiều trang báo cáo, truyền tham số khi @include (mặc định = Thông báo đề lỗi):
+      pollSummaryUrl, pollPagePath, pollLabel, pollToast, pollPrefix (tiền tố id: {prefix}Live / Stats / Table)
     Cứ 20 giây hỏi server 1 lần (tạm dừng khi tab bị ẩn, hỏi ngay khi quay lại):
       - Sidebar: đổi số "Thông báo đề lỗi (N)".
       - Có báo cáo mới: hiện toast; nếu đang ở trang danh sách thì tải lại
@@ -9,12 +11,14 @@
     (function () {
         "use strict";
 
-        var SUMMARY_URL = @json(route('panel.ielts_answer_reports.summary'));
-        var PAGE_PATH = '/panel/noticeboard/answer-reports';
-        var LABEL = 'Thông báo đề lỗi';
+        var SUMMARY_URL = @json($pollSummaryUrl ?? route('panel.ielts_answer_reports.summary'));
+        var PAGE_PATH = @json($pollPagePath ?? '/panel/noticeboard/answer-reports');
+        var LABEL = @json($pollLabel ?? 'Thông báo đề lỗi');
+        var TOAST = @json($pollToast ?? 'Có báo cáo đề lỗi mới từ học viên.');
+        var PREFIX = @json($pollPrefix ?? 'ar');
         var INTERVAL = 20000;
 
-        var live = document.getElementById('arLive');
+        var live = document.getElementById(PREFIX + 'Live');
         var latestId = live ? parseInt(live.dataset.latestId, 10) || 0 : null;
         var timer = null;
         var busy = false;
@@ -38,7 +42,7 @@
 
         function notify() {
             if (typeof window.showToast !== 'function') return;
-            window.showToast('success', LABEL, 'Có báo cáo đề lỗi mới từ học viên.');
+            window.showToast('success', LABEL, TOAST);
         }
 
         /** Đang ở trang danh sách: tải lại thống kê + bảng theo đúng URL (giữ bộ lọc, trang). */
@@ -49,14 +53,14 @@
                     if (!html) return;
                     var doc = new DOMParser().parseFromString(html, 'text/html');
 
-                    ['arStats', 'arTable'].forEach(function (id) {
+                    [PREFIX + 'Stats', PREFIX + 'Table'].forEach(function (id) {
                         var fresh = doc.getElementById(id);
                         var current = document.getElementById(id);
                         if (fresh && current) current.innerHTML = fresh.innerHTML;
                     });
 
-                    document.querySelectorAll('#arTable tr[data-report-id]').forEach(function (tr) {
-                        if ((parseInt(tr.dataset.reportId, 10) || 0) > previousLatest) tr.classList.add('ar-row-new');
+                    document.querySelectorAll('#' + PREFIX + 'Table tr[data-report-id]').forEach(function (tr) {
+                        if ((parseInt(tr.dataset.reportId, 10) || 0) > previousLatest) tr.classList.add(PREFIX + '-row-new');
                     });
                 });
         }

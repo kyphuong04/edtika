@@ -701,6 +701,19 @@ class SidebarItems
                 'text' => 'Thông báo đề lỗi' . ($newReports > 0 ? " ({$newReports})" : ''),
                 'url' => '/panel/noticeboard/answer-reports',
             ];
+
+            // Thông báo từ vựng lỗi — học viên báo lỗi từ vựng trong bộ từ do giáo viên tạo.
+            $newWordReports = 0;
+            try {
+                $newWordReports = \App\Models\VocabularyWordReport::newCountFor((int) $user->id);
+            } catch (\Throwable $e) {
+                // Chưa chạy migration -> không hiện số.
+            }
+
+            $items['noticeboard']['items'][] = [
+                'text' => 'Thông báo từ vựng lỗi' . ($newWordReports > 0 ? " ({$newWordReports})" : ''),
+                'url' => '/panel/noticeboard/vocabulary-reports',
+            ];
         }
 
         // AI Contents
