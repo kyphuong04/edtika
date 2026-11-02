@@ -629,6 +629,11 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
         Route::post('/attempt/{attemptId}/retake', 'IeltsTestController@retakeTest')->name('panel.ielts_tests.retake');
 
+        // Chia sẻ bài làm (link công khai + ảnh 1:1 theo mức điểm)
+        Route::post('/attempt/{attemptId}/share', 'IeltsAttemptShareController@store')->name('panel.ielts_tests.share.store');
+        Route::post('/attempt/{attemptId}/share/shuffle', 'IeltsAttemptShareController@shuffle')->name('panel.ielts_tests.share.shuffle');
+        Route::post('/attempt/{attemptId}/share/disable', 'IeltsAttemptShareController@disable')->name('panel.ielts_tests.share.disable');
+
         Route::get('/attempt/{attemptId}/review', 'IeltsTestController@reviewAnswers')->name('panel.ielts_tests.review');
         Route::post('/attempt/{attemptId}/report-answer', 'IeltsTestController@reportAnswer')->name('panel.ielts_tests.report_answer');
         Route::post('/attempt/{attemptId}/mistake-reason', 'IeltsTestController@saveMistakeReason')->name('panel.ielts_tests.mistake_reason');

@@ -1377,6 +1377,19 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
                 ->where('tier', 'low|mid|high')
                 ->name('admin.ielts_result_banners.reset');
 
+            // Banner 1:1 khi chia sẻ bài làm lên mạng xã hội (Manager / CEO)
+            Route::get('/share-banners', 'IeltsShareBannerController@index')
+                ->name('admin.ielts_share_banners.index');
+            Route::post('/share-banners/{tier}/upload', 'IeltsShareBannerController@upload')
+                ->where('tier', 'low|mid|high')
+                ->name('admin.ielts_share_banners.upload');
+            Route::post('/share-banners/{id}/toggle', 'IeltsShareBannerController@toggle')
+                ->where('id', '[0-9]+')
+                ->name('admin.ielts_share_banners.toggle');
+            Route::post('/share-banners/{id}/delete', 'IeltsShareBannerController@destroy')
+                ->where('id', '[0-9]+')
+                ->name('admin.ielts_share_banners.delete');
+
             Route::post('/store', 'IeltsTestController@store')->name('admin.ielts_tests.store');
             Route::get('/{id}/edit', 'IeltsTestController@edit')->name('admin.ielts_tests.edit');
             Route::post('/{id}/update', 'IeltsTestController@update')->name('admin.ielts_tests.update');

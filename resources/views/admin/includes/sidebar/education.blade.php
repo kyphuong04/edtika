@@ -204,6 +204,9 @@
                             <li class="{{ request()->is(getAdminPanelUrl('/ielts-tests/result-banners', false)) ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/result-banners">Banner trang kết quả</a>
                             </li>
+                            <li class="{{ request()->is(getAdminPanelUrl('/ielts-tests/share-banners', false)) ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ getAdminPanelUrl() }}/ielts-tests/share-banners">Banner chia sẻ bài làm</a>
+                            </li>
                         @endif
                     </ul>
                 </li>

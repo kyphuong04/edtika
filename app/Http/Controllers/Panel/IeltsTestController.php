@@ -916,7 +916,45 @@ class IeltsTestController extends Controller
             && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
 
         $test = $attempt->test;
-        $reviewUrl = route('panel.ielts_tests.review', $attempt->id);
+        $data = $this->attemptResultData($attempt, route('panel.ielts_tests.review', $attempt->id));
+
+        // Preview của giáo viên luôn làm lại được; học viên thì theo canUserTake().
+        $canRetake = !empty($attempt->is_preview) || $test->canUserTake($attempt->user_id) === true;
+
+        return view('design_1.panel.ielts_tests.results', $data + [
+            'pageTitle' => 'Results: ' . $test->title,
+            'justContent' => true,
+            'attempt' => $attempt,
+            'test' => $test,
+            'canRetake' => $canRetake,
+            'retakeUrl' => route('panel.ielts_tests.retake', $attempt->id),
+            'backUrl' => $test->type === 'mock'
+                ? route('panel.ielts_tests.mock')
+                : route('panel.ielts_tests.practice'),
+            'isMentorPreview' => $isMentorPreview,
+            'mentorPreviewExitUrl' => $isMentorPreview
+                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
+                : null,
+            // Bài xem trước của giáo viên không chia sẻ được.
+            'shareMeta' => empty($attempt->is_preview) ? IeltsAttemptShareController::modalMeta($attempt) : null,
+        ]);
+    }
+
+    /**
+     * Số liệu trang kết quả (Overall) của 1 bài làm — dùng chung cho trang
+     * kết quả của học viên và link chia sẻ công khai (Web\IeltsShareController).
+     *
+     * $reviewUrl: URL gốc trang chữa bài (nối thêm ?section= / ?skill=).
+     * $includeManualReview = false: không tạo link chữa Writing / Speaking
+     * (link chia sẻ chỉ công khai bài chữa Listening / Reading).
+     *
+     * @return array{skills: array, summary: array, byType: array, overallBand: ?float,
+     *               pendingManual: array, ratio: ?float, tier: string, banner: array,
+     *               durationLabel: string, reviewUrl: ?string}
+     */
+    public function attemptResultData(IeltsTestAttempt $attempt, string $reviewUrl, bool $includeManualReview = true): array
+    {
+        $test = $attempt->test;
 
         $skillOrder = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
         $skillLabels = [
@@ -970,7 +1008,7 @@ class IeltsTestController extends Controller
                     'graded' => $graded,
                     'band' => ($graded && $band !== null) ? (float) $band : null,
                     'criteria' => $rows,
-                    'reviewUrl' => $reviewUrl . '?skill=' . $skill,
+                    'reviewUrl' => $includeManualReview ? $reviewUrl . '?skill=' . $skill : null,
                 ];
                 continue;
             }
@@ -1037,7 +1075,7 @@ class IeltsTestController extends Controller
         } else {
             $ratio = (empty($pendingManual) && $overallBand !== null) ? $overallBand / 9 : null;
         }
-        $banner = IeltsResultBanner::forTier(IeltsResultBanner::tierForRatio($ratio));
+        $tier = IeltsResultBanner::tierForRatio($ratio);
 
         $seconds = ($attempt->started_at && $attempt->completed_at)
             ? max(0, (int) $attempt->completed_at - (int) $attempt->started_at)
@@ -1046,32 +1084,21 @@ class IeltsTestController extends Controller
             ? '--:--:--'
             : sprintf('%02d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
 
-        // Preview của giáo viên luôn làm lại được; học viên thì theo canUserTake().
-        $canRetake = !empty($attempt->is_preview) || $test->canUserTake($attempt->user_id) === true;
+        // Link "Xem giải thích": kỹ năng đầu tiên có trang chữa bài.
+        $firstReviewUrl = collect($skills)->pluck('reviewUrl')->filter()->first();
 
-        return view('design_1.panel.ielts_tests.results', [
-            'pageTitle' => 'Results: ' . $test->title,
-            'justContent' => true,
-            'attempt' => $attempt,
-            'test' => $test,
+        return [
             'skills' => $skills,
             'summary' => $summary,
             'byType' => array_values($byLabel),
             'overallBand' => $overallBand,
             'pendingManual' => $pendingManual,
-            'banner' => $banner,
+            'ratio' => $ratio,
+            'tier' => $tier,
+            'banner' => IeltsResultBanner::forTier($tier),
             'durationLabel' => $durationLabel,
-            'reviewUrl' => $skills[0]['reviewUrl'] ?? $reviewUrl,
-            'canRetake' => $canRetake,
-            'retakeUrl' => route('panel.ielts_tests.retake', $attempt->id),
-            'backUrl' => $test->type === 'mock'
-                ? route('panel.ielts_tests.mock')
-                : route('panel.ielts_tests.practice'),
-            'isMentorPreview' => $isMentorPreview,
-            'mentorPreviewExitUrl' => $isMentorPreview
-                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
-                : null,
-        ]);
+            'reviewUrl' => $includeManualReview ? ($firstReviewUrl ?? $reviewUrl) : $firstReviewUrl,
+        ];
     }
 
     /**
@@ -1268,11 +1295,53 @@ class IeltsTestController extends Controller
 
         $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)
             && ((int) session('mentor_preview_test_id', 0) === (int) $attempt->test_id);
-        $mentorPreviewExitUrl = $isMentorPreview
-            ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
-            : null;
+
+        return $this->renderReviewPage($attempt, $request, [
+            'public' => false,
+            'isOwner' => $isOwner,
+            'viewer' => $authUser,
+            'reviewUrl' => route('panel.ielts_tests.review', $attempt->id),
+            'resultsUrl' => $isOwner ? route('panel.ielts_tests.results', $attempt->id) : null,
+            'logoUrl' => $attempt->test->type === 'mock'
+                ? route('panel.ielts_tests.mock')
+                : route('panel.ielts_tests.practice'),
+            'isMentorPreview' => $isMentorPreview,
+            'mentorPreviewExitUrl' => $isMentorPreview
+                ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
+                : null,
+            'shareMeta' => ($isOwner && empty($attempt->is_preview))
+                ? IeltsAttemptShareController::modalMeta($attempt)
+                : null,
+        ]);
+    }
+
+    /**
+     * Dựng trang chữa bài của 1 bài làm đã nộp. Dùng chung cho:
+     *  - học viên / giáo viên trong panel (reviewAnswers),
+     *  - link chia sẻ công khai (Web\IeltsShareController, $ctx['public'] = true):
+     *    chỉ Listening / Reading…, ẩn ghi chú highlight, báo lỗi, "Vì sao làm sai",
+     *    nút Làm lại; Writing / Speaking chuyển về trang kết quả.
+     *
+     * $ctx: public, isOwner, viewer (?User), reviewUrl, resultsUrl, logoUrl,
+     *       isMentorPreview, mentorPreviewExitUrl, shareMeta, studentName,
+     *       layoutView, viewExtra (biến view thêm cho layout công khai).
+     */
+    public function renderReviewPage(IeltsTestAttempt $attempt, Request $request, array $ctx)
+    {
+        $isPublic = !empty($ctx['public']);
+        $isOwner = !$isPublic && !empty($ctx['isOwner']);
+        $viewer = $ctx['viewer'] ?? null;
+        $reviewUrl = $ctx['reviewUrl'];
+        $isMentorPreview = !empty($ctx['isMentorPreview']);
+        $mentorPreviewExitUrl = $ctx['mentorPreviewExitUrl'] ?? null;
 
         $sections = $attempt->test->sections->sortBy('sort_order')->values();
+        $isManualSkill = fn ($s) => in_array($s->skill, ['writing', 'speaking'], true);
+
+        // Link công khai: chỉ chữa các kỹ năng chấm tự động.
+        if ($isPublic) {
+            $sections = $sections->reject($isManualSkill)->values();
+        }
 
         $section = null;
         if ($request->filled('section')) {
@@ -1285,8 +1354,12 @@ class IeltsTestController extends Controller
             $section = $sections->first();
         }
 
+        if ($isPublic && !$section) {
+            return redirect()->to($ctx['resultsUrl']);
+        }
+
         // Writing / Speaking (hoặc đề không có section): giao diện cũ.
-        if (!$section || in_array($section->skill, ['writing', 'speaking'], true)) {
+        if (!$section || $isManualSkill($section)) {
             return view('design_1.panel.ielts_tests.review', [
                 'pageTitle' => trans('update.review_answers'),
                 'attempt' => $attempt,
@@ -1308,7 +1381,12 @@ class IeltsTestController extends Controller
         // ── Đáp án học viên: cùng shape với takeTest() ────────────────
         $answersByQuestion = $attempt->answers->keyBy('question_id');
 
-        $savedAnswers = $attempt->answers->mapWithKeys(fn ($answer) => [
+        // Link công khai: chỉ đáp án của phần đang xem (không lộ bản ghi âm Speaking…).
+        $visibleAnswers = $isPublic
+            ? $attempt->answers->whereIn('question_id', $section->questions->pluck('id')->all())
+            : $attempt->answers;
+
+        $savedAnswers = $visibleAnswers->mapWithKeys(fn ($answer) => [
             $answer->question_id => [
                 'answer_text' => $answer->answer_text,
                 'answer_options' => $answer->answer_options_array,
@@ -1344,19 +1422,16 @@ class IeltsTestController extends Controller
         }
 
         // ── Tab chuyển kỹ năng (Mock nhiều kỹ năng) ───────────────────
-        $reviewUrl = route('panel.ielts_tests.review', $attempt->id);
-        $sectionTabs = $sections->map(function ($s) use ($sections, $section, $reviewUrl) {
+        $sectionTabs = $sections->map(function ($s) use ($sections, $section, $reviewUrl, $isManualSkill) {
             $sameSkill = $sections->where('skill', $s->skill)->values();
             $label = ucfirst($s->skill);
             if ($sameSkill->count() > 1) {
                 $label .= ' ' . ($sameSkill->search(fn ($x) => $x->id === $s->id) + 1);
             }
 
-            $isManual = in_array($s->skill, ['writing', 'speaking'], true);
-
             return [
                 'label' => $label,
-                'url' => $reviewUrl . ($isManual ? '?skill=' . $s->skill : '?section=' . $s->id),
+                'url' => $reviewUrl . ($isManualSkill($s) ? '?skill=' . $s->skill : '?section=' . $s->id),
                 'active' => $s->id === $section->id,
             ];
         })->values();
@@ -1373,6 +1448,7 @@ class IeltsTestController extends Controller
         ];
 
         // ── Highlight + ghi chú học viên tạo lúc làm bài (chỉ xem) ─────
+        //    Link công khai: giữ phần tô màu, ẩn nội dung ghi chú cá nhân.
         $highlights = IeltsAttemptHighlight::where('attempt_id', $attempt->id)
             ->orderBy('start_offset')
             ->get(['id', 'part_id', 'start_offset', 'end_offset', 'text', 'note'])
@@ -1382,20 +1458,20 @@ class IeltsTestController extends Controller
                 'start' => $r->start_offset,
                 'end' => $r->end_offset,
                 'text' => $r->text,
-                'note' => $r->note,
+                'note' => $isPublic ? null : $r->note,
             ])->values());
 
         // Chỉ chính học viên mới làm lại / xem trang kết quả được.
         $canRetake = $isOwner
             && (!empty($attempt->is_preview) || $attempt->test->canUserTake($attempt->user_id) === true);
 
-        $backUrl = $attempt->test->type === 'mock'
-            ? route('panel.ielts_tests.mock')
-            : route('panel.ielts_tests.practice');
+        $studentName = $ctx['studentName']
+            ?? ($isOwner ? null : ($attempt->user->full_name ?? $attempt->user->name ?? ''));
 
-        return view('design_1.panel.ielts_tests.attempt.review', [
+        return view('design_1.panel.ielts_tests.attempt.review', ($ctx['viewExtra'] ?? []) + [
             'pageTitle' => 'Review: ' . $attempt->test->title,
             'justContent' => true,
+            'layoutView' => $ctx['layoutView'] ?? null,
             'attempt' => $attempt,
             'test' => $attempt->test,
             'isMentorPreview' => $isMentorPreview,
@@ -1406,16 +1482,19 @@ class IeltsTestController extends Controller
             'highlights' => $highlights,
             'canRetake' => $canRetake,
             'retakeUrl' => route('panel.ielts_tests.retake', $attempt->id),
+            'shareMeta' => $ctx['shareMeta'] ?? null,
             'topbar' => [
                 'active' => 'breakdown',
-                'logoUrl' => $backUrl,
-                'overallUrl' => $isOwner ? route('panel.ielts_tests.results', $attempt->id) : null,
+                'logoUrl' => $ctx['logoUrl'] ?? url('/'),
+                'overallUrl' => $ctx['resultsUrl'] ?? null,
                 'breakdownUrl' => $request->fullUrl(),
                 'stats' => $stats,
                 'canRetake' => $canRetake,
-                'studentName' => $isOwner ? null : ($attempt->user->full_name ?? $attempt->user->name ?? ''),
+                'studentName' => $studentName,
                 'sections' => $sectionTabs->all(),
                 'extraClass' => 'rvx-topbar',
+                'share' => !empty($ctx['shareMeta']),
+                'cta' => $ctx['cta'] ?? null,
             ],
             'attemptMeta' => [
                 'attemptId' => $attempt->id,
@@ -1429,14 +1508,15 @@ class IeltsTestController extends Controller
                 'score' => $score,
                 'total' => $total,
                 'band' => $skillBand !== null ? (float) $skillBand : null,
-                'resultsUrl' => $isOwner ? route('panel.ielts_tests.results', $attempt->id) : null,
-                'reportUrl' => IeltsAnswerReport::recipientFor($attempt->test, $authUser)
+                'resultsUrl' => $ctx['resultsUrl'] ?? null,
+                'reportUrl' => (!$isPublic && $viewer && IeltsAnswerReport::recipientFor($attempt->test, $viewer))
                     ? route('panel.ielts_tests.report_answer', $attempt->id)
                     : null,
                 'skillLabel' => IeltsAnswerReport::SKILL_LABELS[$section->skill] ?? ('IELTS ' . ucfirst($section->skill)),
                 'reportMax' => IeltsAnswerReport::MESSAGE_MAX,
                 // "Vì sao bạn làm sai câu này?" — chỉ học viên làm bài mới chọn được (url = null -> chỉ xem).
-                'mistake' => [
+                // Link công khai: ẩn hẳn mục này.
+                'mistake' => $isPublic ? null : [
                     'url' => $isOwner ? route('panel.ielts_tests.mistake_reason', $attempt->id) : null,
                     'reasons' => IeltsAttemptMistakeReason::optionsFor($section->skill),
                     'other' => IeltsAttemptMistakeReason::OTHER,

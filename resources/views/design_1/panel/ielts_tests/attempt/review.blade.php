@@ -1,4 +1,4 @@
-@extends('design_1.panel.layouts.panel')
+@extends($layoutView ?? 'design_1.panel.layouts.panel')
 
 @php
     $assetV = fn (string $path) => asset($path) . '?v=' . (is_file(public_path($path)) ? filemtime(public_path($path)) : time());
@@ -135,6 +135,10 @@
 
 @if(!empty($canRetake))
     @include('design_1.panel.ielts_tests.partials.retake_modal', ['retakeUrl' => $retakeUrl])
+@endif
+
+@if(!empty($shareMeta))
+    @include('design_1.panel.ielts_tests.partials.share_modal', ['shareMeta' => $shareMeta])
 @endif
 @endsection
 

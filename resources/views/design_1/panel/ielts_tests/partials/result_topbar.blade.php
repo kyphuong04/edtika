@@ -12,7 +12,11 @@
         'studentName'  => null | tên học viên (khi giáo viên xem bài),
         'sections'     => [] | [['label', 'url', 'active']] — đề nhiều kỹ năng,
         'extraClass'   => class thêm cho thẻ header,
+        'share'        => bool — hiện nút "Chia sẻ bài làm" (kèm partials.share_modal),
+        'cta'          => null | ['label', 'url'] — nút kêu gọi trên link chia sẻ công khai,
     ]
+
+    breakdownUrl = null: tab Breakdown bị khoá (link công khai của đề chỉ có Writing / Speaking).
 --}}
 @php
     $tb = $topbar ?? [];
@@ -32,8 +36,12 @@
             @else
                 <span class="rs-tab is-disabled" title="Chỉ học viên làm bài mới xem được trang này">Overall</span>
             @endif
-            <a href="{{ $tb['breakdownUrl'] ?? '#' }}" class="rs-tab {{ $tbActive === 'breakdown' ? 'is-active' : '' }}"
-               @if($tbActive === 'breakdown') aria-current="page" @endif>Breakdown</a>
+            @if(!empty($tb['breakdownUrl']))
+                <a href="{{ $tb['breakdownUrl'] }}" class="rs-tab {{ $tbActive === 'breakdown' ? 'is-active' : '' }}"
+                   @if($tbActive === 'breakdown') aria-current="page" @endif>Breakdown</a>
+            @else
+                <span class="rs-tab is-disabled" title="Đề này không có phần chữa bài Listening / Reading">Breakdown</span>
+            @endif
         </nav>
 
         @if(count($tbSections) > 1)
@@ -74,8 +82,14 @@
                 <i class="fas fa-redo-alt" aria-hidden="true"></i> Làm lại
             </button>
         @endif
-        <button type="button" class="rs-btn rs-btn--primary" disabled title="Tính năng đang được phát triển">
-            <i class="fas fa-share-alt" aria-hidden="true"></i> Chia sẻ bài làm
-        </button>
+        @if(!empty($tb['share']))
+            <button type="button" class="rs-btn rs-btn--primary" data-share-open aria-haspopup="dialog">
+                <i class="fas fa-share-alt" aria-hidden="true"></i> Chia sẻ bài làm
+            </button>
+        @elseif(!empty($tb['cta']['url']))
+            <a href="{{ $tb['cta']['url'] }}" class="rs-btn rs-btn--primary">
+                <i class="fas fa-pen" aria-hidden="true"></i> {{ $tb['cta']['label'] ?? 'Làm thử đề này' }}
+            </a>
+        @endif
     </div>
 </header>

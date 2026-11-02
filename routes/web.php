@@ -116,6 +116,12 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
 
     Route::get('/', 'HomeController@index');
 
+    // Link chia sẻ bài làm IELTS — xem không cần đăng nhập (og:* cho Facebook / Threads / LinkedIn)
+    Route::group(['prefix' => 'ielts-share'], function () {
+        Route::get('/{token}', 'IeltsShareController@show')->name('ielts_share.show');
+        Route::get('/{token}/review', 'IeltsShareController@review')->name('ielts_share.review');
+    });
+
     Route::get('/getDefaultAvatar', 'DefaultAvatarController@make');
 
     Route::group(['prefix' => 'course'], function () {

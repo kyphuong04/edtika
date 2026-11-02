@@ -534,9 +534,16 @@
 
 @include('design_1.web.includes.purchase_notifications')
 
-{{-- Thông báo đề lỗi: tự cập nhật số trên sidebar + trang danh sách (giáo viên) --}}
+{{-- Thông báo đề lỗi / Thông báo từ vựng lỗi: tự cập nhật số trên sidebar + trang danh sách (giáo viên) --}}
 @if(auth()->check() && auth()->user()->isTeacher())
     @include('design_1.panel.ielts_tests_manage.partials.answer_report_poller')
+    @include('design_1.panel.ielts_tests_manage.partials.answer_report_poller', [
+        'pollSummaryUrl' => route('panel.vocabulary_word_reports.summary'),
+        'pollPagePath' => '/panel/noticeboard/vocabulary-reports',
+        'pollLabel' => 'Thông báo từ vựng lỗi',
+        'pollToast' => 'Có báo cáo lỗi từ vựng mới từ học viên.',
+        'pollPrefix' => 'wr',
+    ])
 @endif
 
 

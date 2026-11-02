@@ -1,4 +1,4 @@
-﻿@extends('design_1.panel.layouts.panel')
+﻿@extends($layoutView ?? 'design_1.panel.layouts.panel')
 
 @push('styles_top')
 @php
@@ -33,6 +33,10 @@
         'overallUrl' => request()->url(),
         'breakdownUrl' => $reviewUrl,
         'canRetake' => $canRetake,
+        // Link chia sẻ công khai: "Bài làm của …" + nút Làm thử đề này.
+        'studentName' => $publicStudentName ?? null,
+        'share' => !empty($shareMeta),
+        'cta' => $cta ?? null,
     ]])
 
     <main class="rs-main">
@@ -43,7 +47,7 @@
                 <img src="{{ $banner['url'] }}" alt="{{ $banner['alt'] }}">
             </div>
 
-            <div class="rs-overview">
+            <div class="rs-overview{{ empty($reviewUrl) ? ' rs-overview--single' : '' }}">
                 <div class="rs-card rs-result">
                     <h2 class="rs-card-title">Kết quả làm bài</h2>
 
@@ -92,7 +96,7 @@
                             </div>
                         @else
                             <div class="rs-pending-note">
-                                Bài Writing/Speaking của bạn đang chờ giáo viên chấm. Điểm và nhận xét sẽ hiện ở đây khi chấm xong.
+                                Bài Writing/Speaking{{ empty($publicStudentName) ? ' của bạn' : '' }} đang chờ giáo viên chấm. Điểm và nhận xét sẽ hiện ở đây khi chấm xong.
                             </div>
                         @endif
                     </div>
@@ -104,6 +108,7 @@
                     @endif
                 </div>
 
+                @if(!empty($reviewUrl))
                 <a href="{{ $reviewUrl }}" class="rs-card rs-explain">
                     <span class="rs-explain-icon"><i class="fas fa-book-open" aria-hidden="true"></i></span>
                     <span class="rs-explain-body">
@@ -112,6 +117,7 @@
                     </span>
                     <span class="rs-explain-arrow"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>
                 </a>
+                @endif
             </div>
 
             @if(!empty($byType))
@@ -156,6 +162,10 @@
 
 @if($canRetake)
     @include('design_1.panel.ielts_tests.partials.retake_modal', ['retakeUrl' => $retakeUrl])
+@endif
+
+@if(!empty($shareMeta))
+    @include('design_1.panel.ielts_tests.partials.share_modal', ['shareMeta' => $shareMeta])
 @endif
 @endsection
 
