@@ -14,6 +14,9 @@ use App\Models\Bundle;
 use App\Models\BundleVocabularySet;
 use App\Models\BundleVocabularyWord;
 use App\Models\VocabularyWordReport;
+use App\Models\DictionarySearchHistory;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +34,12 @@ class DictionaryController extends Controller
     // Using Free Dictionary API - free, no key required, has UK + US pronunciation audio
     private $freeDictBaseUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en';
     private int $lastSkippedDuplicates = 0;
+
+    /** Số folder từ vựng tối đa mỗi học viên (tính cả folder mặc định "My Word List"). */
+    private const WORD_FOLDER_LIMIT = 5;
+
+    /** word_lists.category của folder học viên: 'user' = folder mặc định, 'folder' = folder tự tạo. */
+    private const WORD_FOLDER_CATEGORIES = ['user', 'folder'];
 
     public function publicIndex()
     {
@@ -147,8 +156,16 @@ class DictionaryController extends Controller
 
         $academicWordLists = $academicWordLists->concat($bundleAcademicWordLists)->values();
 
-        // My Word List only contains user-saved words from dictionary search
+        // My Word List: các folder từ vựng học viên tự tạo (folder mặc định "My Word List" + tối đa 4 folder khác)
         $myWordList = $this->getOrCreatePersonalWordList($user);
+        $wordFolders = $this->userFolderQuery($user)
+            ->orderByRaw("CASE WHEN category = 'user' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->get()
+            ->map(function (WordList $folder) {
+                return $this->formatWordFolder($folder);
+            })
+            ->values();
 
         // Get user stats
         $userStats = [
@@ -171,6 +188,8 @@ class DictionaryController extends Controller
             'hasApiKey' => true, // Free Dictionary API – no key required
             'academicWordLists' => $academicWordLists,
             'myWordList' => $myWordList,
+            'wordFolders' => $wordFolders,
+            'wordFolderLimit' => self::WORD_FOLDER_LIMIT,
             'userStats' => $userStats,
             'authUser' => $user,
             'canManageBundleVocabulary' => $canManageBundleVocabulary,
@@ -251,14 +270,29 @@ class DictionaryController extends Controller
     public function searchFirst(Request $request)
     {
         // Accept both 'query', 'word', and 'q' parameters
-        $query = strtolower(trim($request->input('query', $request->input('word', $request->get('q', '')))));
+        $query = mb_strtolower(trim((string) $request->input('query', $request->input('word', $request->get('q', '')))));
 
-        if (empty($query)) {
+        if ($query === '') {
             return response()->json([
                 'success' => false,
                 'message' => 'Query is required'
             ], 400);
         }
+
+        $user = Auth::user();
+
+        // 1. Bộ từ nội bộ học viên có quyền (bundle đã mua + Academic Word List được mở):
+        //    có nghĩa tiếng Việt, collocation, ví dụ do giáo viên soạn → ưu tiên hiển thị.
+        $internalEntries = [];
+        try {
+            $internalEntries = $user ? $this->lookupInternalVocabulary($user, $query) : [];
+        } catch (\Throwable $e) {
+            Log::warning('Internal vocabulary lookup failed', ['query' => $query, 'message' => $e->getMessage()]);
+        }
+
+        // 2. Free Dictionary API: phiên âm, audio, các nghĩa tiếng Anh.
+        $transformedData = null;
+        $apiError = null;
 
         try {
             $url = $this->freeDictBaseUrl . '/' . urlencode($query);
@@ -271,50 +305,381 @@ class DictionaryController extends Controller
                 'status' => $response->status(),
             ]);
 
-            if ($response->status() === 404) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No definition found for "' . $query . '"',
-                    'data'    => null
-                ]);
+            if ($response->successful()) {
+                $apiData = $response->json();
+
+                if (!empty($apiData) && is_array($apiData) && isset($apiData[0])) {
+                    // Merge all entries for the same word (different parts of speech come as separate items)
+                    $transformedData = $this->transformDictionaryData($apiData[0], $apiData);
+                }
+            } elseif ($response->status() !== 404) {
+                $apiError = 'Dictionary API request failed (HTTP ' . $response->status() . ')';
             }
-
-            if (!$response->successful()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Dictionary API request failed (HTTP ' . $response->status() . ')',
-                ], 500);
-            }
-
-            $apiData = $response->json();
-
-            if (empty($apiData) || !is_array($apiData)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No definition found for "' . $query . '"',
-                    'data'    => null
-                ]);
-            }
-
-            // Merge all entries for the same word (different parts of speech come as separate items)
-            $transformedData = $this->transformDictionaryData($apiData[0], $apiData);
-
-            return response()->json([
-                'success' => true,
-                'data'    => $transformedData
-            ]);
-
         } catch (\Exception $e) {
             Log::error('Dictionary API error', [
                 'query'   => $query,
                 'message' => $e->getMessage(),
             ]);
+            $apiError = 'Error: ' . $e->getMessage();
+        }
+
+        if (!$transformedData && empty($internalEntries)) {
+            if ($apiError) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $apiError,
+                ], 500);
+            }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ], 500);
+                'message' => 'No definition found for "' . $query . '"',
+                'data'    => null
+            ]);
         }
+
+        $data = $transformedData ?: $this->buildDictionaryDataFromEntries($query, $internalEntries);
+        $data['entries'] = $this->buildDictionaryEntries($data, $internalEntries);
+        $data['source'] = empty($internalEntries) ? 'api' : ($transformedData ? 'mixed' : 'internal');
+
+        // Lịch sử tra từ: chỉ ghi khi học viên tra ở ô tìm kiếm (history=1), không ghi khi mở chi tiết từ.
+        if ($user && $request->boolean('history')) {
+            try {
+                DictionarySearchHistory::record((int) $user->id, $data['headword'] ?: $query);
+            } catch (\Throwable $e) {
+                // Chưa chạy migration → bỏ qua lịch sử.
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data
+        ]);
+    }
+
+    /* =================================================================
+     * Dictionary Hub: thẻ kết quả theo từ loại
+     * ================================================================= */
+
+    /** Gom tên từ loại về 1 khoá chung (n / noun / danh từ → noun ...). */
+    private function canonicalPartOfSpeech($pos): string
+    {
+        $key = mb_strtolower(trim((string) $pos));
+        $key = trim($key, " .()");
+
+        $map = [
+            'n' => 'noun', 'noun' => 'noun', 'danh từ' => 'noun',
+            'v' => 'verb', 'verb' => 'verb', 'động từ' => 'verb',
+            'adj' => 'adjective', 'adjective' => 'adjective', 'tính từ' => 'adjective',
+            'adv' => 'adverb', 'adverb' => 'adverb', 'trạng từ' => 'adverb',
+            'prep' => 'preposition', 'preposition' => 'preposition', 'giới từ' => 'preposition',
+            'conj' => 'conjunction', 'conjunction' => 'conjunction', 'liên từ' => 'conjunction',
+            'pron' => 'pronoun', 'pronoun' => 'pronoun', 'đại từ' => 'pronoun',
+            'interj' => 'interjection', 'interjection' => 'interjection', 'thán từ' => 'interjection',
+            'phrasal verb' => 'phrasal verb', 'cụm động từ' => 'phrasal verb',
+        ];
+
+        return $map[$key] ?? $key;
+    }
+
+    /** Tách chuỗi nhiều dòng / ngăn bằng "|" thành danh sách. */
+    private function splitVocabularyLines($text, string $pattern = '/\r?\n|\|/'): array
+    {
+        $text = trim((string) $text);
+        if ($text === '') {
+            return [];
+        }
+
+        return collect(preg_split($pattern, $text))
+            ->map(function ($line) { return trim(preg_replace('/^\s*(?:[-•*]|\d+[.)])\s+/u', '', (string) $line)); })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Tra từ trong các bộ từ nội bộ mà học viên được học:
+     * bộ từ khoá học (đã duyệt + đã mua) và Academic Word List đang mở.
+     */
+    private function lookupInternalVocabulary($user, string $query): array
+    {
+        $groups = [];
+
+        $push = function (array $row) use (&$groups) {
+            $key = $this->canonicalPartOfSpeech($row['part_of_speech']);
+
+            if (!isset($groups[$key])) {
+                $groups[$key] = [
+                    'part_of_speech' => $row['part_of_speech'] ?: null,
+                    'pos_key'        => $key,
+                    'translation'    => null,
+                    'definition'     => null,
+                    'collocation'    => null,
+                    'examples'       => [],
+                    'pronunciation'  => null,
+                    'audio_url'      => null,
+                    'level'          => null,
+                    'source'         => $row['source'],
+                ];
+            }
+
+            foreach (['translation', 'definition', 'collocation', 'pronunciation', 'audio_url', 'level'] as $field) {
+                if (empty($groups[$key][$field]) && !empty($row[$field])) {
+                    $groups[$key][$field] = $row[$field];
+                }
+            }
+
+            $groups[$key]['examples'] = array_values(array_unique(array_merge(
+                $groups[$key]['examples'],
+                $this->splitVocabularyLines($row['example'])
+            )));
+        };
+
+        $setIds = $this->getApprovedBundleVocabularySetsForUser($user)->pluck('id')->all();
+
+        if (!empty($setIds)) {
+            BundleVocabularyWord::query()
+                ->whereIn('vocabulary_set_id', $setIds)
+                ->whereRaw('LOWER(word) = ?', [$query])
+                ->orderBy('vocabulary_set_id')
+                ->orderBy('sort_order')
+                ->limit(20)
+                ->get()
+                ->each(function ($w) use ($push) {
+                    $push([
+                        'source'         => 'bundle',
+                        'part_of_speech' => $w->part_of_speech,
+                        'translation'    => $w->translation_vi,
+                        'definition'     => $w->definition,
+                        'collocation'    => $w->collocation,
+                        'example'        => $w->example,
+                        'pronunciation'  => $w->pronunciation,
+                        'audio_url'      => $this->sanitizeExternalUrl($w->audio_url),
+                        'level'          => $w->cefr_level ?? null,
+                    ]);
+                });
+        }
+
+        AcademicWordListWord::query()
+            ->with('academicWordList')
+            ->whereRaw('LOWER(word) = ?', [$query])
+            ->limit(20)
+            ->get()
+            ->filter(function ($w) use ($user) {
+                $list = $w->academicWordList;
+                return $list && $list->is_active && $list->hasAccess($user->id);
+            })
+            ->each(function ($w) use ($push) {
+                $push([
+                    'source'         => 'academic',
+                    'part_of_speech' => $w->part_of_speech ?? null,
+                    'translation'    => $w->translation,
+                    'definition'     => $w->definition,
+                    'collocation'    => $w->collocation ?? null,
+                    'example'        => $w->example,
+                    'pronunciation'  => $w->pronunciation,
+                    'audio_url'      => null,
+                    'level'          => $w->cefr_level ?? null,
+                ]);
+            });
+
+        // Bỏ nghĩa tiếng Việt trùng định nghĩa (bộ từ không có cột riêng)
+        foreach ($groups as &$group) {
+            if ($group['translation'] && $group['definition']
+                && mb_strtolower($group['translation']) === mb_strtolower($group['definition'])) {
+                $group['definition'] = null;
+            }
+            $group['examples'] = array_slice($group['examples'], 0, 5);
+        }
+        unset($group);
+
+        return array_values($groups);
+    }
+
+    /** API không có từ này nhưng bộ từ nội bộ có → dựng dữ liệu cùng cấu trúc với API. */
+    private function buildDictionaryDataFromEntries(string $query, array $entries): array
+    {
+        $pron = collect($entries)->pluck('pronunciation')->filter()->first();
+        $audio = collect($entries)->pluck('audio_url')->filter()->first();
+
+        $data = [
+            'headword'       => $query,
+            'pronunciations' => ($pron || $audio) ? [['label' => '', 'ipa' => $pron ?: '', 'audio' => $audio ?: '']] : [],
+            'meanings'       => [],
+            'synonyms'       => [],
+            'antonyms'       => [],
+        ];
+
+        foreach ($entries as $entry) {
+            $data['meanings'][] = [
+                'partOfSpeech' => $entry['part_of_speech'] ?: '',
+                'definitions'  => [[
+                    'definition' => $entry['definition'] ?: ($entry['translation'] ?: ''),
+                    'example'    => $entry['examples'][0] ?? '',
+                    'synonyms'   => [],
+                    'antonyms'   => [],
+                ]],
+                'synonyms' => [],
+                'antonyms' => [],
+            ];
+        }
+
+        $data['htmlContent'] = $this->generateHtmlContent($data);
+
+        return $data;
+    }
+
+    /**
+     * Danh sách thẻ hiển thị ở Dictionary Hub, mỗi từ loại 1 thẻ.
+     * Từ loại có trong bộ từ nội bộ dùng dữ liệu nội bộ; từ loại chỉ API có thì
+     * lấy định nghĩa + ví dụ từ API và dịch nghĩa sang tiếng Việt.
+     */
+    private function buildDictionaryEntries(array $data, array $internalEntries): array
+    {
+        $word = (string) ($data['headword'] ?? '');
+        $firstPron = $data['pronunciations'][0] ?? [];
+        $defaultIpa = trim((string) ($firstPron['ipa'] ?? ''));
+        $defaultAudio = (string) collect($data['pronunciations'] ?? [])->pluck('audio')->filter()->first();
+
+        $entries = [];
+        $usedKeys = [];
+
+        foreach ($internalEntries as $entry) {
+            $usedKeys[$entry['pos_key']] = true;
+
+            $entries[] = [
+                'part_of_speech' => $entry['part_of_speech'],
+                'translation'    => $entry['translation'],
+                'definition'     => $entry['definition'],
+                'collocation'    => $entry['collocation'],
+                'examples'       => $entry['examples'],
+                'pronunciation'  => $entry['pronunciation'] ?: $defaultIpa,
+                'audio_url'      => $entry['audio_url'] ?: $defaultAudio,
+                'level'          => $entry['level'],
+                'source'         => $entry['source'],
+            ];
+        }
+
+        $apiGroups = [];
+        foreach ($data['meanings'] ?? [] as $meaning) {
+            $key = $this->canonicalPartOfSpeech($meaning['partOfSpeech'] ?? '');
+            if (isset($usedKeys[$key])) {
+                continue;
+            }
+
+            if (!isset($apiGroups[$key])) {
+                $apiGroups[$key] = [
+                    'part_of_speech' => $meaning['partOfSpeech'] ?? null,
+                    'definitions'    => [],
+                    'examples'       => [],
+                    'synonyms'       => [],
+                ];
+            }
+
+            foreach ($meaning['definitions'] ?? [] as $def) {
+                if (!empty($def['definition'])) {
+                    $apiGroups[$key]['definitions'][] = $def['definition'];
+                }
+                if (!empty($def['example'])) {
+                    $apiGroups[$key]['examples'][] = $def['example'];
+                }
+            }
+
+            $apiGroups[$key]['synonyms'] = array_merge($apiGroups[$key]['synonyms'], $meaning['synonyms'] ?? []);
+        }
+
+        if (!empty($apiGroups)) {
+            $translation = $this->translateHeadwordToVietnamese($word);
+
+            foreach ($apiGroups as $group) {
+                $definitions = array_values(array_unique($group['definitions']));
+
+                $entries[] = [
+                    'part_of_speech' => $group['part_of_speech'],
+                    'translation'    => $translation,
+                    'definition'     => $definitions[0] ?? null,
+                    'definitions'    => array_slice($definitions, 0, 3),
+                    'collocation'    => null,
+                    'examples'       => array_slice(array_values(array_unique($group['examples'])), 0, 3),
+                    'synonyms'       => array_slice(array_values(array_unique($group['synonyms'])), 0, 6),
+                    'pronunciation'  => $defaultIpa,
+                    'audio_url'      => $defaultAudio,
+                    'level'          => null,
+                    'source'         => 'api',
+                ];
+            }
+        }
+
+        return $entries;
+    }
+
+    /** Nghĩa tiếng Việt ngắn cho từ tra từ API (Google Translate), cache 30 ngày. */
+    private function translateHeadwordToVietnamese(string $word): ?string
+    {
+        $word = trim($word);
+        if ($word === '') {
+            return null;
+        }
+
+        try {
+            return Cache::remember('dict_hub_vi:' . md5(mb_strtolower($word)), now()->addDays(30), function () use ($word) {
+                if (!class_exists(GoogleTranslate::class)) {
+                    return '';
+                }
+
+                $translator = new GoogleTranslate('vi', 'en', ['timeout' => 5, 'connect_timeout' => 3]);
+                $result = trim((string) $translator->translate($word));
+
+                return mb_strtolower($result) === mb_strtolower($word) ? '' : $result;
+            }) ?: null;
+        } catch (\Throwable $e) {
+            Log::warning('Dictionary hub translation failed', ['word' => $word, 'message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /** 10 từ tra gần nhất của học viên. */
+    public function searchHistory()
+    {
+        $items = [];
+
+        try {
+            $items = DictionarySearchHistory::where('user_id', Auth::id())
+                ->orderByDesc('searched_at')
+                ->orderByDesc('id')
+                ->limit(DictionarySearchHistory::SHOW_LIMIT)
+                ->get(['id', 'query', 'searched_at'])
+                ->map(function ($h) {
+                    return ['id' => $h->id, 'query' => $h->query, 'searched_at' => (int) $h->searched_at];
+                })
+                ->values();
+        } catch (\Throwable $e) {
+            // Chưa chạy migration → trả rỗng.
+        }
+
+        return response()->json(['success' => true, 'data' => $items]);
+    }
+
+    /** Xoá 1 mục (id) hoặc toàn bộ lịch sử (all=1). */
+    public function deleteSearchHistory(Request $request)
+    {
+        $request->validate([
+            'id'  => 'nullable|integer',
+            'all' => 'nullable|boolean',
+        ]);
+
+        $query = DictionarySearchHistory::where('user_id', Auth::id());
+
+        if ($request->boolean('all')) {
+            $query->delete();
+        } elseif ($request->filled('id')) {
+            $query->where('id', (int) $request->id)->delete();
+        } else {
+            return response()->json(['success' => false, 'message' => 'Missing history item'], 422);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -845,30 +1210,31 @@ class DictionaryController extends Controller
     public function bulkDeleteFromMyWordList(Request $request)
     {
         $request->validate([
+            'folder_id'       => 'nullable|integer',
             'flashcard_ids'   => 'required|array|min:1',
             'flashcard_ids.*' => 'exists:user_flashcards,id',
         ]);
 
         $user = Auth::user();
+        $folder = $this->resolveUserFolder($user, $request->input('folder_id'));
 
-        $deleted = Flashcard::where('user_id', $user->id)
+        // Chỉ bỏ từ khỏi folder đang xem; từ còn ở folder khác thì giữ nguyên.
+        $ids = Flashcard::where('user_id', $user->id)
             ->whereIn('id', $request->flashcard_ids)
-            ->delete();
+            ->pluck('id');
 
-        // Recalculate word_count on My Word List
-        $myWordList = WordList::where('user_id', $user->id)
-            ->where('category', 'user')
-            ->where('name', 'My Word List')
-            ->first();
+        $deleted = 0;
 
-        if ($myWordList) {
-            $myWordList->updateWordCount();
-        }
+        DB::transaction(function () use ($user, $folder, $ids, &$deleted) {
+            $deleted = $folder->flashcards()->detach($ids->all());
+            $folder->updateWordCount();
+            $this->deleteOrphanUserFlashcards($user, $ids);
+        });
 
         return response()->json([
             'success' => true,
             'deleted' => $deleted,
-            'message' => $deleted . ' word(s) deleted successfully',
+            'message' => 'Đã xoá ' . $deleted . ' từ khỏi "' . $folder->name . '".',
         ]);
     }
 
@@ -964,59 +1330,91 @@ class DictionaryController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'word'        => 'required|string|max:255',
-            'definition'  => 'required|string',
+            'folder_id'      => 'nullable|integer',
+            'word'           => 'required|string|max:255',
+            'definition'     => 'nullable|string',
+            'translation'    => 'nullable|string',
             'part_of_speech' => 'nullable|string|max:50',
             'pronunciation'  => 'nullable|string|max:255',
             'example'        => 'nullable|string',
+            'collocation'    => 'nullable|string',
+            'audio_url'      => 'nullable|string|max:2000',
         ]);
 
-        // Get or create the user's personal word list
-        $wordList = WordList::firstOrCreate(
-            [
-                'user_id'  => $user->id,
-                'category' => 'user',
-                'name'     => 'My Word List',
-            ],
-            [
-                'description' => 'My personal vocabulary collection',
-                'is_public'   => false,
-                'word_count'  => 0,
-            ]
-        );
+        $word = trim($request->word);
+        $definition = trim((string) $request->definition);
+        $translation = trim((string) $request->translation);
 
-        // Upsert the underlying flashcard record
-        $flashcard = Flashcard::updateOrCreate(
-            [
-                'user_id'        => $user->id,
-                'source'         => 'user',
-                'word'           => $request->word,
-                'part_of_speech' => $request->part_of_speech,
-            ],
-            [
-                'definition'    => $request->definition,
-                'pronunciation' => $request->pronunciation,
-                'example'       => $request->example,
-            ]
-        );
-
-        // Already in list?
-        if ($wordList->flashcards()->where('user_flashcards.id', $flashcard->id)->exists()) {
+        if ($definition === '' && $translation === '') {
             return response()->json([
                 'success' => false,
-                'message' => trans('panel.word_already_in_list'),
+                'message' => trans('panel.word_definition_not_found'),
+            ], 422);
+        }
+
+        $folder = $this->resolveUserFolder($user, $request->input('folder_id'));
+        $partOfSpeech = $request->part_of_speech !== null && trim($request->part_of_speech) !== ''
+            ? trim($request->part_of_speech)
+            : null;
+
+        $flashcard = Flashcard::query()
+            ->where('user_id', $user->id)
+            ->where('source', Flashcard::SOURCE_USER)
+            ->where('word', $word)
+            ->where('part_of_speech', $partOfSpeech)
+            ->first();
+
+        // Đã có trong folder này → báo trùng, KHÔNG ghi đè nội dung đã lưu.
+        if ($flashcard && $folder->flashcards()->where('user_flashcards.id', $flashcard->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Từ "' . $word . '" đã có trong "' . $folder->name . '".',
             ], 400);
         }
 
-        $maxOrder = $wordList->flashcards()->max('flashcard_word_list.order') ?? 0;
-        $wordList->flashcards()->attach($flashcard->id, ['order' => $maxOrder + 1]);
-        $wordList->updateWordCount();
+        $fields = [
+            'definition'    => $definition !== '' ? $definition : $translation,
+            'translation'   => $translation !== '' ? $translation : null,
+            'pronunciation' => $request->pronunciation,
+            'example'       => $request->example,
+        ];
+
+        if ($this->flashcardHasColumn('collocation')) {
+            $fields['collocation'] = $request->collocation;
+        }
+        if ($this->flashcardHasColumn('audio_url')) {
+            $fields['audio_url'] = $request->audio_url;
+        }
+
+        DB::transaction(function () use ($user, $folder, $word, $partOfSpeech, $fields, &$flashcard) {
+            if ($flashcard) {
+                // Từ đã nằm ở folder khác: chỉ bổ sung các trường còn trống.
+                foreach ($fields as $key => $value) {
+                    if (($flashcard->{$key} === null || $flashcard->{$key} === '') && $value !== null && $value !== '') {
+                        $flashcard->{$key} = $value;
+                    }
+                }
+                $flashcard->save();
+            } else {
+                $flashcard = Flashcard::create(array_merge($fields, [
+                    'user_id'        => $user->id,
+                    'source'         => Flashcard::SOURCE_USER,
+                    'word'           => $word,
+                    'part_of_speech' => $partOfSpeech,
+                ]));
+            }
+
+            $maxOrder = $folder->flashcards()->max('flashcard_word_list.order') ?? 0;
+            $folder->flashcards()->attach($flashcard->id, ['order' => $maxOrder + 1]);
+            $folder->updateWordCount();
+        });
 
         return response()->json([
             'success' => true,
-            'message' => trans('panel.word_added_to_list_successfully'),
+            'message' => 'Đã lưu "' . $word . '" vào "' . $folder->name . '".',
             'data'    => [
-                'word_count' => $wordList->word_count,
+                'folder'     => $this->formatWordFolder($folder->fresh()),
+                'word_count' => $folder->word_count,
             ],
         ]);
     }
@@ -1517,18 +1915,19 @@ class DictionaryController extends Controller
     public function startMyWordListPractice(Request $request)
     {
         $request->validate([
+            'folder_id' => 'nullable|integer',
             'flashcard_ids' => 'nullable|array',
             'flashcard_ids.*' => 'exists:user_flashcards,id',
         ]);
 
         $user = Auth::user();
 
-        $myWordList = $this->getOrCreatePersonalWordList($user);
+        $myWordList = $this->resolveUserFolder($user, $request->input('folder_id'));
 
-        if (!$myWordList || $myWordList->flashcards()->count() < 1) {
+        if ($myWordList->flashcards()->count() < 1) {
             return response()->json([
                 'success' => false,
-                'message' => 'My Word List not found'
+                'message' => 'Word List này chưa có từ nào.'
             ], 404);
         }
 
@@ -1745,10 +2144,10 @@ class DictionaryController extends Controller
     /**
      * Get My Word List details
      */
-    public function getMyWordList()
+    public function getMyWordList(Request $request)
     {
         $user = Auth::user();
-        $myWordList = $this->getOrCreatePersonalWordList($user);
+        $myWordList = $this->resolveUserFolder($user, $request->input('folder_id'));
 
         if (!$myWordList) {
             return response()->json(['success' => false, 'message' => 'My Word List not found'], 404);
@@ -1784,8 +2183,8 @@ class DictionaryController extends Controller
                 'definition'        => $bw->definition    ?? $flashcard->definition,
                 'translation'       => $bw->translation_vi ?? $flashcard->translation,
                 'example'           => $bw->example       ?? $flashcard->example,
-                'audio_url'         => $bw->audio_url     ?? null,
-                'collocation'       => $bw->collocation   ?? null,
+                'audio_url'         => $bw->audio_url     ?? $flashcard->audio_url,
+                'collocation'       => $bw->collocation   ?? $flashcard->collocation,
                 'image_url'         => $bw->image_url     ?? null,
                 'is_learned'        => $progress ? (bool) $progress->is_learned : false,
                 'needs_review'      => $progress ? (bool) $progress->needs_review : false,
@@ -1803,6 +2202,7 @@ class DictionaryController extends Controller
                 'name'        => $myWordList->name,
                 'description' => $myWordList->description,
                 'word_count'  => $myWordList->word_count,
+                'is_default'  => $myWordList->category === 'user',
                 'source'      => 'my',
                 'flashcards'  => $flashcards,
             ],
@@ -1980,18 +2380,238 @@ class DictionaryController extends Controller
 
     private function getOrCreatePersonalWordList($user): WordList
     {
-        return WordList::with('flashcards')->firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'category' => 'user',
-                'name' => 'My Word List'
+        // Tìm theo category (không theo tên) vì học viên được đổi tên folder mặc định.
+        $existing = WordList::with('flashcards')
+            ->where('user_id', $user->id)
+            ->where('category', 'user')
+            ->orderBy('id')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return WordList::create([
+            'user_id' => $user->id,
+            'category' => 'user',
+            'name' => 'My Word List',
+            'description' => 'My personal vocabulary collection',
+            'is_public' => false,
+            'word_count' => 0,
+        ])->load('flashcards');
+    }
+
+    /* =================================================================
+     * Folder từ vựng của học viên (tab My Word List)
+     * ================================================================= */
+
+    private function userFolderQuery($user)
+    {
+        return WordList::query()
+            ->where('user_id', $user->id)
+            ->whereIn('category', self::WORD_FOLDER_CATEGORIES);
+    }
+
+    /** Folder theo id (phải là của học viên). Không truyền id → folder mặc định. */
+    private function resolveUserFolder($user, $folderId = null): WordList
+    {
+        if (empty($folderId)) {
+            return $this->getOrCreatePersonalWordList($user);
+        }
+
+        return $this->userFolderQuery($user)->findOrFail((int) $folderId);
+    }
+
+    private function formatWordFolder(WordList $folder): array
+    {
+        return [
+            'id' => $folder->id,
+            'name' => $folder->name,
+            'description' => $folder->description,
+            'word_count' => (int) $folder->word_count,
+            'is_default' => $folder->category === 'user',
+        ];
+    }
+
+    /** Cột mới của user_flashcards có thể chưa có nếu chưa chạy migrate. */
+    private function flashcardHasColumn(string $column): bool
+    {
+        static $cache = [];
+
+        if (!array_key_exists($column, $cache)) {
+            try {
+                $cache[$column] = Schema::hasColumn('user_flashcards', $column);
+            } catch (\Throwable $e) {
+                $cache[$column] = false;
+            }
+        }
+
+        return $cache[$column];
+    }
+
+    /** Xoá flashcard tự lưu không còn nằm trong folder nào (dọn rác sau khi bỏ khỏi folder). */
+    private function deleteOrphanUserFlashcards($user, $flashcardIds): void
+    {
+        $ids = collect($flashcardIds)->map(function ($id) { return (int) $id; })->filter()->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $stillUsed = DB::table('flashcard_word_list')
+            ->whereIn('flashcard_id', $ids)
+            ->pluck('flashcard_id')
+            ->map(function ($id) { return (int) $id; })
+            ->unique();
+
+        $orphanIds = $ids->diff($stillUsed)->values();
+
+        if ($orphanIds->isEmpty()) {
+            return;
+        }
+
+        Flashcard::query()
+            ->where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->where('source', Flashcard::SOURCE_USER)->orWhereNull('source');
+            })
+            ->whereIn('id', $orphanIds)
+            ->delete();
+    }
+
+    /** Danh sách folder của học viên. */
+    public function wordFolders()
+    {
+        $user = Auth::user();
+        $this->getOrCreatePersonalWordList($user);
+
+        $folders = $this->userFolderQuery($user)
+            ->orderByRaw("CASE WHEN category = 'user' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->get()
+            ->map(function (WordList $folder) {
+                return $this->formatWordFolder($folder);
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'limit' => self::WORD_FOLDER_LIMIT,
+                'folders' => $folders,
             ],
-            [
-                'description' => 'My personal vocabulary collection',
-                'is_public' => false,
-                'word_count' => 0
-            ]
-        );
+        ]);
+    }
+
+    public function createWordFolder(Request $request)
+    {
+        $user = Auth::user();
+
+        $data = $request->validate([
+            'name' => 'required|string|max:60',
+            'description' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Hãy nhập tên Word List.',
+            'name.max' => 'Tên Word List tối đa 60 ký tự.',
+            'description.max' => 'Mô tả tối đa 255 ký tự.',
+        ]);
+
+        $name = trim($data['name']);
+        if ($name === '') {
+            return response()->json(['success' => false, 'message' => 'Hãy nhập tên Word List.'], 422);
+        }
+
+        $this->getOrCreatePersonalWordList($user);
+
+        if ($this->userFolderQuery($user)->count() >= self::WORD_FOLDER_LIMIT) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn chỉ có thể tạo tối đa ' . self::WORD_FOLDER_LIMIT . ' Word List.',
+            ], 422);
+        }
+
+        if ($this->userFolderQuery($user)->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->exists()) {
+            return response()->json(['success' => false, 'message' => 'Bạn đã có Word List tên "' . $name . '".'], 422);
+        }
+
+        $folder = WordList::create([
+            'user_id' => $user->id,
+            'category' => 'folder',
+            'name' => $name,
+            'description' => isset($data['description']) ? trim($data['description']) : null,
+            'is_public' => false,
+            'word_count' => 0,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tạo Word List "' . $name . '".',
+            'data' => $this->formatWordFolder($folder),
+        ]);
+    }
+
+    public function updateWordFolder(Request $request, $id)
+    {
+        $user = Auth::user();
+        $folder = $this->resolveUserFolder($user, $id);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:60',
+            'description' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Hãy nhập tên Word List.',
+            'name.max' => 'Tên Word List tối đa 60 ký tự.',
+            'description.max' => 'Mô tả tối đa 255 ký tự.',
+        ]);
+
+        $name = trim($data['name']);
+        if ($name === '') {
+            return response()->json(['success' => false, 'message' => 'Hãy nhập tên Word List.'], 422);
+        }
+
+        $duplicated = $this->userFolderQuery($user)
+            ->where('id', '!=', $folder->id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->exists();
+
+        if ($duplicated) {
+            return response()->json(['success' => false, 'message' => 'Bạn đã có Word List tên "' . $name . '".'], 422);
+        }
+
+        $folder->name = $name;
+        $folder->description = isset($data['description']) ? trim($data['description']) : null;
+        $folder->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã lưu Word List.',
+            'data' => $this->formatWordFolder($folder),
+        ]);
+    }
+
+    public function deleteWordFolder($id)
+    {
+        $user = Auth::user();
+        $folder = $this->resolveUserFolder($user, $id);
+
+        if ($folder->category === 'user') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xoá Word List mặc định.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($user, $folder) {
+            $flashcardIds = $folder->flashcards()->pluck('user_flashcards.id');
+            $folder->flashcards()->detach();
+            $folder->delete();
+            $this->deleteOrphanUserFlashcards($user, $flashcardIds);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xoá Word List "' . $folder->name . '".',
+        ]);
     }
 
     private function getApprovedBundleVocabularySetForUser($user, int $setId): ?BundleVocabularySet
@@ -3098,18 +3718,7 @@ class DictionaryController extends Controller
             }
         }
 
-        $myWordList = WordList::with('flashcards')->firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'category' => 'user',
-                'name' => 'My Word List'
-            ],
-            [
-                'description' => 'My personal vocabulary collection',
-                'is_public' => false,
-                'word_count' => 0
-            ]
-        );
+        $myWordList = $this->getOrCreatePersonalWordList($user);
 
         return [
             'source' => 'my',

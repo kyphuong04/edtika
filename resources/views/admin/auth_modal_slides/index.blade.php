@@ -15,13 +15,14 @@
         <div class="card">
             <div class="card-body">
                 <p class="mb-2">
-                    Modal <strong>Đăng nhập / Đăng ký</strong> có một khung slider bên phải, tự chuyển qua 3 slide.
-                    Mỗi slide gồm 1 ảnh, 1 tiêu đề và 1 dòng mô tả. Thay đổi ở đây áp dụng ngay cho mọi trang có modal.
+                    Modal <strong>Đăng nhập / Đăng ký</strong> có một khung slider bên phải, tự chuyển qua tối đa 5 slide.
+                    Mỗi slide gồm 1 ảnh, 1 tiêu đề và 1 dòng mô tả (không bắt buộc). Thay đổi ở đây áp dụng ngay cho mọi trang có modal.
+                    Vị trí nào chưa tuỳ chỉnh và theme không có sẵn slide thì sẽ không hiển thị.
                 </p>
                 <p class="mb-0 text-muted" style="font-size:13px;">
-                    Ảnh JPG, PNG hoặc WebP, tối đa 5MB, rộng tối thiểu 400px. Nên dùng ảnh minh hoạ gần vuông
-                    (khoảng 720&times;720px), PNG nền trong suốt sẽ đẹp nhất. Ảnh được thu nhỏ vừa khung, không bị cắt.
-                    Để trống tiêu đề / mô tả nếu chỉ muốn hiện ảnh.
+                    Ảnh JPG, PNG hoặc WebP, tối đa 5MB, rộng tối thiểu 400px. Ảnh tải lên sẽ <strong>phủ kín khung slider</strong>,
+                    nên dùng tỉ lệ <strong>4:5 (dọc)</strong>, ví dụ 1080&times;1350px. Ảnh khác tỉ lệ sẽ bị cắt bớt phần mép.
+                    Nếu banner đã có chữ sẵn trong ảnh, hãy để trống tiêu đề / mô tả.
                 </p>
             </div>
         </div>
@@ -32,20 +33,22 @@
 
         <div class="row">
             @foreach($slides as $slot => $slide)
-                <div class="col-12 col-lg-4" id="slide-{{ $slot }}">
+                <div class="col-12 col-md-6 col-xl-4" id="slide-{{ $slot }}">
                     <div class="card ams-card">
                         <div class="card-header d-flex align-items-center justify-content-between" style="gap:8px;">
                             <h4 class="mb-0">Slide {{ $slot }}</h4>
                             @if($slide['is_custom'])
                                 <span class="badge badge-primary">Đã tuỳ chỉnh</span>
-                            @else
+                            @elseif($slide['is_shown'])
                                 <span class="badge badge-light">Mặc định</span>
+                            @else
+                                <span class="badge badge-warning">Chưa hiển thị</span>
                             @endif
                         </div>
 
                         <div class="card-body">
                             {{-- Xem trước giống khung slider trong modal --}}
-                            <div class="ams-preview">
+                            <div class="ams-preview {{ $slide['has_custom_image'] ? 'is-fill' : '' }} {{ $slide['is_shown'] ? '' : 'is-hidden-slot' }}" id="ams-preview-{{ $slot }}" data-hidden="{{ $slide['is_shown'] ? 0 : 1 }}">
                                 <div class="ams-preview__image-wrap">
                                     <img src="{{ $slide['image'] }}" alt="Slide {{ $slot }}" id="ams-img-{{ $slot }}"
                                          data-original="{{ $slide['image'] }}">
@@ -53,6 +56,12 @@
                                 <div class="ams-preview__title" id="ams-title-{{ $slot }}">{{ $slide['title'] }}</div>
                                 <div class="ams-preview__subtitle" id="ams-subtitle-{{ $slot }}">{{ $slide['subtitle'] }}</div>
                             </div>
+
+                            @unless($slide['is_shown'])
+                                <div class="text-muted mt-2" style="font-size:12px;">
+                                    Slide này chưa có nội dung nên đang bị ẩn khỏi modal. Tải ảnh lên để hiển thị.
+                                </div>
+                            @endunless
 
                             @if($slide['is_custom'] && $slide['updated_at'])
                                 <div class="text-muted mt-2" style="font-size:12px;">
@@ -69,7 +78,8 @@
                                 <div class="form-group">
                                     <label class="input-label">Ảnh</label>
                                     <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
-                                           class="form-control-file ams-file-input" data-preview="#ams-img-{{ $slot }}">
+                                           class="form-control-file ams-file-input" data-preview="#ams-img-{{ $slot }}"
+                                           data-frame="#ams-preview-{{ $slot }}" data-was-fill="{{ $slide['has_custom_image'] ? 1 : 0 }}">
                                     <small class="form-text text-muted">Không chọn ảnh = giữ ảnh đang hiển thị.</small>
                                 </div>
 
@@ -157,6 +167,40 @@
     .ams-preview__subtitle:empty {
         display: none;
     }
+    /* Giống khung slider trong modal: tỉ lệ 4:5, ảnh phủ kín */
+    .ams-preview.is-fill {
+        position: relative;
+        justify-content: flex-end;
+        min-height: 0;
+        aspect-ratio: 4 / 5;
+        padding: 0 0 16px;
+        overflow: hidden;
+        border-style: solid;
+    }
+    .ams-preview.is-fill .ams-preview__image-wrap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+    }
+    .ams-preview.is-fill .ams-preview__image-wrap img {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        object-fit: cover;
+    }
+    .ams-preview.is-fill .ams-preview__title,
+    .ams-preview.is-fill .ams-preview__subtitle {
+        position: relative;
+        z-index: 1;
+        color: #fff;
+        padding: 0 14px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    }
+    .ams-preview.is-hidden-slot {
+        opacity: 0.45;
+    }
 </style>
 
 <script>
@@ -168,6 +212,13 @@
 
             var file = input.files && input.files[0];
             img.src = file ? URL.createObjectURL(file) : img.dataset.original;
+
+            // Ảnh mới tải lên sẽ phủ kín khung -> xem trước đúng như trong modal.
+            var frame = document.querySelector(input.dataset.frame);
+            if (frame) {
+                frame.classList.toggle('is-fill', !!file || input.dataset.wasFill === '1');
+                frame.classList.toggle('is-hidden-slot', !file && frame.dataset.hidden === '1');
+            }
         });
     });
 

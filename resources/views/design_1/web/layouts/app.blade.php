@@ -531,6 +531,53 @@
             background: #511D99;
         }
 
+        /* Banner do Manager/CEO tải lên: ảnh phủ kín khung slider (tỉ lệ khuyến nghị 4:5) */
+        .edtika-auth-slider__slide.is-fill {
+            padding: 0;
+            justify-content: flex-end;
+            background: #f3f0fb;
+        }
+
+        .edtika-auth-slider__slide.is-fill .edtika-auth-slider__image-wrap {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            min-height: 0;
+        }
+
+        .edtika-auth-slider__slide.is-fill .edtika-auth-slider__image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .edtika-auth-slider__slide.is-fill.has-text::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 55%;
+            background: linear-gradient(180deg, rgba(16, 16, 20, 0) 0%, rgba(16, 16, 20, 0.62) 100%);
+            pointer-events: none;
+        }
+
+        .edtika-auth-slider__slide.is-fill .edtika-auth-slider__title,
+        .edtika-auth-slider__slide.is-fill .edtika-auth-slider__subtitle {
+            position: relative;
+            z-index: 1;
+            color: #fff;
+            padding: 0 30px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+        }
+
+        .edtika-auth-slider__slide.is-fill .edtika-auth-slider__subtitle {
+            margin-bottom: 56px;
+        }
+
+        .edtika-auth-slider__slide.is-fill .edtika-auth-slider__title:last-child {
+            margin-bottom: 56px;
+        }
+
         .edtika-floating-cta {
             position: fixed;
             right: 24px;
@@ -861,7 +908,7 @@
                                     }
                                 @endphp
 
-                                <div class="edtika-auth-slider__slide {{ $authSlideIndex === 0 ? 'is-active' : '' }}" data-auth-slide>
+                                <div class="edtika-auth-slider__slide {{ $authSlideIndex === 0 ? 'is-active' : '' }} {{ !empty($authSlide['fill']) ? 'is-fill' : '' }} {{ (!empty($authSlideTitle) || !empty($authSlideSubtitle)) ? 'has-text' : '' }}" data-auth-slide>
                                     @if(!empty($authSlide['image']))
                                         <div class="edtika-auth-slider__image-wrap">
                                             <img class="edtika-auth-slider__image" src="{{ $authSlide['image'] }}" alt="{{ $authModalText['sliderImageAlt'] }}">

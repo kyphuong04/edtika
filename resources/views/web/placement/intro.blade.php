@@ -9,14 +9,37 @@
 
 @push('styles_top')
 <style>
+/* ════════════════════════════════════════════════════════════════════
+   Trang intro Placement Test — tông tím/lavender theo thiết kế mới.
+   Màu dùng chung khai báo ở :root (--pt-*) để chỉnh 1 chỗ là đổi cả trang.
+   ════════════════════════════════════════════════════════════════════ */
+:root {
+    --pt-primary: #5B21B6;        /* tím chính: tiêu đề phụ, icon, chữ nhấn */
+    --pt-primary-dark: #3B0F86;   /* tím đậm: nút, hover */
+    --pt-accent: #7C3AED;         /* tím sáng: gradient, viền focus */
+    --pt-lavender: #F1EBFF;       /* nền icon / pill */
+    --pt-lavender-2: #E6DAFF;
+    --pt-border: #ECE6FA;         /* viền card */
+    --pt-ink: #1A1033;            /* chữ tiêu đề */
+    --pt-text: #3F3A55;           /* chữ nội dung */
+    --pt-muted: #6B6683;
+    --pt-bg: #FBFAFF;
+}
+
 /* ── RESET TRANG: khóa scroll, không tràn ngang ── */
 html, body {
-    background-color: #F7F5FF;
     margin: 0;
     height: 100%;
     overflow-x: hidden;
     overflow-y: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--pt-bg);
+    /* Vầng sáng tím rất nhẹ ở 2 góc như ảnh thiết kế */
+    background-image:
+        radial-gradient(900px 600px at 100% 0%, rgba(196, 170, 255, 0.28), transparent 60%),
+        radial-gradient(700px 500px at 0% 100%, rgba(214, 196, 255, 0.22), transparent 60%);
+    background-repeat: no-repeat;
+    min-height: 100%;
 }
 
 /* Ép box-sizing cho các khối của trang này (layout cha có thể không set) */
@@ -37,7 +60,8 @@ html, body {
     display: flex; align-items: center;
 }
 .pt-mini-header .pt-brand {
-    font-size: 22px; font-weight: 900; color: #1E1B4B; text-decoration: none;
+    font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+    color: var(--pt-primary); text-decoration: none;
 }
 
 .pt-intro-wrap {
@@ -70,109 +94,111 @@ html, body {
 
 .pt-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
-    background: #EEF2FF; color: #4338CA;
-    font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
-    padding: 6px 14px; border-radius: 99px;
-    margin-bottom: clamp(8px, 1.4vh, 16px);
+    background: var(--pt-lavender); color: var(--pt-primary);
+    border: 1px solid var(--pt-lavender-2);
+    font-size: 11px; font-weight: 800; letter-spacing: 0.6px;
+    padding: 7px 16px; border-radius: 99px;
+    margin-bottom: clamp(10px, 1.6vh, 18px);
     text-transform: uppercase;
     width: fit-content;
 }
 
 /* Cỡ chữ vừa theo cả chiều rộng lẫn chiều cao màn hình */
 .pt-title-main {
-    font-size: clamp(26px, min(2.8vw, 4.4vh), 40px);
-    line-height: 1.2;
+    font-size: clamp(26px, min(2.8vw, 4.4vh), 42px);
+    line-height: 1.18;
     font-weight: 900;
-    color: #0F172A;
+    color: var(--pt-ink);
     margin: 0 0 6px 0;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.8px;
     white-space: nowrap;
 }
 
+/* Dòng phụ: tím, nét vừa (không đậm như tiêu đề) */
 .pt-title-sub {
-    font-size: clamp(17px, min(1.8vw, 2.8vh), 24px);
+    font-size: clamp(18px, min(1.9vw, 3vh), 26px);
     line-height: 1.3;
-    font-weight: 800;
-    color: #5B21B6;
-    margin: 0 0 clamp(12px, 2.2vh, 20px) 0;
+    font-weight: 500;
+    color: var(--pt-primary);
+    margin: 0 0 clamp(12px, 2.2vh, 22px) 0;
     white-space: nowrap;
 }
-.pt-title-sub span { color: #5B21B6; }
+.pt-title-sub span { color: var(--pt-primary); }
 
 .pt-meta-row {
-    display: flex; align-items: center; gap: 16px;
-    margin-bottom: clamp(12px, 2.2vh, 24px);
+    display: flex; align-items: center; gap: 18px;
+    margin-bottom: clamp(12px, 2.2vh, 22px);
     flex-wrap: wrap;
 }
 .pt-meta-item {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 14px; font-weight: 700; color: #1E293B;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700; color: var(--pt-ink);
 }
-.pt-meta-divider { color: #CBD5E1; }
+.pt-meta-item svg { stroke: var(--pt-primary); }
+.pt-meta-divider { width: 1px; height: 18px; background: #DCD3F0; color: transparent; overflow: hidden; }
 
 .pt-intro-desc {
-    font-size: 15px; line-height: 1.6; color: #334155;
-    margin: 0 0 clamp(8px, 1.4vh, 16px) 0;
+    font-size: 15px; line-height: 1.6; color: var(--pt-text);
+    margin: 0 0 clamp(8px, 1.4vh, 14px) 0;
 }
-.pt-intro-desc strong { color: #5B21B6; font-weight: 800; }
+.pt-intro-desc strong { color: var(--pt-ink); font-weight: 800; }
 
 .pt-feature-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: clamp(10px, 1.4vh, 16px);
-    margin-bottom: clamp(12px, 2.2vh, 24px);
+    gap: clamp(10px, 1.4vh, 14px);
+    margin: clamp(6px, 1vh, 10px) 0 clamp(12px, 2vh, 20px);
 }
 
-/* Card trắng nổi trên nền sáng bằng bóng đổ tông tím */
+/* Card trắng, viền lavender mảnh, bóng rất nhẹ */
 .pt-feature-card {
     background: #FFFFFF;
-    border: 1px solid #EDE9FE;
-    border-radius: 16px;
-    padding: clamp(10px, 1.6vh, 16px) 12px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
-                0 8px 24px -8px rgba(91, 33, 182, 0.18);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--pt-border);
+    border-radius: 14px;
+    padding: clamp(12px, 1.7vh, 16px) 14px;
+    box-shadow: 0 6px 20px -10px rgba(91, 33, 182, 0.16);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .pt-feature-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
-                0 14px 32px -10px rgba(91, 33, 182, 0.28);
+    border-color: var(--pt-lavender-2);
+    box-shadow: 0 14px 30px -12px rgba(91, 33, 182, 0.28);
 }
 .pt-feature-icon {
-    width: 32px; height: 32px; border-radius: 8px; background: #EEF2FF; color: #4338CA;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--pt-lavender); color: var(--pt-primary);
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: clamp(6px, 1.1vh, 12px);
+    margin-bottom: clamp(8px, 1.2vh, 12px);
 }
-.pt-feature-card h5 { font-size: 14px; font-weight: 800; color: #0F172A; margin: 0 0 6px 0; }
-.pt-feature-card p { font-size: 12.5px; line-height: 1.45; color: #475569; margin: 0; }
+.pt-feature-card h5 { font-size: 14.5px; font-weight: 800; color: var(--pt-primary); margin: 0 0 5px 0; }
+.pt-feature-card p { font-size: 12.5px; line-height: 1.45; color: var(--pt-muted); margin: 0; }
 
 .pt-tip-banner {
-    display: flex; gap: 12px; align-items: flex-start;
+    display: flex; gap: 14px; align-items: center;
     background: #FFFFFF;
-    border: 1px solid #EDE9FE;
-    border-left: 4px solid #7C3AED;
-    border-radius: 16px;
-    padding: clamp(10px, 1.6vh, 16px) 20px;
-    margin-bottom: clamp(14px, 2.6vh, 32px);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04),
-                0 10px 28px -10px rgba(91, 33, 182, 0.22);
+    border: 1px solid var(--pt-border);
+    border-radius: 14px;
+    padding: clamp(12px, 1.7vh, 16px) 20px;
+    margin-bottom: clamp(16px, 2.8vh, 32px);
+    box-shadow: 0 6px 20px -10px rgba(91, 33, 182, 0.16);
 }
-.pt-tip-banner svg { width: 24px; height: 24px; flex-shrink: 0; margin-top: 2px; }
-.pt-tip-banner p { font-size: 13.5px; line-height: 1.55; color: #1E293B; margin: 0; }
-.pt-tip-banner strong { color: #4338CA; font-weight: 800; }
+.pt-tip-banner svg { width: 26px; height: 26px; flex-shrink: 0; stroke: var(--pt-primary); }
+.pt-tip-banner p { font-size: 13.5px; line-height: 1.55; color: var(--pt-text); margin: 0; }
+.pt-tip-banner strong { color: var(--pt-ink); font-weight: 800; }
+.pt-tip-banner strong.is-accent { color: var(--pt-primary); }
 
 .pt-start-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    background: linear-gradient(90deg, #5B21B6 0%, #4338CA 100%);
-    color: #FFF; border: none; border-radius: 12px;
-    padding: clamp(11px, 1.6vh, 16px) 40px;
-    font-weight: 700; font-size: 16px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    background: linear-gradient(135deg, var(--pt-accent) 0%, var(--pt-primary) 45%, var(--pt-primary-dark) 100%);
+    color: #FFF; border: none; border-radius: 14px;
+    padding: clamp(12px, 1.7vh, 16px) 40px;
+    font-weight: 700; font-size: 17px;
     text-decoration: none; cursor: pointer; width: fit-content;
-    box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.6);
+    box-shadow: 0 12px 26px -8px rgba(91, 33, 182, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.pt-start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(79, 70, 229, 0.8); color: #FFF; }
-.pt-start-btn:focus-visible { outline: 3px solid #A78BFA; outline-offset: 3px; }
+.pt-start-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -8px rgba(91, 33, 182, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.18); color: #FFF; }
+.pt-start-btn:focus-visible { outline: 3px solid #C4B5FD; outline-offset: 3px; }
 
 /* ── CỘT PHẢI (Mascot) ── */
 .pt-intro-right {
@@ -183,82 +209,93 @@ html, body {
     min-width: 0;
     min-height: 0;
     height: 100%;
+    /* Chỉnh --robot-scale để phóng to / thu nhỏ robot (tính theo chiều cao cột) */
+    --robot-scale: 0.82;
 }
 
-/* Vầng sáng tím mềm phía sau robot, thay cho nền tím cũ */
+/* Vầng sáng tím mềm phía sau robot */
 .pt-intro-right::before {
     content: '';
     position: absolute;
-    top: 50%; left: 50%;
+    top: 46%; left: 52%;
     transform: translate(-50%, -50%);
-    width: 72%;
+    width: 92%;
     aspect-ratio: 1;
     background: radial-gradient(circle,
-        rgba(167, 139, 250, 0.38) 0%,
-        rgba(167, 139, 250, 0.12) 45%,
-        rgba(167, 139, 250, 0) 70%);
+        rgba(196, 170, 255, 0.55) 0%,
+        rgba(214, 196, 255, 0.28) 38%,
+        rgba(236, 228, 255, 0) 68%);
     z-index: 0;
     pointer-events: none;
 }
 
 .pt-chat-bubble {
-    position: absolute; top: 8%; left: 4%; z-index: 10;
+    position: absolute; top: 6%; left: 6%; z-index: 10;
     background: #FFF;
-    border: 1px solid #EDE9FE;
-    border-radius: 16px; padding: 14px 16px;
-    width: min(210px, 46%);
-    box-shadow: 0 18px 40px -12px rgba(91, 33, 182, 0.35);
+    border: 1px solid var(--pt-border);
+    border-radius: 16px; padding: 14px 18px;
+    width: min(230px, 48%);
+    box-shadow: 0 18px 40px -16px rgba(91, 33, 182, 0.35);
 }
 .pt-chat-bubble::after {
     content: ''; position: absolute;
-    bottom: -10px; right: 40px;
-    border-width: 12px 12px 0 0;
-    border-style: solid;
-    border-color: #FFF transparent transparent transparent;
+    bottom: -9px; left: 34%;
+    width: 16px; height: 16px;
+    background: #FFF;
+    border-right: 1px solid var(--pt-border);
+    border-bottom: 1px solid var(--pt-border);
+    transform: rotate(45deg);
+    border-bottom-right-radius: 3px;
 }
-.pt-chat-bubble h4 { margin: 0 0 6px 0; font-size: 13px; color: #0F172A; font-weight: 800; }
-.pt-chat-bubble h4 span { color: #5B21B6; }
-.pt-chat-bubble p { margin: 0; font-size: 12px; line-height: 1.5; color: #334155; }
-.pt-chat-bubble strong { color: #5B21B6; }
+.pt-chat-bubble h4 { margin: 0 0 6px 0; font-size: 14px; color: var(--pt-primary); font-weight: 800; }
+.pt-chat-bubble h4 span { color: var(--pt-primary); }
+.pt-chat-bubble p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--pt-primary); }
+.pt-chat-bubble strong { color: var(--pt-primary-dark); }
 
-/* Robot: neo giữa cột, cho phép tràn ngang (đã bị wrap cắt nên không sinh scroll)
-   Chỉnh --robot-scale để phóng to / thu nhỏ robot */
-.pt-intro-right { --robot-scale: 1.18; }
-
+.pt-robot-pic { display: contents; }
 .pt-robot-img {
     position: absolute;
-    bottom: 0;
-    left: 50%;
+    bottom: 3%;
+    left: 53%;
     transform: translateX(-50%);
-    height: calc(100% * var(--robot-scale));
-    width: auto;
+    /* Rộng theo chiều cao màn hình (ảnh tỉ lệ 900x1154 ≈ 0.78) nhưng không vượt 84% cột,
+       để robot luôn nằm giữa các badge mà không đè lên chúng */
+    width: min(84%, calc((100vh - 120px) * 0.78 * var(--robot-scale)));
+    height: auto;
     max-width: none;
     object-fit: contain;
     object-position: bottom center;
     z-index: 5;
+    filter: drop-shadow(0 24px 30px rgba(91, 33, 182, 0.22));
 }
 
-/* ── BADGE TÍM quanh robot ── */
+/* ── BADGE TRÒN TRẮNG quanh robot ── */
 .pt-glass-badge {
     position: absolute; z-index: 10;
-    background: linear-gradient(145deg, #7C3AED 0%, #5B21B6 100%);
-    border: 2px solid rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--pt-border);
     border-radius: 50%;
-    color: #FFF;
+    color: var(--pt-primary);
     display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    box-shadow: 0 12px 28px -8px rgba(91, 33, 182, 0.55);
+    box-shadow: 0 14px 32px -12px rgba(91, 33, 182, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
-.pt-badge-free { top: 10%;    right: 6%; width: 95px;  height: 95px; }
-.pt-badge-time { bottom: 35%; left: 2%;  width: 85px;  height: 85px; }
-.pt-badge-tag  { bottom: 14%; right: 2%; width: 110px; height: 110px; }
+.pt-glass-badge svg { stroke: var(--pt-primary); }
+.pt-badge-free { top: 14%;    right: 3%;  width: 100px; height: 100px; }
+.pt-badge-time { top: 46%;    left: 2%;   width: 88px;  height: 88px; }
+.pt-badge-tag  { bottom: 24%; right: 0;   width: 112px; height: 112px; }
 
-.pt-glass-badge span { font-weight: 800; font-size: 10.5px; line-height: 1.25; margin-top: 4px; }
-.pt-badge-time span { font-size: 13px; }
+.pt-glass-badge span { font-weight: 800; font-size: 10.5px; line-height: 1.3; margin-top: 6px; letter-spacing: 0.2px; }
+.pt-badge-time span { font-size: 12.5px; }
 
 .pt-star { position: absolute; z-index: 2; animation: twinkle 3s infinite ease-in-out; }
+.pt-star:nth-of-type(2) { animation-delay: .8s; }
+.pt-star:nth-of-type(3) { animation-delay: 1.6s; }
+.pt-star:nth-of-type(4) { animation-delay: 2.2s; }
 
 /* ── ANIMATIONS ── */
-@keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+@keyframes twinkle { 0%, 100% { opacity: 0.45; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
 
 @media (prefers-reduced-motion: reduce) {
     .pt-star { animation: none; opacity: 0.7; }
@@ -275,7 +312,7 @@ html, body {
 @media (max-height: 620px) {
     html, body { overflow-y: auto; height: auto; }
     .pt-intro-wrap { height: auto; min-height: calc(100vh - 72px); padding-bottom: 32px; }
-    .pt-intro-right { min-height: 440px; }
+    .pt-intro-right { min-height: 460px; }
 }
 
 /* ── RESPONSIVE ── */
@@ -296,8 +333,9 @@ html, body {
     }
     .pt-intro-right {
         order: -1;
-        min-height: 420px;
+        min-height: 460px;
         height: auto;
+        padding-top: 70px;   /* chừa chỗ cho bong bóng chat, không che mặt robot */
     }
     .pt-robot-img {
         position: relative;
@@ -306,20 +344,27 @@ html, body {
         transform: none;
         height: auto;
         width: 100%;
-        max-width: 460px;
+        max-width: 400px;
     }
+    .pt-badge-time { top: 46%; }
+    .pt-badge-tag  { bottom: 18%; }
     .pt-title-main { font-size: 34px; }
-    .pt-title-sub { font-size: 20px; }
+    .pt-title-sub { font-size: 21px; }
 }
 
 @media (max-width: 640px) {
     .pt-feature-grid { grid-template-columns: 1fr 1fr; }
-    .pt-chat-bubble { width: 175px; top: 0; left: 0; padding: 12px 14px; }
-    .pt-badge-free { width: 76px; height: 76px; top: 6%; right: 2%; }
-    .pt-badge-time { width: 70px; height: 70px; }
+    .pt-intro-right { padding-top: 92px; min-height: 0; }
+    .pt-chat-bubble { width: 200px; top: 0; left: 0; padding: 12px 14px; }
+    .pt-robot-img { max-width: 300px; }
+    .pt-badge-free { width: 76px; height: 76px; top: 4%; right: 0; }
+    .pt-badge-time { width: 70px; height: 70px; left: 0; }
     .pt-badge-tag  { width: 88px; height: 88px; right: 0; }
-    .pt-glass-badge span { font-size: 9px; }
-    .pt-badge-time span { font-size: 11px; }
+    .pt-glass-badge svg { width: 20px; height: 20px; }
+    .pt-glass-badge span { font-size: 9px; margin-top: 4px; }
+    .pt-badge-time span { font-size: 10.5px; }
+    .pt-title-main { font-size: 28px; }
+    .pt-title-sub { font-size: 18px; }
 }
 </style>
 @endpush
@@ -345,12 +390,12 @@ html, body {
 
             <div class="pt-meta-row">
                 <div class="pt-meta-item">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B21B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     Chỉ trong 30 phút
                 </div>
-                <span class="pt-meta-divider">|</span>
+                <span class="pt-meta-divider" aria-hidden="true"></span>
                 <div class="pt-meta-item">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B21B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
                     Hoàn toàn miễn phí
                 </div>
             </div>
@@ -414,8 +459,8 @@ html, body {
             </div>
 
             <div class="pt-tip-banner">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                <p>Bắt đầu hành trình học hiệu quả bằng việc hiểu đúng trình độ hiện tại của bạn. Chỉ mất khoảng <strong>30 phút</strong> để nhận báo cáo đánh giá chi tiết và lộ trình học được <strong>cá nhân hóa</strong> theo mục tiêu!</p>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#5B21B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+                <p>Bắt đầu hành trình học hiệu quả bằng việc hiểu đúng trình độ hiện tại của bạn. Chỉ mất khoảng <strong>30 phút</strong> để nhận báo cáo đánh giá chi tiết và lộ trình học được <strong class="is-accent">cá nhân hóa</strong> theo mục tiêu!</p>
             </div>
 
             <a href="{{ route('placement.mic_check') }}" class="pt-start-btn">
@@ -427,9 +472,11 @@ html, body {
         {{-- ── PHẢI: Hình ảnh Robot ── --}}
         <div class="pt-intro-right">
 
-            <svg class="pt-star" style="top:15%; right:15%" width="18" height="18" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
-            <svg class="pt-star" style="top:40%; right:5%" width="12" height="12" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
-            <svg class="pt-star" style="bottom:25%; left:20%" width="14" height="14" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            {{-- Ngôi sao 4 cánh lấp lánh --}}
+            <svg class="pt-star" aria-hidden="true" style="top:30%; right:9%" width="22" height="22" viewBox="0 0 24 24" fill="#C4B5FD"><path d="M12 0c.9 6.6 5.4 11.1 12 12-6.6.9-11.1 5.4-12 12-.9-6.6-5.4-11.1-12-12C6.6 11.1 11.1 6.6 12 0z"/></svg>
+            <svg class="pt-star" aria-hidden="true" style="top:44%; left:16%" width="16" height="16" viewBox="0 0 24 24" fill="#C4B5FD"><path d="M12 0c.9 6.6 5.4 11.1 12 12-6.6.9-11.1 5.4-12 12-.9-6.6-5.4-11.1-12-12C6.6 11.1 11.1 6.6 12 0z"/></svg>
+            <svg class="pt-star" aria-hidden="true" style="bottom:22%; left:10%" width="22" height="22" viewBox="0 0 24 24" fill="#C4B5FD"><path d="M12 0c.9 6.6 5.4 11.1 12 12-6.6.9-11.1 5.4-12 12-.9-6.6-5.4-11.1-12-12C6.6 11.1 11.1 6.6 12 0z"/></svg>
+            <svg class="pt-star" aria-hidden="true" style="top:9%; right:34%" width="12" height="12" viewBox="0 0 24 24" fill="#DDD6FE"><path d="M12 0c.9 6.6 5.4 11.1 12 12-6.6.9-11.1 5.4-12 12-.9-6.6-5.4-11.1-12-12C6.6 11.1 11.1 6.6 12 0z"/></svg>
 
             <div class="pt-chat-bubble">
                 <h4>Xin chào! Mình là <span>Edti</span> 👋</h4>
@@ -437,24 +484,28 @@ html, body {
             </div>
 
             <div class="pt-glass-badge pt-badge-free">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
                 <span>100%<br>MIỄN PHÍ</span>
             </div>
 
             <div class="pt-glass-badge pt-badge-time">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>30<br>PHÚT</span>
             </div>
 
             <div class="pt-glass-badge pt-badge-tag">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 2.5 2.5 0 0 1-.96-4.43 2.5 2.5 0 0 1 2.45-3.9 2.5 2.5 0 0 1 3.93-2.53A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 2.5 2.5 0 0 0 .96-4.43 2.5 2.5 0 0 0-2.45-3.9 2.5 2.5 0 0 0-3.93-2.53A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 2.5 2.5 0 0 1-.96-4.43 2.5 2.5 0 0 1 2.45-3.9 2.5 2.5 0 0 1 3.93-2.53A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 2.5 2.5 0 0 0 .96-4.43 2.5 2.5 0 0 0-2.45-3.9 2.5 2.5 0 0 0-3.93-2.53A2.5 2.5 0 0 0 14.5 2Z"/></svg>
                 <span>ADAPTIVE<br>PLACEMENT<br>TEST</span>
             </div>
 
-            <img src="https://res.cloudinary.com/dozs7ggs4/image/upload/f_auto,q_auto/v1785208045/EDTI-ROBOT-SAYHI_ai08gx.png"
-                 alt=""
-                 fetchpriority="high"
-                 class="pt-robot-img">
+            <picture class="pt-robot-pic">
+                <source srcset="{{ asset('assets/placement/edti-robot-podium.webp') }}" type="image/webp">
+                <img src="{{ asset('assets/placement/edti-robot-podium.png') }}"
+                     alt="Edti — trợ lý của EDTIKA"
+                     width="900" height="1154"
+                     fetchpriority="high"
+                     class="pt-robot-img">
+            </picture>
 
         </div>
     </div>

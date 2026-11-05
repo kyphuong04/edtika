@@ -25,6 +25,8 @@ class Flashcard extends Model
         'definition',
         'example',
         'translation',
+        'collocation',
+        'audio_url',
     ];
 
     protected $casts = [

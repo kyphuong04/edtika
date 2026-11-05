@@ -2626,6 +2626,645 @@
     /* Cửa sổ chi tiết từ: giữ khung 3:2 nhưng ảnh không còn bị cắt */
     .wdc-image-wrap.vc-media img { object-fit: contain; }
 
+    /* ═════════════════════════════════════════════════════════
+     * Dictionary Hub (dh-*) + Word List dạng folder (wf-*)
+     * ═════════════════════════════════════════════════════════ */
+    :root {
+        --dh-primary: #5B2A86;
+        --dh-primary-dark: #4A2170;
+        --dh-soft: #EFE9F8;
+        --dh-softer: #F7F4FC;
+        --dh-border: #E3DEEE;
+        --dh-text: #2E2A3B;
+        --dh-muted: #6E6783;
+    }
+
+    .dh-card {
+        background: #fff;
+        border: 1px solid var(--dh-border);
+        border-radius: 20px;
+        padding: 24px 24px 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(60, 30, 110, .05);
+    }
+    .dh-title {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -.01em;
+        color: var(--dh-primary);
+    }
+    .dh-sub { margin: 6px 0 0; font-size: 13px; color: var(--dh-muted); }
+    .dh-label {
+        display: block;
+        margin: 18px 0 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dh-primary);
+    }
+
+    .dh-search { position: relative; display: flex; gap: 10px; margin: 0; }
+    .dh-search__field {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        height: 46px;
+        padding: 0 8px 0 14px;
+        border: 1px solid #D9D3E6;
+        border-radius: 12px;
+        background: #fff;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .dh-search__field:focus-within { border-color: var(--dh-primary); box-shadow: 0 0 0 3px rgba(91, 42, 134, .12); }
+    .dh-search__icon { display: inline-flex; color: #8E879E; margin-right: 10px; flex-shrink: 0; }
+    .dh-search__icon svg, .wf-search__icon svg { width: 18px; height: 18px; }
+    .dh-search__input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 15px;
+        color: var(--dh-text);
+    }
+    .dh-search__input::placeholder { color: #8E879E; }
+    .dh-search__clear {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: #8E879E;
+        cursor: pointer;
+    }
+    .dh-search__clear:hover { background: var(--dh-softer); color: var(--dh-primary); }
+    .dh-search__btn {
+        flex-shrink: 0;
+        height: 46px;
+        padding: 0 20px;
+        border: none;
+        border-radius: 12px;
+        background: var(--dh-primary);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background .2s, opacity .2s;
+    }
+    .dh-search__btn:hover { background: var(--dh-primary-dark); }
+    .dh-search__btn:disabled { opacity: .7; cursor: progress; }
+
+    /* Lịch sử tìm kiếm */
+    .dh-history {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        z-index: 60;
+        max-height: 360px;
+        overflow-y: auto;
+        padding: 8px;
+        background: #fff;
+        border: 1px solid var(--dh-border);
+        border-radius: 14px;
+        box-shadow: 0 16px 40px rgba(40, 20, 80, .14);
+    }
+    .dh-history[hidden] { display: none; }
+    .dh-history__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px 8px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--dh-muted);
+    }
+    .dh-history__clear-all {
+        border: none;
+        background: transparent;
+        color: var(--dh-primary);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        cursor: pointer;
+        padding: 2px 4px;
+    }
+    .dh-history__item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 6px 0 10px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    .dh-history__item:hover,
+    .dh-history__item.is-active { background: var(--dh-softer); }
+    .dh-history__icon { display: inline-flex; color: #A49DB4; flex-shrink: 0; }
+    .dh-history__text {
+        flex: 1;
+        min-width: 0;
+        padding: 9px 0;
+        font-size: 14px;
+        color: var(--dh-text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .dh-history__text mark { background: transparent; color: var(--dh-primary); font-weight: 700; padding: 0; }
+    .dh-history__remove {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: #A49DB4;
+        cursor: pointer;
+    }
+    .dh-history__remove:hover { background: #fff; color: #E11D48; }
+
+    /* Banner (trạng thái chưa tra) */
+    .dh-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        min-height: 160px;
+        margin-top: 16px;
+        padding: 20px 32px;
+        background: #F6F3FB;
+        border: 1px solid var(--dh-border);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .dh-banner.hidden { display: none !important; }
+    .dh-banner__title { margin: 0; font-size: 24px; font-weight: 800; line-height: 1.3; color: #8A7AA3; }
+    .dh-banner__sub { margin: 10px 0 0; font-size: 13px; color: #A69CB8; }
+    .dh-banner__img { flex-shrink: 0; height: 130px; width: auto; user-select: none; pointer-events: none; }
+
+    /* Kết quả */
+    .dh-results { margin-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .dh-results.hidden { display: none !important; }
+    .dh-entry {
+        padding: 20px 22px;
+        background: #fff;
+        border: 1px solid var(--dh-border);
+        border-radius: 16px;
+    }
+    .dh-entry__head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+    .dh-entry__word {
+        margin: 0 4px 0 0;
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -.02em;
+        color: var(--dh-primary);
+        word-break: break-word;
+    }
+    .dh-entry__pos {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 999px;
+        background: var(--dh-soft);
+        color: var(--dh-primary);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .dh-entry__ipa { font-size: 15px; color: #3F3A4D; }
+    .dh-entry__audio {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        background: var(--dh-soft);
+        color: var(--dh-primary);
+        cursor: pointer;
+        transition: transform .15s;
+    }
+    .dh-entry__audio:hover { transform: scale(1.06); }
+    .dh-entry__audio.playing { background: var(--dh-primary); color: #fff; }
+    .dh-entry__level {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 46px;
+        padding: 4px 12px;
+        border: 1.5px solid var(--dh-primary);
+        border-radius: 999px;
+        color: var(--dh-primary);
+        font-size: 13px;
+        font-weight: 800;
+    }
+    .dh-entry__meaning { margin: 14px 0 0; font-size: 16px; font-weight: 700; color: var(--dh-primary); }
+    .dh-entry__def { margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: var(--dh-muted); }
+    .dh-entry__section { margin: 16px 0 8px; font-size: 15px; font-weight: 700; color: var(--dh-primary); }
+    .dh-entry__colloc {
+        padding: 12px 16px;
+        background: #F5F1FB;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #3F3A4D;
+    }
+    .dh-entry__colloc p { margin: 0; }
+    .dh-entry__colloc p + p { margin-top: 8px; font-style: italic; color: #7C7391; }
+    .dh-entry__examples { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+    .dh-entry__example { display: flex; align-items: flex-start; gap: 10px; }
+    .dh-entry__num {
+        flex: 0 0 28px;
+        height: 28px;
+        margin-top: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--dh-soft);
+        color: var(--dh-primary);
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .dh-entry__example-text {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 14px;
+        border-radius: 10px;
+        background: var(--dh-softer);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--dh-text);
+    }
+    .dh-entry__example-text strong { color: var(--dh-primary); }
+    .dh-entry__syn { margin: 12px 0 0; font-size: 13px; color: var(--dh-muted); }
+    .dh-entry__syn strong { color: var(--dh-primary); }
+    .dh-entry__save {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 999px;
+        background: var(--dh-primary);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .2s;
+    }
+    .dh-entry__save:hover { background: var(--dh-primary-dark); }
+    .dh-entry__save.is-saved { background: #16A34A; }
+
+    .dh-state {
+        padding: 22px 20px;
+        background: #fff;
+        border: 1px solid var(--dh-border);
+        border-radius: 16px;
+        text-align: center;
+        color: var(--dh-muted);
+        font-size: 14px;
+    }
+    .dh-state strong { color: var(--dh-primary); }
+    .dh-state__title { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--dh-primary); }
+    .dh-skeleton { height: 18px; border-radius: 8px; background: linear-gradient(90deg, #F1EDF8 25%, #E7E1F3 50%, #F1EDF8 75%); background-size: 200% 100%; animation: dhShimmer 1.2s linear infinite; }
+    .dh-skeleton + .dh-skeleton { margin-top: 14px; }
+    @keyframes dhShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+    /* ── Tabs My Word List / Academic Word List ── */
+    .wordlist-tabs {
+        display: flex !important;
+        gap: 14px !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 0 18px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .wordlist-tab {
+        flex: 1 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        height: 48px;
+        padding: 0 14px !important;
+        border: 1.5px solid var(--dh-primary) !important;
+        border-radius: 12px !important;
+        background: #fff !important;
+        color: var(--dh-primary) !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        box-shadow: none !important;
+    }
+    .wordlist-tab.active {
+        background: var(--dh-primary) !important;
+        color: #fff !important;
+        box-shadow: 0 6px 16px rgba(91, 42, 134, .16) !important;
+    }
+    .wordlist-tab .wordlist-tab__count {
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--dh-soft) !important;
+        color: var(--dh-primary) !important;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .wordlist-tab.active .wordlist-tab__count { background: #fff !important; color: var(--dh-primary) !important; }
+
+    /* ── Folder Word List ── */
+    .wf-view.hidden { display: none !important; }
+    .wf-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .wf-title { margin: 0; font-size: 20px; font-weight: 800; color: var(--dh-primary); }
+    .wf-sub { margin: 4px 0 0; font-size: 13px; color: var(--dh-muted); }
+    .wf-create {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border: none;
+        border-radius: 10px;
+        background: var(--dh-primary);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .wf-create:hover { background: var(--dh-primary-dark); }
+    .wf-create:disabled { opacity: .5; cursor: not-allowed; }
+    .wf-search {
+        display: flex;
+        align-items: center;
+        height: 44px;
+        margin: 14px 0 16px;
+        padding: 0 8px 0 14px;
+        border: 1px solid #D9D3E6;
+        border-radius: 12px;
+        background: #fff;
+    }
+    .wf-search:focus-within { border-color: var(--dh-primary); }
+    .wf-search__icon { display: inline-flex; color: var(--dh-primary); margin-right: 10px; }
+    .wf-search__input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 14px; color: var(--dh-text); }
+    .wf-search__input::placeholder { color: #8E879E; }
+    .wf-search__clear { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: transparent; color: #8E879E; cursor: pointer; }
+    .wf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .wf-card {
+        display: flex;
+        gap: 14px;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid var(--dh-border);
+        border-radius: 16px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .wf-card:hover { border-color: #CDBFE6; box-shadow: 0 10px 26px rgba(60, 30, 110, .07); }
+    .wf-card__thumb {
+        flex: 0 0 112px;
+        width: 112px;
+        aspect-ratio: 1 / 1;
+        align-self: flex-start;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px;
+        border: none;
+        border-radius: 12px;
+        background: #F1EBFA;
+        color: var(--dh-primary);
+        cursor: pointer;
+    }
+    .wf-card__thumb-label {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+    .wf-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; padding-top: 2px; }
+    .wf-card__name {
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+        text-align: left;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--dh-primary);
+        cursor: pointer;
+        word-break: break-word;
+    }
+    .wf-card__name:hover { text-decoration: underline; }
+    .wf-card__desc {
+        margin: 4px 0 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--dh-muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+    }
+    .wf-card__foot { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .wf-card__count { display: inline-block; padding: 3px 10px; border-radius: 999px; background: #F4F0FA; color: var(--dh-text); font-size: 12px; font-weight: 700; }
+    .wf-card__practice {
+        display: inline-block;
+        margin-top: 0;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 999px;
+        background: var(--dh-primary);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .wf-card__practice:hover { background: var(--dh-primary-dark); }
+    .wf-card__practice:disabled { opacity: .45; cursor: not-allowed; }
+    .wf-empty { grid-column: 1 / -1; padding: 30px; border: 1px dashed var(--dh-border); border-radius: 18px; text-align: center; color: var(--dh-muted); }
+    .wf-limit { margin: 10px 0 0; font-size: 12px; color: var(--dh-muted); }
+    .wf-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 0 10px;
+        padding: 4px 2px;
+        border: none;
+        background: transparent;
+        color: var(--dh-primary);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .wf-back:hover { text-decoration: underline; }
+    #wfDetailView .word-list-card[data-list-type="my"] { cursor: default; }
+    .wf-detail-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .wf-icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--dh-border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--dh-primary);
+        cursor: pointer;
+    }
+    .wf-icon-btn:hover { border-color: var(--dh-primary); }
+    .wf-icon-btn.is-danger { color: #E11D48; }
+    .wf-icon-btn.is-danger:hover { border-color: #E11D48; }
+    .wf-icon-btn.hidden { display: none !important; }
+    .wf-words-empty { padding: 26px 12px; text-align: center; color: var(--dh-muted); font-size: 14px; }
+
+    /* ── Modal lưu từ / tạo Word List ── */
+    .pq-modal__dialog.dh-modal {
+        max-width: 480px;
+        padding: 24px 26px 24px;
+        border: 1px solid var(--dh-primary);
+        border-radius: 16px;
+    }
+    .dh-modal__close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--dh-border);
+        border-radius: 50%;
+        background: #fff;
+        color: var(--dh-primary);
+        cursor: pointer;
+    }
+    .dh-modal__title { margin: 0 40px 0 0; font-size: 20px; font-weight: 800; color: var(--dh-primary); }
+    .dh-modal__sub { margin: 10px 0 0; font-size: 14px; color: var(--dh-muted); word-break: break-word; }
+    .dh-modal__sub strong { color: var(--dh-text); }
+    .dh-modal__label { display: block; margin: 16px 0 6px; font-size: 13px; font-weight: 700; color: var(--dh-primary); }
+    .dh-modal__optional { font-weight: 500; color: var(--dh-muted); }
+    .dh-modal__select,
+    .dh-modal__input {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        height: 44px;
+        padding: 0 12px;
+        border: 1px solid #D9D3E6;
+        border-radius: 10px;
+        background: #fff;
+        color: var(--dh-text);
+        font-family: inherit;
+        font-size: 14px;
+        outline: none;
+    }
+    .dh-modal__textarea { height: auto; padding: 10px 12px; font-size: 14px; resize: vertical; }
+    .dh-modal__select:focus,
+    .dh-modal__input:focus { border-color: var(--dh-primary); box-shadow: 0 0 0 3px rgba(91, 42, 134, .12); }
+    .dh-modal__link {
+        margin-top: 8px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--dh-primary);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .dh-modal__link:hover { text-decoration: underline; }
+    .dh-modal__link.hidden { display: none !important; }
+    .dh-modal__msg { margin: 12px 0 0; padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+    .dh-modal__msg.is-success { background: #ECFDF5; color: #15803D; }
+    .dh-modal__msg.is-error { background: #FFF1F2; color: #E11D48; }
+    .dh-modal__submit {
+        display: block;
+        width: 100%;
+        height: 44px;
+        margin-top: 20px;
+        border: none;
+        border-radius: 999px;
+        background: var(--dh-primary);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .dh-modal__submit:hover { background: var(--dh-primary-dark); }
+    .dh-modal__submit:disabled { opacity: .55; cursor: not-allowed; }
+
+    .dark-mode .dh-card,
+    .dark-mode .dh-entry,
+    .dark-mode .dh-state,
+    .dark-mode .wf-card { background: #1E293B; border-color: #334155; }
+    .dark-mode .dh-search__field,
+    .dark-mode .wf-search,
+    .dark-mode .dh-history { background: #0F172A; border-color: #334155; }
+    .dark-mode .dh-search__input,
+    .dark-mode .wf-search__input,
+    .dark-mode .dh-history__text { color: #F1F5F9; }
+    .dark-mode .dh-banner { background: #0F172A; border-color: #334155; }
+    .dark-mode .dh-title,
+    .dark-mode .dh-entry__word,
+    .dark-mode .wf-title,
+    .dark-mode .wf-card__name { color: #C4B5FD; }
+
+    @media (max-width: 767.98px) {
+        .dh-card { padding: 18px 16px; border-radius: 16px; }
+        .dh-title { font-size: 24px; }
+        .dh-search { flex-direction: column; }
+        /* Dropdown lịch sử nằm dưới cả nút "Tra từ", không che nút */
+        .dh-search__field { position: static; }
+        .dh-search__field, .dh-search__btn { height: 44px; }
+        .dh-banner { padding: 16px 18px; min-height: 0; }
+        .dh-banner__title { font-size: 18px; }
+        .dh-banner__img { height: 80px; }
+        .dh-entry { padding: 16px; }
+        .dh-entry__word { font-size: 28px; }
+        .dh-entry__level { margin-left: 0; }
+        .wordlist-tabs { gap: 10px !important; }
+        .wordlist-tab { min-width: 0; height: 44px; padding: 0 10px !important; font-size: 13px !important; white-space: normal !important; line-height: 1.2; gap: 8px; }
+        .wordlist-tab .wordlist-tab__count { min-width: 24px; height: 24px; font-size: 12px; }
+        .dh-banner__title br { display: none; }
+        .dh-banner { gap: 12px; }
+        .wf-head { flex-direction: column; }
+        .wf-grid { grid-template-columns: 1fr; }
+        .wf-card__thumb { flex-basis: 92px; width: 92px; }
+        .pq-modal__dialog.dh-modal { padding: 20px 18px; }
+        .dh-modal__title { font-size: 18px; }
+    }
+
 </style>
 @endpush
 
@@ -2646,25 +3285,41 @@
     <div class="row">
         <!-- Left Column: Search, Word Lists (66%) -->
         <div class="col-lg-8">
-            <!-- Search Section -->
-            <div class="search-section">
-                <h3 class="search-title">{{ trans('panel.search_english') }}</h3>
-                <div class="search-wrapper">
-                    <input type="text" class="search-input" id="searchInput" placeholder="{{ trans('panel.search_the_word') }}">
-                    <button class="search-btn" id="searchBtn">{{ trans('panel.search') }}</button>
-                </div>
-            </div>
+            <!-- Dictionary Hub: tra từ + kết quả (kết quả thay chỗ banner) -->
+            <section class="dh-card" id="dictionaryHub">
+                <h1 class="dh-title">DICTIONARY HUB</h1>
+                <p class="dh-sub">Tra cứu từ vựng tiếng Anh và lưu vào Word List để ôn luyện.</p>
 
-            <!-- Dictionary Result Container (hidden by default) -->
-            <div class="dictionary-result-container hidden" id="dictionaryResult">
-                <!-- Search results will be displayed here -->
-            </div>
+                <label class="dh-label" for="searchInput">Tìm kiếm từ tiếng Anh</label>
+                <form class="dh-search" id="dhSearchForm" role="search" autocomplete="off" novalidate>
+                    <div class="dh-search__field" id="dhSearchField">
+                        <span class="dh-search__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                        <input type="text" class="dh-search__input" id="searchInput" maxlength="100"
+                               placeholder="Nhập từ vựng" autocomplete="off" autocapitalize="off" spellcheck="false"
+                               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dhHistory">
+                        <button type="button" class="dh-search__clear" id="dhClearBtn" aria-label="Xoá nội dung tìm kiếm"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+
+                        <div class="dh-history" id="dhHistory" role="listbox" aria-label="Lịch sử tìm kiếm" hidden></div>
+                    </div>
+                    <button type="submit" class="dh-search__btn" id="searchBtn">Tra từ &rarr;</button>
+                </form>
+
+                <div class="dh-banner" id="dhBanner">
+                    <div class="dh-banner__text">
+                        <h2 class="dh-banner__title">Tra từ cực nhanh, lưu từ <br>cực gọn với Edtika</h2>
+                        <p class="dh-banner__sub">Nhập từ vựng vào thanh tìm kiếm để bắt đầu tra cứu.</p>
+                    </div>
+                    <img class="dh-banner__img" src="{{ asset('assets/design_1/img/dictionary/dictionary-hub-mascot.png') }}" alt="" aria-hidden="true">
+                </div>
+
+                <div class="dh-results hidden" id="dictionaryResult" aria-live="polite"></div>
+            </section>
 
             <!-- Tab bar -->
             <div class="wordlist-tabs" id="wordlistTabs">
                 <button class="wordlist-tab active" data-tab="my">
                     My Word List
-                    <span class="wordlist-tab__count" id="tabCountMy">{{ $myWordList->word_count }}</span>
+                    <span class="wordlist-tab__count" id="tabCountMy">{{ count($wordFolders) }}</span>
                 </button>
                 <button class="wordlist-tab" data-tab="academic">
                     Academic Word List
@@ -2725,12 +3380,49 @@
                 @endforeach
             </div>
 
-            <!-- My Word List Section (default view) -->
+            <!-- My Word List: các folder từ vựng của học viên -->
             <div class="word-lists-section" id="myWordListSection">
-                <div class="word-list-card" data-list-id="{{ $myWordList->id }}" data-list-type="my">
+                {{-- Danh sách folder --}}
+                <div class="wf-view" id="wfGridView">
+                    <div class="wf-head">
+                        <div>
+                            <h2 class="wf-title">My Word List</h2>
+                            <p class="wf-sub">Tạo và quản lý danh sách từ vựng cá nhân.</p>
+                        </div>
+                        <button type="button" class="wf-create" id="wfCreateBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                            Tạo mới
+                        </button>
+                    </div>
+
+                    <div class="wf-search">
+                        <span class="wf-search__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                        <input type="text" class="wf-search__input" id="wfSearchInput" placeholder="Tìm Word List đã tạo, chủ đề, mô tả..." aria-label="Tìm Word List">
+                        <button type="button" class="wf-search__clear" id="wfSearchClear" aria-label="Xoá tìm kiếm"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+                    </div>
+
+                    <div class="wf-grid" id="wfGrid"></div>
+                    <p class="wf-limit" id="wfLimitNote"></p>
+                </div>
+
+                {{-- Chi tiết 1 folder --}}
+                <div class="wf-view hidden" id="wfDetailView">
+                    <button type="button" class="wf-back" id="wfBackBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Tất cả Word List
+                    </button>
+                    <div class="word-list-card" data-list-id="{{ $myWordList->id }}" data-list-type="my">
                     <div class="word-list-header">
                         <h3 class="word-list-name" id="myWordListName">{{ $myWordList->name }}</h3>
-                        <span class="word-count-badge" id="myWordListCount">Tổng số từ: {{ $myWordList->word_count }} từ</span>
+                        <div class="wf-detail-actions">
+                            <span class="word-count-badge" id="myWordListCount">Tổng số từ: {{ $myWordList->word_count }} từ</span>
+                            <button type="button" class="wf-icon-btn" id="wfEditBtn" title="Sửa Word List" aria-label="Sửa Word List">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="2"/></svg>
+                            </button>
+                            <button type="button" class="wf-icon-btn is-danger" id="wfDeleteBtn" title="Xoá Word List" aria-label="Xoá Word List">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <p class="word-list-description" id="myWordListDesc">{{ $myWordList->description }}</p>
                     
@@ -2759,6 +3451,7 @@
                             <button class="action-btn btn-practice btn-flashcard">Luyện tập nâng cao PRO <svg class="pq-crown" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 7.5l4.6 3.9L12 4.5l4.4 6.9L21 7.5l-1.9 11H4.9L3 7.5z"/></svg></button>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -3026,6 +3719,42 @@
     </form>
 </div>
 
+{{-- ── Modal: lưu từ vào 1 Word List (folder) ──────────────── --}}
+<div class="pq-modal" id="dhSaveModal" aria-hidden="true">
+    <div class="pq-modal__backdrop js-dh-save-close"></div>
+    <form class="pq-modal__dialog dh-modal" id="dhSaveForm" role="dialog" aria-modal="true" aria-labelledby="dhSaveTitle" novalidate>
+        <button type="button" class="dh-modal__close js-dh-save-close" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+        <h3 class="dh-modal__title" id="dhSaveTitle">Lưu vào My Word List</h3>
+        <p class="dh-modal__sub">Thêm &ldquo;<strong id="dhSaveWord"></strong>&rdquo; vào một bộ từ cá nhân.</p>
+
+        <label class="dh-modal__label" for="dhSaveFolder">Chọn Word List</label>
+        <select class="dh-modal__select" id="dhSaveFolder"></select>
+        <button type="button" class="dh-modal__link" id="dhSaveNewFolder">+ Tạo Word List mới</button>
+
+        <p class="dh-modal__msg" id="dhSaveMsg" role="status" aria-live="polite" hidden></p>
+        <button type="submit" class="dh-modal__submit" id="dhSaveSubmit">Lưu từ vựng</button>
+    </form>
+</div>
+
+{{-- ── Modal: tạo / sửa Word List (folder) ──────────────────── --}}
+<div class="pq-modal" id="wfFolderModal" aria-hidden="true">
+    <div class="pq-modal__backdrop js-wf-folder-close"></div>
+    <form class="pq-modal__dialog dh-modal" id="wfFolderForm" role="dialog" aria-modal="true" aria-labelledby="wfFolderTitle" novalidate>
+        <button type="button" class="dh-modal__close js-wf-folder-close" aria-label="Đóng"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+        <h3 class="dh-modal__title" id="wfFolderTitle">Tạo Word List mới</h3>
+        <p class="dh-modal__sub" id="wfFolderSub">Bạn có thể tạo tối đa {{ $wordFolderLimit }} Word List.</p>
+
+        <label class="dh-modal__label" for="wfFolderName">Tên Word List</label>
+        <input type="text" class="dh-modal__input" id="wfFolderName" maxlength="60" placeholder="Ví dụ: IELTS Environment">
+
+        <label class="dh-modal__label" for="wfFolderDesc">Mô tả <span class="dh-modal__optional">(không bắt buộc)</span></label>
+        <textarea class="dh-modal__input dh-modal__textarea" id="wfFolderDesc" maxlength="255" rows="3" placeholder="Chủ đề, mục tiêu ôn luyện..."></textarea>
+
+        <p class="dh-modal__msg" id="wfFolderMsg" role="status" aria-live="polite" hidden></p>
+        <button type="submit" class="dh-modal__submit" id="wfFolderSubmit">Tạo Word List</button>
+    </form>
+</div>
+
 {{-- ── Modal: chọn chế độ luyện tập ─────────────────────────── --}}
 <div class="pq-modal" id="pqModeModal" aria-hidden="true">
     <div class="pq-modal__backdrop js-pq-mode-close"></div>
@@ -3226,6 +3955,9 @@
     }
 
     function renderSidebarCard() {
+        // Widget flashcard ở cột phải đã gỡ khỏi trang → bỏ qua, tránh lỗi JS làm dừng các bước sau renderWords()
+        if (!document.getElementById('sidebarCardImage')) return;
+
         if (!sidebarCards.length) {
             $('#sidebarCardWord').text('-');
             $('#sidebarCardPron').text('');
@@ -3315,206 +4047,761 @@
 
     // ── Page init ────────────────────────────────────────────────────────
 
-    // Auto-load My Word List on page init
-    loadMyWordList();
 
-    // Search functionality
-    let isSearching = false; // Prevent duplicate searches
+    /* =================================================================
+     * DICTIONARY HUB: tra từ, lịch sử tìm kiếm, lưu từ vào Word List
+     * ================================================================= */
+    const WF_LIMIT = {{ (int) $wordFolderLimit }};
+    let wordFolders = @json($wordFolders);
+    let currentFolderId = {{ (int) $myWordList->id }};
 
-    $('#searchBtn').on('click', function(e) {
+    let dhSearching = false;
+    let dhEntries = [];
+    let dhHistory = null;          // null = chưa tải từ server
+    let dhHistoryItems = [];       // các mục đang hiện trong dropdown
+    let dhHistoryActive = -1;
+    let dhHistorySuppressed = false; // vừa bấm Esc / vừa tra → không tự mở lại khi lịch sử tải xong
+    let dhLastFolderId = null;     // folder vừa lưu gần nhất → chọn sẵn lần sau
+    let dhSaveEntry = null;
+    let dhSaveTrigger = null;
+
+    const DH_ICON_AUDIO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
+    const DH_ICON_PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+    const DH_ICON_CLOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    const DH_ICON_X = '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+    const WF_ICON_FOLDER = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-9.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+    function dhEsc(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function dhCsrf() {
+        return $('meta[name="csrf-token"]').attr('content');
+    }
+
+    function dhRegexEscape(str) {
+        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Tô đậm từ đang tra trong câu ví dụ (đã escape HTML)
+    function dhHighlight(text, word) {
+        const safe = dhEsc(text);
+        const w = String(word || '').trim();
+        if (!w) return safe;
+        try {
+            return safe.replace(new RegExp('(' + dhRegexEscape(dhEsc(w)) + '[a-z]*)', 'gi'), '<strong>$1</strong>');
+        } catch (e) {
+            return safe;
+        }
+    }
+
+    function dhIpa(value) {
+        const ipa = String(value || '').trim().replace(/^\/+|\/+$/g, '').trim();
+        return ipa ? '/' + ipa + '/' : '';
+    }
+
+    // Đưa modal ra <body> (giữ thứ tự: modal tạo folder nằm trên modal lưu từ)
+    const $dhSaveModal = $('#dhSaveModal').appendTo('body');
+    const $wfFolderModal = $('#wfFolderModal').appendTo('body');
+
+    /* ---------- Banner / kết quả ---------- */
+    function dhShowBanner() {
+        dhEntries = [];
+        $('#dictionaryResult').addClass('hidden').empty();
+        $('#dhBanner').removeClass('hidden');
+    }
+
+    function dhShowResults(html) {
+        $('#dhBanner').addClass('hidden');
+        $('#dictionaryResult').removeClass('hidden').html(html);
+    }
+
+    $('#dhSearchForm').on('submit', function(e) {
         e.preventDefault();
         performSearch();
     });
 
-    $('#searchInput').on('keypress', function(e) {
-        if (e.which === 13) { // Enter key
-            e.preventDefault();
-            performSearch();
-        }
+    $('#dhClearBtn').on('click', function() {
+        dhHistorySuppressed = false;
+        $('#searchInput').val('').trigger('focus');
+        dhShowBanner();
+        dhLoadHistory(dhRenderHistory);
     });
 
-    function performSearch() {
-        // Prevent duplicate calls
-        if (isSearching) {
+    function performSearch(term) {
+        term = String(term === undefined ? $('#searchInput').val() : term).trim();
+
+        if (term === '') {
+            $('#searchInput').trigger('focus');
             return;
         }
+        if (dhSearching) return;
 
-        const searchTerm = $('#searchInput').val().trim();
-        
-        if (searchTerm === '') {
-            alert('Please enter a word to search');
-            return;
-        }
+        $('#searchInput').val(term);
+        dhHistorySuppressed = true;
+        dhCloseHistory();
+        dhSearching = true;
+        $('#searchBtn').prop('disabled', true).text('Đang tra...');
 
-        isSearching = true;
+        dhShowResults(
+            '<div class="dh-entry" aria-busy="true">'
+            + '<div class="dh-skeleton" style="width:38%;height:46px"></div>'
+            + '<div class="dh-skeleton" style="width:30%"></div>'
+            + '<div class="dh-skeleton" style="width:80%"></div>'
+            + '<div class="dh-skeleton" style="width:64%"></div>'
+            + '</div>'
+        );
 
         $.ajax({
             url: '/panel/dictionary/search-first',
             method: 'POST',
+            data: { query: term, history: 1, _token: dhCsrf() }
+        })
+        .done(function(res) {
+            if (res && res.success && res.data) {
+                dhHistory = null; // tải lại lịch sử ở lần mở dropdown sau
+                dhRenderEntries(res.data, term);
+            } else {
+                dhRenderNotFound(term);
+            }
+        })
+        .fail(function(xhr) {
+            const msg = xhr && xhr.responseJSON && xhr.responseJSON.message;
+            dhShowResults(
+                '<div class="dh-state"><p class="dh-state__title">Không tra được từ lúc này</p>'
+                + dhEsc(msg || 'Vui lòng thử lại sau ít phút.') + '</div>'
+            );
+        })
+        .always(function() {
+            dhSearching = false;
+            $('#searchBtn').prop('disabled', false).html('Tra từ &rarr;');
+        });
+    }
+
+    function dhRenderNotFound(term) {
+        dhEntries = [];
+        dhShowResults(
+            '<div class="dh-state"><p class="dh-state__title">Không tìm thấy từ &ldquo;' + dhEsc(term) + '&rdquo;</p>'
+            + 'Kiểm tra lại chính tả hoặc thử tra dạng gốc của từ (ví dụ: <strong>run</strong> thay vì <strong>running</strong>).</div>'
+        );
+    }
+
+    // API cũ không có entries → dựng tạm từ meanings
+    function dhEntriesFromMeanings(data) {
+        const pron = (data.pronunciations || [])[0] || {};
+        return (data.meanings || []).map(function(m) {
+            const defs = (m.definitions || []).map(function(d) { return d.definition; }).filter(Boolean);
+            const examples = (m.definitions || []).map(function(d) { return d.example; }).filter(Boolean);
+            return {
+                part_of_speech: m.partOfSpeech || '',
+                translation: '',
+                definition: defs[0] || '',
+                examples: examples.slice(0, 3),
+                synonyms: (m.synonyms || []).slice(0, 6),
+                pronunciation: pron.ipa || '',
+                audio_url: pron.audio || ''
+            };
+        });
+    }
+
+    function dhRenderEntries(data, term) {
+        currentWordData = data;
+        const word = data.headword || data.word || term;
+        const entries = (Array.isArray(data.entries) && data.entries.length) ? data.entries : dhEntriesFromMeanings(data);
+
+        if (!entries.length) {
+            dhRenderNotFound(term);
+            return;
+        }
+
+        dhEntries = entries.map(function(e) { return Object.assign({ word: word }, e); });
+        dhShowResults(dhEntries.map(dhEntryHtml).join(''));
+    }
+
+    function dhEntryHtml(e, index) {
+        const word = e.word;
+        const ipa = dhIpa(e.pronunciation);
+        let audio = String(e.audio_url || '');
+        if (audio.indexOf('//') === 0) audio = 'https:' + audio;
+
+        let html = '<article class="dh-entry">';
+
+        html += '<header class="dh-entry__head">'
+            + '<h2 class="dh-entry__word">' + dhEsc(word) + '</h2>'
+            + (e.part_of_speech ? '<span class="dh-entry__pos">' + dhEsc(posLabel(e.part_of_speech)) + '</span>' : '')
+            + (ipa ? '<span class="dh-entry__ipa">' + dhEsc(ipa) + '</span>' : '')
+            + '<button type="button" class="dh-entry__audio js-dh-audio" data-audio="' + dhEsc(audio) + '" data-word="' + dhEsc(word) + '" aria-label="Phát âm ' + dhEsc(word) + '">' + DH_ICON_AUDIO + '</button>'
+            + (e.level ? '<span class="dh-entry__level" title="Trình độ CEFR">' + dhEsc(e.level) + '</span>' : '')
+            + '</header>';
+
+        const translation = String(e.translation || '').trim();
+        const definition = String(e.definition || '').trim();
+
+        if (translation) {
+            html += '<p class="dh-entry__meaning">' + dhEsc(translation) + '</p>';
+        }
+        if (definition && definition.toLowerCase() !== translation.toLowerCase()) {
+            html += translation
+                ? '<p class="dh-entry__def">' + dhEsc(definition) + '</p>'
+                : '<p class="dh-entry__meaning">' + dhEsc(definition) + '</p>';
+        }
+
+        // Collocation: dòng đầu là các cụm từ, các dòng sau (nếu có) là câu ví dụ — in nghiêng
+        const collocLines = String(e.collocation || '').split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+        if (collocLines.length) {
+            html += '<h3 class="dh-entry__section">Collocation</h3><div class="dh-entry__colloc">'
+                + collocLines.map(function(l) { return '<p>' + dhEsc(l) + '</p>'; }).join('')
+                + '</div>';
+        }
+
+        const examples = (e.examples || []).filter(Boolean);
+        if (examples.length) {
+            html += '<h3 class="dh-entry__section">Examples</h3><ol class="dh-entry__examples">';
+            examples.forEach(function(ex, i) {
+                html += '<li class="dh-entry__example"><span class="dh-entry__num">' + (i + 1) + '</span>'
+                    + '<span class="dh-entry__example-text">' + dhHighlight(ex, word) + '</span></li>';
+            });
+            html += '</ol>';
+        }
+
+        if (Array.isArray(e.synonyms) && e.synonyms.length) {
+            html += '<p class="dh-entry__syn"><strong>Từ đồng nghĩa:</strong> ' + dhEsc(e.synonyms.join(', ')) + '</p>';
+        }
+
+        html += '<button type="button" class="dh-entry__save js-dh-save" data-index="' + index + '">'
+            + DH_ICON_PLUS + '<span>Lưu vào My Word List</span></button>';
+
+        return html + '</article>';
+    }
+
+    $(document).on('click', '.js-dh-audio', function() {
+        playAudio(this);
+    });
+
+    /* ---------- Lịch sử tìm kiếm ---------- */
+    function dhLoadHistory(done) {
+        if (dhHistory !== null) {
+            if (typeof done === 'function') done();
+            return;
+        }
+
+        $.get('/panel/dictionary/search-history')
+            .done(function(res) {
+                dhHistory = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+            })
+            .fail(function() {
+                dhHistory = [];
+            })
+            .always(function() {
+                if (typeof done === 'function') done();
+            });
+    }
+
+    function dhCloseHistory() {
+        dhHistoryItems = [];
+        dhHistoryActive = -1;
+        $('#dhHistory').prop('hidden', true).empty();
+        $('#searchInput').attr('aria-expanded', 'false').removeAttr('aria-activedescendant');
+    }
+
+    function dhRenderHistory() {
+        const $input = $('#searchInput');
+        if (!$input.is(':focus') || dhHistorySuppressed) return;
+
+        const q = String($input.val() || '').trim().toLowerCase();
+        dhHistoryItems = (dhHistory || []).filter(function(h) {
+            return !q || String(h.query).indexOf(q) !== -1;
+        }).slice(0, 10);
+
+        if (!dhHistoryItems.length) {
+            dhCloseHistory();
+            return;
+        }
+
+        let html = '<div class="dh-history__head"><span>Tìm kiếm gần đây</span>'
+            + '<button type="button" class="dh-history__clear-all" data-history-clear>Xoá tất cả</button></div>';
+
+        dhHistoryItems.forEach(function(h, i) {
+            let text = dhEsc(h.query);
+            if (q) {
+                text = text.replace(new RegExp('(' + dhRegexEscape(dhEsc(q)) + ')', 'i'), '<mark>$1</mark>');
+            }
+            html += '<div class="dh-history__item" role="option" id="dhHistOpt' + i + '" data-index="' + i + '" aria-selected="false">'
+                + '<span class="dh-history__icon">' + DH_ICON_CLOCK + '</span>'
+                + '<span class="dh-history__text">' + text + '</span>'
+                + '<button type="button" class="dh-history__remove" data-history-remove="' + i + '" aria-label="Xoá &ldquo;' + dhEsc(h.query) + '&rdquo; khỏi lịch sử">' + DH_ICON_X + '</button>'
+                + '</div>';
+        });
+
+        dhHistoryActive = -1;
+        $('#dhHistory').html(html).prop('hidden', false);
+        $input.attr('aria-expanded', 'true');
+    }
+
+    function dhSetHistoryActive(index) {
+        const $items = $('#dhHistory .dh-history__item');
+        if (!$items.length) return;
+
+        dhHistoryActive = (index + $items.length) % $items.length;
+        $items.removeClass('is-active').attr('aria-selected', 'false');
+
+        const $active = $items.eq(dhHistoryActive).addClass('is-active').attr('aria-selected', 'true');
+        $('#searchInput').attr('aria-activedescendant', $active.attr('id'));
+        $active[0].scrollIntoView({ block: 'nearest' });
+    }
+
+    $('#searchInput')
+        .on('focus click', function() {
+            dhHistorySuppressed = false;
+            dhLoadHistory(dhRenderHistory);
+        })
+        .on('input', function() {
+            dhHistorySuppressed = false;
+            dhRenderHistory();
+        })
+        .on('keydown', function(e) {
+            const open = !$('#dhHistory').prop('hidden');
+
+            if (e.key === 'ArrowDown' && open) {
+                e.preventDefault();
+                dhSetHistoryActive(dhHistoryActive + 1);
+            } else if (e.key === 'ArrowUp' && open) {
+                e.preventDefault();
+                dhSetHistoryActive(dhHistoryActive - 1);
+            } else if (e.key === 'Enter' && open && dhHistoryActive >= 0 && dhHistoryItems[dhHistoryActive]) {
+                e.preventDefault();
+                performSearch(dhHistoryItems[dhHistoryActive].query);
+            } else if (e.key === 'Escape') {
+                dhHistorySuppressed = true;
+                if (open) {
+                    e.stopPropagation();
+                    dhCloseHistory();
+                }
+            }
+        });
+
+    // mousedown: chạy trước khi ô tìm kiếm mất focus
+    $('#dhHistory').on('mousedown', function(e) {
+        e.preventDefault();
+
+        const $remove = $(e.target).closest('[data-history-remove]');
+        if ($remove.length) {
+            const item = dhHistoryItems[parseInt($remove.attr('data-history-remove'), 10)];
+            if (!item) return;
+
+            dhHistory = (dhHistory || []).filter(function(h) { return h.query !== item.query; });
+            dhRenderHistory();
+
+            if (item.id) {
+                $.post('/panel/dictionary/search-history/delete', { id: item.id, _token: dhCsrf() });
+            }
+            return;
+        }
+
+        if ($(e.target).closest('[data-history-clear]').length) {
+            dhHistory = [];
+            dhCloseHistory();
+            $.post('/panel/dictionary/search-history/delete', { all: 1, _token: dhCsrf() });
+            return;
+        }
+
+        const $item = $(e.target).closest('.dh-history__item');
+        if ($item.length) {
+            const picked = dhHistoryItems[parseInt($item.attr('data-index'), 10)];
+            if (picked) performSearch(picked.query);
+        }
+    });
+
+    $('#dhSearchField').on('focusout', function() {
+        setTimeout(function() {
+            if (!$.contains(document.getElementById('dhSearchField'), document.activeElement)) {
+                dhCloseHistory();
+            }
+        }, 120);
+    });
+
+    /* ---------- Lưu từ vào Word List ---------- */
+    function dhFillFolderSelect(selectedId) {
+        const $select = $('#dhSaveFolder').empty();
+
+        wordFolders.forEach(function(f) {
+            $('<option></option>')
+                .val(f.id)
+                .text(f.name + ' (' + (f.word_count || 0) + ' từ)')
+                .appendTo($select);
+        });
+
+        const wanted = wfFolderById(selectedId) ? selectedId
+            : (wfFolderById(dhLastFolderId) ? dhLastFolderId
+            : (wordFolders[0] ? wordFolders[0].id : ''));
+        $select.val(String(wanted));
+
+        $('#dhSaveNewFolder').toggleClass('hidden', wordFolders.length >= WF_LIMIT);
+    }
+
+    function dhSaveMessage(text, type) {
+        $('#dhSaveMsg').text(text || '')
+            .attr('class', 'dh-modal__msg' + (type ? ' is-' + type : ''))
+            .prop('hidden', !text);
+    }
+
+    $(document).on('click', '.js-dh-save', function() {
+        const entry = dhEntries[parseInt($(this).attr('data-index'), 10)];
+        if (!entry) return;
+
+        dhSaveEntry = entry;
+        dhSaveTrigger = this;
+
+        $('#dhSaveWord').text(entry.word);
+        dhFillFolderSelect(null);
+        dhSaveMessage('', '');
+        $('#dhSaveSubmit').prop('disabled', false).text('Lưu từ vựng');
+
+        pqOpenModal($dhSaveModal);
+        setTimeout(function() { $('#dhSaveFolder').trigger('focus'); }, 30);
+    });
+
+    function dhCloseSaveModal() {
+        pqCloseModal($dhSaveModal);
+        if (dhSaveTrigger && document.body.contains(dhSaveTrigger)) dhSaveTrigger.focus();
+    }
+
+    $(document).on('click', '.js-dh-save-close', dhCloseSaveModal);
+
+    $('#dhSaveNewFolder').on('click', function() {
+        wfOpenFolderModal(null, function(folder) {
+            dhFillFolderSelect(folder.id);
+        });
+    });
+
+    $('#dhSaveForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const entry = dhSaveEntry;
+        const folderId = $('#dhSaveFolder').val();
+        if (!entry || !folderId) return;
+
+        const $submit = $('#dhSaveSubmit').prop('disabled', true).text('Đang lưu...');
+        dhSaveMessage('', '');
+
+        $.ajax({
+            url: '/panel/dictionary/my-word-list/add-word',
+            method: 'POST',
             data: {
-                query: searchTerm,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            beforeSend: function() {
-                $('#searchBtn').prop('disabled', true).text('{{ trans('panel.searching') }}...');
-            },
-            success: function(response) {
-                if (response.success && response.data) {
-                    displaySearchResult(response.data);
-                    $('#dictionaryResult').removeClass('hidden');
-                } else {
-                    alert('{{ trans('panel.word_not_found') }}: ' + searchTerm);
+                _token: dhCsrf(),
+                folder_id: folderId,
+                word: entry.word,
+                part_of_speech: entry.part_of_speech || '',
+                definition: entry.definition || '',
+                translation: entry.translation || '',
+                pronunciation: String(entry.pronunciation || '').replace(/^\/+|\/+$/g, '').trim(),
+                example: (entry.examples || []).join('\n'),
+                collocation: entry.collocation || '',
+                audio_url: entry.audio_url || ''
+            }
+        })
+        .done(function(res) {
+            if (!res || !res.success) {
+                dhSaveMessage((res && res.message) || 'Không lưu được từ, hãy thử lại.', 'error');
+                $submit.prop('disabled', false).text('Lưu từ vựng');
+                return;
+            }
+
+            const folder = res.data && res.data.folder;
+            if (folder) {
+                wfUpsertFolder(folder);
+                dhLastFolderId = folder.id;
+
+                // Đang mở đúng folder này thì tải lại danh sách từ
+                if (String(folder.id) === String(currentFolderId) && !$('#wfDetailView').hasClass('hidden')) {
+                    loadMyWordList();
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('Search error:', xhr.responseText);
-                
-                let errorMessage = '{{ trans('panel.search_error') }}';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                alert(errorMessage);
-            },
-            complete: function() {
-                $('#searchBtn').prop('disabled', false).text('{{ trans('panel.search') }}');
-                isSearching = false;
+            }
+
+            dhSaveMessage(res.message || 'Đã lưu từ vựng.', 'success');
+            $submit.text('Đã lưu ✓');
+
+            if (dhSaveTrigger) {
+                $(dhSaveTrigger).addClass('is-saved').find('span').text('Đã lưu' + (folder ? ' vào ' + folder.name : '') + ' · Lưu thêm');
+            }
+
+            setTimeout(dhCloseSaveModal, 900);
+        })
+        .fail(function(xhr) {
+            const data = (xhr && xhr.responseJSON) || {};
+            const firstError = data.errors ? Object.values(data.errors)[0] : null;
+            dhSaveMessage(
+                (Array.isArray(firstError) ? firstError[0] : firstError) || data.message
+                    || (xhr && xhr.status === 419 ? 'Phiên làm việc đã hết hạn, hãy tải lại trang.' : 'Không lưu được từ, hãy thử lại.'),
+                'error'
+            );
+            $submit.prop('disabled', false).text('Lưu từ vựng');
+        });
+    });
+
+    /* =================================================================
+     * MY WORD LIST: các folder từ vựng (tối đa WF_LIMIT)
+     * ================================================================= */
+    let wfFolderModalCallback = null;
+    let wfEditingId = null;
+
+    function wfFolderById(id) {
+        if (id === null || id === undefined || id === '') return null;
+        return wordFolders.find(function(f) { return String(f.id) === String(id); }) || null;
+    }
+
+    function wfUpsertFolder(folder) {
+        const index = wordFolders.findIndex(function(f) { return String(f.id) === String(folder.id); });
+        if (index === -1) {
+            wordFolders.push(folder);
+        } else {
+            wordFolders[index] = Object.assign({}, wordFolders[index], folder);
+        }
+        wfRenderGrid();
+    }
+
+    function wfCardHtml(f) {
+        const count = parseInt(f.word_count, 10) || 0;
+        return '<article class="wf-card" data-folder-id="' + dhEsc(f.id) + '">'
+            + '<button type="button" class="wf-card__thumb js-wf-open" aria-label="Mở ' + dhEsc(f.name) + '">'
+            + WF_ICON_FOLDER + '<span class="wf-card__thumb-label">' + dhEsc(f.name) + '</span></button>'
+            + '<div class="wf-card__body">'
+            + '<button type="button" class="wf-card__name js-wf-open">' + dhEsc(f.name) + '</button>'
+            + (f.description ? '<p class="wf-card__desc">' + dhEsc(f.description) + '</p>' : '')
+            + '<div class="wf-card__foot"><span class="wf-card__count">' + count + ' từ</span>'
+            + '<button type="button" class="wf-card__practice js-wf-practice"' + (count ? '' : ' disabled title="Word List chưa có từ nào"') + '>Luyện tập</button>'
+            + '</div></div></article>';
+    }
+
+    function wfRenderGrid() {
+        const q = String($('#wfSearchInput').val() || '').trim().toLowerCase();
+        const list = wordFolders.filter(function(f) {
+            return !q || (String(f.name) + ' ' + String(f.description || '')).toLowerCase().indexOf(q) !== -1;
+        });
+
+        $('#wfGrid').html(list.length
+            ? list.map(wfCardHtml).join('')
+            : '<div class="wf-empty">' + (q ? 'Không tìm thấy Word List phù hợp.' : 'Chưa có Word List nào.') + '</div>');
+
+        const full = wordFolders.length >= WF_LIMIT;
+        $('#tabCountMy').text(wordFolders.length);
+        $('#wfCreateBtn').prop('disabled', full)
+            .attr('title', full ? 'Bạn đã tạo tối đa ' + WF_LIMIT + ' Word List' : '');
+        $('#wfLimitNote').text('Đã tạo ' + wordFolders.length + '/' + WF_LIMIT + ' Word List'
+            + (full ? ' · xoá bớt Word List để tạo mới.' : '.'));
+    }
+
+    function wfRefreshFolders() {
+        $.get('/panel/dictionary/folders').done(function(res) {
+            if (res && res.success && res.data) {
+                wordFolders = res.data.folders || [];
+                wfRenderGrid();
             }
         });
     }
 
-    function displaySearchResult(data) {
-        console.log('Dictionary data:', data); // Debug log
-
-        // Word heading
-        let html = `<div class="result-word">${data.headword || data.word || 'Unknown'}</div>`;
-
-        // ── Pronunciations: UK / US buttons with audio ──────────────────
-        if (data.pronunciations && data.pronunciations.length > 0) {
-            html += '<div class="pronunciations-row">';
-            const wordForSpeech = data.headword || data.word || '';
-
-            data.pronunciations.forEach(function(pron) {
-                let label = pron.label || '';
-                let ipa   = pron.ipa   || pron.text || '';
-                let audio = pron.audio || '';
-
-                // Fix protocol-relative URL on client side too
-                if (audio && audio.startsWith('//')) {
-                    audio = 'https:' + audio;
-                }
-
-                html += '<div class="pronunciation-item">';
-                if (label) {
-                    html += `<span class="pron-label">${label}</span>`;
-                }
-                if (ipa) {
-                    html += `<span class="pron-ipa">/${ipa}/</span>`;
-                }
-                // Always show audio button (fallback to TTS if no URL)
-                html += `<button class="pron-audio-btn" data-audio="${audio}" data-word="${wordForSpeech}" title="Play ${label} pronunciation" onclick="playAudio(this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                </button>`;
-                html += '</div>';
-            });
-
-            html += '</div>';
-        }
-
-        // ── Meanings ─────────────────────────────────────────────────────
-        const wordLabel = data.headword || data.word || '';
-        function escAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
-
-        if (data.meanings && data.meanings.length > 0) {
-            data.meanings.forEach(function(meaning) {
-                html += '<div class="result-meaning-group">';
-
-                if (meaning.partOfSpeech) {
-                    html += `<div class="result-pos">${meaning.partOfSpeech}</div>`;
-                }
-
-                if (meaning.definitions && meaning.definitions.length > 0) {
-                    // Show max 4 definitions per part-of-speech, each with its own Save button
-                    meaning.definitions.slice(0, 4).forEach(function(defObj, i) {
-                        html += '<div class="def-entry">';
-                        html += '<div class="def-content">';
-                        if (defObj.definition) {
-                            html += `<div class="result-definition"><span class="def-num">${i + 1}.</span> ${defObj.definition}</div>`;
-                        }
-                        if (defObj.example) {
-                            html += `<div class="result-example">"${defObj.example}"</div>`;
-                        }
-                        if (defObj.synonyms && defObj.synonyms.length > 0) {
-                            html += `<div class="result-synonyms"><strong>Synonyms:</strong> ${defObj.synonyms.join(', ')}</div>`;
-                        }
-                        if (defObj.antonyms && defObj.antonyms.length > 0) {
-                            html += `<div class="result-antonyms"><strong>Antonyms:</strong> ${defObj.antonyms.join(', ')}</div>`;
-                        }
-                        html += '</div>'; // .def-content
-                        html += `<button class="btn-save-def save-definition-btn" data-word="${escAttr(wordLabel)}" data-definition="${escAttr(defObj.definition)}" data-pos="${escAttr(meaning.partOfSpeech)}" data-example="${escAttr(defObj.example)}">Save</button>`;
-                        html += '</div>'; // .def-entry
-                    });
-                }
-
-                // Part-of-speech level synonyms/antonyms
-                if (meaning.synonyms && meaning.synonyms.length > 0) {
-                    html += `<div class="result-synonyms"><strong>Synonyms:</strong> ${meaning.synonyms.join(', ')}</div>`;
-                }
-                if (meaning.antonyms && meaning.antonyms.length > 0) {
-                    html += `<div class="result-antonyms"><strong>Antonyms:</strong> ${meaning.antonyms.join(', ')}</div>`;
-                }
-
-                html += '</div>';
-            });
-        }
-        // Fallback to old senses structure
-        else if (data.senses && data.senses.length > 0) {
-            data.senses.forEach(function(sense) {
-                if (sense.part_of_speech) {
-                    html += `<div class="result-pos">${sense.part_of_speech}</div>`;
-                }
-                if (sense.definitions && sense.definitions.length > 0) {
-                    sense.definitions.forEach(function(definition) {
-                        html += '<div class="def-entry">';
-                        html += '<div class="def-content">';
-                        html += `<div class="result-definition">${definition}</div>`;
-                        html += '</div>';
-                        html += `<button class="btn-save-def save-definition-btn" data-word="${escAttr(wordLabel)}" data-definition="${escAttr(definition)}" data-pos="${escAttr(sense.part_of_speech)}" data-example="">Save</button>`;
-                        html += '</div>';
-                    });
-                }
-                if (sense.examples && sense.examples.length > 0) {
-                    sense.examples.forEach(function(example) {
-                        html += `<div class="result-example">"${example}"</div>`;
-                    });
-                }
-            });
-        }
-
-        // Back button
-        html += `<div class="text-center mt-8 mb-4">
-            <button class="dict-result-back-btn" id="dictResultBackBtn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                {{ trans('panel.back') }}
-            </button>
-        </div>`;
-
-        // Store current word data for use by action buttons
-        currentWordData = data;
-
-        $('#dictionaryResult').html(html);
-
-        // Back button handler
-        $('#dictResultBackBtn').on('click', function() {
-            $('#dictionaryResult').addClass('hidden').html('');
-        });
-
-        // Re-init icon rendering if iconsax is available
-        if (typeof iconsax !== 'undefined') { try { iconsax.replace(); } catch(e) {} }
+    function wfDefaultFolder() {
+        return wordFolders.find(function(f) { return f.is_default; }) || wordFolders[0] || null;
     }
+
+    function wfShowGrid() {
+        lastSelectedIds = [];
+        $('#wfDetailView').addClass('hidden');
+        $('#wfGridView').removeClass('hidden');
+    }
+
+    function wfOpenFolder(id, opts) {
+        const folder = wfFolderById(id);
+        if (!folder) return;
+
+        currentFolderId = folder.id;
+        lastSelectedIds = [];
+        updateMyWordListMeta(folder);
+
+        $('#wfGridView').addClass('hidden');
+        $('#wfDetailView').removeClass('hidden');
+        $('#wfDetailView .word-list-expanded').addClass('show');
+        $('#myWordListSection .words-container').first().html('<p class="wf-words-empty">Đang tải...</p>');
+
+        loadMyWordList(function() {
+            if (opts && opts.practice) wfPracticeAll();
+        });
+    }
+
+    // Nút "Luyện tập" trên thẻ folder: chọn sẵn tất cả từ rồi mở modal chọn dạng bài
+    function wfPracticeAll() {
+        const $expanded = $('#wfDetailView .word-list-expanded');
+        const $boxes = $expanded.find('.word-checkbox');
+
+        if (!$boxes.length) {
+            alert('Word List này chưa có từ nào để luyện tập.');
+            return;
+        }
+
+        $boxes.prop('checked', true);
+        $expanded.find('.btn-practice:not(.btn-flashcard)').first().trigger('click');
+    }
+
+    $(document).on('click', '.js-wf-open', function() {
+        wfOpenFolder($(this).closest('.wf-card').attr('data-folder-id'));
+    });
+
+    $(document).on('click', '.js-wf-practice', function() {
+        wfOpenFolder($(this).closest('.wf-card').attr('data-folder-id'), { practice: true });
+    });
+
+    $('#wfBackBtn').on('click', function() {
+        wfShowGrid();
+        wfRenderGrid();
+    });
+
+    $('#wfSearchInput').on('input', wfRenderGrid);
+    $('#wfSearchClear').on('click', function() {
+        $('#wfSearchInput').val('').trigger('focus');
+        wfRenderGrid();
+    });
+
+    /* ---------- Tạo / sửa / xoá folder ---------- */
+    function wfFolderMessage(text, type) {
+        $('#wfFolderMsg').text(text || '')
+            .attr('class', 'dh-modal__msg' + (type ? ' is-' + type : ''))
+            .prop('hidden', !text);
+    }
+
+    function wfOpenFolderModal(folder, callback) {
+        if (!folder && wordFolders.length >= WF_LIMIT) {
+            alert('Bạn chỉ có thể tạo tối đa ' + WF_LIMIT + ' Word List.');
+            return;
+        }
+
+        wfEditingId = folder ? folder.id : null;
+        wfFolderModalCallback = typeof callback === 'function' ? callback : null;
+
+        $('#wfFolderTitle').text(folder ? 'Sửa Word List' : 'Tạo Word List mới');
+        $('#wfFolderSub').text(folder
+            ? 'Đổi tên hoặc mô tả cho Word List của bạn.'
+            : 'Đã tạo ' + wordFolders.length + '/' + WF_LIMIT + ' Word List.');
+        $('#wfFolderName').val(folder ? folder.name : '');
+        $('#wfFolderDesc').val(folder ? (folder.description || '') : '');
+        $('#wfFolderSubmit').prop('disabled', false).text(folder ? 'Lưu thay đổi' : 'Tạo Word List');
+        wfFolderMessage('', '');
+
+        pqOpenModal($wfFolderModal);
+        setTimeout(function() { $('#wfFolderName').trigger('focus'); }, 30);
+    }
+
+    $(document).on('click', '.js-wf-folder-close', function() {
+        pqCloseModal($wfFolderModal);
+    });
+
+    $('#wfCreateBtn').on('click', function() {
+        wfOpenFolderModal(null, function(folder) {
+            wfOpenFolder(folder.id);
+        });
+    });
+
+    $('#wfEditBtn').on('click', function(e) {
+        e.stopPropagation();
+        const folder = wfFolderById(currentFolderId);
+        if (folder) wfOpenFolderModal(folder);
+    });
+
+    $('#wfFolderForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const name = String($('#wfFolderName').val() || '').trim();
+        if (!name) {
+            wfFolderMessage('Hãy nhập tên Word List.', 'error');
+            $('#wfFolderName').trigger('focus');
+            return;
+        }
+
+        const editingId = wfEditingId;
+        const $submit = $('#wfFolderSubmit').prop('disabled', true).text('Đang lưu...');
+        wfFolderMessage('', '');
+
+        $.ajax({
+            url: editingId
+                ? '/panel/dictionary/folders/' + encodeURIComponent(editingId) + '/update'
+                : '/panel/dictionary/folders/create',
+            method: 'POST',
+            data: { _token: dhCsrf(), name: name, description: String($('#wfFolderDesc').val() || '').trim() }
+        })
+        .done(function(res) {
+            if (!res || !res.success || !res.data) {
+                wfFolderMessage((res && res.message) || 'Không lưu được Word List.', 'error');
+                $submit.prop('disabled', false).text(editingId ? 'Lưu thay đổi' : 'Tạo Word List');
+                return;
+            }
+
+            wfUpsertFolder(res.data);
+            if (String(res.data.id) === String(currentFolderId)) {
+                updateMyWordListMeta(res.data);
+            }
+
+            pqCloseModal($wfFolderModal);
+
+            const cb = wfFolderModalCallback;
+            wfFolderModalCallback = null;
+            if (cb) cb(res.data);
+        })
+        .fail(function(xhr) {
+            const data = (xhr && xhr.responseJSON) || {};
+            const firstError = data.errors ? Object.values(data.errors)[0] : null;
+            wfFolderMessage(
+                (Array.isArray(firstError) ? firstError[0] : firstError) || data.message || 'Không lưu được Word List.',
+                'error'
+            );
+            $submit.prop('disabled', false).text(editingId ? 'Lưu thay đổi' : 'Tạo Word List');
+        });
+    });
+
+    $('#wfDeleteBtn').on('click', function(e) {
+        e.stopPropagation();
+
+        const folder = wfFolderById(currentFolderId);
+        if (!folder || folder.is_default) return;
+
+        if (!confirm('Xoá Word List "' + folder.name + '"?\nCác từ chỉ nằm trong Word List này cũng sẽ bị xoá.')) {
+            return;
+        }
+
+        $.post('/panel/dictionary/folders/' + encodeURIComponent(folder.id) + '/delete', { _token: dhCsrf() })
+            .done(function(res) {
+                if (!res || !res.success) {
+                    alert((res && res.message) || 'Không xoá được Word List.');
+                    return;
+                }
+
+                wordFolders = wordFolders.filter(function(f) { return String(f.id) !== String(folder.id); });
+                const fallback = wfDefaultFolder();
+                currentFolderId = fallback ? fallback.id : null;
+
+                wfShowGrid();
+                wfRenderGrid();
+            })
+            .fail(function(xhr) {
+                alert((xhr && xhr.responseJSON && xhr.responseJSON.message) || 'Không xoá được Word List.');
+            });
+    });
+
+    $(document).on('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+
+        if ($wfFolderModal.hasClass('is-open')) {
+            pqCloseModal($wfFolderModal);
+        } else if ($dhSaveModal.hasClass('is-open')) {
+            dhCloseSaveModal();
+        }
+    });
+
+    // Hiện danh sách folder ngay khi mở trang (tab My Word List là tab mặc định)
+    wfRenderGrid();
 
     // Play pronunciation audio
     function playAudio(btnEl) {
@@ -3572,69 +4859,6 @@
         window.speechSynthesis.speak(utter);
     }
 
-    // Save individual definition to My Word List
-    $(document).on('click', '.save-definition-btn', function() {
-        const $btn = $(this);
-        const word         = $btn.data('word')       || '';
-        const definition   = $btn.data('definition') || '';
-        const partOfSpeech = $btn.data('pos')        || '';
-        const example      = $btn.data('example')    || '';
-        let pronunciation  = '';
-
-        if (!word) {
-            alert('{{ trans('panel.no_word_selected') }}');
-            return;
-        }
-        if (!definition) {
-            alert('{{ trans('panel.word_definition_not_found') }}');
-            return;
-        }
-
-        if (currentWordData && currentWordData.pronunciations && currentWordData.pronunciations.length > 0) {
-            pronunciation = currentWordData.pronunciations[0].ipa || currentWordData.pronunciations[0].text || '';
-        }
-
-        $btn.prop('disabled', true).text('{{ trans('panel.adding') }}...');
-
-        $.ajax({
-            url: '/panel/dictionary/my-word-list/add-word',
-            method: 'POST',
-            data: {
-                word: word,
-                definition: definition,
-                part_of_speech: partOfSpeech,
-                example: example,
-                pronunciation: pronunciation,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(res) {
-                if (res.success) {
-                    $btn.text('{{ trans('panel.added') }} ✓').css({'background': '#22c55e', 'color': '#fff'}).prop('disabled', true);
-                    // Refresh word list if currently expanded
-                    if ($('#words-my-{{ $myWordList->id }}').closest('.word-list-expanded').hasClass('show')) {
-                        loadMyWordList();
-                    }
-                } else {
-                    if (res.message && res.message.toLowerCase().indexOf('already') !== -1) {
-                        $btn.text('{{ trans('panel.already_in_list') }}').css({'background': '#94a3b8', 'color': '#fff'}).prop('disabled', true);
-                    } else {
-                        alert(res.message || '{{ trans('panel.failed_to_add_word') }}');
-                        $btn.prop('disabled', false).text('Save').removeAttr('style');
-                    }
-                }
-            },
-            error: function(xhr) {
-                const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '{{ trans('panel.failed_to_add_word') }}';
-                if (msg.toLowerCase().indexOf('already') !== -1) {
-                    $btn.text('{{ trans('panel.already_in_list') }}').css({'background': '#94a3b8', 'color': '#fff'}).prop('disabled', true);
-                } else {
-                    alert(msg);
-                    $btn.prop('disabled', false).text('Save').removeAttr('style');
-                }
-            }
-        });
-    });
-
         // ── Tab switching ────────────────────────────────────────────────
     $(document).on('click', '.wordlist-tab', function() {
         const tab = $(this).data('tab');
@@ -3651,11 +4875,10 @@
             $('#academicWordListsSection').addClass('hidden');
             $('#myWordListSection').removeClass('hidden');
 
-            const $expanded = $('#myWordListSection .word-list-expanded');
-            if (!$expanded.hasClass('show')) {
-                $expanded.addClass('show');
-            }
-            loadMyWordList();
+            // Về danh sách folder và đồng bộ lại số từ
+            wfShowGrid();
+            wfRenderGrid();
+            wfRefreshFolders();
         } else {
             $('#myWordListSection').addClass('hidden');
             $('#academicWordListsSection').removeClass('hidden');
@@ -3673,6 +4896,10 @@
 
         let listId   = $card.data('list-id');
         let listType = $card.data('list-type');
+
+        // Folder My Word List luôn mở sẵn (quay lại bằng nút "Tất cả Word List")
+        if (listType === 'my') return;
+
         let sourceId = $card.data('source-id');
         let sourceType = $card.data('source-type');
         let expandedSection = $card.find('.word-list-expanded');
@@ -3681,7 +4908,8 @@
             expandedSection.removeClass('show');
         } else {
             lastSelectedIds = [];
-            $('.word-list-expanded').removeClass('show');
+            // Chỉ thu gọn các bộ từ Academic khác — không đụng tới folder My Word List
+            $('#academicWordListsSection .word-list-expanded').removeClass('show');
             expandedSection.addClass('show');
             if (listType === 'academic') {
                 loadAcademicWordList(listId, sourceType, sourceId);
@@ -3718,19 +4946,38 @@
         });
     }
 
-    // Load My Word List
-    function loadMyWordList() {
+    // Load từ của folder đang mở (currentFolderId)
+    function loadMyWordList(done) {
+        const folderId = currentFolderId;
+
         $.ajax({
             url: '/panel/dictionary/my-word-list',
             method: 'GET',
+            data: folderId ? { folder_id: folderId } : {},
             success: function(response) {
-                if (response.success) {
-                    updateMyWordListMeta(response.data);
-                    renderWords(response.data.flashcards, response.data.id, 'my', 'my', response.data.id);
+                if (!response.success || String(response.data.id) !== String(currentFolderId || response.data.id)) return;
+
+                const words = response.data.flashcards || [];
+                updateMyWordListMeta(response.data);
+                renderWords(words, response.data.id, 'my', 'my', response.data.id);
+
+                if (!words.length) {
+                    $('#myWordListSection .words-container').first().html(
+                        '<p class="wf-words-empty">Word List này chưa có từ nào. Tra từ ở Dictionary Hub phía trên rồi bấm "Lưu vào My Word List".</p>'
+                    );
                 }
+
+                if (typeof done === 'function') done(response.data);
             },
-            error: function(error) {
-                console.error('Error loading my word list:', error);
+            error: function(xhr) {
+                console.error('Error loading my word list:', xhr);
+                // Folder đã bị xoá ở tab khác → quay về danh sách folder
+                if (xhr && xhr.status === 404) {
+                    const fallback = wfDefaultFolder();
+                    currentFolderId = fallback ? fallback.id : null;
+                    wfShowGrid();
+                    wfRefreshFolders();
+                }
             }
         });
     }
@@ -3744,7 +4991,7 @@
         container.empty();
 
         words.forEach(function(word) {
-            let pronunciation = word.pronunciation ? `<span class="word-pronunciation">/${word.pronunciation}/</span>` : '';
+            let pronunciation = word.pronunciation ? `<span class="word-pronunciation">${dhEsc(dhIpa(word.pronunciation))}</span>` : '';
             let wordSource = word.word_source || sourceType || listType;
 
             let needsReview = !!word.needs_review;
@@ -3752,8 +4999,8 @@
             let isLearned   = (!!word.is_learned || practicedCorrectIds.has(word.id)) && !needsReview;
 
             let wordHtml = `
-                <div class="word-item" data-word-id="${word.id}" data-word="${word.word}"
-                     data-word-source="${wordSource}"
+                <div class="word-item" data-word-id="${dhEsc(word.id)}" data-word="${dhEsc(word.word)}"
+                     data-word-source="${dhEsc(wordSource)}"
                      data-reportable="${word.can_report ? 1 : 0}"
                      data-learned="${isLearned ? 1 : 0}"
                      data-review="${needsReview ? 1 : 0}"
@@ -3761,10 +5008,10 @@
                     <input type="checkbox" class="word-checkbox" data-word-id="${word.id}">
                     <div class="word-content">
                         <div class="word-title-row">
-                            <span class="word-text">${word.word}</span>
+                            <span class="word-text">${dhEsc(word.word)}</span>
                             ${pronunciation}
                         </div>
-                        <div class="word-definition">${word.definition}</div>
+                        <div class="word-definition">${dhEsc(listType === 'my' && word.translation ? word.translation : word.definition)}</div>
                     </div>
                     <div class="word-badges">
                         <span class="word-badge badge-learned ${isLearned ? 'on' : ''}"
@@ -3809,7 +5056,16 @@
         $('#myWordListName').text(data.name || 'My Word List');
         $('#myWordListDesc').text(data.description || '');
         $('#myWordListCount').text('Tổng số từ: ' + totalWords + ' từ');
-        $('#tabCountMy').text(totalWords);
+        $('#wfDeleteBtn').toggleClass('hidden', !!data.is_default);
+
+        // Đồng bộ số từ trên thẻ folder
+        const folder = wfFolderById(data.id);
+        if (folder) {
+            folder.word_count = totalWords;
+            folder.name = data.name || folder.name;
+            folder.description = data.description;
+            wfRenderGrid();
+        }
     }
 
         // Bật/tắt "cần ôn tập" và "gắn sao"
@@ -3885,6 +5141,7 @@
             url: '/panel/dictionary/my-word-list/bulk-delete',
             method: 'POST',
             data: {
+                folder_id: currentFolderId,
                 flashcard_ids: selectedIds,
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
@@ -4054,6 +5311,7 @@
                 data.word_ids = wordIds;
             }
         } else {
+            data.folder_id = ctx.listId;
             data.flashcard_ids = wordIds;
         }
 
@@ -4774,7 +6032,7 @@
                 endpoint = '/panel/dictionary/academic-word-lists/' + currentWordListSourceId;
             }
         } else {
-            endpoint = '/panel/dictionary/my-word-list';
+            endpoint = '/panel/dictionary/my-word-list?folder_id=' + encodeURIComponent(currentWordListId || currentFolderId || '');
         }
 
         $.ajax({
@@ -4841,7 +6099,13 @@
             'n': 'Danh từ', 'noun': 'Danh từ',
             'v': 'Động từ', 'verb': 'Động từ',
             'adj': 'Tính từ', 'adjective': 'Tính từ',
-            'adv': 'Trạng từ', 'adverb': 'Trạng từ'
+            'adv': 'Trạng từ', 'adverb': 'Trạng từ',
+            'prep': 'Giới từ', 'preposition': 'Giới từ',
+            'conj': 'Liên từ', 'conjunction': 'Liên từ',
+            'pron': 'Đại từ', 'pronoun': 'Đại từ',
+            'interj': 'Thán từ', 'interjection': 'Thán từ', 'exclamation': 'Thán từ',
+            'det': 'Từ hạn định', 'determiner': 'Từ hạn định',
+            'phrasal verb': 'Cụm động từ', 'phrase': 'Cụm từ', 'idiom': 'Thành ngữ'
         };
         if (!pos) return '';
         const key = pos.toLowerCase().trim();

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Slider bên phải modal Đăng nhập / Đăng ký (3 slide, tự chuyển).
+ * Slider bên phải modal Đăng nhập / Đăng ký (tối đa 5 slide, tự chuyển).
  *
  * Manager/CEO đổi ảnh + chữ tại Admin > Giao diện > Ảnh modal đăng nhập.
  * Vị trí nào chưa tuỳ chỉnh thì dùng slide trong cài đặt theme
@@ -21,7 +21,7 @@ class AuthModalSlide extends Model
 
     protected $guarded = ['id'];
 
-    public const SLOTS = [1, 2, 3];
+    public const SLOTS = [1, 2, 3, 4, 5];
 
     public const DEFAULT_IMAGE = 'store/icons/—Pngtree—abstract purple line wave background_5542852 1.png';
 
@@ -38,27 +38,48 @@ class AuthModalSlide extends Model
     }
 
     /**
-     * 3 slide cho modal: [['image' => url, 'title' => ..., 'subtitle' => ...], ...]
+     * Slide cho modal: [['image' => url, 'title' => ..., 'subtitle' => ..., 'fill' => bool], ...]
      * Dùng chung cho modal ở layout và modal ở trang chủ.
+     *
+     * - Vị trí đã tuỳ chỉnh -> dùng nội dung của manager.
+     * - Vị trí chưa tuỳ chỉnh -> dùng slide theme cùng vị trí (nếu theme có);
+     *   theme không có slide ở vị trí đó thì bỏ qua, không lặp lại slide cũ.
+     * - 'fill' = true khi ảnh là banner manager tải lên -> ảnh phủ kín khung slider.
      */
     public static function forModal(): array
     {
-        $slides = self::themeSlides();
+        $themeSlides = self::themeSlides(false);
         $custom = self::customRows();
+        $slides = [];
 
         foreach (self::SLOTS as $index => $slot) {
-            if (empty($custom[$slot])) {
+            if (!empty($custom[$slot])) {
+                $row = $custom[$slot];
+                $hasCustomImage = !empty($row['image_path']);
+
+                $slides[] = [
+                    'image' => $hasCustomImage
+                        ? Storage::disk('public')->url($row['image_path'])
+                        : ($themeSlides[$index]['image'] ?? asset(self::DEFAULT_IMAGE)),
+                    'title' => (string)($row['title'] ?? ''),
+                    'subtitle' => (string)($row['subtitle'] ?? ''),
+                    'fill' => $hasCustomImage,
+                ];
+
                 continue;
             }
 
-            $row = $custom[$slot];
+            if (!empty($themeSlides[$index])) {
+                $slides[] = $themeSlides[$index] + ['fill' => false];
+            }
+        }
 
-            $slides[$index] = [
-                'image' => !empty($row['image_path'])
-                    ? Storage::disk('public')->url($row['image_path'])
-                    : ($slides[$index]['image'] ?? asset(self::DEFAULT_IMAGE)),
-                'title' => (string)($row['title'] ?? ''),
-                'subtitle' => (string)($row['subtitle'] ?? ''),
+        if (empty($slides)) {
+            $slides[] = [
+                'image' => asset(self::DEFAULT_IMAGE),
+                'title' => '',
+                'subtitle' => '',
+                'fill' => false,
             ];
         }
 
@@ -68,7 +89,7 @@ class AuthModalSlide extends Model
     /** Dữ liệu cho trang quản lý của manager. */
     public static function overview(): array
     {
-        $themeSlides = self::themeSlides();
+        $themeSlides = self::themeSlides(false);
         $rows = self::with('updater')->get()->keyBy('slot');
         $out = [];
 
@@ -77,10 +98,14 @@ class AuthModalSlide extends Model
             $isCustom = !empty($row);
             $hasCustomImage = $isCustom && !empty($row->image_path);
 
+            $hasThemeSlide = !empty($themeSlides[$index]);
+
             $out[$slot] = [
                 'slot' => $slot,
                 'is_custom' => $isCustom,
                 'has_custom_image' => $hasCustomImage,
+                // Chưa tuỳ chỉnh và theme không có slide ở vị trí này -> modal không hiện slide này.
+                'is_shown' => $isCustom || $hasThemeSlide,
                 'image' => $hasCustomImage
                     ? Storage::disk('public')->url($row->image_path)
                     : ($themeSlides[$index]['image'] ?? asset(self::DEFAULT_IMAGE)),
@@ -96,8 +121,12 @@ class AuthModalSlide extends Model
         return $out;
     }
 
-    /** Slide lấy từ cài đặt theme, luôn đủ 3 phần tử (giống logic cũ trong view). */
-    public static function themeSlides(): array
+    /**
+     * Slide lấy từ cài đặt theme, tối đa count(SLOTS) phần tử.
+     * $pad = true: lặp slide cuối cho đủ số vị trí (giống logic cũ);
+     * $pad = false: chỉ trả đúng số slide theme thật sự có (ít nhất 1 nếu theme trống).
+     */
+    public static function themeSlides(bool $pad = true): array
     {
         $settings = function_exists('getThemeAuthenticationPagesSettings') ? getThemeAuthenticationPagesSettings() : [];
 
@@ -115,7 +144,7 @@ class AuthModalSlide extends Model
 
         $slides = array_slice($slides, 0, count(self::SLOTS));
 
-        while (count($slides) < count(self::SLOTS)) {
+        while ($pad && count($slides) < count(self::SLOTS)) {
             $slides[] = $slides[count($slides) - 1];
         }
 

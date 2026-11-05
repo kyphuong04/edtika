@@ -851,6 +851,16 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/word-lists/remove-word', 'DictionaryController@removeWordFromList');
         Route::post('/my-word-list/add-word', 'DictionaryController@addWordToMyList');
         Route::post('/my-word-list/bulk-delete', 'DictionaryController@bulkDeleteFromMyWordList');
+
+        // Folder từ vựng của học viên (tab My Word List, tối đa 5 folder)
+        Route::get('/folders', 'DictionaryController@wordFolders');
+        Route::post('/folders/create', 'DictionaryController@createWordFolder');
+        Route::post('/folders/{id}/update', 'DictionaryController@updateWordFolder')->where('id', '[0-9]+');
+        Route::post('/folders/{id}/delete', 'DictionaryController@deleteWordFolder')->where('id', '[0-9]+');
+
+        // Lịch sử tra từ (Dictionary Hub)
+        Route::get('/search-history', 'DictionaryController@searchHistory');
+        Route::post('/search-history/delete', 'DictionaryController@deleteSearchHistory');
         Route::get('/word-lists-dropdown', 'DictionaryController@getUserWordLists');
 
         // Academic Word Lists (Band-based)
