@@ -880,6 +880,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         // Bundle Vocabulary Library
         Route::get('/bundle-vocabulary/manage', 'DictionaryController@bundleVocabularyManage');
         Route::post('/bundle-vocabulary/store', 'DictionaryController@storeBundleVocabularySet');
+        // Folder bộ từ vựng (teacher tự tạo, hiển thị ở tab Academic Word List)
+        Route::post('/bundle-vocabulary/folders/store', 'DictionaryController@storeVocabularyFolder');
+        Route::post('/bundle-vocabulary/folders/{id}/update', 'DictionaryController@updateVocabularyFolder')->where('id', '[0-9]+');
+        Route::post('/bundle-vocabulary/folders/{id}/delete', 'DictionaryController@deleteVocabularyFolder')->where('id', '[0-9]+');
         Route::get('/bundle-vocabulary/{id}', 'DictionaryController@showBundleVocabularySet');
         Route::post('/bundle-vocabulary/{id}/update', 'DictionaryController@updateBundleVocabularySet');
         Route::post('/bundle-vocabulary/{id}/submit', 'DictionaryController@submitBundleVocabularySet');

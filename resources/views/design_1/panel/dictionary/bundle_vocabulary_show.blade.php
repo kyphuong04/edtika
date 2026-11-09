@@ -236,6 +236,26 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="input-label">Folder <span class="text-danger">*</span></label>
+                    <select name="folder_id" class="form-control" required>
+                        <option value="">Chọn folder</option>
+                        @foreach($vocabularyFolders as $folderItem)
+                            <option value="{{ $folderItem->id }}" {{ (string) old('folder_id', $set->folder_id) === (string) $folderItem->id ? 'selected' : '' }}>{{ $folderItem->name }}{{ $folderItem->level ? ' ('.$folderItem->level.')' : '' }}</option>
+                        @endforeach
+                    </select>
+                    @if(empty($set->folder_id))
+                        <p class="font-12 text-warning mt-6 mb-0">Bộ từ này chưa thuộc folder nào — học viên đang thấy ở mục "Chưa phân loại". Hãy chọn folder rồi lưu.</p>
+                    @endif
+                    @if($vocabularyFolders->isEmpty())
+                        <p class="font-12 text-warning mt-6 mb-0">Người tạo bộ từ chưa có folder. <a href="{{ url('/panel/dictionary/bundle-vocabulary/manage#vocabularyFolders') }}">Tạo folder</a> trước khi lưu.</p>
+                    @endif
+                    <p class="font-12 text-gray-500 mt-6 mb-0">Đổi folder không cần duyệt lại bộ từ.</p>
+                    @error('folder_id')
+                        <div class="text-danger mt-4">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
                     <label class="input-label">{{ trans('panel.bundle_vocabulary_set_name') }}</label>
                     <input type="text" name="name" class="form-control" value="{{ old('name', $set->name) }}" required>
                     @error('name')

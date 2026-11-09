@@ -10,6 +10,7 @@ use App\Models\PlacementTest;
 use App\Models\PlacementQuestion;
 use App\Services\PlacementAdaptiveEngine;
 use App\Support\Placement\PlacementCourseCatalog;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -102,7 +103,8 @@ class PlacementPlayController extends Controller
                 'scores'                   => [],
                 'current_level'            => PlacementAdaptiveEngine::FIRST_LEVEL,
                 'started_at'               => now(),
-                'current_step_started_at'  => now(),
+                // 10 phút của đề 1 tính từ lúc màn đếm ngược 5 giây kết thúc.
+                'current_step_started_at'  => now()->addSeconds(IeltsPlacementAttempt::START_COUNTDOWN_SECONDS),
             ]);
 
             // Ghi nhớ attempt này trong session để nhận lại được xuyên suốt các
@@ -111,7 +113,10 @@ class PlacementPlayController extends Controller
             $request->session()->put('placement_attempt_id', $attempt->id);
         }
 
-        return $this->renderTakePage($attempt, showCountdown: true);
+        // POST -> Redirect -> GET: không render đề ngay trong response của POST.
+        // Nếu render thẳng, nút Back của trình duyệt sẽ hiện lại bản lưu của
+        // trang POST này (đề 1) dù đề 1 đã nộp. Cờ đếm ngược 5s đi qua flash.
+        return redirect()->route('placement.take')->with('placement_show_countdown', true);
     }
 
     public function take(Request $request)
@@ -132,7 +137,7 @@ class PlacementPlayController extends Controller
             return redirect()->route('placement.entry');
         }
 
-        return $this->renderTakePage($attempt, showCountdown: false);
+        return $this->renderTakePage($attempt, showCountdown: (bool) $request->session()->get('placement_show_countdown', false));
     }
 
     private function renderTakePage(IeltsPlacementAttempt $attempt, bool $showCountdown)
@@ -147,39 +152,111 @@ class PlacementPlayController extends Controller
             return redirect()->route('placement.entry');
         }
 
-        return view('web.placement.take', [
+        return $this->noStore(response()->view('web.placement.take', [
             'attempt'          => $attempt,
             'test'             => $test,
             'questions'        => $test->questionsWithAudioGroups(),
             'remainingSeconds' => $attempt->remainingSeconds(),
             'showCountdown'    => $showCountdown,
+            'notice'           => session('placement_notice'),
+        ]));
+    }
+
+    /**
+     * Không cho trình duyệt lưu trang làm bài (kể cả bộ đệm Back/Forward):
+     * bấm Back luôn phải hỏi lại server, server trả về ĐÚNG đề hiện tại.
+     */
+    private function noStore($response)
+    {
+        return $response->withHeaders([
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma'        => 'no-cache',
+            'Expires'       => '0',
         ]);
+    }
+
+    /**
+     * Trang làm bài nộp bằng fetch (Accept: application/json) -> trả URL đích
+     * thay vì 302, để JS tự chuyển trang bằng location.replace() (không tạo
+     * thêm mục lịch sử) và flash data không bị request fetch "ăn" mất.
+     */
+    private function submitResponse(Request $request, $response)
+    {
+        if ($request->expectsJson() && $response instanceof RedirectResponse) {
+            return response()->json(['ok' => true, 'redirect' => $response->getTargetUrl()]);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Giữ phiên trong lúc làm bài + cấp lại CSRF token. Trang làm bài / Speaking
+     * gọi định kỳ (~2 phút) để phiên không hết hạn giữa chừng (nguyên nhân màn
+     * hình lỗi khi tự nộp lúc hết giờ), đồng thời đồng bộ đồng hồ với server và
+     * phát hiện trang đã cũ (đề đã được nộp ở tab khác).
+     */
+    public function ping(Request $request)
+    {
+        $attempt = $this->findActiveAttempt($request);
+
+        return $this->noStore(response()->json([
+            'token'     => csrf_token(),
+            'status'    => $attempt?->status,
+            'step'      => $attempt?->current_step,
+            'test_id'   => $attempt?->current_test_id,
+            'remaining' => $attempt && in_array($attempt->status, ['in_progress', 'speaking'], true)
+                ? $attempt->remainingSeconds()
+                : null,
+        ]));
     }
 
     public function submitTest(Request $request)
     {
-        $attempt = $this->findActiveAttempt($request);
+        $found = $this->findActiveAttempt($request);
 
-        if (!$attempt || !$attempt->current_test_id) {
-            return redirect()->route('placement.entry');
+        if (!$found || !$found->current_test_id) {
+            return $this->submitResponse($request, redirect()->route('placement.entry'));
         }
 
-        $submittedTestId = (int) $request->input('test_id');
+        $response = DB::transaction(function () use ($request, $found) {
+            // Khoá dòng attempt: 2 lần nộp gần như cùng lúc (bấm "Nộp bài" ở giây
+            // cuối + đồng hồ tự nộp) sẽ xếp hàng; lần sau thấy đề đã đổi và bị
+            // từ chối ở bước kiểm tra bên dưới -> không chấm / lưu đáp án trùng.
+            $attempt = IeltsPlacementAttempt::whereKey($found->id)->lockForUpdate()->first();
 
-        if ($submittedTestId !== (int) $attempt->current_test_id) {
-            return redirect()->route('placement.take');
-        }
+            if (!$attempt || $attempt->status !== 'in_progress' || !$attempt->current_test_id) {
+                return redirect()->route('placement.entry');
+            }
 
-        $test = PlacementTest::with('questions')->find($attempt->current_test_id);
+            $submittedTestId = (int) $request->input('test_id');
+            // Trang cũ (trước bản sửa này) chưa gửi `step` -> chỉ so test_id.
+            $submittedStep = $request->filled('step') ? (int) $request->input('step') : null;
 
-        if (!$test) {
-            return redirect()->route('placement.entry');
-        }
+            // So cả bước lẫn đề: khi kho đề hết, pickTestForLevel() có thể giao
+            // lại đúng đề cũ -> chỉ so test_id thì trang đề cũ vẫn nộp lọt.
+            if ($submittedTestId !== (int) $attempt->current_test_id
+                || ($submittedStep !== null && $submittedStep !== (int) $attempt->current_step)) {
+                return redirect()->route('placement.take')->with(
+                    'placement_notice',
+                    'Bài làm của đề này đã được ghi nhận trước đó, không thể làm lại. Bạn đang làm Đề ' . $attempt->current_step . '.'
+                );
+            }
 
-        $rawAnswers = $request->input('answers', []);
-        $score = $this->gradeAndPersistAnswers($attempt, $test, $rawAnswers);
+            $test = PlacementTest::with('questions')->find($attempt->current_test_id);
 
-        return $this->advanceAttempt($attempt, $test->level, $score);
+            if (!$test) {
+                return redirect()->route('placement.entry');
+            }
+
+            // Chấp nhận bài nộp trễ trong khoảng ân hạn (độ trễ mạng / đồng hồ
+            // trình duyệt). Quá ân hạn -> coi như không có đáp án nào.
+            $rawAnswers = $attempt->isPastSubmitGrace() ? [] : (array) $request->input('answers', []);
+            $score = $this->gradeAndPersistAnswers($attempt, $test, $rawAnswers);
+
+            return $this->advanceAttempt($attempt, $test->level, $score);
+        });
+
+        return $this->submitResponse($request, $response);
     }
 
     /**
@@ -204,11 +281,11 @@ class PlacementPlayController extends Controller
             ? PlacementSpeakingQuestion::find($attempt->speaking_question_id)
             : null;
 
-        return view('web.placement.speaking', [
+        return $this->noStore(response()->view('web.placement.speaking', [
             'attempt'          => $attempt,
             'question'         => $question,
             'remainingSeconds' => $attempt->remainingSeconds(),
-        ]);
+        ]));
     }
 
     /**
@@ -750,8 +827,11 @@ class PlacementPlayController extends Controller
             return $this->moveToSpeakingOrFinish($attempt, $attempt->final_level, $testIdsTaken, $levelsTaken, $scores);
         }
 
+        // Hết giờ 1 đề chỉ kết thúc ĐỀ ĐÓ (chấm với những câu đã làm), sau đó
+        // vẫn đi tiếp theo engine như bình thường — mỗi đề có 10 phút riêng.
+        // (Trước đây hết giờ ở đề 1/2 là dừng luôn cả bài và chốt level bằng
+        // level của đề tiếp theo chưa hề làm.)
         $decision = $this->engine->decideNext($levelsTaken, $scores);
-        $timeUp = $attempt->isTimeUp();
 
         if ($decision['action'] === 'continue_locked') {
             $nextTest = $this->pickTestForLevel($decision['next_level'], $testIdsTaken);
@@ -776,7 +856,7 @@ class PlacementPlayController extends Controller
             return redirect()->route('placement.take');
         }
 
-        if ($timeUp || $decision['action'] === 'stop' || count($levelsTaken) >= PlacementAdaptiveEngine::MAX_STEPS) {
+        if ($decision['action'] === 'stop' || count($levelsTaken) >= PlacementAdaptiveEngine::MAX_STEPS) {
             $finalLevel = $decision['action'] === 'stop'
                 ? $decision['final_level']
                 : ($decision['next_level'] ?? $testLevel);
@@ -850,9 +930,18 @@ class PlacementPlayController extends Controller
             return redirect()->route('placement.entry');
         }
 
-        $score = $this->gradeAndPersistAnswers($attempt, $test, []);
+        return DB::transaction(function () use ($attempt, $test) {
+            // Khoá + đọc lại: nếu bài vừa được nộp bằng request khác thì không chấm lần 2.
+            $locked = IeltsPlacementAttempt::whereKey($attempt->id)->lockForUpdate()->first();
 
-        return $this->advanceAttempt($attempt, $test->level, $score);
+            if (!$locked || $locked->status !== 'in_progress' || (int) $locked->current_test_id !== (int) $test->id || !$locked->isTimeUp()) {
+                return redirect()->route('placement.take');
+            }
+
+            $score = $this->gradeAndPersistAnswers($locked, $test, []);
+
+            return $this->advanceAttempt($locked, $test->level, $score);
+        });
     }
     public function requestLogin(Request $request)
     {

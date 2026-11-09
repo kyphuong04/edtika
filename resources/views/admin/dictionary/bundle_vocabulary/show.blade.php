@@ -133,6 +133,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="font-13 font-weight-bold text-dark">Folder (do giáo viên chọn)</label>
+                        <input type="text" class="form-control" value="{{ !empty($set->folder) ? $set->folder->name . ($set->folder->level ? ' ('.$set->folder->level.')' : '') : 'Chưa chọn folder' }}" readonly>
+                    </div>
+
+                    <div class="form-group">
                         <label class="font-13 font-weight-bold text-dark">{{ trans('panel.bundle_vocabulary_status') }}</label>
                         <input type="text" class="form-control" value="{{ ucfirst($set->status) }}" readonly>
                     </div>

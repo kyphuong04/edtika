@@ -63,6 +63,13 @@ class Handler extends ExceptionHandler
             return $this->renderApi($request, $exception);
         }
 
+        // Hết phiên / sai CSRF token trong request AJAX (VD: trang Placement Test tự nộp
+        // bài bằng fetch) -> trả 419 JSON để JS lấy token mới rồi gửi lại, thay vì rơi
+        // xuống trang lỗi 500 bên dưới khi APP_DEBUG=false.
+        if ($exception instanceof \Illuminate\Session\TokenMismatchException && $request->expectsJson()) {
+            return response()->json(['message' => 'CSRF token mismatch.'], 419);
+        }
+
         // Lỗi validate phải trả về 422 (JSON cho AJAX / redirect kèm $errors cho form thường),
         // không được rơi vào trang lỗi 500 bên dưới khi APP_DEBUG=false.
         if ($exception instanceof ValidationException) {

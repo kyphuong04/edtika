@@ -12,6 +12,10 @@ class IeltsPlacementAttempt extends Model
     // cả 3 đề như trước) — xem currentStepTimeLimit()/remainingSeconds().
     public const TEST_TIME_SECONDS = 10 * 60;
     public const SPEAKING_TIME_SECONDS = 7 * 60;
+    /** Bài nộp đến trễ tối đa chừng này giây sau khi hết giờ vẫn được chấm (trễ mạng / đồng hồ trình duyệt). */
+    public const SUBMIT_GRACE_SECONDS = 60;
+    /** Màn đếm ngược "5, 4, 3..." trước đề 1 — không tính vào 10 phút làm bài. */
+    public const START_COUNTDOWN_SECONDS = 5;
     public const STATUS_ARCHIVED = 'archived';
 
     protected $fillable = [
@@ -82,14 +86,39 @@ class IeltsPlacementAttempt extends Model
             return $this->currentStepTimeLimit();
         }
 
-        $elapsed = now()->diffInSeconds($this->current_step_started_at);
+        return max(0, $this->currentStepTimeLimit() - $this->elapsedSeconds());
+    }
 
-        return max(0, $this->currentStepTimeLimit() - $elapsed);
+    /**
+     * Số giây đã trôi qua của bước hiện tại — CÓ DẤU: âm nếu bước chưa bắt đầu
+     * (đề 1 bắt đầu sau màn đếm ngược 5 giây). diffInSeconds() mặc định lấy trị
+     * tuyệt đối nên phải truyền false.
+     */
+    public function elapsedSeconds(): int
+    {
+        if (!$this->current_step_started_at) {
+            return 0;
+        }
+
+        return (int) $this->current_step_started_at->diffInSeconds(now(), false);
     }
 
     public function isTimeUp(): bool
     {
         return $this->remainingSeconds() <= 0;
+    }
+
+    /**
+     * Đã quá hạn nộp của bước hiện tại + khoảng ân hạn chưa. Dùng để không
+     * nhận đáp án của bài nộp quá muộn (VD: giữ trang mở rất lâu rồi mới nộp).
+     */
+    public function isPastSubmitGrace(): bool
+    {
+        if (!$this->current_step_started_at) {
+            return false;
+        }
+
+        return $this->elapsedSeconds() > $this->currentStepTimeLimit() + self::SUBMIT_GRACE_SECONDS;
     }
 
     /**

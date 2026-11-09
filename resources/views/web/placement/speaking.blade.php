@@ -231,6 +231,8 @@
     // Bỏ qua — submit form mà KHÔNG gán file (input.files rỗng), Controller đã
     // xử lý sẵn: nếu không có file thì chỉ đánh dấu completed, không lưu path.
     document.getElementById('ptSkipLink').addEventListener('click', function () {
+        if (window.ptSpeakingSubmitted) return;
+        window.ptSpeakingSubmitted = true;
         recordingInput.value = '';
         document.getElementById('ptSpeakingForm').submit();
     });
@@ -257,11 +259,44 @@
         if (seconds <= 0 && !autoSubmitted) {
             autoSubmitted = true;
             clearInterval(timer);
+            // Đã bấm "Nộp bài"/"Bỏ qua" trước đó -> không nộp thêm lần nữa.
+            if (window.ptSpeakingSubmitted) return;
+            window.ptSpeakingSubmitted = true;
             // Hết giờ -> tự nộp form Speaking với bất kỳ ghi âm nào đã có
             // (kể cả chưa ghi âm gì), server sẽ tự xử lý như 1 lần nộp bình thường.
             form.submit();
         }
     }, 1000);
+})();
+
+(function () {
+    var form = document.getElementById('ptSpeakingForm');
+
+    // Bấm "Nộp bài" -> đánh dấu đã nộp để đồng hồ không tự nộp thêm lần nữa.
+    form.addEventListener('submit', function (e) {
+        if (window.ptSpeakingSubmitted) { e.preventDefault(); return; }
+        window.ptSpeakingSubmitted = true;
+    });
+
+    // Trang được khôi phục từ bộ đệm Back/Forward -> tải lại để server trả đúng bước hiện tại.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) location.reload();
+    });
+
+    // Giữ phiên trong 7 phút Speaking + cập nhật CSRF token mới cho form,
+    // tránh màn hình lỗi khi tự nộp lúc hết giờ.
+    setInterval(function () {
+        if (window.ptSpeakingSubmitted) return;
+        fetch(@json(route('placement.ping')), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+        }).then(function (res) { return res.ok ? res.json() : null; }).then(function (data) {
+            if (!data) return;
+            if (data.token) form.querySelector('input[name="_token"]').value = data.token;
+            if (data.status !== 'speaking') location.replace(@json(route('placement.entry')));
+        }).catch(function () {});
+    }, 120000);
 })();
 </script>
 @endsection

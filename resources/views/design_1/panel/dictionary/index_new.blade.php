@@ -3265,6 +3265,107 @@
         .dh-modal__title { font-size: 18px; }
     }
 
+    /* ── Academic Word List: thẻ folder (af-*) ── */
+    .af-view.hidden { display: none !important; }
+    .af-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+    .af-card {
+        display: flex;
+        gap: 14px;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid var(--dh-border);
+        border-radius: 16px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .af-card:hover { border-color: #CDBFE6; box-shadow: 0 10px 26px rgba(60, 30, 110, .07); }
+    .af-card.hidden { display: none !important; }
+    .af-card__thumb {
+        position: relative;
+        flex: 0 0 132px;
+        min-height: 170px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: none;
+        border-radius: 12px;
+        background: #F1EBFA;
+        color: var(--dh-primary);
+        overflow: hidden;
+        cursor: pointer;
+    }
+    .af-card__deco {
+        position: absolute;
+        top: -46px;
+        right: -46px;
+        width: 120px;
+        height: 120px;
+        border: 1px solid rgba(91, 42, 134, .16);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .af-card__icon { display: inline-flex; margin-bottom: 18px; }
+    .af-card__label {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+    .af-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; padding-top: 2px; }
+    .af-card__name {
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+        text-align: left;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--dh-primary);
+        cursor: pointer;
+        word-break: break-word;
+    }
+    .af-card__name:hover { text-decoration: underline; }
+    .af-card__desc {
+        margin: 4px 0 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--dh-muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+    }
+    .af-card__meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 12px 0 0; }
+    .af-meta { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+    .af-meta__icon { flex-shrink: 0; display: inline-flex; margin-top: 2px; color: var(--dh-primary); }
+    .af-meta dt { margin: 0; font-size: 11px; font-weight: 500; color: var(--dh-muted); }
+    .af-meta dd { margin: 0; font-size: 13px; font-weight: 700; color: var(--dh-primary); overflow-wrap: break-word; }
+    #afDetailView .word-list-card.hidden { display: none !important; }
+    .dark-mode .af-card { background: #1E293B; border-color: #334155; }
+    .dark-mode .af-card__name, .dark-mode .af-meta dd { color: #C4B5FD; }
+
+    @media (max-width: 767.98px) {
+        .af-grid { grid-template-columns: 1fr; }
+        .af-card { gap: 12px; padding: 10px; }
+        .af-card__thumb { flex-basis: 84px; min-height: 140px; }
+        .af-card__icon svg { width: 32px; height: 32px; }
+        .af-card__label { white-space: normal; font-size: 8px; line-height: 1.35; letter-spacing: .08em; }
+        .af-card__name { font-size: 15px; }
+        .af-card__meta { gap: 8px 10px; }
+        .af-meta { gap: 6px; }
+        .af-meta dd { font-size: 12px; }
+    }
+
 </style>
 @endpush
 
@@ -3323,14 +3424,67 @@
                 </button>
                 <button class="wordlist-tab" data-tab="academic">
                     Academic Word List
-                    <span class="wordlist-tab__count">{{ count($academicWordLists) }}</span>
+                    <span class="wordlist-tab__count" id="tabCountAcademic">{{ count($academicFolders) }}</span>
                 </button>
             </div>
 
-            <!-- Academic Word Lists Section -->
+            <!-- Academic Word Lists Section: thẻ folder → các bộ từ trong folder -->
             <div class="word-lists-section hidden" id="academicWordListsSection">
+                <div class="wf-head af-head">
+                    <div>
+                        <h2 class="wf-title" id="afTitle">Academic Word List</h2>
+                        <p class="wf-sub">Các bộ từ vựng được sắp xếp theo trình độ và kỹ năng.</p>
+                    </div>
+                </div>
+
+                <div class="wf-search">
+                    <span class="wf-search__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                    <input type="text" class="wf-search__input" id="afSearchInput" placeholder="Tìm tên gói từ vựng, bundle, chủ đề..." aria-label="Tìm gói từ vựng">
+                    <button type="button" class="wf-search__clear" id="afSearchClear" aria-label="Xoá tìm kiếm"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+                </div>
+
+                {{-- Lưới folder --}}
+                <div class="af-view" id="afGridView">
+                    @if(empty($academicFolders))
+                        <div class="wf-empty">Bạn chưa có bộ từ vựng học thuật nào. Bộ từ sẽ xuất hiện khi bạn đăng ký khoá học có kèm từ vựng.</div>
+                    @else
+                        <div class="af-grid" id="afGrid">
+                            @foreach($academicFolders as $af)
+                                <article class="af-card" data-folder-key="{{ $af['key'] }}" data-folder-name="{{ $af['name'] }}"
+                                         data-search="{{ mb_strtolower($af['name'].' '.$af['description'].' '.$af['level'].' '.$af['skill'].' '.$af['label'].' '.$af['set_names']) }}">
+                                    <button type="button" class="af-card__thumb js-af-open" aria-label="Mở {{ $af['name'] }}">
+                                        <span class="af-card__deco" aria-hidden="true"></span>
+                                        <span class="af-card__icon">@include('design_1.panel.dictionary.partials.folder_icon', ['icon' => $af['icon'], 'size' => 46])</span>
+                                        <span class="af-card__label">{{ $af['label'] }}</span>
+                                    </button>
+                                    <div class="af-card__body">
+                                        <button type="button" class="af-card__name js-af-open">{{ $af['name'] }}</button>
+                                        @if(!empty($af['description']))
+                                            <p class="af-card__desc">{{ $af['description'] }}</p>
+                                        @endif
+                                        <dl class="af-card__meta">
+                                            <div class="af-meta"><span class="af-meta__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5c-1.8-1.3-4.4-2-7.5-2v13c3.1 0 5.7.7 7.5 2 1.8-1.3 4.4-2 7.5-2v-13c-3.1 0-5.7.7-7.5 2z"/><path d="M12 6.5v13"/></svg></span><div><dt>Trình độ</dt><dd>{{ $af['level'] }}</dd></div></div>
+                                            <div class="af-meta"><span class="af-meta__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/><path d="M9 12h6M9 15.5h6"/></svg></span><div><dt>Số từ</dt><dd>{{ $af['word_count'] }} từ</dd></div></div>
+                                            <div class="af-meta"><span class="af-meta__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-9.5z"/></svg></span><div><dt>Số topic</dt><dd>{{ $af['topic_count'] }} chủ đề</dd></div></div>
+                                            <div class="af-meta"><span class="af-meta__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16v-5"/><path d="M12 16V7"/><path d="M17 16v-3"/></svg></span><div><dt>Kỹ năng</dt><dd>{{ $af['skill'] }}</dd></div></div>
+                                        </dl>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                        <div class="wf-empty hidden" id="afGridEmpty">Không tìm thấy gói từ vựng phù hợp.</div>
+                    @endif
+                </div>
+
+                {{-- Các bộ từ trong folder đang mở --}}
+                <div class="af-view hidden" id="afDetailView">
+                    <button type="button" class="wf-back" id="afBackBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Tất cả Word List Pack
+                    </button>
                 @foreach($academicWordLists as $wordList)
                 <div class="word-list-card {{ $wordList['is_locked'] ? 'locked' : '' }}" 
+                     data-folder-key="{{ $wordList['folder_key'] ?? 'system' }}"
                      data-list-id="{{ $wordList['id'] }}"
                      data-source-id="{{ $wordList['source_id'] }}"
                      data-source-type="{{ $wordList['source_type'] }}"
@@ -3378,6 +3532,8 @@
                     </div>
                 </div>
                 @endforeach
+                    <div class="wf-empty hidden" id="afDetailEmpty">Không tìm thấy bộ từ phù hợp trong folder này.</div>
+                </div>
             </div>
 
             <!-- My Word List: các folder từ vựng của học viên -->
@@ -4625,6 +4781,7 @@
 
         $('#wfGridView').addClass('hidden');
         $('#wfDetailView').removeClass('hidden');
+        // Phần danh sách từ của folder luôn mở
         $('#wfDetailView .word-list-expanded').addClass('show');
         $('#myWordListSection .words-container').first().html('<p class="wf-words-empty">Đang tải...</p>');
 
@@ -4859,6 +5016,83 @@
         window.speechSynthesis.speak(utter);
     }
 
+    // ── Academic Word List: lưới folder → các bộ từ trong folder ─────
+    let afCurrentKey = null;
+
+    function afNorm(text) {
+        return String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').trim();
+    }
+
+    function afCollapseSets() {
+        $('#academicWordListsSection .word-list-expanded').removeClass('show');
+    }
+
+    function afShowGrid() {
+        afCurrentKey = null;
+        lastSelectedIds = [];
+        afCollapseSets();
+        $('#afTitle').text('Academic Word List');
+        $('#afSearchInput').val('').attr('placeholder', 'Tìm tên gói từ vựng, bundle, chủ đề...');
+        $('#afDetailView').addClass('hidden');
+        $('#afGridView').removeClass('hidden');
+        afFilter();
+    }
+
+    function afOpenFolder(key) {
+        const $folder = $('.af-card[data-folder-key="' + key + '"]');
+        if (!$folder.length) return;
+        afCurrentKey = String(key);
+        lastSelectedIds = [];
+        afCollapseSets();
+        $('#afTitle').text($folder.data('folder-name') || 'Academic Word List');
+        $('#afSearchInput').val('').attr('placeholder', 'Tìm bộ từ trong folder...');
+        $('#afGridView').addClass('hidden');
+        $('#afDetailView').removeClass('hidden');
+        afFilter();
+        const top = $('#academicWordListsSection').offset();
+        if (top && $(window).scrollTop() > top.top) {
+            $('html, body').animate({ scrollTop: top.top - 90 }, 200);
+        }
+    }
+
+    function afFilter() {
+        const q = afNorm($('#afSearchInput').val());
+        $('#afSearchClear').toggleClass('show', q.length > 0);
+
+        if (afCurrentKey === null) {
+            let shown = 0;
+            $('#afGrid .af-card').each(function() {
+                const match = !q || afNorm($(this).attr('data-search')).indexOf(q) !== -1;
+                $(this).toggleClass('hidden', !match);
+                if (match) shown++;
+            });
+            $('#afGridEmpty').toggleClass('hidden', shown > 0 || !$('#afGrid .af-card').length);
+            return;
+        }
+
+        let shown = 0;
+        $('#afDetailView .word-list-card').each(function() {
+            const $card = $(this);
+            const inFolder = String($card.data('folder-key')) === afCurrentKey;
+            const text = afNorm($card.find('.word-list-name').text() + ' ' + $card.find('.word-list-description').text());
+            const match = inFolder && (!q || text.indexOf(q) !== -1);
+            $card.toggleClass('hidden', !match);
+            if (!match) $card.find('.word-list-expanded').removeClass('show');
+            if (match) shown++;
+        });
+        $('#afDetailEmpty').toggleClass('hidden', shown > 0);
+    }
+
+    $(document).on('click', '.js-af-open', function() {
+        afOpenFolder($(this).closest('.af-card').data('folder-key'));
+    });
+    $(document).on('click', '#afBackBtn', function() { afShowGrid(); });
+    $(document).on('input', '#afSearchInput', afFilter);
+    $(document).on('click', '#afSearchClear', function() {
+        $('#afSearchInput').val('').trigger('focus');
+        afFilter();
+    });
+
         // ── Tab switching ────────────────────────────────────────────────
     $(document).on('click', '.wordlist-tab', function() {
         const tab = $(this).data('tab');
@@ -4882,6 +5116,9 @@
         } else {
             $('#myWordListSection').addClass('hidden');
             $('#academicWordListsSection').removeClass('hidden');
+
+            // Luôn về lưới folder khi chuyển sang tab Academic
+            afShowGrid();
         }
     });
 

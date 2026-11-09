@@ -45,6 +45,11 @@ class BundleVocabularySet extends Model
         return $this->belongsTo(Bundle::class, 'bundle_id', 'id');
     }
 
+    public function folder()
+    {
+        return $this->belongsTo(VocabularyFolder::class, 'folder_id', 'id');
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');

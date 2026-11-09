@@ -14,6 +14,7 @@ use App\Models\Bundle;
 use App\Models\BundleVocabularySet;
 use App\Models\BundleVocabularyWord;
 use App\Models\VocabularyWordReport;
+use App\Models\VocabularyFolder;
 use App\Models\DictionarySearchHistory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -134,10 +135,18 @@ class DictionaryController extends Controller
                     'word_count' => $list->word_count,
                     'has_access' => $hasAccess,
                     'is_locked' => !$hasAccess,
+                    'folder_key' => 'system',
                 ];
             });
 
-        $bundleAcademicWordLists = $this->getApprovedBundleVocabularySetsForUser($user)
+        $approvedSets = $this->getApprovedBundleVocabularySetsForUser($user);
+        try {
+            $approvedSets->load(['folder.creator:id,full_name']);
+        } catch (\Throwable $e) {
+            // Chưa chạy migration folder → mọi bộ từ vào "Chưa phân loại"
+        }
+
+        $bundleAcademicWordLists = $approvedSets
             ->map(function (BundleVocabularySet $set) {
                 $bundleTitle = !empty($set->bundle) ? ($set->bundle->title ?: $set->bundle->slug) : ('Bundle #' . $set->bundle_id);
 
@@ -151,10 +160,14 @@ class DictionaryController extends Controller
                     'word_count' => (int) $set->words_count,
                     'has_access' => true,
                     'is_locked' => false,
+                    'folder_key' => ($set->relationLoaded('folder') && $set->folder) ? 'f' . $set->folder->id : 'uncategorized',
                 ];
             });
 
         $academicWordLists = $academicWordLists->concat($bundleAcademicWordLists)->values();
+
+        // Tab Academic: gom bộ từ theo folder (folder teacher tạo + folder hệ thống Edtika Academic + Chưa phân loại)
+        $academicFolders = $this->buildAcademicFolders($academicWordLists, $approvedSets);
 
         // My Word List: các folder từ vựng học viên tự tạo (folder mặc định "My Word List" + tối đa 4 folder khác)
         $myWordList = $this->getOrCreatePersonalWordList($user);
@@ -187,6 +200,7 @@ class DictionaryController extends Controller
             'pageTitle' => trans('panel.dictionary_and_flashcard'),
             'hasApiKey' => true, // Free Dictionary API – no key required
             'academicWordLists' => $academicWordLists,
+            'academicFolders' => $academicFolders,
             'myWordList' => $myWordList,
             'wordFolders' => $wordFolders,
             'wordFolderLimit' => self::WORD_FOLDER_LIMIT,
@@ -197,6 +211,85 @@ class DictionaryController extends Controller
         ];
 
         return view('design_1.panel.dictionary.index_new', $data);
+    }
+
+    /**
+     * Thẻ folder ở tab Academic Word List. Chỉ giữ folder có ít nhất 1 bộ từ học viên
+     * được học; Số từ / Số topic tính trên các bộ đó.
+     *
+     * @param \Illuminate\Support\Collection $lists danh sách bộ từ (đã có folder_key)
+     * @param \Illuminate\Support\Collection $approvedSets BundleVocabularySet đã load folder.creator
+     */
+    private function buildAcademicFolders($lists, $approvedSets): array
+    {
+        $meta = [];
+
+        foreach ($approvedSets as $set) {
+            $folder = $set->relationLoaded('folder') ? $set->folder : null;
+            if (!$folder || isset($meta['f' . $folder->id])) {
+                continue;
+            }
+
+            $teacherName = optional($folder->creator)->full_name;
+
+            $meta['f' . $folder->id] = [
+                'key' => 'f' . $folder->id,
+                'name' => $folder->name,
+                'description' => $folder->description,
+                'level' => $folder->level ?: 'Mọi trình độ',
+                'skill' => $folder->skill ?: 'IELTS Vocabulary',
+                'icon' => VocabularyFolder::iconKey($folder->icon),
+                'label' => $teacherName ? mb_strtoupper($teacherName) : 'EDTIKA',
+                'sort' => [0, (int) $folder->sort_order, (int) $folder->id],
+            ];
+        }
+
+        $meta['system'] = [
+            'key' => 'system',
+            'name' => 'Edtika Academic',
+            'description' => 'Bộ từ vựng học thuật theo band điểm IELTS do Edtika biên soạn.',
+            'level' => 'Theo band',
+            'skill' => 'IELTS Academic',
+            'icon' => 'book',
+            'label' => 'EDTIKA · IELTS',
+            'sort' => [1, 0, 0],
+        ];
+
+        $meta['uncategorized'] = [
+            'key' => 'uncategorized',
+            'name' => 'Chưa phân loại',
+            'description' => 'Các bộ từ giáo viên chưa xếp vào folder.',
+            'level' => 'Mọi trình độ',
+            'skill' => 'IELTS Vocabulary',
+            'icon' => 'folder',
+            'label' => 'EDTIKA',
+            'sort' => [2, 0, 0],
+        ];
+
+        $folders = [];
+
+        foreach ($lists->groupBy('folder_key') as $key => $items) {
+            if (!isset($meta[$key])) {
+                continue;
+            }
+
+            $accessible = $items->where('has_access', true);
+            if ($accessible->isEmpty()) {
+                continue;
+            }
+
+            $folders[] = array_merge($meta[$key], [
+                'word_count' => (int) $accessible->sum('word_count'),
+                'topic_count' => $accessible->count(),
+                'set_names' => $items->pluck('name')->implode(' '),
+            ]);
+        }
+
+        usort($folders, function ($a, $b) {
+            return $a['sort'] <=> $b['sort'];
+        });
+
+        return $folders;
     }
 
     private function getUserStreak($userId)
@@ -2851,7 +2944,7 @@ class DictionaryController extends Controller
         $status = $request->get('status');
 
         $setsQuery = BundleVocabularySet::query()
-            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name', 'approver:id,full_name'])
+            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name', 'approver:id,full_name', 'folder:id,name'])
             ->withCount('words');
 
         if ($user->canApproveBundleVocabulary()) {
@@ -2870,6 +2963,9 @@ class DictionaryController extends Controller
             'status' => $status,
             'availableBundles' => $this->getAvailableBundlesForVocabulary($user),
             'canApprove' => $user->canApproveBundleVocabulary(),
+            'vocabularyFolders' => $this->vocabularyFoldersOf($user->id),
+            'folderLevels' => VocabularyFolder::LEVELS,
+            'folderIcons' => VocabularyFolder::ICONS,
         ];
 
         return view('design_1.panel.dictionary.bundle_vocabulary_manage', $data);
@@ -2890,11 +2986,19 @@ class DictionaryController extends Controller
             'description' => 'nullable|string',
             'intro_content' => 'nullable|string',
             'feature_content' => 'nullable|string',
+            'folder_id' => 'required|integer',
             'source_file' => 'required|file|mimes:csv,txt,xlsx,xls|max:20480',
+        ], [
+            'folder_id.required' => 'Hãy chọn folder cho bộ từ vựng (tạo folder ở mục "Folder bộ từ vựng" nếu chưa có).',
         ]);
 
         $bundle = Bundle::query()->findOrFail((int)$request->bundle_id);
         $this->assertUserCanUploadToBundle($user, $bundle->id);
+
+        $folder = $this->findOwnedVocabularyFolder((int) $user->id, (int) $request->folder_id);
+        if (!$folder) {
+            return back()->withErrors(['folder_id' => 'Folder không hợp lệ.'])->withInput();
+        }
 
         $parsedWords = $this->parseUploadedVocabularyFile($request->file('source_file'));
 
@@ -2909,6 +3013,7 @@ class DictionaryController extends Controller
         try {
             $set = BundleVocabularySet::query()->create([
                 'bundle_id' => $bundle->id,
+                'folder_id' => $folder->id,
                 'created_by' => $user->id,
                 'name' => $request->name,
                 'description' => $request->description,
@@ -2959,7 +3064,7 @@ class DictionaryController extends Controller
         }
 
         $set = BundleVocabularySet::query()
-            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name', 'approver:id,full_name'])
+            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name', 'approver:id,full_name', 'folder'])
             ->findOrFail($id);
 
         if (!$user->canApproveBundleVocabulary() && $set->created_by !== $user->id) {
@@ -2977,6 +3082,8 @@ class DictionaryController extends Controller
             'words' => $words,
             'canApprove' => $user->canApproveBundleVocabulary(),
             'availableBundles' => $this->getAvailableBundlesForVocabulary($user),
+            // Folder chọn được = folder của người tạo bộ từ
+            'vocabularyFolders' => $this->vocabularyFoldersOf((int) $set->created_by),
         ];
 
         return view('design_1.panel.dictionary.bundle_vocabulary_show', $data);
@@ -3002,8 +3109,17 @@ class DictionaryController extends Controller
             'description' => 'nullable|string',
             'intro_content' => 'nullable|string',
             'feature_content' => 'nullable|string',
+            'folder_id' => 'required|integer',
             'source_file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:20480',
+        ], [
+            'folder_id.required' => 'Hãy chọn folder cho bộ từ vựng.',
         ]);
+
+        // Folder phải thuộc người tạo bộ từ. Đổi folder không làm bộ từ phải duyệt lại.
+        $folder = $this->findOwnedVocabularyFolder((int) $set->created_by, (int) $request->folder_id);
+        if (!$folder) {
+            return back()->withErrors(['folder_id' => 'Folder không hợp lệ.'])->withInput();
+        }
 
         DB::beginTransaction();
 
@@ -3012,6 +3128,7 @@ class DictionaryController extends Controller
             $set->description = $request->description;
             $set->intro_content = $request->intro_content;
             $set->feature_content = $request->feature_content;
+            $set->folder_id = $folder->id;
 
             if ($request->hasFile('source_file')) {
                 $parsedWords = $this->parseUploadedVocabularyFile($request->file('source_file'));
@@ -3147,6 +3264,132 @@ class DictionaryController extends Controller
     }
 
 
+
+    /* =================================================================
+     * Folder bộ từ vựng (teacher tự tạo, hiển thị ở tab Academic Word List)
+     * ================================================================= */
+
+    /** Folder của 1 người tạo, kèm số bộ từ đang nằm trong folder. */
+    private function vocabularyFoldersOf(int $userId)
+    {
+        try {
+            return VocabularyFolder::query()
+                ->where('created_by', $userId)
+                ->withCount('sets')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+        } catch (\Throwable $e) {
+            // Chưa chạy migration
+            return collect();
+        }
+    }
+
+    private function findOwnedVocabularyFolder(int $ownerId, int $folderId): ?VocabularyFolder
+    {
+        if ($folderId < 1) {
+            return null;
+        }
+
+        return VocabularyFolder::query()
+            ->where('created_by', $ownerId)
+            ->find($folderId);
+    }
+
+    private function validateVocabularyFolderRequest(Request $request): array
+    {
+        $data = $request->validate([
+            'folder_name' => 'required|string|max:120',
+            'folder_description' => 'nullable|string|max:500',
+            'folder_level' => 'nullable|in:' . implode(',', VocabularyFolder::LEVELS),
+            'folder_skill' => 'nullable|string|max:100',
+            'folder_icon' => 'nullable|in:' . implode(',', array_keys(VocabularyFolder::ICONS)),
+            'folder_sort_order' => 'nullable|integer|min:0|max:9999',
+        ], [
+            'folder_name.required' => 'Hãy nhập tên folder.',
+            'folder_name.max' => 'Tên folder tối đa 120 ký tự.',
+        ]);
+
+        return [
+            'name' => trim($data['folder_name']),
+            'description' => isset($data['folder_description']) ? trim($data['folder_description']) : null,
+            'level' => $data['folder_level'] ?? null,
+            'skill' => isset($data['folder_skill']) ? trim($data['folder_skill']) : null,
+            'icon' => VocabularyFolder::iconKey($data['folder_icon'] ?? null),
+            'sort_order' => (int) ($data['folder_sort_order'] ?? 0),
+        ];
+    }
+
+    public function storeVocabularyFolder(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $payload = $this->validateVocabularyFolderRequest($request);
+
+        $duplicated = VocabularyFolder::query()
+            ->where('created_by', $user->id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($payload['name'])])
+            ->exists();
+
+        if ($duplicated) {
+            return back()->withErrors(['folder_name' => 'Bạn đã có folder tên "' . $payload['name'] . '".'])->withInput();
+        }
+
+        VocabularyFolder::query()->create(array_merge($payload, ['created_by' => $user->id]));
+
+        return back()->with('success', 'Đã tạo folder "' . $payload['name'] . '".');
+    }
+
+    public function updateVocabularyFolder(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $folder = VocabularyFolder::query()->where('created_by', $user->id)->findOrFail($id);
+        $payload = $this->validateVocabularyFolderRequest($request);
+
+        $duplicated = VocabularyFolder::query()
+            ->where('created_by', $user->id)
+            ->where('id', '!=', $folder->id)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($payload['name'])])
+            ->exists();
+
+        if ($duplicated) {
+            return back()->withErrors(['folder_name' => 'Bạn đã có folder tên "' . $payload['name'] . '".'])->withInput();
+        }
+
+        $folder->fill($payload)->save();
+
+        return back()->with('success', 'Đã lưu folder "' . $folder->name . '".');
+    }
+
+    public function deleteVocabularyFolder($id)
+    {
+        $user = Auth::user();
+
+        if (!$user->canManageBundleVocabulary()) {
+            abort(403);
+        }
+
+        $folder = VocabularyFolder::query()->where('created_by', $user->id)->withCount('sets')->findOrFail($id);
+
+        if ($folder->sets_count > 0) {
+            return back()->withErrors([
+                'folder_delete' => 'Folder "' . $folder->name . '" còn ' . $folder->sets_count . ' bộ từ. Hãy chuyển các bộ từ sang folder khác trước khi xoá.',
+            ]);
+        }
+
+        $folder->delete();
+
+        return back()->with('success', 'Đã xoá folder "' . $folder->name . '".');
+    }
 
     private function getAvailableBundlesForVocabulary($user)
     {

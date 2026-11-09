@@ -93,6 +93,7 @@
                             <td class="py-16 px-20">{{ $set->id }}</td>
                             <td class="py-16">
                                 <div class="font-weight-bold text-dark">{{ $set->name }}</div>
+                                <div class="font-12 text-primary mt-2">{{ !empty($set->folder) ? 'Folder: ' . $set->folder->name : 'Chưa chọn folder' }}</div>
                                 @if(!empty($set->description))
                                     <div class="font-12 text-gray-500 mt-4">{{ \Illuminate\Support\Str::limit($set->description, 90) }}</div>
                                 @endif

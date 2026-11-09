@@ -8,6 +8,7 @@ Route::middleware(['web', 'share', 'check_maintenance', 'check_restriction'])->p
     Route::get('/mic-check', [PlacementPlayController::class, 'micCheck'])->name('placement.mic_check');
     Route::post('/start', [PlacementPlayController::class, 'start'])->name('placement.start');
     Route::get('/take', [PlacementPlayController::class, 'take'])->name('placement.take');
+    Route::get('/ping', [PlacementPlayController::class, 'ping'])->name('placement.ping');   // giữ phiên + cấp lại CSRF khi đang làm bài
     Route::post('/submit', [PlacementPlayController::class, 'submitTest'])->name('placement.submit');
     Route::get('/speaking', [PlacementPlayController::class, 'speaking'])->name('placement.speaking');
     Route::post('/speaking/submit', [PlacementPlayController::class, 'submitSpeaking'])->name('placement.submit_speaking');

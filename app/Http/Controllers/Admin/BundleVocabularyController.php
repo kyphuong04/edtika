@@ -32,7 +32,7 @@ class BundleVocabularyController extends Controller
         $search = trim((string) $request->get('search'));
 
         $setsQuery = BundleVocabularySet::query()
-            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name,email', 'approver:id,full_name'])
+            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name,email', 'approver:id,full_name', 'folder:id,name,level'])
             ->withCount('words');
 
         if (in_array($status, BundleVocabularySet::$statuses, true)) {
@@ -80,7 +80,7 @@ class BundleVocabularyController extends Controller
         $this->authorizeApprover($authUser);
 
         $set = BundleVocabularySet::query()
-            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name,email', 'approver:id,full_name'])
+            ->with(['bundle:id,slug,creator_id,teacher_id', 'creator:id,full_name,email', 'approver:id,full_name', 'folder:id,name,level'])
             ->findOrFail($id);
 
         $words = BundleVocabularyWord::query()

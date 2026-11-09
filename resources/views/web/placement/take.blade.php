@@ -49,6 +49,9 @@
 .pt-submit-actions { position:sticky; bottom:16px; display:flex; justify-content:center; margin-top:24px; }
 .pt-submit-btn { background:#511D99; color:#fff; border:none; border-radius:14px; padding:14px 32px; font-weight:700; font-size:15px; box-shadow:0 8px 20px rgba(81,29,153,.3); cursor:pointer; }
 .pt-submit-btn:disabled { opacity:.6; cursor:not-allowed; }
+.pt-notice { background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; border-radius:12px; padding:12px 16px; margin-bottom:16px; font-size:14px; font-weight:600; }
+.pt-submit-error { background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; border-radius:12px; padding:12px 16px; margin-bottom:12px; font-size:14px; }
+.pt-submit-error[hidden] { display:none; }
 
 .pt-countdown-overlay {
     position:fixed; inset:0; z-index:2000; display:none;
@@ -236,6 +239,10 @@
         <div class="pt-timer" id="ptCountdown">--:--</div>
     </div>
 
+    @if(!empty($notice))
+        <div class="pt-notice" role="status"><i class="fas fa-info-circle mr-2"></i>{{ $notice }}</div>
+    @endif
+
     @php
         $passages = collect($test->reading_passages ?? [])->keyBy('position');
     @endphp
@@ -243,6 +250,7 @@
     <form id="placementTakeForm" action="{{ route('placement.submit') }}" method="POST">
         @csrf
         <input type="hidden" name="test_id" value="{{ $test->id }}">
+        <input type="hidden" name="step" value="{{ $attempt->current_step }}">
 
         @foreach($questions as $index => $q)
 
@@ -383,6 +391,7 @@
             </div>
         @endif
 
+        <div class="pt-submit-error" id="ptSubmitError" role="alert" hidden></div>
         <div class="pt-submit-actions">
             <button type="submit" class="pt-submit-btn" id="ptSubmitBtn">
                 <i class="fas fa-check mr-2"></i>Nộp bài đề này
@@ -400,41 +409,153 @@
 @endif
 
 <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       Nộp bài + đồng hồ.
+       - Nộp bằng fetch (cả bấm nút lẫn tự nộp khi hết giờ), server trả URL
+         đích -> location.replace(): không tạo thêm mục lịch sử nên bấm Back
+         không quay lại được đề vừa nộp.
+       - Chỉ nộp 1 lần (cờ `submitting` dùng chung cho nút và đồng hồ).
+       - Hết phiên / sai token (419) -> lấy token mới qua /ping rồi gửi lại.
+       - Ping ~2 phút/lần để giữ phiên, đồng bộ đồng hồ với server, và phát
+         hiện trang đã cũ (đề này đã được nộp ở tab khác) -> tải lại.
+       ═══════════════════════════════════════════════════════════════════ */
+    var PT = {
+        pingUrl: @json(route('placement.ping')),
+        takeUrl: @json(route('placement.take')),
+        step: {{ (int) $attempt->current_step }},
+        testId: {{ (int) $test->id }},
+        timeLimit: {{ (int) \App\Models\IeltsPlacementAttempt::TEST_TIME_SECONDS }},
+        // Mốc hết giờ theo đồng hồ máy, tính từ số giây server còn lại lúc render.
+        deadline: Date.now() + {{ (int) $remainingSeconds }} * 1000,
+        submitting: false
+    };
+
+    // Trang được khôi phục từ bộ đệm Back/Forward -> tải lại để server trả đúng đề hiện tại.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) location.reload();
+    });
+
+    function ptPing() {
+        return fetch(PT.pingUrl, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            cache: 'no-store'
+        }).then(function (res) { return res.ok ? res.json() : null; }).then(function (data) {
+            if (!data) return null;
+            if (data.token) {
+                document.querySelectorAll('input[name="_token"]').forEach(function (i) { i.value = data.token; });
+            }
+            return data;
+        });
+    }
+
     function startExamTimer() {
-        var seconds = {{ (int) $remainingSeconds }};
         var el = document.getElementById('ptCountdown');
         var form = document.getElementById('placementTakeForm');
         var submitBtn = document.getElementById('ptSubmitBtn');
-        var autoSubmitted = false;
+        var errorBox = document.getElementById('ptSubmitError');
+
+        function secondsLeft() {
+            return Math.min(PT.timeLimit, Math.max(0, Math.ceil((PT.deadline - Date.now()) / 1000)));
+        }
 
         function render() {
-            var m = String(Math.floor(Math.max(seconds, 0) / 60)).padStart(2, '0');
-            var s = String(Math.max(seconds, 0) % 60).padStart(2, '0');
-            el.textContent = m + ':' + s;
-            el.classList.toggle('is-warning', seconds <= 60);
+            var left = secondsLeft();
+            el.textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
+            el.classList.toggle('is-warning', left <= 60);
+        }
+
+        function setBusy(html) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = html;
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.hidden = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-redo mr-2"></i>Thử nộp lại';
+            PT.submitting = false;
+        }
+
+        function send(retried) {
+            var body = new FormData(form);
+            return fetch(form.action, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: body,
+                credentials: 'same-origin'
+            }).then(function (res) {
+                if (res.status === 419 && !retried) {
+                    // Token hết hạn -> lấy token mới rồi gửi lại 1 lần.
+                    return ptPing().then(function () { return send(true); });
+                }
+                return res.json().catch(function () { return null; }).then(function (data) {
+                    if (res.ok && data && data.redirect) {
+                        location.replace(data.redirect);
+                        return;
+                    }
+                    if (!retried) {
+                        return ptPing().then(function () { return send(true); });
+                    }
+                    throw new Error('HTTP ' + res.status);
+                });
+            });
+        }
+
+        function submitAnswers(isAuto) {
+            if (PT.submitting) return;
+            PT.submitting = true;
+            clearInterval(timer);
+            errorBox.hidden = true;
+            setBusy(isAuto
+                ? '<i class="fas fa-hourglass-end mr-2"></i>Hết giờ, đang tự nộp bài...'
+                : '<i class="fas fa-spinner fa-spin mr-2"></i>Đang nộp bài...');
+
+            send(false).catch(function () {
+                // Mất mạng: thử lại sau vài giây (tối đa 3 lần) trước khi báo lỗi —
+                // đáp án vẫn còn nguyên trên trang, không bị mất.
+                var tries = 0;
+                (function retry() {
+                    tries++;
+                    setTimeout(function () {
+                        send(true).catch(function () {
+                            if (tries < 3) return retry();
+                            showError('Không kết nối được máy chủ. Đáp án của bạn vẫn còn trên trang — kiểm tra mạng rồi bấm "Thử nộp lại".');
+                        });
+                    }, 3000);
+                })();
+            });
         }
 
         render();
-
         var timer = setInterval(function () {
-            seconds--;
             render();
-
-            if (seconds <= 0 && !autoSubmitted) {
-                autoSubmitted = true;
-                clearInterval(timer);
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-hourglass-end mr-2"></i>Hết giờ, đang tự nộp bài...';
-                // Hết giờ -> tự nộp bài với đáp án hiện có (kể cả còn thiếu),
-                // để server chấm điểm những gì đã trả lời và finalize kết quả.
-                form.submit();
+            if (secondsLeft() <= 0) {
+                // Hết giờ -> tự nộp bài với đáp án hiện có (kể cả còn thiếu).
+                submitAnswers(true);
             }
         }, 1000);
 
-        form.addEventListener('submit', function () {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang nộp bài...';
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            submitAnswers(false);
         });
+
+        // Giữ phiên + đồng bộ giờ với server + phát hiện trang đã cũ.
+        setInterval(function () {
+            if (PT.submitting) return;
+            ptPing().then(function (data) {
+                if (!data || PT.submitting) return;
+                if (data.status !== 'in_progress' || Number(data.step) !== PT.step || Number(data.test_id) !== PT.testId) {
+                    location.replace(PT.takeUrl);
+                    return;
+                }
+                if (typeof data.remaining === 'number') {
+                    PT.deadline = Date.now() + data.remaining * 1000;
+                }
+            }).catch(function () {});
+        }, 120000);
     }
 
     @if($showCountdown)
@@ -442,11 +563,11 @@
             // Nội dung đề thi ĐÃ có sẵn trong trang (chỉ đang bị ẩn bằng CSS
             // visibility:hidden) — countdown 5->1 chạy hoàn toàn ở client, không
             // phụ thuộc mạng. Đồng hồ 10 phút của bài thi chỉ bắt đầu chạy SAU
-            // khi countdown này kết thúc và nội dung được hiện ra.
+            // khi countdown này kết thúc (server cũng tính giờ từ mốc đó).
             var overlay = document.getElementById('ptCountdownOverlay');
             var numberEl = document.getElementById('ptCountdownNumber');
             var pageContent = document.getElementById('ptPageContent');
-            var count = 5;
+            var count = {{ (int) \App\Models\IeltsPlacementAttempt::START_COUNTDOWN_SECONDS }};
             numberEl.textContent = count;
 
             var timer = setInterval(function () {
@@ -524,4 +645,4 @@
     });
 })();
 </script>
-@endsectionr
+@endsection
