@@ -17,6 +17,7 @@
         ['label' => $isEnglish ? 'Home' : 'Trang chủ', 'url' => '/', 'active' => $isHomeActive],
         ['label' => $isEnglish ? 'Courses' : 'Khóa học', 'url' => '/classes', 'active' => $isClassesActive],
         ['label' => $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào', 'url' => '/panel/ielts-tests/practice', 'requiresAuth' => true, 'active' => $isPlacementActive],
+        ['label' => 'AI Examiner', 'url' => '/ai-examiner', 'active' => request()->is('ai-examiner') || request()->is('ai-examiner/*')],
         ['label' => $isEnglish ? 'Mock Tests' : 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => $isEnglish ? 'Dictionary & Flashcards' : 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
         ['label' => $isEnglish ? 'Knowledge & News' : 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
@@ -801,6 +802,17 @@
             .edtika-footer__description {
                 font-size: 16px;
             }
+        }
+
+            /* Menu có 7 mục (thêm AI Examiner) → thu gọn để không tràn ngang trên desktop */
+        @media (min-width: 992px) {
+            .edtika-news-page__brand { font-size: 44px; }
+            .edtika-news-page__nav { gap: 16px; margin-left: 16px; margin-right: 16px; }
+            .edtika-news-page__nav-link { font-size: 15px; }
+        }
+        @media (min-width: 992px) and (max-width: 1365px) {
+            .edtika-news-page__header { height: auto; flex-wrap: wrap; padding: 18px 0 6px; }
+            .edtika-news-page__nav { order: 3; width: 100%; justify-content: center; margin: 4px 0 0; }
         }
     </style>
 @endpush

@@ -15,6 +15,7 @@
         ['label' => 'Trang chủ', 'url' => '/', 'active' => $isHomeActive],
         ['label' => 'Khóa học', 'url' => '/classes', 'active' => $isClassesActive],
         ['label' => 'Kiểm tra đầu vào', 'url' => '/placement-test', 'active' => $isPlacementActive],
+        ['label' => 'AI Examiner', 'url' => '/ai-examiner', 'active' => request()->is('ai-examiner') || request()->is('ai-examiner/*')],
         ['label' => 'Luyện đề', 'url' => '/panel/ielts-tests/mock', 'requiresAuth' => true, 'active' => $isMockActive],
         ['label' => 'Từ điển & Flashcard', 'url' => '/panel/dictionary', 'requiresAuth' => true, 'active' => $isDictionaryActive],
         ['label' => 'Kiến thức & Tin tức', 'url' => '/blog', 'active' => $isNewsActive],
@@ -1406,6 +1407,7 @@
             }
 
         }
+
     </style>
 @endpush
 

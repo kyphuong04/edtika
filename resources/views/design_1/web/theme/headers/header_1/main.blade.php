@@ -32,6 +32,9 @@
                         {{-- Courses --}}
                         <a href="/classes" class="custom-nav-link font-weight-500">{{ trans('navbar.courses') }}</a>
 
+                        {{-- AI Examiner --}}
+                        <a href="/ai-examiner" class="custom-nav-link font-weight-500">AI Examiner</a>
+
                         {{-- Tests (dropdown) --}}
                         <div class="theme-header-1__dropdown theme-header-1__nav-dropdown position-relative">
                             <div class="d-inline-flex align-items-center gap-6 cursor-pointer custom-nav-link font-weight-500">

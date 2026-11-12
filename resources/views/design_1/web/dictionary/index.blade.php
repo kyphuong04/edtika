@@ -1020,6 +1020,7 @@
             text-align: left;
         }
     }
+        
 </style>
 @endpush
 
@@ -1035,6 +1036,8 @@
                 <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Home' : 'Trang chủ' }}</a>
                 <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Courses' : 'Khóa học' }}</a>
                 <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Placement Test' : 'Kiểm tra đầu vào' }}</a>
+
+                <a href="/ai-examiner" class="edtika-homepage__nav-link {{ request()->is('ai-examiner') || request()->is('ai-examiner/*') ? 'is-active' : '' }}">AI Examiner</a>
                 @if(auth()->check())
                     <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $isEnglish ? 'Mock Tests' : 'Luyện đề' }}</a>
                 @else

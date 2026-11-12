@@ -3719,6 +3719,7 @@
                 height: 10px;
             }
         }
+
     </style>
 @endpush
 
@@ -3736,6 +3737,8 @@
                     <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $t['nav']['classes'] }}</a>
 
                     <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
+
+                    <a href="/ai-examiner" class="edtika-homepage__nav-link {{ request()->is('ai-examiner') || request()->is('ai-examiner/*') ? 'is-active' : '' }}">AI Examiner</a>
 
                     @if(auth()->check())
                         <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $t['nav']['mockTest'] }}</a>

@@ -19,7 +19,20 @@ Route::middleware(['web', 'share', 'check_maintenance', 'check_restriction'])->p
         ->middleware('throttle:5,1')
         ->name('placement.submit_consult');
 });
- 
+
+// EDTIKA AI Examiner (bản mẫu giao diện — dữ liệu chấm giả, xem config/ai_examiner.php)
+Route::middleware(['web', 'share', 'check_maintenance', 'check_restriction'])->prefix('ai-examiner')->name('ai_examiner.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Web\AiExaminerController::class, 'index'])->name('index');
+    Route::get('/speaking', [\App\Http\Controllers\Web\AiExaminerController::class, 'speaking'])->name('speaking');
+    Route::get('/writing', [\App\Http\Controllers\Web\AiExaminerController::class, 'writing'])->name('writing');
+    Route::get('/writing/random-topic', [\App\Http\Controllers\Web\AiExaminerController::class, 'randomTopic'])->name('writing.random_topic');
+    Route::post('/writing/ocr', [\App\Http\Controllers\Web\AiExaminerController::class, 'ocr'])->middleware('throttle:10,1')->name('writing.ocr');
+    Route::post('/writing/submit', [\App\Http\Controllers\Web\AiExaminerController::class, 'submit'])->middleware('throttle:10,1')->name('writing.submit');
+    Route::get('/writing/{id}/grading', [\App\Http\Controllers\Web\AiExaminerController::class, 'grading'])->name('writing.grading');
+    Route::get('/writing/{id}/status', [\App\Http\Controllers\Web\AiExaminerController::class, 'status'])->name('writing.status');
+    Route::get('/writing/{id}/result', [\App\Http\Controllers\Web\AiExaminerController::class, 'result'])->name('writing.result');
+    Route::get('/writing/{id}/breakdown', [\App\Http\Controllers\Web\AiExaminerController::class, 'breakdown'])->name('writing.breakdown');
+});
 
 // Fast route for question type forms (no heavy middleware)
 Route::get('/api/question-type-form/{type}', function ($type) {
