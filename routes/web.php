@@ -267,6 +267,8 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         Route::get('/verify/{gateway}', ['as' => 'payment_verify', 'uses' => 'PaymentController@paymentVerify']);
         Route::post('/verify/{gateway}', ['as' => 'payment_verify_post', 'uses' => 'PaymentController@paymentVerify']);
         Route::get('/status', 'PaymentController@payStatus');
+        // GĐ5: trang thanh toán của cổng Demo (URL có chữ ký, hết hạn theo thời hạn QR)
+        Route::get('/demo/{order}', 'DemoPaymentController@show')->name('payment_demo.show')->middleware(['web.auth', \Illuminate\Routing\Middleware\ValidateSignature::class])->where('order', '[0-9]+');
         Route::get('/payku/callback/{id}', 'PaymentController@paykuPaymentVerify')->name('payku.result');
         Route::get('/chapa/callback/{reference}', 'PaymentController@chapaPaymentVerify')->name('chapa.callback');
     });
@@ -375,7 +377,10 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     Route::get('/reward-products', 'RewardProductsController@index');
 
     Route::group(['prefix' => 'bundles'], function () {
-        Route::get('/{slug}', 'BundleController@index');
+        Route::get('/', 'BundleController@index');
+        // Panel giỏ hàng / thanh toán demo: mở được khi chưa đăng nhập (phải đứng trước /{slug})
+        Route::get('/cart-preview', 'BundleStorefrontController@cartPreview');
+        Route::get('/{slug}', 'BundleController@show');
         Route::get('/{slug}/free', 'BundleController@free');
 
         Route::group(['middleware' => 'web.auth'], function () {
@@ -390,6 +395,10 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
             });
 
             Route::post('/direct-payment', 'BundleController@directPayment');
+
+            // GĐ5: mua nhanh trong side panel
+            Route::post('/quick-buy/preview', 'BundleStorefrontController@quickBuyPreview');
+            Route::post('/quick-buy', 'BundleStorefrontController@quickBuy');
         });
     });
 
@@ -469,8 +478,6 @@ Route::group(['prefix' => 'manager', 'namespace' => 'Admin', 'middleware' => ['w
     Route::get('login', 'LoginController@showLoginForm');
     Route::post('login', 'LoginController@login');
     Route::get('logout', 'LoginController@logout');
-    Route::post('/panel/bundles/{id}/resubmit', [BundlesController::class, 'resubmitForReview']);
-    Route::post('/panel/bundles/{id}/resubmit-review', [\App\Http\Controllers\Panel\BundlesController::class, 'resubmitForReview']);
     
     // Dashboard
     Route::group(['middleware' => 'admin'], function () {

@@ -31,6 +31,11 @@ class BundleController extends Controller
 
     public function index(Request $request)
     {
+        // GĐ5: trang danh sách theo design mới
+        if (config('bundle_learning.new_storefront', true)) {
+            return app(BundleStorefrontController::class)->catalog($request);
+        }
+
         $query = Bundle::query()->where('status', Bundle::$active);
 
         $filterMaxPrice = deepClone($query)->max('price') ?? 10000;
@@ -210,6 +215,11 @@ class BundleController extends Controller
 
     public function show(Request $request, $slug)
     {
+        // GĐ5: trang chi tiết theo design mới
+        if (config('bundle_learning.new_storefront', true)) {
+            return app(BundleStorefrontController::class)->detail($request, $slug);
+        }
+
         $user = null;
 
         if (auth()->check()) {

@@ -22,6 +22,11 @@ class ClassesController extends Controller
 
     public function index(Request $request)
     {
+        // GĐ5: trang "Khóa học" theo design mới (danh sách bundle thật). Trả về JSON/ajax như cũ khi có lọc nâng cao
+        if (config('bundle_learning.new_storefront', true) and !$request->ajax()) {
+            return app(BundleStorefrontController::class)->catalog($request);
+        }
+
         $webinarsQuery = Webinar::where('webinars.status', 'active')
             ->where('private', false);
 

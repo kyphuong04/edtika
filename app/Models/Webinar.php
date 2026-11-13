@@ -27,6 +27,9 @@ class Webinar extends Model implements TranslatableContract
 
     public $morphsFunctions = ['productBadgeContents', 'relatedCourses', 'deleteRequest'];
 
+    // GĐ1: kỹ năng của module trong bundle (cột webinars.skill)
+    const SKILLS = ['listening', 'reading', 'writing', 'speaking'];
+
     static $active = 'active';
     static $pending = 'pending';
     static $isDraft = 'is_draft';

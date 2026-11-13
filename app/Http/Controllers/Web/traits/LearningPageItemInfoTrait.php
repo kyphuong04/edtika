@@ -43,8 +43,14 @@ trait LearningPageItemInfoTrait
         }
 
         $type = $data['type'];
-        $id = $data['id'];
+        $id = $data['id'] ?? null;
         $quizId = !empty($data['quiz_id']) ? $data['quiz_id'] : null;
+
+        // GĐ3: module / lesson / Mid-term / Final của bundle đang khóa thì hiện thông báo khóa
+        $lockedResponse = $this->getBundleLockedResponse($course, $type, $id);
+        if (!empty($lockedResponse)) {
+            return $lockedResponse;
+        }
 
         switch ($type) {
             case 'file':
@@ -61,6 +67,57 @@ trait LearningPageItemInfoTrait
             case 'course_certificate':
                 return $this->getCertificateInfo($type, $id, $quizId, $course);
         }
+    }
+
+    /**
+     * GĐ3: kiểm tra quy tắc khóa/mở của bundle cho item đang mở.
+     * Trả về response hiển thị trạng thái khóa, hoặc null nếu được xem.
+     */
+    private function getBundleLockedResponse($course, $type, $id)
+    {
+        $tables = [
+            'file' => 'files',
+            'session' => 'sessions',
+            'text_lesson' => 'text_lessons',
+            'quiz' => 'quizzes',
+            'assignment' => 'webinar_assignments',
+        ];
+
+        if (empty($id) or !isset($tables[$type])) {
+            return null;
+        }
+
+        $user = auth()->user();
+        if (empty($user)) {
+            return null;
+        }
+
+        $chapterId = \Illuminate\Support\Facades\DB::table($tables[$type])
+            ->where('id', $id)
+            ->where('webinar_id', $course->id)
+            ->value('chapter_id');
+
+        $block = app(\App\Services\Bundle\BundleLearningGate::class)->check(
+            $course,
+            $user,
+            !empty($chapterId) ? (int)$chapterId : null,
+            $type === 'quiz' ? (int)$id : null
+        );
+
+        if (empty($block)) {
+            return null;
+        }
+
+        $html = (string)view()->make('design_1.web.courses.learning_page.includes.contents.bundle_locked', [
+            'reason' => $block['reason'],
+            'bundle' => $block['bundle'],
+        ]);
+
+        return response()->json([
+            'code' => 200,
+            'locked' => true,
+            'html' => $html,
+        ]);
     }
 
     private function checkCourseAccess($course): bool

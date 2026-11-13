@@ -3727,51 +3727,7 @@
     <div class="edtika-homepage">
         <div class="edtika-homepage__container">
             <div class="edtika-homepage__content">
-            <header class="edtika-homepage__header" aria-label="{{ $isEnglish ? 'Homepage Header' : 'Đầu trang chủ' }}">
-                <a href="/" class="text-decoration-none" aria-label="EDTIKA Home">
-                    <h1 class="edtika-homepage__brand">EDTIKA</h1>
-                </a>
-
-                <nav class="edtika-homepage__nav" aria-label="{{ $t['header']['mainNavAria'] }}">
-                    <a href="/" class="edtika-homepage__nav-link {{ $isHomeActive ? 'is-active' : '' }}">{{ $t['nav']['home'] }}</a>
-                    <a href="/classes" class="edtika-homepage__nav-link {{ $isClassesActive ? 'is-active' : '' }}">{{ $t['nav']['classes'] }}</a>
-
-                    <a href="/placement-test" class="edtika-homepage__nav-link {{ $isPlacementActive ? 'is-active' : '' }}">{{ $t['nav']['placementTest'] }}</a>
-
-                    <a href="/ai-examiner" class="edtika-homepage__nav-link {{ request()->is('ai-examiner') || request()->is('ai-examiner/*') ? 'is-active' : '' }}">AI Examiner</a>
-
-                    @if(auth()->check())
-                        <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}">{{ $t['nav']['mockTest'] }}</a>
-                    @else
-                        <a href="/panel/ielts-tests/mock" class="edtika-homepage__nav-link {{ $isMockActive ? 'is-active' : '' }}" data-open-auth-modal="true">{{ $t['nav']['mockTest'] }}</a>
-                    @endif
-
-                    <a href="/dictionary" class="edtika-homepage__nav-link {{ $isDictionaryActive ? 'is-active' : '' }}">{{ $t['nav']['dictionary'] }}</a>
-
-                    <a href="/blog" class="edtika-homepage__nav-link {{ $isNewsActive ? 'is-active' : '' }}">{{ $t['nav']['knowledge&news'] }}</a>
-                </nav>
-
-                <div class="edtika-homepage__actions">
-                    <div class="edtika-lang-switch {{ $langSwitchClass }}" aria-label="{{ $t['header']['languageSwitchAria'] }}">
-                        <div class="edtika-lang-switch__thumb"></div>
-
-                        <form class="edtika-lang-switch__form" action="/locale" method="post">
-                            {{ csrf_field() }}
-                            <button class="edtika-lang-switch__button" type="submit" name="locale" value="{{ $nextLocale }}" aria-label="{{ $t['header']['switchLanguageAria'] }}">
-                                {{ $nextLocaleLabel }}
-                            </button>
-                        </form>
-                    </div>
-
-                    @if(auth()->check())
-                        <a href="/panel" class="edtika-user-avatar-btn" aria-label="{{ auth()->user()->full_name }}" title="{{ auth()->user()->full_name }}">
-                            <img src="{{ auth()->user()->getAvatar(80) }}" alt="{{ auth()->user()->full_name }}" class="edtika-user-avatar-btn__image">
-                        </a>
-                    @else
-                        <a href="/login" class="edtika-login-btn" data-open-auth-modal="true">{{ $t['header']['loginButton'] }}</a>
-                    @endif
-                </div>
-            </header>
+            @include('design_1.web.includes.edtika_header', ['edtikaHeaderWrap' => false])
 
             <section class="edtika-homepage__hero" aria-label="{{ $isEnglish ? 'Homepage Hero' : 'Khu vực mở đầu trang chủ' }}">
                 <h2 class="edtika-homepage__headline">
@@ -4065,89 +4021,8 @@
             </section>
             </div>
 
-            <footer class="edtika-footer" aria-label="{{ $isEnglish ? 'Homepage Footer' : 'Chân trang chủ' }}">
-                <div class="edtika-footer__top">
-                    <div>
-                        <h3 class="edtika-footer__brand">EDTIKA</h3>
-                        <p class="edtika-footer__description">{{ $t['footer']['description'] }}</p>
-                    </div>
-
-                    <div class="edtika-footer__right">
-                        <div>
-                            <h4 class="edtika-footer__column-title">{{ $t['footer']['supportTitle'] }}<span class="edtika-footer__title-mark" aria-hidden="true"></span></h4>
-
-                            <ul class="edtika-footer__list">
-                                @foreach($t['footer']['supportLinks'] as $supportLink)
-                                    <li><a href="#">{{ $supportLink }}</a></li>
-                                @endforeach
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 class="edtika-footer__column-title">{{ $t['footer']['introTitle'] }}<span class="edtika-footer__title-mark" aria-hidden="true"></span></h4>
-
-                            <ul class="edtika-footer__list">
-                                @foreach($t['footer']['introLinks'] as $introLink)
-                                    <li>
-                                        <a href="#">{{ $introLink }}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 class="edtika-footer__column-title">{{ $t['footer']['contactTitle'] }}<span class="edtika-footer__title-mark" aria-hidden="true"></span></h4>
-
-                            <div class="edtika-footer__contact-row">
-                                <p class="edtika-footer__contact-label">{{ $t['footer']['hotlineLabel'] }}</p>
-                                <p class="edtika-footer__contact-value">{{ $t['footer']['hotlineValue'] }}</p>
-                            </div>
-
-                            <div class="edtika-footer__contact-row">
-                                <p class="edtika-footer__contact-label">{{ $t['footer']['emailLabel'] }}</p>
-                                <p class="edtika-footer__contact-value">{{ $t['footer']['emailValue'] }}</p>
-                            </div>
-
-                            <div class="edtika-footer__contact-row">
-                                <p class="edtika-footer__contact-label">{{ $t['footer']['addressLabel'] }}</p>
-                                <p class="edtika-footer__contact-value">{{ $t['footer']['addressValue'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="edtika-footer__bottom">
-                    <p class="edtika-footer__copyright">
-                        {{ $t['footer']['copyright'] }} &copy; <span class="edtika-footer__copyright-brand">Edtika.</span> {{ $t['footer']['allRightsReserved'] }}
-                    </p>
-
-                    <div class="edtika-footer__social" aria-label="Social links">
-                        <a class="edtika-footer__social-link" href="#" aria-label="Facebook">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M13.74 20V12.7H16.21L16.58 9.86H13.74V8.05C13.74 7.23 13.97 6.68 15.15 6.68H16.68V4.14C16.42 4.1 15.52 4 14.47 4C12.29 4 10.8 5.33 10.8 7.77V9.86H8.34V12.7H10.8V20H13.74Z" fill="currentColor"/>
-                            </svg>
-                        </a>
-                        <a class="edtika-footer__social-link" href="#" aria-label="Instagram">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="16.7" cy="7.3" r="1" fill="currentColor"/>
-                            </svg>
-                        </a>
-                        <a class="edtika-footer__social-link" href="#" aria-label="LinkedIn">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M7.23 9.5H4.75V17.5H7.23V9.5Z" fill="currentColor"/>
-                                <path d="M6 8.36C6.79 8.36 7.43 7.72 7.43 6.93C7.43 6.14 6.79 5.5 6 5.5C5.21 5.5 4.57 6.14 4.57 6.93C4.57 7.72 5.21 8.36 6 8.36Z" fill="currentColor"/>
-                                <path d="M11.1 9.5H8.72V17.5H11.19V13.54C11.19 12.5 11.39 11.49 12.68 11.49C13.95 11.49 13.97 12.68 13.97 13.61V17.5H16.45V13.11C16.45 10.95 15.99 9.29 13.47 9.29C12.26 9.29 11.45 9.95 11.1 10.57V9.5Z" fill="currentColor"/>
-                            </svg>
-                        </a>
-                    </div>
-
-                    <p class="edtika-footer__policies">
-                        {{ $t['footer']['terms'] }}<span class="edtika-footer__dot">•</span>{{ $t['footer']['privacy'] }}
-                    </p>
-                </div>
-            </footer>
+            {{-- Footer dùng chung với trang khóa học --}}
+            @include('design_1.web.includes.edtika_footer')
 
             <div class="edtika-auth-modal" id="edtikaAuthModal" aria-hidden="true">
                 <div class="edtika-auth-modal__dialog" role="dialog" aria-modal="true" aria-label="{{ $t['auth']['dialogAria'] }}">

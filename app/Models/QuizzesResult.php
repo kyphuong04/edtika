@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuizzesResult extends Model
 {
+    use \App\Models\Traits\TriggersBundleCompletion;
+
     static $passed = 'passed';
     static $failed = 'failed';
     static $waiting = 'waiting';
@@ -49,6 +51,21 @@ class QuizzesResult extends Model
 
         return $quizQuestions;
     }
+
+    /* ---------- GĐ4: kiểm tra hoàn thành bundle khi quiz đạt ---------- */
+
+    public function bundleCompletionReached(): bool
+    {
+        return $this->status === self::$passed && ($this->wasRecentlyCreated || $this->wasChanged('status'));
+    }
+
+    public function bundleCompletionUserId(): ?int
+    {
+        return $this->user_id;
+    }
+
+    public function bundleCompletionWebinarId(): ?int
+    {
+        return !empty($this->quiz) ? $this->quiz->webinar_id : null;
+    }
 }
-
-

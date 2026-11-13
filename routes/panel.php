@@ -73,7 +73,14 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/', 'MyPurchasedCoursesController@index');
             Route::post('/getJoinInfo', 'MyPurchasedCoursesController@getJoinInfo');
             Route::get('/learning/{slug}', 'MyPurchasedCoursesController@showLearning');
+            Route::get('/{slug}/lessons/{chapterId}', 'BundleLearningController@lesson')->where('chapterId', '[0-9]+');
             Route::get('/{slug}', 'MyPurchasedCoursesController@showCourse');
+        });
+
+        // GĐ3: API cho player (ghi nhận xem video, Mini Quiz)
+        Route::group(['prefix' => 'bundle-learning'], function () {
+            Route::get('/files/{fileId}/state', 'BundleLearningController@fileState')->where('fileId', '[0-9]+');
+            Route::post('/video-progress', 'BundleLearningController@videoProgress');
         });
 
         Route::post('/search', 'WebinarController@search');
@@ -559,6 +566,11 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{id}/export-students-list', 'BundlesController@exportStudentsList');
             Route::post('/{id}/duplicate', 'BundlesController@duplicate');
             Route::post('/{id}/toggle-hidden', 'BundlesController@toggleHidden');
+
+            // GĐ4: chấm bài theo khóa học
+            Route::get('/{id}/grading', 'BundleGradingController@index');
+            Route::get('/{id}/grading/{historyId}', 'BundleGradingController@show')->where('historyId', '[0-9]+');
+            Route::post('/{id}/grading/{historyId}', 'BundleGradingController@grade')->where('historyId', '[0-9]+');
         });
     });
 

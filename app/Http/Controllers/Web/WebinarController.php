@@ -775,9 +775,30 @@ class WebinarController extends Controller
             if (!empty($course) and $course->checkUserHasBought($user)) {
                 $data = $request->all();
 
-                $item = $data['item'];
-                $item_id = $data['item_id'];
-                $status = $data['status'];
+                $item = $data['item'] ?? null;
+                $item_id = $data['item_id'] ?? null;
+                $status = $data['status'] ?? null;
+
+                // Chỉ chấp nhận cột trong whitelist và item phải thuộc khóa học này
+                if (!CourseLearning::isValidItem($item, $item_id, $course->id)) {
+                    return response()->json([
+                        'code' => 422,
+                        'title' => trans('public.request_failed'),
+                        'msg' => trans('public.request_failed'),
+                    ], 422);
+                }
+
+                // GĐ3: video được tính "đã xem" tự động từ player, không cho tự tick
+                if ($item === 'file' and config('bundle_learning.auto_video_completion', true)) {
+                    $learningFile = File::query()->find($item_id);
+                    if (!empty($learningFile) and $learningFile->isAutoTrackableVideo()) {
+                        return response()->json([
+                            'code' => 422,
+                            'title' => trans('public.request_failed'),
+                            'msg' => trans('bundle_learning.video_auto_tracked'),
+                        ], 422);
+                    }
+                }
 
                 CourseLearning::where('user_id', $user->id)
                     ->where($item, $item_id)

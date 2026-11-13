@@ -39,47 +39,25 @@
                             </div>
 
                             <div class="d-grid grid-columns-2 grid-lg-columns-3 gap-24 px-16 mt-16">
-                                {{-- VNPay Payment Gateway --}}
-                                <div class="payment-channel-card position-relative">
-                                    <input type="radio" name="gateway" id="gateway_vnpay" data-class="VNPay" value="vnpay">
-                                    <label class="position-relative w-100 d-block cursor-pointer" for="gateway_vnpay">
-                                        <div class="gateway-mask"></div>
-                                        <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
-                                            <div class="d-flex-center size-48 bg-gray-100">
-                                                <img src="/assets/design_1/img/payment-gateways/vnpay.svg" alt="VNPay" class="img-fluid">
+                                {{-- GĐ5: phương thức thanh toán lấy từ config/bundle_payment.php (mỗi phương thức trỏ tới một cổng) --}}
+                                @foreach(config('bundle_payment.methods', []) as $methodKey => $method)
+                                    <div class="payment-channel-card position-relative">
+                                        <input type="radio" name="gateway" id="gateway_{{ $methodKey }}" data-class="{{ $method['channel'] }}" value="{{ $methodKey }}" {{ $loop->first ? 'checked' : '' }}>
+                                        <label class="position-relative w-100 d-block cursor-pointer" for="gateway_{{ $methodKey }}">
+                                            <div class="gateway-mask"></div>
+                                            <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
+                                                <div class="d-flex-center size-48 rounded-12 bg-gray-100">
+                                                    <span class="font-24 text-primary">{{ $method['icon'] }}</span>
+                                                </div>
+                                                <h6 class="font-14 mt-12">{{ $method['title'] }}</h6>
+                                                <p class="mt-4 font-12 text-gray-500">{{ $method['detail'] }}</p>
+                                                @if(!empty($method['recommended']))
+                                                    <span class="mt-4 font-12 text-success">{{ trans('bundle_payment.recommended') }}</span>
+                                                @endif
                                             </div>
-                                            <h6 class="font-14 mt-12">VNPay</h6>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                {{-- Momo Payment Gateway --}}
-                                <div class="payment-channel-card position-relative">
-                                    <input type="radio" name="gateway" id="gateway_momo" data-class="Momo" value="momo">
-                                    <label class="position-relative w-100 d-block cursor-pointer" for="gateway_momo">
-                                        <div class="gateway-mask"></div>
-                                        <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
-                                            <div class="d-flex-center size-48 bg-gray-100">
-                                                <img src="/assets/design_1/img/payment-gateways/momo.svg" alt="Momo" class="img-fluid">
-                                            </div>
-                                            <h6 class="font-14 mt-12">Momo</h6>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                {{-- Visa Card Payment Gateway --}}
-                                <div class="payment-channel-card position-relative">
-                                    <input type="radio" name="gateway" id="gateway_visa" data-class="Visa" value="visa">
-                                    <label class="position-relative w-100 d-block cursor-pointer" for="gateway_visa">
-                                        <div class="gateway-mask"></div>
-                                        <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
-                                            <div class="d-flex-center size-48 bg-gray-100">
-                                                <img src="/assets/design_1/img/payment-gateways/visa.svg" alt="Visa" class="img-fluid">
-                                            </div>
-                                            <h6 class="font-14 mt-12">Visa Card</h6>
-                                        </div>
-                                    </label>
-                                </div>
+                                        </label>
+                                    </div>
+                                @endforeach
 
                                 {{-- <div class="payment-channel-card position-relative">
                                     <input type="radio" name="gateway" id="gateway_credit" value="credit" {{ (empty($userCharge) or ($calculatePrices["total"] > $userCharge)) ? 'disabled' : '' }}>

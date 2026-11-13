@@ -43,6 +43,14 @@ class PaymentController extends Controller
             ->where('user_id', $user->id)
             ->first();
 
+        if (empty($order)) {
+            return redirect('/cart')->with(['toast' => [
+                'title' => trans('cart.fail_purchase'),
+                'msg' => trans('cart.gateway_error'),
+                'status' => 'error'
+            ]]);
+        }
+
         if ($order->type === Order::$meeting) {
             $orderItem = OrderItem::where('order_id', $order->id)->first();
             $reserveMeeting = ReserveMeeting::where('id', $orderItem->reserve_meeting_id)->first();
@@ -74,9 +82,7 @@ class PaymentController extends Controller
             return redirect('/payments/status');
         }
 
-        $paymentChannel = PaymentChannel::where('id', $gateway)
-            ->where('status', 'active')
-            ->first();
+        $paymentChannel = $this->resolvePaymentChannel($gateway);
 
         if (!$paymentChannel) {
             $toastData = [
@@ -111,6 +117,33 @@ class PaymentController extends Controller
             ];
             return back()->with(['toast' => $toastData]);
         }
+    }
+
+    /**
+     * GĐ5: gateway có thể là id kênh (như cũ) hoặc mã phương thức trên giao diện
+     * (vietqr / wallet / atm / card) được ánh xạ sang driver trong config/bundle_payment.php.
+     */
+    private function resolvePaymentChannel($gateway)
+    {
+        $methods = config('bundle_payment.methods', []);
+
+        if (is_string($gateway) and array_key_exists($gateway, $methods)) {
+            $className = $methods[$gateway]['channel'] ?? null;
+
+            if (empty($className) or ($className === 'Demo' and !config('bundle_payment.demo_enabled'))) {
+                return null;
+            }
+
+            session()->put('payment_method_key', $gateway);
+
+            return PaymentChannel::where('class_name', $className)
+                ->where('status', 'active')
+                ->first();
+        }
+
+        return PaymentChannel::where('id', $gateway)
+            ->where('status', 'active')
+            ->first();
     }
 
     public function paymentVerify(Request $request, $gateway)

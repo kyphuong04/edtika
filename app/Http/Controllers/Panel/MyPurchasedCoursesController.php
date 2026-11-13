@@ -270,6 +270,16 @@ class MyPurchasedCoursesController extends Controller
 
         $course = $data['course'];
 
+        // GĐ3: module thuộc bundle đang bị khóa (học tuần tự) thì quay về trang khóa học
+        $gateBlock = app(\App\Services\Bundle\BundleLearningGate::class)->check($course, auth()->user());
+        if (!empty($gateBlock)) {
+            return redirect('/panel/courses/purchases/' . $gateBlock['bundle']->slug)->with(['toast' => [
+                'title' => trans('public.request_failed'),
+                'msg' => trans('bundle_learning.' . $gateBlock['reason'] . '_msg'),
+                'status' => 'error',
+            ]]);
+        }
+
         $data['breadcrumbs'] = [
             ['text' => trans('update.platform'), 'url' => '/'],
             ['text' => trans('panel.dashboard'), 'url' => '/panel'],
@@ -298,6 +308,16 @@ class MyPurchasedCoursesController extends Controller
             ->first();
 
         if (!empty($bundle)) {
+            // Chỉ học viên đã mua, chủ khóa hoặc admin mới xem được trang khóa học
+            $authUser = auth()->user();
+            if (!$bundle->checkUserHasBought($authUser) and !$bundle->isOwner($authUser->id) and !$authUser->isAdmin()) {
+                abort(403);
+            }
+
+            // GĐ3: trang khóa học theo design mới (tiến độ, khóa/mở, Mid-term/Final)
+            if (config('bundle_learning.new_learning_ui', true)) {
+                return app(\App\Http\Controllers\Panel\BundleLearningController::class)->course($request, $bundle);
+            }
             $totalLessons = 0;
             $bundleProgressSum = 0;
             $bundleWebinarIds = [];

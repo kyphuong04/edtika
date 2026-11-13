@@ -155,6 +155,52 @@ class Bundle extends Model implements TranslatableContract
         return $this->morphOne(ContentDeleteRequest::class, 'targetable');
     }
 
+    /* ---------- GĐ1: dữ liệu khóa học theo design mới ---------- */
+
+    const TYPE_BAND_PATH = 'band_path';             // Lộ trình theo band
+    const TYPE_SKILL_INTENSIVE = 'skill_intensive'; // Khóa chuyên sâu theo kỹ năng
+    const TYPE_FULL_SKILLS = 'full_skills';         // Khóa tổng hợp 4 kỹ năng
+    const TYPE_COMBO = 'combo';                     // Combo khóa học
+
+    const TYPES = [self::TYPE_BAND_PATH, self::TYPE_SKILL_INTENSIVE, self::TYPE_FULL_SKILLS, self::TYPE_COMBO];
+
+    const EXAM_TYPES = ['ielts', 'toeic', 'aptis'];
+
+    public function gifts()
+    {
+        return $this->hasMany(BundleGift::class, 'bundle_id', 'id')->orderBy('order')->orderBy('id');
+    }
+
+    public function highlights()
+    {
+        return $this->hasMany(BundleHighlight::class, 'bundle_id', 'id')->orderBy('order')->orderBy('id');
+    }
+
+    public function checkpoints()
+    {
+        return $this->hasMany(BundleCheckpoint::class, 'bundle_id', 'id')->orderBy('order')->orderBy('id');
+    }
+
+    public function hasGifts(): bool
+    {
+        return $this->relationLoaded('gifts') ? $this->gifts->isNotEmpty() : $this->gifts()->exists();
+    }
+
+    /**
+     * Phần trăm giảm so với giá gốc teacher nhập (0 nếu không có giá gốc hoặc giá bán >= giá gốc).
+     */
+    public function getOriginalPriceDiscountPercent(): int
+    {
+        $original = (int)$this->original_price;
+        $price = (int)$this->price;
+
+        if ($original <= 0 or $price >= $original) {
+            return 0;
+        }
+
+        return (int)round((($original - $price) / $original) * 100);
+    }
+
     /**
      * Return the sluggable configuration array for this model.
      *

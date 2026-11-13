@@ -176,6 +176,7 @@ class FileController extends Controller
                 'check_previous_parts' => $data['check_previous_parts'],
                 'access_after_day' => $data['access_after_day'],
                 'status' => (!empty($data['status']) and $data['status'] == 'on') ? File::$Active : File::$Inactive,
+                'duration_seconds' => (isset($data['duration_seconds']) and is_numeric($data['duration_seconds']) and $data['duration_seconds'] > 0) ? (int)$data['duration_seconds'] : null,
                 'created_at' => time()
             ]);
 
@@ -645,6 +646,10 @@ class FileController extends Controller
                     'check_previous_parts' => $data['check_previous_parts'],
                     'access_after_day' => $data['access_after_day'],
                     'status' => (!empty($data['status']) and $data['status'] == 'on') ? File::$Active : File::$Inactive,
+                    // Chỉ ghi đè thời lượng khi form có gửi lên
+                    'duration_seconds' => array_key_exists('duration_seconds', $data)
+                        ? ((is_numeric($data['duration_seconds']) and $data['duration_seconds'] > 0) ? (int)$data['duration_seconds'] : null)
+                        : $file->duration_seconds,
                     'updated_at' => time()
                 ]);
 

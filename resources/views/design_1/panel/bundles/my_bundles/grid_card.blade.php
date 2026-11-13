@@ -74,6 +74,11 @@
                     </li>
                 @endcan
 
+                {{-- GĐ4: chấm bài theo khóa học --}}
+                <li class="actions-dropdown__dropdown-menu-item">
+                    <a href="/panel/bundles/{{ $bundle->id }}/grading">{{ trans('bundle_learning.grading_title') }}</a>
+                </li>
+
                 @can('panel_bundles_create')
                     <li class="actions-dropdown__dropdown-menu-item">
                         <!-- Form được ẩn đi bằng class d-none (hoặc style="display: none;") -->

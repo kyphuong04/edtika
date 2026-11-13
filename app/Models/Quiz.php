@@ -53,6 +53,19 @@ class Quiz extends Model implements TranslatableContract
         return $this->belongsTo('App\Models\Webinar', 'webinar_id', 'id');
     }
 
+    /**
+     * Video mà Mini Quiz này gắn vào (GĐ1). NULL = quiz thường.
+     */
+    public function file()
+    {
+        return $this->belongsTo('App\Models\File', 'file_id', 'id');
+    }
+
+    public function isMiniQuiz(): bool
+    {
+        return !empty($this->file_id);
+    }
+
     public function teacher()
     {
         return $this->belongsTo('App\User', 'creator_id', 'id');

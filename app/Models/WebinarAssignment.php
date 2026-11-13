@@ -35,6 +35,41 @@ class WebinarAssignment extends Model implements TranslatableContract
         return $this->belongsTo('App\Models\Webinar', 'webinar_id', 'id');
     }
 
+    /**
+     * Người được phép chấm bài: admin, người tạo bài, chủ module (webinar),
+     * hoặc teacher/người tạo của bundle có chứa module này.
+     */
+    public function canBeGradedBy($user): bool
+    {
+        if (empty($user)) {
+            return false;
+        }
+
+        if ($user->isAdmin() or $this->creator_id == $user->id) {
+            return true;
+        }
+
+        $webinar = $this->webinar;
+
+        if (empty($webinar)) {
+            return false;
+        }
+
+        if ($webinar->isOwner($user->id)) {
+            return true;
+        }
+
+        return Bundle::query()
+            ->whereHas('bundleWebinars', function ($query) use ($webinar) {
+                $query->where('webinar_id', $webinar->id);
+            })
+            ->where(function ($query) use ($user) {
+                $query->where('teacher_id', $user->id)
+                    ->orWhere('creator_id', $user->id);
+            })
+            ->exists();
+    }
+
     public function chapter()
     {
         return $this->belongsTo('App\Models\WebinarChapter', 'chapter_id', 'id');

@@ -217,6 +217,11 @@ class WebinarController extends Controller
         }
 
 
+        // Chỉ chấp nhận cột trong whitelist và item phải thuộc khóa học này
+        if (!CourseLearning::isValidItem($item, $item_id, $course->id)) {
+            return apiResponse2(0, 'invalid_item', trans('public.request_failed'));
+        }
+
         $courseLearning = CourseLearning::where('user_id', $user->id)
             ->where($item, $item_id)->delete();
 

@@ -587,6 +587,11 @@
             flex-direction: column;
             align-items: flex-end;
             gap: 10px;
+            pointer-events: none;
+        }
+
+        .edtika-floating-cta__toggle {
+            pointer-events: auto;
         }
 
         .edtika-floating-cta__menu {

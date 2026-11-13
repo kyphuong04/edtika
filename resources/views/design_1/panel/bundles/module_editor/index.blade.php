@@ -160,6 +160,14 @@
                        class="module-editor-topbar__title-input"
                        placeholder="Title"
                        required>
+
+                {{-- GĐ2: kỹ năng của module (dùng cho bộ lọc "Khóa học của tôi") --}}
+                <select name="skill" class="form-control module-editor-topbar__skill" style="max-width: 180px;">
+                    <option value="">{{ trans('bundle_learning.skill_none') }}</option>
+                    @foreach(\App\Models\Webinar::SKILLS as $moduleSkill)
+                        <option value="{{ $moduleSkill }}" {{ $webinar->skill === $moduleSkill ? 'selected' : '' }}>{{ trans('bundle_learning.skill_' . $moduleSkill) }}</option>
+                    @endforeach
+                </select>
             </div>
 
             {{-- G��G�� SECTIONS HEADER (replaces built-in) G��G��G��G��G��G��G�� --}}

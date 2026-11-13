@@ -37,6 +37,34 @@
         <div class="invalid-feedback d-block">@error('price') {{ $message }} @enderror</div>
     </div>
 
+    {{-- GĐ2: giá gốc toàn khóa (teacher tự nhập), dùng để hiện giá gạch và % giảm --}}
+    @php
+        $bundleOriginalPriceValue = old('original_price');
+        if (is_null($bundleOriginalPriceValue) and !empty($bundle) and !empty($bundle->original_price)) {
+            $bundleOriginalPriceValue = $bundle->original_price;
+        }
+    @endphp
+    <div class="form-group">
+        <label class="form-group-label">{{ trans('bundle_learning.original_price') }}</label>
+        <span class="has-translation bg-gray-100 text-gray-500 js-bundle-currency-sign">{{ currencySign($selectedBundleCurrency) }}</span>
+        <input type="text" name="original_price" class="form-control @error('original_price') is-invalid @enderror" value="{{ $bundleOriginalPriceValue }}" oninput="validatePrice(this)"/>
+        <div class="invalid-feedback d-block">@error('original_price') {{ $message }} @enderror</div>
+        <p class="font-12 text-gray-500 mt-8">- {{ trans('bundle_learning.original_price_hint') }}</p>
+    </div>
+
+    <div class="form-group">
+        <div class="d-flex align-items-center">
+            <div class="custom-switch mr-8">
+                <input id="isComboSwitch" type="checkbox" name="is_combo" class="custom-control-input" {{ (old('is_combo') or (!empty($bundle) and $bundle->is_combo)) ? 'checked' : '' }}>
+                <label class="custom-control-label cursor-pointer" for="isComboSwitch"></label>
+            </div>
+            <label class="cursor-pointer mb-0" for="isComboSwitch">{{ trans('bundle_learning.is_combo') }}</label>
+        </div>
+    </div>
+
+    {{-- Các tùy chọn giá cũ (thời hạn truy cập, subscribe, gói giá) - ẩn theo design mới, bật lại bằng config --}}
+    @if(config('bundle_learning.show_legacy_pricing'))
+
 
     <div class="form-group">
         <label class="form-group-label">{{ trans('update.access_days') }} ({{ trans('public.optional') }})</label>
@@ -116,6 +144,7 @@
             </div>
         @endif
     </div>
+    @endif
 
 
 </div>
@@ -137,6 +166,9 @@
                 currencySelect.addEventListener('change', function () {
                     const selectedCurrency = this.value || 'USD';
                     currencySignEl.innerText = currencySigns[selectedCurrency] || currencySigns.USD;
+                    document.querySelectorAll('.js-bundle-currency-sign').forEach(function (el) {
+                        el.innerText = currencySigns[selectedCurrency] || currencySigns.USD;
+                    });
                 });
             }
         })();

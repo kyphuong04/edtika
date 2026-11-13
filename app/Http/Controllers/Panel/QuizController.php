@@ -238,6 +238,42 @@ class QuizController extends Controller
         return view('design_1.panel.quizzes.create.index', $data);
     }
 
+    /**
+     * GĐ1/GĐ2 - Mini Quiz: gắn quiz vào một video của module, bật ra tại giây show_at_second.
+     * Chỉ trả về field khi form có gửi lên (form trong trang module), để lưu quiz
+     * từ trang quiz riêng không làm mất cấu hình Mini Quiz.
+     */
+    private function getMiniQuizFields(array $data, $webinar): array
+    {
+        if (!array_key_exists('mini_file_id', $data)) {
+            return [];
+        }
+
+        $fileId = null;
+        $showAt = null;
+
+        if (!empty($data['mini_file_id']) and !empty($webinar)) {
+            $file = \App\Models\File::query()
+                ->where('id', $data['mini_file_id'])
+                ->where('webinar_id', $webinar->id)
+                ->first();
+
+            if (!empty($file) and $file->isVideo()) {
+                $fileId = $file->id;
+                $showAt = isset($data['show_at_second']) && $data['show_at_second'] !== '' ? max(0, (int)$data['show_at_second']) : 0;
+
+                if (!empty($file->duration_seconds)) {
+                    $showAt = min($showAt, (int)$file->duration_seconds);
+                }
+            }
+        }
+
+        return [
+            'file_id' => $fileId,
+            'show_at_second' => $showAt,
+        ];
+    }
+
     public function store(Request $request)
     {
         $this->authorize("panel_quizzes_create");
@@ -293,7 +329,7 @@ class QuizController extends Controller
             'display_questions_randomly' => (!empty($data['display_questions_randomly']) and $data['display_questions_randomly'] == 'on'),
             'expiry_days' => (!empty($data['expiry_days']) and $data['expiry_days'] > 0) ? $data['expiry_days'] : null,
             'created_at' => time(),
-        ]);
+        ] + $this->getMiniQuizFields($data, $webinar));
 
         if (!empty($quiz)) {
             QuizTranslation::updateOrCreate([
@@ -466,7 +502,7 @@ class QuizController extends Controller
                 'display_questions_randomly' => (!empty($data['display_questions_randomly']) and $data['display_questions_randomly'] == 'on'),
                 'expiry_days' => (!empty($data['expiry_days']) and $data['expiry_days'] > 0) ? $data['expiry_days'] : null,
                 'updated_at' => time(),
-            ]);
+            ] + $this->getMiniQuizFields($data, $webinar ?? null));
 
 
             $checkChapterItem = WebinarChapterItem::query()

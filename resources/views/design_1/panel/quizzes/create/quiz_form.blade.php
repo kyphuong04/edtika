@@ -103,6 +103,40 @@
         <p class="font-12 text-gray-500 mt-8">{{ trans('update.quiz_expiry_days_hint') }}</p>
     </div>
 
+    {{-- GĐ2: Mini Quiz gắn vào video (chỉ hiện trong trang soạn module) --}}
+    @if(!empty($selectedWebinar))
+        @php
+            $miniQuizVideos = \App\Models\File::query()
+                ->where('webinar_id', $selectedWebinar->id)
+                ->whereIn('file_type', \App\Models\File::$videoTypes)
+                ->get();
+            $quizFormKey = !empty($quiz) ? $quiz->id : 'new';
+        @endphp
+
+        <div class="p-12 rounded-12 border-gray-200 mb-16">
+            <h5 class="font-14 font-weight-bold">{{ trans('bundle_learning.mini_quiz') }}</h5>
+            <p class="font-12 text-gray-500 mt-4">{{ trans('bundle_learning.mini_quiz_hint') }}</p>
+
+            <div class="form-group mt-12">
+                <label class="form-group-label">{{ trans('bundle_learning.mini_quiz_video') }}</label>
+                <select name="ajax[{{ $quizFormKey }}][mini_file_id]" class="js-ajax-mini_file_id form-control">
+                    <option value="">{{ trans('bundle_learning.mini_quiz_not_attached') }}</option>
+                    @foreach($miniQuizVideos as $miniQuizVideo)
+                        <option value="{{ $miniQuizVideo->id }}" {{ (!empty($quiz) and $quiz->file_id == $miniQuizVideo->id) ? 'selected' : '' }}>{{ $miniQuizVideo->title }}</option>
+                    @endforeach
+                </select>
+                <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="form-group mb-0">
+                <label class="form-group-label">{{ trans('bundle_learning.mini_quiz_show_at') }}</label>
+                <span class="has-translation bg-gray-100 font-14 text-gray-500 w-auto px-4">{{ trans('bundle_learning.seconds') }}</span>
+                <input type="number" name="ajax[{{ $quizFormKey }}][show_at_second]" value="{{ !empty($quiz) ? $quiz->show_at_second : '' }}" class="js-ajax-show_at_second form-control" min="0"/>
+                <div class="invalid-feedback"></div>
+            </div>
+        </div>
+    @endif
+
     @if(!empty($quiz))
         <div class="form-group d-flex align-items-center mt-16">
             <div class="custom-switch mr-8">

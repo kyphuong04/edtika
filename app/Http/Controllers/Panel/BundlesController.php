@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Enums\UploadSource;
 use App\Exports\WebinarStudents;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Panel\Traits\BundleCourseFieldsTrait;
 use App\Models\Bundle;
 use App\Models\BundleFilterOption;
 use App\Models\Category;
@@ -23,6 +24,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class BundlesController extends Controller
 {
+    use BundleCourseFieldsTrait;
+
     public function index(Request $request)
     {
         $this->authorize("panel_bundles_lists");
@@ -187,13 +190,18 @@ class BundlesController extends Controller
         $rules = [
             'title' => 'required|max:255',
             'description' => 'required',
-        ];
+        ] + $this->bundleCourseInfoRules();
 
         $this->validate($request, $rules);
 
         $data = $request->all();
 
-        $bundle = Bundle::create([
+        $bandErrors = $this->validateBundleBandRange($data);
+        if (!empty($bandErrors)) {
+            return back()->withInput()->withErrors($bandErrors);
+        }
+
+        $bundle = Bundle::create($this->normalizeBundleCourseInfo($data) + [
             'teacher_id' => $user->isTeacher() ? $user->id : (!empty($data['teacher_id']) ? $data['teacher_id'] : $user->id),
             'creator_id' => $user->id,
             'slug' => Bundle::makeSlug($data['title']),
@@ -389,7 +397,7 @@ class BundlesController extends Controller
             $rules = [
                 'title' => 'required|max:255',
                 'description' => 'required',
-            ];
+            ] + $this->bundleCourseInfoRules();
         }
 
         if ($currentStep == 2) {
@@ -401,7 +409,11 @@ class BundlesController extends Controller
         if ($currentStep == 3) {
             $rules = [
                 'price_currency' => 'required|in:USD,VND',
-            ];
+            ] + $this->bundlePricingRules();
+        }
+
+        if ($currentStep == 5) {
+            $rules = $this->bundleExtrasRules();
         }
 
         // Sửa 1: bỏ điều kiện thừa/sai, chỉ bắt buộc "rules" đúng lúc submit ở step 6
@@ -411,6 +423,18 @@ class BundlesController extends Controller
         }
 
         $this->validate($request, $rules);
+
+        // GĐ2: kiểm tra thêm band (bước 1) và quiz của Mid-term/Final (bước 5)
+        $extraErrors = [];
+        if ($currentStep == 1) {
+            $extraErrors = $this->validateBundleBandRange($data);
+        }
+        if ($currentStep == 5) {
+            $extraErrors = $this->validateBundleCheckpoints($bundle, $data);
+        }
+        if (!empty($extraErrors)) {
+            return back()->withInput()->withErrors($extraErrors);
+        }
 
         // Sửa 2: KHÔNG hạ status nếu bundle đang active, trừ khi user chủ động chọn "Lưu nháp"
         if ($bundle->status === Bundle::$active and !$isDraft) {
@@ -434,6 +458,9 @@ class BundlesController extends Controller
 
             // Handle Image and Video
             $this->storeWebinarMedia($request, $bundle);
+
+            // GĐ2: loại khóa, kỳ thi, band, lộ trình
+            $data = array_merge($data, $this->normalizeBundleCourseInfo($data));
         }
 
         if ($currentStep == 2) {
@@ -466,13 +493,30 @@ class BundlesController extends Controller
         }
 
         if ($currentStep == 3) {
-            $data['subscribe'] = !empty($data['subscribe']) ? true : false;
+            if (config('bundle_learning.show_legacy_pricing')) {
+                $data['subscribe'] = !empty($data['subscribe']) ? true : false;
+            } else {
+                // Tùy chọn subscribe đang ẩn trên form: giữ nguyên giá trị cũ
+                unset($data['subscribe']);
+            }
 
             $priceCurrency = strtoupper($data['price_currency'] ?? 'USD');
             $priceCurrency = in_array($priceCurrency, Bundle::PRICE_CURRENCIES) ? $priceCurrency : 'USD';
 
             $data['price_currency'] = $priceCurrency;
             $data['price'] = !empty($data['price']) ? $data['price'] : null;
+
+            // GĐ2: giá gốc, combo
+            $data = array_merge($data, $this->normalizeBundlePricing($data));
+        }
+
+        if ($currentStep == 5) {
+            // GĐ2: quà tặng, slider nội dung, Mid-term/Final, cờ học tuần tự
+            $data = array_merge($data, $this->saveBundleExtras($bundle, $data));
+        }
+
+        foreach ($this->bundleExtraRequestKeys() as $extraKey) {
+            unset($data[$extraKey]);
         }
 
         unset($data['_token'],

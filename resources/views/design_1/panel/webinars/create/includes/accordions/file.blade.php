@@ -177,6 +177,16 @@
                             <div class="invalid-feedback"></div>
                         </div>
                     </div>
+
+                    {{-- GĐ2: thời lượng video (giây). Bỏ trống thì player tự ghi lại khi học viên xem --}}
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label class="form-group-label">{{ trans('bundle_learning.video_duration') }}</label>
+                            <span class="has-translation bg-gray-100 font-14 text-gray-500 w-auto px-4">{{ trans('bundle_learning.seconds') }}</span>
+                            <input type="number" min="0" name="ajax[{{ !empty($file) ? $file->id : 'new' }}][duration_seconds]" value="{{ (!empty($file)) ? $file->duration_seconds : '' }}" class="js-ajax-duration_seconds form-control" placeholder="{{ trans('bundle_learning.video_duration_hint') }}"/>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="interactive-content-section mt-24">

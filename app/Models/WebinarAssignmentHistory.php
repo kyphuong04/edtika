@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class WebinarAssignmentHistory extends Model
 {
+    use \App\Models\Traits\TriggersBundleCompletion;
+
     protected $table = 'webinar_assignment_history';
     public $timestamps = false;
     protected $dateFormat = 'U';
@@ -36,6 +38,21 @@ class WebinarAssignmentHistory extends Model
     {
         return $this->hasMany('App\Models\WebinarAssignmentHistoryMessage', 'assignment_history_id', 'id');
     }
+
+    /* ---------- GĐ4: kiểm tra hoàn thành bundle khi bài tập được chấm đạt ---------- */
+
+    public function bundleCompletionReached(): bool
+    {
+        return $this->status === self::$passed && ($this->wasRecentlyCreated || $this->wasChanged('status'));
+    }
+
+    public function bundleCompletionUserId(): ?int
+    {
+        return $this->student_id;
+    }
+
+    public function bundleCompletionWebinarId(): ?int
+    {
+        return !empty($this->assignment) ? $this->assignment->webinar_id : null;
+    }
 }
-
-

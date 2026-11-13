@@ -45,6 +45,14 @@ class BundleVocabularySet extends Model
         return $this->belongsTo(Bundle::class, 'bundle_id', 'id');
     }
 
+    /**
+     * Lesson (chapter) dùng bộ từ này làm Pre Lesson (GĐ1). NULL = dùng cho cả khóa.
+     */
+    public function chapter()
+    {
+        return $this->belongsTo(WebinarChapter::class, 'chapter_id', 'id');
+    }
+
     public function folder()
     {
         return $this->belongsTo(VocabularyFolder::class, 'folder_id', 'id');

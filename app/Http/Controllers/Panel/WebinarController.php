@@ -485,6 +485,11 @@ class WebinarController extends Controller
         if ($currentStep == 1) {
             $data['private'] = (!empty($data['private']) and $data['private'] == 'on');
 
+            // GĐ2: kỹ năng của module trong bundle, chỉ nhận giá trị hợp lệ
+            if (array_key_exists('skill', $data)) {
+                $data['skill'] = in_array($data['skill'], Webinar::SKILLS, true) ? $data['skill'] : null;
+            }
+
             // Handle Image and Video
             $webinar = $this->storeWebinarMedia($request, $webinar);
 

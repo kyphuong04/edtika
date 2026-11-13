@@ -80,6 +80,40 @@ class File extends Model implements TranslatableContract
         return (in_array($this->file_type, self::$videoTypes));
     }
 
+    /**
+     * Mini Quiz bật ra trong lúc xem video này (GĐ1).
+     */
+    public function miniQuizzes()
+    {
+        return $this->hasMany(Quiz::class, 'file_id', 'id')->orderBy('show_at_second');
+    }
+
+    public function watchProgress()
+    {
+        return $this->hasMany(VideoWatchProgress::class, 'file_id', 'id');
+    }
+
+    public function webinar()
+    {
+        return $this->belongsTo(Webinar::class, 'webinar_id', 'id');
+    }
+
+    /**
+     * GĐ3: video mà player trên learning page theo dõi được vị trí xem
+     * (video tải lên/S3/link trực tiếp phát bằng thẻ <video>, YouTube, Vimeo qua Plyr).
+     * Các nguồn khác (secure_host, google_drive, iframe...) vẫn cho học viên tự tick.
+     */
+    public function isAutoTrackableVideo(): bool
+    {
+        if (in_array($this->storage, ['youtube', 'vimeo'])) {
+            return true;
+        }
+
+        return $this->isVideo()
+            and !$this->online_viewer
+            and in_array($this->storage, ['upload', 's3', 'external_link']);
+    }
+
     public function getFileDuration()
     {
         $duration = 0;

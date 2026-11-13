@@ -102,6 +102,9 @@
 
     </div>
 
+    {{-- GĐ2: Course Info (loại khóa, kỳ thi, band, lộ trình) --}}
+    @include('design_1.panel.bundles.create.includes.course_info')
+
     {{-- Course Summary --}}
     <h3 class="font-14 font-weight-bold my-24">{{ trans('update.bundle_summary') }}</h3>
 

@@ -294,6 +294,10 @@
                                 </section>
 
                                 @if(!empty($bundle))
+                                    @include('admin.bundles.includes.course_summary')
+                                @endif
+
+                                @if(!empty($bundle))
                                     <section class="mt-30">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h2 class="section-title after-line">{{ trans('admin/main.price_plans') }}</h2>

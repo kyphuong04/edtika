@@ -475,7 +475,21 @@
                         </div>
                     </div>
                     @if($allowManage)
-                        <a href="/panel/bundles/{{ $bundle->id }}/module/create" class="bd-btn-primary">Tạo</a>
+                        @php
+                            // GĐ4: số bài đang chờ chấm của khóa
+                            $pendingGradingCount = \App\Models\WebinarAssignmentHistory::query()
+                                ->where('status', \App\Models\WebinarAssignmentHistory::$pending)
+                                ->whereHas('assignment', function ($query) use ($bundle) {
+                                    $query->whereIn('webinar_id', $bundle->bundleWebinars->pluck('webinar_id'));
+                                })
+                                ->count();
+                        @endphp
+                        <div class="d-flex align-items-center" style="gap: 8px;">
+                            <a href="/panel/bundles/{{ $bundle->id }}/grading" class="bd-btn-primary" style="background: #fff; color: #511D99; border: 1px solid #511D99;">
+                                {{ trans('bundle_learning.grading_title') }}@if($pendingGradingCount > 0) ({{ $pendingGradingCount }})@endif
+                            </a>
+                            <a href="/panel/bundles/{{ $bundle->id }}/module/create" class="bd-btn-primary">Tạo</a>
+                        </div>
                     @endif
                 </div>
 

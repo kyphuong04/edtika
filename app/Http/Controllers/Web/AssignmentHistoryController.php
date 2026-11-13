@@ -89,6 +89,11 @@ class AssignmentHistoryController extends Controller
                         ]);
 
                         $shouldNotifyAdminReview = ($user->id != $assignment->creator_id);
+                    } elseif ($assignmentHistory->status == WebinarAssignmentHistory::$notPassed and $user->id == $assignmentHistory->student_id) {
+                        // GĐ4: học viên nộp lại sau khi chưa đạt -> quay lại hàng chờ chấm
+                        $assignmentHistory->update([
+                            'status' => WebinarAssignmentHistory::$pending
+                        ]);
                     }
 
                     $notifyOptions = [
@@ -129,18 +134,16 @@ class AssignmentHistoryController extends Controller
     {
         $user = auth()->user();
 
-        $assignment = WebinarAssignment::where('id', $assignmentId)
-            ->where('creator_id', $user->id)
-            ->first();
+        $assignment = WebinarAssignment::where('id', $assignmentId)->first();
 
         if (!empty($assignment)) {
             $webinar = $assignment->webinar;
 
-            if (!empty($webinar) and $webinar->isOwner($user->id)) {
+            if (!empty($webinar) and $assignment->canBeGradedBy($user)) {
                 $studentId = $request->get('student');
-                $assignmentHistory = $this->getAssignmentHistory($webinar, $assignment, $user, $studentId);
+                $assignmentHistory = $this->findStudentAssignmentHistory($assignment, $historyId, $studentId);
 
-                if (!empty($assignmentHistory) and $historyId == $assignmentHistory->id and $assignmentHistory->instructor_id == $user->id) {
+                if (!empty($assignmentHistory)) {
                     $data = [
                         'assignmentHistory' => $assignmentHistory,
                         'assignment' => $assignment,
@@ -166,18 +169,16 @@ class AssignmentHistoryController extends Controller
     {
         $user = auth()->user();
 
-        $assignment = WebinarAssignment::where('id', $assignmentId)
-            ->where('creator_id', $user->id)
-            ->first();
+        $assignment = WebinarAssignment::where('id', $assignmentId)->first();
 
         if (!empty($assignment)) {
             $webinar = $assignment->webinar;
 
-            if (!empty($webinar) and $webinar->isOwner($user->id)) {
+            if (!empty($webinar) and $assignment->canBeGradedBy($user)) {
                 $studentId = $request->get('student');
-                $assignmentHistory = $this->getAssignmentHistory($webinar, $assignment, $user, $studentId);
+                $assignmentHistory = $this->findStudentAssignmentHistory($assignment, $historyId, $studentId);
 
-                if (!empty($assignmentHistory) and $historyId == $assignmentHistory->id and $assignmentHistory->instructor_id == $user->id) {
+                if (!empty($assignmentHistory)) {
                     $data = $request->all();
 
                     $rules = [
@@ -194,32 +195,13 @@ class AssignmentHistoryController extends Controller
                         ], 422);
                     }
 
-                    $grade = $data['grade'];
-
-                    $status = WebinarAssignmentHistory::$passed;
-
-                    if ($grade < $assignment->pass_grade) {
-                        $status = WebinarAssignmentHistory::$notPassed;
-                    }
-
-                    $assignmentHistory->update([
-                        'status' => $status,
-                        'grade' => $grade
-                    ]);
-
-                    if ($status == WebinarAssignmentHistory::$passed) {
-                        $buyStoreReward = RewardAccounting::calculateScore(Reward::PASS_ASSIGNMENT);
-                        RewardAccounting::makeRewardAccounting($assignmentHistory->student_id, $buyStoreReward, Reward::PASS_ASSIGNMENT, $assignment->id);
-                    }
-
-                    $notifyOptions = [
-                        '[instructor.name]' => $assignmentHistory->instructor->full_name,
-                        '[c.title]' => $webinar->title,
-                        '[student.name]' => $assignmentHistory->student->full_name,
-                        '[assignment_grade]' => $assignmentHistory->grade,
-                    ];
-
-                    sendNotification('instructor_set_grade', $notifyOptions, $assignmentHistory->student_id);
+                    // GĐ4: dùng chung logic chấm với màn chấm bài theo bundle
+                    app(\App\Services\Bundle\AssignmentGradingService::class)->grade(
+                        $assignmentHistory,
+                        (int)$data['grade'],
+                        $user,
+                        $data['comment'] ?? null
+                    );
 
                     return response()->json([
                         'code' => 200,
@@ -233,6 +215,22 @@ class AssignmentHistoryController extends Controller
         return response()->json([],403);
     }
 
+    /**
+     * Lấy đúng bài nộp của học viên theo id, không tự tạo bản ghi mới
+     * (getAssignmentHistory() có thể tạo history gán nhầm cho người chấm).
+     */
+    private function findStudentAssignmentHistory($assignment, $historyId, $studentId)
+    {
+        if (empty($studentId)) {
+            return null;
+        }
+
+        return WebinarAssignmentHistory::where('id', $historyId)
+            ->where('assignment_id', $assignment->id)
+            ->where('student_id', $studentId)
+            ->first();
+    }
+
     public function downloadAttach($assignmentId, $historyId, $messageId)
     {
         $user = auth()->user();
@@ -243,7 +241,8 @@ class AssignmentHistoryController extends Controller
             $webinar = $assignment->webinar;
 
             if (!empty($webinar) and $webinar->checkUserHasBought($user)) {
-                $allow = ($webinar->creator_id == $user->id or $webinar->teacher_id == $user->id or $user->isAdmin());
+                // GĐ4: người có quyền chấm (kể cả teacher của bundle) được tải file bài nộp
+                $allow = ($webinar->creator_id == $user->id or $webinar->teacher_id == $user->id or $user->isAdmin() or $assignment->canBeGradedBy($user));
 
                 $assignmentHistory = WebinarAssignmentHistory::where('instructor_id', $assignment->creator_id)
                     ->where('id', $historyId)
@@ -262,6 +261,10 @@ class AssignmentHistoryController extends Controller
                             ]);
                         }
                     ])->first();
+
+                if (empty($assignmentHistory)) {
+                    abort(404);
+                }
 
                 $message = WebinarAssignmentHistoryMessage::where('id', $messageId)
                     ->where('assignment_history_id', $assignmentHistory->id)

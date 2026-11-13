@@ -127,6 +127,8 @@
     <script src="{{ getDesign1ScriptPath("learning_page_noticeboards") }}"></script>
     <script src="{{ getDesign1ScriptPath("learning_page") }}"></script>
 
+    @include('design_1.web.courses.learning_page.includes.bundle_player_script')
+
     <script>
         // Rewrite any "Go to course detail" link to use panel URL
         (function () {

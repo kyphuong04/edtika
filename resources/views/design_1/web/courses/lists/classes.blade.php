@@ -150,103 +150,101 @@
     $defaultTargetKey = $targetBands[1]['key'];
     $courseHighlights = $courseHighlightsByTarget[$defaultTargetKey] ?? [];
 
-    $suggestedCoursesByTarget = [
-        'band_4_0_4_5' => [
-            [
-                'name' => 'BAND 4.0 - 4.5',
-                'items' => ['24h Fast generations', 'Guided Relaxed generations', 'General commercial terms'],
-                'price' => '1.099.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-            [
-                'name' => 'BAND 4.5 +',
-                'items' => ['30h Fast generations', 'Unlimited Relaxed generations', 'General commercial terms'],
-                'price' => '1.299.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-        ],
-        'band_5_0_5_5' => [
-            [
-                'name' => 'BAND 5.0 - 5.5',
-                'items' => ['30h Fast generations', 'Unlimited Relaxed generations', 'General commercial terms'],
-                'price' => '1.499.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-            [
-                'name' => 'BAND 5.0 - 5.5 +',
-                'items' => ['30h Fast generations', 'Unlimited Relaxed generations', 'General commercial terms'],
-                'price' => '1.499.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-        ],
-        'band_6_0_6_5' => [
-            [
-                'name' => 'BAND 6.0 - 6.5',
-                'items' => ['40h Fast generations', 'Unlimited Relaxed generations', 'Priority commercial terms'],
-                'price' => '1.799.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-            [
-                'name' => 'BAND 6.5 +',
-                'items' => ['50h Fast generations', 'Unlimited Relaxed generations', 'Priority commercial terms'],
-                'price' => '1.999.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-        ],
-        'band_7_plus' => [
-            [
-                'name' => 'BAND 7.0 +',
-                'items' => ['60h Fast generations', 'Unlimited Relaxed generations', 'Advanced commercial terms'],
-                'price' => '2.199.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-            [
-                'name' => 'BAND 7.5 +',
-                'items' => ['80h Fast generations', 'Unlimited Relaxed generations', 'Advanced commercial terms'],
-                'price' => '2.499.000 đ',
-                'billing' => "per editor/month\nbilled monthly",
-            ],
-        ],
+    /*
+     * GĐ5: gợi ý khóa học lấy từ bundle thật thay cho dữ liệu mẫu.
+     * Khóa phù hợp với band mục tiêu khi band_from <= điểm đầu mục tiêu <= band_to.
+     * Khóa chưa nhập band (bước 1 của form) chỉ dùng làm dự phòng khi không có khóa nào khớp.
+     */
+    $targetStartByKey = [
+        'band_4_0_4_5' => 4.0,
+        'band_5_0_5_5' => 5.0,
+        'band_6_0_6_5' => 6.0,
+        'band_7_plus' => 7.0,
     ];
 
-    $allActiveCourses = \App\Models\Webinar::query()
-        ->where('status', \App\Models\Webinar::$active)
-        ->where('private', false)
+    $storeBundles = \App\Models\Bundle::query()
+        ->where('status', \App\Models\Bundle::$active)
+        ->whereNull('hidden_at')
+        ->with(['tags', 'gifts'])
+        ->withCount('bundleWebinars')
+        ->orderByDesc('created_at')
         ->get();
 
-    $fallbackCourse = $allActiveCourses->first();
+    $ownedBundleIds = auth()->check() ? auth()->user()->getPurchasedBundlesIds() : [];
 
-    $normalizeValue = static function ($value) {
-        $value = mb_strtolower((string) $value, 'UTF-8');
-        return preg_replace('/[^a-z0-9]/', '', $value);
+    $mapBundleToCard = static function ($bundle) use ($ownedBundleIds) {
+        $currency = $bundle->getPriceCurrency();
+        $offPercent = $bundle->getOriginalPriceDiscountPercent();
+
+        // 3 dòng đặc điểm: tags của khóa, thiếu thì bổ sung từ quà tặng / số module
+        $items = $bundle->tags->pluck('title')->take(3)->values()->all();
+        foreach ($bundle->gifts as $gift) {
+            if (count($items) >= 3) {
+                break;
+            }
+            $items[] = '🎁 ' . $gift->title;
+        }
+        if (count($items) < 3 and $bundle->bundle_webinars_count > 0) {
+            $items[] = $bundle->bundle_webinars_count . ' module';
+        }
+        if (count($items) < 3 and !empty($bundle->roadmap_months)) {
+            $items[] = 'Lộ trình ' . $bundle->roadmap_months . ' tháng';
+        }
+
+        $billing = [];
+        if ($offPercent > 0) {
+            $billing[] = 'Giá gốc ' . handleBundlePriceByCurrency($bundle->original_price, $currency) . ' (-' . $offPercent . '%)';
+        }
+        if (!is_null($bundle->band_from) or !is_null($bundle->band_to)) {
+            $billing[] = 'Band ' . ($bundle->band_from ?? '?') . ' → ' . ($bundle->band_to ?? '?');
+        }
+
+        return [
+            'bundle_id' => $bundle->id,
+            'name' => $bundle->title,
+            'items' => $items,
+            'price' => $bundle->price > 0 ? handleBundlePriceByCurrency($bundle->price, $currency) : trans('public.free'),
+            'billing' => implode("\n", $billing),
+            'detail_url' => $bundle->getUrl(),
+            'owned' => in_array($bundle->id, $ownedBundleIds),
+            'learn_url' => '/panel/courses/purchases/' . $bundle->slug,
+            'modules' => (int)$bundle->bundle_webinars_count,
+            'roadmap_months' => $bundle->roadmap_months,
+        ];
     };
 
-    $resolveCourseDetailUrl = static function ($courseName) use ($allActiveCourses, $fallbackCourse, $normalizeValue) {
-        $needle = $normalizeValue($courseName);
-
-        $matchedCourse = $allActiveCourses->first(function ($activeCourse) use ($needle, $normalizeValue) {
-            $title = $normalizeValue($activeCourse->title);
-
-            return str_contains($title, $needle) || str_contains($needle, $title);
+    $suggestedCoursesByTarget = [];
+    foreach ($targetStartByKey as $targetKey => $targetStart) {
+        $matched = $storeBundles->filter(function ($bundle) use ($targetStart) {
+            return !is_null($bundle->band_from) and !is_null($bundle->band_to)
+                and (float)$bundle->band_from <= $targetStart and (float)$bundle->band_to >= $targetStart;
         });
 
-        if (!empty($matchedCourse)) {
-            return url('/classes/' . $matchedCourse->slug);
+        // Dự phòng: khóa có band_to đạt mục tiêu, rồi tới tất cả khóa
+        if ($matched->isEmpty()) {
+            $matched = $storeBundles->filter(function ($bundle) use ($targetStart) {
+                return !is_null($bundle->band_to) and (float)$bundle->band_to >= $targetStart;
+            });
+        }
+        if ($matched->isEmpty()) {
+            $matched = $storeBundles;
         }
 
-        if (!empty($fallbackCourse)) {
-            return url('/classes/' . $fallbackCourse->slug);
-        }
+        $suggestedCoursesByTarget[$targetKey] = $matched->take(6)->map($mapBundleToCard)->values()->all();
 
-        return '/classes';
-    };
-
-    foreach ($suggestedCoursesByTarget as $targetKey => $targetCourses) {
-        foreach ($targetCourses as $courseIndex => $suggestedCourse) {
-            $suggestedCoursesByTarget[$targetKey][$courseIndex]['detail_url'] = $resolveCourseDetailUrl($suggestedCourse['name']);
+        // Ô "x module" và "x tháng" theo khóa phù hợp nhất (nếu teacher đã nhập)
+        $bestCard = $suggestedCoursesByTarget[$targetKey][0] ?? null;
+        if (!empty($bestCard) and !empty($courseHighlightsByTarget[$targetKey])) {
+            if ($bestCard['modules'] > 0) {
+                $courseHighlightsByTarget[$targetKey][0]['title'] = $bestCard['modules'] . ' module';
+            }
+            if (!empty($bestCard['roadmap_months'])) {
+                $courseHighlightsByTarget[$targetKey][1]['title'] = $bestCard['roadmap_months'] . ' tháng';
+            }
         }
     }
 
+    $courseHighlights = $courseHighlightsByTarget[$defaultTargetKey] ?? [];
     $suggestedCourses = $suggestedCoursesByTarget[$defaultTargetKey] ?? [];
 
 @endphp
@@ -254,6 +252,7 @@
 @extends("design_1.web.layouts.app")
 
 @push("styles_top")
+    @include('design_1.web.bundles.storefront.styles')
     <style>
         .edtika-classes-page {
             --edtika-purple: #511d99;
@@ -1544,37 +1543,18 @@
                 <section class="edtika-classes-page__suggested" aria-label="Gợi ý khóa học phù hợp" data-suggested-section>
                     <h3 class="edtika-classes-page__suggested-title">Gợi ý khóa học phù hợp với bạn</h3>
 
-                    <div class="edtika-classes-page__suggested-grid">
-                        @foreach($suggestedCourses as $courseIndex => $course)
-                            <article class="edtika-classes-page__bundle-card" data-suggested-card="{{ $courseIndex }}">
-                                <div class="edtika-classes-page__bundle-top">
-                                    <img src="{{ asset('store/icons/—Pngtree—abstract purple line wave background_5542852 1.png') }}" alt="Abstract background">
-                                </div>
-
-                                <div class="edtika-classes-page__bundle-body">
-                                    <h4 class="edtika-classes-page__bundle-name" data-suggested-name>{{ $course['name'] }}</h4>
-
-                                    <ul class="edtika-classes-page__bundle-features">
-                                        @foreach($course['items'] as $featureIndex => $feature)
-                                            <li data-suggested-feature="{{ $featureIndex }}">{{ $feature }}</li>
-                                        @endforeach
-                                    </ul>
-
-                                    <div class="edtika-classes-page__bundle-bottom">
-                                        <div>
-                                            <div class="edtika-classes-page__bundle-price" data-suggested-price>{{ $course['price'] }}</div>
-                                            <div class="edtika-classes-page__bundle-billing" data-suggested-billing>{{ $course['billing'] }}</div>
-                                        </div>
-
-                                        <div class="edtika-classes-page__bundle-actions">
-                                            <a href="/bundles" class="edtika-classes-page__bundle-btn edtika-classes-page__bundle-btn--buy">Mua</a>
-                                            <a href="{{ $course['detail_url'] ?? '/classes' }}" class="edtika-classes-page__bundle-btn edtika-classes-page__bundle-btn--view" data-suggested-view>Xem</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-                        @endforeach
+                    <div class="edtika-classes-page__suggested-grid" data-suggested-grid>
+                        @forelse($suggestedCourses as $courseIndex => $course)
+                            @include('design_1.web.courses.lists.includes.classes_bundle_card', ['course' => $course])
+                        @empty
+                            <p class="text-gray-500">Chưa có khóa học nào.</p>
+                        @endforelse
                     </div>
+
+                    {{-- GĐ5: mẫu thẻ để JS dựng lại khi đổi band mục tiêu --}}
+                    <template data-suggested-template>
+                        @include('design_1.web.courses.lists.includes.classes_bundle_card', ['course' => null])
+                    </template>
                 </section>
             </main>
         </div>
@@ -1662,6 +1642,9 @@
             </div>
         </footer>
     </div>
+
+    {{-- GĐ5: panel mua nhanh dùng chung với trang /bundles --}}
+    @include('design_1.web.bundles.storefront.quick_buy_panel')
 @endsection
 
 @push('scripts_bottom')
@@ -1723,28 +1706,49 @@
                     }
 
                     const courses = suggestedCoursesByTarget[targetKey] || [];
+                    const grid = $suggestedSection.find('[data-suggested-grid]')[0];
+                    const template = $suggestedSection.find('[data-suggested-template]')[0];
 
-                    if (!courses.length) {
+                    if (!grid || !template) {
                         return;
                     }
 
-                    $suggestedSection.find('[data-suggested-card]').each(function (index) {
-                        const course = courses[index];
+                    grid.innerHTML = '';
 
-                        if (!course) {
-                            return;
-                        }
+                    if (!courses.length) {
+                        const empty = document.createElement('p');
+                        empty.className = 'text-gray-500';
+                        empty.textContent = 'Chưa có khóa học phù hợp.';
+                        grid.appendChild(empty);
+                        return;
+                    }
 
-                        const $card = $(this);
+                    courses.forEach(function (course) {
+                        const card = template.content.firstElementChild.cloneNode(true);
+                        const $card = $(card);
+
                         $card.find('[data-suggested-name]').text(course.name || '');
                         $card.find('[data-suggested-price]').text(course.price || '');
                         $card.find('[data-suggested-billing]').text(course.billing || '');
-                        $card.find('[data-suggested-view]').attr('href', course.detail_url || '/classes');
+                        $card.find('[data-suggested-view]').attr('href', course.detail_url || '/bundles');
 
-                        $card.find('[data-suggested-feature]').each(function (featureIndex) {
-                            const value = Array.isArray(course.items) ? (course.items[featureIndex] || '') : '';
-                            $(this).text(value);
+                        const $features = $card.find('[data-suggested-features]').empty();
+                        (Array.isArray(course.items) ? course.items : []).forEach(function (item) {
+                            $('<li>').text(item).appendTo($features);
                         });
+
+                        const $buy = $card.find('[data-suggested-buy]');
+                        if (course.owned) {
+                            $buy.replaceWith($('<a>', {
+                                href: course.learn_url,
+                                'class': 'edtika-classes-page__bundle-btn edtika-classes-page__bundle-btn--buy',
+                                text: 'Vào học'
+                            }));
+                        } else {
+                            $buy.attr('data-bundle-id', course.bundle_id).attr('data-title', course.name || '');
+                        }
+
+                        grid.appendChild(card);
                     });
                 }
 

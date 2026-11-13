@@ -4,6 +4,10 @@
 
 <div class="bg-white rounded-16 p-16 mt-32 mb-32">
 
+    {{-- GĐ2: Quà tặng, slider nội dung, cấu hình học tập, Mid-term/Final --}}
+    @include('design_1.panel.bundles.create.includes.course_extras')
+
+    @if(config('bundle_learning.show_faq'))
 
     <div class="d-flex align-items-center justify-content-between mt-32 p-12 rounded-16 border-gray-300 border-dashed">
         <div class="d-flex align-items-center">
@@ -47,6 +51,7 @@
 
         </div>
     </div>
+    @endif
 
 </div>
 

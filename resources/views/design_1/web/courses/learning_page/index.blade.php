@@ -63,4 +63,6 @@
     <script src="{{ getDesign1ScriptPath("video_player_helpers") }}"></script>
     <script src="{{ getDesign1ScriptPath("learning_page_noticeboards") }}"></script>
     <script src="{{ getDesign1ScriptPath("learning_page") }}"></script>
+
+    @include('design_1.web.courses.learning_page.includes.bundle_player_script')
 @endpush

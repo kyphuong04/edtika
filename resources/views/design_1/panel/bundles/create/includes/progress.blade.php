@@ -22,6 +22,7 @@
 
         5 => [
             'name' => 'faq',
+            'label' => trans('bundle_learning.step_intro_learning'),
             'icon' => 'bill'
         ],
 
@@ -42,7 +43,7 @@
             $isActiveStep = ($currentStep == $key);
         @endphp
 
-        <div class="js-get-next-step {{ $isActiveStep ? 'd-flex' : 'd-none d-lg-flex' }} align-items-center cursor-pointer {{ !($loop->last) ? 'mr-40' : '' }}" data-step="{{ $key }}" @if(!$isActiveStep) data-tippy-content="{{ trans('public.' . $progressStep['name']) }}" @endif>
+        <div class="js-get-next-step {{ $isActiveStep ? 'd-flex' : 'd-none d-lg-flex' }} align-items-center cursor-pointer {{ !($loop->last) ? 'mr-40' : '' }}" data-step="{{ $key }}" @if(!$isActiveStep) data-tippy-content="{{ $progressStep['label'] ?? trans('public.' . $progressStep['name']) }}" @endif>
             @if($isActiveStep)
                 <div class="d-flex-center size-48 rounded-circle" style="background-color: #511D99;">
                     @svg("iconsax-lin-{$progressStep['icon']}", ['height' => 24, 'width' => 24, 'class' => 'text-white'])
@@ -56,7 +57,7 @@
             @if($isActiveStep)
                 <div class="ml-8">
                     <p class="font-12 text-gray-500">{{ trans('webinars.progress_step', ['step' => $key,'count' => $stepCount]) }}</p>
-                    <h6 class="font-14 font-weight-bold mt-2">{{ trans('public.' . $progressStep['name']) }}</h6>
+                    <h6 class="font-14 font-weight-bold mt-2">{{ $progressStep['label'] ?? trans('public.' . $progressStep['name']) }}</h6>
                 </div>
             @endif
         </div>
