@@ -1,267 +1,166 @@
 @extends('design_1.panel.layouts.panel')
 
-{{-- GĐ3: "Khóa học của tôi" theo design mới --}}
+{{-- "Tổng quan khóa học" của học viên - dựng theo màn #overview trong bản demo của khách, dữ liệu thật --}}
 
 @push('styles_top')
-    @include('design_1.panel.bundles.learning.partials.styles')
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/design_1/css/edtika-storefront.css?v=gd5-4">
+    <link rel="stylesheet" href="/assets/design_1/css/edtika-learning.css?v=1">
 @endpush
 
 @section('content')
     @php
-        $counts = $progress['counts'];
-        $moduleCount = $progress['modules_total'];
-        $courseLessonUrl = '/panel/courses/purchases/' . $bundle->slug . '/lessons/';
+        $lockIcon = '<span class="v10-white-lock" aria-label="' . e(trans('bundle_learning.status_locked')) . '"><svg class="v9-svg" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="11" x="5" y="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg></span>';
     @endphp
 
-    <div class="bl-page">
-        <div class="bl-layout">
-            {{-- ===== Sidebar: đổi khóa học ===== --}}
-            <aside class="bl-sidebar">
-                <div class="bl-card">
-                    <div class="bl-eyebrow">{{ trans('bundle_learning.my_courses') }}</div>
-                    <ul class="bl-course-switch">
-                        @foreach($purchasedBundles as $purchasedBundle)
-                            <li>
-                                <a href="/panel/courses/purchases/{{ $purchasedBundle->slug }}" class="{{ $purchasedBundle->id === $bundle->id ? 'is-active' : '' }}">{{ $purchasedBundle->title }}</a>
-                            </li>
-                        @endforeach
-                        <li><a href="/panel/courses/purchases">{{ trans('bundle_learning.all_courses') }}</a></li>
-                    </ul>
-                </div>
+    <div class="edk edk-learning">
+        <section id="overview">
+            <div class="crumb">
+                <a href="/panel/courses/purchases">{{ trans('panel.my_courses') }}</a><span>›</span><b>{{ trans('bundle_learning.overview_crumb') }}</b>
+            </div>
 
-                <div class="bl-card mt-16">
-                    <div class="bl-eyebrow">{{ trans('bundle_learning.support') }}</div>
-                    <a href="/panel/support/new" class="bl-link">{{ trans('bundle_learning.ask_teacher') }} →</a>
-                </div>
-            </aside>
-
-            <main class="bl-main">
-                {{-- ===== Hero ===== --}}
-                <section class="bl-card bl-hero">
-                    <div class="bl-crumb">
-                        <a href="/panel/courses/purchases">{{ trans('bundle_learning.my_courses') }}</a>
-                        <span>›</span>
-                        <b>{{ $bundle->title }}</b>
+            {{-- ===== Hero + Thông tin ===== --}}
+            <div class="shell overview-hero">
+                <div class="overview-main">
+                    <div>
+                        <div class="overview-eyebrow">{{ trans('bundle_learning.overview_eyebrow') }}</div>
+                        <h1>{{ $bundle->title }}</h1>
+                        @if(!empty($bundle->summary))
+                            <p class="muted">{{ trim(strip_tags($bundle->summary)) }}</p>
+                        @endif
+                        <div class="meta-pills">
+                            <span class="tag">{{ strtoupper($bundle->exam_type ?: 'ielts') }}</span>
+                            <span class="tag outline">{{ $progress['modules_total'] }} module</span>
+                            <span class="tag outline">{{ $syllabus['lessons_total'] }} lessons</span>
+                            <span class="tag outline">{{ $syllabus['videos_total'] }} video</span>
+                        </div>
                     </div>
-                    <h1 class="bl-title">{{ $bundle->title }}</h1>
-                    @if(!empty($bundle->summary))
-                        <p class="bl-muted">{!! nl2br(e(strip_tags($bundle->summary))) !!}</p>
+
+                    <div class="overview-aside">
+                        <h3>{{ trans('bundle_learning.overview_info') }}</h3>
+                        <div class="quickstats">
+                            <span>{{ trans('bundle_learning.overview_current_module') }}<b>{{ $syllabus['current_module'] }}/{{ $progress['modules_total'] }}</b></span>
+                            <span>{{ trans('bundle_learning.overview_videos_watched') }}<b>{{ $syllabus['current_videos_done'] }}/{{ $syllabus['current_videos_total'] }}</b></span>
+                            <span>{{ trans('bundle_learning.overview_assessment') }}<b>{{ $syllabus['current_assignments_done'] }}/{{ $syllabus['current_assignments_total'] }}</b></span>
+                            <span>{{ trans('bundle_learning.overview_status') }}<b>{{ $syllabus['status_text'] }}</b></span>
+                        </div>
+                        <a href="{{ $syllabus['next_url'] ?: '#' }}" class="action primary {{ empty($syllabus['next_url']) ? 'is-disabled' : '' }}" style="margin-top:17px;width:100%">
+                            {{ $syllabus['started'] ? trans('bundle_learning.overview_continue') : trans('bundle_learning.overview_start') }} →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ===== Lộ trình bài học ===== --}}
+            <div class="shell syllabus">
+                <div class="syllabus-select">
+                    <div>
+                        <h2>{{ trans('bundle_learning.syllabus_title') }}</h2>
+                        <p class="section-sub">{{ trans('bundle_learning.syllabus_sub') }}</p>
+                    </div>
+                </div>
+
+                <div class="syllabus-lesson-list">
+                    @if(empty($syllabus['modules']))
+                        <p class="syllabus-empty">{{ trans('bundle_learning.syllabus_empty') }}</p>
+                    @else
+                        <div class="syllabus-modules">
+                            @foreach($syllabus['modules'] as $module)
+                                <details class="syllabus-module" {{ ($module['open'] and $module['unlocked']) ? 'open' : '' }} @if(!$module['unlocked']) data-locked="1" @endif>
+                                    <summary>
+                                        <span>Module {{ $module['number'] }} · {{ $module['title'] }}</span>
+                                        @if($module['unlocked'])
+                                            <span>⌄</span>
+                                        @else
+                                            {!! $lockIcon !!}
+                                        @endif
+                                    </summary>
+
+                                    <div class="module-lesson-list">
+                                        @forelse($module['lessons'] as $lessonIndex => $lesson)
+                                            <details class="syllabus-lesson" {{ ($module['open'] and $lessonIndex === $module['open_lesson']) ? 'open' : '' }}>
+                                                <summary>
+                                                    <span>Lesson {{ str_pad($lesson['number'], 2, '0', STR_PAD_LEFT) }} · {{ $lesson['title'] }} @if($lesson['completed'])<span class="done-mark">✓</span>@endif</span>
+                                                    <span class="syllabus-summary-right"><span class="syllabus-video-count">{{ $lesson['videos'] }} video</span>⌄</span>
+                                                </summary>
+
+                                                <div class="syllabus-items">
+                                                    @foreach($lesson['lines'] as $line)
+                                                        <div class="line">
+                                                            <span>{{ $line['label'] }}</span>
+                                                            @if($line['state'] === 'done')
+                                                                <span class="done-mark">✓</span>
+                                                            @elseif($line['state'] === 'lock')
+                                                                {!! $lockIcon !!}
+                                                            @elseif($line['state'] === 'dash')
+                                                                <span class="line-state">—</span>
+                                                            @elseif($line['state'] === 'text')
+                                                                <span class="line-state">{{ $line['text'] }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+
+                                                    <div class="line">
+                                                        <span>{{ trans('bundle_learning.syllabus_lesson_status') }}</span>
+                                                        @if($lesson['status']['state'] === 'done')
+                                                            <span class="done-mark">{{ $lesson['status']['text'] }}</span>
+                                                        @else
+                                                            <span class="line-state">{{ $lesson['status']['text'] }}</span>
+                                                        @endif
+                                                    </div>
+
+                                                    <a href="{{ $lesson['unlocked'] ? $lesson['url'] : '#' }}" class="action sm primary ed20-lesson-cta {{ $lesson['unlocked'] ? '' : 'is-disabled' }}">{{ trans('bundle_learning.syllabus_enter_lesson') }}</a>
+                                                </div>
+                                            </details>
+                                        @empty
+                                            <p class="syllabus-empty">{{ trans('bundle_learning.syllabus_module_empty') }}</p>
+                                        @endforelse
+                                    </div>
+                                </details>
+                            @endforeach
+                        </div>
                     @endif
 
-                    <div class="bl-progress-row">
-                        <div class="bl-bar"><i style="width: {{ $progress['progress'] }}%"></i></div>
-                        <span class="bl-progress-num">{{ round($progress['progress']) }}%</span>
-                    </div>
-                </section>
-
-                {{-- ===== 3 ô tiến độ ===== --}}
-                <section class="bl-stats">
-                    <div class="bl-card bl-stat">
-                        <span class="bl-stat__icon">▶</span>
-                        <div>
-                            <div class="bl-muted bl-small">{{ trans('bundle_learning.stat_videos') }}</div>
-                            <div class="bl-stat__value">{{ $counts['videos_done'] }}/{{ $counts['videos_total'] }} video</div>
-                        </div>
-                    </div>
-                    <div class="bl-card bl-stat">
-                        <span class="bl-stat__icon">✓</span>
-                        <div>
-                            <div class="bl-muted bl-small">{{ trans('bundle_learning.stat_quizzes') }}</div>
-                            <div class="bl-stat__value">{{ $counts['quizzes_done'] }}/{{ $counts['quizzes_total'] }} quiz</div>
-                        </div>
-                    </div>
-                    <div class="bl-card bl-stat">
-                        <span class="bl-stat__icon">↗</span>
-                        <div>
-                            <div class="bl-muted bl-small">{{ trans('bundle_learning.stat_progress') }}</div>
-                            <div class="bl-stat__value">{{ round($progress['progress']) }}%</div>
-                        </div>
-                    </div>
-                </section>
-
-                {{-- ===== Bộ lọc ===== --}}
-                <section class="bl-card bl-filters">
-                    <div class="bl-filter">
-                        <label for="blFilterSkill">{{ trans('bundle_learning.filter_skill') }}</label>
-                        <select id="blFilterSkill" class="form-control js-bl-filter">
-                            <option value="all">{{ trans('bundle_learning.all') }}</option>
-                            @foreach(\App\Models\Webinar::SKILLS as $skill)
-                                <option value="{{ $skill }}">{{ trans('bundle_learning.skill_' . $skill) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="bl-filter">
-                        <label for="blFilterDuration">{{ trans('bundle_learning.filter_duration') }}</label>
-                        <select id="blFilterDuration" class="form-control js-bl-filter">
-                            <option value="all">{{ trans('bundle_learning.all') }}</option>
-                            <option value="short">{{ trans('bundle_learning.duration_short', ['minutes' => round($shortVideoMaxSeconds / 60)]) }}</option>
-                            <option value="long">{{ trans('bundle_learning.duration_long', ['minutes' => round($shortVideoMaxSeconds / 60)]) }}</option>
-                        </select>
-                    </div>
-                    <div class="bl-filter">
-                        <label for="blFilterStatus">{{ trans('bundle_learning.filter_status') }}</label>
-                        <select id="blFilterStatus" class="form-control js-bl-filter">
-                            <option value="all">{{ trans('bundle_learning.all') }}</option>
-                            <option value="todo">{{ trans('bundle_learning.status_not_started') }}</option>
-                            <option value="doing">{{ trans('bundle_learning.status_in_progress') }}</option>
-                            <option value="done">{{ trans('bundle_learning.status_completed') }}</option>
-                            <option value="locked">{{ trans('bundle_learning.status_locked') }}</option>
-                        </select>
-                    </div>
-                </section>
-
-                {{-- ===== Lesson theo module ===== --}}
-                @forelse($progress['modules'] as $module)
-                    <section class="bl-module js-bl-module">
-                        <div class="bl-module__head">
-                            <div>
-                                <span class="bl-tag">{{ trans('bundle_learning.module') }} {{ $module['order_index'] + 1 }}/{{ $moduleCount }}</span>
-                                @if(!empty($module['skill']))
-                                    <span class="bl-tag bl-tag--outline">{{ trans('bundle_learning.skill_' . $module['skill']) }}</span>
-                                @endif
-                                <h2 class="bl-module__title">{{ $module['title'] }}</h2>
-                            </div>
-                            <div class="bl-module__meta">
-                                @if(!$module['unlocked'])
-                                    <span class="bl-lock">🔒 {{ trans('bundle_learning.status_locked') }}</span>
-                                @elseif($module['completed'] and $module['counts']['items_total'] > 0)
-                                    <span class="bl-done">✓ {{ trans('bundle_learning.status_completed') }}</span>
-                                @else
-                                    <span class="bl-muted bl-small">{{ round($module['progress']) }}%</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="bl-grid">
-                            @forelse($module['lessons'] as $lesson)
+                    {{-- ===== Mid-term / Final ===== --}}
+                    @if(!empty($progress['checkpoints']))
+                        <div class="edk-checkpoints">
+                            @foreach($progress['checkpoints'] as $checkpoint)
                                 @php
-                                    $lessonCounts = $lesson['counts'];
-                                    $avgVideoSeconds = $lessonCounts['videos_total'] > 0 ? (int)round($lessonCounts['video_seconds'] / $lessonCounts['videos_total']) : 0;
-                                    if (!$lesson['unlocked']) {
-                                        $lessonStatus = 'locked';
-                                    } elseif ($lesson['completed'] and $lessonCounts['items_total'] > 0) {
-                                        $lessonStatus = 'done';
-                                    } elseif ($lesson['started']) {
-                                        $lessonStatus = 'doing';
-                                    } else {
-                                        $lessonStatus = 'todo';
-                                    }
-                                    $durationGroup = $avgVideoSeconds <= 0 ? 'unknown' : ($avgVideoSeconds < $shortVideoMaxSeconds ? 'short' : 'long');
+                                    $checkpointQuiz = $checkpointQuizzes->get($checkpoint['quiz_id']);
                                 @endphp
-
-                                <article class="bl-card bl-lesson js-bl-lesson"
-                                         data-skill="{{ $module['skill'] ?? '' }}"
-                                         data-duration="{{ $durationGroup }}"
-                                         data-status="{{ $lessonStatus }}">
-                                    <div class="bl-lesson__cover bl-skill-{{ $module['skill'] ?? 'none' }}">
-                                        <span class="bl-lesson__mark">{{ strtoupper($bundle->exam_type ?: 'ielts') }}</span>
-                                        <span class="bl-lesson__num">{{ str_pad($lesson['order_index'] + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                                <div class="edk-checkpoint {{ $checkpoint['type'] === 'final' ? 'is-final' : '' }}">
+                                    <div>
+                                        <b>{{ $checkpoint['title'] ?: trans('bundle_learning.checkpoint_' . $checkpoint['type']) }}</b>
+                                        <small>{{ trans('bundle_learning.checkpoint_requirement', ['done' => $progress['modules_completed'], 'required' => $checkpoint['required_modules']]) }}</small>
                                     </div>
-
-                                    <div class="bl-lesson__body">
-                                        <h3 class="bl-lesson__title">{{ $lesson['title'] }}</h3>
-                                        <p class="bl-muted bl-small">{{ $module['title'] }}</p>
-
-                                        <div class="bl-metrics">
-                                            <div><span>◷</span>{{ trans('bundle_learning.duration') }}<b>{{ $avgVideoSeconds > 0 ? trans('bundle_learning.minutes_per_video', ['minutes' => max(1, round($avgVideoSeconds / 60))]) : '-' }}</b></div>
-                                            <div><span>▣</span>{{ trans('bundle_learning.lessons_videos') }}<b>{{ $lessonCounts['videos_total'] }} video</b></div>
-                                            <div><span>✓</span>Quiz<b>{{ $lessonCounts['quizzes_total'] }}</b></div>
-                                            <div><span>✎</span>{{ trans('bundle_learning.assignments') }}<b>{{ $lessonCounts['assignments_total'] }}</b></div>
-                                        </div>
-
-                                        <div class="bl-state-line">
-                                            <span>{{ trans('bundle_learning.status_' . ['locked' => 'locked', 'done' => 'completed', 'doing' => 'in_progress', 'todo' => 'not_started'][$lessonStatus]) }}</span>
-                                            <span>{{ round($lesson['progress']) }}%</span>
-                                        </div>
-                                        <div class="bl-bar"><i style="width: {{ $lesson['progress'] }}%"></i></div>
-
-                                        @if($lessonStatus === 'locked')
-                                            <button type="button" class="bl-btn" disabled>{{ trans('bundle_learning.locked_btn') }}</button>
-                                        @else
-                                            <a href="{{ $courseLessonUrl . $lesson['chapter_id'] }}" class="bl-btn bl-btn--primary">
-                                                {{ $lessonStatus === 'todo' ? trans('bundle_learning.start') : trans('bundle_learning.continue') }} →
-                                            </a>
-                                        @endif
-                                    </div>
-                                </article>
-                            @empty
-                                <p class="bl-muted bl-small">{{ trans('bundle_learning.no_lessons') }}</p>
-                            @endforelse
-                        </div>
-                    </section>
-                @empty
-                    <section class="bl-card"><p class="bl-muted mb-0">{{ trans('bundle_learning.no_modules') }}</p></section>
-                @endforelse
-
-                <p class="bl-card bl-muted d-none js-bl-empty">{{ trans('bundle_learning.no_filter_result') }}</p>
-
-                {{-- ===== Mid-term / Final ===== --}}
-                @if(!empty($progress['checkpoints']))
-                    <section class="bl-card bl-checkpoints">
-                        <h2 class="bl-module__title">{{ trans('bundle_learning.checkpoints') }}</h2>
-                        @foreach($progress['checkpoints'] as $checkpoint)
-                            @php
-                                $checkpointQuiz = $checkpointQuizzes->get($checkpoint['quiz_id']);
-                            @endphp
-                            <div class="bl-checkpoint">
-                                <div>
-                                    <b>{{ $checkpoint['title'] ?: trans('bundle_learning.checkpoint_' . $checkpoint['type']) }}</b>
-                                    <div class="bl-muted bl-small">{{ trans('bundle_learning.checkpoint_requirement', ['done' => $progress['modules_completed'], 'required' => $checkpoint['required_modules']]) }}</div>
+                                    @if($checkpoint['passed'])
+                                        <span class="done-mark">✓ {{ trans('bundle_learning.status_completed') }}</span>
+                                    @elseif($checkpoint['unlocked'] and !empty($checkpointQuiz) and !empty($checkpointQuiz->webinar))
+                                        <a href="/panel/courses/purchases/learning/{{ $checkpointQuiz->webinar->slug }}?type=quiz&item={{ $checkpointQuiz->id }}" class="action sm primary">{{ trans('bundle_learning.start') }} →</a>
+                                    @else
+                                        {!! $lockIcon !!}
+                                    @endif
                                 </div>
-                                @if($checkpoint['passed'])
-                                    <span class="bl-done">✓ {{ trans('bundle_learning.status_completed') }}</span>
-                                @elseif($checkpoint['unlocked'] and !empty($checkpointQuiz) and !empty($checkpointQuiz->webinar))
-                                    <a href="/panel/courses/purchases/learning/{{ $checkpointQuiz->webinar->slug }}?type=quiz&item={{ $checkpointQuiz->id }}" class="bl-btn bl-btn--primary">{{ trans('bundle_learning.start') }} →</a>
-                                @else
-                                    <span class="bl-lock">🔒 {{ trans('bundle_learning.status_locked') }}</span>
-                                @endif
-                            </div>
-                        @endforeach
-                    </section>
-                @endif
-            </main>
-        </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </section>
     </div>
 @endsection
 
 @push('scripts_bottom')
     <script>
-        (function () {
-            var filters = document.querySelectorAll('.js-bl-filter');
-
-            function applyFilters() {
-                var skill = document.getElementById('blFilterSkill').value;
-                var duration = document.getElementById('blFilterDuration').value;
-                var status = document.getElementById('blFilterStatus').value;
-                var visibleTotal = 0;
-
-                document.querySelectorAll('.js-bl-module').forEach(function (module) {
-                    var visibleInModule = 0;
-
-                    module.querySelectorAll('.js-bl-lesson').forEach(function (lesson) {
-                        var show = (skill === 'all' || lesson.dataset.skill === skill)
-                            && (duration === 'all' || lesson.dataset.duration === duration)
-                            && (status === 'all' || lesson.dataset.status === status);
-
-                        lesson.classList.toggle('d-none', !show);
-                        if (show) {
-                            visibleInModule++;
-                        }
-                    });
-
-                    module.classList.toggle('d-none', visibleInModule === 0);
-                    visibleTotal += visibleInModule;
-                });
-
-                var empty = document.querySelector('.js-bl-empty');
-                if (empty) {
-                    empty.classList.toggle('d-none', visibleTotal > 0);
+        // Module chưa mở khóa: không cho mở rộng, báo cho học viên
+        document.querySelectorAll('.edk-learning .syllabus-module[data-locked] > summary').forEach(function (summary) {
+            summary.addEventListener('click', function (event) {
+                event.preventDefault();
+                if (typeof window.showToast === 'function') {
+                    window.showToast('error', '', @json(trans('bundle_learning.syllabus_module_locked')));
                 }
-            }
-
-            filters.forEach(function (select) {
-                select.addEventListener('change', applyFilters);
             });
-        })();
+        });
     </script>
 @endpush
