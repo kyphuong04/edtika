@@ -758,6 +758,8 @@
                             <option value="mock" {{ old('type', $test->type ?? '') === 'mock' ? 'selected' : '' }}>Mock Test (All 4 Skills)</option>
                             <option value="practice" {{ old('type', $test->type ?? '') === 'practice' ? 'selected' : '' }}>Practice Test (1 Skill)</option>
                             <option value="diagnostic" {{ old('type', $test->type ?? '') === 'diagnostic' ? 'selected' : '' }}>Diagnostic Test (Bài test đầu vào)</option>
+                            {{-- GĐ6: đề chỉ dùng gắn vào lesson (Bài Tập / Post Lesson), không hiện ở trang Luyện đề --}}
+                            <option value="lesson" {{ old('type', $test->type ?? '') === 'lesson' ? 'selected' : '' }}>{{ trans('bundle_learning.lesson_test_type_option') }}</option>
                         </select>
                         @error('type')
                             <div class="text-danger font-size-sm mt-5">{{ $message }}</div>
@@ -818,6 +820,17 @@
                 </div>
 
                 
+
+                {{-- GĐ6: đề "Bài tập khóa học" - cho học viên xem đáp án ngay sau khi nộp (bật/tắt theo từng đề) --}}
+                @php $showAnswersValue = (bool) old('show_answers_immediately', isset($test) ? ($test->show_answers_immediately ?? true) : true); @endphp
+                <div class="form-group hidden" id="lessonShowAnswersField">
+                    <label class="input-label">{{ trans('bundle_learning.lesson_test_show_answers') }}</label>
+                    <input type="hidden" name="show_answers_immediately" value="0">
+                    <label class="d-flex align-items-center mt-8 font-14" style="gap:8px;cursor:pointer">
+                        <input type="checkbox" name="show_answers_immediately" value="1" {{ $showAnswersValue ? 'checked' : '' }}>
+                        <span>{{ trans('bundle_learning.lesson_test_show_answers_hint') }}</span>
+                    </label>
+                </div>
 
                 {{-- Phạm vi đề — CHỈ dành cho Practice Test, ẩn/hiện trong updatePracticeOnlyFields() --}}
                 @php $selectedScope = (string) old('practice_scope', $test->practice_scope ?? ''); @endphp
@@ -2220,6 +2233,25 @@ function updatePracticeOnlyFields() {
         }
     }
     updatePartNumberField(isPractice);
+    updateLessonOnlyFields(testType);
+}
+
+/**
+ * GĐ6 - Đề "Bài tập khóa học" (type = lesson): chỉ Listening và Reading, có tùy chọn xem đáp án ngay.
+ * Các section kỹ năng khác bị ẩn; nếu đã có nội dung thì server sẽ báo lỗi khi gửi.
+ */
+const LESSON_TEST_SKILLS = ['listening', 'reading'];
+function updateLessonOnlyFields(testType) {
+    const isLesson = testType === 'lesson';
+    const showAnswersField = document.getElementById('lessonShowAnswersField');
+    if (showAnswersField) {
+        showAnswersField.classList.toggle('hidden', !isLesson);
+    }
+
+    document.querySelectorAll('#sectionsContainer .section-container[data-skill]').forEach(function (section) {
+        const skill = section.getAttribute('data-skill');
+        section.classList.toggle('hidden', isLesson && LESSON_TEST_SKILLS.indexOf(skill) === -1);
+    });
 }
 
 function initHashtagField() {
@@ -2300,6 +2332,7 @@ function updateTestRequirements() {
         initializeSections();
     }
 
+    updateLessonOnlyFields(currentTestType);
     updateCompletenessStatus();
 }
 

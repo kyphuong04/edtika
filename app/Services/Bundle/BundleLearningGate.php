@@ -18,6 +18,8 @@ class BundleLearningGate
     const MODULE_LOCKED = 'module_locked';
     const LESSON_LOCKED = 'lesson_locked';
     const CHECKPOINT_LOCKED = 'checkpoint_locked';
+    // GĐ6: lesson có Pre Lesson chưa hoàn thành -> video và nội dung khác của lesson còn khóa
+    const PRE_LESSON_LOCKED = 'pre_lesson_locked';
 
     /** @var BundleProgressService */
     private $progressService;
@@ -117,6 +119,10 @@ class BundleLearningGate
 
         if (!empty($chapterId) and !$this->progressService->canAccessLesson($progress, $chapterId)) {
             return $this->block(self::LESSON_LOCKED, $bundle);
+        }
+
+        if (!empty($chapterId) and !$this->progressService->canAccessLessonContent($progress, $chapterId)) {
+            return $this->block(self::PRE_LESSON_LOCKED, $bundle) + ['chapter_id' => $chapterId];
         }
 
         return null;

@@ -102,6 +102,11 @@
 
                 <div id="collapsePricePlan{{ $chapter->id }}" class="accordion__collapse show" role="tabpanel">
 
+                    {{-- GĐ6: Pre Lesson / Bài Tập / Post Lesson - chỉ có trong trình soạn module của khóa học --}}
+                    @if(!empty($bundle) and isset($lessonActivityOptions))
+                        @include('design_1.panel.bundles.module_editor.lesson_activities', ['bundle' => $bundle, 'chapter' => $chapter])
+                    @endif
+
 
                     <div class="accordion-content-wrapper mt-20" id="chapterContentAccordion{{ $chapter->id }}" role="tablist" aria-multiselectable="true">
                         @if(!empty($chapter->chapterItems) and count($chapter->chapterItems))

@@ -74,6 +74,9 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::post('/getJoinInfo', 'MyPurchasedCoursesController@getJoinInfo');
             Route::get('/learning/{slug}', 'MyPurchasedCoursesController@showLearning');
             Route::get('/{slug}/lessons/{chapterId}', 'BundleLearningController@lesson')->where('chapterId', '[0-9]+');
+            // GĐ6: Pre Lesson (đánh dấu từ đã thuộc, xác nhận hoàn thành)
+            Route::post('/{slug}/lessons/{chapterId}/pre-lesson/word', 'BundleLearningController@preLessonWord')->where('chapterId', '[0-9]+');
+            Route::post('/{slug}/lessons/{chapterId}/pre-lesson/complete', 'BundleLearningController@preLessonComplete')->where('chapterId', '[0-9]+');
             Route::get('/{slug}', 'MyPurchasedCoursesController@showCourse');
         });
 
@@ -571,6 +574,14 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{id}/grading', 'BundleGradingController@index');
             Route::get('/{id}/grading/{historyId}', 'BundleGradingController@show')->where('historyId', '[0-9]+');
             Route::post('/{id}/grading/{historyId}', 'BundleGradingController@grade')->where('historyId', '[0-9]+');
+
+            // GĐ6: Pre Lesson / Bài Tập / Post Lesson của từng lesson (trình soạn module)
+            Route::group(['prefix' => '/{bundleId}/lessons/{chapterId}'], function () {
+                Route::post('/pre-lesson', 'BundleLessonActivityController@updatePreLesson');
+                Route::post('/tests', 'BundleLessonActivityController@addTest');
+                Route::post('/tests/{linkId}/delete', 'BundleLessonActivityController@removeTest');
+                Route::post('/tests/{linkId}/move', 'BundleLessonActivityController@moveTest');
+            });
         });
     });
 

@@ -104,6 +104,7 @@
                                 <option value="mock" {{ request('type') == 'mock' ? 'selected' : '' }}>{{ trans('update.mock_test') }}</option>
                                 <option value="practice" {{ request('type') == 'practice' ? 'selected' : '' }}>{{ trans('update.practice') }}</option>
                                 <option value="diagnostic" {{ request('type') == 'diagnostic' ? 'selected' : '' }}>{{ trans('update.diagnostic') }}</option>
+                                <option value="lesson" {{ request('type') == 'lesson' ? 'selected' : '' }}>{{ trans('bundle_learning.lesson_test_type') }}</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -191,6 +192,8 @@
                                                     <span class="badge text-black badge-soft-primary" style="min-width: 90px; display: inline-block;">{{ trans('update.mock_test') }}</span>
                                                 @elseif($test->type === 'practice')
                                                     <span class="badge text-black badge-soft-info" style="min-width: 90px; display: inline-block;">{{ trans('update.practice') }}</span>
+                                                @elseif($test->type === 'lesson')
+                                                    <span class="badge text-black badge-soft-success" style="min-width: 90px; display: inline-block;">{{ trans('bundle_learning.lesson_test_type') }}</span>
                                                 @else
                                                     <span class="badge text-black badge-soft-secondary" style="min-width: 90px; display: inline-block;">{{ trans('update.diagnostic') }}</span>
                                                 @endif

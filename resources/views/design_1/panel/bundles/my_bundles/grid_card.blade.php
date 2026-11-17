@@ -74,10 +74,12 @@
                     </li>
                 @endcan
 
-                {{-- GĐ4: chấm bài theo khóa học --}}
-                <li class="actions-dropdown__dropdown-menu-item">
-                    <a href="/panel/bundles/{{ $bundle->id }}/grading">{{ trans('bundle_learning.grading_title') }}</a>
-                </li>
+                {{-- GĐ4: chấm bài theo khóa học (GĐ6: ẩn khi Post Lesson chấm tự động) --}}
+                @if(config('bundle_learning.teacher_grading_enabled'))
+                    <li class="actions-dropdown__dropdown-menu-item">
+                        <a href="/panel/bundles/{{ $bundle->id }}/grading">{{ trans('bundle_learning.grading_title') }}</a>
+                    </li>
+                @endif
 
                 @can('panel_bundles_create')
                     <li class="actions-dropdown__dropdown-menu-item">

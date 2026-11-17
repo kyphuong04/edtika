@@ -30,8 +30,22 @@ return [
     // Video phát được bằng player (tải lên, YouTube, Vimeo) chỉ được đánh dấu "đã xem" tự động, không cho tự tick
     'auto_video_completion' => env('BUNDLE_AUTO_VIDEO_COMPLETION', true),
 
+    // Trang "Khóa học của tôi" (/panel/courses/purchases) theo design mới (false = danh sách cũ của theme)
+    'new_my_courses' => env('BUNDLE_NEW_MY_COURSES', true),
+
     // GĐ5 - Trang danh sách / chi tiết khóa học theo design mới (false = giao diện cũ)
     'new_storefront' => env('BUNDLE_NEW_STOREFRONT', true),
+
+    // GĐ6 - Lesson theo design: Pre Lesson / Bài Tập / Post Lesson
+    // Pre Lesson: phải đánh dấu đã thuộc tối thiểu tỉ lệ này (%) số từ của bộ từ thì mới mở video
+    'pre_lesson_pass_percent' => env('BUNDLE_PRE_LESSON_PASS_PERCENT', 80),
+
+    // Bài tập (assignment) kiểu cũ do giáo viên chấm: không còn bắt buộc để hoàn thành lesson
+    // (Post Lesson giờ là đề "Bài tập khóa học" chấm tự động). true = quay lại cách cũ.
+    'assignments_required' => env('BUNDLE_ASSIGNMENTS_REQUIRED', false),
+
+    // Trang "Chấm bài" (GĐ4) cho giáo viên: ẩn khi Post Lesson chấm tự động
+    'teacher_grading_enabled' => env('BUNDLE_TEACHER_GRADING_ENABLED', false),
 
     // Giới hạn số dòng để tránh form quá dài
     'max_gifts' => 10,

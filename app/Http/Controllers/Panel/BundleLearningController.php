@@ -76,7 +76,110 @@ class BundleLearningController extends Controller
     }
 
     /**
-     * Trang tổng quan một lesson (chapter) của bundle.
+     * Trang "Khóa học của tôi" theo màn #library của design: các khóa học (bundle) học viên đã mua
+     * kèm tiến độ, bên dưới là các khóa chưa mua (mờ, rê chuột để xem chi tiết / mua).
+     * Lọc Skill / Duration / Content Type và phân trang làm ở phía trình duyệt.
+     */
+    public function myCourses(Request $request)
+    {
+        $user = auth()->user();
+        $ownedIds = $user->getPurchasedBundlesIds();
+
+        $owned = empty($ownedIds) ? collect() : Bundle::query()
+            ->whereIn('id', $ownedIds)
+            ->where('status', Bundle::$active)
+            ->orderByDesc('id')
+            ->get();
+
+        $unowned = Bundle::query()
+            ->where('status', Bundle::$active)
+            ->whereNull('hidden_at')
+            ->whereNotIn('id', $owned->pluck('id')->all())
+            ->orderByDesc('id')
+            ->get();
+
+        $cards = collect();
+        foreach ($owned->concat($unowned)->values() as $position => $bundle) {
+            $cards->push($this->libraryCard($bundle, $owned->contains('id', $bundle->id) ? $user : null, $position));
+        }
+
+        // Khóa (module) mua lẻ không nằm trong khóa học nào đã mua - giữ lối vào học
+        $ownedWebinarIds = \Illuminate\Support\Facades\DB::table('bundle_webinars')->whereIn('bundle_id', $owned->pluck('id')->all())->pluck('webinar_id')->all();
+        $otherWebinars = Webinar::query()
+            ->whereIn('id', \App\Models\Sale::query()
+                ->where('buyer_id', $user->id)
+                ->where('type', 'webinar')
+                ->whereNull('refund_at')
+                ->whereNotNull('webinar_id')
+                ->pluck('webinar_id'))
+            ->whereNotIn('id', $ownedWebinarIds)
+            ->where('status', Webinar::$active)
+            ->get();
+
+        return view('design_1.panel.bundles.learning.my_courses', [
+            'pageTitle' => trans('panel.my_courses'),
+            'cards' => $cards,
+            'otherWebinars' => $otherWebinars,
+            'shortVideoMaxSeconds' => (int)config('bundle_learning.short_video_max_seconds', 900),
+            'breadcrumbs' => [
+                ['text' => trans('update.platform'), 'url' => '/'],
+                ['text' => trans('panel.dashboard'), 'url' => '/panel'],
+                ['text' => trans('panel.my_courses'), 'url' => null],
+            ],
+        ]);
+    }
+
+    private function libraryCard(Bundle $bundle, $user, int $position): array
+    {
+        $progress = $this->gate->progress($bundle, $user);
+        $webinarIds = collect($progress['modules'])->pluck('webinar_id')->all();
+
+        $skills = collect($progress['modules'])->pluck('skill')->filter()->unique()->values();
+        $lessons = collect($progress['modules'])->sum(function ($module) {
+            return count($module['lessons']);
+        });
+
+        $miniQuizzes = empty($webinarIds) ? 0 : Quiz::query()
+            ->whereIn('webinar_id', $webinarIds)
+            ->whereNotNull('file_id')
+            ->where('status', 'active')
+            ->count();
+
+        $counts = $progress['counts'];
+        $avgVideoSeconds = $counts['videos_total'] > 0 ? (int)round($counts['video_seconds'] / $counts['videos_total']) : 0;
+
+        // Ảnh minh họa theo design: theo kỹ năng, còn lại xoay vòng
+        $skill = $skills->count() === 1 ? $skills->first() : null;
+        $covers = ['diamond', 'bars', 'target', 'book'];
+        $cover = $skill === 'writing' ? 'pencil' : ($skill === 'speaking' ? 'speech' : $covers[$position % count($covers)]);
+
+        return [
+            'id' => $bundle->id,
+            'slug' => $bundle->slug,
+            'title' => $bundle->title,
+            'summary' => trim(strip_tags((string)$bundle->summary)),
+            'exam' => strtoupper($bundle->exam_type ?: 'ielts'),
+            'skill' => $skill,
+            'skill_label' => $skill ? trans('bundle_learning.skill_' . $skill) : ($skills->count() > 1 ? trans('bundle_learning.skills_count', ['count' => $skills->count()]) : null),
+            'skills' => $skills->all(),
+            'modules' => $progress['modules_total'],
+            'lessons' => $lessons,
+            'videos' => $counts['videos_total'],
+            'mini_quizzes' => $miniQuizzes,
+            'avg_video_seconds' => $avgVideoSeconds,
+            'owned' => !empty($user),
+            'progress' => (int)round($progress['progress']),
+            'started' => $counts['items_done'] > 0,
+            'completed' => $progress['completed'],
+            'cover' => '/assets/design_1/img/bundles/covers/' . $cover . '.webp',
+        ];
+    }
+
+    /**
+     * GĐ6 - Trang học một lesson theo design: khung nội dung (Pre Lesson / Video / Bài Tập / Post Lesson)
+     * + cột "Nội dung bài học" (module → lesson → Pre Lesson / Video Learning / Post Lesson).
+     *
+     * ?view=pre | video (&item=file_id) | exercise | post (&test=link_id)
      */
     public function lesson(Request $request, $slug, $chapterId)
     {
@@ -99,8 +202,10 @@ class BundleLearningController extends Controller
         }
 
         $courseUrl = '/panel/courses/purchases/' . $bundle->slug;
+        $lessonUrl = $courseUrl . '/lessons/' . $lesson['chapter_id'];
+        $canBypass = $this->canBypassLocks($bundle, $user);
 
-        if (!$lesson['unlocked'] and !$this->canBypassLocks($bundle, $user)) {
+        if (!$lesson['unlocked'] and !$canBypass) {
             return redirect($courseUrl)->with(['toast' => [
                 'title' => trans('public.request_failed'),
                 'msg' => trans('bundle_learning.lesson_locked_msg'),
@@ -110,8 +215,9 @@ class BundleLearningController extends Controller
 
         $webinar = Webinar::query()->findOrFail($module['webinar_id']);
         $chapter = WebinarChapter::query()->findOrFail($lesson['chapter_id']);
+        $contentUnlocked = ($lesson['content_unlocked'] or $canBypass);
 
-        // Danh sách item của lesson theo thứ tự soạn
+        // Item của lesson theo thứ tự soạn
         $doneMap = [];
         foreach ($lesson['items'] as $item) {
             $doneMap[$item['type'] . '_' . $item['id']] = $item['done'];
@@ -141,29 +247,92 @@ class BundleLearningController extends Controller
 
                 return [
                     'type' => $chapterItem->type,
-                    'id' => $chapterItem->item_id,
+                    'id' => (int)$chapterItem->item_id,
                     'title' => $model->title,
                     'done' => $doneMap[$key],
                     'is_video' => ($chapterItem->type === 'file' and $model->isVideo()),
                     'is_mini_quiz' => ($chapterItem->type === 'quiz' and !empty($model->file_id)),
+                    'file_id' => ($chapterItem->type === 'quiz' and !empty($model->file_id)) ? (int)$model->file_id : null,
+                    'show_at_second' => ($chapterItem->type === 'quiz') ? $model->show_at_second : null,
+                    'model' => $model,
                 ];
             })
             ->filter()
             ->values();
 
-        // Pre Lesson: Word List đã duyệt gắn với lesson này
-        $wordSets = BundleVocabularySet::query()
-            ->where('bundle_id', $bundle->id)
-            ->where('chapter_id', $chapter->id)
-            ->where('status', BundleVocabularySet::STATUS_APPROVED)
-            ->get();
+        $videos = $chapterItems->where('is_video', true)->values();
+        $otherItems = $chapterItems->filter(function ($item) {
+            return !$item['is_video'] and !$item['is_mini_quiz'] and $item['type'] !== 'assignment';
+        })->values();
+        $miniQuizzes = $chapterItems->where('is_mini_quiz', true)->values();
 
-        $words = $wordSets->isEmpty() ? collect() : BundleVocabularyWord::query()
-            ->whereIn('vocabulary_set_id', $wordSets->pluck('id'))
-            ->orderBy('vocabulary_set_id')
-            ->orderBy('sort_order')
-            ->limit(200)
-            ->get();
+        // Chế độ xem hiện tại
+        $view = in_array($request->get('view'), ['pre', 'video', 'exercise', 'post'], true) ? $request->get('view') : null;
+        $pre = $lesson['pre'];
+
+        if (!$contentUnlocked and in_array($view, [null, 'video', 'exercise', 'post'], true)) {
+            $view = 'pre';
+        }
+
+        if (is_null($view)) {
+            if (!empty($pre) and !$pre['done']) {
+                $view = 'pre';
+            } elseif ($videos->isNotEmpty()) {
+                $view = 'video';
+            } elseif (!empty($lesson['post'])) {
+                $view = 'post';
+            } else {
+                $view = 'video';
+            }
+        }
+
+        if ($view === 'pre' and empty($pre)) {
+            $view = 'video';
+        }
+
+        // Video đang xem: ?item=, không có thì video đầu tiên chưa xong
+        $currentVideo = null;
+        if ($view === 'video' and $videos->isNotEmpty()) {
+            $currentVideo = $videos->firstWhere('id', (int)$request->get('item'))
+                ?? $videos->firstWhere('done', false)
+                ?? $videos->first();
+        }
+
+        // Bài Tập / Post Lesson đang chọn
+        $currentTest = null;
+        if (in_array($view, ['exercise', 'post'], true)) {
+            $tests = collect($lesson[$view]);
+            $currentTest = $tests->firstWhere('link_id', (int)$request->get('test'))
+                ?? $tests->firstWhere('done', false)
+                ?? $tests->first();
+        }
+
+        // Pre Lesson: từ của bộ từ + flashcard của học viên (tạo khi mở Pre Lesson)
+        $preWords = collect();
+        $knownWordIds = [];
+        $flashcardMap = [];
+        if (!empty($pre) and $view === 'pre') {
+            $preSet = BundleVocabularySet::query()->find($pre['set_id']);
+            if (!empty($preSet)) {
+                $flashcardMap = $this->activityService()->syncPreLessonFlashcards($user, $bundle, $chapter, $preSet);
+                $preWords = $preSet->words()->get();
+                $knownWordIds = $this->activityService()->knownWordIds($user->id, $preWords->pluck('id')->all());
+            }
+        }
+
+        // Ghi chú cá nhân của video đang xem (tab Ghi chú)
+        $personalNote = null;
+        if (!empty($currentVideo)) {
+            $personalNote = \App\Models\CoursePersonalNote::query()
+                ->where('user_id', $user->id)
+                ->where('course_id', $webinar->id)
+                ->where('targetable_id', $currentVideo['id'])
+                ->where('targetable_type', 'file')
+                ->first();
+        }
+
+        $checkpointQuizIds = collect($progress['checkpoints'])->pluck('quiz_id')->filter()->all();
+        $checkpointQuizzes = Quiz::query()->whereIn('id', $checkpointQuizIds)->with('webinar')->get()->keyBy('id');
 
         return view('design_1.panel.bundles.learning.lesson', [
             'pageTitle' => $chapter->title,
@@ -174,8 +343,21 @@ class BundleLearningController extends Controller
             'webinar' => $webinar,
             'chapter' => $chapter,
             'chapterItems' => $chapterItems,
-            'words' => $words,
+            'videos' => $videos,
+            'otherItems' => $otherItems,
+            'miniQuizzes' => $miniQuizzes,
+            'view' => $view,
+            'contentUnlocked' => $contentUnlocked,
+            'currentVideo' => $currentVideo,
+            'currentTest' => $currentTest,
+            'pre' => $pre,
+            'preWords' => $preWords,
+            'knownWordIds' => $knownWordIds,
+            'flashcardMap' => $flashcardMap,
+            'personalNote' => $personalNote,
+            'checkpointQuizzes' => $checkpointQuizzes,
             'courseUrl' => $courseUrl,
+            'lessonUrl' => $lessonUrl,
             'learningUrl' => '/panel/courses/purchases/learning/' . $webinar->slug,
             'breadcrumbs' => [
                 ['text' => trans('update.platform'), 'url' => '/'],
@@ -184,6 +366,105 @@ class BundleLearningController extends Controller
                 ['text' => $chapter->title, 'url' => null],
             ],
         ]);
+    }
+
+    /**
+     * GĐ6 - Pre Lesson: đánh dấu / bỏ đánh dấu một từ đã thuộc (đồng bộ với Từ điển & Flashcard).
+     */
+    public function preLessonWord(Request $request, $slug, $chapterId)
+    {
+        [$bundle, $lesson, $user] = $this->resolvePreLesson($slug, (int)$chapterId);
+
+        $wordId = (int)$request->input('word_id');
+        $known = filter_var($request->input('known'), FILTER_VALIDATE_BOOLEAN);
+
+        $setWordIds = BundleVocabularyWord::query()->where('vocabulary_set_id', $lesson['pre']['set_id'])->pluck('id')->map(function ($id) {
+            return (int)$id;
+        })->all();
+
+        if (!in_array($wordId, $setWordIds, true)) {
+            return response()->json(['code' => 422], 422);
+        }
+
+        $flashcard = \App\Models\Flashcard::query()
+            ->where('user_id', $user->id)
+            ->where('source', \App\Models\Flashcard::SOURCE_BUNDLE)
+            ->where('bundle_vocabulary_word_id', $wordId)
+            ->first();
+
+        if (empty($flashcard)) {
+            return response()->json(['code' => 422], 422);
+        }
+
+        $wordListId = \App\Models\BundlePreLessonProgress::query()
+            ->where('user_id', $user->id)
+            ->where('chapter_id', $lesson['chapter_id'])
+            ->value('word_list_id');
+
+        $this->activityService()->setWordKnown($user, (int)$flashcard->id, $known, !empty($wordListId) ? (int)$wordListId : null);
+
+        $knownCount = count($this->activityService()->knownWordIds($user->id, $setWordIds));
+
+        return response()->json([
+            'code' => 200,
+            'known' => $knownCount,
+            'total' => count($setWordIds),
+            'required' => $lesson['pre']['required'],
+        ]);
+    }
+
+    /**
+     * GĐ6 - Pre Lesson: xác nhận đã thuộc đủ từ -> mở Video Learning của lesson.
+     */
+    public function preLessonComplete(Request $request, $slug, $chapterId)
+    {
+        [$bundle, $lesson, $user] = $this->resolvePreLesson($slug, (int)$chapterId);
+
+        $setWordIds = BundleVocabularyWord::query()->where('vocabulary_set_id', $lesson['pre']['set_id'])->pluck('id')->all();
+        $knownCount = count($this->activityService()->knownWordIds($user->id, $setWordIds));
+
+        if ($knownCount < $lesson['pre']['required']) {
+            return response()->json([
+                'code' => 422,
+                'message' => trans('bundle_learning.pre_lesson_need_more', ['count' => $lesson['pre']['required']]),
+            ], 422);
+        }
+
+        $this->activityService()->completePreLesson($user, (int)$lesson['chapter_id']);
+
+        return response()->json([
+            'code' => 200,
+            'redirect' => '/panel/courses/purchases/' . $bundle->slug . '/lessons/' . $lesson['chapter_id'] . '?view=video',
+        ]);
+    }
+
+    /**
+     * @return array [Bundle, array lesson, User]
+     */
+    private function resolvePreLesson(string $slug, int $chapterId): array
+    {
+        $user = auth()->user();
+
+        $bundle = Bundle::query()
+            ->where('slug', $slug)
+            ->where('status', Bundle::$active)
+            ->firstOrFail();
+
+        $this->abortIfNoAccess($bundle, $user);
+
+        $progress = $this->gate->progress($bundle, $user);
+        [$module, $lesson] = $this->findLesson($progress, $chapterId);
+
+        if (empty($lesson) or empty($lesson['pre']) or (!$lesson['unlocked'] and !$this->canBypassLocks($bundle, $user))) {
+            abort(404);
+        }
+
+        return [$bundle, $lesson, $user];
+    }
+
+    private function activityService(): \App\Services\Bundle\LessonActivityService
+    {
+        return app(\App\Services\Bundle\LessonActivityService::class);
     }
 
     /**
@@ -340,27 +621,7 @@ class BundleLearningController extends Controller
             })
             ->all();
 
-        // Pre Lesson: số từ trong Word List (đã duyệt) gắn với từng lesson
-        $wordCounts = [];
-        if (!empty($chapterIds)) {
-            $sets = BundleVocabularySet::query()
-                ->where('bundle_id', $bundle->id)
-                ->whereIn('chapter_id', $chapterIds)
-                ->where('status', BundleVocabularySet::STATUS_APPROVED)
-                ->get(['id', 'chapter_id']);
-
-            if ($sets->isNotEmpty()) {
-                $wordsBySet = BundleVocabularyWord::query()
-                    ->whereIn('vocabulary_set_id', $sets->pluck('id'))
-                    ->selectRaw('vocabulary_set_id, count(*) as total')
-                    ->groupBy('vocabulary_set_id')
-                    ->pluck('total', 'vocabulary_set_id');
-
-                foreach ($sets as $set) {
-                    $wordCounts[$set->chapter_id] = ($wordCounts[$set->chapter_id] ?? 0) + (int)($wordsBySet[$set->id] ?? 0);
-                }
-            }
-        }
+        $assignmentsRequired = (bool)config('bundle_learning.assignments_required', false);
 
         // Module hiện tại: module đầu tiên đã mở mà chưa hoàn thành
         $currentIndex = null;
@@ -398,12 +659,15 @@ class BundleLearningController extends Controller
                 }
 
                 $lines = [];
-                if (!empty($wordCounts[$lesson['chapter_id']])) {
-                    $lines[] = [
-                        'label' => trans('bundle_learning.syllabus_pre_lesson', ['count' => $wordCounts[$lesson['chapter_id']]]),
-                        'state' => $locked ? 'lock' : 'none',
-                    ];
+                // GĐ6: Pre Lesson (bộ từ gắn với lesson) - xong khi đã thuộc đủ từ và xác nhận
+                if (!empty($lesson['pre'])) {
+                    $lines[] = $lesson['pre']['done']
+                        ? ['label' => trans('bundle_learning.syllabus_pre_lesson', ['count' => $lesson['pre']['total']]), 'state' => 'done']
+                        : ($locked
+                            ? ['label' => trans('bundle_learning.syllabus_pre_lesson', ['count' => $lesson['pre']['total']]), 'state' => 'lock']
+                            : ['label' => trans('bundle_learning.syllabus_pre_lesson', ['count' => $lesson['pre']['total']]), 'state' => 'text', 'text' => $lesson['pre']['known'] . '/' . $lesson['pre']['required']]);
                 }
+                $contentLocked = $locked || !$lesson['content_unlocked'];
 
                 $videoNumber = 0;
                 $miniNumber = 0;
@@ -435,7 +699,7 @@ class BundleLearningController extends Controller
                             $done = $done && $miniQuiz['done'];
                         }
 
-                        $lines[] = ['label' => $label, 'state' => $done ? 'done' : ($locked ? 'lock' : 'dash')];
+                        $lines[] = ['label' => $label, 'state' => $done ? 'done' : ($contentLocked ? 'lock' : 'dash')];
                         continue;
                     }
 
@@ -446,10 +710,30 @@ class BundleLearningController extends Controller
                         'quiz' => 'Quiz',
                     ][$item['type']] ?? '';
 
-                    $lines[] = ['label' => trim($prefix . ' · ' . $title, ' ·'), 'state' => $item['done'] ? 'done' : ($locked ? 'lock' : 'dash')];
+                    $lines[] = ['label' => trim($prefix . ' · ' . $title, ' ·'), 'state' => $item['done'] ? 'done' : ($contentLocked ? 'lock' : 'dash')];
                 }
 
-                if ($assignments['total'] > 0) {
+                // GĐ6: Bài Tập giáo viên giao (luyện thêm) và Post Lesson (đề chấm tự động)
+                if (!empty($lesson['exercise'])) {
+                    $exerciseDone = count(array_filter($lesson['exercise'], function ($test) {
+                        return $test['done'];
+                    }));
+                    $lines[] = [
+                        'label' => trans('bundle_learning.syllabus_exercise', ['count' => count($lesson['exercise'])]),
+                        'state' => 'text',
+                        'text' => $exerciseDone . '/' . count($lesson['exercise']),
+                    ];
+                }
+
+                if (!empty($lesson['post'])) {
+                    $lines[] = [
+                        'label' => trans('bundle_learning.syllabus_post_lesson', ['count' => count($lesson['post'])]),
+                        'state' => 'text',
+                        'text' => $lesson['counts']['posts_done'] . '/' . $lesson['counts']['posts_total'],
+                    ];
+                }
+
+                if ($assignments['total'] > 0 && $assignmentsRequired) {
                     $lines[] = [
                         'label' => trans('bundle_learning.syllabus_post_lesson', ['count' => $assignments['total']]),
                         'state' => 'text',
@@ -459,7 +743,7 @@ class BundleLearningController extends Controller
 
                 if ($lesson['completed']) {
                     $status = ['state' => 'done', 'text' => trans('bundle_learning.syllabus_status_passed')];
-                } elseif ($assignments['pending'] > 0) {
+                } elseif ($assignmentsRequired && $assignments['pending'] > 0) {
                     $status = ['state' => 'text', 'text' => trans('bundle_learning.syllabus_status_waiting')];
                 } else {
                     $status = ['state' => 'text', 'text' => trans('bundle_learning.syllabus_status_incomplete')];
@@ -519,8 +803,9 @@ class BundleLearningController extends Controller
             'current_module' => is_null($current) ? 0 : $currentIndex + 1,
             'current_videos_done' => $current['counts']['videos_done'] ?? 0,
             'current_videos_total' => $current['counts']['videos_total'] ?? 0,
-            'current_assignments_done' => $current['counts']['assignments_done'] ?? 0,
-            'current_assignments_total' => $current['counts']['assignments_total'] ?? 0,
+            // GĐ6: "Assessment" = các bài Post Lesson đã làm trong module hiện tại
+            'current_assignments_done' => $current['counts']['posts_done'] ?? 0,
+            'current_assignments_total' => $current['counts']['posts_total'] ?? 0,
             'status_text' => $statusText,
             'started' => $counts['items_done'] > 0,
             'next_url' => $nextLessonUrl,

@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\DB;
  * Item gồm: file/video, session, text lesson (xong khi có dòng course_learning),
  * assignment (xong khi được chấm passed), quiz (xong khi kết quả passed).
  *
+ * GĐ6: mỗi lesson còn có Pre Lesson (bộ từ, tính như 1 item bắt buộc và khóa video tới khi xong),
+ * Bài Tập (luyện thêm, không tính) và Post Lesson (đề chấm tự động, chỉ thống kê, không ràng buộc).
+ * Assignment kiểu cũ không còn bắt buộc trừ khi bật config('bundle_learning.assignments_required').
+ *
  * Toàn bộ dữ liệu được lấy bằng một số query cố định (khoảng 10 query)
  * bất kể khóa có bao nhiêu module/lesson, thay cho các vòng lặp N+1 của Webinar::getProgress().
  *
@@ -48,6 +52,14 @@ class BundleProgressService
         $done = $this->loadDoneItems($userId, $items);
         $lessons = $this->loadLessons($webinarIds);
 
+        $chapterPreSets = [];
+        foreach ($lessons as $moduleLessons) {
+            foreach ($moduleLessons as $chapter) {
+                $chapterPreSets[$chapter->id] = $chapter->pre_vocabulary_set_id;
+            }
+        }
+        $activities = app(LessonActivityService::class)->forChapters($chapterPreSets, $userId);
+
         $sequentialModules = (bool)$bundle->sequential_modules;
         $sequentialLessons = is_null($bundle->sequential_lessons) ? true : (bool)$bundle->sequential_lessons;
 
@@ -61,7 +73,6 @@ class BundleProgressService
             $moduleCounts = $this->countItems($moduleItems, $done);
 
             $moduleUnlocked = (!$sequentialModules || $moduleIndex === 0 || $previousModuleCompleted);
-            $moduleCompleted = $this->isCompleted($moduleCounts);
 
             // Lesson trong module, theo thứ tự chapter
             $resultLessons = [];
@@ -72,6 +83,14 @@ class BundleProgressService
                     return $item['chapter_id'] == $chapter->id;
                 }));
                 $lessonCounts = $this->countItems($lessonItems, $done);
+
+                $activity = $activities[$chapter->id] ?? ['pre' => null, 'exercise' => [], 'post' => []];
+                $extra = $this->activityCounts($activity);
+                foreach ($extra as $key => $value) {
+                    $lessonCounts[$key] += $value;
+                    $moduleCounts[$key] += $value;
+                }
+
                 $lessonCompleted = $this->isCompleted($lessonCounts);
 
                 $lessonUnlocked = ($moduleUnlocked && (!$sequentialLessons || $lessonIndex === 0 || $previousLessonCompleted));
@@ -88,10 +107,17 @@ class BundleProgressService
                     'items' => array_map(function ($item) use ($done) {
                         return $item + ['done' => !empty($done[$item['type']][$item['id']])];
                     }, $lessonItems),
+                    'pre' => $activity['pre'],
+                    // Pre Lesson chưa xong thì video và nội dung khác của lesson còn khóa
+                    'content_unlocked' => $lessonUnlocked && (empty($activity['pre']) || $activity['pre']['done']),
+                    'exercise' => $activity['exercise'],
+                    'post' => $activity['post'],
                 ];
 
                 $previousLessonCompleted = $lessonCompleted;
             }
+
+            $moduleCompleted = $this->isCompleted($moduleCounts);
 
             $resultModules[] = [
                 'webinar_id' => $webinar->id,
@@ -195,6 +221,22 @@ class BundleProgressService
         }
 
         return false;
+    }
+
+    /**
+     * GĐ6 - Video / nội dung của lesson đã mở chưa (lesson mở + Pre Lesson đã xong nếu có).
+     */
+    public function canAccessLessonContent(array $progress, int $chapterId): bool
+    {
+        foreach ($progress['modules'] as $module) {
+            foreach ($module['lessons'] as $lesson) {
+                if ((int)$lesson['chapter_id'] === $chapterId) {
+                    return $lesson['content_unlocked'];
+                }
+            }
+        }
+
+        return true;
     }
 
     /* ---------------- Load dữ liệu ---------------- */
@@ -405,18 +447,48 @@ class BundleProgressService
             'quizzes_done' => 0,
             'assignments_total' => 0,
             'assignments_done' => 0,
+            'pre_total' => 0,
+            'pre_done' => 0,
+            'posts_total' => 0,
+            'posts_done' => 0,
         ];
+    }
+
+    /**
+     * Pre Lesson tính như 1 item bắt buộc; Post Lesson chỉ thống kê (không ràng buộc hoàn thành).
+     */
+    private function activityCounts(array $activity): array
+    {
+        $counts = array_fill_keys(array_keys($this->emptyCounts()), 0);
+
+        if (!empty($activity['pre'])) {
+            $counts['pre_total'] = 1;
+            $counts['pre_done'] = $activity['pre']['done'] ? 1 : 0;
+            $counts['items_total'] = 1;
+            $counts['items_done'] = $counts['pre_done'];
+        }
+
+        foreach ($activity['post'] as $post) {
+            $counts['posts_total']++;
+            $counts['posts_done'] += $post['done'] ? 1 : 0;
+        }
+
+        return $counts;
     }
 
     private function countItems(array $items, array $done): array
     {
         $counts = $this->emptyCounts();
 
+        $assignmentsRequired = (bool)config('bundle_learning.assignments_required', false);
+
         foreach ($items as $item) {
             $isDone = !empty($done[$item['type']][$item['id']]);
 
-            $counts['items_total']++;
-            $counts['items_done'] += $isDone ? 1 : 0;
+            if ($item['type'] !== 'assignment' || $assignmentsRequired) {
+                $counts['items_total']++;
+                $counts['items_done'] += $isDone ? 1 : 0;
+            }
 
             if ($item['is_video']) {
                 $counts['videos_total']++;

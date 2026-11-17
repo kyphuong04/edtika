@@ -187,6 +187,21 @@
     @include('design_1.web.bundles.storefront.add_to_cart_script')
 
     <script>
+        // Từ "Khóa học của tôi" bấm "Mua khóa học" (?buy=1): mở ngay panel mua nhanh
+        (function () {
+            if (!/[?&]buy=1\b/.test(window.location.search)) {
+                return;
+            }
+            window.addEventListener('load', function () {
+                var buyButton = document.querySelector('.js-sf-buy');
+                if (buyButton) {
+                    buyButton.click();
+                }
+            });
+        })();
+    </script>
+
+    <script>
         (function () {
             var viewport = document.querySelector('.js-edk-slides');
             if (!viewport) {

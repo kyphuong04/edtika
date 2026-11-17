@@ -502,7 +502,9 @@ class IeltsTestInlineController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:mock,practice,diagnostic',
+            'type' => 'required|in:mock,practice,diagnostic,lesson',
+            // GĐ6: đề Bài tập khóa học - cho xem đáp án ngay sau khi nộp
+            'show_answers_immediately' => 'nullable|boolean',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
             'practice_scope' => 'nullable|in:' . implode(',', IeltsTest::PRACTICE_SCOPES),
@@ -572,6 +574,20 @@ class IeltsTestInlineController extends Controller
 
         // Validate structure
         $testType = $validated['type'];
+
+        // GĐ6: đề "Bài tập khóa học" chỉ gồm Listening và Reading (chấm tự động, hiện kết quả ngay)
+        if ($testType === 'lesson') {
+            foreach ($groupsData['sections'] as $lessonSkill => $lessonSection) {
+                $lessonParts = $lessonSection['parts'] ?? $lessonSection['groups'] ?? [];
+                if (!empty($lessonParts) && !in_array($lessonSkill, ['listening', 'reading'], true)) {
+                    return back()->withInput()->with(['toast' => [
+                        'title' => 'Error',
+                        'msg' => trans('bundle_learning.lesson_test_only_lr'),
+                        'status' => 'error',
+                    ]]);
+                }
+            }
+        }
         $validationErrors = [];
         $totalParts = 0;
         $totalGroups = 0;
@@ -627,7 +643,7 @@ class IeltsTestInlineController extends Controller
             ]]);
         }
 
-        if (!$saveAsDraft && $testType === 'practice' && $totalParts === 0) {
+        if (!$saveAsDraft && in_array($testType, ['practice', 'lesson'], true) && $totalParts === 0) {
             return back()->with(['toast' => [
                 'title' => 'Error',
                 'msg' => 'Practice Test requires at least 1 part',
@@ -682,6 +698,7 @@ class IeltsTestInlineController extends Controller
                     'review_resources' => IeltsTest::normalizeReviewResources($validated['review_resources'] ?? null),
                     'is_active' => true,
                     'is_free' => true,
+                    'show_answers_immediately' => $testType === 'lesson' ? $request->boolean('show_answers_immediately') : true,
                     'created_by' => $user->id,
                     'status' => $saveAsDraft ? 'draft' : 'pending_approval',
                     'submitted_for_approval_at' => $saveAsDraft ? null : time(),
@@ -833,7 +850,9 @@ class IeltsTestInlineController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:mock,practice,diagnostic',
+            'type' => 'required|in:mock,practice,diagnostic,lesson',
+            // GĐ6: đề Bài tập khóa học - cho xem đáp án ngay sau khi nộp
+            'show_answers_immediately' => 'nullable|boolean',
             'format' => 'required|in:academic,general,both',
             'difficulty_level' => 'nullable|in:beginner,intermediate,advanced,mixed',
             'practice_scope' => 'nullable|in:' . implode(',', IeltsTest::PRACTICE_SCOPES),
@@ -904,6 +923,20 @@ class IeltsTestInlineController extends Controller
         $test = $this->findOwnedInlineTestOrFail($id);
         $testType = $validated['type'];
 
+        // GĐ6: đề "Bài tập khóa học" chỉ gồm Listening và Reading (chấm tự động, hiện kết quả ngay)
+        if ($testType === 'lesson') {
+            foreach ($groupsData['sections'] as $lessonSkill => $lessonSection) {
+                $lessonParts = $lessonSection['parts'] ?? $lessonSection['groups'] ?? [];
+                if (!empty($lessonParts) && !in_array($lessonSkill, ['listening', 'reading'], true)) {
+                    return back()->withInput()->with(['toast' => [
+                        'title' => 'Error',
+                        'msg' => trans('bundle_learning.lesson_test_only_lr'),
+                        'status' => 'error',
+                    ]]);
+                }
+            }
+        }
+
         if (!$saveAsDraft) {
             $sectionRequirements = [
                 'listening' => ['mock' => 4, 'practice' => 0],
@@ -947,7 +980,7 @@ class IeltsTestInlineController extends Controller
                 ]]);
             }
 
-            if ($testType === 'practice' && $totalParts === 0) {
+            if (in_array($testType, ['practice', 'lesson'], true) && $totalParts === 0) {
                 return back()->with(['toast' => [
                     'title' => 'Error',
                     'msg' => 'Practice Test requires at least 1 part',
@@ -993,6 +1026,7 @@ class IeltsTestInlineController extends Controller
                     'review_resources' => IeltsTest::normalizeReviewResources($validated['review_resources'] ?? null),
                     'is_active' => true,
                     'is_free' => true,
+                    'show_answers_immediately' => $testType === 'lesson' ? $request->boolean('show_answers_immediately') : ($test->show_answers_immediately ?? true),
                     'status' => $saveAsDraft ? 'draft' : 'pending_approval',
                     'submitted_for_approval_at' => $saveAsDraft ? null : time(),
                     'approved_by' => null,

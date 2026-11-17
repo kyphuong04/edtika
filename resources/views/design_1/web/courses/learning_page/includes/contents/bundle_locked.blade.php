@@ -7,7 +7,10 @@
     <h3 class="font-16 font-weight-bold mt-16">{{ trans('bundle_learning.locked_title') }}</h3>
     <p class="font-14 text-gray-500 mt-8">{{ trans('bundle_learning.' . $reason . '_msg') }}</p>
 
-    @if(!empty($bundle))
+    @if(!empty($bundle) and !empty($chapterId))
+        {{-- GĐ6: Pre Lesson chưa xong -> về trang lesson để làm Pre Lesson --}}
+        <a href="/panel/courses/purchases/{{ $bundle->slug }}/lessons/{{ $chapterId }}?view=pre" class="btn btn-primary mt-24">{{ trans('bundle_learning.go_to_pre_lesson') }}</a>
+    @elseif(!empty($bundle))
         <a href="/panel/courses/purchases/{{ $bundle->slug }}" class="btn btn-primary mt-24">{{ trans('bundle_learning.back_to_course') }}</a>
     @endif
 </div>

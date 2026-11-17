@@ -111,6 +111,7 @@ trait LearningPageItemInfoTrait
         $html = (string)view()->make('design_1.web.courses.learning_page.includes.contents.bundle_locked', [
             'reason' => $block['reason'],
             'bundle' => $block['bundle'],
+            'chapterId' => $block['chapter_id'] ?? null,
         ]);
 
         return response()->json([

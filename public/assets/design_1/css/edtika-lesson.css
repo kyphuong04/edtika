@@ -1,0 +1,186 @@
+/* Trang học một lesson (/panel/courses/purchases/{slug}/lessons/{id}) - CSS trích từ màn #player trong bản demo của khách,
+   thêm tiền tố .edk. Dùng kèm edtika-storefront.css + edtika-learning.css. View: panel/bundles/learning/lesson.blade.php */
+.edk .tiny { font-size: 11px; }
+.edk .flex.between { justify-content: space-between; }
+.edk .player-layout { display: grid; grid-template-columns: minmax(0px, 1fr) 306px; gap: 18px; align-items: start; margin-bottom: 42px; }
+.edk .player-stack { display: grid; gap: 16px; min-width: 0px; }
+.edk .player-shell { padding: 18px; }
+.edk .player-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 14px; }
+.edk .player-head h1 { font-size: 23px; line-height: 1.24; font-weight: 660; margin: 4px 0px; }
+.edk .player-screen { background: rgb(36, 27, 50); color: rgb(255, 255, 255); aspect-ratio: 16 / 9; border-radius: 15px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.edk .screen-center { text-align: center; padding: 20px; }
+.edk .screen-center h2 { font-weight: 630; font-size: 25px; margin: 13px 0px 4px; }
+.edk .screen-center p { font-size: 12px; color: rgb(221, 211, 231); }
+.edk .big-play { height: 65px; width: 65px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); color: rgb(255, 255, 255); border: 1px solid rgba(255, 255, 255, 0.55); font-size: 24px; }
+.edk .video-controls { position: absolute; bottom: 0px; left: 0px; right: 0px; background: rgba(21, 14, 31, 0.93); display: flex; align-items: center; gap: 9px; padding: 12px; }
+.edk .video-controls button { background: transparent; color: rgb(255, 255, 255); border: 0px; font-size: 12px; white-space: nowrap; }
+.edk .video-controls input[type="range"] { flex: 1 1 0%; min-width: 18px; accent-color: rgb(226, 202, 250); }
+.edk .video-controls select { color: rgb(255, 255, 255); background: rgb(83, 55, 103); border: 1px solid rgb(113, 87, 131); border-radius: 8px; padding: 4px; }
+.edk .video-controls time { font-size: 11px; white-space: nowrap; }
+.edk .player-switch { border: 1px solid rgb(238, 229, 242); border-radius: 15px; padding: 18px; min-height: 310px; max-height: 530px; overflow: auto; background: rgb(255, 255, 255); color: var(--ink); }
+.edk .player-switch h3 { font-weight: 670; font-size: 19px; margin: 5px 0px 10px; }
+.edk .quiz-options { display: grid; gap: 8px; margin: 14px 0px; }
+.edk .quiz-option { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 11px; border: 1px solid rgb(238, 232, 244); cursor: pointer; background: rgb(255, 255, 255); font-size: 13px; }
+.edk .quiz-option:has(input:checked) { background: var(--l); border-color: rgb(207, 188, 225); }
+.edk .quiz-option input { accent-color: var(--p); margin-top: 3px; }
+.edk .section-tabs { border-bottom: 1px solid rgb(238, 232, 244); display: flex; overflow-x: auto; gap: 0px; }
+.edk .section-tabs button { border: 0px; background: rgb(255, 255, 255); padding: 14px 12px; color: var(--sub); font-size: 12px; font-weight: 580; white-space: nowrap; position: relative; }
+.edk .section-tabs button.active { color: var(--p); border-bottom: 2px solid var(--p); }
+.edk .tab-body { padding: 19px; min-height: 220px; }
+.edk .toolbox { display: flex; gap: 5px; flex-wrap: wrap; padding-bottom: 11px; }
+.edk .toolbox button { border: 1px solid rgb(229, 219, 238); color: var(--p); background: rgb(255, 255, 255); border-radius: 8px; min-width: 30px; height: 30px; }
+.edk .notes-editor { border: 1px solid rgb(230, 222, 238); border-radius: 12px; min-height: 170px; padding: 12px; outline-color: var(--p); color: rgb(17, 17, 17); background: rgb(255, 255, 255); }
+.edk .field { margin-bottom: 12px; }
+.edk .field label { display: block; font-weight: 610; margin: 0px 0px 6px; font-size: 12px; }
+.edk .field input, .edk .field textarea { border: 1px solid rgb(227, 217, 235); padding: 10px 12px; border-radius: 11px; width: 100%; outline-color: var(--p); color: rgb(17, 17, 17); }
+.edk .sidebar { padding: 17px; max-height: 920px; overflow: auto; }
+.edk .sidebar h3 { font-size: 18px; font-weight: 670; }
+.edk .module-heading { border: 0px; background: rgb(249, 247, 252); color: var(--p); border-radius: 10px; width: 100%; padding: 11px 10px; display: flex; align-items: center; justify-content: space-between; text-align: left; margin-bottom: 6px; font-size: 12px; font-weight: 650; }
+.edk .module-heading.active { background: var(--l); }
+.edk .q-summary { display: grid; gap: 9px; margin: 10px 0px; }
+.edk .q-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border: 1px solid rgb(238, 231, 244); border-radius: 11px; font-size: 12px; }
+.edk .q-line.locked { opacity: 0.58; }
+.edk .q-line .q-text { display: grid; gap: 3px; }
+.edk .q-line .q-text b { font-weight: 640; }
+.edk .assignment-progress { display: flex; gap: 8px; margin: 13px 0px; }
+.edk .assignment-progress span { height: 7px; border-radius: 99px; background: rgb(239, 233, 246); flex: 1 1 0%; }
+@media (max-width: 1050px) { .edk .player-layout { grid-template-columns: minmax(0px, 1fr) 260px; } }
+@media (max-width: 760px) { .edk .player-screen { aspect-ratio: 4 / 3; } }
+@media (max-width: 760px) { .edk .video-controls { gap: 3px; padding: 8px; } }
+@media (max-width: 760px) { .edk .video-controls button { font-size: 10px; } }
+@media (max-width: 760px) { .edk .video-controls select { width: 57px; font-size: 10px; } }
+@media (max-width: 430px) { .edk .player-head { flex-direction: column; } }
+@media (max-width: 430px) { .edk .video-controls time { display: none; } }
+.edk #player .module-heading { font-weight: 630; }
+.edk #player .module-heading { display: flex; align-items: center; gap: 10px; min-height: 48px; background: rgb(90, 43, 129); color: rgb(255, 255, 255); border-radius: 13px; padding: 12px 14px; margin: 10px 0px 8px; font-weight: 670; font-size: 12px; line-height: 1.32; }
+.edk #player .module-heading.active { background: rgb(90, 43, 129); color: rgb(255, 255, 255); }
+.edk #player .course-stepper { position: relative; margin-left: 13px; padding: 4px 0px 12px 16px; border-left: 2px solid rgb(229, 217, 242); }
+.edk #player .step-lesson { position: relative; border: 1px solid rgb(232, 223, 240); border-radius: 13px; padding: 0px; margin: 8px 0px 12px 1px; background: rgb(255, 255, 255); }
+.edk #player .step-lesson::before { content: ""; position: absolute; left: -25px; top: 17px; width: 13px; height: 13px; border: 4px solid rgb(235, 229, 252); background: var(--p); border-radius: 50%; box-shadow: rgb(255, 255, 255) 0px 0px 0px 3px; }
+.edk #player .step-lesson-header { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; padding: 12px; border: 0px; background: rgb(255, 255, 255); color: var(--p); font-weight: 670; text-align: left; border-radius: 12px; }
+.edk #player .step-lesson-body { padding: 5px 12px 14px; border-top: 1px solid rgb(237, 230, 244); }
+.edk #player .step-group { position: relative; padding: 7px 0px 6px 7px; border-left: 2px solid rgb(228, 216, 242); margin: 6px 0px 6px 7px; }
+.edk #player .step-group-title { color: var(--p); font-weight: 720; font-size: 12px; margin: 0px 0px 5px; display: flex; align-items: center; gap: 8px; }
+.edk #player .step-group-title .step-symbol { width: 26px; height: 26px; border-radius: 50%; background: rgb(235, 229, 252); color: var(--p); display: grid; place-items: center; font-size: 14px; flex-shrink: 0; margin-left: -21px; }
+.edk #player .step-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 36px; padding: 7px 1px 7px 12px; margin-left: 9px; border-width: 0px 0px 1px; border-style: none none solid; border-color: currentcolor currentcolor rgb(240, 235, 246); border-image: none; background: transparent; width: calc(100% - 9px); text-align: left; color: rgb(94, 83, 106); font-size: 11.5px; }
+.edk #player .step-item.current { color: var(--p); font-weight: 700; background: rgb(250, 248, 253); }
+.edk #player .step-item:disabled { opacity: 0.5; cursor: not-allowed; }
+.edk #player .step-item .done-mark { flex-shrink: 0; }
+.edk #player .player-switch .assignment-progress, .edk #player .sidebar-post-stages { display: none !important; }
+.edk #player .q-summary .q-line { background: rgb(255, 255, 255); }
+.edk #player .player-layout { grid-template-columns: minmax(0px, 1fr) minmax(365px, 390px); gap: 20px; }
+.edk #player .sidebar { padding: 18px 17px; max-height: min(90vh, 1060px); overflow: hidden auto; }
+.edk #player .sidebar h3 { font-size: 20px; line-height: 1.3; font-weight: 700; margin: 0px 0px 13px !important; }
+.edk #player .module-heading, .edk #player .module-heading.active { min-height: 56px; padding: 12px 13px; gap: 11px; line-height: 1.35; font-size: 13px; display: flex; align-items: center; background: rgb(90, 43, 129); color: white; border-radius: 14px; }
+.edk #player .course-stepper { margin-left: 18px; padding: 7px 0px 12px 22px; border-left: 2px solid rgb(223, 210, 239); }
+.edk #player .step-lesson { margin: 9px 0px 12px; border-radius: 15px; }
+.edk #player .step-lesson::before { width: 16px; height: 16px; left: -31px; top: 17px; border: 4px solid rgb(235, 229, 252); background: rgb(90, 43, 129); box-shadow: rgb(255, 255, 255) 0px 0px 0px 3px; z-index: 2; }
+.edk #player .step-lesson-header { padding: 13px 12px; gap: 12px; line-height: 1.4; font-size: 12.7px; align-items: center; }
+.edk #player .step-lesson-header .v9-head-title { min-width: 0px; flex: 1 1 0%; word-break: normal; overflow-wrap: anywhere; }
+.edk #player .step-lesson-header .v9-head-status { flex-shrink: 0; display: flex; align-items: center; justify-content: center; min-width: 26px; }
+.edk #player .step-lesson-body { padding: 8px 11px 13px 14px; }
+.edk #player .step-group { margin: 10px 0px 12px 17px; padding: 4px 0px 6px 20px; border-left: 2px solid rgb(223, 210, 239); }
+.edk #player .step-group-title { display: flex; align-items: center; gap: 9px; min-height: 34px; font-size: 13px; font-weight: 700; margin: 0px 0px 6px; line-height: 1.35; }
+.edk #player .step-group-title .step-symbol { flex: 0 0 32px; width: 32px; height: 32px; min-width: 32px; display: grid; place-items: center; margin: 0px 0px 0px -37px; border-radius: 50%; background: rgb(235, 229, 252); color: rgb(90, 43, 129); box-shadow: rgb(255, 255, 255) 0px 0px 0px 4px; }
+.edk #player .step-item { width: 100%; margin: 0px; min-height: 43px; padding: 9px 7px 9px 3px; gap: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 12.3px; line-height: 1.35; border-bottom: 1px solid rgb(240, 235, 246); }
+.edk #player .step-item .v9-item-text { min-width: 0px; flex: 1 1 0%; display: flex; align-items: center; gap: 9px; overflow-wrap: anywhere; }
+.edk #player .step-item .v9-item-text .v9-svg { flex-shrink: 0; }
+.edk #player .step-item .v9-item-state { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.edk #player .step-item:disabled { opacity: 0.55; }
+.edk #player .step-item.current { border-radius: 7px; background: rgb(250, 247, 253); }
+.edk #player .v9-svg { display: inline-block; vertical-align: middle; width: 18px; height: 18px; stroke: currentcolor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.edk #player .step-group .step-symbol .v9-svg { width: 17px; height: 17px; }
+.edk #player .player-switch textarea, .edk #player .player-switch input:not([type="radio"]):not([type="checkbox"]):not([type="range"]), .edk #player .tab-body textarea, .edk #player .tab-body input:not([type="radio"]):not([type="checkbox"]):not([type="range"]), .edk #player .field input, .edk #player .field textarea, .edk #player .match-drop { background: rgb(255, 255, 255) !important; color: rgb(23, 19, 33) !important; border: 1px solid rgb(231, 223, 239) !important; }
+.edk #player input::placeholder, .edk #player textarea::placeholder { color: rgb(138, 130, 149) !important; opacity: 1; }
+.edk #player .player-switch .field, .edk #player .match-board { background: rgb(255, 255, 255); color: rgb(23, 19, 33); }
+@media (max-width: 1150px) and (min-width: 901px) { .edk #player .player-layout { grid-template-columns: minmax(0px, 1fr) 355px; gap: 16px; } }
+@media (max-width: 900px) { .edk #player .player-layout { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .edk #player .sidebar { max-height: none; } }
+.edk #player .stepper-module { position: relative; padding-left: 0px; margin: 0px 0px 4px; }
+.edk #player .stepper-module::before { content: ""; position: absolute; top: 24px; bottom: -15px; left: 24px; width: 2px; background: rgb(226, 216, 238); z-index: 0; }
+.edk #player .module-heading, .edk #player .module-heading.active { display: flex; align-items: center; position: relative; margin: 9px 0px 12px 57px; width: calc(100% - 57px); min-height: 59px; padding: 13px 14px; border-radius: 14px; background: rgb(90, 43, 129); color: rgb(255, 255, 255); gap: 11px; }
+.edk #player .course-stepper { margin: 0px 0px 12px 24px; padding: 0px 0px 2px 33px; border-left: 0px !important; }
+.edk #player .step-lesson { margin: 9px 0px 12px; border-radius: 15px; position: relative; }
+.edk #player .step-lesson::before { display: none !important; }
+.edk #player .v10-lesson-icon { position: absolute; top: 11px; left: -51px; width: 34px; height: 34px; background: rgb(235, 229, 252); border-radius: 50%; display: grid; place-items: center; color: rgb(90, 43, 129); box-shadow: rgb(255, 255, 255) 0px 0px 0px 5px; z-index: 3; }
+.edk #player .v10-lesson-icon .v9-svg { width: 18px; height: 18px; }
+.edk #player .step-lesson-body { position: relative; }
+.edk #player .step-lesson-body::before { content: ""; position: absolute; left: 44px; top: 23px; bottom: 45px; width: 2px; background: rgb(226, 216, 238); z-index: 0; }
+.edk #player .step-group { position: relative; z-index: 1; border-left: 0px !important; }
+.edk #player .step-group-title .step-symbol { position: relative; z-index: 2; }
+.edk #player .v10-lock-line { display: inline-flex; align-items: center; justify-content: center; color: rgb(90, 43, 129); flex: 0 0 auto; }
+.edk #player .v10-lock-line .v9-svg { width: 18px; height: 18px; stroke: rgb(90, 43, 129); }
+.edk #player .v10-lock-line .v9-svg { stroke-width: 2.2; stroke: rgb(90, 43, 129); }
+.edk #player .step-lesson-body { --v11-group-axis: 30px; }
+.edk #player .step-lesson-body::before { width: 2px; transform: translateX(-1px); left: var(--v11-group-axis) !important; }
+.edk #player .step-group-title .step-symbol { justify-content: center; align-items: center; flex-shrink: 0; }
+.edk #player .step-group-title .step-symbol .v9-svg { display: block; margin: auto; }
+.edk #player .stepper-module::before { left: 23px; }
+.edk #player .v15-checkpoint { position: relative; margin: 0px 0px 4px; min-height: 72px; padding: 8px 0px; }
+.edk #player .v15-checkpoint::before { content: ""; position: absolute; top: -10px; bottom: -14px; left: 23px; width: 2px; background: rgb(226, 216, 238); z-index: 0; }
+.edk #player .v15-checkpoint.v15-final::before { bottom: 32px; }
+.edk #player .v15-checkpoint-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: calc(100% - 57px); min-height: 56px; margin-left: 57px; padding: 12px 14px; background: rgb(255, 255, 255); border: 1px solid rgb(220, 204, 236); border-radius: 14px; text-align: left; font-size: 13px; font-weight: 670; color: rgb(90, 43, 129); line-height: 1.35; }
+.edk #player .v15-checkpoint-btn:not(:disabled):hover { background: rgb(249, 246, 252); border-color: rgb(158, 119, 191); }
+.edk #player .v15-checkpoint-btn:disabled { cursor: not-allowed; opacity: 1; color: rgb(134, 122, 145); background: rgb(250, 249, 252); }
+.edk #player .v15-checkpoint-btn .v15-checkpoint-title { min-width: 0px; flex: 1 1 0%; }
+.edk #player .v15-checkpoint-btn .v15-checkpoint-status { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.edk #player .v15-checkpoint-btn .v9-svg { width: 18px; height: 18px; stroke: rgb(90, 43, 129); }
+.edk #player .section-tabs button { white-space: nowrap; }
+.edk #player .stepper-module > .module-heading { margin-left: 0px !important; width: 100% !important; }
+.edk .ed19-progress { height: 7px; background: rgb(235, 229, 252); border-radius: 10px; overflow: hidden; margin: 12px 0px; }
+.edk .ed19-progress span { height: 100%; background: rgb(0, 138, 90); display: block; transition: width 0.2s; }
+.edk .ed19-vocab-grid { display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); gap: 8px; margin: 12px 0px; }
+.edk .ed19-vocab-grid button { border: 1px solid rgb(223, 208, 237); background: white; border-radius: 10px; padding: 12px 8px; color: rgb(90, 43, 129); text-align: left; font-weight: 600; }
+.edk .ed19-vocab-grid button.done { border-color: rgb(142, 224, 188); background: rgb(235, 254, 247); color: rgb(0, 138, 90); }
+.edk .ed19-inline-note { font-size: 12px; color: rgb(116, 103, 130); line-height: 1.55; }
+.edk #player .v15-checkpoint::after { content: ""; position: absolute; left: 9px; top: calc(50% - 15px); width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgb(216, 197, 235); background-color: rgb(255, 255, 255); background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%235A2B81%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%223%22%20width%3D%2214%22%20height%3D%2218%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M9%208h6M9%2012h6M9%2016h3%22%2F%3E%3Cpath%20d%3D%22m14%2016%201.5%201.5L18%2015%22%2F%3E%3C%2Fsvg%3E"); background-size: 17px 17px; background-position: center center; background-repeat: no-repeat; z-index: 1; pointer-events: none; box-shadow: rgb(255, 255, 255) 0px 0px 0px 3px; }
+.edk #player .v15-checkpoint.v15-final::after { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%235A2B81%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%202.7%2014.8%208l5.9.9-4.2%204.1%201%205.8L12%2016l-5.5%202.8%201-5.8-4.2-4.1L9.2%208z%22%2F%3E%3Cpath%20d%3D%22M9.5%2021h5%22%2F%3E%3C%2Fsvg%3E"); }
+.edk #player .ed20-tabs-hidden { display: none !important; }
+.edk #player .ed20-optional-player .player-switch { min-height: 395px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgb(195, 176, 216) transparent; overscroll-behavior: contain; max-height: min(64vh, 610px) !important; }
+.edk #player .ed20-optional-player .player-switch::-webkit-scrollbar { width: 5px; }
+.edk #player .ed20-optional-player .player-switch::-webkit-scrollbar-thumb { background: rgb(195, 176, 216); border-radius: 20px; }
+.edk #player .ed20-exercise-question { padding: 14px 13px; border: 1px solid rgb(236, 229, 244); border-radius: 12px; background: rgb(255, 255, 255); margin: 11px 0px; }
+.edk #player .ed20-exercise-question strong { display: block; color: rgb(57, 38, 77); font-size: 12.5px; margin-bottom: 9px; }
+.edk #player .ed20-exercise-question .quiz-options { margin: 0px; gap: 6px; }
+.edk #player .ed20-exercise-question .quiz-option { padding: 8px 10px; font-size: 12px; }
+.edk #player .ed20-exercise-toolbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 8px 0px 2px; }
+.edk #player .sidebar { scrollbar-width: thin; scrollbar-color: rgb(195, 176, 216) transparent; }
+.edk #player .sidebar::-webkit-scrollbar { width: 5px; }
+.edk #player .sidebar::-webkit-scrollbar-track { background: transparent; }
+.edk #player .sidebar::-webkit-scrollbar-thumb { background: rgb(195, 176, 216); border-radius: 12px; }
+/* ---- Bổ sung cho EDTIKA ---- */
+.edk #player { display: block; }
+.edk #player a.step-item, .edk #player a.step-lesson-header, .edk #player a.v15-checkpoint-btn { text-decoration: none; color: inherit; }
+.edk #player a.step-item.is-disabled, .edk #player .step-lesson-header.is-disabled { opacity: .55; cursor: not-allowed; pointer-events: none; }
+.edk #player .v15-checkpoint-btn.is-disabled { cursor: not-allowed; color: #867a91; background: #faf9fc; pointer-events: none; }
+.edk #player .course-stepper[hidden] { display: none !important; }
+.edk #player .player-head h1 { font-family: inherit; }
+
+/* Video thật: Plyr / thẻ video trong khung 16:9 */
+.edk .edk-video-frame { position: relative; aspect-ratio: 16 / 9; border-radius: 15px; overflow: hidden; background: #241b32; }
+.edk .edk-video-frame video, .edk .edk-video-frame iframe, .edk .edk-video-frame .plyr { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.edk .edk-video-frame .plyr { --plyr-color-main: #5A2B81; border-radius: 15px; }
+.edk .edk-video-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 48px 24px; color: #fff; height: 100%; }
+.edk .edk-video-empty p { color: rgba(255, 255, 255, .8); margin: 0; font-size: 14px; }
+.edk .edk-video-done { display: inline-flex; gap: 6px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--success); font-weight: 600; }
+
+/* Pre Lesson */
+.edk .ed19-vocab-grid button { cursor: pointer; display: flex; flex-direction: column; gap: 3px; }
+.edk .ed19-vocab-grid button small { font-weight: 500; color: var(--sub); font-size: 12px; }
+.edk .ed19-vocab-grid button.done small { color: #2d8a63; }
+.edk .ed19-vocab-grid button.is-busy { opacity: .6; }
+
+/* Bài Tập / Post Lesson */
+.edk .edk-test-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.edk .edk-test-result { border: 1px solid #d8efe3; background: #f2fbf6; border-radius: 12px; padding: 12px 14px; margin: 12px 0; color: #1f6b47; font-size: 14px; }
+.edk .edk-test-result b { font-size: 18px; color: #12603a; }
+.edk .edk-test-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.edk .edk-test-actions form { margin: 0; }
+.edk .assignment-progress span.done { background: var(--p); }
+.edk .edk-empty-frame { padding: 34px 20px; text-align: center; color: var(--sub); }
+
+/* Tab Giới thiệu / Ghi chú / Quizzes */
+.edk #player .tab-pane[hidden] { display: none; }
+.edk #player .edk-resource-list { display: grid; gap: 8px; margin-top: 12px; }
+.edk #player .notes-editor textarea { width: 100%; min-height: 140px; }
+.edk #player .q-line a.action { text-decoration: none; }

@@ -21,6 +21,11 @@ class MyPurchasedCoursesController extends Controller
     {
         $this->authorize("panel_webinars_my_purchases");
 
+        // Trang "Khóa học của tôi" theo design mới (danh sách khóa học + tiến độ)
+        if (config('bundle_learning.new_my_courses', true) and !$request->ajax()) {
+            return app(BundleLearningController::class)->myCourses($request);
+        }
+
         $user = auth()->user();
 
         $query = $this->getQuery($user);

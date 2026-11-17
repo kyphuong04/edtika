@@ -240,6 +240,9 @@
         </div>
 
     </form>
+
+    {{-- GĐ6: Pre Lesson / Bài Tập / Post Lesson cho từng lesson --}}
+    @include('design_1.panel.bundles.module_editor.lesson_activities_script')
 @endsection
 
 @push('scripts_bottom')

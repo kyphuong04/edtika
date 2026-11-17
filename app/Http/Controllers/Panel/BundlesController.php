@@ -1015,6 +1015,8 @@ class BundlesController extends Controller
             'pageTitle'    => $webinar->title,
             'bundle'       => $bundle,
             'webinar'      => $webinar,
+            // GĐ6: bộ từ + đề "Bài tập khóa học" của teacher để gắn Pre Lesson / Bài Tập / Post Lesson cho lesson
+            'lessonActivityOptions' => \App\Http\Controllers\Panel\BundleLessonActivityController::editorOptions($user),
             'currentStep'  => 4,
             'stepCount'    => $stepCount,
             'locale'       => app()->getLocale(),

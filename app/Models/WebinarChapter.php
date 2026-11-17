@@ -70,6 +70,22 @@ class WebinarChapter extends Model implements TranslatableContract
         return $this->hasMany('App\Models\Quiz', 'chapter_id', 'id');
     }
 
+    /**
+     * GĐ6 - Bộ từ dùng làm Pre Lesson của lesson này.
+     */
+    public function preVocabularySet()
+    {
+        return $this->belongsTo(BundleVocabularySet::class, 'pre_vocabulary_set_id', 'id');
+    }
+
+    /**
+     * GĐ6 - Đề Bài Tập / Post Lesson gắn vào lesson.
+     */
+    public function lessonTests()
+    {
+        return $this->hasMany(BundleLessonTest::class, 'chapter_id', 'id')->orderBy('sort_order')->orderBy('id');
+    }
+
     public function chapterItems()
     {
         return $this->hasMany('App\Models\WebinarChapterItem', 'chapter_id', 'id');

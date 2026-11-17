@@ -58,7 +58,7 @@ class IeltsTestManageController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'type' => ['required', 'in:mock,practice'],
+            'type' => ['required', 'in:mock,practice,lesson'],
             'format' => ['required', 'in:computer,paper,both'],
             'total_duration' => ['required', 'integer', 'min:1'],
             'target_band_min' => ['nullable', 'numeric'],

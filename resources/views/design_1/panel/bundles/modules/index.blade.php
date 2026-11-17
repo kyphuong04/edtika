@@ -485,9 +485,12 @@
                                 ->count();
                         @endphp
                         <div class="d-flex align-items-center" style="gap: 8px;">
-                            <a href="/panel/bundles/{{ $bundle->id }}/grading" class="bd-btn-primary" style="background: #fff; color: #511D99; border: 1px solid #511D99;">
-                                {{ trans('bundle_learning.grading_title') }}@if($pendingGradingCount > 0) ({{ $pendingGradingCount }})@endif
-                            </a>
+                            {{-- GĐ6: Post Lesson chấm tự động, ẩn trang chấm bài trừ khi bật lại trong config --}}
+                            @if(config('bundle_learning.teacher_grading_enabled'))
+                                <a href="/panel/bundles/{{ $bundle->id }}/grading" class="bd-btn-primary" style="background: #fff; color: #511D99; border: 1px solid #511D99;">
+                                    {{ trans('bundle_learning.grading_title') }}@if($pendingGradingCount > 0) ({{ $pendingGradingCount }})@endif
+                                </a>
+                            @endif
                             <a href="/panel/bundles/{{ $bundle->id }}/module/create" class="bd-btn-primary">Tạo</a>
                         </div>
                     @endif

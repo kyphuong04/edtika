@@ -25,6 +25,8 @@ class BundleGradingController extends Controller
      */
     public function index(Request $request, $id)
     {
+        $this->abortIfGradingDisabled();
+
         $user = auth()->user();
         $bundle = $this->findBundleForGrader($id, $user);
         $webinarIds = $this->bundleWebinarIds($bundle);
@@ -96,6 +98,8 @@ class BundleGradingController extends Controller
      */
     public function show(Request $request, $id, $historyId)
     {
+        $this->abortIfGradingDisabled();
+
         $user = auth()->user();
         $bundle = $this->findBundleForGrader($id, $user);
         $history = $this->findHistory($bundle, (int)$historyId);
@@ -132,6 +136,8 @@ class BundleGradingController extends Controller
      */
     public function grade(Request $request, $id, $historyId)
     {
+        $this->abortIfGradingDisabled();
+
         $user = auth()->user();
         $bundle = $this->findBundleForGrader($id, $user);
         $history = $this->findHistory($bundle, (int)$historyId);
@@ -235,5 +241,15 @@ class BundleGradingController extends Controller
         }
 
         return $history;
+    }
+
+    /**
+     * GĐ6 - Post Lesson chấm tự động: trang chấm bài của giáo viên bị ẩn (bật lại bằng BUNDLE_TEACHER_GRADING_ENABLED=true).
+     */
+    private function abortIfGradingDisabled(): void
+    {
+        if (!config('bundle_learning.teacher_grading_enabled')) {
+            abort(404);
+        }
     }
 }

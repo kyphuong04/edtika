@@ -918,6 +918,27 @@ class IeltsTestController extends Controller
         $test = $attempt->test;
         $data = $this->attemptResultData($attempt, route('panel.ielts_tests.review', $attempt->id));
 
+        // GĐ6: đề Bài tập khóa học - giáo viên tắt "xem đáp án ngay" thì không có link chữa bài,
+        // nút quay lại đưa về đúng lesson trong khóa học.
+        $lessonBackUrl = null;
+        if ($test->isLessonTest()) {
+            if (!$test->show_answers_immediately && empty($attempt->is_preview)) {
+                // Bỏ mọi link chữa bài (tổng, theo kỹ năng, theo section)
+                $stripReview = function (array $value) use (&$stripReview) {
+                    foreach ($value as $key => $item) {
+                        if ($key === 'reviewUrl') {
+                            $value[$key] = null;
+                        } elseif (is_array($item)) {
+                            $value[$key] = $stripReview($item);
+                        }
+                    }
+                    return $value;
+                };
+                $data = $stripReview($data);
+            }
+            $lessonBackUrl = \App\Models\BundleLessonTest::lessonUrlForUser((int)$test->id, auth()->user());
+        }
+
         // Preview của giáo viên luôn làm lại được; học viên thì theo canUserTake().
         $canRetake = !empty($attempt->is_preview) || $test->canUserTake($attempt->user_id) === true;
 
@@ -928,9 +949,9 @@ class IeltsTestController extends Controller
             'test' => $test,
             'canRetake' => $canRetake,
             'retakeUrl' => route('panel.ielts_tests.retake', $attempt->id),
-            'backUrl' => $test->type === 'mock'
+            'backUrl' => $lessonBackUrl ?: ($test->type === 'mock'
                 ? route('panel.ielts_tests.mock')
-                : route('panel.ielts_tests.practice'),
+                : route('panel.ielts_tests.practice')),
             'isMentorPreview' => $isMentorPreview,
             'mentorPreviewExitUrl' => $isMentorPreview
                 ? route('panel.my_ielts_tests.exit_preview', $attempt->test_id)
@@ -1291,6 +1312,16 @@ class IeltsTestController extends Controller
                 return redirect()->route('panel.ielts_tests.take', $attempt->id);
             }
             abort(404);
+        }
+
+        // GĐ6: đề Bài tập khóa học không cho xem đáp án -> học viên chỉ xem được kết quả
+        if ($isOwner && !empty($attempt->test) && $attempt->test->isLessonTest()
+            && !$attempt->test->show_answers_immediately && empty($attempt->is_preview)) {
+            return redirect()->route('panel.ielts_tests.results', $attempt->id)->with(['toast' => [
+                'title' => trans('public.request_failed'),
+                'msg' => trans('bundle_learning.lesson_test_answers_hidden'),
+                'status' => 'error',
+            ]]);
         }
 
         $isMentorPreview = ((int) session('mentor_preview_attempt_id', 0) === (int) $attempt->id)

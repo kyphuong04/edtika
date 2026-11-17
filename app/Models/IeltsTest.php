@@ -311,6 +311,56 @@ class IeltsTest extends Model
     |--------------------------------------------------------------------------
     */
     
+    /**
+     * GĐ6 - Đề "Bài tập khóa học": chỉ dùng gắn vào lesson (Bài Tập / Post Lesson), không hiện ở Luyện đề.
+     */
+    public function scopeLessonTests($query)
+    {
+        return $query->where('type', 'lesson');
+    }
+
+    public function isLessonTest()
+    {
+        return $this->type === 'lesson';
+    }
+
+    /**
+     * GĐ6 - Học viên làm được đề lesson khi đã mua khóa học có lesson gắn đề này
+     * (người tạo đề, admin luôn làm được để xem trước).
+     */
+    public function canUserTakeLessonTest($userId): bool
+    {
+        if ((int)$this->created_by === (int)$userId) {
+            return true;
+        }
+
+        $user = \App\User::query()->find($userId);
+        if (empty($user)) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        $chapterIds = BundleLessonTest::query()->where('ielts_test_id', $this->id)->pluck('chapter_id');
+        if ($chapterIds->isEmpty()) {
+            return false;
+        }
+
+        $webinarIds = WebinarChapter::query()->whereIn('id', $chapterIds)->pluck('webinar_id')->unique();
+
+        return Bundle::query()
+            ->where('status', Bundle::$active)
+            ->whereHas('bundleWebinars', function ($query) use ($webinarIds) {
+                $query->whereIn('webinar_id', $webinarIds);
+            })
+            ->get()
+            ->contains(function (Bundle $bundle) use ($user) {
+                return $bundle->checkUserHasBought($user);
+            });
+    }
+
     public function isMockTest()
     {
         return $this->type === 'mock';
@@ -436,6 +486,11 @@ class IeltsTest extends Model
      */
     public function canUserTake($userId)
     {
+        // GĐ6: đề Bài tập khóa học chỉ dành cho học viên đã mua khóa học chứa lesson gắn đề
+        if ($this->isLessonTest()) {
+            return $this->canUserTakeLessonTest($userId) ? true : 'not_enrolled';
+        }
+
         // First, verify enrollment if this test requires it
         if ($this->require_enrollment && $this->webinar_id) {
             $enrolled = \App\Sale::where('webinar_id', $this->webinar_id)
