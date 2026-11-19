@@ -50,7 +50,9 @@ const AttemptAnswers = {
 
 const RV_TFNG_TYPES = ['true_false_not_given', 'yes_no_not_given'];
 const RV_MCQ_TYPES = ['multiple_choice_single', 'multiple_choice_multiple'];
-const RV_COMPLETION_TYPES = ['sentence_completion', 'note_completion', 'table_completion'];
+const RV_COMPLETION_TYPES = ['sentence_completion', 'summary_completion', 'note_completion', 'table_completion'];
+// Ô trống nằm ngay trong đoạn văn (số câu tròn đứng trước viên đáp án), cả group gom vào 1 khung.
+const RV_INLINE_COMPLETION_TYPES = ['note_completion', 'summary_completion'];
 // Sơ đồ điền từ: Flow chart (Reading) + Diagram Labeling điền từ (Listening).
 const RV_FLOW_TYPES = ['flow_chart_completion', 'diagram_completion'];
 
@@ -695,8 +697,13 @@ const ReviewCompletion = {
         return AttemptState.skill !== 'listening' || entry.question.type === 'table_completion';
     },
 
-    isNote(entry) {
-        return entry.question.type === 'note_completion';
+    /** Note / Summary completion: giữ nguyên đoạn văn, ô trống chữa ngay trong dòng. */
+    isInline(entry) {
+        return RV_INLINE_COMPLETION_TYPES.includes(entry.question.type);
+    },
+
+    isSummary(entry) {
+        return entry.question.type === 'summary_completion';
     },
 
     /** Đáp án chấp nhận của 1 ô (bỏ phần tử rỗng). */
@@ -873,7 +880,7 @@ const ReviewCompletion = {
         }
         card.dataset.rvxDone = '1';
 
-        const note = this.isNote(entry);
+        const note = this.isInline(entry);
         const single = !note && inputs.length === 1;
 
         card.querySelectorAll('.exam-blank-number').forEach((b) => b.remove());
@@ -884,6 +891,7 @@ const ReviewCompletion = {
         card.querySelectorAll('.attempt-save-indicator').forEach((el) => el.remove());
 
         card.classList.add(note ? 'rvx-note-card' : 'rvx-sc-card', 'rvx-is-' + ReviewData.entryStatus(entry));
+        if (this.isSummary(entry)) card.classList.add('rvx-summary-card');
 
         if (note) return;
 
@@ -966,9 +974,9 @@ const ReviewCompletion = {
         return lines;
     },
 
-    /** Note completion: gom tiêu đề + các thẻ của group vào 1 khung ghi chú. */
+    /** Note / Summary completion: gom tiêu đề + các thẻ của group vào 1 khung. */
     decorateGroup(holder) {
-        if (holder.dataset.type !== 'note_completion') return;
+        if (!RV_INLINE_COMPLETION_TYPES.includes(holder.dataset.type)) return;
         if (holder.querySelector('.rvx-notes')) return;
 
         const items = Array.from(holder.children).filter((el) => el.classList.contains('rvx-note-card')
@@ -976,7 +984,7 @@ const ReviewCompletion = {
         if (!items.some((el) => el.classList.contains('rvx-note-card'))) return;
 
         const panel = document.createElement('div');
-        panel.className = 'rvx-notes';
+        panel.className = 'rvx-notes' + (holder.dataset.type === 'summary_completion' ? ' rvx-summary' : '');
         items[0].insertAdjacentElement('beforebegin', panel);
         items.forEach((el) => panel.appendChild(el));
     },
@@ -1911,6 +1919,9 @@ const AnswerHelp = {
             el.addEventListener('click', () => this.close());
         });
 
+        // Đổi cỡ cửa sổ khi đang mở: chuyển qua lại giữa "ghim cạnh nội dung" và "phủ lên".
+        window.addEventListener('resize', () => { if (this.isOpen()) this.applyDock(); });
+
         this.body.addEventListener('click', (e) => {
             const t = e.target;
             if (!t.closest) return;
@@ -1919,7 +1930,7 @@ const AnswerHelp = {
             const play = t.closest('.rvl-help-play');
             if (play && this.entry && window.ReviewListening) {
                 const entry = this.entry;
-                this.close();
+                if (!this.isDocked()) this.close();
                 window.ReviewListening.playEntry(entry);
                 return;
             }
@@ -2287,7 +2298,8 @@ const AnswerHelp = {
                 if (!first) first = mark;
             });
 
-            this.close();
+            // Sidebar ghim cạnh bài đọc thì vẫn giữ mở, chỉ cuộn tới đoạn trích.
+            if (!this.isDocked()) this.close();
             if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
@@ -2303,12 +2315,26 @@ const AnswerHelp = {
         if (!this.isOpen()) {
             this.returnFocus = trigger || document.activeElement;
             this.root.hidden = false;
+            this.applyDock();
             // Kích hoạt transition sau khi bỏ hidden.
             window.requestAnimationFrame(() => this.root.classList.add('is-open'));
             document.body.classList.add('rvx-drawer-open');
             const closeBtn = this.root.querySelector('.rvx-drawer-close');
-            if (closeBtn) closeBtn.focus();
+            if (closeBtn) closeBtn.focus({ preventScroll: true });
+
+            // Ghim: cột bài chữa vừa hẹp lại, chữ xuống dòng -> kéo câu đang xem trở lại tầm nhìn.
+            const anchor = this.returnFocus;
+            if (this.isDockedNow() && anchor && anchor.scrollIntoView) {
+                window.setTimeout(() => {
+                    if (document.body.contains(anchor)) anchor.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 280);
+            }
         }
+    },
+
+    /** Đã gắn chế độ ghim (kể cả lúc hiệu ứng mở chưa xong). */
+    isDockedNow() {
+        return !!(this.root && this.root.classList.contains('is-docked'));
     },
 
     /** Đang mở mà chuyển câu (hoặc sang ô khác của cùng câu) -> đổi nội dung. */
@@ -2321,14 +2347,45 @@ const AnswerHelp = {
         }
     },
 
+    /** Màn hình đủ rộng: sidebar ghim bên phải, đề + bài chữa co lại (không che). */
+    canDock() {
+        return window.innerWidth >= DrawerResize.DOCK_MIN_VIEWPORT;
+    },
+
+    isDocked() {
+        return !!(this.root && this.root.classList.contains('is-docked') && this.isOpen());
+    },
+
+    applyDock() {
+        if (!this.root) return;
+        const dock = this.canDock();
+        this.root.classList.toggle('is-docked', dock);
+        document.body.classList.toggle('rvx-drawer-docked', dock);
+
+        const panel = this.root.querySelector('.rvx-drawer-panel');
+        if (panel) panel.setAttribute('aria-modal', dock ? 'false' : 'true');
+
+        if (dock) {
+            // Sidebar bắt đầu ngay dưới thanh điều hướng -> navbar vẫn trải hết chiều ngang.
+            const rootEl = document.getElementById('attemptRoot');
+            const top = rootEl ? Math.max(0, Math.round(rootEl.getBoundingClientRect().top)) : 0;
+            document.documentElement.style.setProperty('--rvx-dock-top', top + 'px');
+        }
+        DrawerResize.apply(DrawerResize.saved() || 0, false);
+    },
+
     close() {
         if (!this.root || this.root.hidden) return;
         if (ReportModal.isOpen()) ReportModal.close();
         MistakeReason.flush();
         this.root.classList.remove('is-open');
-        document.body.classList.remove('rvx-drawer-open');
+        document.body.classList.remove('rvx-drawer-open', 'rvx-drawer-docked');
 
-        const done = () => { this.root.hidden = true; };
+        const done = () => {
+            if (this.root.classList.contains('is-open')) return;   // đã mở lại trong lúc chờ
+            this.root.hidden = true;
+            this.root.classList.remove('is-docked');
+        };
         const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce) done(); else window.setTimeout(done, 260);
 
@@ -2345,11 +2402,27 @@ const DrawerResize = {
     KEY: 'ielts-review-drawer-width',
     MIN: 420,
     DEFAULT: 640,
+    // Ghim sidebar khi màn hình >= 1100px; phần đề + bài chữa giữ tối thiểu 640px.
+    DOCK_MIN_VIEWPORT: 1100,
+    DOCK_MIN_MAIN: 640,
     panel: null,
     handle: null,
 
+    docked() {
+        const root = this.panel && this.panel.closest('.rvx-drawer');
+        return !!(root && root.classList.contains('is-docked'));
+    },
+
     max() {
-        return Math.max(this.MIN, Math.round(window.innerWidth * 0.92));
+        const limit = this.docked()
+            ? window.innerWidth - this.DOCK_MIN_MAIN
+            : Math.round(window.innerWidth * 0.92);
+        return Math.max(this.MIN, limit);
+    },
+
+    /** Độ rộng mặc định khi ghim: ~36% màn hình, trong khoảng 420–640px. */
+    dockDefault() {
+        return Math.min(this.DEFAULT, Math.max(this.MIN, Math.round(window.innerWidth * 0.36)));
     },
 
     enabled() {
@@ -2358,12 +2431,21 @@ const DrawerResize = {
 
     apply(width, save) {
         if (!this.panel) return;
-        if (!this.enabled() || !width) {
+        const docked = this.docked();
+
+        if (!this.enabled() || (!width && !docked)) {
             this.panel.style.width = '';
             return;
         }
-        const w = Math.round(Math.min(this.max(), Math.max(this.MIN, width)));
-        this.panel.style.width = w + 'px';
+        const w = Math.round(Math.min(this.max(), Math.max(this.MIN, width || this.dockDefault())));
+
+        if (docked) {
+            // Ghim: độ rộng nằm ở biến CSS -> sidebar và phần nội dung co giãn cùng lúc.
+            this.panel.style.width = '';
+            document.documentElement.style.setProperty('--rvx-dock-w', w + 'px');
+        } else {
+            this.panel.style.width = w + 'px';
+        }
         if (this.handle) this.handle.setAttribute('aria-valuenow', String(w));
         if (save) {
             try { window.localStorage.setItem(this.KEY, String(w)); } catch (e) { /* bỏ qua */ }

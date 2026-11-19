@@ -1104,8 +1104,16 @@ body.rvx-drawer-open { overflow: hidden; }
 .rvx-note-card .exam-question-text li { margin: 0 0 2px; }
 .rvx-note-card .exam-question-text ul > li::marker { color: var(--rs-brand); }
 
+/* Summary completion (Reading): đoạn tóm tắt liền mạch, ô trống chữa ngay trong dòng */
+.rvx-summary > .exam-question-title { color: var(--rs-brand); }
+.rvx-summary-card .exam-question-text { line-height: 2.1; }
+.rvx-summary-card .exam-question-text p { margin: 0 0 14px; }
+.rvx-summary-card .exam-question-text p:last-child { margin-bottom: 0; }
+.exam-question-card.rvx-summary-card + .exam-question-card.rvx-summary-card { margin-top: 14px; }
+
 @media (max-width: 640px) {
     .rvx-notes { padding: 16px 14px; }
+    .rvx-summary-card .exam-question-text { line-height: 1.9; }
     .rvx-sc-row { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; }
     .rvx-num.rvx-num--sc { width: 38px; height: 38px; font-size: 15px; }
     .rvx-sc-item, .exam-question-card.rvx-sc-card.rvx-sc-item { padding: 12px; }
@@ -1937,3 +1945,40 @@ body.rvx-drawer-resizing .rvx-drawer-panel { transition: none; }
 /* Bóng đèn dự phòng cho dạng chưa có giao diện chữa riêng */
 .rvx-help-fallback { display: inline-flex; flex: 0 0 auto; align-items: center; }
 .rvx-help-fallback .rvx-help { width: 34px; height: 34px; font-size: 15px; }
+
+/* ── Sidebar ghim cạnh nội dung (màn hình >= 1100px) ───────────────────
+   AnswerHelp.applyDock(): .rvx-drawer.is-docked + body.rvx-drawer-docked.
+   Sidebar nằm dưới navbar, cùng mặt phẳng với đề + bài chữa (không phủ, không
+   làm mờ); phần đề + bài chữa thu hẹp đúng bằng độ rộng sidebar. Kéo mép trái
+   sidebar để đổi độ rộng — 2 cột bên trái co giãn theo tỉ lệ (%). */
+:root { --rvx-dock-w: 520px; --rvx-dock-top: 0px; }
+
+.exam-root.rvx-root { transition: margin-right .25s ease; }
+body.rvx-drawer-docked .exam-root.rvx-root { margin-right: var(--rvx-dock-w); }
+body.rvx-drawer-docked.rvx-drawer-open { overflow: auto; }
+
+.rvx-drawer.is-docked {
+    top: var(--rvx-dock-top);
+    left: auto;
+    width: var(--rvx-dock-w);
+    z-index: 60;            /* trên .rvx-page (50), dưới cửa sổ Báo lỗi / Làm lại */
+}
+.rvx-drawer.is-docked .rvx-drawer-backdrop { display: none; }
+.rvx-drawer.is-docked .rvx-drawer-panel {
+    width: 100% !important;
+    max-width: none;
+    border-left: 1px solid var(--rs-line);
+    box-shadow: -6px 0 18px rgba(30, 27, 75, .06);
+}
+
+/* Đang kéo: tắt hiệu ứng để 2 bên bám theo chuột */
+body.rvx-drawer-resizing .exam-root.rvx-root { transition: none; }
+
+/* Hai cột khi sidebar mở: giữ tối thiểu đủ đọc, bài đọc nhường chỗ trước */
+body.rvx-drawer-docked .rvx-left { min-width: 260px; }
+body.rvx-drawer-docked .rvx-right { min-width: 320px; }
+body.rvx-drawer-docked .exam-questions.rvx-questions { padding-left: 20px; padding-right: 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .exam-root.rvx-root { transition: none; }
+}

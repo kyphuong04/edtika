@@ -9,6 +9,13 @@
 <link rel="stylesheet" href="{{ asset('assets/css/ielts-tests/explain-builder.css') }}?v={{ filemtime(public_path('assets/css/ielts-tests/explain-builder.css')) }}">
 <style>
 
+/* Nút Bullet / Numbering: app.min.css đặt `li { list-style: none }` toàn trang
+   nên danh sách trong editor không hiện dấu chấm / số -> khôi phục trong vùng soạn. */
+.note-editor .note-editable ul { list-style: disc; padding-left: 24px; margin: 0 0 10px; }
+.note-editor .note-editable ol { list-style: decimal; padding-left: 24px; margin: 0 0 10px; }
+.note-editor .note-editable ul ul { list-style: circle; }
+.note-editor .note-editable li { display: list-item; list-style: inherit; margin: 0 0 4px; }
+
     /* --- FIX LỖI HOVER & ACTIVE CHO NÚT CĂN LỀ --- */
 
 /* 1. Sửa lỗi Hover bị trắng: Đổi nền sang tím nhạt, giữ icon màu tím */
@@ -5186,11 +5193,22 @@ function getQuestionFormHTML(questionType, skill = '') {
                 </div>
             </div>`;
         } else {
-            const placeholder = 'Enter the sentence/text (use ___ to indicate the blank)';
-            html += `${titleField}<div class="form-row">
+            // Summary completion: 1 câu hỏi = cả đoạn tóm tắt (tiêu đề + nhiều đoạn, mỗi ___ là 1 câu),
+            // hoặc mỗi câu 1 question cùng tiêu đề — trang chữa bài gom cả group vào 1 khung.
+            const isSummary = questionType === 'summary_completion';
+            const placeholder = isSummary
+                ? 'Nhập đoạn tóm tắt, mỗi chỗ trống gõ ___ (Enter để xuống đoạn mới)'
+                : 'Enter the sentence/text (use ___ to indicate the blank)';
+            const summaryTitleField = `<div class="form-row">
                 <div class="form-group">
-                    <label class="input-label">Question / Sentence * <small class="text-muted">(use ___ for blank)</small></label>
-                    <textarea class="form-control question-text-input js-richtext-editor" data-height="150" rows="2" placeholder="${placeholder}"></textarea>
+                    <label class="input-label">Tiêu đề summary <small class="text-muted">(hiện in đậm, căn giữa phía trên đoạn tóm tắt)</small></label>
+                    <input type="text" class="form-control question-title-input" placeholder="VD: Keeping the collection reliable">
+                </div>
+            </div>`;
+            html += `${isSummary ? summaryTitleField : titleField}<div class="form-row">
+                <div class="form-group">
+                    <label class="input-label">${isSummary ? 'Summary Text' : 'Question / Sentence'} * <small class="text-muted">(use ___ for blank)</small></label>
+                    <textarea class="form-control question-text-input js-richtext-editor" data-height="${isSummary ? 220 : 150}" rows="${isSummary ? 4 : 2}" placeholder="${placeholder}"></textarea>
                 </div>
             </div>
             <div class="form-row">

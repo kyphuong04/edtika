@@ -2342,3 +2342,20 @@ mark.exam-hl.has-note {
     .exam-match-row { flex-direction: column; }
     .exam-match-slot { width: 100%; }
 }
+/* ── Danh sách do giáo viên soạn (nút Bullet / Numbering trong editor) ──
+   app.min.css đặt `li { list-style: none }` cho toàn trang nên <ul>/<ol> trong
+   passage, hướng dẫn, câu hỏi, Answer help bị mất dấu chấm / số thứ tự.
+   Chỉ khôi phục cho danh sách không có class (nội dung từ editor), không đụng
+   các danh sách giao diện (phương án MCQ, menu…). Dùng chung trang làm bài + chữa bài. */
+:is(.exam-context-passage, .exam-part-instructions, .exam-question-text, .exam-question-title, .rvh-rich, .rv-explanation) :is(ul, ol):not([class]) {
+    margin: 0 0 10px;
+    padding-left: 24px;
+}
+:is(.exam-context-passage, .exam-part-instructions, .exam-question-text, .exam-question-title, .rvh-rich, .rv-explanation) ul:not([class]) { list-style: disc; }
+:is(.exam-context-passage, .exam-part-instructions, .exam-question-text, .exam-question-title, .rvh-rich, .rv-explanation) ol:not([class]) { list-style: decimal; }
+:is(.exam-context-passage, .exam-part-instructions, .exam-question-text, .exam-question-title, .rvh-rich, .rv-explanation) ul:not([class]) ul:not([class]) { list-style: circle; }
+:is(.exam-context-passage, .exam-part-instructions, .exam-question-text, .exam-question-title, .rvh-rich, .rv-explanation) :is(ul, ol):not([class]) > li {
+    display: list-item;
+    list-style: inherit;
+    margin: 0 0 4px;
+}
