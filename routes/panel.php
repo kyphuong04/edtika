@@ -77,6 +77,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             // GĐ6: Pre Lesson (đánh dấu từ đã thuộc, xác nhận hoàn thành)
             Route::post('/{slug}/lessons/{chapterId}/pre-lesson/word', 'BundleLearningController@preLessonWord')->where('chapterId', '[0-9]+');
             Route::post('/{slug}/lessons/{chapterId}/pre-lesson/complete', 'BundleLearningController@preLessonComplete')->where('chapterId', '[0-9]+');
+            // GĐ7: Mid-term / Final làm trong khung player của trang lesson
+            Route::get('/{slug}/checkpoints/{quizId}', 'BundleLearningController@checkpoint')->where('quizId', '[0-9]+');
             Route::get('/{slug}', 'MyPurchasedCoursesController@showCourse');
         });
 
@@ -84,6 +86,9 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::group(['prefix' => 'bundle-learning'], function () {
             Route::get('/files/{fileId}/state', 'BundleLearningController@fileState')->where('fileId', '[0-9]+');
             Route::post('/video-progress', 'BundleLearningController@videoProgress');
+            // GĐ7: làm quiz ngay trên trang học (Mini Quiz, Mid-term / Final)
+            Route::get('/quizzes/{quizId}', 'BundleLearningController@inlineQuiz')->where('quizId', '[0-9]+');
+            Route::post('/quizzes/{quizId}', 'BundleLearningController@inlineQuizSubmit')->where('quizId', '[0-9]+');
         });
 
         Route::post('/search', 'WebinarController@search');
@@ -564,6 +569,8 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{id}/courses', 'BundlesController@courses');
             Route::get('/{id}/modules', 'BundlesController@modules');
             Route::get('/{bundleId}/module/create', 'BundlesController@moduleCreate');
+            Route::post('/{bundleId}/module/create', 'BundlesController@moduleCreate');
+            Route::post('/{bundleId}/module/{courseId}/title', 'BundlesController@moduleRename');
             Route::get('/{bundleId}/module/{courseId}/edit', 'BundlesController@moduleEdit');
             Route::post('/{bundleId}/module/{courseId}/delete', 'BundlesController@moduleDestroy');
             Route::get('/{id}/export-students-list', 'BundlesController@exportStudentsList');

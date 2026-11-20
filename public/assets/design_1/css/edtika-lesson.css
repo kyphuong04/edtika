@@ -184,3 +184,22 @@
 .edk #player .edk-resource-list { display: grid; gap: 8px; margin-top: 12px; }
 .edk #player .notes-editor textarea { width: 100%; min-height: 140px; }
 .edk #player .q-line a.action { text-decoration: none; }
+
+/* GĐ7 - Mini Quiz ngay tại tab Quizzes, Mid-term / Final trong khung player (theo demo) */
+.edk #player .q-summary.v10-quiz-complete { padding: 11px; border-radius: 15px; border: 1px solid #B9EED6; background: #EBFEF7; }
+.edk #player .q-summary.v10-quiz-complete .q-line { background: #EBFEF7 !important; border-color: #D0F4E3; }
+.edk #player .q-summary.v10-quiz-complete .q-text b, .edk #player .q-summary.v10-quiz-complete .q-text span { color: #008A5A; }
+.edk #player .v10-quiz-title-complete { color: #008A5A; }
+.edk #player .v10-quiz-title-complete .tag { background: #EBFEF7; color: #008A5A; border-color: #B9EED6; }
+.edk #player .q-line.is-active { border-color: #bda4d5; background: #faf7fd; }
+.edk #player .edk-mini-inline { padding: 16px; margin-top: 12px; scroll-margin-top: 90px; }
+.edk #player .v15-checkpoint-btn.is-current { border-color: var(--p); background: #f7f3fb; box-shadow: 0 6px 16px rgba(90, 43, 129, .08); }
+.edk #player .v15-checkpoint-btn .v15-checked { background: #EBFEF7; color: #008A5A; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 650; }
+.edk #player .v15-assessment-footer { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 13px; }
+.edk #player .js-checkpoint .edk-iq { margin-top: 12px; }
+.edk #player .player-switch.js-checkpoint { max-height: min(760px, 80vh); }
+/* Đồng hồ + thông tin bài luôn hiện khi cuộn câu hỏi */
+.edk #player .js-checkpoint .edk-iq-meta { position: sticky; top: -18px; z-index: 2; background: #fff; padding: 8px 0; margin: 0 0 6px; }
+.edk #player .feedback { padding: 10px 12px; border-radius: 10px; font-size: 12px; margin-top: 11px; }
+.edk #player .feedback.good { color: var(--success); background: var(--mint); }
+.edk #player .feedback.bad { color: var(--red); background: var(--pink); }

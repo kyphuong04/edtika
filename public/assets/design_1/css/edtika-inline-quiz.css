@@ -1,0 +1,69 @@
+/*
+ * GĐ7 - Quiz làm ngay trên trang học (Mini Quiz trong video, Mid-term / Final trong khung player).
+ * Tự đủ style (không phụ thuộc edtika-lesson.css) để dùng được cả trên trang học module cũ của Rocket.
+ */
+.edk-iq { --iq-p: #5A2B81; --iq-l: #EBE5FC; --iq-ink: #21182e; --iq-sub: #756a82; --iq-line: #eee8f4; --iq-ok: #008A5A; --iq-mint: #EBFEF7; --iq-red: #e03043; --iq-pink: #FEF1F1; color: var(--iq-ink); font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 13px; line-height: 1.5; }
+.edk-iq * { box-sizing: border-box; }
+.edk-iq .edk-iq-tag { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: var(--iq-l); color: var(--iq-p); font-size: 11px; font-weight: 630; white-space: nowrap; }
+.edk-iq .edk-iq-tag.outline { background: #fff; border: 1px solid #ddd0e9; }
+.edk-iq h3.edk-iq-title { font-size: 16px; font-weight: 670; margin: 9px 0 6px; color: var(--iq-ink); }
+.edk-iq .edk-iq-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.edk-iq .edk-iq-timer { margin-left: auto; font-variant-numeric: tabular-nums; }
+.edk-iq .edk-iq-timer.is-low { color: var(--iq-red); border-color: #f3c3c9; background: var(--iq-pink); }
+.edk-iq .edk-iq-loading { color: var(--iq-sub); padding: 18px 0; }
+
+.edk-iq .edk-iq-questions { display: grid; gap: 14px; margin: 6px 0 14px; }
+.edk-iq .edk-iq-q { background: #fff; border: 1px solid var(--iq-line); padding: 13px; border-radius: 13px; transition: border-color .15s, background .15s; }
+.edk-iq .edk-iq-q.is-correct { border-color: #B9EED6; background: #FAFFFD; }
+.edk-iq .edk-iq-q.is-wrong { border-color: #f3c3c9; background: #FFFBFB; }
+.edk-iq .edk-iq-q.is-missing { border-color: #f0d48a; }
+.edk-iq .edk-iq-q-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.edk-iq .edk-iq-q-head strong { font-weight: 650; font-size: 13px; }
+.edk-iq .edk-iq-grade { flex: 0 0 auto; color: var(--iq-sub); font-size: 11px; }
+.edk-iq .edk-iq-prompt { background: #faf8fd; border-radius: 10px; padding: 10px 12px; margin-top: 10px; font-size: 13px; }
+.edk-iq .edk-iq-media { margin-top: 10px; }
+.edk-iq .edk-iq-media img, .edk-iq .edk-iq-media video { max-width: 100%; border-radius: 10px; display: block; }
+
+.edk-iq .quiz-options { display: grid; gap: 8px; margin: 12px 0 0; }
+.edk-iq .quiz-option { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--iq-line); cursor: pointer; background: #fff; font-size: 13px; margin: 0; font-weight: 500; }
+.edk-iq .quiz-option:has(input:checked) { background: var(--iq-l); border-color: #cfbce1; }
+.edk-iq .quiz-option input { accent-color: var(--iq-p); margin-top: 3px; flex: 0 0 auto; }
+.edk-iq .edk-iq-answer-img { max-width: 160px; max-height: 110px; border-radius: 8px; }
+
+.edk-iq .edk-iq-input { width: 100%; border: 1px solid #e3d9eb; padding: 9px 12px; border-radius: 11px; outline-color: var(--iq-p); color: #111; background: #fff; font: inherit; margin-top: 10px; }
+.edk-iq textarea.edk-iq-input { resize: vertical; min-height: 90px; }
+.edk-iq .edk-iq-blanks { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0 10px; }
+.edk-iq .edk-iq-matching { display: grid; gap: 8px; margin-top: 10px; }
+.edk-iq .edk-iq-match-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1ebf6; margin: 0; font-weight: 500; }
+.edk-iq .edk-iq-match-row .edk-iq-input { margin-top: 0; }
+
+.edk-iq .edk-iq-mark { margin-top: 10px; font-size: 12px; font-weight: 600; }
+.edk-iq .edk-iq-mark.good { color: var(--iq-ok); }
+.edk-iq .edk-iq-mark.bad { color: var(--iq-red); }
+.edk-iq .edk-iq-mark.wait { color: #8a6d00; }
+
+.edk-iq .edk-iq-feedback { padding: 10px 12px; border-radius: 10px; font-size: 12px; margin: 0 0 12px; }
+.edk-iq .edk-iq-feedback.good { color: var(--iq-ok); background: var(--iq-mint); }
+.edk-iq .edk-iq-feedback.bad { color: var(--iq-red); background: var(--iq-pink); }
+.edk-iq .edk-iq-feedback.wait { color: #7a5a00; background: #fff8e1; }
+.edk-iq .edk-iq-feedback b { font-weight: 700; }
+.edk-iq .edk-iq-feedback a { color: inherit; text-decoration: underline; }
+
+.edk-iq .edk-iq-footer { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.edk-iq .edk-iq-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #e0d4ec; color: var(--iq-p); background: #fff; border-radius: 11px; padding: 8px 14px; font-size: 12px; font-weight: 640; white-space: nowrap; cursor: pointer; text-decoration: none; line-height: 1.4; font-family: inherit; }
+.edk-iq .edk-iq-btn:hover:not(:disabled) { background: #f9f6fc; text-decoration: none; color: var(--iq-p); }
+.edk-iq .edk-iq-btn.primary { background: var(--iq-p); color: #fff; border-color: var(--iq-p); }
+.edk-iq .edk-iq-btn.primary:hover:not(:disabled) { background: #472263; color: #fff; }
+.edk-iq .edk-iq-btn:disabled { opacity: .45; cursor: not-allowed; }
+.edk-iq.is-locked .edk-iq-questions input, .edk-iq.is-locked .edk-iq-questions select, .edk-iq.is-locked .edk-iq-questions textarea { pointer-events: none; }
+.edk-iq.is-locked .quiz-option { cursor: default; }
+
+/* Mini Quiz dạng hộp thoại (trang học module cũ - không có tab Quizzes) */
+.bl-mini-quiz-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(33, 24, 46, .45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.bl-mini-quiz-modal { background: #fff; border-radius: 20px; padding: 22px; max-width: 620px; width: 100%; max-height: calc(100vh - 32px); overflow: auto; box-shadow: 0 20px 60px rgba(33, 24, 46, .25); }
+.bl-mini-quiz-modal .edk-iq-close { float: right; border: 0; background: none; font-size: 22px; line-height: 1; color: #756a82; cursor: pointer; }
+
+@media (max-width: 575px) {
+    .edk-iq .edk-iq-match-row { grid-template-columns: 1fr; gap: 6px; }
+    .edk-iq .edk-iq-timer { margin-left: 0; }
+}

@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/design_1/css/edtika-storefront.css?v=gd5-4">
     <link rel="stylesheet" href="/assets/design_1/css/edtika-learning.css?v=1">
-    <link rel="stylesheet" href="/assets/design_1/css/edtika-my-courses.css?v=1">
+    <link rel="stylesheet" href="/assets/design_1/css/edtika-my-courses.css?v=2">
 @endpush
 
 @section('content')

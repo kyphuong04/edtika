@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/assets/vendors/plyr.io/plyr.min.css">
     <link rel="stylesheet" href="/assets/design_1/css/edtika-storefront.css?v=gd5-4">
     <link rel="stylesheet" href="/assets/design_1/css/edtika-learning.css?v=1">
-    <link rel="stylesheet" href="/assets/design_1/css/edtika-lesson.css?v=1">
+    <link rel="stylesheet" href="/assets/design_1/css/edtika-lesson.css?v=2">
 @endpush
 
 @section('content')
@@ -41,6 +41,7 @@
             'video' => 'Video Learning',
             'exercise' => trans('bundle_learning.activity_exercise'),
             'post' => 'Post Lesson',
+            'checkpoint' => !empty($currentCheckpoint) ? ($currentCheckpoint['title'] ?: trans('bundle_learning.checkpoint_' . $currentCheckpoint['type'])) : 'Test',
         ];
 
         $videoIndex = !empty($currentVideo) ? $videos->search(function ($video) use ($currentVideo) { return $video['id'] === $currentVideo['id']; }) : false;
@@ -52,6 +53,18 @@
                 $subParts[] = max(1, (int)round($videoSeconds / 60)) . ' ' . trans('bundle_learning.minutes_short');
             }
         }
+
+        // GĐ7: Mid-term / Final đang mở trong khung player
+        $totalModules = count($progress['modules']);
+        if ($view === 'checkpoint' and !empty($currentCheckpoint)) {
+            $subParts = [
+                trans('bundle_learning.checkpoint_label_' . ($currentCheckpoint['type'] === 'final' ? 'final' : 'mid')),
+                trans('bundle_learning.checkpoint_modules', ['required' => $currentCheckpoint['required_modules'], 'total' => $totalModules]),
+            ];
+        }
+        $checkpointUrl = function ($quizId) use ($courseUrl) {
+            return $courseUrl . '/checkpoints/' . $quizId;
+        };
 
         $lessonPageUrl = function ($chapterId, $query = '') use ($courseUrl) {
             return $courseUrl . '/lessons/' . $chapterId . ($query !== '' ? '?' . $query : '');
@@ -83,7 +96,7 @@
                         <div class="player-head">
                             <div>
                                 <span class="tag outline">{{ $bundle->title }}{{ $skillLabel ? ' · ' . $skillLabel : '' }}</span>
-                                <h1>{{ $chapter->title }}</h1>
+                                <h1>{{ $view === 'checkpoint' ? $viewLabels['checkpoint'] : $chapter->title }}</h1>
                                 <span class="muted tiny">{{ implode(' · ', $subParts) }}</span>
                             </div>
                             <a class="action sm" href="{{ $courseUrl }}">Course Syllabus ↗</a>
@@ -236,6 +249,58 @@
                                     </div>
                                 </div>
 
+                            @elseif($view === 'checkpoint' and !empty($checkpointInfo))
+                                {{-- ----- GĐ7: Mid-term / Final làm ngay trong khung player ----- --}}
+                                @php
+                                    $cpQuiz = $checkpointInfo['quiz'];
+                                    $cpLast = $checkpointInfo['last_result'];
+                                    $cpName = $viewLabels['checkpoint'];
+                                @endphp
+                                <div class="player-switch js-checkpoint" data-url="{{ $checkpointInfo['inline_url'] }}">
+                                    <span class="tag">{{ trans('bundle_learning.checkpoint_label_' . ($currentCheckpoint['type'] === 'final' ? 'final' : 'mid')) }}</span>
+                                    <h3>{{ $cpName }}</h3>
+                                    <p class="muted tiny">{{ trans('bundle_learning.checkpoint_intro', ['required' => $currentCheckpoint['required_modules'], 'total' => $totalModules]) }}</p>
+
+                                    <div class="js-checkpoint-intro">
+                                        <div class="edk-test-meta">
+                                            <span class="tag outline">{{ trans('bundle_learning.inline_quiz_questions', ['count' => $checkpointInfo['questions_count']]) }}</span>
+                                            <span class="tag outline">{{ trans('bundle_learning.inline_quiz_pass_mark', ['pass' => (int)$cpQuiz->pass_mark, 'total' => $checkpointInfo['total_grade']]) }}</span>
+                                            <span class="tag outline">{{ !empty($cpQuiz->time) ? trans('bundle_learning.checkpoint_minutes', ['minutes' => (int)$cpQuiz->time]) : trans('bundle_learning.checkpoint_no_limit') }}</span>
+                                            @if(!is_null($checkpointInfo['attempts_left']))
+                                                <span class="tag outline">{{ trans('bundle_learning.inline_quiz_attempts_left', ['count' => $checkpointInfo['attempts_left']]) }}</span>
+                                            @endif
+                                        </div>
+
+                                        @if($currentCheckpoint['passed'])
+                                            <div class="feedback good">✓ {{ trans('bundle_learning.checkpoint_passed', ['title' => $cpName]) }}@if(!empty($cpLast) and $cpLast->status === \App\Models\QuizzesResult::$passed) · {{ (int)$cpLast->user_grade }}/{{ $checkpointInfo['total_grade'] }}@endif</div>
+                                        @elseif(!empty($cpLast) and $cpLast->status === \App\Models\QuizzesResult::$waiting)
+                                            <div class="feedback" style="background:#fff8e1;color:#7a5a00">⏳ {{ trans('bundle_learning.checkpoint_waiting') }}</div>
+                                        @elseif(!empty($cpLast) and $cpLast->status === \App\Models\QuizzesResult::$failed)
+                                            <div class="feedback bad">{{ trans('bundle_learning.checkpoint_last_failed', ['grade' => (int)$cpLast->user_grade, 'total' => $checkpointInfo['total_grade']]) }}</div>
+                                        @endif
+
+                                        @if(!$checkpointInfo['can_submit'] and !$currentCheckpoint['passed'])
+                                            <div class="feedback bad">{{ trans('bundle_learning.inline_quiz_no_attempts') }}</div>
+                                        @endif
+
+                                        @if(!empty($cpQuiz->time) and $checkpointInfo['can_submit'])
+                                            <p class="muted tiny" style="margin-top:10px">{{ trans('bundle_learning.checkpoint_start_hint') }}</p>
+                                        @endif
+                                    </div>
+
+                                    <div class="js-checkpoint-body"></div>
+
+                                    <div class="v15-assessment-footer js-checkpoint-footer">
+                                        @if($checkpointInfo['can_submit'] and !(!empty($cpLast) and $cpLast->status === \App\Models\QuizzesResult::$waiting))
+                                            <button type="button" class="action sm primary js-checkpoint-start">{{ ($currentCheckpoint['passed'] or !empty($cpLast)) ? trans('bundle_learning.checkpoint_retake') : trans('bundle_learning.checkpoint_start') }} →</button>
+                                        @endif
+                                        @if(!empty($cpLast))
+                                            <a href="/panel/quizzes/results/{{ $cpLast->id }}/details" class="action sm js-checkpoint-last-result" target="_blank">{{ trans('bundle_learning.inline_quiz_view_detail') }} ↗</a>
+                                        @endif
+                                        <a href="{{ $lessonPageUrl($chapter->id) }}" class="action sm">{{ trans('bundle_learning.checkpoint_back') }}</a>
+                                    </div>
+                                </div>
+
                             @else
                                 <div class="edk-empty-frame">{{ trans('bundle_learning.lesson_no_content') }}</div>
                             @endif
@@ -296,28 +361,35 @@
                             @endif
 
                             <div class="tab-pane" data-pane="quizzes" hidden>
-                                @php $miniDone = $miniQuizzes->where('done', true)->count(); @endphp
-                                <h3>Mini Quiz <span class="tag outline">{{ $miniDone }}/{{ $miniQuizzes->count() }} {{ trans('bundle_learning.done_short') }}</span></h3>
-                                <p class="muted tiny">{{ trans('bundle_learning.mini_quiz_tab_hint') }}</p>
+                                @php
+                                    $miniDone = $miniQuizzes->where('done', true)->count();
+                                    $miniAllDone = ($miniQuizzes->isNotEmpty() && $miniDone === $miniQuizzes->count());
+                                @endphp
+                                <h3 class="js-mini-title {{ $miniAllDone ? 'v10-quiz-title-complete' : '' }}">Mini Quiz <span class="tag outline"><span class="js-mini-done">{{ $miniDone }}</span>/{{ $miniQuizzes->count() }} {{ trans('bundle_learning.done_short') }}</span></h3>
+                                <p class="muted tiny">{{ trans('bundle_learning.mini_quiz_inline_hint') }}</p>
 
-                                <div class="q-summary">
+                                <div class="q-summary js-mini-summary {{ $miniAllDone ? 'v10-quiz-complete' : '' }}">
                                     @forelse($miniQuizzes as $miniQuiz)
                                         @php
                                             $miniVideoIndex = $videos->search(function ($video) use ($miniQuiz) { return $video['id'] === $miniQuiz['file_id']; });
                                         @endphp
-                                        <div class="q-line {{ $contentUnlocked ? '' : 'locked' }}">
+                                        <div class="q-line {{ $contentUnlocked ? '' : 'locked' }} js-mini-line" data-quiz-id="{{ $miniQuiz['id'] }}">
                                             <div class="q-text">
                                                 <b>{{ $miniVideoIndex !== false ? 'Video ' . str_pad($miniVideoIndex + 1, 2, '0', STR_PAD_LEFT) . ' · ' : '' }}{{ $miniQuiz['title'] }}</b>
-                                                <span>{{ $miniQuiz['done'] ? '✓ ' . trans('bundle_learning.status_completed') : (!is_null($miniQuiz['show_at_second']) ? trans('bundle_learning.mini_quiz_at', ['time' => gmdate('i:s', (int)$miniQuiz['show_at_second'])]) : '') }}</span>
+                                                <span class="js-mini-state">{{ $miniQuiz['done'] ? '✓ ' . trans('bundle_learning.status_completed') : (!is_null($miniQuiz['show_at_second']) ? trans('bundle_learning.mini_quiz_at', ['time' => gmdate('i:s', (int)$miniQuiz['show_at_second'])]) : trans('bundle_learning.mini_quiz_pending')) }}</span>
                                             </div>
                                             @if($contentUnlocked)
-                                                <a href="{{ $itemLearningUrl('quiz', $miniQuiz['id']) }}" class="action sm primary">{{ trans('bundle_learning.take_quiz') }}</a>
+                                                <button type="button" class="action sm {{ $miniQuiz['done'] ? '' : 'primary' }} js-mini-open"
+                                                        data-quiz-id="{{ $miniQuiz['id'] }}"
+                                                        data-url="/panel/courses/bundle-learning/quizzes/{{ $miniQuiz['id'] }}">{{ $miniQuiz['done'] ? trans('bundle_learning.mini_quiz_review') : trans('bundle_learning.take_quiz') }}</button>
                                             @endif
                                         </div>
                                     @empty
                                         <p class="muted tiny">{{ trans('bundle_learning.no_mini_quiz') }}</p>
                                     @endforelse
                                 </div>
+
+                                <div id="mini-quiz-inline" class="inner edk-mini-inline" hidden></div>
 
                                 @foreach($lesson['exercise'] as $exercise)
                                     <div class="q-line" style="margin-top:14px">
@@ -450,11 +522,13 @@
                             {{-- Mid-term / Final sau module đủ điều kiện --}}
                             @foreach($checkpointsAfter[$outlineModuleNumber] ?? [] as $checkpoint)
                                 @php $checkpointQuiz = $checkpointQuizzes->get($checkpoint['quiz_id']); @endphp
+                                @php $isCurrentCheckpoint = ($view === 'checkpoint' and !empty($currentCheckpoint) and (int)$currentCheckpoint['quiz_id'] === (int)$checkpoint['quiz_id']); @endphp
                                 <div class="v15-checkpoint {{ $checkpoint['type'] === 'final' ? 'v15-final' : '' }}">
-                                    @if($checkpoint['unlocked'] and !$checkpoint['passed'] and !empty($checkpointQuiz) and !empty($checkpointQuiz->webinar))
-                                        <a class="v15-checkpoint-btn" href="/panel/courses/purchases/learning/{{ $checkpointQuiz->webinar->slug }}?type=quiz&item={{ $checkpointQuiz->id }}">
+                                    @if($checkpoint['unlocked'] and !empty($checkpointQuiz))
+                                        {{-- GĐ7: làm ngay trong khung player (không mở trang quiz của module) --}}
+                                        <a class="v15-checkpoint-btn {{ $isCurrentCheckpoint ? 'is-current' : '' }}" href="{{ $checkpointUrl($checkpointQuiz->id) }}">
                                             <span class="v15-checkpoint-title">{{ $checkpoint['title'] ?: trans('bundle_learning.checkpoint_' . $checkpoint['type']) }}</span>
-                                            <span class="v15-checkpoint-status">{!! $icon('dot') !!}</span>
+                                            <span class="v15-checkpoint-status">{!! $checkpoint['passed'] ? '<span class="v15-checked">✓ ' . e(trans('bundle_learning.status_completed')) . '</span>' : '<span class="tag outline">' . e(trans('bundle_learning.library_start')) . '</span>' !!}</span>
                                         </a>
                                     @else
                                         <span class="v15-checkpoint-btn {{ $checkpoint['passed'] ? '' : 'is-disabled' }}">
@@ -524,6 +598,139 @@
                     });
                 });
             });
+
+            function openTab(tab) {
+                var button = document.querySelector('.js-lesson-tabs button[data-tab="' + tab + '"]');
+                if (button) {
+                    button.click();
+                }
+            }
+
+            // GĐ7 - Mini Quiz làm ngay tại tab Quizzes (video tự dừng ở mốc quiz)
+            var miniBox = document.getElementById('mini-quiz-inline');
+            var miniLabels = {
+                done: @json('✓ ' . trans('bundle_learning.status_completed')),
+                waiting: @json('⏳ ' . trans('bundle_learning.mini_quiz_waiting')),
+                review: @json(trans('bundle_learning.mini_quiz_review'))
+            };
+
+            function markMiniLine(quizId, status) {
+                var line = document.querySelector('.js-mini-line[data-quiz-id="' + quizId + '"]');
+                if (!line || line.getAttribute('data-done') === '1') {
+                    return;
+                }
+                line.querySelector('.js-mini-state').textContent = status === 'waiting' ? miniLabels.waiting : miniLabels.done;
+                if (status !== 'passed') {
+                    return;
+                }
+                line.setAttribute('data-done', '1');
+                var button = line.querySelector('.js-mini-open');
+                if (button) {
+                    button.classList.remove('primary');
+                    button.textContent = miniLabels.review;
+                }
+                var counter = document.querySelector('.js-mini-done');
+                var lines = document.querySelectorAll('.js-mini-line');
+                if (counter) {
+                    var done = parseInt(counter.textContent, 10) + 1;
+                    counter.textContent = done;
+                    if (done >= lines.length) {
+                        document.querySelector('.js-mini-title').classList.add('v10-quiz-title-complete');
+                        document.querySelector('.js-mini-summary').classList.add('v10-quiz-complete');
+                    }
+                }
+            }
+
+            function showMiniQuiz(quizId, url, fromVideo) {
+                if (!miniBox || !window.EdkInlineQuiz) {
+                    return false;
+                }
+                openTab('quizzes');
+                document.querySelectorAll('.js-mini-line').forEach(function (line) {
+                    line.classList.toggle('is-active', line.getAttribute('data-quiz-id') === String(quizId));
+                });
+                miniBox.hidden = false;
+
+                var extraButtons = [];
+                if (fromVideo && !fromVideo.quiz.blocking) {
+                    extraButtons.push({label: @json(trans('bundle_learning.later')), onClick: function () { fromVideo.resume(); }});
+                }
+
+                window.EdkInlineQuiz.mount(miniBox, {
+                    url: url,
+                    mode: 'mini',
+                    extraButtons: extraButtons,
+                    onResult: function (json) {
+                        if (json.status !== 'passed' && json.status !== 'waiting') {
+                            return;
+                        }
+                        markMiniLine(quizId, json.status);
+                        if (fromVideo) {
+                            fromVideo.markPassed(json.status);
+                        } else if (window.bundleLearningPlayerApi) {
+                            window.bundleLearningPlayerApi.markQuizPassed(quizId, json.status);
+                        }
+
+                        // Nút xem tiếp video (về khung player)
+                        var footer = miniBox.querySelector('.js-iq-footer');
+                        var video = document.querySelector('.edk-video-frame');
+                        if (footer && video) {
+                            footer.innerHTML = '';
+                            var next = document.createElement('button');
+                            next.type = 'button';
+                            next.className = 'edk-iq-btn primary';
+                            next.textContent = @json(trans('bundle_learning.inline_quiz_continue_video')) + ' →';
+                            next.addEventListener('click', function () {
+                                video.scrollIntoView({behavior: 'smooth', block: 'center'});
+                                if (fromVideo) {
+                                    fromVideo.resume();
+                                }
+                            });
+                            footer.appendChild(next);
+                        }
+                    }
+                });
+
+                setTimeout(function () { miniBox.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 60);
+                return true;
+            }
+
+            document.addEventListener('edk:mini-quiz', function (event) {
+                var detail = event.detail;
+                if (showMiniQuiz(detail.quiz.id, detail.quiz.inline_url, detail)) {
+                    event.preventDefault();
+                }
+            });
+
+            document.querySelectorAll('.js-mini-open').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    showMiniQuiz(button.getAttribute('data-quiz-id'), button.getAttribute('data-url'), null);
+                });
+            });
+
+            // GĐ7 - Mid-term / Final trong khung player: bấm "Bắt đầu" mới tải câu hỏi và đếm giờ
+            var checkpoint = document.querySelector('.js-checkpoint');
+            if (checkpoint && window.EdkInlineQuiz) {
+                var startButton = checkpoint.querySelector('.js-checkpoint-start');
+                if (startButton) {
+                    startButton.addEventListener('click', function () {
+                        checkpoint.querySelector('.js-checkpoint-intro').hidden = true;
+                        startButton.remove();
+                        // Link kết quả cũ: kết quả lượt mới hiện ngay trong bài
+                        checkpoint.querySelectorAll('.js-checkpoint-last-result').forEach(function (link) { link.remove(); });
+                        var body = checkpoint.querySelector('.js-checkpoint-body');
+                        window.EdkInlineQuiz.mount(body, {
+                            url: checkpoint.getAttribute('data-url'),
+                            mode: 'checkpoint',
+                            onResult: function (json) {
+                                if (json.status === 'passed') {
+                                    notify('success', json.message);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
 
             // Cột "Nội dung bài học": mở / đóng module
             document.querySelectorAll('.js-outline-toggle').forEach(function (button) {

@@ -588,9 +588,13 @@ class WebinarController extends Controller
         }
 
         if ($webinar and $currentStep == 1) {
+            // Trình soạn module của khóa học: các form bài học bên trong cũng có ô "locale",
+            // nên dùng module_locale để tên module không bị lưu sang ngôn ngữ khác
+            $translationLocale = !empty($data['module_locale']) ? $data['module_locale'] : $data['locale'];
+
             WebinarTranslation::updateOrCreate([
                 'webinar_id' => $webinar->id,
-                'locale' => mb_strtolower($data['locale']),
+                'locale' => mb_strtolower($translationLocale),
             ], [
                 'title' => $data['title'],
                 'summary' => $data['summary'] ?? null,
@@ -611,6 +615,8 @@ class WebinarController extends Controller
             $data['description'],
             $data['seo_description'],
             $data['companyLogos'],
+            $data['module_locale'],
+            $data['bundle_id'],
         );
 
         if (false) { // organization check removed - teachers assign themselves
@@ -644,6 +650,16 @@ class WebinarController extends Controller
                 '[link]' => getAdminPanelUrl("/webinars/{$webinar->id}/edit"),
             ];
             sendNotification("content_review_request", $notifyOptions, 1);
+        }
+
+        // Lưu từ trình soạn module của khóa học: quay về danh sách module của khóa
+        $bundleId = (int)$request->get('bundle_id');
+        if (!empty($bundleId) and !$getNextStep and $webinar->bundleWebinars()->where('bundle_id', $bundleId)->exists()) {
+            return redirect('/panel/bundles/' . $bundleId . '/modules')->with(['toast' => [
+                'title' => trans('public.request_success'),
+                'msg' => trans('webinars.success_store'),
+                'status' => 'success',
+            ]]);
         }
 
         return redirect($url);

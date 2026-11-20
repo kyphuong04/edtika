@@ -136,8 +136,9 @@
                                     </div>
                                     @if($checkpoint['passed'])
                                         <span class="done-mark">✓ {{ trans('bundle_learning.status_completed') }}</span>
-                                    @elseif($checkpoint['unlocked'] and !empty($checkpointQuiz) and !empty($checkpointQuiz->webinar))
-                                        <a href="/panel/courses/purchases/learning/{{ $checkpointQuiz->webinar->slug }}?type=quiz&item={{ $checkpointQuiz->id }}" class="action sm primary">{{ trans('bundle_learning.start') }} →</a>
+                                    @elseif($checkpoint['unlocked'] and !empty($checkpointQuiz))
+                                        {{-- GĐ7: làm ngay trong khung player của trang lesson --}}
+                                        <a href="/panel/courses/purchases/{{ $bundle->slug }}/checkpoints/{{ $checkpointQuiz->id }}" class="action sm primary">{{ trans('bundle_learning.start') }} →</a>
                                     @else
                                         {!! $lockIcon !!}
                                     @endif

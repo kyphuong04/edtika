@@ -889,23 +889,33 @@ class BundlesController extends Controller
             })
             ->firstOrFail();
 
-        $placeholderTitle = trans('public.new_chapter');
+        // Link cũ (GET): không tạo module "Tạo phần mới" trống nữa, mở hộp thoại nhập tên ở trang danh sách
+        if (!$request->isMethod('post')) {
+            return redirect('/panel/bundles/' . $bundle->id . '/modules?new_module=1');
+        }
+
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'skill' => 'nullable|in:' . implode(',', \App\Models\Webinar::SKILLS),
+        ]);
+        $title = trim($data['title']);
 
         $webinar = \App\Models\Webinar::create([
             'teacher_id'  => $user->id,
             'creator_id'  => $user->id,
-            'slug'        => \App\Models\Webinar::makeSlug($placeholderTitle . ' ' . time()),
+            'slug'        => \App\Models\Webinar::makeSlug($title . ' ' . time()),
             'type'        => 'course',
             'private'     => false,
             'status'      => \App\Models\Webinar::$isDraft,
             'category_id' => $bundle->category_id,
+            'skill'       => $data['skill'] ?? null,
             'created_at'  => time(),
         ]);
 
         \App\Models\Translation\WebinarTranslation::create([
             'webinar_id' => $webinar->id,
-            'locale'     => mb_strtolower(app()->getLocale()),
-            'title'      => $placeholderTitle,
+            'locale'     => $this->moduleLocale(),
+            'title'      => $title,
         ]);
 
         \App\Models\BundleWebinar::create([
@@ -914,6 +924,67 @@ class BundlesController extends Controller
         ]);
 
         return redirect('/panel/bundles/' . $bundleId . '/module/' . $webinar->id . '/edit');
+    }
+
+    /**
+     * Đổi tên / kỹ năng module ngay trong trình soạn module (tự lưu, không cần bấm "Save As Draft").
+     */
+    public function moduleRename(Request $request, $bundleId, $courseId)
+    {
+        $this->authorize("panel_webinars_create");
+
+        $user = auth()->user();
+
+        if ($user->isUser()) {
+            abort(404);
+        }
+
+        $bundle = Bundle::where('id', $bundleId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->firstOrFail();
+
+        $webinar = \App\Models\Webinar::where('id', $courseId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })
+            ->whereHas('bundleWebinars', function ($query) use ($bundle) {
+                $query->where('bundle_id', $bundle->id);
+            })
+            ->firstOrFail();
+
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'skill' => 'nullable|in:' . implode(',', \App\Models\Webinar::SKILLS),
+        ]);
+
+        \App\Models\Translation\WebinarTranslation::updateOrCreate([
+            'webinar_id' => $webinar->id,
+            'locale' => $this->moduleLocale(),
+        ], [
+            'title' => trim($data['title']),
+        ]);
+
+        if ($request->has('skill')) {
+            $webinar->update(['skill' => $data['skill'] ?? null, 'updated_at' => time()]);
+        }
+
+        return response()->json([
+            'code' => 200,
+            'title' => trim($data['title']),
+            'message' => trans('bundle_learning.module_saved'),
+        ]);
+    }
+
+    /**
+     * Ngôn ngữ lưu tên module: ngôn ngữ đang hiển thị (cũng là ngôn ngữ trang danh sách module đọc ra).
+     */
+    private function moduleLocale(): string
+    {
+        return mb_strtolower(app()->getLocale());
     }
 
     public function moduleDestroy(Request $request, $bundleId, $courseId)

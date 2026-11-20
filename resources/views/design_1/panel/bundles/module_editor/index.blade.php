@@ -65,6 +65,10 @@
             border-color: #1f2937;
         }
 
+        .module-editor-topbar__save-state { font-size: 12px; color: #6b7280; white-space: nowrap; min-width: 70px; }
+        .module-editor-topbar__save-state.is-saved { color: #1d7a45; }
+        .module-editor-topbar__save-state.is-error { color: #d02a2a; }
+
         /* G��G��G�� Override: hide the progress bar from bottom actions G�� */
         .create-course-bottom-progress { display: none !important; }
         /* Remove bottom padding no longer needed for fixed bar */
@@ -136,6 +140,11 @@
         <input type="hidden" name="get_step"  value="0"  id="getStep">
         <input type="hidden" name="type"      value="{{ $webinar->type }}">
         <input type="hidden" name="locale"    value="{{ $locale }}">
+        {{-- Các form bài học bên trong cũng có ô name="locale" (ô sau đè ô trước), nên gửi riêng ngôn ngữ của tên module --}}
+        <input type="hidden" name="module_locale" value="{{ $locale }}">
+        @if($bundle)
+            <input type="hidden" name="bundle_id" value="{{ $bundle->id }}">
+        @endif
         <input type="hidden" name="summary"   value="{{ htmlspecialchars($webinar->summary ?: ($webinar->title ?? 'New Module')) }}">
         <input type="hidden" name="description" value="{{ htmlspecialchars($webinar->description ?: ($webinar->title ?? 'New Module')) }}">
         <input type="hidden" name="message_for_reviewer" id="bundleMessageForReviewer" value="{{ $webinar->message_for_reviewer ?? '' }}">
@@ -157,12 +166,16 @@
                 <input type="text"
                        name="title"
                        value="{{ $webinar->title }}"
-                       class="module-editor-topbar__title-input"
-                       placeholder="Title"
+                       class="module-editor-topbar__title-input js-module-title"
+                       placeholder="{{ trans('bundle_learning.module_name_placeholder') }}"
+                       maxlength="255"
                        required>
+                @if($bundle)
+                    <span class="module-editor-topbar__save-state js-module-title-state" aria-live="polite"></span>
+                @endif
 
                 {{-- GĐ2: kỹ năng của module (dùng cho bộ lọc "Khóa học của tôi") --}}
-                <select name="skill" class="form-control module-editor-topbar__skill" style="max-width: 180px;">
+                <select name="skill" class="form-control module-editor-topbar__skill js-module-skill" style="max-width: 180px;">
                     <option value="">{{ trans('bundle_learning.skill_none') }}</option>
                     @foreach(\App\Models\Webinar::SKILLS as $moduleSkill)
                         <option value="{{ $moduleSkill }}" {{ $webinar->skill === $moduleSkill ? 'selected' : '' }}>{{ trans('bundle_learning.skill_' . $moduleSkill) }}</option>
@@ -699,6 +712,88 @@
 
     <script src="/assets/design_1/js/panel/create_webinar.min.js"></script>
     <script src="/assets/design_1/js/panel/webinar_content_locale.min.js"></script>
+
+    @if($bundle)
+        <script>
+            // Tên + kỹ năng module tự lưu khi rời ô (không phụ thuộc nút "Save As Draft")
+            (function () {
+                var url = '/panel/bundles/{{ $bundle->id }}/module/{{ $webinar->id }}/title';
+                var input = document.querySelector('.js-module-title');
+                var skill = document.querySelector('.js-module-skill');
+                var state = document.querySelector('.js-module-title-state');
+                var saved = input ? input.value.trim() : '';
+                var savedSkill = skill ? skill.value : '';
+                var labels = {
+                    saving: @json(trans('bundle_learning.module_saving')),
+                    saved: @json('✓ ' . trans('bundle_learning.module_saved')),
+                    empty: @json(trans('bundle_learning.module_name_required')),
+                    failed: @json(trans('public.request_failed'))
+                };
+
+                function show(text, type) {
+                    if (!state) { return; }
+                    state.textContent = text;
+                    state.className = 'module-editor-topbar__save-state js-module-title-state' + (type ? ' is-' + type : '');
+                }
+
+                function save() {
+                    var title = input.value.trim();
+                    var skillValue = skill ? skill.value : '';
+                    if (!title) {
+                        show(labels.empty, 'error');
+                        return;
+                    }
+                    if (title === saved && skillValue === savedSkill) {
+                        return;
+                    }
+
+                    var body = new FormData();
+                    body.append('_token', '{{ csrf_token() }}');
+                    body.append('title', title);
+                    body.append('skill', skillValue);
+                    show(labels.saving);
+
+                    fetch(url, {
+                        method: 'POST',
+                        body: body,
+                        credentials: 'same-origin',
+                        headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+                    }).then(function (response) {
+                        return response.json().then(function (json) { return {ok: response.ok, json: json}; });
+                    }).then(function (result) {
+                        if (!result.ok) {
+                            var errors = result.json.errors || {};
+                            show((errors.title && errors.title[0]) || result.json.message || labels.failed, 'error');
+                            return;
+                        }
+                        saved = title;
+                        savedSkill = skillValue;
+                        show(labels.saved, 'saved');
+                    }).catch(function () {
+                        show(labels.failed, 'error');
+                    });
+                }
+
+                if (input) {
+                    input.addEventListener('change', save);
+                    input.addEventListener('keydown', function (event) {
+                        if (event.key === 'Enter') {
+                            // Enter: lưu tên, không gửi cả form
+                            event.preventDefault();
+                            save();
+                            input.blur();
+                        }
+                    });
+                }
+                if (skill) {
+                    skill.addEventListener('change', save);
+                    if (window.jQuery) {
+                        window.jQuery(skill).on('select2:select', save);
+                    }
+                }
+            })();
+        </script>
+    @endif
 
     <script>
         // Override the post-save redirect to go back to the bundle

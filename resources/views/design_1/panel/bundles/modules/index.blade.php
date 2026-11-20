@@ -301,6 +301,20 @@
             flex-shrink: 0;
         }
         .bd-chat__send-btn svg { fill: #fff; }
+
+        /* Hộp thoại tạo module */
+        .bd-new-module { position: fixed; inset: 0; z-index: 1050; background: rgba(17, 24, 39, .45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .bd-new-module[hidden] { display: none; }
+        .bd-new-module__dialog { background: #fff; border-radius: 16px; padding: 22px 24px; width: 100%; max-width: 460px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+        .bd-new-module__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .bd-new-module__head h3 { font-size: 17px; font-weight: 700; margin: 0; color: #111827; }
+        .bd-new-module__close { border: 0; background: none; font-size: 24px; line-height: 1; color: #6b7280; cursor: pointer; }
+        .bd-new-module__label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin: 10px 0 6px; }
+        .bd-new-module__input { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 9px 14px; font-size: 14px; outline: none; background: #fff; height: auto; }
+        .bd-new-module__input:focus { border-color: #511D99; }
+        .bd-new-module__error { color: #d02a2a; font-size: 12px; margin-top: 6px; }
+        .bd-new-module__hint { display: block; color: #6b7280; font-size: 12px; margin-top: 8px; }
+        .bd-new-module__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
     </style>
 @endpush
 
@@ -491,7 +505,7 @@
                                     {{ trans('bundle_learning.grading_title') }}@if($pendingGradingCount > 0) ({{ $pendingGradingCount }})@endif
                                 </a>
                             @endif
-                            <a href="/panel/bundles/{{ $bundle->id }}/module/create" class="bd-btn-primary">Tạo</a>
+                            <button type="button" class="bd-btn-primary js-new-module-open">Tạo</button>
                         </div>
                     @endif
                 </div>
@@ -577,9 +591,76 @@
         </div>
     </div>
 </div>
+    {{-- Tạo module: nhập tên trước, không tạo sẵn module "Tạo phần mới" --}}
+    @if($allowManage)
+        @php $openNewModule = (request()->get('new_module') || $errors->has('title') || $errors->has('skill')); @endphp
+        <div class="bd-new-module js-new-module" {{ $openNewModule ? '' : 'hidden' }}>
+            <form method="post" action="/panel/bundles/{{ $bundle->id }}/module/create" class="bd-new-module__dialog" role="dialog" aria-modal="true" aria-labelledby="bdNewModuleTitle">
+                {{ csrf_field() }}
+                <div class="bd-new-module__head">
+                    <h3 id="bdNewModuleTitle">{{ trans('bundle_learning.module_new_title') }}</h3>
+                    <button type="button" class="bd-new-module__close js-new-module-close" aria-label="{{ trans('public.close') }}">×</button>
+                </div>
+
+                <label class="bd-new-module__label" for="bdNewModuleName">{{ trans('bundle_learning.module_name') }}</label>
+                <input type="text" id="bdNewModuleName" name="title" value="{{ old('title') }}" maxlength="255" required
+                       class="bd-new-module__input" placeholder="{{ trans('bundle_learning.module_name_placeholder') }}">
+                @error('title')
+                    <div class="bd-new-module__error">{{ $message }}</div>
+                @enderror
+
+                <label class="bd-new-module__label" for="bdNewModuleSkill">{{ trans('bundle_learning.module_skill') }}</label>
+                <select id="bdNewModuleSkill" name="skill" class="bd-new-module__input">
+                    <option value="">{{ trans('bundle_learning.skill_none') }}</option>
+                    @foreach(\App\Models\Webinar::SKILLS as $moduleSkill)
+                        <option value="{{ $moduleSkill }}" {{ old('skill') === $moduleSkill ? 'selected' : '' }}>{{ trans('bundle_learning.skill_' . $moduleSkill) }}</option>
+                    @endforeach
+                </select>
+                <small class="bd-new-module__hint">{{ trans('bundle_learning.module_new_hint') }}</small>
+
+                <div class="bd-new-module__actions">
+                    <button type="button" class="bd-btn-outline js-new-module-close">{{ trans('public.cancel') }}</button>
+                    <button type="submit" class="bd-btn-primary">{{ trans('bundle_learning.module_create_submit') }}</button>
+                </div>
+            </form>
+        </div>
+    @endif
 @endsection
 
 @push('scripts_bottom')
+    <script>
+        (function () {
+            var box = document.querySelector('.js-new-module');
+            if (!box) { return; }
+            var input = box.querySelector('input[name="title"]');
+
+            function open() {
+                box.hidden = false;
+                setTimeout(function () { input.focus(); }, 30);
+            }
+            function close() {
+                box.hidden = true;
+            }
+
+            document.querySelectorAll('.js-new-module-open').forEach(function (button) {
+                button.addEventListener('click', open);
+            });
+            box.querySelectorAll('.js-new-module-close').forEach(function (button) {
+                button.addEventListener('click', close);
+            });
+            box.addEventListener('click', function (event) {
+                if (event.target === box) { close(); }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !box.hidden) { close(); }
+            });
+            box.querySelector('form').addEventListener('submit', function () {
+                box.querySelector('button[type="submit"]').disabled = true;
+            });
+
+            if (!box.hidden) { open(); }
+        })();
+    </script>
     <script src="{{ getDesign1ScriptPath('show_course') }}"></script>
     <script>
         const bdCsrf = '{{ csrf_token() }}';

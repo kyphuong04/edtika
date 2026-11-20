@@ -4,7 +4,9 @@
  * - Gửi vị trí xem lên server mỗi 15 giây và khi video kết thúc.
  *   Vị trí chỉ tăng khi video phát bình thường (tua nhanh không được tính).
  * - Tự tiếp tục từ vị trí xem gần nhất.
- * - Mini Quiz: tới giây show_at_second thì dừng video và mời học viên làm quiz.
+ * - Mini Quiz: tới giây show_at_second thì dừng video và hiện câu hỏi ngay trên trang (GĐ7):
+ *   trang lesson bắt sự kiện "edk:mini-quiz" để hiện ở tab Quizzes; trang khác hiện hộp thoại.
+ *   Quiz "blocking" (chưa đạt): không xem tiếp / tua qua mốc quiz cho tới khi làm đạt.
  *
  * Cấu hình: window.bundleLearningPlayer = { stateUrl, progressUrl, csrfToken, lang: {...} }
  */
@@ -77,40 +79,122 @@
         };
     }
 
-    /* ---------- Mini Quiz modal ---------- */
+    /* ---------- Mini Quiz (GĐ7: làm ngay trên trang) ---------- */
 
-    function showMiniQuizModal(tracker, quiz) {
+    function findQuiz(quizId) {
+        var found = null;
+        Object.keys(trackers).forEach(function (fileId) {
+            trackers[fileId].quizzes.forEach(function (quiz) {
+                if (String(quiz.id) === String(quizId)) {
+                    found = {tracker: trackers[fileId], quiz: quiz};
+                }
+            });
+        });
+        return found;
+    }
+
+    function markQuizPassed(quizId, status) {
+        var found = findQuiz(quizId);
+        if (!found) {
+            return;
+        }
+        if (status === 'waiting') {
+            found.quiz.waiting = true;
+        } else {
+            found.quiz.passed = true;
+        }
+        found.quiz.blocking = false;
+    }
+
+    function resume(tracker) {
+        closeModal();
+        tracker.activeQuizId = null;
+        var media = getMedia(tracker.element);
+        if (media) {
+            media.play();
+        }
+    }
+
+    function openMiniQuiz(tracker, quiz) {
+        tracker.activeQuizId = quiz.id;
+
+        var detail = {
+            quiz: quiz,
+            fileId: tracker.fileId,
+            markPassed: function (status) { markQuizPassed(quiz.id, status); },
+            resume: function () { resume(tracker); },
+            close: function () { tracker.activeQuizId = null; }
+        };
+
+        // Trang lesson mới: hiện tại tab Quizzes (không bật đè lên video)
+        var event = new CustomEvent('edk:mini-quiz', {detail: detail, cancelable: true});
+        if (!document.dispatchEvent(event)) {
+            return;
+        }
+
+        showMiniQuizModal(tracker, quiz, detail);
+    }
+
+    function showMiniQuizModal(tracker, quiz, detail) {
         closeModal();
 
         var overlay = document.createElement('div');
         overlay.className = 'bl-mini-quiz-overlay';
-        overlay.innerHTML =
-            '<div class="bl-mini-quiz-modal" role="dialog" aria-modal="true">' +
-            '<div class="bl-mini-quiz-eyebrow">Mini Quiz</div>' +
-            '<h3></h3>' +
-            '<p>' + lang('miniQuizText', 'Làm nhanh Mini Quiz để kiểm tra phần vừa học.') + '</p>' +
-            '<div class="bl-mini-quiz-actions">' +
-            '<button type="button" class="bl-mini-quiz-later">' + lang('later', 'Để sau') + '</button>' +
-            '<a class="bl-mini-quiz-start">' + lang('startQuiz', 'Làm Mini Quiz') + ' →</a>' +
-            '</div></div>';
+        overlay.innerHTML = '<div class="bl-mini-quiz-modal" role="dialog" aria-modal="true">' +
+            '<button type="button" class="edk-iq-close" aria-label="' + lang('close', 'Đóng') + '">×</button>' +
+            '<div class="js-bl-mini-quiz-body"></div></div>';
+        document.body.appendChild(overlay);
 
-        overlay.querySelector('h3').textContent = quiz.title;
-        overlay.querySelector('.bl-mini-quiz-start').setAttribute('href', quiz.url);
-
-        overlay.querySelector('.bl-mini-quiz-start').addEventListener('click', function () {
-            // Lưu vị trí trước khi rời video
-            sendProgress(tracker, true);
-        });
-
-        overlay.querySelector('.bl-mini-quiz-later').addEventListener('click', function () {
+        function close() {
             closeModal();
-            var media = getMedia(tracker.element);
-            if (media) {
-                media.play();
+            tracker.activeQuizId = null;
+            if (!quiz.blocking) {
+                // Không bắt buộc: "Để sau" thì xem tiếp
+                var media = getMedia(tracker.element);
+                if (media) {
+                    media.play();
+                }
+            }
+        }
+
+        overlay.querySelector('.edk-iq-close').addEventListener('click', close);
+
+        var body = overlay.querySelector('.js-bl-mini-quiz-body');
+
+        if (!quiz.inline_url || !window.EdkInlineQuiz) {
+            // Dự phòng: mở trang quiz của module
+            body.innerHTML = '<div class="edk-iq"><span class="edk-iq-tag">Mini Quiz</span><h3 class="edk-iq-title"></h3>' +
+                '<p>' + lang('miniQuizText', 'Làm nhanh Mini Quiz để kiểm tra phần vừa học.') + '</p>' +
+                '<div class="edk-iq-footer"><a class="edk-iq-btn primary">' + lang('startQuiz', 'Làm Mini Quiz') + ' →</a></div></div>';
+            body.querySelector('h3').textContent = quiz.title;
+            body.querySelector('a').setAttribute('href', quiz.url);
+            body.querySelector('a').addEventListener('click', function () { sendProgress(tracker, true); });
+            return;
+        }
+
+        var extraButtons = quiz.blocking ? [] : [{label: lang('later', 'Để sau'), onClick: close}];
+
+        window.EdkInlineQuiz.mount(body, {
+            url: quiz.inline_url,
+            mode: 'mini',
+            extraButtons: extraButtons,
+            onResult: function (json) {
+                if (json.status !== 'passed' && json.status !== 'waiting') {
+                    return;
+                }
+                detail.markPassed(json.status);
+                var footer = body.querySelector('.js-iq-footer');
+                if (footer) {
+                    footer.innerHTML = '';
+                    var next = document.createElement('button');
+                    next.type = 'button';
+                    next.className = 'edk-iq-btn primary';
+                    next.textContent = lang('continueVideo', 'Tiếp tục video') + ' →';
+                    next.addEventListener('click', function () { resume(tracker); });
+                    footer.appendChild(next);
+                }
             }
         });
-
-        document.body.appendChild(overlay);
     }
 
     function closeModal() {
@@ -188,10 +272,30 @@
             // Mini Quiz tới mốc thời gian
             for (var i = 0; i < tracker.quizzes.length; i++) {
                 var quiz = tracker.quizzes[i];
-                if (!quiz.passed && !tracker.shownQuizzes[quiz.id] && time >= quiz.show_at_second && time < quiz.show_at_second + 3) {
+                if (quiz.passed || time < quiz.show_at_second) {
+                    continue;
+                }
+
+                if (quiz.blocking) {
+                    // Chưa làm đạt: giữ video ở mốc quiz (kể cả khi tua qua)
+                    media.pause();
+                    if (time > quiz.show_at_second + 1) {
+                        media.seek(quiz.show_at_second);
+                        time = quiz.show_at_second;
+                    }
+                    if (tracker.activeQuizId !== quiz.id) {
+                        tracker.shownQuizzes[quiz.id] = true;
+                        openMiniQuiz(tracker, quiz);
+                    } else if (typeof window.showToast === 'function') {
+                        window.showToast('error', '', lang('quizRequired', 'Hoàn thành Mini Quiz để xem tiếp video.'));
+                    }
+                    break;
+                }
+
+                if (!tracker.shownQuizzes[quiz.id] && time < quiz.show_at_second + 3) {
                     tracker.shownQuizzes[quiz.id] = true;
                     media.pause();
-                    showMiniQuizModal(tracker, quiz);
+                    openMiniQuiz(tracker, quiz);
                     break;
                 }
             }
@@ -214,7 +318,8 @@
             watchedMax: 0,
             lastTime: 0,
             lastSentAt: 0,
-            lastSentPosition: 0
+            lastSentPosition: 0,
+            activeQuizId: null
         };
         trackers[fileId] = tracker;
 
@@ -222,6 +327,12 @@
             tracker.quizzes = state.mini_quizzes || [];
             tracker.completed = !!state.completed;
             tracker.resumeAt = state.completed ? 0 : (state.last_position || 0);
+            // Không tự tiếp tục vượt qua Mini Quiz chưa làm
+            tracker.quizzes.forEach(function (quiz) {
+                if (quiz.blocking && tracker.resumeAt > quiz.show_at_second) {
+                    tracker.resumeAt = Math.max(0, quiz.show_at_second - 1);
+                }
+            });
             tracker.watchedMax = state.last_position || 0;
             tracker.lastSentPosition = tracker.watchedMax;
         }).catch(function () {
@@ -273,6 +384,11 @@
             startTracker(element, fileId);
         });
     }
+
+    // Trang có tab Quizzes gọi khi học viên làm đạt Mini Quiz ngoài lúc video dừng
+    window.bundleLearningPlayerApi = {
+        markQuizPassed: markQuizPassed
+    };
 
     setInterval(scan, 1500);
     scan();

@@ -267,8 +267,25 @@ class BundleLearningController extends Controller
         $miniQuizzes = $chapterItems->where('is_mini_quiz', true)->values();
 
         // Chế độ xem hiện tại
-        $view = in_array($request->get('view'), ['pre', 'video', 'exercise', 'post'], true) ? $request->get('view') : null;
+        $view = in_array($request->get('view'), ['pre', 'video', 'exercise', 'post', 'checkpoint'], true) ? $request->get('view') : null;
         $pre = $lesson['pre'];
+
+        // GĐ7: Mid-term / Final làm ngay trong khung player
+        $currentCheckpoint = null;
+        if ($view === 'checkpoint') {
+            $checkpointQuizId = (int)$request->get('quiz');
+            $currentCheckpoint = collect($progress['checkpoints'])->first(function ($checkpoint) use ($checkpointQuizId) {
+                return !empty($checkpoint['quiz_id']) and (int)$checkpoint['quiz_id'] === $checkpointQuizId;
+            });
+
+            if (empty($currentCheckpoint) or (!$currentCheckpoint['unlocked'] and !$canBypass)) {
+                return redirect($lessonUrl)->with(['toast' => [
+                    'title' => trans('public.request_failed'),
+                    'msg' => trans('bundle_learning.checkpoint_locked_msg'),
+                    'status' => 'error',
+                ]]);
+            }
+        }
 
         if (!$contentUnlocked and in_array($view, [null, 'video', 'exercise', 'post'], true)) {
             $view = 'pre';
@@ -334,6 +351,28 @@ class BundleLearningController extends Controller
         $checkpointQuizIds = collect($progress['checkpoints'])->pluck('quiz_id')->filter()->all();
         $checkpointQuizzes = Quiz::query()->whereIn('id', $checkpointQuizIds)->with('webinar')->get()->keyBy('id');
 
+        // Thông tin bài Mid-term / Final đang mở
+        $checkpointInfo = null;
+        if (!empty($currentCheckpoint)) {
+            $checkpointQuiz = $checkpointQuizzes->get($currentCheckpoint['quiz_id']);
+
+            if (empty($checkpointQuiz)) {
+                return redirect($lessonUrl);
+            }
+
+            $inlineQuiz = $this->inlineQuizService();
+            $checkpointQuestions = $inlineQuiz->questions($checkpointQuiz);
+            $checkpointInfo = [
+                'quiz' => $checkpointQuiz,
+                'questions_count' => $checkpointQuestions->count(),
+                'total_grade' => (int)$checkpointQuestions->sum('grade'),
+                'attempts_left' => $inlineQuiz->attemptsLeft($checkpointQuiz, $user),
+                'can_submit' => $inlineQuiz->canSubmit($checkpointQuiz, $user),
+                'last_result' => $inlineQuiz->lastResult($checkpointQuiz, $user),
+                'inline_url' => '/panel/courses/bundle-learning/quizzes/' . $checkpointQuiz->id,
+            ];
+        }
+
         return view('design_1.panel.bundles.learning.lesson', [
             'pageTitle' => $chapter->title,
             'bundle' => $bundle,
@@ -356,6 +395,8 @@ class BundleLearningController extends Controller
             'flashcardMap' => $flashcardMap,
             'personalNote' => $personalNote,
             'checkpointQuizzes' => $checkpointQuizzes,
+            'currentCheckpoint' => $currentCheckpoint,
+            'checkpointInfo' => $checkpointInfo,
             'courseUrl' => $courseUrl,
             'lessonUrl' => $lessonUrl,
             'learningUrl' => '/panel/courses/purchases/learning/' . $webinar->slug,
@@ -502,22 +543,184 @@ class BundleLearningController extends Controller
 
         $learningUrl = '/panel/courses/purchases/learning/' . $file->webinar->slug;
 
+        // GĐ7: chờ giáo viên chấm (câu tự luận) thì không chặn video
+        $waitingQuizIds = $miniQuizzes->isEmpty() ? [] : QuizzesResult::query()
+            ->where('user_id', $user->id)
+            ->where('status', QuizzesResult::$waiting)
+            ->where('results', '!=', '')
+            ->whereIn('quiz_id', $miniQuizzes->pluck('id'))
+            ->pluck('quiz_id')
+            ->map(function ($id) {
+                return (int)$id;
+            })
+            ->all();
+        $inlineQuiz = $this->inlineQuizService();
+        $blocksVideo = (bool)config('bundle_learning.mini_quiz_blocks_video', true);
+
         return response()->json([
             'code' => 200,
             'file_id' => $file->id,
             'duration' => $file->duration_seconds,
             'last_position' => !empty($watch) ? (int)$watch->last_position : 0,
             'completed' => (!empty($watch) && $watch->isCompleted()),
-            'mini_quizzes' => $miniQuizzes->map(function (Quiz $quiz) use ($passedQuizIds, $learningUrl) {
+            'mini_quizzes' => $miniQuizzes->map(function (Quiz $quiz) use ($passedQuizIds, $waitingQuizIds, $learningUrl, $inlineQuiz, $user, $blocksVideo) {
+                $passed = in_array((int)$quiz->id, $passedQuizIds, true);
+                $waiting = in_array((int)$quiz->id, $waitingQuizIds, true);
+                $canSubmit = $inlineQuiz->canSubmit($quiz, $user);
+
                 return [
                     'id' => $quiz->id,
                     'title' => $quiz->title,
                     'show_at_second' => (int)$quiz->show_at_second,
-                    'passed' => in_array((int)$quiz->id, $passedQuizIds, true),
+                    'passed' => $passed,
+                    'waiting' => $waiting,
                     'url' => $learningUrl . '?type=quiz&item=' . $quiz->id,
+                    // GĐ7: làm quiz ngay trên trang (không rời video)
+                    'inline_url' => '/panel/courses/bundle-learning/quizzes/' . $quiz->id,
+                    // Video dừng ở mốc quiz cho tới khi làm đạt (trừ khi đang chờ chấm hoặc đã hết lượt)
+                    'blocking' => ($blocksVideo and !$passed and !$waiting and $canSubmit),
                 ];
             })->values(),
         ]);
+    }
+
+    /**
+     * GĐ7 - Nội dung một quiz để làm ngay trên trang (Mini Quiz trong video, Mid-term / Final trong khung player).
+     */
+    public function inlineQuiz(Request $request, $quizId)
+    {
+        $user = auth()->user();
+        $quiz = Quiz::query()->with('webinar')->findOrFail($quizId);
+        $service = $this->inlineQuizService();
+
+        $deny = $service->denyReason($quiz, $user);
+        if (!empty($deny)) {
+            return response()->json(['code' => 403, 'message' => $deny], 403);
+        }
+
+        $questions = $service->questions($quiz);
+        $lastResult = $service->lastResult($quiz, $user);
+
+        return response()->json([
+            'code' => 200,
+            'id' => $quiz->id,
+            'title' => $quiz->title,
+            'time' => (int)$quiz->time,
+            'pass_mark' => (int)$quiz->pass_mark,
+            'total_grade' => (int)$questions->sum('grade'),
+            'questions_count' => $questions->count(),
+            'attempts_left' => $service->attemptsLeft($quiz, $user),
+            'can_submit' => $service->canSubmit($quiz, $user),
+            'passed' => $service->hasPassed($quiz, $user),
+            'last_status' => optional($lastResult)->status,
+            'last_grade' => !empty($lastResult) ? (int)$lastResult->user_grade : null,
+            'html' => view('design_1.panel.bundles.learning.inline_quiz_form', [
+                'quiz' => $quiz,
+                'quizQuestions' => $questions,
+            ])->render(),
+        ]);
+    }
+
+    /**
+     * GĐ7 - Nộp bài quiz làm trên trang. Chấm giống trang quiz của Rocket (cùng bảng quizzes_results).
+     */
+    public function inlineQuizSubmit(Request $request, $quizId)
+    {
+        $user = auth()->user();
+        $quiz = Quiz::query()->with('webinar')->findOrFail($quizId);
+        $service = $this->inlineQuizService();
+
+        $deny = $service->denyReason($quiz, $user);
+        if (!empty($deny)) {
+            return response()->json(['code' => 403, 'message' => $deny], 403);
+        }
+
+        if (!$service->canSubmit($quiz, $user)) {
+            return response()->json(['code' => 422, 'message' => trans('bundle_learning.inline_quiz_no_attempts')], 422);
+        }
+
+        $answers = $request->input('question', []);
+        $submitted = $service->submit($quiz, $user, is_array($answers) ? $answers : []);
+        /** @var QuizzesResult $result */
+        $result = $submitted['result'];
+
+        $messages = [
+            QuizzesResult::$passed => trans('bundle_learning.inline_quiz_passed'),
+            QuizzesResult::$failed => trans('bundle_learning.inline_quiz_failed'),
+            QuizzesResult::$waiting => trans('bundle_learning.inline_quiz_waiting'),
+        ];
+        $attemptsLeft = $service->attemptsLeft($quiz, $user);
+
+        return response()->json([
+            'code' => 200,
+            'status' => $result->status,
+            'message' => $messages[$result->status] ?? '',
+            'grade' => (int)$result->user_grade,
+            'total_grade' => $service->totalGrade($quiz),
+            'pass_mark' => (int)$quiz->pass_mark,
+            'questions' => $submitted['questions'],
+            'attempts_left' => $attemptsLeft,
+            'can_retry' => ($result->status === QuizzesResult::$failed and (is_null($attemptsLeft) or $attemptsLeft > 0)),
+            'result_url' => '/panel/quizzes/results/' . $result->id . '/details',
+        ]);
+    }
+
+    /**
+     * GĐ7 - Mở Mid-term / Final từ trang tổng quan: vào trang lesson cuối của module điều kiện, làm bài trong khung player.
+     */
+    public function checkpoint(Request $request, $slug, $quizId)
+    {
+        $this->authorize("panel_webinars_my_purchases");
+
+        $user = auth()->user();
+        $bundle = Bundle::query()
+            ->where('slug', $slug)
+            ->where('status', Bundle::$active)
+            ->firstOrFail();
+
+        $this->abortIfNoAccess($bundle, $user);
+
+        $progress = $this->gate->progress($bundle, $user);
+        $courseUrl = '/panel/courses/purchases/' . $bundle->slug;
+        $chapterId = $this->checkpointHostChapterId($progress, (int)$quizId);
+
+        if (empty($chapterId)) {
+            return redirect($courseUrl);
+        }
+
+        return redirect($courseUrl . '/lessons/' . $chapterId . '?view=checkpoint&quiz=' . (int)$quizId);
+    }
+
+    /**
+     * Lesson "chứa" khung làm Mid-term / Final: lesson cuối của module thứ required_modules.
+     */
+    private function checkpointHostChapterId(array $progress, int $quizId): ?int
+    {
+        $checkpoint = collect($progress['checkpoints'])->first(function ($checkpoint) use ($quizId) {
+            return (int)$checkpoint['quiz_id'] === $quizId;
+        });
+
+        if (empty($checkpoint) or empty($progress['modules'])) {
+            return null;
+        }
+
+        $moduleIndex = max(1, min(count($progress['modules']), (int)$checkpoint['required_modules'])) - 1;
+        $lessons = $progress['modules'][$moduleIndex]['lessons'] ?? [];
+
+        // Module rỗng: lấy lesson cuối của module gần nhất phía trước có lesson
+        while (empty($lessons) and $moduleIndex > 0) {
+            $moduleIndex--;
+            $lessons = $progress['modules'][$moduleIndex]['lessons'] ?? [];
+        }
+
+        $lastLesson = end($lessons);
+
+        return !empty($lastLesson) ? (int)$lastLesson['chapter_id'] : null;
+    }
+
+    private function inlineQuizService(): \App\Services\Bundle\InlineQuizService
+    {
+        return app(\App\Services\Bundle\InlineQuizService::class);
     }
 
     /**

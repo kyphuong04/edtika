@@ -47,6 +47,11 @@ return [
     // Trang "Chấm bài" (GĐ4) cho giáo viên: ẩn khi Post Lesson chấm tự động
     'teacher_grading_enabled' => env('BUNDLE_TEACHER_GRADING_ENABLED', false),
 
+    // GĐ7 - Quiz làm ngay trên trang học
+    // Video dừng ở mốc Mini Quiz và không xem tiếp được cho tới khi làm đạt
+    // (không chặn khi bài đang chờ giáo viên chấm hoặc đã hết lượt làm). false = cho phép "Để sau".
+    'mini_quiz_blocks_video' => env('BUNDLE_MINI_QUIZ_BLOCKS_VIDEO', true),
+
     // Giới hạn số dòng để tránh form quá dài
     'max_gifts' => 10,
     'max_highlights' => 12,
